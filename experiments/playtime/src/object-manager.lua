@@ -113,15 +113,8 @@ end
 -- settings: {x, y, bodyType, width, height, radius, label,
 --   width2, width3, height2, height3, height4,  -- extra dims for complex shapes
 --   vertices, mirrorX, mirrorY, behaviors, shape8URL, density}
-function lib.addThing(shapeType, settings)
-    local thing = createThing(shapeType, settings)
-    if not thing then
-        logger:error("addThing: Failed to create thing.")
-        return nil
-    end
-
-    return thing
-end
+-- nil when the shape can't be made (createThing logs why).
+lib.addThing = createThing
 
 -- this one is called when the shape of the body changes, thus, its kinda safe to make weird changes to joints too.
 function lib.recreateThingFromBody(body, newSettings)

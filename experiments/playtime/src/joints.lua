@@ -241,85 +241,50 @@ end
 
 -- this one is only called from recreateThingFromBody
 
-local function tranlateBody(body, dx, dy)
+local function translateBody(body, dx, dy)
     local x, y = body:getPosition()
     body:setPosition(x + dx, y + dy)
 end
 
+-- Move everything jointed onward from `from`, following the joints' other side (dir A: their
+-- bodyB, dir B: their bodyA), each body once.
 local function moveUntilEnd(from, dx, dy, visited, dir)
     local joints = from:getJoints()
     for i = 1, #joints do
         local bodyA, bodyB = joints[i]:getBodies()
-
-        if (dir == SIDES.A) then
-            if (not visited[utils.thingOf(bodyB).id]) then
-                tranlateBody(bodyB, dx, dy)
-                visited[utils.thingOf(bodyB).id] = true
-                moveUntilEnd(bodyB, dx, dy, visited, dir)
-            end
-        end
-        if dir == SIDES.B then
-            if (not visited[utils.thingOf(bodyA).id]) then
-                tranlateBody(bodyA, dx, dy)
-                visited[utils.thingOf(bodyA).id] = true
-                moveUntilEnd(bodyA, dx, dy, visited, dir)
-            end
+        local nextBody = dir == SIDES.A and bodyB or bodyA
+        local id = utils.thingOf(nextBody).id
+        if not visited[id] then
+            translateBody(nextBody, dx, dy)
+            visited[id] = true
+            moveUntilEnd(nextBody, dx, dy, visited, dir)
         end
     end
 end
 
+-- The new body keeps its side of each joint; that side's anchor moves with the reshaped polygon
+-- (mean value coordinates), and what hangs on the other side moves along.
 function lib.reattachJoints(jointData, newBody, oldVertices)
     local visited = {}
     for _, data in ipairs(jointData) do
-        if data.originalBodyOrder == SIDES.BODY_A then
-            data.body1 = newBody
-            data.body2 = data.otherBody
-
-            local before = { x = data.offsetA.x, y = data.offsetA.y }
-
-            local weights = mathutils.getMeanValueCoordinatesWeights(data.offsetA.x, data.offsetA.y, oldVertices)
-            local newx, newy = mathutils.repositionPointUsingWeights(weights, utils.thingOf(newBody).vertices)
-
-            data.offsetA.x = newx
-            data.offsetA.y = newy
-
-            local after = { x = data.offsetA.x, y = data.offsetA.y }
-
-            local rx, ry = mathutils.rotatePoint(
-                after.x - before.x, after.y - before.y, 0, 0, newBody:getAngle()
-            )
-            local id = utils.thingOf(data.otherBody).id
-            if (not visited[id]) then
-                tranlateBody(data.otherBody, rx, ry)
-                visited[id] = true
-                moveUntilEnd(data.otherBody, rx, ry, visited, 'A')
-            end
+        local onA = data.originalBodyOrder == SIDES.BODY_A
+        local offset = onA and data.offsetA or data.offsetB
+        if onA then
+            data.body1, data.body2 = newBody, data.otherBody
         else
-            data.body1 = data.otherBody
-            data.body2 = newBody
+            data.body1, data.body2 = data.otherBody, newBody
+        end
 
-            local before = { x = data.offsetB.x, y = data.offsetB.y }
+        local beforeX, beforeY = offset.x, offset.y
+        local weights = mathutils.getMeanValueCoordinatesWeights(offset.x, offset.y, oldVertices)
+        offset.x, offset.y = mathutils.repositionPointUsingWeights(weights, utils.thingOf(newBody).vertices)
 
-            local weights = mathutils.getMeanValueCoordinatesWeights(data.offsetB.x, data.offsetB.y, oldVertices)
-            local newx, newy = mathutils.repositionPointUsingWeights(weights, utils.thingOf(newBody).vertices)
-
-            data.offsetB.x = newx
-            data.offsetB.y = newy
-
-            local after = { x = data.offsetB.x, y = data.offsetB.y }
-
-            local rx, ry = mathutils.rotatePoint(
-                after.x - before.x, after.y - before.y, 0, 0, newBody:getAngle()
-            )
-            local id = utils.thingOf(data.otherBody).id
-            if not visited[id] then
-                visited[id] = true
-                tranlateBody(data.otherBody, rx, ry)
-                moveUntilEnd(data.otherBody, rx, ry, visited, 'B')
-            end
-
-            -- if true then -- this pushes back the other way!
-
+        local rx, ry = mathutils.rotatePoint(offset.x - beforeX, offset.y - beforeY, 0, 0, newBody:getAngle())
+        local id = utils.thingOf(data.otherBody).id
+        if not visited[id] then
+            visited[id] = true
+            translateBody(data.otherBody, rx, ry)
+            moveUntilEnd(data.otherBody, rx, ry, visited, onA and SIDES.A or SIDES.B)
         end
 
         lib.createJoint(data)

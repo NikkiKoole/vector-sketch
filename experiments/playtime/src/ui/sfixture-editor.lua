@@ -308,45 +308,43 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
 
                 if #state.triangleEditor.selectedTriangles > 0 then
                     if ui.button(x, y, ROW_WIDTH + 50, 'split selected') then
-                        for _, rv in ipairs({ resourceLink.find(ud) }) do -- the linked RESOURCE, if any
-                            if not rv:isDestroyed() then
-                                local rud = rv:getUserData()
-                                if rud then
-                                    local rextra = rud.extra
-                                    local triIdx = rextra and rextra.triangles
-                                    local allVerts = rextra
-                                        and (rextra.meshVertices or utils.thingOf(rv:getBody()).vertices)
-                                    if triIdx and allVerts then
-                                        -- Path B: Steiner points live on the body in body-local
-                                        -- coords. allVerts may be either body-local (new code,
-                                        -- meshVertices) or authoring-world (thing.vertices or
-                                        -- legacy saves); subtracting its own centroid normalizes
-                                        -- to body-local either way.
-                                        local bodyThing = utils.thingOf(rv:getBody())
-                                        local ocenX, ocenY = mathutils.computeCentroid(allVerts)
-                                        bodyThing.extraSteiner = bodyThing.extraSteiner or {}
-                                        for _, t in ipairs(state.triangleEditor.selectedTriangles) do
-                                            local i1 = triIdx[(t - 1) * 3 + 1]
-                                            local i2 = triIdx[(t - 1) * 3 + 2]
-                                            local i3 = triIdx[(t - 1) * 3 + 3]
-                                            if i1 and i2 and i3 then
-                                                local cx = (allVerts[(i1-1)*2+1] + allVerts[(i2-1)*2+1]
-                                                    + allVerts[(i3-1)*2+1]) / 3 - ocenX
-                                                local cy = (allVerts[(i1-1)*2+2] + allVerts[(i2-1)*2+2]
-                                                    + allVerts[(i3-1)*2+2]) / 3 - ocenY
-                                                bodyThing.extraSteiner[#bodyThing.extraSteiner + 1] = cx
-                                                bodyThing.extraSteiner[#bodyThing.extraSteiner + 1] = cy
-                                            end
+                        local rv = resourceLink.find(ud) -- the linked RESOURCE, if any
+                        if rv and not rv:isDestroyed() then
+                            local rud = rv:getUserData()
+                            if rud then
+                                local rextra = rud.extra
+                                local triIdx = rextra and rextra.triangles
+                                local allVerts = rextra
+                                    and (rextra.meshVertices or utils.thingOf(rv:getBody()).vertices)
+                                if triIdx and allVerts then
+                                    -- Path B: Steiner points live on the body in body-local
+                                    -- coords. allVerts may be either body-local (new code,
+                                    -- meshVertices) or authoring-world (thing.vertices or
+                                    -- legacy saves); subtracting its own centroid normalizes
+                                    -- to body-local either way.
+                                    local bodyThing = utils.thingOf(rv:getBody())
+                                    local ocenX, ocenY = mathutils.computeCentroid(allVerts)
+                                    bodyThing.extraSteiner = bodyThing.extraSteiner or {}
+                                    for _, t in ipairs(state.triangleEditor.selectedTriangles) do
+                                        local i1 = triIdx[(t - 1) * 3 + 1]
+                                        local i2 = triIdx[(t - 1) * 3 + 2]
+                                        local i3 = triIdx[(t - 1) * 3 + 3]
+                                        if i1 and i2 and i3 then
+                                            local cx = (allVerts[(i1-1)*2+1] + allVerts[(i2-1)*2+1]
+                                                + allVerts[(i3-1)*2+1]) / 3 - ocenX
+                                            local cy = (allVerts[(i1-1)*2+2] + allVerts[(i2-1)*2+2]
+                                                + allVerts[(i3-1)*2+2]) / 3 - ocenY
+                                            bodyThing.extraSteiner[#bodyThing.extraSteiner + 1] = cx
+                                            bodyThing.extraSteiner[#bodyThing.extraSteiner + 1] = cy
                                         end
-                                        -- Re-triangulate with the new points included
-                                        local bd = resourceLink.backdrop(rud)
-                                        if bd then
-                                            cdt.computeResourceMesh(rud, rv:getBody(), bd)
-                                        end
-                                        -- Invalidate bone assignments — topology changed
-                                        meshusertBind.clearInfluences(ud.extra, true) -- topology changed
                                     end
-                                    break
+                                    -- Re-triangulate with the new points included
+                                    local bd = resourceLink.backdrop(rud)
+                                    if bd then
+                                        cdt.computeResourceMesh(rud, rv:getBody(), bd)
+                                    end
+                                    -- Invalidate bone assignments — topology changed
+                                    meshusertBind.clearInfluences(ud.extra, true) -- topology changed
                                 end
                             end
                         end
@@ -394,13 +392,12 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
                     end
 
                     if ui.button(x, y, ROW_WIDTH + 50, 'clear all groups') then
-                        for _, rv in ipairs({ resourceLink.find(ud) }) do -- the linked RESOURCE, if any
-                            if not rv:isDestroyed() then
-                                local rud = rv:getUserData()
-                                if rud then
-                                    rud.extra.triangleGroups = nil
-                                    rud.extra.triangleOrderDirty = true
-                                end
+                        local rv = resourceLink.find(ud) -- the linked RESOURCE, if any
+                        if rv and not rv:isDestroyed() then
+                            local rud = rv:getUserData()
+                            if rud then
+                                rud.extra.triangleGroups = nil
+                                rud.extra.triangleOrderDirty = true
                             end
                         end
                     end
@@ -543,24 +540,22 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
                 -- Clear splits: wipes thing.extraSteiner on the body and re-triangulates
                 -- the linked RESOURCE. (Path B: Steiners live on the body, not the RESOURCE.)
                 do
-                    for _, rv in ipairs({ resourceLink.find(ud) }) do -- the linked RESOURCE, if any
-                        if not rv:isDestroyed() then
-                            local rud = rv:getUserData()
-                            if rud then
-                                local rBodyThing = utils.thingOf(rv:getBody())
-                                if rBodyThing.extraSteiner and #rBodyThing.extraSteiner > 0 then
-                                    local numSplits = #rBodyThing.extraSteiner / 2
-                                    if ui.button(x, y, ROW_WIDTH + 50, 'clear splits (' .. numSplits .. ')') then
-                                        rBodyThing.extraSteiner = nil
-                                        local bd = resourceLink.backdrop(rud)
-                                        if bd then
-                                            cdt.computeResourceMesh(rud, rv:getBody(), bd)
-                                        end
-                                        meshusertBind.clearInfluences(ud.extra, true) -- topology changed
+                    local rv = resourceLink.find(ud) -- the linked RESOURCE, if any
+                    if rv and not rv:isDestroyed() then
+                        local rud = rv:getUserData()
+                        if rud then
+                            local rBodyThing = utils.thingOf(rv:getBody())
+                            if rBodyThing.extraSteiner and #rBodyThing.extraSteiner > 0 then
+                                local numSplits = #rBodyThing.extraSteiner / 2
+                                if ui.button(x, y, ROW_WIDTH + 50, 'clear splits (' .. numSplits .. ')') then
+                                    rBodyThing.extraSteiner = nil
+                                    local bd = resourceLink.backdrop(rud)
+                                    if bd then
+                                        cdt.computeResourceMesh(rud, rv:getBody(), bd)
                                     end
-                                    nextRow()
+                                    meshusertBind.clearInfluences(ud.extra, true) -- topology changed
                                 end
-                                break
+                                nextRow()
                             end
                         end
                     end
