@@ -4,19 +4,30 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
     <title>Playtime: __SCENE__</title>
+    <!-- Lora from Google Fonts; crossorigin because the page is cross-origin isolated (love.js threads) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" crossorigin="anonymous"
+          href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;1,500&display=swap">
     <style>
       * { box-sizing: border-box; }
       html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
                    background: rgb(245, 245, 220); font-family: arial; }
-      #loadingCanvas, #canvas { position: absolute; top: 0; left: 0; border: 0; }
-      #loadingCanvas { width: 100%; height: 100%; }
-      #canvas { visibility: hidden; }
+      #canvas { position: absolute; top: 0; left: 0; border: 0; visibility: hidden; }
+      /* One message over the game: 'Loading…' until the game's first frame, then 'Click the screen to
+         start' (browsers only start audio after a click or key), then gone. */
+      #message { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+                 background: rgb(245, 245, 220); user-select: none; text-align: center; padding: 16px;
+                 font-family: 'Lora', Georgia, serif; font-weight: 500; font-style: italic;
+                 font-size: clamp(28px, 6vw, 64px); color: rgb(60, 60, 60); }
+      #message.waiting { background: rgba(245, 245, 220, 0.6); cursor: pointer; }
+      #message.playing { display: none; }
     </style>
   </head>
   <body>
     <!-- made by webtest/build-web.sh from index.template.html; __SCENE__ is the scene -->
-    <canvas id="loadingCanvas" oncontextmenu="event.preventDefault()"></canvas>
     <canvas id="canvas" oncontextmenu="event.preventDefault()"></canvas>
+    <div id="message">Loading…</div>
     <script>
       function resizeCanvas() {
         var canvas = document.getElementById('canvas');
@@ -25,20 +36,22 @@
         canvas.height = window.innerHeight * dpr;
         canvas.style.width = window.innerWidth + 'px';
         canvas.style.height = window.innerHeight + 'px';
-        var loading = document.getElementById('loadingCanvas');
-        loading.width = window.innerWidth;
-        loading.height = window.innerHeight;
       }
 
-      var loadingContext = document.getElementById('loadingCanvas').getContext('2d');
-      function drawLoadingText(text) {
-        var c = loadingContext.canvas;
-        loadingContext.fillStyle = 'rgb(245, 245, 220)';
-        loadingContext.fillRect(0, 0, c.width, c.height);
-        loadingContext.font = '2em arial';
-        loadingContext.textAlign = 'center';
-        loadingContext.fillStyle = 'rgb(60, 60, 60)';
-        loadingContext.fillText(text, c.width / 2, c.height / 2);
+      // The message: 'loading' (opaque), 'waiting' (see-through, asks for a click), 'playing' (gone).
+      var screen = { state: 'loading', clicked: false };
+      function setScreen(state, text) {
+        var message = document.getElementById('message');
+        screen.state = state;
+        message.className = state;
+        if (text) message.textContent = text;
+      }
+      // The game's first frame (src/web-bridge.lua says 'ready' then): ask for the click, unless one
+      // already came while it loaded.
+      function gameReady() {
+        if (screen.state !== 'loading') return;
+        if (screen.clicked) setScreen('playing');
+        else setScreen('waiting', 'Click the screen to start');
       }
 
       window.onload = function () { window.focus(); };
@@ -94,6 +107,16 @@
         window.addEventListener(type, desoundStart);
       });
 
+      // A click or key takes the message away (or, while loading, means it won't be asked for);
+      // the same click starts the audio above.
+      function onFirstClick() {
+        screen.clicked = true;
+        if (screen.state === 'waiting') setScreen('playing');
+      }
+      ['pointerdown', 'keydown', 'touchstart'].forEach(function (type) {
+        window.addEventListener(type, onFirstClick);
+      });
+
       // Lua eval into the running game (src/web-bridge.lua): playtime.eval('return #state.mipos')
       // resolves to {ok, data} or {ok: false, error}, like the desktop bridge's /eval. The code goes
       // in as a file in the game's save directory; the answer comes back as an '@bridge' line.
@@ -113,6 +136,7 @@
         var parts = line.split('\t');
         var data = JSON.parse(parts[2]);
         if (parts[1] === 'ready') {
+          gameReady();
           playtime.dir = data.dir;
           playtime.queued.forEach(function (q) { playtimeWrite(q[0], q[1]); });
           playtime.queued = [];
@@ -139,11 +163,10 @@
           canvas.addEventListener('wheel', function (e) { e.preventDefault(); }, { passive: false });
           return canvas;
         })(),
+        // love.js reports download progress here; '' when the files are in (Lua still has to start).
         setStatus: function (text) {
-          if (text) {
-            drawLoadingText(text);
-          } else if (Module.remainingDependencies === 0) {
-            document.getElementById('loadingCanvas').style.display = 'none';
+          if (screen.state === 'loading' && /error/i.test(text || '')) setScreen('loading', 'Something went wrong (see the console)');
+          if (!text && Module.remainingDependencies === 0) {
             document.getElementById('canvas').style.visibility = 'visible';
             resizeCanvas();
           }
