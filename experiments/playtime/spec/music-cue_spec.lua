@@ -83,8 +83,11 @@ describe('music.cue', function()
         local tail = partsBetween(tailStart, tailEnd)
         assert.is_nil(tail.drums)
         assert.is_nil(tail.bass)
+        -- (the new song's downbeat may be humanized up to ~18 ms early: it isn't the tail's)
         for _, note in ipairs(notes) do
-            if note.t >= tailStart - 0.01 and note.t < tailEnd - 0.01 then assert.is_true(note.ends <= tailEnd + 0.03) end
+            if note.t >= tailStart - 0.01 and note.t < tailEnd - 0.02 then
+                assert.is_true(note.ends <= tailEnd + 0.03)
+            end
         end
         -- the new song: in the old key, at its A (bossa was in A), drums only from its third bar
         assert.are.equal('citypop', song().style)
