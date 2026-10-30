@@ -11,3 +11,19 @@ upcoming
 ========
 Also groups will be coming.
 And behaviors which can be applied to groups or single parts..
+
+running it
+==========
+On the desktop (LÖVE 11.5):
+
+    ./playtime.sh start              # the editor
+    ./playtime.sh play dollhouse     # straight into play mode; tab toggles the editor
+
+In the browser:
+
+    ./webtest/build-web.sh dollhouse     # about a minute, makes webtest/output-dollhouse/
+    ./webtest/serve.sh 8080 dollhouse    # then open http://localhost:8080 and click once for sound
+
+The web build needs love.js (`npm i -g love.js`); for the synth also emscripten
+(`brew install emscripten`) and dreamengine checked out at ~/Projects/dreamengine.
+More in docs/WEB-EXPORT-LOVEJS.md.
