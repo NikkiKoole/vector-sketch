@@ -27,7 +27,8 @@ L = more.
   function, could be inlined), `isRecordingPointers` (the tool rail reads it, nothing sets it).
   Later the same day: `updateShape8` and `mipoVoice.squeakBody` gone; character-manager's
   `getBoundingBox` is used, `instance.textures` / `positioners` were already gone.
-  Left: `music.stepAt`, music `lib.trace`, `synth.isRunning` (the music session's files); on `state` (restart the game after:
+  `music.stepAt` and `synth.isRunning` gone too (aeaddadc; music's `lib.trace` is used after all).
+  Left: on `state` (restart the game after:
   hot-swapping state.lua unsettles it) `positioningMesh`, `jointLengthParams`, `lastSelectedBody`,
   `axisEnabled`, `showTexFixtureDim`, `texFixtureEdit.verts`. S.
 - [x] **CL3. Unused maths.** `math-utils.lua`: `unloosenVanillalineOLD` with `unpackNodePoints` /
@@ -37,8 +38,8 @@ L = more.
 - [ ] **CL4. Commented-out code.** **Done 2026-10-30** in src/ and main.lua: ~640 lines, found by
   a script that takes a run of `--` lines as code only when the text compiles as Lua, then read
   through. Later the same day: character-manager, io.lua, mipo-voice (character-topology,
-  mipo-chatter and sound.lua had none). Left: state.lua (restart the game after), music.lua and
-  synth.lua (the music session's). S.
+  mipo-chatter and sound.lua had none; music.lua and synth.lua none either, aeaddadc). Left: state.lua
+  (restart the game after). S.
 - [x] **CL5. slide-sound: delete or say it's parked.** `lib.enabled = false` since 2026-10-27, but it
   still runs every frame and the `whistle` patch keeps a synth slot. S.
   **Done 2026-10-30:** deleted (Nikki: "delete slide sound yes"), with its call in sound.lua and the
@@ -238,7 +239,9 @@ L = more.
   aside); the `state()`, `textured()`, `cameraFollow()`, `roomMusic()` and `lab()` wrappers are plain
   requires (checked on a copy: specs and a boot). behaviors' `signals()` stays: signals requires
   behaviors, a real cycle (comment says so now). Left: the ~130 requires inside functions; each
-  needs a load-order check, so file by file, not one pass.
+  needs a load-order check, so file by file, not one pass. Sound modules done (aeaddadc): voice-lab
+  and mipo-voice/snap-sound require synth/music on top; lazy only where pure specs lack ffi, or the
+  web build. The rest: playtime-fc, file by file.
 - [x] **CL25. Names.** `addTexturesFromInstance2` (131 call sites, no version 1) → `rebuildTextures`
   (alias for a while); `bud` (draw-textured:3359), `mud` (sfixture-editor:403, 707), `j` for joints
   (16 places), `fud` vs `ud` (38 places); raw subtype strings in editor-render:95 and draw-textured:180;
