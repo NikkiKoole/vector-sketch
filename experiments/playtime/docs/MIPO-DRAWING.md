@@ -67,6 +67,18 @@ before and after with `claudetools/frame-profile.lua`. Gains are estimates until
   Mipos move, ribbons cost what they did (their curve changes every frame). Draw calls unchanged (L2).
   Found: outside the textured draw ~33 ms at 200 Mipos in the editor (box2d-draw's outlines of every
   body, not culled) and ~22 ms in play mode; the paused update (26 ms at 200) is untouched by this.
+- [ ] **L1b. The rest of the draw: scans of the whole world every frame.** Measured 2026-10-30 with 100
+  Mipos (frame-profile times every love.draw step now). Play mode, normal camera (most Mipos off screen):
+  draw 12.6 ms, of which the Mipo pictures 3.7 ms and three steps that draw almost nothing 9 ms:
+  - **body outlines** (`box2d-draw.drawWorld`) 5.4 ms, 490 KB garbage (10 ms in the editor): every body
+    fetched and asked for its fixtures each frame, bodies under a picture skipped only after that. Cull
+    off-screen bodies (as L0) and keep `coveredBodies` until the world changes.
+  - **rebake check** (`makeCombinedImages`, called from love.draw) 2.4 ms, 180 KB: walks every fixture of
+    every body to find the few dirty pictures. Walk only the sfixtures, or keep a list of dirty ones.
+  - **doors** (`doors.draw` + `drawBehind`) 1.1 ms: the doors looked up every frame. Keep the list until
+    the world changes (src/doors.lua: playtime-fc's).
+  - editor only: signal wires 0.6 ms (the same kind of scan).
+  All on screen (100 Mipos): Mipo pictures 25-26 ms, outlines 6-10 ms, rebake 2.4-2.8, doors 1.2-1.4.
 - [ ] **L2. One texture per Mipo, a few draw calls.** Pack a Mipo's baked part pictures into one atlas at
   bake time, and draw its rigid parts (texfixtures, decals) as one mesh per Mipo, the part vertices
   moved on the CPU each frame; ribbons too if their strips use the atlas. The mouth (stencil) stays

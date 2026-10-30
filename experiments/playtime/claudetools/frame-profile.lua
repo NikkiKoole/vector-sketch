@@ -32,6 +32,20 @@ local STEPS = {
     { 'src.mipo-face', 'update', 'mipo face' },
     { 'src.camera-follow', 'update', 'camera follow' },
     { 'src.physics.box2d-draw-textured', 'drawTexturedWorld', 'draw: textured' },
+    -- the rest of love.draw, in its order
+    { 'src.physics.box2d-draw-textured', 'makeCombinedImages', 'draw: rebake check' },
+    { 'src.editor-render', 'drawGrid', 'draw: grid' },
+    { 'src.physics.box2d-draw', 'drawWorld', 'draw: bodies (box2d-draw)' },
+    { 'src.doors', 'drawBehind', 'draw: doors behind' },
+    { 'src.doors', 'draw', 'draw: doors' },
+    { 'src.camera-follow', 'drawBounds', 'draw: camera bounds' },
+    { 'src.editor-render', 'renderActiveEditorThings', 'draw: editor overlay' },
+    { 'src.editor-render', 'renderSteinerOverlay', 'draw: steiner overlay' },
+    { 'src.editor-render', 'renderSelectionBox', 'draw: selection box' },
+    { 'src.signals', 'drawWires', 'draw: wires' },
+    { 'src.doors', 'drawFade', 'draw: door fade' },
+    { 'src.playtime-ui', 'drawUI', 'draw: editor ui' },
+    { 'src.play-mode', 'drawHint', 'draw: play hint' },
 }
 
 local run
@@ -74,6 +88,17 @@ local function finish()
     table.sort(labels, function(a, b) return run.ms[a] > run.ms[b] end)
     for _, label in ipairs(labels) do row('  ' .. label, run.ms[label]) end
     row('DRAW (whole)', run.ms['(draw)'] or 0)
+    local drawLabels = {}
+    for label in pairs(run.ms) do
+        if label:match('^draw: ') then drawLabels[#drawLabels + 1] = label end
+    end
+    table.sort(drawLabels, function(a, b) return run.ms[a] > run.ms[b] end)
+    local accounted = 0
+    for _, label in ipairs(drawLabels) do accounted = accounted + run.ms[label] end
+    for _, label in ipairs(drawLabels) do
+        if label ~= 'draw: textured' then row('  ' .. label, run.ms[label]) end
+    end
+    row('  draw: (not in a step above)', math.max(0, (run.ms['(draw)'] or 0) - accounted))
     row('  draw: textured', run.ms['draw: textured'] or 0)
     local kinds = {}
     for kind in pairs(state.drawTimes.ms) do kinds[#kinds + 1] = kind end
