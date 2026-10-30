@@ -172,7 +172,8 @@ end
 
 -- Draw `img` over the rectangle `corners` (4 points, torso1-local, top left first, as the
 -- texfixture's shape gives them) as a bent grid. The mesh lives here, never on `extra`
--- (that is saved to the scene file).
+-- (that is saved to the scene file). bones.deform, when there, bends instead of
+-- lib.deform (a Mipo ear: src/ear-bend.lua).
 local meshes = setmetatable({}, { __mode = 'k' }) -- [extra] = { mesh, img, rest, verts }
 
 function lib.drawGrid(img, corners, bones, body, extra)
@@ -208,7 +209,7 @@ function lib.drawGrid(img, corners, bones, body, extra)
             rest[k], rest[k + 1] = tx + (bx - tx) * v, ty + (by - ty) * v
         end
     end
-    local bent = lib.deform(rest, bones, cache.bent)
+    local bent = (bones.deform or lib.deform)(rest, bones, cache.bent)
     local verts = cache.verts
     for r = 0, rows do
         for c = 0, cols do

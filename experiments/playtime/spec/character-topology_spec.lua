@@ -548,8 +548,8 @@ describe("character-topology", function()
             assert.are.equal('topEdge', map['head'].ownAttach.shape8)
         end)
 
-        it("ears use shape8 vertex 5", function()
-            assert.are.equal('top', map['lear'].ownAttach.strategy)
+        it("ears hang from their root, vertex 5 without one", function()
+            assert.are.equal('root', map['lear'].ownAttach.strategy)
             assert.are.equal(5, map['lear'].ownAttach.shape8)
         end)
 
@@ -571,6 +571,77 @@ describe("character-topology", function()
         it("upper legs use bottom (no shape8)", function()
             assert.are.equal('bottom', map['luleg'].ownAttach.strategy)
             assert.is_nil(map['luleg'].ownAttach.shape8)
+        end)
+    end)
+
+    describe("ears", function()
+        -- a lopsided head: its left side (vertices 6-8) is narrower than its right (2-4)
+        local dict = {
+            ['head.png'] = { vertices = { 0, -100, 100, -50, 120, 0, 100, 50, 0, 100, -60, 50, -70, 0, -60, -50 } },
+            ['ear.png'] = { root = { 10, 40 },
+                vertices = { 0, -50, 20, -30, 25, 0, 20, 30, 0, 50, -20, 30, -25, 0, -20, -30 } },
+            ['plain.png'] = { vertices = { 0, -50, 20, -30, 25, 0, 20, 30, 5, 50, -20, 30, -25, 0, -20, -30 } },
+        }
+        local function makeGuy(earY, earZ, earURL)
+            local ear = function(sx)
+                return { shape = 'shape8', shape8URL = earURL or 'ear.png', dims = { w = 50, h = 100, sx = sx, sy = 1 },
+                    appearance = { skin = { zOffset = earZ or 190 } } }
+            end
+            return {
+                scale = 1,
+                dna = {
+                    positioners = { ear = { y = earY } },
+                    parts = {
+                        head = { shape = 'shape8', shape8URL = 'head.png',
+                            dims = { w = 240, h = 200, sx = 1, sy = 1 } },
+                        lear = ear(-1), rear = ear(1),
+                    },
+                },
+            }
+        end
+        local map
+
+        setup(function()
+            topology.setShape8Dict(dict)
+            map = topology.buildEntryMap(topology.resolve({ torsoSegments = 1, isPotatoHead = false }))
+        end)
+
+        it("sit on their own side of a lopsided head", function()
+            local guy = makeGuy(0.5, 210) -- in front of the head: no inset
+            local lx, ly = topology.getOffsetFromParent('lear', guy, map['lear'])
+            local rx, ry = topology.getOffsetFromParent('rear', guy, map['rear'])
+            assert.are.equal(-70, lx) -- vertex 7, not the right ear's 120 mirrored
+            assert.are.equal(120, rx)
+            assert.are.equal(0, ly)
+            assert.are.equal(0, ry)
+        end)
+
+        it("follow the outline through the middle vertex", function()
+            local x, y = topology.getOffsetFromParent('rear', makeGuy(0.25, 210), map['rear'])
+            -- a quarter of the way along 2-3-4 is halfway from 2 to 3
+            assert.is_true(math.abs(x - 110) < 1e-9)
+            assert.is_true(math.abs(y + 25) < 1e-9)
+        end)
+
+        it("tuck their root into the head when drawn behind it", function()
+            local x, y = topology.getOffsetFromParent('rear', makeGuy(0.5, 190), map['rear'])
+            -- ear outline is 100 tall: inset earInset * 100 toward the head's middle
+            assert.is_true(math.abs(x - (120 - topology.earInset * 100)) < 1e-9)
+            assert.are.equal(0, y)
+        end)
+
+        it("hang from the measured root, mirrored on the left", function()
+            local guy = makeGuy(0.5)
+            local rx, ry = topology.getOwnOffset('rear', guy, map['rear'])
+            local lx, ly = topology.getOwnOffset('lear', guy, map['lear'])
+            assert.are.same({ -10, -40 }, { rx, ry })
+            assert.are.same({ 10, -40 }, { lx, ly })
+        end)
+
+        it("fall back to vertex 5 without a root", function()
+            local guy = makeGuy(0.5, nil, 'plain.png')
+            local x, y = topology.getOwnOffset('rear', guy, map['rear'])
+            assert.are.same({ -5, -50 }, { x, y })
         end)
     end)
 end)

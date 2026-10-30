@@ -497,10 +497,15 @@ function lib.buildWorld(data, world, cam, opts)
                     jointData.properties.maxLength
                 )
             elseif jointData.type == "weld" then
+                -- the angle it springs back to (a Mipo's ears); scenes saved without it
+                -- count from the saved pose, as before
+                local referenceAngle = jointData.properties and jointData.properties.referenceAngle
+                    or (bodyB:getAngle() - bodyA:getAngle())
                 joint = love.physics.newWeldJoint(
                     bodyA, bodyB,
                     anchorA[1], anchorA[2],
-                    collideConnected
+                    anchorA[1], anchorA[2],
+                    collideConnected, referenceAngle
                 )
                 joint:setFrequency(jointData.properties.frequency)
                 joint:setDampingRatio(jointData.properties.dampingRatio)
@@ -1139,6 +1144,7 @@ function lib.gatherSaveData(world, camera)
                         jointData.properties.upperLimit = joint:getUpperLimit()
                     end
                 elseif joint:getType() == JT.WELD then
+                    jointData.properties.referenceAngle = joint:getReferenceAngle()
                     jointData.properties.frequency = joint:getFrequency()
                     jointData.properties.dampingRatio = joint:getDampingRatio()
                 elseif joint:getType() == JT.PRISMATIC then

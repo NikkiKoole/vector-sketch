@@ -18,6 +18,15 @@ local state = require('src.state')
 local D = require('src.dna-defaults')
 local C = require('src.shape-catalogs')
 local topology = require('src.character-topology')
+local units = require('src.physics-units')
+
+-- Ears hang on a soft weld: the angle springs back to the stanceAngle, the root stays
+-- put. On a hinge (+-11 deg) they lay on a limit all the time, drooping, one up and one
+-- down when the head tilted. frequency is Hz at the reference meter (physics-units).
+lib.earSpring = { frequency = 3, dampingRatio = 0.25 }
+local function earJoint()
+    return { type = JT.WELD, frequency = lib.earSpring.frequency, dampingRatio = lib.earSpring.dampingRatio }
+end
 
 -- Negative group index counter for character self-collision prevention.
 -- Each character gets a unique negative index so its fixtures never collide
@@ -971,37 +980,40 @@ local shape8Dict = {
         vertices = { -31, -215, 99, -111, 26, 52, 39, 192, -32, 242, -121, 188, -140, 50, -132, -110 } },
     ['feet7xr.png'] = { dimensions = { 216, 410 },
         vertices = { 4, -170, 71, -143, 77, -47, 45, 165, -11, 182, -71, 163, -67, -51, -42, -144 } },
-    ['earx1r.png'] = { dimensions = { 312, 416 },
+    -- Ears: root is where the drawing meets the head, the middle of the bottom fifth of
+    -- the mask (measured; earx9r's two legs by hand). Vertex 5, used before, was off
+    -- to one side or well above the drawing's end on most of them.
+    ['earx1r.png'] = { dimensions = { 312, 416 }, root = { 35, 131 },
         vertices = { -32, -132, 71, -50, 92, 36, 36, 177, -23, 92, -74, 93, -117, 36, -140, -53 } },
-    ['earx2r.png'] = { dimensions = { 354, 420 },
+    ['earx2r.png'] = { dimensions = { 354, 420 }, root = { -18, 129 },
         vertices = { 23, -163, 125, -63, 135, 33, 116, 95, 16, 144, -74, 99, -112, 35, -89, -63 } },
-    ['earx3r.png'] = { dimensions = { 369, 339 },
+    ['earx3r.png'] = { dimensions = { 369, 339 }, root = { 41, 96 },
         vertices = { -111, -116, -23, -48, 36, 13, 96, 70, -11, 74, -94, 70, -107, 15, -114, -49 } },
-    ['earx4r.png'] = { dimensions = { 306, 483 },
+    ['earx4r.png'] = { dimensions = { 306, 483 }, root = { -7, 133 },
         vertices = { -15, -195, 85, -67, 69, 35, 54, 96, -13, 98, -74, 93, -92, 34, -108, -68 } },
-    ['earx5r.png'] = { dimensions = { 240, 549 },
+    ['earx5r.png'] = { dimensions = { 240, 549 }, root = { 1, 190 },
         vertices = { 9, -191, 49, -72, 69, 48, 82, 187, 10, 209, -61, 198, -69, 51, -54, -72 } },
-    ['earx6r.png'] = { dimensions = { 240, 519 },
+    ['earx6r.png'] = { dimensions = { 240, 519 }, root = { 1, 176 },
         vertices = { -15, -214, 79, -67, 92, 59, 73, 187, -4, 193, -66, 185, -88, 57, -94, -68 } },
-    ['earx7r.png'] = { dimensions = { 204, 474 },
+    ['earx7r.png'] = { dimensions = { 204, 474 }, root = { 9, 152 },
         vertices = { -49, -189, 48, -67, 69, 35, 54, 96, -13, 98, -74, 93, -92, 34, -81, -68 } },
-    ['earx8r.png'] = { dimensions = { 402, 270 },
+    ['earx8r.png'] = { dimensions = { 402, 270 }, root = { -17, 81 },
         vertices = { -22, -88, 85, -67, 128, 29, 120, 84, -13, 90, -153, 88, -160, 25, -108, -68 } },
-    ['earx9r.png'] = { dimensions = { 231, 243 },
+    ['earx9r.png'] = { dimensions = { 231, 243 }, root = { -7, 62 },
         vertices = { -4, -81, 38, -60, 66, 0, 62, 38, -7, 59, -73, 49, -82, 7, -57, -59 } },
-    ['earx10r.png'] = { dimensions = { 168, 174 },
+    ['earx10r.png'] = { dimensions = { 168, 174 }, root = { -11, 58 },
         vertices = { -3, -35, 29, -16, 32, 13, 35, 46, -7, 50, -50, 45, -45, 13, -37, -15 } },
-    ['earx11r.png'] = { dimensions = { 177, 150 },
+    ['earx11r.png'] = { dimensions = { 177, 150 }, root = { -17, 49 },
         vertices = { -1, -33, 29, -16, 32, 16, 14, 47, -16, 41, -50, 45, -45, 13, -37, -15 } },
-    ['earx12r.png'] = { dimensions = { 240, 330 },
+    ['earx12r.png'] = { dimensions = { 240, 330 }, root = { 4, 101 },
         vertices = { -19, -66, 39, -28, 76, 13, 49, 73, -9, 86, -45, 72, -57, 15, -62, -21 } },
-    ['earx13r.png'] = { dimensions = { 225, 336 },
+    ['earx13r.png'] = { dimensions = { 225, 336 }, root = { 31, 129 },
         vertices = { -33, -100, 12, -33, 29, 16, 43, 73, -9, 86, -54, 72, -57, 15, -62, -33 } },
-    ['earx14r.png'] = { dimensions = { 270, 465 },
+    ['earx14r.png'] = { dimensions = { 270, 465 }, root = { 25, 156 },
         vertices = { -54, -172, 47, -41, 76, 18, 102, 82, -39, 86, -105, 83, -117, 23, -104, -42 } },
-    ['earx15r.png'] = { dimensions = { 132, 228 },
+    ['earx15r.png'] = { dimensions = { 132, 228 }, root = { -16, 63 },
         vertices = { -20, -78, 15, -36, 26, 11, 21, 66, -16, 63, -37, 40, -43, 12, -48, -36 } },
-    ['earx16r.png'] = { dimensions = { 312, 258 },
+    ['earx16r.png'] = { dimensions = { 312, 258 }, root = { 19, 73 },
         vertices = { -57, -98, 25, -35, 54, 8, 69, 51, -50, 59, -89, 58, -99, 9, -95, -36 } },
 }
 
@@ -1269,7 +1281,7 @@ local dna = {
 
                 shape = ST.SHAPE8,
                 shape8URL = 'earx1r.png',
-                j = { type = JT.REVOLUTE, limits = { low = -math.pi / 16, up = math.pi / 16 } },
+                j = earJoint(),
                 stanceAngle = -math.pi / 2 + math.pi / 5
             },
             ['rear'] = {
@@ -1285,7 +1297,7 @@ local dna = {
 
                 shape = ST.SHAPE8,
                 shape8URL = 'earx1r.png',
-                j = { type = JT.REVOLUTE, limits = { low = -math.pi / 16, up = math.pi / 16 } },
+                j = earJoint(),
                 stanceAngle = math.pi / 2 - math.pi / 5
             }
         },
@@ -1455,6 +1467,8 @@ local function makePart(partName, instance, settings)
                 id = uuid.generateID(),
                 offsetA = { x = 0, y = 0 },
                 offsetB = { x = 0, y = 0 },
+                frequency = jointData.frequency and units.rate(jointData.frequency),
+                dampingRatio = jointData.dampingRatio,
             }
             -- logger:info('joint:', parent, partName)
             -- todo we dont really need this yet...
@@ -2504,6 +2518,10 @@ end
 
 local function migrateTorsoLayers(instance)
     for partName, partDNA in pairs(instance.dna.parts or {}) do
+        -- ears on a hinge (saved before the soft weld): the next rebuild makes them springy
+        if (partName == 'lear' or partName == 'rear') and partDNA.j and partDNA.j.type == JT.REVOLUTE then
+            partDNA.j = earJoint()
+        end
         local skin = partName:find('^torso%d') and partDNA.appearance and partDNA.appearance.skin
         if skin and skin.zOffset == 200 then skin.zOffset = TORSO_SKIN_Z end
         -- the duck beak upper lip is out (shape-catalogs.lua)

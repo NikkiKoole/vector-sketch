@@ -21,6 +21,7 @@ local SIDES = require('src.sides')
 local cam = require('src.camera').getInstance()
 local mipoRegistry = require('src.mipo-registry')
 local spineSkin = require('src.spine-skin')
+local earBend = require('src.ear-bend')
 -- face parts drawn on their body around extra.ox/oy: on a spine torso they ride the bend
 local faceDrawables = { decal = true, brow = true, ['mouth-backdrop'] = true, ['mouth-lower'] = true,
     ['mouth-upper'] = true, ['mouth-teeth'] = true }
@@ -1755,7 +1756,8 @@ local function drawCombinedImageVanilla(ompImage, extra, texfixture, _thing)
     local img = ompImage
     if vertices and img then
         local body = texfixture:getBody()
-        local bones = #vertices == 8 and spineSkin.bonesOf(body) -- a spine's torso picture bends
+        -- a spine's torso picture bends, and a Mipo ear's
+        local bones = #vertices == 8 and (spineSkin.bonesOf(body) or earBend.bonesOf(body, vertices))
         if bones then
             love.graphics.setColor(1, 1, 1, 1)
             if extra.main.tint then love.graphics.setColor(lib.hexToColor(extra.main.tint)) end

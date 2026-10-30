@@ -194,7 +194,7 @@ parentStrategies.vertex = function(_partName, guy, entry)
 end
 
 -- Lerp between two parent vertices, driven by a positioner value.
--- Used for legs (on lowest torso) and ears (on head/torso).
+-- Used for legs (on lowest torso).
 parentStrategies.lerpVertices = function(_partName, guy, entry)
     local parentPart = guy.dna.parts[entry.parent]
     local pa = entry.parentAttach
@@ -204,18 +204,74 @@ parentStrategies.lerpVertices = function(_partName, guy, entry)
     if isShape8(parentPart) then
         local ax, ay = getVertex(parentPart, pa.vertex1, scale)
         local bx, by = getVertex(parentPart, pa.vertex2, scale)
-        local rx, ry = lerp(ax, bx, t), lerp(ay, by, t)
-        if pa.negateX then rx = -rx end
-        return rx, ry
+        return lerp(ax, bx, t), lerp(ay, by, t)
     else
         local w, h = parentPart.dims.w, parentPart.dims.h
-        if pa.legStyle then
-            return (pa.xSign or 1) * (w / 2) * (1 - t) * scale, (h / 2) * scale
-        else
-            -- ear fallback
-            return (pa.xSign or 1) * (w / 2) * scale, (-h / 2) * scale
+        return (pa.xSign or 1) * (w / 2) * (1 - t) * scale, (h / 2) * scale
+    end
+end
+
+-- How far an ear's root goes into the head, as a part of the ear's own height.
+-- Ears draw behind the head, so the root hides there; an ear drawn in front of the
+-- head (the 'ears over head' toggle) stays on the edge.
+lib.earInset = 0.12
+
+-- An ear's height in world units (its outline, scaled).
+local function earHeight(part, scale)
+    local raw = lib.shape8Vertices(part)
+    local top, bottom = math.huge, -math.huge
+    for i = 2, #raw, 2 do
+        top, bottom = math.min(top, raw[i]), math.max(bottom, raw[i])
+    end
+    return (bottom - top) * math.abs(part.dims.sy or 1) * scale
+end
+
+-- Walk along the parent's outline through pa.vertices (on the ear's own side:
+-- 2,3,4 for the right ear, 8,7,6 for the left), t of the way by length. Ears used
+-- to mirror the right ear's point and cut straight from vertex 2 to 4: on a
+-- lopsided head the left ear floated off, and on a round one both sank in.
+parentStrategies.outline = function(partName, guy, entry)
+    local parentPart = guy.dna.parts[entry.parent]
+    local pa = entry.parentAttach
+    local scale = guy.scale
+    local t = guy.dna.positioners[pa.positioner][pa.posField]
+
+    if not isShape8(parentPart) then
+        local w, h = parentPart.dims.w, parentPart.dims.h
+        return (pa.xSign or 1) * (w / 2) * scale, (-h / 2) * scale
+    end
+
+    local points, lengths, total = {}, {}, 0
+    for i, index in ipairs(pa.vertices) do
+        local x, y = getVertex(parentPart, index, scale)
+        points[i] = { x, y }
+        if i > 1 then
+            local p = points[i - 1]
+            lengths[i - 1] = math.sqrt((x - p[1]) ^ 2 + (y - p[2]) ^ 2)
+            total = total + lengths[i - 1]
         end
     end
+    local x, y = points[1][1], points[1][2]
+    local togo = mathutils.clamp(t, 0, 1) * total
+    for i = 1, #lengths do
+        local a, b = points[i], points[i + 1]
+        if togo <= lengths[i] or i == #lengths then
+            local f = lengths[i] > 0 and math.min(1, togo / lengths[i]) or 0
+            x, y = lerp(a[1], b[1], f), lerp(a[2], b[2], f)
+            break
+        end
+        togo = togo - lengths[i]
+    end
+
+    local part = guy.dna.parts[partName]
+    local skin = part.appearance and part.appearance.skin
+    local behind = not (skin and skin.zOffset and skin.zOffset > 200)
+    local distance = math.sqrt(x * x + y * y)
+    if behind and distance > 0 and isShape8(part) then
+        local inset = math.min(lib.earInset * earHeight(part, scale), distance / 2)
+        x, y = x - x / distance * inset, y - y / distance * inset
+    end
+    return x, y
 end
 
 -- Lerp along vertex 1→5 midline on parent (nose placement).
@@ -251,6 +307,16 @@ function lib.getOwnOffset(partName, guy, entry)
         else
             return 0, (-part.dims.h / 2) * scale
         end
+    elseif oa.strategy == 'root' then
+        -- where the drawing meets the body: the shape's root (measured from its mask,
+        -- character-manager.lua shape8Dict), else vertex oa.shape8
+        local root = isShape8(part) and shape8Dict[part.shape8URL].root
+        if root then
+            return -root[1] * (part.dims.sx or 1) * scale, -root[2] * (part.dims.sy or 1) * scale
+        elseif isShape8(part) then
+            return getAnchor(part, oa.shape8, scale)
+        end
+        return 0, (-part.dims.h / 2) * scale
     elseif oa.strategy == 'bottom' then
         if type(oa.shape8) == 'number' and isShape8(part) then
             return getAnchor(part, oa.shape8, scale)
@@ -429,13 +495,13 @@ function lib.resolve(creation)
           ownAttach = { strategy = 'bottom', shape8 = 1 }, angleOffset = 0 },
         -- Ears
         { name = 'lear', parent = earParent,
-          parentAttach = { strategy = 'lerpVertices', vertex1 = 2, vertex2 = 4,
-                           positioner = 'ear', posField = 'y', negateX = true, xSign = -1 },
-          ownAttach = { strategy = 'top', shape8 = 5 }, angleOffset = 'stanceAngle' },
+          parentAttach = { strategy = 'outline', vertices = { 8, 7, 6 },
+                           positioner = 'ear', posField = 'y', xSign = -1 },
+          ownAttach = { strategy = 'root', shape8 = 5 }, angleOffset = 'stanceAngle' },
         { name = 'rear', parent = earParent,
-          parentAttach = { strategy = 'lerpVertices', vertex1 = 2, vertex2 = 4,
+          parentAttach = { strategy = 'outline', vertices = { 2, 3, 4 },
                            positioner = 'ear', posField = 'y', xSign = 1 },
-          ownAttach = { strategy = 'top', shape8 = 5 }, angleOffset = 'stanceAngle' },
+          ownAttach = { strategy = 'root', shape8 = 5 }, angleOffset = 'stanceAngle' },
     }
 
     for _, entry in ipairs(limbs) do
