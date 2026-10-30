@@ -88,6 +88,7 @@ local playtimeui = require 'src.playtime-ui'
 local selectrect = require 'src.selection-rect'
 local script = require 'src.script'
 local gameLoop = require('src.game-loop')
+local mipoFace = require('src.mipo-face')
 local objectManager = require('src.object-manager')
 
 local utils = require 'src.utils'
@@ -230,6 +231,7 @@ function love.update(dt)
     end
     prof.push('pointers')
     box2dPointerJoints.handlePointerUpdate(scaled_dt, cam)
+    mipoFace.update(state.physicsWorld, dt) -- blinks, brows, mouths (src/mipo-face.lua)
     prof.pop('pointers')
     cameraFollow.update(dt) -- while playing, follow the Mipo last touched
     if state.interaction.draggingObj then

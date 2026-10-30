@@ -91,7 +91,7 @@ describe('drawing: debug views', function()
     end)
 
     it('lets blink states go with their thing (BUG18)', function()
-        local blinkStates = box2dDrawTextured._test.blinkStates
+        local blinkStates = require('src.mipo-face')._test.blinkStates
         local thing = {}
         blinkStates[thing] = { expiresAt = 0 }
         thing = nil -- luacheck: ignore 311
