@@ -143,7 +143,7 @@ L = more.
   selected part now copies the whole Mipo (before: only the selected parts). Ribbon nodes on a joint
   that wasn't copied keep pointing at the original (before: lost). `spec/clone_spec.lua` passed on
   the old clone first.
-- [ ] **CL18. Character copies.** `addFaceDecals` (character-manager:1884-2222, ~340 lines): the OMP
+- [x] **CL18. Character copies.** `addFaceDecals` (character-manager:1884-2222, ~340 lines): the OMP
   block 5 times → `ompMain(...)`, `addDecal(body, label, extra)`, then placeEyes/Brows/Nose/Mouth.
   Loose z numbers (190, 220, 250-254, 300, ...) → one `Z = {...}` table (`TORSO_SKIN_Z` exists but
   :1065 writes 192). DNA prep twice (:2519, :2765) → `prepareDNA`; group/z loop 4 times →
@@ -153,6 +153,14 @@ L = more.
 
 ## One job per module
 
+  **Done 2026-10-30:** face decals through `addDecal / omp / maskOf / maskedOrPlain` and a `FACE_Z`
+  table, split into placeEyes / Brows / Nose / Mouth around one face box (teeth size cached, not a
+  newImage per rebuild); `newInstance`, `prepareDNA` (with `migrateDNA`, the nose-490 fix moved in),
+  `partSettings` and `applyGroupAndZ` replace the copies; `pick(list)` and `randomLook()`, one
+  `randomizeAll` behind randomizeMipo / Constrained, arm/leg and foot/hand branches folded. Random
+  draws kept in the same order. character-manager.lua 2886 -> 2470 lines. Checked with a one-off
+  snapshot (10 seeded Mipos: randomized, parts randomized, rebuilt, potato, saved and loaded; every
+  fixture, decal and joint): identical before and after.
 - [ ] **CL19. `sound.update(dt)`.** See BUG7: synth, music, snap and slide out of mipo-voice. S-M.
 - [ ] **CL20. The renderer only draws.** Blink, brows, mouth tween and the click-to-pull-a-face
   (`box2d-draw-textured.lua:30-283`, polls `love.mouse.isDown` inside draw) → `src/mipo-face.lua`,

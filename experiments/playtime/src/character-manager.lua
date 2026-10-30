@@ -308,18 +308,27 @@ function lib.updateConnectedAppearance(instance, partName, appearanceKey, values
     end
 end
 
+-- One of the list, at random.
+local function pick(list)
+    return list[math.ceil(math.random() * #list)]
+end
+
+-- a pattern texture as a pURL ('pat/x' -> 'x.png')
 local function randomPatternURL()
-    local pats = C.patternTextures
-    -- strip 'pat/' prefix, add '.png' suffix to match pURL format
-    local pat = pats[math.ceil(math.random() * #pats)]
-    return pat:gsub('^pat/', '') .. '.png'
+    return (pick(C.patternTextures):gsub('^pat/', '')) .. '.png'
+end
+
+-- A random fill colour, pattern colour and pattern (in that order of draws).
+local function randomLook()
+    local fgHex = randomHexColor()
+    local pHex = randomHexColor()
+    return fgHex, pHex, randomPatternURL()
 end
 
 -- Randomize torso/head shapes, scales, colors, and clear skin patches.
 local function randomizeShapes(instance)
     local urls = C.torsoHeadShapes
-    local urlIndex = math.ceil(math.random() * #urls)
-    local url = urls[urlIndex]
+    local url = pick(urls)
     local creation = instance.dna.creation
     local count = creation.torsoSegments
     local s = D.randomInRangeWeighted('bodyScale')
@@ -331,27 +340,20 @@ local function randomizeShapes(instance)
     end
 
     local headScale = D.randomInRangeWeighted('bodyScale')
-    local headUrlIndex = math.ceil(math.random() * #urls)
-    local headUrl = urls[headUrlIndex]
+    local headUrl = pick(urls)
     lib.updatePart('head',
         { shape8URL = headUrl .. '.png', sy = headScale * (math.random() < 0.5 and -1 or 1), sx = headScale },
         instance)
 
     -- Random colors + pattern — shared across all torso segments + head
-    local bgHex = '000000ff'
-    local fgHex = randomHexColor()
-    local pHex = randomHexColor()
-    local skinPURL = randomPatternURL()
+    local fgHex, pHex, pURL = randomLook()
+    local look = { bgHex = '000000ff', fgHex = fgHex, pHex = pHex, pURL = pURL }
     for i = 1, count do
-        lib.updateSkinOfPart(instance, 'torso' .. i,
-            { bgHex = bgHex, fgHex = fgHex, pHex = pHex, pURL = skinPURL })
-        lib.updateSkinOfPart(instance, 'torso' .. i,
-            { bgHex = bgHex, fgHex = fgHex, pHex = pHex, pURL = skinPURL }, 'patch1')
-        lib.updateSkinOfPart(instance, 'torso' .. i,
-            { bgHex = bgHex, fgHex = fgHex, pHex = pHex, pURL = skinPURL }, 'patch2')
+        for _, patch in ipairs({ 'main', 'patch1', 'patch2' }) do
+            lib.updateSkinOfPart(instance, 'torso' .. i, look, patch)
+        end
     end
-    lib.updateSkinOfPart(instance, 'head',
-        { bgHex = bgHex, fgHex = fgHex, pHex = pHex, pURL = skinPURL })
+    lib.updateSkinOfPart(instance, 'head', look)
 
     -- Clear skin patches (they're optional overlays, not always wanted)
     for _, patchName in ipairs({'patch1', 'patch2', 'patch3'}) do
@@ -399,9 +401,7 @@ end
 
 -- Randomize ear shapes, scales, and colors.
 local function randomizeEars(instance)
-    local earUrls = C.earShapes
-    local earUrlIndex = math.ceil(math.random() * #earUrls)
-    local earUrl = earUrls[earUrlIndex]
+    local earUrl = pick(C.earShapes)
     local earSy = D.randomInRangeWeighted('earScale')
     local earSx = D.randomInRangeWeighted('earScale')
     -- Sync w/h between ears so they're always symmetric
@@ -414,21 +414,16 @@ local function randomizeEars(instance)
         { shape8URL = earUrl .. '.png', sy = earSy, sx = earSx, w = earW, h = earH },
         instance)
 
-    local earBgHex = '000000ff'
-    local earFgHex = randomHexColor()
-    local earPHex = randomHexColor()
-    local earPURL = randomPatternURL()
-    lib.updateSkinOfPart(instance, 'lear',
-        { bgHex = earBgHex, fgHex = earFgHex, pHex = earPHex, pURL = earPURL })
-    lib.updateSkinOfPart(instance, 'rear',
-        { bgHex = earBgHex, fgHex = earFgHex, pHex = earPHex, pURL = earPURL })
+    local fgHex, pHex, pURL = randomLook()
+    for _, ear in ipairs({ 'lear', 'rear' }) do
+        lib.updateSkinOfPart(instance, ear, { bgHex = '000000ff', fgHex = fgHex, pHex = pHex, pURL = pURL })
+    end
 end
 
 -- Randomize feet/hand shapes, scales, and colors.
 local function randomizeFeetAndHands(instance)
     local fhUrls = C.handShapes
-    local fUrlIndex = math.ceil(math.random() * #fhUrls)
-    local fUrl = fhUrls[fUrlIndex]
+    local fUrl = pick(fhUrls)
     local fS = D.randomInRangeWeighted('feetScale')
 
     lib.updatePart('lfoot',
@@ -439,8 +434,7 @@ local function randomizeFeetAndHands(instance)
         instance)
 
     local handScale = D.randomInRangeWeighted('handScale')
-    local handUrlIndex = math.ceil(math.random() * #fhUrls)
-    local handUrl = fhUrls[handUrlIndex]
+    local handUrl = pick(fhUrls)
     lib.updatePart('lhand',
         { shape8URL = handUrl .. '.png', sy = handScale, sx = handScale },
         instance)
@@ -448,22 +442,11 @@ local function randomizeFeetAndHands(instance)
         { shape8URL = handUrl .. '.png', sy = handScale, sx = -handScale },
         instance)
 
-    -- Random feet skin colors
-    local feetFgHex = randomHexColor()
-    local feetPHex = randomHexColor()
-    local feetPURL = randomPatternURL()
-    for _, part in ipairs({'lfoot', 'rfoot'}) do
-        lib.updateSkinOfPart(instance, part,
-            { bgHex = '000000ff', fgHex = feetFgHex, pHex = feetPHex, pURL = feetPURL })
-    end
-
-    -- Random hand skin colors
-    local handFgHex = randomHexColor()
-    local handPHex = randomHexColor()
-    local handPURL = randomPatternURL()
-    for _, part in ipairs({'lhand', 'rhand'}) do
-        lib.updateSkinOfPart(instance, part,
-            { bgHex = '000000ff', fgHex = handFgHex, pHex = handPHex, pURL = handPURL })
+    for _, pair in ipairs({ { 'lfoot', 'rfoot' }, { 'lhand', 'rhand' } }) do
+        local fgHex, pHex, pURL = randomLook()
+        for _, part in ipairs(pair) do
+            lib.updateSkinOfPart(instance, part, { bgHex = '000000ff', fgHex = fgHex, pHex = pHex, pURL = pURL })
+        end
     end
 end
 
@@ -474,7 +457,7 @@ local function randomizeTextures(instance, hairColor, opts)
     local count = instance.dna.creation.torsoSegments
 
     -- Random haircut (update both head and torso1 since isPotatoHead flip changes owner)
-    local hcUrl = C.haircutTextures[math.ceil(math.random() * #C.haircutTextures)]
+    local hcUrl = pick(C.haircutTextures)
     local hcBgURL = hcUrl .. '.png'
     local hcFgURL = C.hairsWithMask[hcBgURL] and hcBgURL:gsub('%.png', '-mask.png') or ''
     local hcValues = {
@@ -486,12 +469,8 @@ local function randomizeTextures(instance, hairColor, opts)
 
     -- Random bodyhair (shared hairColor for bgHex, independent fgHex/pHex for variety).
     -- Head gets the same bodyhair as torsos so outline/colors are consistent across the body.
-    local bhUrls = C.bodyhairTextures
-    local bhUrlIndex = math.ceil(math.random() * #bhUrls)
-    local bhUrl = bhUrls[bhUrlIndex]
-    local bhFgHex = randomHexColor()
-    local bhPHex = randomHexColor()
-    local bhPURL = randomPatternURL()
+    local bhUrl = pick(C.bodyhairTextures)
+    local bhFgHex, bhPHex, bhPURL = randomLook()
     local bhValues = { bgURL = bhUrl .. '.png', fgURL = bhUrl .. '-mask.png',
                        bgHex = hairColor, fgHex = bhFgHex, pHex = bhPHex, pURL = bhPURL }
     lib.updateBodyhairOfPart(instance, 'head', bhValues)
@@ -499,54 +478,26 @@ local function randomizeTextures(instance, hairColor, opts)
         lib.updateBodyhairOfPart(instance, 'torso' .. i, bhValues)
     end
 
-    -- Random arm connected-skin
-    local armSkinUrl = (opts and opts.limbSkin) or C.limbSkinTextures[math.ceil(math.random() * #C.limbSkinTextures)]
-    local armSkinFgHex = randomHexColor()
-    local armSkinPHex = randomHexColor()
-    local armSkinPURL = randomPatternURL()
-    for _, part in ipairs({'luarm', 'ruarm'}) do
-        lib.updateConnectedAppearance(instance, part, 'connected-skin',
-            { bgURL = armSkinUrl .. '.png', fgURL = armSkinUrl .. '-mask.png',
-              fgHex = armSkinFgHex, pHex = armSkinPHex, pURL = armSkinPURL })
+    -- arm skin, then leg skin; torsos take the leg's for continuity
+    local torsos = {}
+    for i = 1, count do torsos[i] = 'torso' .. i end
+    local limbs = { { 'luarm', 'ruarm' }, { 'luleg', 'ruleg' } }
+    local skin
+    for _, parts in ipairs(limbs) do
+        local url = (opts and opts.limbSkin) or pick(C.limbSkinTextures)
+        local fgHex, pHex, pURL = randomLook()
+        skin = { bgURL = url .. '.png', fgURL = url .. '-mask.png', fgHex = fgHex, pHex = pHex, pURL = pURL }
+        for _, part in ipairs(parts) do lib.updateConnectedAppearance(instance, part, 'connected-skin', skin) end
     end
+    for _, part in ipairs(torsos) do lib.updateConnectedAppearance(instance, part, 'connected-skin', skin) end
 
-    -- Random leg connected-skin
-    local legSkinUrl = (opts and opts.limbSkin) or C.limbSkinTextures[math.ceil(math.random() * #C.limbSkinTextures)]
-    local legSkinFgHex = randomHexColor()
-    local legSkinPHex = randomHexColor()
-    local legSkinPURL = randomPatternURL()
-    for _, part in ipairs({'luleg', 'ruleg'}) do
-        lib.updateConnectedAppearance(instance, part, 'connected-skin',
-            { bgURL = legSkinUrl .. '.png', fgURL = legSkinUrl .. '-mask.png',
-              fgHex = legSkinFgHex, pHex = legSkinPHex, pURL = legSkinPURL })
+    -- limb hair in the hair colour, the same way
+    local hair
+    for _, parts in ipairs(limbs) do
+        hair = { bgURL = pick(C.limbHairTextures) .. '.png', bgHex = hairColor }
+        for _, part in ipairs(parts) do lib.updateConnectedAppearance(instance, part, 'connected-hair', hair) end
     end
-
-    -- Torso connected-skin (uses leg skin for continuity)
-    for i = 1, count do
-        lib.updateConnectedAppearance(instance, 'torso' .. i, 'connected-skin',
-            { bgURL = legSkinUrl .. '.png', fgURL = legSkinUrl .. '-mask.png',
-              fgHex = legSkinFgHex, pHex = legSkinPHex, pURL = legSkinPURL })
-    end
-
-    -- Random arm connected-hair (shared hairColor)
-    local armHairUrl = C.limbHairTextures[math.ceil(math.random() * #C.limbHairTextures)]
-    for _, part in ipairs({'luarm', 'ruarm'}) do
-        lib.updateConnectedAppearance(instance, part, 'connected-hair',
-            { bgURL = armHairUrl .. '.png', bgHex = hairColor })
-    end
-
-    -- Random leg connected-hair (shared hairColor)
-    local legHairUrl = C.limbHairTextures[math.ceil(math.random() * #C.limbHairTextures)]
-    for _, part in ipairs({'luleg', 'ruleg'}) do
-        lib.updateConnectedAppearance(instance, part, 'connected-hair',
-            { bgURL = legHairUrl .. '.png', bgHex = hairColor })
-    end
-
-    -- Torso connected-hair (uses leg hair URL for continuity, shared hairColor)
-    for i = 1, count do
-        lib.updateConnectedAppearance(instance, 'torso' .. i, 'connected-hair',
-            { bgURL = legHairUrl .. '.png', bgHex = hairColor })
-    end
+    for _, part in ipairs(torsos) do lib.updateConnectedAppearance(instance, part, 'connected-hair', hair) end
 end
 
 -- Randomize face features: eyes, pupils, brows, nose, mouth, and teeth.
@@ -559,7 +510,7 @@ local function randomizeFace(instance, hairColor, opts)
     local uniform = opts and opts.uniformEyeScale
     local allowedPupils = opts and opts.allowedPupilShapes
     local pupilShapeIdx = allowedPupils
-        and allowedPupils[math.ceil(math.random() * #allowedPupils)]
+        and pick(allowedPupils)
         or math.ceil(math.random() * #C.pupilShapes)
     local faceValues = {
         eyeShape = math.ceil(math.random() * #C.eyeShapes),
@@ -573,7 +524,7 @@ local function randomizeFace(instance, hairColor, opts)
         eyeBgHex = '000000ff',
         eyeFgHex = 'ffffffff',
         pupilBgHex = '000000ff',
-        mouthShape = mouthShapes.indexOf(mouthShapes.restShapes[math.ceil(math.random() * #mouthShapes.restShapes)]),
+        mouthShape = mouthShapes.indexOf(pick(mouthShapes.restShapes)),
         mouthUpperLipShape = math.ceil(math.random() * #C.upperLipShapes),
         mouthLowerLipShape = math.ceil(math.random() * #C.lowerLipShapes),
         mouthLipHex = 'cc5555ff',
@@ -677,40 +628,31 @@ function lib.limitArmReach(instance)
     return changed
 end
 
-function lib.randomizeMipo(instance)
+-- Everything at random; textureOpts / faceOpts narrow it down (see randomizeMipoConstrained).
+local function randomizeAll(instance, textureOpts, faceOpts)
     if not instance then return end
-
-    -- Generate one shared hair color for haircut, bodyhair, connected-hair, and brows
-    local hairColor = utils.randomHexColor()
-
+    local hairColor = utils.randomHexColor() -- haircut, bodyhair, limb hair and brows share it
     randomizeShapes(instance)
     randomizeLimbLengths(instance)
     randomizeEars(instance)
     randomizeFeetAndHands(instance)
-    randomizeTextures(instance, hairColor)
-    randomizeFace(instance, hairColor)
-
-    -- Disable physics nose when overlay nose is randomized
+    randomizeTextures(instance, hairColor, textureOpts)
+    randomizeFace(instance, hairColor, faceOpts)
+    -- no physics nose: the randomized nose is drawn on the face
     lib.rebuildFromCreation(instance, { isPotatoHead = not instance.dna.creation.isPotatoHead, noseSegments = 0 })
     lib.limitArmReach(instance)
     lib.addTexturesFromInstance2(instance)
 end
 
--- Constrained randomize: limb skin locked to leg1, limb lengths use full range.
--- Use this for Bathhouse Mipos or any context where you want coherent-but-varied characters.
--- Add more constraints here over time as the Mipo DNA language matures.
+function lib.randomizeMipo(instance)
+    randomizeAll(instance)
+end
+
+-- Coherent but varied (Bathhouse Mipos): limb skin locked to leg1, round-ish eyes, calm pupils.
+-- More constraints go here as the Mipo DNA language grows.
 function lib.randomizeMipoConstrained(instance)
-    if not instance then return end
-    local hairColor = utils.randomHexColor()
-    randomizeShapes(instance)
-    randomizeLimbLengths(instance)
-    randomizeEars(instance)
-    randomizeFeetAndHands(instance)
-    randomizeTextures(instance, hairColor, { limbSkin = C.limbSkinTextures[1] })
-    randomizeFace(instance, hairColor, { uniformEyeScale = true, allowedPupilShapes = { 1, 2, 3, 6, 7, 8 } })
-    lib.rebuildFromCreation(instance, { isPotatoHead = not instance.dna.creation.isPotatoHead, noseSegments = 0 })
-    lib.limitArmReach(instance)
-    lib.addTexturesFromInstance2(instance)
+    randomizeAll(instance, { limbSkin = C.limbSkinTextures[1] },
+        { uniformEyeScale = true, allowedPupilShapes = { 1, 2, 3, 6, 7, 8 } })
 end
 
 -- Randomize a single part (or its symmetric group) by name.
@@ -721,15 +663,14 @@ function lib.randomizePart(instance, partName)
     local hairColor = utils.randomHexColor()
 
     if partName == 'head' then
-        local url = C.torsoHeadShapes[math.ceil(math.random() * #C.torsoHeadShapes)]
+        local url = pick(C.torsoHeadShapes)
         local s = D.randomInRangeWeighted('bodyScale')
         lib.updatePart('head',
             { shape8URL = url .. '.png', sy = s * (math.random() < 0.5 and -1 or 1), sx = s },
             instance)
-        lib.updateSkinOfPart(instance, 'head',
-            { bgHex = '000000ff', fgHex = utils.randomHexColor(),
-              pHex = utils.randomHexColor(), pURL = randomPatternURL() })
-        local hcUrl = C.haircutTextures[math.ceil(math.random() * #C.haircutTextures)]
+        local fgHex, pHex, pURL = randomLook()
+        lib.updateSkinOfPart(instance, 'head', { bgHex = '000000ff', fgHex = fgHex, pHex = pHex, pURL = pURL })
+        local hcUrl = pick(C.haircutTextures)
         local hcBgURL = hcUrl .. '.png'
         local hcFgURL = C.hairsWithMask[hcBgURL] and hcBgURL:gsub('%.png', '-mask.png') or ''
         lib.updateHaircutOfPart(instance, 'head',
@@ -738,77 +679,46 @@ function lib.randomizePart(instance, partName)
         randomizeFace(instance, hairColor)
 
     elseif partName:match('^torso') then
-        local url = C.torsoHeadShapes[math.ceil(math.random() * #C.torsoHeadShapes)]
+        local url = pick(C.torsoHeadShapes)
         local s = D.randomInRangeWeighted('bodyScale')
         lib.updatePart(partName,
             { shape8URL = url .. '.png', sy = s * (math.random() < 0.5 and -1 or 1), sx = s },
             instance)
-        lib.updateSkinOfPart(instance, partName,
-            { bgHex = '000000ff', fgHex = utils.randomHexColor(),
-              pHex = utils.randomHexColor(), pURL = randomPatternURL() })
-        local bhUrl = C.bodyhairTextures[math.ceil(math.random() * #C.bodyhairTextures)]
-        lib.updateBodyhairOfPart(instance, partName,
-            { bgURL = bhUrl .. '.png', fgURL = bhUrl .. '-mask.png',
-              bgHex = hairColor, fgHex = utils.randomHexColor(),
-              pHex = utils.randomHexColor(), pURL = randomPatternURL() })
+        local fgHex, pHex, pURL = randomLook()
+        lib.updateSkinOfPart(instance, partName, { bgHex = '000000ff', fgHex = fgHex, pHex = pHex, pURL = pURL })
+        local bhUrl = pick(C.bodyhairTextures)
+        local bhFgHex, bhPHex, bhPURL = randomLook()
+        lib.updateBodyhairOfPart(instance, partName, { bgURL = bhUrl .. '.png', fgURL = bhUrl .. '-mask.png',
+            bgHex = hairColor, fgHex = bhFgHex, pHex = bhPHex, pURL = bhPURL })
 
     elseif partName == 'lear' or partName == 'rear' then
         randomizeEars(instance)
 
-    elseif partName == 'lfoot' or partName == 'rfoot' then
-        local fUrl = C.handShapes[math.ceil(math.random() * #C.handShapes)]
-        local fS = D.randomInRangeWeighted('feetScale')
-        lib.updatePart('lfoot', { shape8URL = fUrl .. '.png', sy = fS, sx = fS }, instance)
-        lib.updatePart('rfoot', { shape8URL = fUrl .. '.png', sy = fS, sx = -fS }, instance)
-        local fgHex = utils.randomHexColor()
-        local pHex = utils.randomHexColor()
-        local pURL = randomPatternURL()
-        for _, p in ipairs({'lfoot', 'rfoot'}) do
-            lib.updateSkinOfPart(instance, p,
-                { bgHex = '000000ff', fgHex = fgHex, pHex = pHex, pURL = pURL })
+    elseif partName:match('foot$') or partName:match('hand$') then
+        -- both feet (or both hands): a shape and a size, mirrored, and one look
+        local kind = partName:match('foot$') and 'foot' or 'hand'
+        local url = pick(C.handShapes)
+        local size = D.randomInRangeWeighted(kind == 'foot' and 'feetScale' or 'handScale')
+        lib.updatePart('l' .. kind, { shape8URL = url .. '.png', sy = size, sx = size }, instance)
+        lib.updatePart('r' .. kind, { shape8URL = url .. '.png', sy = size, sx = -size }, instance)
+        local fgHex, pHex, pURL = randomLook()
+        for _, p in ipairs({ 'l' .. kind, 'r' .. kind }) do
+            lib.updateSkinOfPart(instance, p, { bgHex = '000000ff', fgHex = fgHex, pHex = pHex, pURL = pURL })
         end
 
-    elseif partName == 'lhand' or partName == 'rhand' then
-        local hUrl = C.handShapes[math.ceil(math.random() * #C.handShapes)]
-        local hS = D.randomInRangeWeighted('handScale')
-        lib.updatePart('lhand', { shape8URL = hUrl .. '.png', sy = hS, sx = hS }, instance)
-        lib.updatePart('rhand', { shape8URL = hUrl .. '.png', sy = hS, sx = -hS }, instance)
-        local fgHex = utils.randomHexColor()
-        local pHex = utils.randomHexColor()
-        local pURL = randomPatternURL()
-        for _, p in ipairs({'lhand', 'rhand'}) do
-            lib.updateSkinOfPart(instance, p,
-                { bgHex = '000000ff', fgHex = fgHex, pHex = pHex, pURL = pURL })
-        end
-
-    elseif partName:match('arm') then
-        local skinUrl = C.limbSkinTextures[math.ceil(math.random() * #C.limbSkinTextures)]
-        local fgHex = utils.randomHexColor()
-        local pHex = utils.randomHexColor()
-        local pURL = randomPatternURL()
-        for _, p in ipairs({'luarm', 'ruarm'}) do
+    elseif partName:match('arm') or partName:match('leg') then
+        -- both arms (or both legs): skin and hair along them
+        local kind = partName:match('arm') and 'arm' or 'leg'
+        local parts = { 'lu' .. kind, 'ru' .. kind }
+        local skinUrl = pick(C.limbSkinTextures)
+        local fgHex, pHex, pURL = randomLook()
+        for _, p in ipairs(parts) do
             lib.updateConnectedAppearance(instance, p, 'connected-skin',
                 { bgURL = skinUrl .. '.png', fgURL = skinUrl .. '-mask.png',
                   fgHex = fgHex, pHex = pHex, pURL = pURL })
         end
-        local hairUrl = C.limbHairTextures[math.ceil(math.random() * #C.limbHairTextures)]
-        for _, p in ipairs({'luarm', 'ruarm'}) do
-            lib.updateConnectedAppearance(instance, p, 'connected-hair',
-                { bgURL = hairUrl .. '.png', bgHex = hairColor })
-        end
-
-    elseif partName:match('leg') then
-        local skinUrl = C.limbSkinTextures[math.ceil(math.random() * #C.limbSkinTextures)]
-        local fgHex = utils.randomHexColor()
-        local pHex = utils.randomHexColor()
-        local pURL = randomPatternURL()
-        for _, p in ipairs({'luleg', 'ruleg'}) do
-            lib.updateConnectedAppearance(instance, p, 'connected-skin',
-                { bgURL = skinUrl .. '.png', fgURL = skinUrl .. '-mask.png',
-                  fgHex = fgHex, pHex = pHex, pURL = pURL })
-        end
-        local hairUrl = C.limbHairTextures[math.ceil(math.random() * #C.limbHairTextures)]
-        for _, p in ipairs({'luleg', 'ruleg'}) do
+        local hairUrl = pick(C.limbHairTextures)
+        for _, p in ipairs(parts) do
             lib.updateConnectedAppearance(instance, p, 'connected-hair',
                 { bgURL = hairUrl .. '.png', bgHex = hairColor })
         end
@@ -922,7 +832,7 @@ end
 
 -- Torso layers: above the ears (190), below the head (200) with its bodyhair too. Both
 -- used to be 200 (bodyhair 210), and same-z layers draw in fixture-id order: P4re5's
--- torso bodyhair covered its head. Saved Mipos are moved over by migrateTorsoLayers.
+-- torso bodyhair covered its head. Saved Mipos are moved over by migrateDNA.
 local TORSO_SKIN_Z = 192
 local TORSO_HAIR_ABOVE_SKIN = 5
 
@@ -1313,6 +1223,34 @@ local function applyFootMaterial(thing, partName)
     end
 end
 
+-- How makePart builds a part from its DNA at this scale.
+local function partSettings(partName, partData, scale, x, y)
+    local settings = {
+        x = x,
+        y = y,
+        bodyType = BT.DYNAMIC,
+        shapeType = partData.shape,
+        shape8URL = partData.shape8URL,
+        label = partName,
+        density = partData.density or 1,
+        behaviors = partData.behaviors,
+        radius = (partData.dims.r or 0) * scale,
+        width = (partData.dims.w or 0) * scale,
+        width2 = (partData.dims.w2 or 0) * scale,
+        width3 = (partData.dims.w3 or 0) * scale,
+        height = (partData.dims.h or 0) * scale,
+        height2 = (partData.dims.h2 or 0) * scale,
+        height3 = (partData.dims.h3 or 0) * scale,
+        height4 = (partData.dims.h4 or 0) * scale,
+    }
+    if partData.shape8URL and shape8Dict[partData.shape8URL] then
+        local raw = topology.shape8Vertices(partData) -- a spine band, or the whole shape
+        settings.vertices = makeTransformedVertices(raw, (partData.dims.sx or 1) * scale,
+            (partData.dims.sy or 1) * scale)
+    end
+    return settings
+end
+
 local function makePart(partName, instance, settings)
     local entry = instance.entryMap[partName]
     if not entry then return end
@@ -1480,35 +1418,8 @@ local function updateSinglePart(partName, data, instance)
         instance.parts[partName] = nil
     end
 
-    local scale = instance.scale or 1
-    -- Recreate the part
-    local settings = {
-        x = oldPosX,
-        y = oldPosY,
-        bodyType = BT.DYNAMIC,
-        shapeType = partData.shape,
-        shape8URL = partData.shape8URL,
-        label = partName,
-        density = partData.density or 1,
-        behaviors = partData.behaviors,
-        radius = (partData.dims.r or 0) * scale,
-        width = (partData.dims.w or 0) * scale,
-        width2 = (partData.dims.w2 or 0) * scale,
-        width3 = (partData.dims.w3 or 0) * scale,
-        height = (partData.dims.h or 0) * scale,
-        height2 = (partData.dims.h2 or 0) * scale,
-        height3 = (partData.dims.h3 or 0) * scale,
-        height4 = (partData.dims.h4 or 0) * scale,
-    }
-
-    if partData.shape8URL and shape8Dict[partData.shape8URL] then
-        local raw = topology.shape8Vertices(partData) -- a spine band, or the whole shape
-        settings.vertices = makeTransformedVertices(
-            raw, (partData.dims.sx or 1) * scale, (partData.dims.sy or 1) * scale)
-    end
-
     local children = instance.childrenMap[partName] or {}
-    makePart(partName, instance, settings)
+    makePart(partName, instance, partSettings(partName, partData, instance.scale or 1, oldPosX, oldPosY))
 
     if not instance.parts[partName] then return end
 
@@ -1582,7 +1493,6 @@ function lib.rebuildFromCreation(instance, newCreation)
 
     instance.parts = {}
     instance.joints = {}
-    instance.textures = {}
     --print(instance.scale)
     lib.createCharacterFromExistingDNA(instance, torsoX, torsoY, torsoAngle)
 
@@ -1804,344 +1714,186 @@ local function addHaircutTexture(body, partName, partData, haircutData, instance
     end
 end
 
+-- Every fixture of the Mipo in its collision group (setGroup; a negative group never
+-- collides with itself) and its sfixtures in its z-range (zGroupOffset * 1000 + zOffset).
+local function applyGroupAndZ(instance, setGroup)
+    for _, part in pairs(instance.parts) do
+        if part.body and not part.body:isDestroyed() then
+            for _, fixture in ipairs(part.body:getFixtures()) do
+                if setGroup and instance.groupIndex then fixture:setGroupIndex(instance.groupIndex) end
+                local ud = fixture:getUserData()
+                if instance.zGroupOffset and ud and ud.extra then ud.extra.zGroupOffset = instance.zGroupOffset end
+            end
+        end
+    end
+end
+
+-- Where the face's decals sit, front to back (zOffset, within the Mipo's z group).
+local FACE_Z = { eye = 250, pupil = 251, teeth = 251, lowerLip = 252, brow = 252, teethOut = 252.5,
+    upperLip = 253, nose = 254 } -- nose above the mouth, below the arms (402); was 490
+
+-- An outline + mask (+ no pattern) colour block for a decal (extra.main).
+local function omp(bgURL, fgURL, bgHex, fgHex)
+    return { bgURL = bgURL, fgURL = fgURL, pURL = '', bgHex = bgHex, fgHex = fgHex, pHex = 'ffffff00' }
+end
+
+-- '<name>-mask.png' when that texture exists, else ''.
+local function maskOf(name)
+    local mask = name .. '-mask.png'
+    return love.filesystem.getInfo('textures/' .. mask) and mask or ''
+end
+
+-- A decal on the body: label, its extra fields; a colour block (main) is composed when drawn.
+local function addDecal(body, label, extra)
+    local ud = fixtures.createSFixture(body, 0, 0, subtypes.DECAL, { radius = 10 }):getUserData()
+    ud.label = label
+    for k, v in pairs(extra) do ud.extra[k] = v end
+    if extra.main then
+        ud.extra.dirty = true
+        box2dDrawTextured.makeCached(ud.extra.main)
+    end
+    return ud
+end
+
+-- Masked: a colour block; no mask: the outline picture in one colour.
+local function maskedOrPlain(extra, name, bgHex, fgHex)
+    local mask = maskOf(name)
+    if mask ~= '' then
+        extra.OMP = true
+        extra.main = omp(name .. '.png', mask, bgHex, fgHex)
+    else
+        extra.OMP = false
+        extra.bgURL = name .. '.png'
+        extra.bgHex = bgHex
+    end
+    return extra
+end
+
+local imageSizes = {} -- [path] = { w, h }: a picture's size, without loading it on every rebuild
+local function imageSize(path)
+    if imageSizes[path] == nil then
+        local ok, img = pcall(love.graphics.newImage, path)
+        imageSizes[path] = ok and { img:getDimensions() } or false
+        if ok then img:release() end
+    end
+    return imageSizes[path] or nil
+end
+
+local function placeEyes(body, face, box)
+    local eye, pupil, eyeR = face.eye, face.pupil, face.positioners.eye.r
+    local eyeW, eyeH = box.headW * 0.25 * box.fm * eye.wMul, box.headH * 0.25 * box.fm * eye.hMul
+    local eyeName = 'eye' .. eye.shape
+    for _, side in ipairs({ { x = box.leftEyeX, label = 'l', mirror = true, rot = -eyeR },
+                            { x = box.rightEyeX, label = 'r', mirror = false, rot = eyeR } }) do
+        addDecal(body, side.label .. 'eye', {
+            ox = side.x, oy = box.eyeY, w = eyeW, h = eyeH, mirror = side.mirror, rot = side.rot,
+            zOffset = FACE_Z.eye, isEye = true, OMP = true,
+            main = omp(eyeName .. '.png', eyeName .. '-mask.png', eye.bgHex, eye.fgHex),
+        })
+        -- a pupil with a mask is two colours, without one a tinted outline
+        addDecal(body, side.label .. 'pupil', maskedOrPlain({
+            ox = side.x, oy = box.eyeY, w = eyeW * pupil.wMul, h = eyeH * pupil.hMul, mirror = side.mirror,
+            zOffset = FACE_Z.pupil, isEye = true, eyeW = eyeW, eyeH = eyeH, eyeMaskURL = eyeName .. '-mask.png',
+            eyeMirror = side.mirror, eyeRot = side.rot, lookAtMouse = eye.lookAtMouse,
+        }, 'pupil' .. pupil.shape, pupil.bgHex, pupil.fgHex))
+    end
+end
+
+local function placeBrows(body, face, box)
+    local brow = face.brow
+    for _, side in ipairs({ { x = box.leftEyeX, label = 'lbrow', mirror = false },
+                            { x = box.rightEyeX, label = 'rbrow', mirror = true } }) do
+        addDecal(body, side.label, {
+            ox = side.x, oy = lerp(box.topY, box.botY, face.positioners.brow.y),
+            w = box.headW * 0.2 * brow.wMul * box.fm, h = box.headH * 0.1 * brow.hMul * box.fm,
+            zOffset = FACE_Z.brow, browCurve = true, browBend = brow.bend, browMirror = side.mirror,
+            bgURL = 'brow' .. brow.shape .. '.png', bgHex = brow.bgHex,
+        })
+    end
+end
+
+local function placeNose(body, face, box)
+    local nose = face.nose
+    if nose.shape <= 0 then return end
+    addDecal(body, 'nose', maskedOrPlain({
+        ox = (box.leftX + box.rightX) / 2, oy = lerp(box.topY, box.botY, face.positioners.nose.y),
+        w = box.headW * 0.15 * nose.wMul * box.fm, h = box.headH * 0.15 * nose.hMul * box.fm,
+        zOffset = FACE_Z.nose,
+    }, 'nose' .. nose.shape, nose.bgHex, nose.fgHex))
+end
+
+-- Lower lip (draws first, stencils the inside), upper lip, and teeth clipped to the mouth.
+local function placeMouth(body, face, box)
+    local mouth = face.mouth
+    local mouthShape = mouthShapes.normalized[mouth.shape]
+    if not mouthShape then return end
+    local mouthX, mouthY = (box.leftX + box.rightX) / 2, lerp(box.topY, box.botY, face.positioners.mouth.y)
+    -- about 40% of the head wide (wMul/hMul adjust)
+    local scaleX = (box.headW * 0.004) * mouth.wMul * box.fm
+    local scaleY = (box.headH * 0.004) * mouth.hMul * box.fm
+    local curvePoints = {} -- the 8 shape points scaled and moved onto the face
+    for ci = 1, 16, 2 do
+        curvePoints[ci] = mouthShape.points[ci] * scaleX + mouthX
+        curvePoints[ci + 1] = mouthShape.points[ci + 1] * scaleY + mouthY
+    end
+    local function mouthPart(curve, z)
+        return { ox = mouthX, oy = mouthY, zOffset = z, mouthCurve = curve, curvePoints = curvePoints,
+            mouthScaleX = scaleX, mouthScaleY = scaleY, mouthX = mouthX, mouthY = mouthY, OMP = true }
+    end
+    local lower = mouthPart('lower', FACE_Z.lowerLip)
+    lower.lipScale = mouth.lowerLipScale or mouth.lipScale or 0.2
+    lower.backdropHex = mouth.backdropHex
+    lower.main = omp('lowerlip' .. mouth.lowerLipShape .. '.png', 'lowerlip' .. mouth.lowerLipShape .. '-mask.png',
+        '000000ff', mouth.lipHex)
+    addDecal(body, 'lowerlip', lower)
+    local upper = mouthPart('upper', FACE_Z.upperLip)
+    upper.lipScale = mouth.upperLipScale or mouth.lipScale or 0.15
+    upper.main = omp('upperlip' .. mouth.upperLipShape .. '.png', 'upperlip' .. mouth.upperLipShape .. '-mask.png',
+        '000000ff', mouth.lipHex)
+    addDecal(body, 'upperlip', upper)
+
+    local teeth = face.teeth
+    if teeth.shape <= 0 then return end
+    local teethName = 'teeth' .. teeth.shape
+    local teethW = scaleX * 100 * (teeth.wMul or 1)
+    local size = imageSize('textures/' .. teethName .. '.png')
+    local aspect = size and (size[2] / size[1]) or 0.5 -- 2:1 when the picture is missing
+    local part = mouthPart('teeth', teeth.stickOut and FACE_Z.teethOut or FACE_Z.teeth)
+    part.w, part.h = teethW, teethW * aspect * teeth.hMul
+    part.teethStickOut = teeth.stickOut
+    part.main = omp(teethName .. '.png', teethName .. '-mask.png', teeth.bgHex, teeth.fgHex)
+    addDecal(body, 'teeth', part)
+end
+
+-- Eyes, pupils, brows, nose and mouth, on the head (or torso1 on a potato head), placed by
+-- the face's positioners within the head shape's box.
 local function addFaceDecals(body, partName, partData, faceData, instance, scale)
-    -- Face decals (eyes + pupils) go on head (non-potato) or torso1 (potato)
-    local rightPlaceForFace = false
-    if instance.dna.creation.isPotatoHead and partName == 'torso1' then
-        rightPlaceForFace = true
-    end
-    if not instance.dna.creation.isPotatoHead and partName == 'head' then
-        rightPlaceForFace = true
-    end
+    local faceOwner = instance.dna.creation.isPotatoHead and 'torso1' or 'head'
+    if partName ~= faceOwner or not (partData.shape8URL and shape8Dict[partData.shape8URL]) then return end
+    D.ensureDefaults(faceData, D.face)
 
-    if rightPlaceForFace and partData.shape8URL and shape8Dict[partData.shape8URL] then
-        local face = faceData
-        D.ensureDefaults(face, D.face)
-        local eyePos = face.positioners.eye
+    local verts = makeTransformedVertices(shape8Dict[partData.shape8URL].vertices,
+        (partData.dims.sx or 1) * scale, (partData.dims.sy or 1) * scale)
+    -- a spine's torso1 (potato head): the face is on the whole torso, like its picture
+    local offsetY = spinePictureOffset(partData, scale)
+    for i = 2, #verts, 2 do verts[i] = verts[i] + offsetY end
 
-        -- Get head shape vertices to compute eye positions
-        local raw = shape8Dict[partData.shape8URL].vertices
-        local verts = makeTransformedVertices(raw,
-            (partData.dims.sx or 1) * scale, (partData.dims.sy or 1) * scale)
-        -- a spine's torso1 (potato head): the face is on the whole torso, like its picture
-        local offsetY = spinePictureOffset(partData, scale)
-        for i = 2, #verts, 2 do verts[i] = verts[i] + offsetY end
+    -- 8 vertices: 1 top, 3 right, 5 bottom, 7 left; min/max so a flipped shape works too
+    local box = {
+        topY = math.min(verts[2], verts[10]), botY = math.max(verts[2], verts[10]),
+        leftX = math.min(verts[5], verts[13]), rightX = math.max(verts[5], verts[13]),
+        fm = instance.dna.faceMagnitude,
+    }
+    box.headW, box.headH = math.abs(box.rightX - box.leftX), math.abs(box.botY - box.topY)
+    local eyePos = faceData.positioners.eye
+    box.leftEyeX = lerp(box.leftX, box.rightX, 0.5 - eyePos.x)
+    box.rightEyeX = lerp(box.leftX, box.rightX, 0.5 + eyePos.x)
+    box.eyeY = lerp(box.topY, box.botY, eyePos.y)
 
-        -- 8-vertex polygon: 1=top, 3=right-mid, 5=bottom, 7=left-mid
-        -- Indices are 1-based, pairs of x,y
-        -- Normalize so topY < botY and leftX < rightX even when shape is flipped
-        local topY = math.min(verts[2], verts[10])
-        local botY = math.max(verts[2], verts[10])
-        local leftX = math.min(verts[5], verts[13])
-        local rightX = math.max(verts[5], verts[13])
-
-        local leftEyeX = lerp(leftX, rightX, 0.5 - eyePos.x)
-        local rightEyeX = lerp(leftX, rightX, 0.5 + eyePos.x)
-        local eyeY = lerp(topY, botY, eyePos.y)
-
-        -- Compute base eye size from head dimensions
-        local headW = math.abs(rightX - leftX)
-        local headH = math.abs(botY - topY)
-        local fm = instance.dna.faceMagnitude
-        local baseEyeW = headW * 0.25 * fm
-        local baseEyeH = headH * 0.25 * fm
-
-        local eye = face.eye
-        local pupil = face.pupil
-
-        local eyeW = baseEyeW * eye.wMul
-        local eyeH = baseEyeH * eye.hMul
-        local pupilW = eyeW * pupil.wMul
-        local pupilH = eyeH * pupil.hMul
-
-        local eyeBgURL = 'eye' .. eye.shape .. '.png'
-        local eyeFgURL = 'eye' .. eye.shape .. '-mask.png'
-        local pupilBgURL = 'pupil' .. pupil.shape .. '.png'
-        -- Only some pupils have masks
-        local pupilFgURL = ''
-        local pupilMaskPath = 'textures/pupil' .. pupil.shape .. '-mask.png'
-        if love.filesystem.getInfo(pupilMaskPath) then
-            pupilFgURL = 'pupil' .. pupil.shape .. '-mask.png'
-        end
-
-        -- Create eye decals (left and right)
-        -- Uses OMP compositing: outline + mask → pre-composited image
-        local eyeZOffset = 250
-        local eyeR = eyePos.r
-        local eyeSides = {
-            { ox = leftEyeX, label = 'leye', mirror = true, rot = -eyeR },
-            { ox = rightEyeX, label = 'reye', rot = eyeR },
-        }
-        for _, side in ipairs(eyeSides) do
-            local f = fixtures.createSFixture(body, 0, 0, subtypes.DECAL, { radius = 10 })
-            local ud = f:getUserData()
-            ud.label = side.label
-            ud.extra.ox = side.ox
-            ud.extra.oy = eyeY
-            ud.extra.w = eyeW
-            ud.extra.h = eyeH
-            ud.extra.mirror = side.mirror or false
-            ud.extra.rot = side.rot or 0
-            ud.extra.zOffset = eyeZOffset
-            ud.extra.isEye = true
-            ud.extra.OMP = true
-            ud.extra.dirty = true
-            ud.extra.main = {
-                bgURL = eyeBgURL,
-                fgURL = eyeFgURL,
-                pURL = '',
-                bgHex = eye.bgHex,
-                fgHex = eye.fgHex,
-                pHex = 'ffffff00',
-            }
-            box2dDrawTextured.makeCached(ud.extra.main)
-        end
-
-        -- Create pupil decals (left and right)
-        -- Pupils with a mask use OMP compositing (2-color).
-        -- Pupils without a mask are single-color (just tinted outline).
-        local hasPupilMask = pupilFgURL ~= ''
-        local pupilZOffset = 251
-        local pupilSides = {
-            { ox = leftEyeX, label = 'lpupil', mirror = true, eyeRot = -eyeR },
-            { ox = rightEyeX, label = 'rpupil', eyeRot = eyeR },
-        }
-        for _, side in ipairs(pupilSides) do
-            local f = fixtures.createSFixture(body, 0, 0, subtypes.DECAL, { radius = 10 })
-            local ud = f:getUserData()
-            ud.label = side.label
-            ud.extra.ox = side.ox
-            ud.extra.oy = eyeY
-            ud.extra.w = pupilW
-            ud.extra.h = pupilH
-            ud.extra.mirror = side.mirror or false
-            ud.extra.zOffset = pupilZOffset
-            ud.extra.isEye = true
-            ud.extra.eyeW = eyeW
-            ud.extra.eyeH = eyeH
-            ud.extra.eyeMaskURL = eyeFgURL
-            ud.extra.eyeMirror = side.mirror or false
-            ud.extra.eyeRot = side.eyeRot or 0
-            ud.extra.lookAtMouse = eye.lookAtMouse
-            if hasPupilMask then
-                ud.extra.OMP = true
-                ud.extra.dirty = true
-                ud.extra.main = {
-                    bgURL = pupilBgURL,
-                    fgURL = pupilFgURL,
-                    pURL = '',
-                    bgHex = pupil.bgHex,
-                    fgHex = pupil.fgHex,
-                    pHex = 'ffffff00',
-                }
-                box2dDrawTextured.makeCached(ud.extra.main)
-            else
-                ud.extra.OMP = false
-                ud.extra.bgURL = pupilBgURL
-                ud.extra.bgHex = pupil.bgHex
-            end
-        end
-
-        -- Create brow decals (left and right)
-        local brow = face.brow
-        local browPos = face.positioners.brow
-        local browY = lerp(topY, botY, browPos.y)
-        local browW = headW * 0.2 * brow.wMul * fm
-        local browH = headH * 0.1 * brow.hMul * fm
-        local browURL = 'brow' .. brow.shape .. '.png'
-        local browZOffset = 252
-        local browSides = {
-            { ox = leftEyeX, label = 'lbrow', mirror = false },
-            { ox = rightEyeX, label = 'rbrow', mirror = true },
-        }
-        for _, side in ipairs(browSides) do
-            local f = fixtures.createSFixture(body, 0, 0, subtypes.DECAL, { radius = 10 })
-            local ud = f:getUserData()
-            ud.label = side.label
-            ud.extra.ox = side.ox
-            ud.extra.oy = browY
-            ud.extra.w = browW
-            ud.extra.h = browH
-            ud.extra.zOffset = browZOffset
-            ud.extra.browCurve = true
-            ud.extra.browBend = brow.bend
-            ud.extra.browMirror = side.mirror
-            ud.extra.bgURL = browURL
-            ud.extra.bgHex = brow.bgHex
-        end
-
-        -- Create nose decal (single, centered)
-        local nose = face.nose
-        local noseShape = nose.shape
-        if noseShape > 0 then
-            local nosePos = face.positioners.nose
-            local noseY = lerp(topY, botY, nosePos.y)
-            local noseX = (leftX + rightX) / 2
-            local noseW = headW * 0.15 * nose.wMul * fm
-            local noseH = headH * 0.15 * nose.hMul * fm
-            local noseBgURL = 'nose' .. noseShape .. '.png'
-            local noseMaskPath = 'textures/nose' .. noseShape .. '-mask.png'
-            local noseFgURL = ''
-            if love.filesystem.getInfo(noseMaskPath) then
-                noseFgURL = 'nose' .. noseShape .. '-mask.png'
-            end
-            local hasNoseMask = noseFgURL ~= ''
-            local noseZOffset = 254 -- on the face: above mouth (253), below arms (402); was 490
-
-            local f = fixtures.createSFixture(body, 0, 0, subtypes.DECAL, { radius = 10 })
-            local ud = f:getUserData()
-            ud.label = 'nose'
-            ud.extra.ox = noseX
-            ud.extra.oy = noseY
-            ud.extra.w = noseW
-            ud.extra.h = noseH
-            ud.extra.zOffset = noseZOffset
-            if hasNoseMask then
-                ud.extra.OMP = true
-                ud.extra.dirty = true
-                ud.extra.main = {
-                    bgURL = noseBgURL,
-                    fgURL = noseFgURL,
-                    pURL = '',
-                    bgHex = nose.bgHex,
-                    fgHex = nose.fgHex,
-                    pHex = 'ffffff00',
-                }
-                box2dDrawTextured.makeCached(ud.extra.main)
-            else
-                ud.extra.OMP = false
-                ud.extra.bgURL = noseBgURL
-                ud.extra.bgHex = nose.bgHex
-            end
-        end
-
-        -- Create mouth decals (upper lip + lower lip)
-        local mouth = face.mouth
-        local mouthPos = face.positioners.mouth
-        local mouthY = lerp(topY, botY, mouthPos.y)
-        local mouthX = (leftX + rightX) / 2
-
-        -- Get the normalized shape points and scale to head
-        local shapeIdx = mouth.shape
-        local mouthShape = mouthShapes.normalized[shapeIdx]
-        if mouthShape then
-            local mwMul = mouth.wMul
-            local mhMul = mouth.hMul
-            -- Scale mouth to ~40% of head width (adjustable via wMul/hMul)
-            local mouthScaleX = (headW * 0.004) * mwMul * fm
-            local mouthScaleY = (headH * 0.004) * mhMul * fm
-
-            -- Build scaled + offset curve points (16 floats)
-            local curvePoints = {}
-            for ci = 1, 16, 2 do
-                curvePoints[ci] = mouthShape.points[ci] * mouthScaleX + mouthX
-                curvePoints[ci + 1] = mouthShape.points[ci + 1] * mouthScaleY + mouthY
-            end
-
-            local upperLipURL = 'upperlip' .. mouth.upperLipShape .. '.png'
-            local upperLipMaskURL = 'upperlip' .. mouth.upperLipShape .. '-mask.png'
-            local lowerLipURL = 'lowerlip' .. mouth.lowerLipShape .. '.png'
-            local lowerLipMaskURL = 'lowerlip' .. mouth.lowerLipShape .. '-mask.png'
-
-            -- Lower lip decal (draws first, handles stencil interior)
-            local fLower = fixtures.createSFixture(body, 0, 0, subtypes.DECAL, { radius = 10 })
-            local udLower = fLower:getUserData()
-            udLower.label = 'lowerlip'
-            udLower.extra.ox = mouthX
-            udLower.extra.oy = mouthY
-            udLower.extra.zOffset = 252
-            udLower.extra.mouthCurve = 'lower'
-            udLower.extra.curvePoints = curvePoints
-            udLower.extra.mouthScaleX = mouthScaleX
-            udLower.extra.mouthScaleY = mouthScaleY
-            udLower.extra.mouthX = mouthX
-            udLower.extra.mouthY = mouthY
-            udLower.extra.lipScale = mouth.lowerLipScale or mouth.lipScale or 0.2
-            udLower.extra.backdropHex = mouth.backdropHex
-            udLower.extra.OMP = true
-            udLower.extra.dirty = true
-            udLower.extra.main = {
-                bgURL = lowerLipURL,
-                fgURL = lowerLipMaskURL,
-                pURL = '',
-                bgHex = '000000ff',
-                fgHex = mouth.lipHex,
-                pHex = 'ffffff00',
-            }
-            box2dDrawTextured.makeCached(udLower.extra.main)
-
-            -- Upper lip decal (draws on top)
-            local fUpper = fixtures.createSFixture(body, 0, 0, subtypes.DECAL, { radius = 10 })
-            local udUpper = fUpper:getUserData()
-            udUpper.label = 'upperlip'
-            udUpper.extra.ox = mouthX
-            udUpper.extra.oy = mouthY
-            udUpper.extra.zOffset = 253
-            udUpper.extra.mouthCurve = 'upper'
-            udUpper.extra.curvePoints = curvePoints
-            udUpper.extra.mouthScaleX = mouthScaleX
-            udUpper.extra.mouthScaleY = mouthScaleY
-            udUpper.extra.mouthX = mouthX
-            udUpper.extra.mouthY = mouthY
-            udUpper.extra.lipScale = mouth.upperLipScale or mouth.lipScale or 0.15
-            udUpper.extra.OMP = true
-            udUpper.extra.dirty = true
-            udUpper.extra.main = {
-                bgURL = upperLipURL,
-                fgURL = upperLipMaskURL,
-                pURL = '',
-                bgHex = '000000ff',
-                fgHex = mouth.lipHex,
-                pHex = 'ffffff00',
-            }
-            box2dDrawTextured.makeCached(udUpper.extra.main)
-
-            -- Create teeth decal (positioned image, clipped to mouth polygon)
-            local teeth = face.teeth
-            local teethShape = teeth.shape
-            if teethShape > 0 then
-                local teethURL = 'teeth' .. teethShape .. '.png'
-                local teethMaskURL = 'teeth' .. teethShape .. '-mask.png'
-                -- Calculate teeth dimensions: scale to mouth width, preserve aspect ratio
-                local teethImgPath = 'textures/' .. teethURL
-                local teethImg = love.filesystem.getInfo(teethImgPath) and love.graphics.newImage(teethImgPath)
-                local teethW = mouthScaleX * 100 * (teeth.wMul or 1)
-                local teethH = teethW * 0.5 * teeth.hMul -- default aspect ratio 2:1
-                if teethImg then
-                    local imgW, imgH = teethImg:getDimensions()
-                    teethH = teethW * (imgH / imgW) * teeth.hMul
-                end
-
-                local teethZOffset = teeth.stickOut and 252.5 or 251
-                local fTeeth = fixtures.createSFixture(body, 0, 0, subtypes.DECAL, { radius = 10 })
-                local udTeeth = fTeeth:getUserData()
-                udTeeth.label = 'teeth'
-                udTeeth.extra.ox = mouthX
-                udTeeth.extra.oy = mouthY
-                udTeeth.extra.w = teethW
-                udTeeth.extra.h = teethH
-                udTeeth.extra.zOffset = teethZOffset
-                udTeeth.extra.mouthCurve = 'teeth'
-                udTeeth.extra.curvePoints = curvePoints
-                udTeeth.extra.mouthScaleX = mouthScaleX
-                udTeeth.extra.mouthScaleY = mouthScaleY
-                udTeeth.extra.mouthX = mouthX
-                udTeeth.extra.mouthY = mouthY
-                udTeeth.extra.teethStickOut = teeth.stickOut
-                udTeeth.extra.OMP = true
-                udTeeth.extra.dirty = true
-                udTeeth.extra.main = {
-                    bgURL = teethURL,
-                    fgURL = teethMaskURL,
-                    pURL = '',
-                    bgHex = teeth.bgHex,
-                    fgHex = teeth.fgHex,
-                    pHex = 'ffffff00',
-                }
-                box2dDrawTextured.makeCached(udTeeth.extra.main)
-            end
-        end
-    end
+    placeEyes(body, faceData, box)
+    placeBrows(body, faceData, box)
+    placeNose(body, faceData, box)
+    placeMouth(body, faceData, box)
 end
 
 function lib.addTexturesFromInstance2(instance)
@@ -2193,20 +1945,7 @@ function lib.addTexturesFromInstance2(instance)
             end
         end
     end
-    -- Re-apply zGroupOffset to newly created fixtures (destroyed+recreated above)
-    if instance.zGroupOffset then
-        for _, part in pairs(instance.parts) do
-            if part.body and not part.body:isDestroyed() then
-                local bodyFixtures = part.body:getFixtures()
-                for fi = 1, #bodyFixtures do
-                    local ud = bodyFixtures[fi]:getUserData()
-                    if ud and ud.extra then
-                        ud.extra.zGroupOffset = instance.zGroupOffset
-                    end
-                end
-            end
-        end
-    end
+    applyGroupAndZ(instance, false) -- the new texture fixtures in the Mipo's z-range
 end
 
 -- Arms are thin capsules under big hands and next to a big torso: by area alone a segment
@@ -2420,8 +2159,15 @@ function lib.applySpine(instance)
     end
 end
 
-local function migrateTorsoLayers(instance)
+-- Old saved DNA moved over to what builds now.
+local function migrateDNA(instance)
     for partName, partDNA in pairs(instance.dna.parts or {}) do
+        -- noses saved when they drew at z 490, above the arms
+        if partName:find('^nose') and partDNA.appearance then
+            for _, block in pairs(partDNA.appearance) do
+                if type(block) == 'table' and block.zOffset == 490 then block.zOffset = 350 end
+            end
+        end
         -- ears on a hinge (saved before the soft weld): the next rebuild makes them springy
         if (partName == 'lear' or partName == 'rear') and partDNA.j and partDNA.j.type == JT.REVOLUTE then
             partDNA.j = earJoint()
@@ -2434,30 +2180,36 @@ local function migrateTorsoLayers(instance)
     end
 end
 
-function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
-    -- same logic as in createCharacter, but uses `instance.dna` and skips the `deepCopy`
-    -- rebuilds the ordered list, generates torso/neck segments, limbs, etc.
-
-    -- Ensure all DNA sub-tables have their defaults filled in
+-- Defaults for what older DNA lacks, old saves moved over, and the body plan (topology).
+local function prepareDNA(instance)
     D.ensureDefaults(instance.dna.creation, D.creation)
-    migrateTorsoLayers(instance)
-    for partName, partDNA in pairs(instance.dna.parts or {}) do
-        if partName:find('^nose') and partDNA.appearance then
-            for _, block in pairs(partDNA.appearance) do
-                if type(block) == 'table' and block.zOffset == 490 then block.zOffset = 350 end
-            end
-        end
-    end
-    if not instance.dna.faceMagnitude then instance.dna.faceMagnitude = D.faceMagnitude end
-    if not instance.dna.positioners then instance.dna.positioners = {} end
+    migrateDNA(instance)
+    instance.dna.faceMagnitude = instance.dna.faceMagnitude or D.faceMagnitude
+    instance.dna.positioners = instance.dna.positioners or {}
     D.ensureDefaults(instance.dna.positioners, D.positioners)
-
-    -- Resolve topology: flat ordered list of body-part entries with parent links
     local topo = topology.resolve(instance.dna.creation)
     instance.topology = topo
     instance.entryMap = topology.buildEntryMap(topo)
     instance.childrenMap = topology.buildChildrenMap(topo)
-    local ordered = topology.buildOrderedNames(topo)
+    return topo
+end
+
+-- A new Mipo instance around a copy of this DNA (no bodies yet).
+local function newInstance(mipoDNA, scale, id)
+    return {
+        id = id or uuid.generateID(),
+        dna = utils.deepCopy(mipoDNA),
+        scale = scale or 1,
+        parts = {},  -- [partName] = thing
+        joints = {}, -- ['parent->child'] = joint id (connected textures follow them)
+    }
+end
+
+function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
+    -- same logic as in createCharacter, but uses `instance.dna` and skips the `deepCopy`
+    -- rebuilds the ordered list, generates torso/neck segments, limbs, etc.
+
+    local ordered = topology.buildOrderedNames(prepareDNA(instance))
 
     -- Ensure template-based parts have their DNA filled in
     local torsoSegments = instance.dna.creation.torsoSegments
@@ -2517,33 +2269,7 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
 
     for i = 1, #ordered do
         local partName = ordered[i]
-        local partData = instance.dna.parts[partName]
-        local settings = {
-            x = x,
-            y = y,
-            bodyType = BT.DYNAMIC,
-            shapeType = partData.shape,
-            shape8URL = partData.shape8URL,
-            label = partName,
-            density = partData.density or 1,
-            radius = (partData.dims.r or 0) * instance.scale,
-            width = (partData.dims.w or 0) * instance.scale,
-            width2 = (partData.dims.w2 or 0) * instance.scale,
-            width3 = (partData.dims.w3 or 0) * instance.scale,
-            height = (partData.dims.h or 0) * instance.scale,
-            height2 = (partData.dims.h2 or 0) * instance.scale,
-            height3 = (partData.dims.h3 or 0) * instance.scale,
-            height4 = (partData.dims.h4 or 0) * instance.scale,
-            behaviors = partData.behaviors,
-        }
-
-        if partData.shape8URL and shape8Dict[partData.shape8URL] then
-            local raw = topology.shape8Vertices(partData) -- a spine band, or the whole shape
-            settings.vertices = makeTransformedVertices(raw, (partData.dims.sx or 1) * instance.scale,
-                (partData.dims.sy or 1) * instance.scale)
-        end
-
-        makePart(partName, instance, settings)
+        makePart(partName, instance, partSettings(partName, instance.dna.parts[partName], instance.scale, x, y))
         if optionalTorsoAngle and partName == 'torso1' then
             instance.parts['torso1'].body:setAngle(optionalTorsoAngle)
         end
@@ -2567,16 +2293,7 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
     if not instance.zGroupOffset then
         instance.zGroupOffset = allocateZGroupOffset(instance)
     end
-    for _, part in pairs(instance.parts) do
-        local bodyFixtures = part.body:getFixtures()
-        for i = 1, #bodyFixtures do
-            bodyFixtures[i]:setGroupIndex(instance.groupIndex)
-            local ud = bodyFixtures[i]:getUserData()
-            if ud and ud.extra then
-                ud.extra.zGroupOffset = instance.zGroupOffset
-            end
-        end
-    end
+    applyGroupAndZ(instance, true)
 
     lib.balanceMasses(instance)
     mipoRegistry.register(instance)
@@ -2584,20 +2301,7 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
 end
 
 function lib.createCharacterFromJustDNA(mydna, x, y, scale)
-    local instance = {
-        id = uuid.generateID(),
-        --templateName = template,
-        dna = utils.deepCopy(mydna), -- Copy template data for potential instance modification
-        parts = {},                  -- { [partName] = thingObject, ... }
-        joints = {},                 -- unused...{ [connectionName] = jointObject, ... }
-        --appearanceValues = {},     -- Will hold visual overrides (implement later)
-        -- Add other instance-specific state if needed
-        textures = {},   -- texture data: simple textures and connected textures
-        positioners = {} -- lerp values describing how things are positioned..
-
-    }
-    instance.scale = scale or 1
-    return lib.createCharacterFromExistingDNA(instance, x, y, false)
+    return lib.createCharacterFromExistingDNA(newInstance(mydna, scale), x, y, false)
 end
 
 -- One-shot post-spawn pose: rigidly rotate each arm chain about its shoulder so
@@ -2631,19 +2335,8 @@ end
 
 function lib.createCharacter(template, x, y, scale)
     if dna[template] then
-        local instance = {
-            id = uuid.generateID(),
-            templateName = template,
-            dna = utils.deepCopy(dna[template]), -- Copy template data for potential instance modification
-            parts = {},              -- { [partName] = thingObject, ... }
-            joints = {},             -- unused...{ [connectionName] = jointObject, ... }
-            --appearanceValues = {}, -- Will hold visual overrides (implement later)
-            -- Add other instance-specific state if needed
-            textures = {},   -- texture data: simple textures and connected textures
-            positioners = {} -- lerp values describing how things are positioned..
-
-        }
-        instance.scale = scale or 1
+        local instance = newInstance(dna[template], scale)
+        instance.templateName = template
         return lib.createCharacterFromExistingDNA(instance, x, y, false)
     end
 end
@@ -2670,27 +2363,11 @@ end
 -- Ensures DNA defaults so new fields added to dna-defaults are auto-populated on old saves.
 function lib.reconstructInstance(charData, partBodies)
     if not partBodies then return nil end
-    local instance = {
-        id = charData.id,
-        dna = utils.deepCopy(charData.dna),
-        scale = charData.scale or 1,
-        zGroupOffset = charData.zGroupOffset,
-        parts = {},
-        joints = {},
-        textures = {},
-        positioners = {},
-    }
-    D.ensureDefaults(instance.dna.creation, D.creation)
-    migrateTorsoLayers(instance)
+    local instance = newInstance(charData.dna, charData.scale, charData.id)
+    instance.zGroupOffset = charData.zGroupOffset
+    prepareDNA(instance)
     lib.applyNeck(instance) -- neck limits (bend budget) before the rest-pose limits below
     lib.applyTrunk(instance)
-    if not instance.dna.faceMagnitude then instance.dna.faceMagnitude = D.faceMagnitude end
-    if not instance.dna.positioners then instance.dna.positioners = {} end
-    D.ensureDefaults(instance.dna.positioners, D.positioners)
-    local topo = topology.resolve(instance.dna.creation)
-    instance.topology = topo
-    instance.entryMap = topology.buildEntryMap(topo)
-    instance.childrenMap = topology.buildChildrenMap(topo)
     for partName, body in pairs(partBodies) do
         local ud = body:getUserData()
         if ud and ud.thing then
@@ -2778,26 +2455,11 @@ function lib.reconstructInstance(charData, partBodies)
     end
     if groupTaken then instance.groupIndex = allocateGroupIndex() end
     if zTaken then instance.zGroupOffset = allocateZGroupOffset(instance) end
-    if groupTaken or zTaken then
-        for _, part in pairs(instance.parts) do
-            for _, fixture in ipairs(part.body:getFixtures()) do
-                if groupTaken then fixture:setGroupIndex(instance.groupIndex) end
-                local fud = fixture:getUserData()
-                if zTaken and fud and fud.extra then fud.extra.zGroupOffset = instance.zGroupOffset end
-            end
-        end
-    end
+    if groupTaken or zTaken then applyGroupAndZ(instance, true) end
     mipoRegistry.register(instance)
     if brokenTextures then
         lib.addTexturesFromInstance2(instance)
-        -- the redrawn texture fixtures start in group 0; put them in the Mipo's group
-        for _, part in pairs(instance.parts) do
-            for _, fixture in ipairs(part.body:getFixtures()) do
-                if instance.groupIndex then fixture:setGroupIndex(instance.groupIndex) end
-                local fud = fixture:getUserData()
-                if fud and fud.extra and instance.zGroupOffset then fud.extra.zGroupOffset = instance.zGroupOffset end
-            end
-        end
+        applyGroupAndZ(instance, true) -- the redrawn texture fixtures start in group 0
     end
     lib.applyNeck(instance, true)
     lib.balanceMasses(instance)
