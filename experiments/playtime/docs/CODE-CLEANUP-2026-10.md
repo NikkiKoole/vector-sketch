@@ -83,9 +83,15 @@ L = more.
 
 ## Bigger de-duplication
 
-- [ ] **CL13. Joints written once.** Joint properties are read and written three times: load
+- [x] **CL13. Joints written once.** Joint properties are read and written three times: load
   (io:462-575), save (io:1135-1198) and joint-handlers. After BUG1's `apply`, load and save use the
   handlers; about 200 lines go from io.lua. M.
+  **Done 2026-10-30:** save writes `handler.extract`, load builds through `joints.createJoint`;
+  the file format stays (axis and pulley ground anchors converted at the edge). Revolute and
+  friction joints take a loaded scene's anchor B. io.lua -220 lines. Every joint of every scene in
+  scripts/ (1812 revolute, 28 wheel, 4 prismatic, 2 friction, 2 rope) compared before and after,
+  loaded and round-tripped: identical. `spec/joints-save-load_spec.lua` covers all nine types.
+  Files now also keep a disabled motor's speed and disabled limits.
 - [ ] **CL14. Connected texture and trace vertices onto the inspector.** `ui/sfixture-editor.lua:1288-1872`
   (~580 lines) copies texture / hairs / plasticine settings that `texfixture-params` already has,
   and the copies drifted. Fix: `[CONNECTED_TEXTURE]` and `[TRACE_VERTICES]` in

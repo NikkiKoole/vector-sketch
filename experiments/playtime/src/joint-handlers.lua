@@ -3,7 +3,7 @@
 -- and extract (read them back). apply sets back everything extract reads, so a
 -- joint rebuilt from extract (recreate, resize, clone, flip) keeps its motor,
 -- springs and limits. apply skips what data doesn't have: a new joint keeps
--- Box2D's defaults.
+-- Box2D's defaults. Load and save (src/io.lua) go through these too.
 local jointHandlers = {}
 local JT = require('src.joint-types')
 
@@ -76,12 +76,21 @@ jointHandlers[JT.ROPE] = {
         }
     end
 }
+-- Where body B holds a revolute or friction joint: anchor A unless a loaded scene says
+-- otherwise (data.anchorB). A joint saved pulled apart a little (a Mipo in motion) put
+-- both halves on A's anchor: a kink in the chain for good.
+local function anchorB(data, x1, y1)
+    if data.anchorB then return data.anchorB[1], data.anchorB[2] end
+    return x1, y1
+end
+
 jointHandlers[JT.REVOLUTE] = {
     -- Without a referenceAngle (a new joint) the short form counts angles from the
     -- pose right now; a rebuilt joint keeps the one it had, or its limits shift.
     create = function(data, x1, y1, _x2, _y2)
         if data.referenceAngle then
-            return love.physics.newRevoluteJoint(data.body1, data.body2, x1, y1, x1, y1,
+            local bx, by = anchorB(data, x1, y1)
+            return love.physics.newRevoluteJoint(data.body1, data.body2, x1, y1, bx, by,
                 data.collideConnected, data.referenceAngle)
         end
         return love.physics.newRevoluteJoint(data.body1, data.body2, x1, y1, data.collideConnected)
@@ -98,7 +107,6 @@ jointHandlers[JT.REVOLUTE] = {
             limitsEnabled = joint:areLimitsEnabled(),
             lowerLimit = joint:getLowerLimit(),
             upperLimit = joint:getUpperLimit(),
-            areLimitsEnabled = joint:areLimitsEnabled(),
             referenceAngle = joint:getReferenceAngle(),
         }
     end
@@ -223,7 +231,8 @@ jointHandlers[JT.PULLEY] = {
 }
 jointHandlers[JT.FRICTION] = {
     create = function(data, x1, y1, _x2, _y2)
-        return love.physics.newFrictionJoint(data.body1, data.body2, x1, y1, false)
+        local bx, by = anchorB(data, x1, y1)
+        return love.physics.newFrictionJoint(data.body1, data.body2, x1, y1, bx, by, data.collideConnected or false)
     end,
     apply = function(joint, data)
         if data.maxForce then joint:setMaxForce(data.maxForce) end

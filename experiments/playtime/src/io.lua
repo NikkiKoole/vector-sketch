@@ -19,6 +19,51 @@ local resourceLink = require('src.resource-link')
 local NT = require('src.node-types')
 local SIDES = require('src.sides')
 local FEXT = require('src.file-extensions')
+local JT = require('src.joint-types')
+
+-- Joints in a scene file: world anchors (anchorA, anchorB), and the properties the joint
+-- handlers read and set (src/joint-handlers.lua) with an axis as { x, y } and pulley
+-- ground anchors as { x, y }; the handlers say axisX/axisY and { x, y } lists.
+local function propertiesForFile(props)
+    local out = {}
+    for key, value in pairs(props) do out[key] = value end
+    if out.axisX then
+        out.axis = { x = out.axisX, y = out.axisY }
+        out.axisX, out.axisY = nil, nil
+    end
+    for _, key in ipairs({ 'groundAnchor1', 'groundAnchor2' }) do
+        local a = out[key]
+        if a and a[1] then out[key] = { x = a[1], y = a[2] } end
+    end
+    return out
+end
+
+-- body-local point of a world point
+local function localPoint(body, point)
+    local x, y = mathutils.rotatePoint(point[1] - body:getX(), point[2] - body:getY(), 0, 0, -body:getAngle())
+    return { x = x, y = y }
+end
+
+-- A saved joint as joints.createJoint takes it.
+local function jointFromFile(jointData, bodyA, bodyB, id)
+    local anchorA = jointData.anchorA
+    local anchorB = jointData.anchorB or anchorA
+    local data = {
+        body1 = bodyA, body2 = bodyB, jointType = jointData.type, id = id,
+        collideConnected = jointData.collideConnected, label = jointData.label, scriptmeta = jointData.scriptmeta,
+        offsetA = localPoint(bodyA, anchorA), offsetB = localPoint(bodyB, anchorB), anchorB = anchorB,
+    }
+    for key, value in pairs(jointData.properties or {}) do data[key] = value end
+    if data.axis then
+        data.axisX, data.axisY = data.axis.x, data.axis.y
+        data.axis = nil
+    end
+    -- scenes saved before the reference angle was kept count from the saved pose
+    if (data.jointType == JT.REVOLUTE or data.jointType == JT.WELD) and not data.referenceAngle then
+        data.referenceAngle = bodyB:getAngle() - bodyA:getAngle()
+    end
+    return data
+end
 
 local function clearWorld(world)
     for _, body in pairs(world:getBodies()) do
@@ -448,158 +493,10 @@ function lib.buildWorld(data, world, cam, opts)
         local bodyA = registry.getBodyByID(getNewId(jointData.bodyA))
         local bodyB = registry.getBodyByID(getNewId(jointData.bodyB))
 
-        if bodyA and bodyB then
-            local joint
-            local anchorA = jointData.anchorA
-            local anchorB = jointData.anchorB
-            local collideConnected = jointData.collideConnected
-
-
-            if jointData.type == "distance" then
-                joint = love.physics.newDistanceJoint(
-                    bodyA, bodyB,
-                    anchorA[1], anchorA[2],
-                    anchorB[1], anchorB[2],
-                    collideConnected
-                )
-                joint:setLength(jointData.properties.length)
-                joint:setFrequency(jointData.properties.frequency)
-                joint:setDampingRatio(jointData.properties.dampingRatio)
-            elseif jointData.type == "revolute" then
-                -- both anchors as saved: a joint saved pulled apart a little (a Mipo in motion)
-                -- got both halves on A's anchor, a kink in the chain for good (3BjZpF fell over
-                -- loaded, stood rebuilt). Scenes saved before the reference angle was kept:
-                -- count from the saved pose, as LÖVE's short form did.
-                local referenceAngle = jointData.properties and jointData.properties.referenceAngle
-                    or (bodyB:getAngle() - bodyA:getAngle())
-                local bx, by = anchorA[1], anchorA[2]
-                if anchorB then bx, by = anchorB[1], anchorB[2] end
-                joint = love.physics.newRevoluteJoint(
-                    bodyA, bodyB,
-                    anchorA[1], anchorA[2],
-                    bx, by,
-                    collideConnected, referenceAngle
-                )
-                joint:setMotorEnabled(jointData.properties.motorEnabled)
-                if jointData.properties.motorEnabled then
-                    joint:setMotorSpeed(jointData.properties.motorSpeed)
-                    joint:setMaxMotorTorque(jointData.properties.maxMotorTorque)
-                end
-                joint:setLimitsEnabled(jointData.properties.limitsEnabled)
-                if jointData.properties.limitsEnabled then
-                    joint:setLimits(jointData.properties.lowerLimit, jointData.properties.upperLimit)
-                end
-            elseif jointData.type == "rope" then
-                joint = love.physics.newRopeJoint(
-                    bodyA, bodyB,
-                    anchorA[1], anchorA[2],
-                    anchorB[1], anchorB[2],
-                    jointData.properties.maxLength
-                )
-            elseif jointData.type == "weld" then
-                -- the angle it springs back to (a Mipo's ears); scenes saved without it
-                -- count from the saved pose, as before
-                local referenceAngle = jointData.properties and jointData.properties.referenceAngle
-                    or (bodyB:getAngle() - bodyA:getAngle())
-                joint = love.physics.newWeldJoint(
-                    bodyA, bodyB,
-                    anchorA[1], anchorA[2],
-                    anchorA[1], anchorA[2],
-                    collideConnected, referenceAngle
-                )
-                joint:setFrequency(jointData.properties.frequency)
-                joint:setDampingRatio(jointData.properties.dampingRatio)
-            elseif jointData.type == "prismatic" then
-                joint = love.physics.newPrismaticJoint(
-                    bodyA, bodyB,
-                    anchorA[1], anchorA[2],
-                    jointData.properties.axis.x, jointData.properties.axis.y,
-                    collideConnected
-                )
-                joint:setMotorEnabled(jointData.properties.motorEnabled)
-                if jointData.properties.motorEnabled then
-                    joint:setMotorSpeed(jointData.properties.motorSpeed)
-                    joint:setMaxMotorForce(jointData.properties.maxMotorForce)
-                end
-                joint:setLimitsEnabled(jointData.properties.limitsEnabled)
-                if jointData.properties.limitsEnabled then
-                    joint:setLimits(jointData.properties.lowerLimit, jointData.properties.upperLimit)
-                end
-            elseif jointData.type == "pulley" then
-                joint = love.physics.newPulleyJoint(
-                    bodyA, bodyB,
-                    jointData.properties.groundAnchor1.x, jointData.properties.groundAnchor1.y,
-                    jointData.properties.groundAnchor2.x, jointData.properties.groundAnchor2.y,
-                    anchorA[1], anchorA[2],
-                    anchorB[1], anchorB[2],
-                    jointData.properties.ratio,
-                    collideConnected
-                )
-            elseif jointData.type == "wheel" then
-                joint = love.physics.newWheelJoint(
-                    bodyA, bodyB,
-                    anchorA[1], anchorA[2],
-                    jointData.properties.axis.x, jointData.properties.axis.y,
-                    collideConnected
-                )
-                joint:setSpringFrequency(jointData.properties.springFrequency)
-                joint:setSpringDampingRatio(jointData.properties.springDampingRatio)
-
-                joint:setMotorEnabled(jointData.properties.motorEnabled)
-
-                if jointData.properties.motorEnabled then
-                    joint:setMotorSpeed(jointData.properties.motorSpeed)
-                    joint:setMaxMotorTorque(jointData.properties.maxMotorTorque)
-                end
-            elseif jointData.type == "motor" then
-                joint = love.physics.newMotorJoint(
-                    bodyA, bodyB,
-                    jointData.properties.correctionFactor,
-                    collideConnected
-                )
-                joint:setAngularOffset(jointData.properties.angularOffset)
-                joint:setLinearOffset(jointData.properties.linearOffsetX, jointData.properties.linearOffsetY)
-                joint:setMaxForce(jointData.properties.maxForce)
-                joint:setMaxTorque(jointData.properties.maxTorque)
-            elseif jointData.type == "friction" then
-                joint = love.physics.newFrictionJoint(
-                    bodyA, bodyB,
-                    anchorA[1], anchorA[2],
-                    anchorB[1], anchorB[2],
-                    collideConnected
-                )
-                joint:setMaxForce(jointData.properties.maxForce)
-                joint:setMaxTorque(jointData.properties.maxTorque)
-            else
-                -- Handle unsupported joint types
-                logger:error("Unsupported joint type during load:", jointData.type)
-            end
-
-            if joint then
-                -- Assign the joint ID
-                -- joint:setUserData({ id = jointData.id })
-
-
-                local fxa, fya = mathutils.rotatePoint(anchorA[1] - bodyA:getX(), anchorA[2] - bodyA:getY(), 0, 0,
-                    -bodyA:getAngle())
-                local fxb, fyb = mathutils.rotatePoint(anchorB[1] - bodyB:getX(), anchorB[2] - bodyB:getY(), 0, 0,
-                    -bodyB:getAngle())
-
-
-                local ud = {
-                    id = getNewId(jointData.id),
-                    offsetA = { x = fxa, y = fya },
-                    offsetB = { x = fxb, y = fyb }
-                }
-
-                if jointData.scriptmeta then ud.scriptmeta = jointData.scriptmeta end
-                ud.label = jointData.label
-
-                joint:setUserData(ud)
-
-                -- Register the joint in the registry
-                registry.registerJoint(ud.id, joint)
-            end
+        if bodyA and bodyB and jointHandlers[jointData.type] then
+            joints.createJoint(jointFromFile(jointData, bodyA, bodyB, getNewId(jointData.id)))
+        elseif bodyA and bodyB then
+            logger:error("Unsupported joint type during load:", jointData.type)
         else
             logger:error("Failed to find bodies for joint:", jointData.id)
         end
@@ -1121,71 +1018,10 @@ function lib.gatherSaveData(world, camera)
                 end
                 jointData.label = jointUserData.label
 
-                -- Extract joint-specific properties
-                local JT = require 'src.joint-types'
-                if joint:getType() == JT.DISTANCE then
-                    jointData.properties.length = joint:getLength()
-                    jointData.properties.frequency = joint:getFrequency()
-                    jointData.properties.dampingRatio = joint:getDampingRatio()
-                elseif joint:getType() == JT.ROPE then
-                    jointData.properties.maxLength = joint:getMaxLength()
-                elseif joint:getType() == JT.REVOLUTE then
-                    -- the angle its limits count from: without it a loaded joint counts from
-                    -- the pose it was saved in, and its limits come back shifted
-                    jointData.properties.referenceAngle = joint:getReferenceAngle()
-                    jointData.properties.motorEnabled = joint:isMotorEnabled()
-                    if jointData.properties.motorEnabled then
-                        jointData.properties.motorSpeed = joint:getMotorSpeed()
-                        jointData.properties.maxMotorTorque = joint:getMaxMotorTorque()
-                    end
-                    jointData.properties.limitsEnabled = joint:areLimitsEnabled()
-                    if jointData.properties.limitsEnabled then
-                        jointData.properties.lowerLimit = joint:getLowerLimit()
-                        jointData.properties.upperLimit = joint:getUpperLimit()
-                    end
-                elseif joint:getType() == JT.WELD then
-                    jointData.properties.referenceAngle = joint:getReferenceAngle()
-                    jointData.properties.frequency = joint:getFrequency()
-                    jointData.properties.dampingRatio = joint:getDampingRatio()
-                elseif joint:getType() == JT.PRISMATIC then
-                    local axisx, axisy = joint:getAxis()
-                    jointData.properties.axis = { x = axisx, y = axisy }
-                    jointData.properties.motorEnabled = joint:isMotorEnabled()
-                    if jointData.properties.motorEnabled then
-                        jointData.properties.motorSpeed = joint:getMotorSpeed()
-                        jointData.properties.maxMotorForce = joint:getMaxMotorForce()
-                    end
-                    jointData.properties.limitsEnabled = joint:areLimitsEnabled()
-                    if jointData.properties.limitsEnabled then
-                        jointData.properties.lowerLimit = joint:getLowerLimit()
-                        jointData.properties.upperLimit = joint:getUpperLimit()
-                    end
-                elseif joint:getType() == JT.PULLEY then
-                    local a1x, a1y, a2x, a2y = joint:getGroundAnchors()
-                    jointData.properties.groundAnchor1 = { x = a1x, y = a1y }
-                    jointData.properties.groundAnchor2 = { x = a2x, y = a2y }
-                    jointData.properties.ratio = joint:getRatio()
-                elseif joint:getType() == JT.WHEEL then
-                    jointData.properties.motorEnabled = joint:isMotorEnabled()
-                    if jointData.properties.motorEnabled then
-                        jointData.properties.motorSpeed = joint:getMotorSpeed()
-                        jointData.properties.maxMotorTorque = joint:getMaxMotorTorque()
-                    end
-                    local axisx, axisy = joint:getAxis()
-                    jointData.properties.axis = { x = axisx, y = axisy }
-                    jointData.properties.springFrequency = joint:getSpringFrequency()
-                    jointData.properties.springDampingRatio = joint:getSpringDampingRatio()
-                elseif joint:getType() == JT.MOTOR then
-                    jointData.properties.correctionFactor = joint:getCorrectionFactor()
-                    jointData.properties.angularOffset = joint:getAngularOffset()
-                    jointData.properties.linearOffsetX, jointData.properties.linearOffsetY = joint:getLinearOffset()
-                    jointData.properties.maxForce = joint:getMaxForce()
-                    jointData.properties.maxTorque = joint:getMaxTorque()
-                elseif joint:getType() == JT.FRICTION then
-                    jointData.properties.maxForce = joint:getMaxForce()
-                    jointData.properties.maxTorque = joint:getMaxTorque()
+                local handler = jointHandlers[joint:getType()]
+                if handler then
+                    jointData.properties = propertiesForFile(handler.extract(joint))
                 else
-                    -- Handle unsupported joint types
                     logger:error("Unsupported joint type during save:", joint:getType())
                 end
 
