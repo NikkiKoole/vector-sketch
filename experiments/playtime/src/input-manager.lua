@@ -28,6 +28,12 @@ local NT = require('src.node-types')
 local playMode = require('src.play-mode')
 local units = require('src.physics-units')
 
+local PANEL_WIDTH = 300        -- presses this close to the right edge belong to the open panel
+local PALETTE_HEIGHT = 400     -- the colour palette along the bottom
+local CORNER_GRAB_RADIUS = 10  -- world units: a polygon or texfixture corner being edited
+local STEINER_GRAB_RADIUS = 20 -- body-local units: an extra Steiner point
+local NODE_GRAB_RADIUS = 30    -- world units: an anchor or joint, for connected-texture/meshusert nodes
+
 -- In-flight Steiner drag state. Non-zero = we're dragging thing.extraSteiner
 -- at this array index on state.selection.selectedObj. Cleared on release.
 local steinerDragIdx = 0
@@ -62,36 +68,25 @@ end
 -- Pre-physics pressed handlers (run before physics hit detection)
 local function pressedDrawClickMode(cx, cy, x)
     local w = love.graphics.getDimensions()
-    if x < w - 300 then
+    if x < w - PANEL_WIDTH then
         table.insert(state.interaction.polyVerts, cx)
         table.insert(state.interaction.polyVerts, cy)
     end
 end
 
-local function pressedSetOffsetA(cx, cy)
-    local joint = state.selection.selectedJoint
-    if not joint or joint:isDestroyed() then
+-- SET_OFFSET_A / SET_OFFSET_B: the press becomes the selected joint's anchor on body A / B.
+local function pressedSetOffset(side)
+    return function(cx, cy)
+        local joint = state.selection.selectedJoint
+        if joint and not joint:isDestroyed() then
+            local bodyA, bodyB = joint:getBodies()
+            local body = side == 'A' and bodyA or bodyB
+            local fx, fy = mathutils.rotatePoint(cx - body:getX(), cy - body:getY(), 0, 0, -body:getAngle())
+            local update = side == 'A' and joints.updateJointOffsetA or joints.updateJointOffsetB
+            state.selection.selectedJoint = update(joint, fx, fy)
+        end
         modes.clear()
-        return
     end
-    local bodyA = joint:getBodies()
-    local fx, fy = mathutils.rotatePoint(cx - bodyA:getX(), cy - bodyA:getY(), 0, 0, -bodyA:getAngle())
-    state.selection.selectedJoint =
-        joints.updateJointOffsetA(joint, fx, fy)
-    modes.clear()
-end
-
-local function pressedSetOffsetB(cx, cy)
-    local joint = state.selection.selectedJoint
-    if not joint or joint:isDestroyed() then
-        modes.clear()
-        return
-    end
-    local _, bodyB = joint:getBodies()
-    local fx, fy = mathutils.rotatePoint(cx - bodyB:getX(), cy - bodyB:getY(), 0, 0, -bodyB:getAngle())
-    state.selection.selectedJoint =
-        joints.updateJointOffsetB(joint, fx, fy)
-    modes.clear()
 end
 
 local function pressedPositioningSFixture(cx, cy)
@@ -140,7 +135,7 @@ local function findClosestNode(cx, cy, maxDist)
 end
 
 local function pressedAddNode(cx, cy)
-    local closest = findClosestNode(cx, cy, 30)
+    local closest = findClosestNode(cx, cy, NODE_GRAB_RADIUS)
     if closest then
         local ud = state.selection.selectedSFixture:getUserData()
         ud.extra.nodes = ud.extra.nodes or {}
@@ -160,8 +155,8 @@ end
 
 local prePhysicsHandlers = {
     [modes.DRAW_CLICK]             = pressedDrawClickMode,
-    [modes.SET_OFFSET_A]           = pressedSetOffsetA,
-    [modes.SET_OFFSET_B]           = pressedSetOffsetB,
+    [modes.SET_OFFSET_A]           = pressedSetOffset('A'),
+    [modes.SET_OFFSET_B]           = pressedSetOffset('B'),
     [modes.POSITIONING_SFIXTURE]   = pressedPositioningSFixture,
     [modes.ADD_NODE_CONNECTED_TEX] = pressedAddNode,
     [modes.ADD_NODE_MESHUSERT]     = pressedAddNode,
@@ -173,7 +168,7 @@ local function pressedPickAutoRopifyMode(hitted, x)
         state.pickAutoRopifyModeHitted = hitted[1]:getBody():getUserData()
     end
     local w = love.graphics.getDimensions()
-    if x < w - 300 and #hitted == 0 then
+    if x < w - PANEL_WIDTH and #hitted == 0 then
         modes.clear()
         state.pickAutoRopifyModeHitted = nil
     end
@@ -315,6 +310,174 @@ local function handlePlayPointer(x, y, id, action)
     end
 end
 
+-- PLACE_STEINER, a POC: extra Steiner points on the selected body's polygon.
+--   Left-click on an existing point -> start a drag (commits on release)
+--   Left-click away                 -> add a new point
+--   Right-click near an existing one -> remove it
+local function pressedPlaceSteiner(x, y, button)
+    local thing = state.selection.selectedObj
+    if state.interaction.pressedOverUI or not (thing and thing.body) then return end
+    local body = thing.body
+    local wx, wy = cam:getWorldCoordinates(x, y)
+    local lx, ly = body:getLocalPoint(wx, wy)
+    thing.extraSteiner = thing.extraSteiner or {}
+
+    -- Nearest existing Steiner within grab radius.
+    local grabIdx, grabD = nil, STEINER_GRAB_RADIUS * STEINER_GRAB_RADIUS
+    for i = 1, #thing.extraSteiner, 2 do
+        local d = distanceSquared(lx, ly, thing.extraSteiner[i], thing.extraSteiner[i + 1])
+        if d < grabD then grabD = d; grabIdx = i end
+    end
+
+    if button == 1 and grabIdx then
+        -- Start drag: position updates in handleMouseMoved, RESOURCE refresh on release.
+        steinerDragIdx = grabIdx
+    elseif button == 1 then
+        thing.extraSteiner[#thing.extraSteiner + 1] = lx
+        thing.extraSteiner[#thing.extraSteiner + 1] = ly
+        refreshResourceAfterSteinerChange(body)
+    elseif button == 2 and grabIdx then
+        table.remove(thing.extraSteiner, grabIdx)
+        table.remove(thing.extraSteiner, grabIdx)
+        refreshResourceAfterSteinerChange(body)
+    end
+end
+
+-- Commit an in-flight Steiner drag: refresh RESOURCE now that the point has landed, and drop
+-- bindings since topology moved.
+local function releasedPlaceSteiner()
+    if steinerDragIdx > 0 then
+        local thing = state.selection.selectedObj
+        if thing and thing.body then
+            refreshResourceAfterSteinerChange(thing.body)
+        end
+        steinerDragIdx = 0
+    end
+end
+
+-- True when a press belongs to an open panel (the save dialog, the palette, the right column)
+-- and not to the bodies under it. A press outside the palette closes it.
+local function pressedOnPanel(x, y)
+    if state.panelVisibility.saveDialogOpened then return true end
+    local w, h = love.graphics.getDimensions()
+    if state.panelVisibility.showPalette then
+        if y < h - PALETTE_HEIGHT or x > w - PANEL_WIDTH then
+            state.panelVisibility.showPalette = nil
+        end
+        return true
+    end
+    local panelOpen = state.selection.selectedJoint or state.selection.selectedObj
+        or state.selection.selectedSFixture or state.selection.selectedBodies
+        or modes.is(modes.DRAW_FREE_POLY) or modes.is(modes.DRAW_FREE_PATH)
+    return panelOpen and x > w - PANEL_WIDTH or false
+end
+
+-- The first corner of `verts` (flat x, y list) within `radius` of (cx, cy), or nil.
+local function findVertexNear(verts, cx, cy, radius)
+    for i = 1, #verts, 2 do
+        if mathutils.dist(cx, cy, verts[i], verts[i + 1]) < radius then return i end
+    end
+    return nil
+end
+
+-- A press on a corner of the polygon or texfixture being edited (`edit` is state.polyEdit or
+-- state.texFixtureEdit) grabs it for dragging. True when it did.
+local function grabCorner(edit, verts, cx, cy)
+    local i = findVertexNear(verts, cx, cy, CORNER_GRAB_RADIUS)
+    if #verts > 0 then edit.dragIdx = i or 0 end
+    return i ~= nil
+end
+
+local function pressedEditedCorner(cx, cy)
+    local obj = state.selection.selectedObj
+    local rightShape = obj and (obj.shapeType == ST.CUSTOM or obj.shapeType == ST.RIBBON)
+    if state.polyEdit.tempVerts and rightShape and state.polyEdit.lockedVerts == false then
+        local verts = mathutils.getLocalVerticesForCustomSelected(state.polyEdit.tempVerts,
+            obj, state.polyEdit.centroid.x, state.polyEdit.centroid.y)
+        if grabCorner(state.polyEdit, verts, cx, cy) then return true end
+    end
+    local sfixture = state.selection.selectedSFixture
+    if state.texFixtureEdit.tempVerts and sfixture and state.texFixtureEdit.lockedVerts == false then
+        local verts = mathutils.getLocalVerticesForCustomSelected(state.texFixtureEdit.tempVerts,
+            utils.thingOf(sfixture:getBody()), 0, 0)
+        if grabCorner(state.texFixtureEdit, verts, cx, cy) then return true end
+    end
+    return false
+end
+
+-- A press on bodies in the editor: select (a blob by its rim too), make joints, start dragging
+-- while paused, play while running.
+local function pressedSelect(hitted, cx, cy)
+    -- a blob's rim bodies have no thing: clicking the rim selects the blob
+    local hitBody = blobs.ownerOf(hitted[1]:getBody()) or hitted[1]:getBody()
+    local thing = utils.thingOf(hitBody)
+    if thing then
+        state.selection.selectedObj = thing
+        -- a blob shows its blob settings; clicking empty space goes to the body
+        local blobFixture = blobs.sfixtureOf(hitBody)
+        local sel = state.selection.selectedSFixture
+        if blobFixture then
+            state.selection.selectedSFixture = blobFixture
+        elseif sel and (sel:isDestroyed() or subtypes.is(sel:getUserData(), subtypes.SOFTBODY)) then
+            state.selection.selectedSFixture = nil
+        end
+    end
+    if state.scene.sceneScript and not state.world.paused and state.selection.selectedObj then
+        state.selection.selectedObj = nil
+    end
+    if modes.is(modes.JOINT_CREATION) and state.selection.selectedObj then
+        pressedJointCreation(cx, cy, hitted)
+    end
+
+    if not state.world.paused then
+        playPressed(hitted)
+    elseif state.polyEdit.lockedVerts then
+        state.interaction.draggingObj = state.selection.selectedObj
+        if state.selection.selectedObj then
+            local offx, offy = state.selection.selectedObj.body:getLocalPoint(cx, cy)
+            state.interaction.offsetDragging = { -offx, -offy }
+        end
+    end
+end
+
+-- A click on nothing (not on a panel, not while placing a body) steps the selection back: from
+-- an sfixture to its body, else drops the joint, else drops everything. The side panels close.
+local function clearSelectionAndPanels()
+    local sel = state.selection
+    if sel.selectedSFixture and not sel.selectedSFixture:isDestroyed() then
+        sel.selectedObj = utils.thingOf(sel.selectedSFixture:getBody())
+        sel.selectedSFixture = nil
+        state.texFixtureEdit.tempVerts = nil
+        state.texFixtureEdit.centroid = nil
+        state.texFixtureEdit.lockedVerts = true
+    elseif sel.selectedJoint then
+        sel.selectedJoint = nil
+    else
+        if not (ui.activeElementID or ui.focusedTextInputID) then
+            sel.selectedObj = nil
+            sel.selectedSFixture = nil
+            sel.selectedJoint = nil
+        end
+        state.polyEdit.tempVerts = nil
+        state.polyEdit.lockedVerts = true
+    end
+    state.interaction.maybeHideSelectedPanel = false
+    for _, panel in ipairs({ 'addBehavior', 'customBehavior', 'bgSettingsOpened', 'worldSettingsOpened',
+        'recordingPanelOpened', 'showPalette' }) do
+        state.panelVisibility[panel] = false
+    end
+end
+
+-- Shift-drag on the screen: select the bodies inside the box.
+local function finishBoxSelection(x, y)
+    local start = state.interaction.startSelection
+    local tlxw, tlyw = cam:getWorldCoordinates(math.min(start.x, x), math.min(start.y, y))
+    local brxw, bryw = cam:getWorldCoordinates(math.max(start.x, x), math.max(start.y, y))
+    state.selection.selectedBodies = selectrect.selectWithin(state.physicsWorld,
+        { x = tlxw, y = tlyw, width = brxw - tlxw, height = bryw - tlyw })
+    state.interaction.startSelection = nil
+end
+
 local function handlePointer(x, y, id, action, button)
     if playMode.isOn() then return handlePlayPointer(x, y, id, action) end
     if action == "pressed" then
@@ -323,72 +486,8 @@ local function handlePointer(x, y, id, action, button)
         -- this is a nice pattern, early return!
         if modes.is(modes.EDIT_MESH_TRIS) then return end
 
-        -- POC Steiner-placement on the selected body's polygon.
-        --   Left-click on existing point  → start drag (commits on release)
-        --   Left-click away               → add a new point
-        --   Right-click near existing     → remove nearest within radius
-        if modes.is(modes.PLACE_STEINER) then
-            if not state.interaction.pressedOverUI
-                and state.selection.selectedObj
-                and state.selection.selectedObj.body then
-                local thing = state.selection.selectedObj
-                local body = thing.body
-                local wx, wy = cam:getWorldCoordinates(x, y)
-                local lx, ly = body:getLocalPoint(wx, wy)
-                thing.extraSteiner = thing.extraSteiner or {}
-
-                -- Nearest existing Steiner within grab radius.
-                local grabIdx, grabD = nil, 20 * 20
-                for i = 1, #thing.extraSteiner, 2 do
-                    local dx = thing.extraSteiner[i] - lx
-                    local dy = thing.extraSteiner[i + 1] - ly
-                    local d = dx * dx + dy * dy
-                    if d < grabD then grabD = d; grabIdx = i end
-                end
-
-                local changed = false
-                if button == 1 and grabIdx then
-                    -- Start drag — position updates in handleMouseMoved;
-                    -- RESOURCE refresh deferred until release.
-                    steinerDragIdx = grabIdx
-                elseif button == 1 then
-                    -- Place a new point at click.
-                    thing.extraSteiner[#thing.extraSteiner + 1] = lx
-                    thing.extraSteiner[#thing.extraSteiner + 1] = ly
-                    changed = true
-                elseif button == 2 and grabIdx then
-                    -- Remove nearest.
-                    table.remove(thing.extraSteiner, grabIdx)
-                    table.remove(thing.extraSteiner, grabIdx)
-                    changed = true
-                end
-                if changed then
-                    refreshResourceAfterSteinerChange(body)
-                end
-            end
-            return
-        end
-        -- Handle press logig
-        --   -- this will block interacting on bodies when 'roughly' over the opened panel
-        if state.panelVisibility.saveDialogOpened then return end
-        if state.panelVisibility.showPalette then
-            local w, h = love.graphics.getDimensions()
-            if y < h - 400 or x > w - 300 then
-                state.panelVisibility.showPalette = nil
-                return
-            else
-                return
-            end
-        end
-        if state.selection.selectedJoint or state.selection.selectedObj
-            or state.selection.selectedSFixture or state.selection.selectedBodies
-            or modes.is(modes.DRAW_FREE_POLY)
-            or modes.is(modes.DRAW_FREE_PATH) then
-            local w = love.graphics.getDimensions()
-            if x > w - 300 then
-                return
-            end
-        end
+        if modes.is(modes.PLACE_STEINER) then return pressedPlaceSteiner(x, y, button) end
+        if pressedOnPanel(x, y) then return end
 
         local startSelection = love.keyboard.isDown('lshift')
         if (startSelection) then
@@ -396,44 +495,7 @@ local function handlePointer(x, y, id, action, button)
         end
 
         local cx, cy = cam:getWorldCoordinates(x, y)
-        local rightShape = state.selection.selectedObj and (state.selection.selectedObj.shapeType == ST.CUSTOM or
-            state.selection.selectedObj.shapeType == ST.RIBBON)
-        if state.polyEdit.tempVerts and state.selection.selectedObj
-            and rightShape and state.polyEdit.lockedVerts == false then
-            local verts = mathutils.getLocalVerticesForCustomSelected(state.polyEdit.tempVerts,
-                state.selection.selectedObj, state.polyEdit.centroid.x, state.polyEdit.centroid.y)
-            for i = 1, #verts, 2 do
-                local vx = verts[i]
-                local vy = verts[i + 1]
-                local dist = math.sqrt((cx - vx) ^ 2 + (cy - vy) ^ 2)
-                if dist < 10 then
-                    state.polyEdit.dragIdx = i
-
-                    return
-                else
-                    state.polyEdit.dragIdx = 0
-                end
-            end
-        end
-
-        if state.texFixtureEdit.tempVerts and state.selection.selectedSFixture
-            and state.texFixtureEdit.lockedVerts == false then
-            local thing = utils.thingOf(state.selection.selectedSFixture:getBody())
-            local verts = mathutils.getLocalVerticesForCustomSelected(state.texFixtureEdit.tempVerts,
-                thing, 0, 0)
-
-            for i = 1, #verts, 2 do
-                local vx = verts[i]
-                local vy = verts[i + 1]
-                local dist = math.sqrt((cx - vx) ^ 2 + (cy - vy) ^ 2)
-                if dist < 10 then
-                    state.texFixtureEdit.dragIdx = i
-                    return
-                else
-                    state.texFixtureEdit.dragIdx = 0
-                end
-            end
-        end
+        if pressedEditedCorner(cx, cy) then return end
 
         -- Pre-physics mode dispatch
         local preHandler = prePhysicsHandlers[state.currentMode]
@@ -455,41 +517,8 @@ local function handlePointer(x, y, id, action, button)
             pressedPickAutoRopifyMode(hitted, x)
         end
 
-        -- Default selection + jointCreationMode handling
         if #hitted > 0 and (not modes.is(modes.PICK_AUTO_ROPIFY)) then
-            -- a blob's rim bodies have no thing: clicking the rim selects the blob
-            local hitBody = blobs.ownerOf(hitted[1]:getBody()) or hitted[1]:getBody()
-            local thing = utils.thingOf(hitBody)
-            if thing then
-                state.selection.selectedObj = thing
-                -- a blob shows its blob settings; clicking empty space goes to the body
-                local blobFixture = blobs.sfixtureOf(hitBody)
-                local sel = state.selection.selectedSFixture
-                if blobFixture then
-                    state.selection.selectedSFixture = blobFixture
-                elseif sel and (sel:isDestroyed() or subtypes.is(sel:getUserData(), subtypes.SOFTBODY)) then
-                    state.selection.selectedSFixture = nil
-                end
-            end
-            if state.scene.sceneScript and not state.world.paused and state.selection.selectedObj then
-                state.selection.selectedObj = nil
-            end
-            if modes.is(modes.JOINT_CREATION) and state.selection.selectedObj then
-                pressedJointCreation(cx, cy, hitted)
-            end
-
-            if (state.world.paused) then
-                if state.polyEdit.lockedVerts then
-                    state.interaction.draggingObj = state.selection.selectedObj
-
-                    if state.selection.selectedObj then
-                        local offx, offy = state.selection.selectedObj.body:getLocalPoint(cx, cy)
-                        state.interaction.offsetDragging = { -offx, -offy }
-                    end
-                end
-            else
-                playPressed(hitted)
-            end
+            pressedSelect(hitted, cx, cy)
         else
             state.interaction.pressMissedEverything = true
         end
@@ -498,18 +527,7 @@ local function handlePointer(x, y, id, action, button)
         end
     elseif action == "released" then
         if modes.is(modes.EDIT_MESH_TRIS) then return end
-        if modes.is(modes.PLACE_STEINER) then
-            -- Commit any in-flight Steiner drag: refresh RESOURCE now that
-            -- the point has landed, and drop bindings since topology moved.
-            if steinerDragIdx > 0 then
-                local thing = state.selection.selectedObj
-                if thing and thing.body then
-                    refreshResourceAfterSteinerChange(thing.body)
-                end
-                steinerDragIdx = 0
-            end
-            return
-        end
+        if modes.is(modes.PLACE_STEINER) then return releasedPlaceSteiner() end
 
         -- Handle release logic
         releasePointer(x, y, id)
@@ -518,38 +536,7 @@ local function handlePointer(x, y, id, action, button)
             local wasOverUI = ui.activeElementID or ui.focusedTextInputID or ui.overPanel
                 or state.interaction.pressedOverUI
             local wasSpawning = state.interaction.draggingObj ~= nil
-            if not wasOverUI and not wasSpawning then
-                if (state.selection.selectedSFixture and not state.selection.selectedSFixture:isDestroyed()) then
-                    local body = state.selection.selectedSFixture:getBody()
-                    local rthing = utils.thingOf(body)
-
-                    state.selection.selectedObj = rthing
-                    state.selection.selectedSFixture = nil
-                    state.texFixtureEdit.tempVerts = nil
-                    state.texFixtureEdit.centroid = nil
-                    state.texFixtureEdit.lockedVerts = true
-                    state.interaction.maybeHideSelectedPanel = false
-                elseif (state.selection.selectedJoint) then
-                    state.selection.selectedJoint = nil
-                    state.interaction.maybeHideSelectedPanel = false
-                else
-                    if not (ui.activeElementID or ui.focusedTextInputID) then
-                        state.selection.selectedObj = nil
-                        state.selection.selectedSFixture = nil
-                        state.selection.selectedJoint = nil
-                    end
-                    state.interaction.maybeHideSelectedPanel = false
-                    state.polyEdit.tempVerts = nil
-                    state.polyEdit.lockedVerts = true
-                end
-                -- todo this is dumb..
-                state.panelVisibility.addBehavior = false
-                state.panelVisibility.customBehavior = false
-                state.panelVisibility.bgSettingsOpened = false
-                state.panelVisibility.worldSettingsOpened = false
-                state.panelVisibility.recordingPanelOpened = false
-                state.panelVisibility.showPalette = false
-            end
+            if not wasOverUI and not wasSpawning then clearSelectionAndPanels() end
         end
         state.interaction.pressMissedEverything = false
         state.interaction.pressedOverUI = false
@@ -581,19 +568,7 @@ local function handlePointer(x, y, id, action, button)
             polyEdit.maybeUpdateTexFixtureVertices()
         end
 
-        if (state.interaction.startSelection) then
-            local tlx = math.min(state.interaction.startSelection.x, x)
-            local tly = math.min(state.interaction.startSelection.y, y)
-            local brx = math.max(state.interaction.startSelection.x, x)
-            local bry = math.max(state.interaction.startSelection.y, y)
-            local tlxw, tlyw = cam:getWorldCoordinates(tlx, tly)
-            local brxw, bryw = cam:getWorldCoordinates(brx, bry)
-            local selected = selectrect.selectWithin(state.physicsWorld,
-                { x = tlxw, y = tlyw, width = brxw - tlxw, height = bryw - tlyw })
-
-            state.selection.selectedBodies = selected
-            state.interaction.startSelection = nil
-        end
+        if state.interaction.startSelection then finishBoxSelection(x, y) end
     end
 end
 
@@ -670,7 +645,7 @@ end
 function lib.showCloseNode()
     local mx, my = love.mouse.getPosition()
     local cx, cy = cam:getWorldCoordinates(mx, my)
-    local node = findClosestNode(cx, cy, 30)
+    local node = findClosestNode(cx, cy, NODE_GRAB_RADIUS)
     if node then
         return { node.x, node.y }
     end
@@ -681,6 +656,70 @@ local function panCamera(dx, dy)
     local tx, ty = cam:getTranslation()
     cam:setTranslation(tx - dx / cam.scale, ty - dy / cam.scale)
     require('src.camera-follow').notePan() -- you steer now, until the next touch
+end
+
+-- The last place `value` is in `list`, or nil.
+local function lastIndexOf(list, value)
+    for i = #list, 1, -1 do
+        if list[i] == value then return i end
+    end
+    return nil
+end
+
+-- EDIT_MESH_TRIS: brushing over the selected MESHUSERT's triangles with a button down. Left adds
+-- them to the selection, right takes them out (and off the selected bone), ctrl+left picks the
+-- bone of the triangle under it. True when the move was a brush stroke.
+local function brushTriangles(x, y)
+    local ud = state.selection.selectedSFixture:getUserData()
+    if not (ud and subtypes.is(ud, subtypes.MESHUSERT) and ud.label) then return false end
+    -- The linked RESOURCE fixture owns the triangle index array (ud.extra.triangles).
+    local mappert = resourceLink.find(ud)
+    local button = (love.mouse.isDown(2) and 2) or (love.mouse.isDown(1) and 1) or nil
+    if not (mappert and button) then return false end
+    local mextra = mappert:getUserData().extra
+    local triIdx = mextra and mextra.triangles
+    if not triIdx or #triIdx < 3 then return true end
+
+    -- Match the draw path's vertex source: CDT mode uses meshVertices (includes Steiner
+    -- points), basic mode falls back to the polygon.
+    local baseVerts = mextra.meshVertices or utils.thingOf(mappert:getBody()).vertices
+    local centeredVerts = mathutils.makePolygonRelativeToCenter(baseVerts, mathutils.computeCentroid(baseVerts))
+    local worldAt = fixtures.makeMeshVertexMapper(ud.extra, centeredVerts, state.selection.selectedSFixture:getBody())
+    local cx, cy = cam:getWorldCoordinates(x, y)
+    local brushRadius = tonumber(state.triangleEditor.brushSize) or 20
+    local isCtrl = love.keyboard.isDown('lctrl') or love.keyboard.isDown('rctrl')
+    local selected = state.triangleEditor.selectedTriangles
+    local bones = ud.extra.triangleBones
+
+    for t = 1, math.floor(#triIdx / 3) do
+        local i1, i2, i3 = triIdx[t * 3 - 2], triIdx[t * 3 - 1], triIdx[t * 3]
+        if i1 and i2 and i3 then
+            local x1, y1 = worldAt(i1)
+            local x2, y2 = worldAt(i2)
+            local x3, y3 = worldAt(i3)
+            if mathutils.dist(cx, cy, (x1 + x2 + x3) / 3, (y1 + y2 + y3) / 3) < brushRadius then
+                if isCtrl and button == 1 then
+                    if bones and bones[t] then
+                        state.triangleEditor.selectedBone = bones[t]
+                        return true
+                    end
+                elseif button == 2 then
+                    local i = lastIndexOf(selected, t)
+                    if i then table.remove(selected, i) end
+                    if bones and bones[t] == state.triangleEditor.selectedBone then bones[t] = nil end
+                elseif not lastIndexOf(selected, t) then
+                    table.insert(selected, t)
+                end
+            end
+        end
+    end
+    return true
+end
+
+-- A screen drag (dx, dy) in the body's own frame, in world units.
+local function localDelta(body, dx, dy)
+    local lx, ly = mathutils.rotatePoint(dx, dy, 0, 0, -body:getAngle())
+    return lx / cam.scale, ly / cam.scale
 end
 
 function lib.handleMouseMoved(x, y, dx, dy)
@@ -704,105 +743,18 @@ function lib.handleMouseMoved(x, y, dx, dy)
         return
     end
 
-    -- TRIANGLE SELECTION FOR MESH EDITING
-    if modes.is(modes.EDIT_MESH_TRIS) and state.selection.selectedSFixture then
-        local cx, cy = cam:getWorldCoordinates(x, y)
-        local ud = state.selection.selectedSFixture:getUserData()
-        if ud and subtypes.is(ud, subtypes.MESHUSERT) and ud.label then
-            -- The linked RESOURCE fixture owns the triangle index array (ud.extra.triangles).
-            local mappert = resourceLink.find(ud)
-            local button = nil
-            if love.mouse.isDown(1) then button = 1 end
-            if love.mouse.isDown(2) then button = 2 end
-            local isCtrl = love.keyboard.isDown('lctrl') or love.keyboard.isDown('rctrl')
-            if mappert and button ~= nil then
-                local mb = mappert:getBody()
-                local mextra = mappert:getUserData().extra
-                local triIdx = mextra and mextra.triangles
-                if not triIdx or #triIdx < 3 then return end
-                -- Match the draw path's vertex source: CDT mode uses
-                -- meshVertices (includes Steiner points), basic mode falls
-                -- back to the polygon.
-                local baseVerts = (mextra and mextra.meshVertices) or utils.thingOf(mb).vertices
-
-                local body = state.selection.selectedSFixture:getBody()
-                local polyCx, polyCy = mathutils.computeCentroid(baseVerts)
-                local centeredVerts = mathutils.makePolygonRelativeToCenter(baseVerts, polyCx, polyCy)
-
-                local brushRadius = tonumber(state.triangleEditor.brushSize) or 20
-                local isRightClick = (button == 2)
-
-                local function removeSelectedIndex(sel, idx)
-                    for n = #sel, 1, -1 do
-                        if sel[n] == idx then
-                            table.remove(sel, n)
-                            return true
-                        end
-                    end
-                    return false
-                end
-
-                local worldAt = fixtures.makeMeshVertexMapper(ud.extra, centeredVerts, body)
-
-                local numTris = math.floor(#triIdx / 3)
-                for t = 1, numTris do
-                    local i1 = triIdx[(t - 1) * 3 + 1]
-                    local i2 = triIdx[(t - 1) * 3 + 2]
-                    local i3 = triIdx[(t - 1) * 3 + 3]
-                    if i1 and i2 and i3 then
-                        local x1, y1 = worldAt(i1)
-                        local x2, y2 = worldAt(i2)
-                        local x3, y3 = worldAt(i3)
-                        local ccx = (x1 + x2 + x3) / 3
-                        local ccy = (y1 + y2 + y3) / 3
-                        local dist = math.sqrt((cx - ccx) ^ 2 + (cy - ccy) ^ 2)
-                        if dist < brushRadius then
-                            if isCtrl and button == 1 then
-                                local tb = ud.extra.triangleBones
-                                if tb and tb[t] then
-                                    state.triangleEditor.selectedBone = tb[t]
-                                    return
-                                end
-                            elseif isRightClick then
-                                removeSelectedIndex(state.triangleEditor.selectedTriangles, t)
-                                local tb = ud.extra.triangleBones
-                                if tb and tb[t] == state.triangleEditor.selectedBone then
-                                    tb[t] = nil
-                                end
-                            else
-                                local already = false
-                                for _, idx in ipairs(state.triangleEditor.selectedTriangles) do
-                                    if idx == t then already = true; break end
-                                end
-                                if not already then
-                                    table.insert(state.triangleEditor.selectedTriangles, t)
-                                end
-                            end
-                        end
-                    end
-                end
-                return
-            end
-        end
+    if modes.is(modes.EDIT_MESH_TRIS) and state.selection.selectedSFixture and brushTriangles(x, y) then
+        return
     end
 
     if state.polyEdit.dragIdx and state.polyEdit.dragIdx > 0 then
         local index = state.polyEdit.dragIdx
-        local obj = state.selection.selectedObj
-        local angle = obj.body:getAngle()
-        local dx2, dy2 = mathutils.rotatePoint(dx, dy, 0, 0, -angle)
-        dx2 = dx2 / cam.scale
-        dy2 = dy2 / cam.scale
+        local dx2, dy2 = localDelta(state.selection.selectedObj.body, dx, dy)
         state.polyEdit.tempVerts[index] = state.polyEdit.tempVerts[index] + dx2
         state.polyEdit.tempVerts[index + 1] = state.polyEdit.tempVerts[index + 1] + dy2
     elseif state.texFixtureEdit.dragIdx and state.texFixtureEdit.dragIdx > 0 then
         local index = state.texFixtureEdit.dragIdx
-        local obj = utils.thingOf(state.selection.selectedSFixture:getBody())
-
-        local angle = obj.body:getAngle()
-        local dx2, dy2 = mathutils.rotatePoint(dx, dy, 0, 0, -angle)
-        dx2 = dx2 / cam.scale
-        dy2 = dy2 / cam.scale
+        local dx2, dy2 = localDelta(state.selection.selectedSFixture:getBody(), dx, dy)
         state.texFixtureEdit.tempVerts[index] = state.texFixtureEdit.tempVerts[index] + dx2
         state.texFixtureEdit.tempVerts[index + 1] = state.texFixtureEdit.tempVerts[index + 1] + dy2
 
@@ -870,33 +822,20 @@ function lib.handleKeyPressed(key)
         state.world.paused = true
         state.panelVisibility.saveDialogOpened = true
     end
-    if key == 'i' and state.polyEdit.tempVerts then
-        -- figure out where my mousecursor is, between what nodes?
-
-        if state.selection.selectedObj and state.selection.selectedObj.shapeType == ST.RIBBON then
-            local mx, my = love.mouse.getPosition()
-            local wx, wy = cam:getWorldCoordinates(mx, my)
+    -- i / d: insert or delete a corner (a ribbon: a pair) at the mouse in the edited polygon
+    if (key == 'i' or key == 'd') and state.polyEdit.tempVerts then
+        local wx, wy = cam:getWorldCoordinates(love.mouse.getPosition())
+        local ribbon = state.selection.selectedObj and state.selection.selectedObj.shapeType == ST.RIBBON
+        if key == 'i' and ribbon then
             polyEdit.insertRibbonPair(wx, wy)
-            polyEdit.maybeUpdateCustomPolygonVertices()
-        else
-            local mx, my = love.mouse.getPosition()
-            local wx, wy = cam:getWorldCoordinates(mx, my)
+        elseif key == 'i' then
             polyEdit.insertCustomPolygonVertex(wx, wy)
-            polyEdit.maybeUpdateCustomPolygonVertices()
-        end
-    end
-    if key == 'd' and state.polyEdit.tempVerts then
-        -- Remove a vertex
-        if state.selection.selectedObj and state.selection.selectedObj.shapeType == ST.RIBBON then
-            local mx, my = love.mouse.getPosition()
-            local wx, wy = cam:getWorldCoordinates(mx, my)
+        elseif ribbon then
             polyEdit.removeRibbonPair(wx, wy)
-            polyEdit.maybeUpdateCustomPolygonVertices()
         else
-            local mx, my = love.mouse.getPosition()
-            local wx, wy = cam:getWorldCoordinates(mx, my)
             polyEdit.removeCustomPolygonVertex(wx, wy)
         end
+        if key == 'i' or ribbon then polyEdit.maybeUpdateCustomPolygonVertices() end
     end
 end
 

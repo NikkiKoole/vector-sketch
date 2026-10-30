@@ -13,11 +13,15 @@ local recorder = {
     recordings = {},           -- Will hold multiple recording layers
     activeLayer = 1,
     events = {},               -- Current layer's events
-    --objectStates = {},         -- Store initial states of objects
     recordingMouseJoints = {}, -- here we save the mousejoints (or data to recreate them) whilst recording them
     replayingMouseJoints = {}, -- here we keep the actual mousejoints that have been createdwhile replaying a recording.
     replayIndices = {}
 }
+
+-- One pointer on one body in one layer: the key for its mouse joint while recording and replaying.
+local function jointKey(pointerId, objectId, layer)
+    return pointerId .. objectId .. layer
+end
 
 function recorder:startRecording(layerIndex)
     self.isRecording = true
@@ -70,87 +74,47 @@ function recorder:update(dt)
     end
 end
 
+-- Record an event at the current time.
+function recorder:addEvent(type, action, data)
+    local event = { type = type, timestamp = self.currentTime, action = action, data = data }
+    table.insert(self.events, event)
+    return event
+end
+
 function recorder:recordMouseJointUpdates(cam)
     for _, v in pairs(self.recordingMouseJoints) do
         if v.data.pointerId then
             local x, y = box2dPointerJoints.getPointerPosition(v.data.pointerId)
             local wx, wy = cam:getWorldCoordinates(x, y)
-
-            local event = {
-                type = "object_interaction",
-                timestamp = self.currentTime,
-                action = "mousejoint-update",
-                data = {
-                    pointerId = v.data.pointerId,
-                    objectId = v.data.objectId,
-                    x = wx,
-                    y = wy
-                }
-            }
-
-            table.insert(self.events, event)
+            self:addEvent('object_interaction', 'mousejoint-update',
+                { pointerId = v.data.pointerId, objectId = v.data.objectId, x = wx, y = wy })
         end
     end
 end
 
 function recorder:recordMouseJointStart(data)
-    local event = {
-        type = "object_interaction",
-        timestamp = self.currentTime,
-        action = "mousejoint-start",
-        data = {
-            pointerId = data.pointerID,
-            objectId = data.bodyID,
-            wx = data.wx,
-            wy = data.wy,
-            force = data.force,
-            damp = data.damp
-        }
-    }
-
-    self.recordingMouseJoints[data.pointerID .. data.bodyID .. self.activeLayer] = event
-    table.insert(self.events, event)
+    local event = self:addEvent('object_interaction', 'mousejoint-start', {
+        pointerId = data.pointerID,
+        objectId = data.bodyID,
+        wx = data.wx,
+        wy = data.wy,
+        force = data.force,
+        damp = data.damp
+    })
+    self.recordingMouseJoints[jointKey(data.pointerID, data.bodyID, self.activeLayer)] = event
 end
 
 function recorder:recordMouseJointFinish(pointerid, bodyid)
-    local event = {
-        type = "object_interaction",
-        timestamp = self.currentTime,
-        action = "mousejoint-end",
-        data = {
-            pointerId = pointerid,
-            objectId = bodyid,
-
-        }
-    }
-    self.recordingMouseJoints[pointerid .. bodyid .. self.activeLayer] = nil
-    table.insert(self.events, event)
+    self.recordingMouseJoints[jointKey(pointerid, bodyid, self.activeLayer)] = nil
+    self:addEvent('object_interaction', 'mousejoint-end', { pointerId = pointerid, objectId = bodyid })
 end
 
 function recorder:recordPause(pause)
-    local event = {
-        timestamp = self.currentTime,
-        type = "world_interaction",
-        action = "pause",
-        data = {
-            state = pause
-        }
-    }
-    table.insert(self.events, event)
+    self:addEvent('world_interaction', 'pause', { state = pause })
 end
 
 function recorder:recordObjectSetPosition(bodyId, x, y)
-    local event = {
-        timestamp = self.currentTime,
-        type = "object_interaction",
-        action = "position",
-        data = {
-            objectId = bodyId,
-            x = x,
-            y = y
-        }
-    }
-    table.insert(self.events, event)
+    self:addEvent('object_interaction', 'position', { objectId = bodyId, x = x, y = y })
 end
 
 -- During replay, we'll need to map recorded object IDs to current objects
@@ -164,37 +128,33 @@ function recorder:processEvent(event, layerIdx)
 
         if not currentObject then return end
 
+        local data = event.data
+        local key = data.pointerId and jointKey(data.pointerId, data.objectId, layerIdx) -- not on 'position'
         if event.action == "position" then
-            currentObject:setPosition(event.data.x, event.data.y)
+            currentObject:setPosition(data.x, data.y)
         elseif event.action == 'mousejoint-start' then
-            local data = event.data
             local created = box2dPointerJoints.makePointerJoint(
                 data.pointerId, registry.getBodyByID(data.objectId), data.wx, data.wy,
                 data.force, data.damp)
 
             if created and created.joint then
-                self.replayingMouseJoints[data.pointerId .. data.objectId .. layerIdx] =
-                {
+                self.replayingMouseJoints[key] = {
                     joint = created.joint,
                     body = created.jointBody,
                     objectId = data.objectId
                 }
             end
         elseif event.action == 'mousejoint-update' then
-            local data = event.data
-            local mj = self.replayingMouseJoints[data.pointerId .. data.objectId .. layerIdx]
+            local mj = self.replayingMouseJoints[key]
             if mj and mj.joint and not mj.joint:isDestroyed() then
                 mj.joint:setTarget(data.x, data.y)
             end
         elseif event.action == 'mousejoint-end' then
-            local data = event.data
-            local is = self.replayingMouseJoints[data.pointerId .. data.objectId .. layerIdx]
-
-            if is and is.joint then
-                is.joint:destroy()
+            local mj = self.replayingMouseJoints[key]
+            if mj and mj.joint then
+                mj.joint:destroy()
             end
-
-            self.replayingMouseJoints[data.pointerId .. data.objectId .. layerIdx] = nil
+            self.replayingMouseJoints[key] = nil
         else
             logger:info(inspect(event))
         end

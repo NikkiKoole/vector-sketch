@@ -208,7 +208,7 @@ L = more.
   too), `nodeLocal`; the panel keeps its buttons. sfixture-editor.lua 1886 -> 698 lines today. Checked by
   pressing every bind and auto-assign button through the panel on 4 Knut scenes: identical results
   before and after. `spec/meshusert-bind_spec.lua`. Three `ipairs({ resourceLink.find(ud) })` left in
-  the triangle tools.
+  the triangle tools (gone 2026-10-30, 96f71305).
 - [x] **CL22. Polygon editing out of object-manager.** `object-manager.lua:84-311` (finalizePath,
   finalizePolygon, ribbon pair / custom vertex insert+remove) → `src/poly-edit.lua`. The three
   "rebuild an sfixture with new points" functions (fixtures.updateSFixturePosition,
@@ -222,7 +222,8 @@ L = more.
   `updateSFixtureDimensions` takes the fixture instead of reading the selection. Delete radius named,
   the doubled `if edge` gone. `recreateJoint`'s missing-handler return was BUG1. Still small and open:
   `addThing` only wraps `createThing`, `reattachJoints`' A/B branches, `tranlateBody`.
-  `spec/poly-edit_spec.lua`, `spec/fixtures_spec.lua`.
+  `spec/poly-edit_spec.lua`, `spec/fixtures_spec.lua`. The small three done later that day (96f71305):
+  `addThing` is `createThing`, `reattachJoints` one branch per side, `translateBody`.
 - [x] **CL23. `shape8Dict` as its own data file.** It lives in character-manager (:924-1015), gets
   pushed into topology via `setShape8Dict`, and spine-skin / blob require character-manager lazily
   just to read it. Move it to shape-catalogs or its own file; the setter and lazy requires go. S.
@@ -254,6 +255,11 @@ L = more.
   `pickupNote`, `bookPercussion`; styles carry data instead of switching by name (`bassLo = 38` on
   guaraldi, `groove = 'lofi'` instead of `drums == 'jazzhop'`). recorder's five record functions →
   `addEvent`. M each.
+  **Input and recorder done 2026-10-30:** `handlePointer` ~280 -> 85 lines: `pressedPlaceSteiner` /
+  `releasedPlaceSteiner`, `pressedOnPanel`, `pressedEditedCorner` (one `findVertexNear` for polygon and
+  texfixture corners), `pressedSelect`, `clearSelectionAndPanels`, `finishBoxSelection`;
+  `pressedSetOffset('A'/'B')`; `brushTriangles` out of handleMouseMoved; `PANEL_WIDTH`, `PALETTE_HEIGHT`
+  and the grab radii named. recorder: `addEvent` and one `jointKey`. Left: the music half (playtime-b5).
 
 ## Leave alone
 
