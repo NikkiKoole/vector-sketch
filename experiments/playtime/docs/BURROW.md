@@ -43,7 +43,8 @@ Nikki: "feels nice", "pretty good already".
 Not just the burrow: a quick way to give any shape (a body, a prop, the earth) an outline that
 looks drawn. Nikki 2026-10-30: the idea is good, not sure this route is it.
 
-**Picked (Nikki 2026-10-30): a textured stroke + line boil as a toggle.**
+**Picked (Nikki 2026-10-30): a textured stroke + line boil as a toggle.** Do it soon, as a
+quick experiment (Nikki: "we need to do this quickly but not now").
 - The stroke: a triangle strip along the outline (like `src/render/ribbon.lua`) with a scanned
   line of Nikki's own (pencil, crayon, brush pen) repeating along its length, tapered ends, a
   little width change. Seeded per shape so it stays put.
