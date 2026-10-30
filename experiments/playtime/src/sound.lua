@@ -1,8 +1,8 @@
 -- sound.lua
 -- Ticks the synth and what plays on it every frame: the music (src/music.lua), snap clicks
--- (src/snap-sound.lua) and slide sounds (src/slide-sound.lua). Called from main.lua, paused or not,
--- so the music keeps going in the editor and with impact sounds off (BUG7: it used to hang off
--- mipoVoice.update). The Mipo voice keeps its own mouth flaps and impact cooldowns.
+-- (src/snap-sound.lua) and the music zones (src/music-zones.lua, around the camera centre). Called
+-- from main.lua, paused or not, so the music keeps going in the editor and with impact sounds off
+-- (BUG7: it used to hang off mipoVoice.update). The Mipo voice keeps its own mouth flaps and impact cooldowns.
 
 local lib = {}
 
@@ -16,15 +16,15 @@ local function getSynth()
     return synth.start() and synth or nil
 end
 
--- paused: the world isn't stepping, so nothing slides or snaps; the music plays on.
+-- paused: the world isn't stepping, so nothing snaps; the music plays on.
 function lib.update(dt, paused)
     local synth = getSynth()
     if not synth then return end
-    synth.update(dt, require('src.camera').getInstance())
-    if not paused then
-        require('src.slide-sound').update(synth, now())
-        require('src.snap-sound').update(synth)
-    end
+    local cam = require('src.camera').getInstance()
+    synth.update(dt, cam)
+    if not paused then require('src.snap-sound').update(synth) end
+    local cx, cy = cam:getTranslation()
+    require('src.music-zones').update(dt, require('src.state').physicsWorld, cx, cy)
     require('src.music').update(synth, now())
 end
 

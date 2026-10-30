@@ -1,5 +1,5 @@
 {
-  "music":{"style":"ambient","at":"bar"},
+  "music":{"style":"island","at":"bar","layers":"quiet"},
   "characters":[],
   "joints":[],
   "camera":{

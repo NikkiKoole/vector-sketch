@@ -12,6 +12,9 @@ local function signals() return require('src.signals') end -- lazy: signals requ
 local signalRow = { key = 'signal', kind = 'text', default = 'signal1' }
 local modeRow = { key = 'mode', kind = 'choice', options = { 'hold', 'toggle' }, default = 'hold' }
 
+-- MUSIC_ZONE's choices; src/music-zones.lua fills them in place from the music's styles and layer presets.
+lib.musicZoneChoices = { style = { 'keep', 'set' }, layers = { 'keep', 'full' } }
+
 lib.allBehaviors = {
     { name = 'KEEP_ANGLE',
       description = 'keep a body at a certain angle, still not completely settled on the other variables. Kp*I etc.',
@@ -56,6 +59,14 @@ lib.allBehaviors = {
           { key = 'to', kind = 'text', default = '' },
           { key = 'arrive', kind = 'text', default = '' },
       } },
+    { name = 'MUSIC_ZONE',
+      description = 'a music zone (src/music-zones.lua): while the camera centre is in its box, the music turns '
+        .. 'into its style and/or layers (keep = leave that part); out again, the room music comes back.',
+      params = {
+          { key = 'style', kind = 'choice', options = lib.musicZoneChoices.style, default = 'keep' },
+          { key = 'layers', kind = 'choice', options = lib.musicZoneChoices.layers, default = 'keep' },
+          { key = 'at', label = 'turn at', kind = 'choice', options = { 'bar', 'phrase' }, default = 'bar' },
+      } },
     { name = 'SQUISHY',
       description = 'soft prop: plays a winegum-kiss sound when it hits something (src/mipo-voice.lua).',
       params = {} },
@@ -89,6 +100,13 @@ function lib.add(body, name)
     thing.behaviors = thing.behaviors or {}
     local added = { name = name }
     if name:find('^SIGNAL_') then added.signal = 'signal1' end
+    if name == 'MUSIC_ZONE' then
+        -- a zone is an area, not a wall: nothing bumps into it
+        added.style, added.layers, added.at = 'keep', 'keep', 'bar'
+        for _, fixture in ipairs(body:getFixtures()) do
+            if not fixture:getUserData() then fixture:setSensor(true) end
+        end
+    end
     if name == 'DOOR' then
         -- a door doesn't collide: Mipos walk past it (sfixtures keep their own setting)
         added.door = 'door1'

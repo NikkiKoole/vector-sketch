@@ -1,5 +1,5 @@
 {
-  "music":{"style":"island","at":"bar"},
+  "music":{"style":"island","at":"bar","layers":"full"},
   "characters":[{
       "scale":0.3,
       "zGroupOffset":1,

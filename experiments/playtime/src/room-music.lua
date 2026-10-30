@@ -26,9 +26,11 @@ local function fresh(saved)
     return s
 end
 
--- A scene's saved setting (nil: the defaults), then cue it.
+-- A scene's saved setting (nil: the defaults), then cue it. A new room starts outside any
+-- music zone (src/music-zones.lua).
 function lib.load(saved)
     state.roomMusic = fresh(saved)
+    state.musicZones = nil
     lib.cue()
     return state.roomMusic
 end
@@ -47,7 +49,12 @@ end
 
 -- Turn the music into this room's style and arrangement.
 function lib.cue()
-    local s = lib.settings()
+    lib.apply(lib.settings())
+end
+
+-- Turn the music into s = { style, layers, at } ('keep' leaves that part as it is); music zones
+-- (src/music-zones.lua) send theirs through here too.
+function lib.apply(s)
     local music = require('src.music')
     local layers = s.layers ~= 'keep' and s.layers or nil
     if s.style ~= 'keep' then
