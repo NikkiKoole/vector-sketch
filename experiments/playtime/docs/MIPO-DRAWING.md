@@ -87,7 +87,17 @@ before and after with `claudetools/frame-profile.lua`. Gains are estimates until
   5.4 -> 0.8, rebake 2.4 -> 1.1, doors 1.1 -> 0.03; garbage 820 -> 123 KB); all on screen 36.4 -> 28.4 ms;
   the editor's outlines 10 -> 0.75 ms. Left: the rebake check still asks each sfixture for its userData
   (1.1 ms); the editor's signal wires (0.9 ms) scan the same way.
-- [ ] **L2. One texture per Mipo, a few draw calls.** Pack a Mipo's baked part pictures into one atlas at
+- [ ] **L2a. One texture per Mipo, parts drawn as now.** `claudetools/drawcall-bench` (2026-10-30, Apple M1,
+  100 Mipos x 30 parts as 10-vertex fans): 3000 meshes with 3000 textures (as today) 9.3 ms a frame; the
+  same 3000 meshes on one texture 4.2 ms; one mesh per Mipo on an atlas 0.5 ms, but with its vertices
+  rewritten from Lua every frame 14.0 ms (worse than today: JIT off). So a draw is ~3 us here, about half
+  of it the texture switch. An atlas per Mipo, each part keeping its own mesh and transform with its UVs
+  pointing into the atlas, takes the switches away without any new per-frame Lua: maybe ~5 of the ~24 ms
+  the pictures take with 100 Mipos on screen (the rest is our own per-part Lua). The shaders are no risk:
+  no scene turns `plasticine` or `hairs` on (2026-10-30). Run the bench on the iPad before choosing.
+- [ ] **L2. One texture per Mipo, a few draw calls.**
+  (Bench: merged meshes only pay off if their vertices aren't rewritten from Lua each frame, so for
+  Mipos standing still (as L3) or with the GPU placing the parts (as L4).) Pack a Mipo's baked part pictures into one atlas at
   bake time, and draw its rigid parts (texfixtures, decals) as one mesh per Mipo, the part vertices
   moved on the CPU each frame; ribbons too if their strips use the atlas. The mouth (stencil) stays
   apart. ~30 -> ~4 draw calls per Mipo. *Cost:* 1-2 weeks. *Gain:* the C/driver side of drawing (the
