@@ -1,0 +1,159 @@
+# Code cleanup — simpler, less copy-paste (October 2026 review)
+
+status: active
+
+From the 7-agent read-only review of 2026-10-30. The aim is plain, boring code: delete what's
+dead, write each small thing once, give modules one job. Line numbers as of commit 65c48eb8; a
+file:line is where to start looking, not a promise. Bugs from the same review are in
+`CODE-BUGS-2026-10.md` (do those first); splitting the big files is `CODE-SPLITS-2026-10.md`
+(after this). The older Feb list `CODEBASE-CLEANUP.md` (parked) still has a few of its own items
+(shape8 anchor logic, UVUSERT, `thing.zOffset`).
+
+Order: delete (CL1-CL5), then the small helpers (CL6-CL12), then the bigger de-duplication
+(CL13-CL18), then module jobs (CL19-CL26). Sizes: S = under half an hour, M = an hour or two,
+L = more.
+
+## Delete
+
+- [ ] **CL1. Dead modules.** `src/character-experiments.lua` (only reachable through commented-out
+  code: `humanoidInstance` is always nil, `main.lua:161`), with its require (:134), its call, and the
+  commented `createCharacter` lines in `love.load`. `src/benchmarks.lua` (nothing requires it; the
+  bridge has `/profile/benchmark`). `tests/` and the `--test` branch at the top of `main.lua`
+  (`spec/` replaced it). S.
+- [ ] **CL2. Unused functions** (grep found no callers in src/, main.lua, spec/, scripts/):
+  `character-manager` `updateShape8` (:1298) and `getBoundingBox` (:81, result thrown away at :1697),
+  `io.reload`, `io` `getNewId`, `registry.print`, `music.stepAt`, music `lib.trace`,
+  `mipoVoice.squeakBody`, `synth.isRunning`, `uuid.uuid128` / `uuid64_base62` / `uuid128_base62`,
+  draw-textured `setShrinkFactor` / `getShrinkFactor`, `ui.dropdown`, `ui.centeredLabel`,
+  `playtime-ui` `assignTrianglesToGroup`, `utils.printTableKeys`, `Logger.new`,
+  pointerjoints `onPressedFunc` and its empty connector loop (:107-116), `instance.textures` /
+  `instance.positioners` (set, never read). On `state`: `positioningMesh`, `jointLengthParams`,
+  `lastSelectedBody`, `axisEnabled`, `showTexFixtureDim`, `isRecordingPointers`,
+  `texFixtureEdit.verts`. S.
+- [ ] **CL3. Unused maths.** `math-utils.lua`: `unloosenVanillalineOLD` (:150-185) with
+  `unpackNodePoints` / `evenlySpreadPath`, and `slicePolygon` (:1028-1150) with `splitPoly` /
+  `findIntersections` (specs only), plus the test polygons in comments (~:990-1027). About 400
+  lines. `polyline.lua`: only `render('miter', ...)` is used; the bevel/none joins and the overdraw
+  path can go (383 → ~90 lines). S.
+- [ ] **CL4. Commented-out code**, about 435 lines: box2d-draw-textured (173), shapes (47, an old
+  `ribbon`), math-utils (37), object-manager (29), io (27), main (20). Git keeps it. S.
+- [ ] **CL5. slide-sound: delete or say it's parked.** `lib.enabled = false` since 2026-10-27, but it
+  still runs every frame and the `whistle` patch keeps a synth slot. S.
+
+## Write small things once
+
+- [ ] **CL6. Use the maths helpers.** `math.max(a, math.min(b, x))` is written out 40 times in 16
+  files while `mathutils.clamp` is used twice. Same for lerp (25 inline), remap (12), distance (34),
+  and angle wrapping `(a + pi) % 2pi - pi` (7: mipo-actions, keep-angle, blob). Local copies:
+  `clamp` character-topology:86, `clampAxis` camera-follow:160, `lerpClamped` slide-sound:86,
+  `mapInto` mipo-voice:367, `lerp` draw-textured:87, `getDistance` / `lerp` inside math-utils itself.
+  Fix: `mathutils.clamp / lerp / remap / dist / wrapAngle`, one mechanical pass. M.
+- [ ] **CL7. `thingOf(body)`.** `getUserData().thing` is written ~80 times in 26 files, 8 of them
+  calling `getUserData()` twice. `ui/on-stage.lua:14` already has a private `thingOf`; move it to
+  registry or utils. M.
+- [ ] **CL8. `fixtures.findSFixture(body, subtype)` / `eachSFixture`.** 44 loops over
+  `getFixtures()` in 20 files, several with `type(ud) == 'table' and subtypes.is(ud, X) and ud.extra`
+  ladders (object-manager:608, 621, blob:409, input-manager:41, liquid). S-M.
+- [ ] **CL9. `behaviors.find(body, name)`.** Written four times: signals:24 `findBehavior`,
+  doors:26 `doorOf`, mipo-voice:470 `isSquishy`, mipo-actions:38. Plus `isSignal(b)` for the test
+  repeated 3x in signals. S.
+- [ ] **CL10. One list of shape dimension keys.** radius/width/width2/width3/height/height2-4 are
+  copied ~10 times (io:422, 944, 1294, 1385; object-manager:327, 363, 409, 492, 590, 695) and the
+  copies disagree (BUG3). Fix: `shapes.DIM_KEYS`, `copyDims(from, to)`, and a
+  `DIMS[shapeType]` table used by io's `needsDimProperty` and body-params. S.
+- [ ] **CL11. Mipo body helpers in one place.** `part.body and not part.body:isDestroyed()` 37 times;
+  subtree walk 4 times (character-manager `subtreeOf`, mipo-actions `subtreeBodies`, joint-guard
+  `collectSubtree`, body-rotate `collectDescendants`); parent-child joint lookup 4 times; Mipo
+  total mass 3 times (input-manager:242, snap:241, mipo-actions:22); `mass * 9.8 * units.meter()`
+  3 times; "scale density to a mass" in balanceArms/Head/Neck. Fix: `src/mipo-parts.lua`
+  (`liveBody`, `subtreeBodies`, `jointBetween`, `totalMass`, `scaleMass`) and `units.weight(mass)`. M.
+- [ ] **CL12. Small copies.** `C.x[math.ceil(math.random() * #C.x)]` 31 times → `pick(list)`;
+  weighted pick 3 times (mipo-chatter:30, music:664, 719); `setting(extra, key)` in liquid, grass,
+  blob; `hexColor` in liquid and grass (use `hexToColor`); `doubleControlPoints` in draw-textured:1629
+  and spine-mesh:84; "subtract the centroid" in box2d-draw:56, editor-render:434, cdt:383 (use
+  `makePolygonRelativeToCenter`); `getPointerPosition` in recorder:75 and pointerjoints:9; main's
+  `getRelativePath` = `utils.getPathDifference`; dna-defaults `deepCopySimple` = `utils.deepCopy`;
+  bone/group colour hash `(b*97)%256` in sfixture-editor and editor-render. S each.
+
+## Bigger de-duplication
+
+- [ ] **CL13. Joints written once.** Joint properties are read and written three times: load
+  (io:462-575), save (io:1135-1198) and joint-handlers. After BUG1's `apply`, load and save use the
+  handlers; about 200 lines go from io.lua. M.
+- [ ] **CL14. Connected texture and trace vertices onto the inspector.** `ui/sfixture-editor.lua:1288-1872`
+  (~580 lines) copies texture / hairs / plasticine settings that `texfixture-params` already has,
+  and the copies drifted. Fix: `[CONNECTED_TEXTURE]` and `[TRACE_VERTICES]` in
+  `sfixtureParams.bySubtype` (position + a few own rows + `texfixtureParams.texture/.hairs/.plasticine`),
+  then delete the hand-made branch and the helpers only it uses (:158-291). Removes BUG4 and BUG10. M.
+- [ ] **CL15. `forPartAndMirror` in the Mipo editor.** "Apply to this part, then its mirror if
+  symmetric, then rebuild textures" is pasted ~18 times (`ui/mipo-editor.lua` 1087, 1146, 1250,
+  1265, 1355, ...); connected skin and connected hair (1786-1962) are near-copies; "all torso
+  segments" loops 9 times. Fix: `forPartAndMirror(instance, part, fn)` + `forAllTorso`, one
+  `drawConnectedAccordion(kind, ...)`. Likely 300+ lines less. Also the shape grid (1065) mirrors with
+  symmetric off. M.
+- [ ] **CL16. Render copies.** Shader setup 3 times (draw-textured 2546, 3106, 3299; caused BUG11)
+  → `beginSurfaceShader(extra, body)`. LBS skinning loop 3 times (1923, 1976, 2026) → `lbsVertex`.
+  Rigid bone blend twice (2865, 2885). Mouth curve points 4 times (3495, 3550, 3596, 3646) and upper/lower
+  reordering 3 times. `composedZ` line 10 times in createDrawables. `browBends` (3423) = `browBendVecs`
+  (38). Alpha divided by 5 in `makeTexturedCanvas` and multiplied by 5 by every caller (its own TODO
+  says so): pass 0-1. M.
+- [ ] **CL17. Clone through the library path.** `cloneSelection` (io:1252-1598, ~350 lines) rebuilds
+  shapes by hand with its own id map and influence remap. `library.place` already does gather →
+  renewIds → move → buildWorld additive. Clone = the same with the selection, +50,+50. Keep only
+  the Mipo pose copy if clones should keep their pose. L, worth it.
+- [ ] **CL18. Character copies.** `addFaceDecals` (character-manager:1884-2222, ~340 lines): the OMP
+  block 5 times → `ompMain(...)`, `addDecal(body, label, extra)`, then placeEyes/Brows/Nose/Mouth.
+  Loose z numbers (190, 220, 250-254, 300, ...) → one `Z = {...}` table (`TORSO_SKIN_Z` exists but
+  :1065 writes 192). DNA prep twice (:2519, :2765) → `prepareDNA`; group/z loop 4 times →
+  `applyGroupAndZ`; instance constructor 3 times; physics settings twice. `randomizePart` redoes
+  the other randomizers; `randomizeMipo` / `randomizeMipoConstrained` differ only in opts. Teeth
+  `newImage` per rebuild just for its size. M-L.
+
+## One job per module
+
+- [ ] **CL19. `sound.update(dt)`.** See BUG7: synth, music, snap and slide out of mipo-voice. S-M.
+- [ ] **CL20. The renderer only draws.** Blink, brows, mouth tween and the click-to-pull-a-face
+  (`box2d-draw-textured.lua:30-283`, polls `love.mouse.isDown` inside draw) → `src/mipo-face.lua`,
+  called from update. The mouth-decal migration in `initFaceDecals` → io.lua load. `hexToColor` and
+  `palette` (used by 5 UI modules) → `src/color.lua`, and cache the colours instead of parsing hex
+  per drawable per frame. `cdt.computeResourceMesh` → resource-link (and just require mathutils). M.
+- [ ] **CL21. MESHUSERT binding out of the UI.** `ui/sfixture-editor.lua:368-692, 702-737, 1026-1130`:
+  the bind maths are closures inside a button handler; vertex prep 3 times, "clear bind state" 5
+  times, `for _, rv in ipairs({ resourceLink.find(ud) })` 4 times (just `local rv = ...; if rv`).
+  → `src/meshusert-bind.lua` (prepBindVerts, bindDQS, bindSpine, clearBind, autoAssign*,
+  splitTriangles), with specs. M-L.
+- [ ] **CL22. Polygon editing out of object-manager.** `object-manager.lua:84-311` (finalizePath,
+  finalizePolygon, ribbon pair / custom vertex insert+remove) → `src/poly-edit.lua`. The three
+  "rebuild an sfixture with new points" functions (fixtures.updateSFixturePosition,
+  updateSFixtureDimensions, objectManager.maybeUpdateTexFixtureVertices) → one
+  `fixtures.replaceShape(fixture, points)`; two of them drop friction/groupIndex. Small ones:
+  `addThing` only wraps `createThing`; both flip axes do the same; `joints.reattachJoints` A and B
+  branches differ by side; `tranlateBody`; `recreateJoint` logs a missing handler and calls it anyway. M.
+- [ ] **CL23. `shape8Dict` as its own data file.** It lives in character-manager (:924-1015), gets
+  pushed into topology via `setShape8Dict`, and spine-skin / blob require character-manager lazily
+  just to read it. Move it to shape-catalogs or its own file; the setter and lazy requires go. S.
+- [ ] **CL24. Plain requires.** 134 lazy `require(` calls, 9 `local function x() return require(...) end`
+  wrappers; the `state()` ones (sfixture-params:13, texfixture-params:10, world-params:8) and
+  behaviors:9 break no cycle. Only registry ↔ snap needs a lazy require; comment it with the cycle.
+  187 bare `require 'x'`, 43 with hyphens (CLAUDE.md says parentheses) → one sed pass. S.
+- [ ] **CL25. Names.** `addTexturesFromInstance2` (131 call sites, no version 1) → `rebuildTextures`
+  (alias for a while); `bud` (draw-textured:3359), `mud` (sfixture-editor:403, 707), `j` for joints
+  (16 places), `fud` vs `ud` (38 places); raw subtype strings in editor-render:95 and draw-textured:180;
+  topology's `guy` → `instance`; signals' module-level `triggers` vs the local in `lib.wires`. S.
+- [ ] **CL26. Long functions in input and music.** `input-manager.lua` `handlePointer` (:333-614):
+  `pressedPlaceSteiner`, `findVertexNear` (polyEdit and texFixtureEdit loops are the same),
+  `clearSelectionAndPanels` (":533, todo this is dumb"), `brushTriangles` (6 deep, :728-809),
+  `pressedSetOffset(which)`; name the panel width 300 (4x), palette 400, grab radii 10/20/30.
+  `music.lua` `bookBar` (~200 lines) and `planSong` → plain local steps; `rememberChord`,
+  `pickupNote`, `bookPercussion`; styles carry data instead of switching by name (`bassLo = 38` on
+  guaraldi, `groove = 'lofi'` instead of `drums == 'jazzhop'`). recorder's five record functions →
+  `addEvent`. M each.
+
+## Leave alone
+
+The reviewers agreed these are clear and fine; don't churn them: registry, subtypes, resource-link,
+library, toys, props, scene-loader, snap, camera-follow, play-mode, modes, physics-units,
+contact-tracker, statemachine, tool-rail, inspector, textinput, right-column, on-stage,
+spine-skin, spine-mesh, the cdt triangulation, mouth-shapes, blob and liquid physics, signals'
+debounce, synth's patch table, mipo-registry, mipo-chatter, keep-angle, body-rotate, doors,
+the `state.X = state.X or {}` hot-reload habit, and the "why" comments on tuning values.
