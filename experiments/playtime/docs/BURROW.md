@@ -42,7 +42,21 @@ Nikki: "feels nice", "pretty good already".
 
 Not just the burrow: a quick way to give any shape (a body, a prop, the earth) an outline that
 looks drawn. Nikki 2026-10-30: the idea is good, not sure this route is it.
-One route: vector-sketch's own shaky border (`../../lib/border-mesh.lua`: a spline through the
+
+**Picked (Nikki 2026-10-30): a textured stroke + line boil as a toggle.**
+- The stroke: a triangle strip along the outline (like `src/render/ribbon.lua`) with a scanned
+  line of Nikki's own (pencil, crayon, brush pen) repeating along its length, tapered ends, a
+  little width change. Seeded per shape so it stays put.
+- Line boil, switched on per shape: re-roll the wobble / texture offset 8-12 times a second, not
+  every frame (the hand-animated "alive" shimmer).
+- Try it on the burrow rim first: generated outline, no textures in the way. Needs a few
+  scanned strokes from Nikki.
+- Maybe with it: misregistration (the fill a few px off its outline, like old print).
+
+Considered and not picked: wobbly geometry alone (reads digital), stamped brush dabs, rough.js
+double strokes, a screen-space edge shader (no per-shape control).
+
+The old route: vector-sketch's own shaky border (`../../lib/border-mesh.lua`: a spline through the
 points, evenly spaced, then `../../lib/polyline.lua:295-307` draws it with a random width).
 `src/polyline.lua` is a copy of that file with the random-width mode taken out (unused then).
 Other routes still to look at: a textured stroke along the outline (like the hair ribbons in
