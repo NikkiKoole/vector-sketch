@@ -25,7 +25,7 @@ local ui = setmetatable({
 local CharacterManager = require('src.character-manager')
 local mipoRegistry = require('src.mipo-registry')
 local mipoActions = require('src.mipo-actions')
-local box2dDrawTextured = require('src.physics.box2d-draw-textured')
+local colors = require('src.color')
 local mouthShapes = require('src.mouth-shapes')
 local ST = require('src.shape-types')
 
@@ -208,7 +208,7 @@ local function drawThumbnailGrid(items, currentURL, panelX, startY, cellSize, on
 end
 
 local function handlePaletteButton(idPrefix, px, py, pw, currentHex, onColorChange)
-    local r, g, b, a = box2dDrawTextured.hexToColor(currentHex or '000000ff')
+    local r, g, b, a = colors.hexToColor(currentHex or '000000ff')
     local paletteShow = ui.button(px - 10, py, 20, '', BUTTON_HEIGHT, { r, g, b, a })
     if paletteShow then
         if state.panelVisibility.showPalette then

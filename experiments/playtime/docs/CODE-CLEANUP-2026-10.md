@@ -127,12 +127,20 @@ L = more.
   checkbox now. Connected skin and hair stay two panels (bendiness, masks and 'none' differ), each
   edit one `setConnectedSkin/Hair(vals)` line. 45 `tonumber` calls after sliders dropped (BUG14).
   `spec/mipo-editor_spec.lua` (also draws every panel open for every part).
-- [ ] **CL16. Render copies.** Shader setup 3 times (draw-textured 2546, 3106, 3299; caused BUG11)
+- [x] **CL16. Render copies.** Shader setup 3 times (draw-textured 2546, 3106, 3299; caused BUG11)
   → `beginSurfaceShader(extra, body)`. LBS skinning loop 3 times (1923, 1976, 2026) → `lbsVertex`.
   Rigid bone blend twice (2865, 2885). Mouth curve points 4 times (3495, 3550, 3596, 3646) and upper/lower
   reordering 3 times. `composedZ` line 10 times in createDrawables. `browBends` (3423) = `browBendVecs`
   (38). Alpha divided by 5 in `makeTexturedCanvas` and multiplied by 5 by every caller (its own TODO
   says so): pass 0-1. M.
+  **Done 2026-10-30** (shader setup was BUG11): one `lbsVertex` for the three linear-blend loops; one
+  `placeVertex` and one vertex list (with or without UVs) for MESHUSERT; one `animatedCurvePoints` for the
+  four mouth copies; `composedZ` once per sfixture; the brow bend shapes one table (mipo-face); alpha no
+  longer *5 then /5. Checked: 8 scenes render the same pixels (also with every mouth animated), the 9 skinned
+  meshes in the Knut scenes get the same vertices, skinning output the same number for number. Left: the
+  lip order flip (3x), makeTexturedCanvas' 17 arguments. Found on the way: as written, the 'DQS' blend
+  is algebraically the same as LBS (the blended rotation cancels: R·b + Σw(P - R·b)/Σw = ΣwP/Σw), so
+  `useDQS` changes nothing; a real fix for the candy-wrapper collapse would blend positions differently.
 - [x] **CL17. Clone through the library path.** `cloneSelection` (io:1252-1598, ~350 lines) rebuilds
   shapes by hand with its own id map and influence remap. `library.place` already does gather →
   renewIds → move → buildWorld additive. Clone = the same with the selection, +50,+50. Keep only
@@ -162,11 +170,15 @@ L = more.
   snapshot (10 seeded Mipos: randomized, parts randomized, rebuilt, potato, saved and loaded; every
   fixture, decal and joint): identical before and after.
 - [ ] **CL19. `sound.update(dt)`.** See BUG7: synth, music, snap and slide out of mipo-voice. S-M.
-- [ ] **CL20. The renderer only draws.** Blink, brows, mouth tween and the click-to-pull-a-face
+- [x] **CL20. The renderer only draws.** Blink, brows, mouth tween and the click-to-pull-a-face
   (`box2d-draw-textured.lua:30-283`, polls `love.mouse.isDown` inside draw) → `src/mipo-face.lua`,
   called from update. The mouth-decal migration in `initFaceDecals` → io.lua load. `hexToColor` and
   `palette` (used by 5 UI modules) → `src/color.lua`, and cache the colours instead of parsing hex
   per drawable per frame. `cdt.computeResourceMesh` → resource-link (and just require mathutils). M.
+  **Done 2026-10-30:** blink, brows, mouth tween and the pull-a-face click in `src/mipo-face.lua`, ticked
+  from love.update; `src/color.lua` (palette, hexToColor remembered) for the renderer, UI, grass and
+  liquid. Left: the old mouth-decal migration still runs when a face first ticks (not at load), and
+  computeResourceMesh stays in cdt.lua next to refreshResourceMesh.
 - [ ] **CL21. MESHUSERT binding out of the UI.** `ui/sfixture-editor.lua:368-692, 702-737, 1026-1130`:
   the bind maths are closures inside a button handler; vertex prep 3 times, "clear bind state" 5
   times, `for _, rv in ipairs({ resourceLink.find(ud) })` 4 times (just `local rv = ...; if rv`).

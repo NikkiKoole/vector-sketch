@@ -114,7 +114,6 @@ local randomHexColor = utils.randomHexColor
 
 
 local function createDefaultTextureDNABlock(shape, skipFG)
-    --local r, g, b, a = box2dDrawTextured.hexToColor('ff0000ff')
     --print(r, g, b, a)
 
     local result = {
@@ -133,7 +132,6 @@ local function createDefaultTextureDNABlock(shape, skipFG)
 end
 
 local function initBlock(url)
-    -- local r, g, b, a = box2dDrawTextured.hexToColor('ff0000ff')
     -- print(r, g, b, a)
     local result = {
         bgURL = (url or '') .. '.png',

@@ -87,7 +87,7 @@ local function drawRow(id, row, target, body, x, y, w, labelWidth)
         ui.alignedLabel(x, y + DY, labelOf(row, target), { 1, 1, 1, 0.6 })
     elseif row.kind == 'color' then -- swatch (opens the palette) + hex field
         local hex = valueOf(row, target)
-        local r, g, b, a = require('src.physics.box2d-draw-textured').hexToColor(hex or 'ffffffff')
+        local r, g, b, a = require('src.color').hexToColor(hex or 'ffffffff')
         if ui.button(wx, y + DY, 30, '', nil, { r, g, b, a }) then
             local state = require('src.state')
             if state.panelVisibility.showPalette then

@@ -8,13 +8,13 @@ local joints = require 'src.joints'
 local objectManager = require 'src.object-manager'
 local polyEdit = require('src.poly-edit')
 local library = require('src.library')
+local color = require('src.color')
 local camera = require 'src.camera'
 local cam = camera.getInstance()
 local utils = require 'src.utils'
 
 local fixtures = require 'src.fixtures'
 local snap = require 'src.physics.snap'
-local box2dDrawTextured = require 'src.physics.box2d-draw-textured'
 
 local state = require 'src.state'
 local modes = require 'src.modes'
@@ -247,15 +247,15 @@ function lib.drawUI()
             local cellHeight = 50
             local itemsPerRow = math.floor((w - 300) / cellHeight)
 
-            for i = 1, #box2dDrawTextured.palette do
+            for i = 1, #color.palette do
                 local row = math.floor((i - 1) / itemsPerRow)
                 local column = (i - 1) % itemsPerRow
                 local x = column * cellHeight
                 local y = row * cellHeight
 
                 if ui.coloredRect(10 + x, h - 300 + y,
-                    { box2dDrawTextured.hexToColor(box2dDrawTextured.palette[i]) }, 40) then
-                    state.showPaletteFunc(box2dDrawTextured.palette[i])
+                    { color.hexToColor(color.palette[i]) }, 40) then
+                    state.showPaletteFunc(color.palette[i])
                 end
             end
         end)

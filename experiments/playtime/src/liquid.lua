@@ -366,10 +366,7 @@ local function updateWave(extra, body, level, width, maxHeight, dt)
     return entry
 end
 
-local function hexColor(hex)
-    local function byte(i) return (tonumber(hex:sub(i, i + 1), 16) or 255) / 255 end
-    return byte(1), byte(3), byte(5), #hex >= 8 and byte(7) or 1
-end
+local hexColor = require('src.color').hexToColor
 
 -- The two ends of the surface: the water polygon's points on the level line.
 local function surfaceEnds(poly, level)

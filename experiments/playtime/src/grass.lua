@@ -132,10 +132,7 @@ local function signature(extra, vertices, angle)
     return table.concat(parts, '|')
 end
 
-local function hexColor(hex)
-    local function byte(i) return (tonumber(hex:sub(i, i + 1), 16) or 255) / 255 end
-    return byte(1), byte(3), byte(5), #hex >= 8 and byte(7) or 1
-end
+local hexColor = require('src.color').hexToColor
 
 local function setBlade(batch, id, blade, extra, angle, time)
     local q = lib.QUADS[blade.quad]

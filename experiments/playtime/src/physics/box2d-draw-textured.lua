@@ -15,6 +15,7 @@ local grass = require('src.grass')
 local blobs = require('src.blob')
 local liquid = require('src.liquid')
 local resourceLink = require('src.resource-link')
+local color = require('src.color')
 local NT = require('src.node-types')
 local spineMesh = require 'src.spine-mesh'
 local SIDES = require('src.sides')
@@ -112,31 +113,6 @@ getLoveImage('textures/pat/type6.png', settings)
 getLoveImage('textures/pat/type7.png', settings)
 getLoveImage('textures/pat/type8.png', settings)
 
-local base = {
-    '020202', '4f3166', '69445D', '613D41', 'efebd8',
-    '6f323a', '872f44', '8d184c', 'be193b', 'd2453a',
-    'd6642f', 'd98524', 'dca941', 'e6c800', 'f8df00',
-    'ddc340', 'dbd054', 'ddc490', 'ded29c', 'dad3bf',
-    '9c9d9f', '938541', '808b1c', '8A934E', '86a542',
-    '57843d', '45783c', '2a5b3e', '1b4141', '1e294b',
-    '0d5f7f', '065966', '1b9079', '3ca37d', '49abac',
-    '5cafc9', '159cb3', '1d80af', '2974a5', '1469a3',
-    '045b9f', '9377b2', '686094', '5f4769', '815562',
-    '6e5358', '493e3f', '4a443c', '7c3f37', 'a93d34',
-    'CB433A', 'a95c42', 'c37c61', 'd19150', 'de9832',
-    'bd7a3e', '865d3e', '706140', '7e6f53', '948465',
-    '252f38', '42505f', '465059', '57595a', '6e7c8c',
-    '75899c', 'aabdce', '807b7b', '857b7e', '8d7e8a',
-    'b38e91', 'a2958d', 'd2a88d', 'ceb18c', 'cf9267',
-    'f0644d', 'ff7376', 'd76656', 'b16890', '020202',
-    '333233', '814800', 'efebd8', '1a5f8f', '66a5bc',
-    '87727b', 'a23d7e', 'fa8a00', 'fef1d0', 'ffa8a2',
-    '6e614c', '418090', 'b5d9a4', 'c0b99e', '4D391F',
-    '4B6868', '9F7344', '9D7630', 'D3C281', '8F4839',
-    'EEC488', 'C77D52', 'C2997A', '9C5F43', '9C8D81',
-    '965D64', '798091', '4C5575', '6E4431', '626964',
-}
-lib.palette = base
 
 -- Weak-keyed side tables so meshes GC cleanly.
 local _vertsBufByMesh = setmetatable({}, { __mode = "k" })
@@ -256,19 +232,19 @@ end
 
 local function setBgColor(item, val)
     item.bgHex = val
-    item.cached.bgR, item.cached.bgG, item.cached.bgB, item.cached.bgA = lib.hexToColor(val)
+    item.cached.bgR, item.cached.bgG, item.cached.bgB, item.cached.bgA = color.hexToColor(val)
     item.cached.bgRGB = { item.cached.bgR, item.cached.bgG, item.cached.bgB }
 end
 
 local function setFgColor(item, val)
     item.fgHex = val
-    item.cached.fgR, item.cached.fgG, item.cached.fgB, item.cached.fgA = lib.hexToColor(val)
+    item.cached.fgR, item.cached.fgG, item.cached.fgB, item.cached.fgA = color.hexToColor(val)
     item.cached.fgRGB = { item.cached.fgR, item.cached.fgG, item.cached.fgB }
 end
 
 local function setPColor(item, val)
     item.pHex = val
-    item.cached.pR, item.cached.pG, item.cached.pB, item.cached.pA = lib.hexToColor(val)
+    item.cached.pR, item.cached.pG, item.cached.pB, item.cached.pA = color.hexToColor(val)
     item.cached.pRGB = { item.cached.pR, item.cached.pG, item.cached.pB }
 end
 
@@ -279,42 +255,6 @@ function lib.makeCached(item)
     setPColor(item, item.pHex)
 end
 
-function lib.hexToColor(hex)
-    if type(hex) ~= "string" then
-        return 1, 1, 1, 1
-    end
-
-    -- Remove any leading hash symbol.
-    hex = hex:gsub("#", "")
-
-    -- Expand shorthand forms:
-    if #hex == 3 then
-        -- Example: "f00" becomes "ff0000"
-        hex = hex:sub(1, 1):rep(2) .. hex:sub(2, 2):rep(2) .. hex:sub(3, 3):rep(2)
-        -- Append full opacity.
-        hex = hex .. "FF"
-    elseif #hex == 4 then
-        -- Example: "f00a" becomes "ff0000aa"
-        hex = hex:sub(1, 1):rep(2) .. hex:sub(2, 2):rep(2) .. hex:sub(3, 3):rep(2) .. hex:sub(4, 4):rep(2)
-    elseif #hex == 6 then
-        -- Append alpha if missing.
-        hex = hex .. "FF"
-    elseif #hex ~= 8 then
-        return 1, 1, 1, 1
-    end
-
-    local r = tonumber(hex:sub(1, 2), 16)
-    local g = tonumber(hex:sub(3, 4), 16)
-    local b = tonumber(hex:sub(5, 6), 16)
-    local a = tonumber(hex:sub(7, 8), 16)
-
-    -- If any conversion failed, return white.
-    if not (r and g and b and a) then
-        return 1, 1, 1, 1
-    end
-
-    return r / 255, g / 255, b / 255, a / 255
-end
 
 -- only thing thats no longer possible == using an alpha for the background color
 local maskShader = love.graphics.newShader([[
@@ -756,8 +696,8 @@ local function sendSharedLighting(shader, body, extra)
     shader:send('sssPow',        extra.plasticineSSSpow       or lib.plasticineSSSpow)
     shader:send('sssStrength',   extra.plasticineSSSstrength  or lib.plasticineSSSstrength)
     shader:send('terminatorPow', extra.plasticineTerminator   or lib.plasticineTerminator)
-    local wr, wg, wb = lib.hexToColor(extra.plasticineWarmHex or lib.plasticineWarmHex)
-    local cr, cg, cb = lib.hexToColor(extra.plasticineCoolHex or lib.plasticineCoolHex)
+    local wr, wg, wb = color.hexToColor(extra.plasticineWarmHex or lib.plasticineWarmHex)
+    local cr, cg, cb = color.hexToColor(extra.plasticineCoolHex or lib.plasticineCoolHex)
     shader:send('warmColor', {wr, wg, wb})
     shader:send('coolColor', {cr, cg, cb})
     sendLightsToShader(shader, body, extra)
@@ -829,7 +769,7 @@ function lib.gatherLightsForBody(body, fx, fy)
                 count = count + 1
                 lightDirBuf[count][1] = ldx
                 lightDirBuf[count][2] = ldy
-                local r, g, b = lib.hexToColor(ud.extra.colorHex or 'ffffffff')
+                local r, g, b = color.hexToColor(ud.extra.colorHex or 'ffffffff')
                 lightColorBuf[count][1] = r
                 lightColorBuf[count][2] = g
                 lightColorBuf[count][3] = b
@@ -864,7 +804,6 @@ local function getDrawParams(flipx, flipy, imgw, imgh)
     return sx, sy, ox, oy
 end
 
--- todo /5 and *5 is dumb!
 lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color2, alpha2, texRot, texScaleX, texScaleY,
                                   texOffX, texOffY,
                                   lineColor, lineAlpha,
@@ -895,13 +834,13 @@ lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color
             maskShader:send('fill', texture2)
         end
 
-        maskShader:send('backgroundColor', { color1[1], color1[2], color1[3], alpha1 / 5 })
+        maskShader:send('backgroundColor', { color1[1], color1[2], color1[3], alpha1 })
         maskShader:send('uvTransform', { { m1, m2 }, { m5, m6 } })
         maskShader:send('uvTranslation', { dx, dy })
 
         if mask then
             local sx, sy, ox, oy = getDrawParams(flipx, flipy, lw, lh)
-            love.graphics.setColor(color2[1], color2[2], color2[3], alpha2 / 5)
+            love.graphics.setColor(color2[1], color2[2], color2[3], alpha2)
             love.graphics.draw(mask, 0, 0, 0, sx, sy, ox, oy)
         end
         love.graphics.setShader()
@@ -911,7 +850,7 @@ lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color
                 local patch = patches[i]
                 if patch and patch.img then
                     love.graphics.setColorMask(true, true, true, false)
-                    local r, g, b, a = lib.hexToColor(patch.tint)
+                    local r, g, b, a = color.hexToColor(patch.tint)
                     love.graphics.setColor(r, g, b, a)
                     local image = patch.img
                     local imgw, imgh = image:getDimensions()
@@ -930,7 +869,7 @@ lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color
         -- I want to know If we do this or not..
         -- if (true and renderPatch) then
 
-        love.graphics.setColor(lineartColor[1], lineartColor[2], lineartColor[3], lineAlpha / 5)
+        love.graphics.setColor(lineartColor[1], lineartColor[2], lineartColor[3], lineAlpha)
         local sx, sy, ox, oy = getDrawParams(flipx, flipy, lw, lh)
         love.graphics.draw(lineart, 0, 0, 0, sx, sy, ox, oy)
 
@@ -957,27 +896,27 @@ local function makePatch(name, ud)
     local result = nil
     if ud.extra[name] and ud.extra[name].bgURL then
         local outlineImage = getLoveImage('textures/' .. ud.extra[name].bgURL)
-        local olr, olg, olb, ola = lib.hexToColor(ud.extra[name].bgHex)
+        local olr, olg, olb, ola = color.hexToColor(ud.extra[name].bgHex)
         local maskImage = getLoveImage('textures/' .. ud.extra[name].fgURL)
-        local mr, mg, mb, ma = lib.hexToColor(ud.extra[name].fgHex)
+        local mr, mg, mb, ma = color.hexToColor(ud.extra[name].fgHex)
         local patternImage = getLoveImage('textures/pat/' .. ud.extra[name].pURL)
-        local pr, pg, pb, pa = lib.hexToColor(ud.extra[name].pHex)
+        local pr, pg, pb, pa = color.hexToColor(ud.extra[name].pHex)
         if outlineImage then
             local imgData = lib.makeTexturedCanvas(
                 outlineImage,            -- line art
                 maskImage,               -- mask
                 { mr, mg, mb },          -- color1
-                ma * 5,                  -- alpha1
+                ma,                      -- alpha1
                 patternImage or tex1,    -- texture2 (fill texture)
                 { pr, pg, pb },          -- color2
-                pa * 5,                  -- alpha2
+                pa,                      -- alpha2
                 ud.extra[name].pr or 0,  -- texRot
                 ud.extra[name].psx or 1, -- texScale
                 ud.extra[name].psy or 1, -- texScale
                 ud.extra[name].ptx or 0,
                 ud.extra[name].pty or 0,
                 { olr, olg, olb },      -- lineColor
-                ola * 5,                -- lineAlpha
+                ola,                    -- lineAlpha
                 ud.extra[name].fx or 1, -- flipx (normal)
                 ud.extra[name].fy or 1  -- flipy (normal)
             )
@@ -1077,17 +1016,17 @@ function lib.makeCombinedImages()
                         outlineImage or line, -- line art
                         maskImage or (hasFgURL and maskTex) or nil, -- mask (nil for outline-only textures)
                         cached.fgRGB,         -- color1
-                        cached.fgA * 5,       -- alpha1
+                        cached.fgA,           -- alpha1
                         patternImage or tex1, -- texture2 (fill texture)
                         cached.pRGB,          -- color2
-                        cached.pA * 5,        -- alpha2
+                        cached.pA,            -- alpha2
                         main.pr or 0,         -- texRot
                         main.psx or 1,        -- texScale
                         main.psy or 1,        -- texScale
                         main.ptx or 0,
                         main.pty or 0,
                         cached.bgRGB,              -- lineColor
-                        cached.bgA * 5,            -- lineAlpha
+                        cached.bgA,                -- lineAlpha
                         main.fx or 1,              -- flipx (normal)
                         main.fy or 1,              -- flipy (normal)
                         patches               -- renderPatch
@@ -1504,7 +1443,7 @@ local function drawCombinedImageVanilla(ompImage, extra, texfixture, _thing)
         local bones = #vertices == 8 and (spineSkin.bonesOf(body) or earBend.bonesOf(body, vertices))
         if bones then
             love.graphics.setColor(1, 1, 1, 1)
-            if extra.main.tint then love.graphics.setColor(lib.hexToColor(extra.main.tint)) end
+            if extra.main.tint then love.graphics.setColor(color.hexToColor(extra.main.tint)) end
             spineSkin.drawGrid(img, vertices, bones, body, extra)
             return
         end
@@ -1514,7 +1453,7 @@ local function drawCombinedImageVanilla(ompImage, extra, texfixture, _thing)
         love.graphics.setColor(1, 1, 1, 1)
 
         if (extra.main.tint) then
-            local r, g, b, a = lib.hexToColor(extra.main.tint)
+            local r, g, b, a = color.hexToColor(extra.main.tint)
             love.graphics.setColor(r, g, b, a)
         end
 
@@ -1553,37 +1492,29 @@ end
 -- Linear Blend Skinning: averages per-bone world positions directly.
 -- Causes "candy wrapper" / bowtie collapse at joints when influencing bodies
 -- rotate in opposite directions (the averaged midpoint falls inside the joint).
+-- One vertex, linear blend: the weighted average of where each live bone puts it,
+-- in the root body's coordinates.
+local function lbsVertex(inflList, rootBody)
+    local wxSum, wySum, wSum = 0, 0, 0
+    for k = 1, #inflList do
+        local infl = inflList[k]
+        if infl.body and not infl.body:isDestroyed() then
+            local ax, ay = currentAnchorLocal(infl)
+            local wx, wy = infl.body:getWorldPoint(ax + infl.dx, ay + infl.dy)
+            wxSum = wxSum + wx * infl.w
+            wySum = wySum + wy * infl.w
+            wSum = wSum + infl.w
+        end
+    end
+    if wSum > 0 then wxSum = wxSum / wSum; wySum = wySum / wSum end
+    return rootBody:getLocalPoint(wxSum, wySum)
+end
+
 local function deformWorldVertsLBS(influences, numVerts, rootBody)
     local out = {}
-
     for vi = 1, numVerts do
-        local inflList = influences[vi]
-        local wxSum, wySum, wSum = 0, 0, 0
-        for k = 1, #inflList do
-            local infl = inflList[k]
-            local body = infl.body
-            if body and not body:isDestroyed() then
-                local ax, ay = currentAnchorLocal(infl)
-                local lx     = ax + infl.dx
-                local ly     = ay + infl.dy
-                local wx, wy = body:getWorldPoint(lx, ly)
-
-                local w      = infl.w
-                wxSum        = wxSum + wx * w
-                wySum        = wySum + wy * w
-                wSum         = wSum + w
-            end
-        end
-
-        if wSum > 0 then
-            wxSum = wxSum / wSum; wySum = wySum / wSum
-        end
-
-        local rx, ry = rootBody:getLocalPoint(wxSum, wySum)
-        out[(vi - 1) * 2 + 1] = rx
-        out[(vi - 1) * 2 + 2] = ry
+        out[(vi - 1) * 2 + 1], out[(vi - 1) * 2 + 2] = lbsVertex(influences[vi], rootBody)
     end
-
     return out
 end
 
@@ -1609,21 +1540,7 @@ local function deformWorldVertsDQS(influences, bindVerts, numVerts, rootBody)
             out[(vi - 1) * 2 + 2] = 0
         -- Fallback path: no bind data for this vertex → LBS for this vertex only.
         elseif not bv then
-            local wxSum, wySum, wSum = 0, 0, 0
-            for k = 1, #inflList do
-                local infl = inflList[k]
-                if infl.body and not infl.body:isDestroyed() then
-                    local ax, ay = currentAnchorLocal(infl)
-                    local wx, wy = infl.body:getWorldPoint(ax + infl.dx, ay + infl.dy)
-                    wxSum = wxSum + wx * infl.w
-                    wySum = wySum + wy * infl.w
-                    wSum  = wSum + infl.w
-                end
-            end
-            if wSum > 0 then wxSum = wxSum / wSum; wySum = wySum / wSum end
-            local rx, ry = rootBody:getLocalPoint(wxSum, wySum)
-            out[(vi - 1) * 2 + 1] = rx
-            out[(vi - 1) * 2 + 2] = ry
+            out[(vi - 1) * 2 + 1], out[(vi - 1) * 2 + 2] = lbsVertex(inflList, rootBody)
         else
             local bx, by = bv[1], bv[2]
 
@@ -1656,23 +1573,8 @@ local function deformWorldVertsDQS(influences, bindVerts, numVerts, rootBody)
                 end
             end
 
-            if not pxs then
-                -- Fallback for this vertex: LBS
-                local wxSum, wySum, wSum2 = 0, 0, 0
-                for k = 1, nInfl do
-                    local infl = inflList[k]
-                    if infl.body and not infl.body:isDestroyed() then
-                        local ax, ay = currentAnchorLocal(infl)
-                        local wx, wy = infl.body:getWorldPoint(ax + infl.dx, ay + infl.dy)
-                        wxSum = wxSum + wx * infl.w
-                        wySum = wySum + wy * infl.w
-                        wSum2 = wSum2 + infl.w
-                    end
-                end
-                if wSum2 > 0 then wxSum = wxSum / wSum2; wySum = wySum / wSum2 end
-                local rx, ry = rootBody:getLocalPoint(wxSum, wySum)
-                out[(vi - 1) * 2 + 1] = rx
-                out[(vi - 1) * 2 + 2] = ry
+            if not pxs then -- a bone without its bind angle: linear blend for this vertex
+                out[(vi - 1) * 2 + 1], out[(vi - 1) * 2 + 2] = lbsVertex(inflList, rootBody)
             else
                 -- Blended delta rotation (circular mean).
                 local len = (cosSum * cosSum + sinSum * sinSum) ^ 0.5
@@ -1768,8 +1670,9 @@ local function createDrawables()
         end
         local body = ud and fixture:getBody()
         local before = #drawables
+        -- each Mipo draws in its own z-range: zGroupOffset * 1000 + the part's zOffset
+        local composedZ = ud and ud.extra and ((ud.extra.zGroupOffset or 0) * 1000 + (ud.extra.zOffset or 0))
         if ud and subtypes.is(ud, subtypes.TRACE_VERTICES) then
-            local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
 
             table.insert(drawables, {
                 type = 'trace-vertices',
@@ -1780,7 +1683,6 @@ local function createDrawables()
         end
 
         if ud and subtypes.is(ud, subtypes.TILE_REPEAT) then
-            local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
 
             table.insert(drawables, {
                 type = 'tile-repeat',
@@ -1792,7 +1694,6 @@ local function createDrawables()
 
         if ud and subtypes.is(ud, subtypes.GRASS) then
             -- two layers: behind the Mipos at its own z, in front of all of them (src/grass.lua)
-            local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
             local thing = body:getUserData() and body:getUserData().thing
             table.insert(drawables, { type = 'grass', layer = 'back', z = composedZ,
                 extra = ud.extra, thing = thing, body = body })
@@ -1802,18 +1703,15 @@ local function createDrawables()
 
         if ud and subtypes.is(ud, subtypes.LIQUID) then
             -- water in a container (src/liquid.lua); 'front' puts it in front of the Mipos (a bath)
-            local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
             if ud.extra.front then composedZ = liquid.FRONT_Z + (ud.extra.zOffset or 0) end
             table.insert(drawables, { type = subtypes.LIQUID, z = composedZ, extra = ud.extra, body = body })
         end
 
         if ud and subtypes.is(ud, subtypes.SOFTBODY) then
-            local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
             table.insert(drawables, { type = subtypes.SOFTBODY, z = composedZ, fixture = fixture })
         end
 
         if ud and subtypes.is(ud, subtypes.TEXFIXTURE) then
-            local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
             table.insert(drawables,
                 {
                     type = 'texfixture',
@@ -1825,7 +1723,6 @@ local function createDrawables()
                 })
         end
         if ud and subtypes.is(ud, subtypes.MESHUSERT) then
-            local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
             table.insert(drawables,
                 {
                     type = 'meshusert',
@@ -1838,7 +1735,6 @@ local function createDrawables()
                 })
         end
         if ud and subtypes.is(ud, subtypes.UVUSERT) then
-            local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
             table.insert(drawables,
                 {
                     type = 'uvusert',
@@ -1851,7 +1747,6 @@ local function createDrawables()
                 })
         end
         if ud and subtypes.is(ud, subtypes.DECAL) then
-            local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
             if ud.extra.browCurve then
                 table.insert(drawables, {
                     type = 'brow',
@@ -1979,7 +1874,6 @@ local function createDrawables()
                 local bendiness = (ud.extra.main and ud.extra.main.bendiness) or 2
                 points = doubleControlPoints(points, bendiness)
 
-                local composedZ = ((ud.extra.zGroupOffset or 0) * 1000) + (ud.extra.zOffset or 0)
                 table.insert(drawables,
                     {
                         z = composedZ,
@@ -2081,6 +1975,20 @@ local function lipShift(extra, side, lipImg)
     local edge = lib.lipEdgeU(url, side)
     -- the ribbon spans -halfWidth (u = 0) .. +halfWidth (u = 1) around its middle
     return -(2 * edge - 1) * lipImg:getWidth() * (extra.lipScale or 0.25)
+end
+
+-- A mouth decal's 8 curve points as the face is now: the animated shape (mouthShapeVec on
+-- the face's thing, src/mipo-face.lua) scaled onto the face; nil while it isn't animating.
+local function animatedCurvePoints(extra, body)
+    local ud = body:getUserData()
+    local vec = ud and ud.thing and ud.thing.mouthShapeVec
+    if not (vec and extra.mouthScaleX) then return nil end
+    local points = {}
+    for ci = 1, 16, 2 do
+        points[ci] = vec[ci] * extra.mouthScaleX + extra.mouthX
+        points[ci + 1] = vec[ci + 1] * extra.mouthScaleY + extra.mouthY
+    end
+    return points
 end
 
 function lib.drawTexturedWorld(_world) -- draws what's registered (createDrawables)
@@ -2332,88 +2240,57 @@ function lib.drawTexturedWorld(_world) -- draws what's registered (createDrawabl
                     end
                 end
 
-                if triIdx then
-                    for j = 1, #triIdx do
-                        local vi = triIdx[j]
-                        local px, py
-                        if vertBoneWeights and vertBoneWeights[vi] then
-                            local wxSum, wySum, wSum = 0, 0, 0
-                            for nodeIndex, w in pairs(vertBoneWeights[vi]) do
-                                local bx, by = rigidBoneVertLocal(
-                                    vi, nodeIndex, rigidSource, drawables[i].body, isRigidLookup)
-                                if bx then
-                                    wxSum = wxSum + bx * w
-                                    wySum = wySum + by * w
-                                    wSum  = wSum + w
-                                end
+                -- Where vertex vi is drawn: blended over its painted bones, else where the
+                -- deformation put it.
+                local function placeVertex(vi)
+                    local bw = vertBoneWeights and vertBoneWeights[vi]
+                    if bw then
+                        local wxSum, wySum, wSum = 0, 0, 0
+                        for nodeIndex, w in pairs(bw) do
+                            local bx, by = rigidBoneVertLocal(
+                                vi, nodeIndex, rigidSource, drawables[i].body, isRigidLookup)
+                            if bx then
+                                wxSum = wxSum + bx * w
+                                wySum = wySum + by * w
+                                wSum  = wSum + w
                             end
-                            if wSum > 0 then px = wxSum / wSum; py = wySum / wSum end
                         end
-                        px = px or verts[(vi - 1) * 2 + 1]
-                        py = py or verts[(vi - 1) * 2 + 2]
-                        table.insert(meshVertices, { px, py, 1, 1, 1, alpha })
+                        if wSum > 0 then return wxSum / wSum, wySum / wSum end
                     end
-                else
-                    for j = 1, #tris do
-                        local tri = tris[j]
-                        for k = 0, 2 do
-                            table.insert(meshVertices, {
-                                tri[k * 2 + 1], tri[k * 2 + 2],
-                                1, 1, 1, alpha
-                            })
-                        end
-                    end
+                    return verts[(vi - 1) * 2 + 1], verts[(vi - 1) * 2 + 2]
                 end
 
-                if data and data.uvs then
-                    meshVertices = {}
+                local uvs = data and data.uvs
+                if uvs then
                     vertexFormat = {
                         { "VertexPosition", "float", 2 },
                         { "VertexTexCoord", "float", 2 },
                         { "VertexColor",    "float", 4 },
                     }
-
-                    if triIdx then
-                        -- Index-based: each tri vertex's UV is uvs[i*2-1..i*2].
-                        -- No coord-key lookup — direct, stable, fast.
-                        for j = 1, #triIdx do
-                            local vi = triIdx[j]
-                            local px, py
-                            if vertBoneWeights and vertBoneWeights[vi] then
-                                local wxSum, wySum, wSum = 0, 0, 0
-                                for nodeIndex, w in pairs(vertBoneWeights[vi]) do
-                                    local bx, by = rigidBoneVertLocal(
-                                    vi, nodeIndex, rigidSource, drawables[i].body, isRigidLookup)
-                                    if bx then
-                                        wxSum = wxSum + bx * w
-                                        wySum = wySum + by * w
-                                        wSum  = wSum + w
-                                    end
-                                end
-                                if wSum > 0 then px = wxSum / wSum; py = wySum / wSum end
-                            end
-                            px = px or verts[(vi - 1) * 2 + 1]
-                            py = py or verts[(vi - 1) * 2 + 2]
-                            table.insert(meshVertices, {
-                                px, py,
-                                data.uvs[(vi - 1) * 2 + 1] or 0,
-                                data.uvs[(vi - 1) * 2 + 2] or 0,
-                                1, 1, 1, alpha
-                            })
+                end
+                if triIdx then
+                    -- index-based: vertex vi's UV is uvs[vi*2-1..vi*2]
+                    for j = 1, #triIdx do
+                        local vi = triIdx[j]
+                        local px, py = placeVertex(vi)
+                        if uvs then
+                            table.insert(meshVertices, { px, py, uvs[(vi - 1) * 2 + 1] or 0,
+                                uvs[(vi - 1) * 2 + 2] or 0, 1, 1, 1, alpha })
+                        else
+                            table.insert(meshVertices, { px, py, 1, 1, 1, alpha })
                         end
-                    else
-                        local vertexIndex = buildPolyVertexIndex(verts)
-                        for j = 1, #tris do
-                            local tri = tris[j]
-                            for k = 0, 2 do
-                                local vx = tri[k * 2 + 1]
-                                local vy = tri[k * 2 + 2]
-                                local u, v = lookupUV(vx, vy, vertexIndex, data.uvs)
-                                table.insert(meshVertices, {
-                                    vx, vy,
-                                    u or 0, v or 0,
-                                    1, 1, 1, alpha
-                                })
+                    end
+                else
+                    local vertexIndex = uvs and buildPolyVertexIndex(verts)
+                    for j = 1, #tris do
+                        local tri = tris[j]
+                        for k = 0, 2 do
+                            local vx, vy = tri[k * 2 + 1], tri[k * 2 + 2]
+                            if uvs then
+                                local u, v = lookupUV(vx, vy, vertexIndex, uvs)
+                                table.insert(meshVertices, { vx, vy, u or 0, v or 0, 1, 1, 1, alpha })
+                            else
+                                table.insert(meshVertices, { vx, vy, 1, 1, 1, alpha })
                             end
                         end
                     end
@@ -2640,7 +2517,7 @@ function lib.drawTexturedWorld(_world) -- draws what's registered (createDrawabl
                     drawables[i].extra._mesh = mesh
                 end
 
-                local r, g, b, a = lib.hexToColor(drawables[i].extra.main.tint or 'ffffffff')
+                local r, g, b, a = color.hexToColor(drawables[i].extra.main.tint or 'ffffffff')
                 love.graphics.setColor(r, g, b, a)
 
                 local body = drawables[i].thing.body
@@ -2771,7 +2648,7 @@ function lib.drawTexturedWorld(_world) -- draws what's registered (createDrawabl
                     if img then
                         local sx = dw / imgw * mirrorX
                         local sy = dh / imgh
-                        local r, g, b, a = lib.hexToColor(extra.bgHex or 'ffffffff')
+                        local r, g, b, a = color.hexToColor(extra.bgHex or 'ffffffff')
                         love.graphics.setColor(r, g, b, a)
                         love.graphics.draw(img, wx, wy, angle, sx, sy, imgw / 2, imgh / 2)
                     end
@@ -2827,7 +2704,7 @@ function lib.drawTexturedWorld(_world) -- draws what's registered (createDrawabl
                     local curve = love.math.newBezierCurve(curveData)
                     local lipScale = h / (browImg:getHeight() * 2)
                     local mesh = getStrip(browImg, lipScale)
-                    local r, g, b, a = lib.hexToColor(extra.bgHex or '000000ff')
+                    local r, g, b, a = color.hexToColor(extra.bgHex or '000000ff')
                     love.graphics.setColor(r, g, b, a)
                     texturedCurve(curve, browImg, mesh, -1, lipScale)
                     -- Mirror right brow via sx=-1, matching puppet-maker2 approach
@@ -2852,18 +2729,7 @@ function lib.drawTexturedWorld(_world) -- draws what's registered (createDrawabl
                 love.graphics.translate(bx, by)
                 love.graphics.rotate(angle)
 
-                local bud = body:getUserData()
-                local bodyThing = bud and bud.thing
-                local vec = bodyThing and bodyThing.mouthShapeVec
-                local curvePoints = extra.curvePoints
-                if vec and extra.mouthScaleX then
-                    curvePoints = {}
-                    for ci = 1, 16, 2 do
-                        curvePoints[ci]   = vec[ci]   * extra.mouthScaleX + extra.mouthX
-                        curvePoints[ci+1] = vec[ci+1] * extra.mouthScaleY + extra.mouthY
-                    end
-                end
-
+                local curvePoints = animatedCurvePoints(extra, body) or extra.curvePoints
                 local cleaned = buildMouthPolygon(curvePoints)
                 if cleaned then
                     local tris = mouthTriangles(extra, 'backdrop', cleaned)
@@ -2875,7 +2741,7 @@ function lib.drawTexturedWorld(_world) -- draws what's registered (createDrawabl
                         end, "replace", 1)
                         love.graphics.setStencilTest("equal", 1)
 
-                        local br, bg, bb, ba = lib.hexToColor(extra.backdropHex or '00000099')
+                        local br, bg, bb, ba = color.hexToColor(extra.backdropHex or '00000099')
                         love.graphics.setColor(br, bg, bb, ba)
                         local minX, minY, maxX, maxY = cleaned[1], cleaned[2], cleaned[1], cleaned[2]
                         for pi = 3, #cleaned, 2 do
@@ -2906,21 +2772,9 @@ function lib.drawTexturedWorld(_world) -- draws what's registered (createDrawabl
                 love.graphics.translate(bx, by)
                 love.graphics.rotate(angle)
 
-                -- Use animated mouth shape if available
-                local bud = body:getUserData()
-                local bodyThing = bud and bud.thing
-                local vec = bodyThing and bodyThing.mouthShapeVec
-                local curvePoints = extra.curvePoints
-                if vec and extra.mouthScaleX then
-                    curvePoints = {}
-                    for ci = 1, 16, 2 do
-                        curvePoints[ci]   = vec[ci]   * extra.mouthScaleX + extra.mouthX
-                        curvePoints[ci+1] = vec[ci+1] * extra.mouthScaleY + extra.mouthY
-                    end
-                end
-
-                local s = curvePoints
-                local activeCurveData = vec and extra.mouthScaleX and {
+                local animated = animatedCurvePoints(extra, body)
+                local s = animated or extra.curvePoints
+                local activeCurveData = animated and {
                     s[1], s[2], s[15], s[16],
                     s[15], s[16], s[13], s[14],
                     s[13], s[14], s[11], s[12],
@@ -2957,16 +2811,9 @@ function lib.drawTexturedWorld(_world) -- draws what's registered (createDrawabl
                 love.graphics.translate(bx, by)
                 love.graphics.rotate(angle)
 
-                local bud = body:getUserData()
-                local bodyThing = bud and bud.thing
-                local vec = bodyThing and bodyThing.mouthShapeVec
                 local activeCurveData = curveData
-                if vec and extra.mouthScaleX then
-                    local s = {}
-                    for ci = 1, 16, 2 do
-                        s[ci]   = vec[ci]   * extra.mouthScaleX + extra.mouthX
-                        s[ci+1] = vec[ci+1] * extra.mouthScaleY + extra.mouthY
-                    end
+                local s = animatedCurvePoints(extra, body)
+                if s then
                     activeCurveData = {
                         s[1], s[2], s[3], s[4],
                         s[3], s[4], s[5], s[6],
@@ -3020,16 +2867,8 @@ function lib.drawTexturedWorld(_world) -- draws what's registered (createDrawabl
 
                     -- Build a local curvePoints copy. Animated from mouthShapeVec when
                     -- available, otherwise copied from bind so we can safely mutate.
-                    local bud = body:getUserData()
-                    local bodyThing = bud and bud.thing
-                    local vec = bodyThing and bodyThing.mouthShapeVec
-                    local curvePoints
-                    if vec and extra.mouthScaleX and extra.curvePoints then
-                        curvePoints = {}
-                        for ci = 1, 16, 2 do
-                            curvePoints[ci]   = vec[ci]   * extra.mouthScaleX + extra.mouthX
-                            curvePoints[ci+1] = vec[ci+1] * extra.mouthScaleY + extra.mouthY
-                        end
+                    local curvePoints = extra.curvePoints and animatedCurvePoints(extra, body)
+                    if curvePoints then
                         -- Anchor at corner midpoint (stable) with a small pull toward
                         -- p3 (top of opening) so teeth follow lip motion subtly.
                         local cmx = (curvePoints[1] + curvePoints[9])  * 0.5
