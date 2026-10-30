@@ -313,7 +313,7 @@ describe("character-manager", function()
         end)
     end)
 
-    -- ─── Z-ordering and addTexturesFromInstance2 ───
+    -- ─── Z-ordering and rebuildTextures ───
 
     describe("z-ordering", function()
         it("ears-over-head toggle should change ear zOffset in DNA", function()
@@ -335,12 +335,12 @@ describe("character-manager", function()
             assert.are.equal(190, rearSkin.zOffset)
         end)
 
-        it("addTexturesFromInstance2 should preserve zGroupOffset on recreated fixtures", function()
+        it("rebuildTextures should preserve zGroupOffset on recreated fixtures", function()
             local originalZGroup = instance.zGroupOffset
             assert.is_truthy(originalZGroup)
 
             -- Recreate textures (this destroys and recreates sfixtures)
-            CharacterManager.addTexturesFromInstance2(instance)
+            CharacterManager.rebuildTextures(instance)
 
             -- All fixtures should still have the correct zGroupOffset
             for partName, part in pairs(instance.parts) do
@@ -348,18 +348,18 @@ describe("character-manager", function()
                     local ud = f:getUserData()
                     if ud and ud.extra then
                         assert.are.equal(originalZGroup, ud.extra.zGroupOffset,
-                            partName .. " lost zGroupOffset after addTexturesFromInstance2")
+                            partName .. " lost zGroupOffset after rebuildTextures")
                     end
                 end
             end
         end)
 
-        it("ear texfixture zOffset should match DNA after addTexturesFromInstance2", function()
+        it("ear texfixture zOffset should match DNA after rebuildTextures", function()
             -- Change ear zOffset in DNA
             instance.dna.parts.lear.appearance.skin.zOffset = 210
 
             -- Recreate textures
-            CharacterManager.addTexturesFromInstance2(instance)
+            CharacterManager.rebuildTextures(instance)
 
             -- Find the texfixture on lear body
             local learBody = instance.parts.lear.body
@@ -447,7 +447,7 @@ describe("character-manager", function()
 
             -- Enable lookAtMouse in DNA
             CharacterManager.updateFaceOfPart(instance, faceOwner, { eyeLookAtMouse = true })
-            CharacterManager.addTexturesFromInstance2(instance)
+            CharacterManager.rebuildTextures(instance)
 
             local body = instance.parts[faceOwner].body
             local lpupil = findFixtureByLabel(body, 'lpupil')
@@ -567,7 +567,7 @@ describe("character-manager", function()
                 CharacterManager.updateConnectedAppearance(instance, 'torso' .. i, 'connected-skin',
                     { bgURL = 'leg3.png', fgURL = 'leg3-mask.png', wmul = 2.5 })
             end
-            CharacterManager.addTexturesFromInstance2(instance)
+            CharacterManager.rebuildTextures(instance)
             local top = instance.parts['torso' .. (instance.dna.creation.torsoSegments or 1)]
             local found
             for _, f in ipairs(top.body:getFixtures()) do

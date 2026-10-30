@@ -124,12 +124,12 @@ local function findClosestNode(cx, cy, maxDist)
         end
     end
 
-    for _, j in pairs(registry.joints) do
-        local x1, y1 = j:getAnchors()
+    for _, joint in pairs(registry.joints) do
+        local x1, y1 = joint:getAnchors()
         local d = distanceSquared(x1, y1, cx, cy)
         if d < closestDistanceSquared then
             closestDistanceSquared = d
-            closest = { type = NT.JOINT, id = j:getUserData().id, x = x1, y = y1 }
+            closest = { type = NT.JOINT, id = joint:getUserData().id, x = x1, y = y1 }
         end
     end
 
@@ -717,14 +717,13 @@ function lib.handleMouseMoved(x, y, dx, dy)
             local isCtrl = love.keyboard.isDown('lctrl') or love.keyboard.isDown('rctrl')
             if mappert and button ~= nil then
                 local mb = mappert:getBody()
-                local mud = mb:getUserData()
                 local mextra = mappert:getUserData().extra
                 local triIdx = mextra and mextra.triangles
                 if not triIdx or #triIdx < 3 then return end
                 -- Match the draw path's vertex source: CDT mode uses
                 -- meshVertices (includes Steiner points), basic mode falls
                 -- back to the polygon.
-                local baseVerts = (mextra and mextra.meshVertices) or mud.thing.vertices
+                local baseVerts = (mextra and mextra.meshVertices) or utils.thingOf(mb).vertices
 
                 local body = state.selection.selectedSFixture:getBody()
                 local polyCx, polyCy = mathutils.computeCentroid(baseVerts)

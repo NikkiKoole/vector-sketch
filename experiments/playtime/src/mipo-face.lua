@@ -5,6 +5,7 @@
 -- drawn. Moved out of box2d-draw-textured.lua: the renderer only draws.
 local mouthShapes = require('src.mouth-shapes')
 local utils = require('src.utils')
+local subtypes = require('src.subtypes')
 local mipoRegistry = require('src.mipo-registry')
 local cam = require('src.camera').getInstance()
 
@@ -160,7 +161,7 @@ local function initFaceDecals(body)
     end
     for _, f in ipairs(body:getFixtures()) do
         local fud = f:getUserData()
-        if fud and fud.subtype == 'decal' then
+        if fud and fud.subtype == subtypes.DECAL then
             if fud.extra.eyeW then fud.extra.lookAtMouse = true end
             local l = fud.label
             if l == 'leye' or l == 'reye' or l == 'lpupil' or l == 'rpupil' then

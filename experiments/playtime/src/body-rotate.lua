@@ -28,8 +28,8 @@ function lib.collectDescendants(root)
     local stack = { root }
     while #stack > 0 do
         local b = table.remove(stack)
-        for _, j in ipairs(b:getJoints()) do
-            local ba, bb = j:getBodies()
+        for _, joint in ipairs(b:getJoints()) do
+            local ba, bb = joint:getBodies()
             -- Follow only parent → child.
             if ba == b and not seen[bb] then
                 seen[bb] = true
@@ -44,10 +44,10 @@ end
 -- return that joint's anchor on the body's side (the natural pivot). If
 -- there's no parent, return the body's own center (rotate in place).
 function lib.findParentPivot(body)
-    for _, j in ipairs(body:getJoints()) do
-        local _, bb = j:getBodies()
+    for _, joint in ipairs(body:getJoints()) do
+        local _, bb = joint:getBodies()
         if bb == body then
-            local _, _, x2, y2 = j:getAnchors()
+            local _, _, x2, y2 = joint:getAnchors()
             return x2, y2
         end
     end

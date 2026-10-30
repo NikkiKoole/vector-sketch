@@ -160,8 +160,11 @@ local function jointSignature(extra)
 end
 
 local function applyJointSettings(rt, extra)
-    for _, j in ipairs(rt.bends) do
-        if not j:isDestroyed() then j:setFrequency(units.rate(setting(extra, 'bend'))); j:setDampingRatio(0.7) end
+    for _, joint in ipairs(rt.bends) do
+        if not joint:isDestroyed() then
+            joint:setFrequency(units.rate(setting(extra, 'bend')))
+            joint:setDampingRatio(0.7)
+        end
     end
     for _, f in ipairs(rt.rimFixtures) do
         f:setFriction(setting(extra, 'friction'))

@@ -124,7 +124,7 @@ describe('the spine room', function()
         before_each(function()
             instance = mipoRegistry.getAll().P4re5
             CM.rebuildFromCreation(instance, { torsoSpine = true, torsoSegments = 2, spineSway = 0, spineBend = 15 })
-            CM.addTexturesFromInstance2(instance)
+            CM.rebuildTextures(instance)
         end)
 
         it('is two bands of one torso, joined where they meet, bending 15 degrees', function()
@@ -228,11 +228,11 @@ describe('the spine room', function()
                 end
             end
             CM.rebuildFromCreation(instance, { isPotatoHead = true, torsoSpine = false, torsoSegments = 1 })
-            CM.addTexturesFromInstance2(instance)
+            CM.rebuildTextures(instance)
             local plain = eyeY()
             assert.is_truthy(plain, 'no eye on the torso')
             CM.rebuildFromCreation(instance, { isPotatoHead = true, torsoSpine = true, torsoSegments = 3 })
-            CM.addTexturesFromInstance2(instance)
+            CM.rebuildTextures(instance)
             local bones = spineSkin.bonesOf(instance.parts.torso1.body)
             assert.is_near(plain, eyeY() - bones.originY, 0.5)
             -- straight: the face part stays where it is

@@ -279,20 +279,21 @@ end
 -- every rescanSteps (a behavior added in the editor): every body every step was 4500
 -- behavior lookups a frame with 20 Mipos.
 lib.rescanSteps = 60
-local triggers = { world = nil, bodyCount = -1, steps = 0, list = {} }
+local triggerScan = { world = nil, bodyCount = -1, steps = 0, list = {} }
 
 local function triggerBodies(world)
     local count = world:getBodyCount()
-    triggers.steps = triggers.steps - 1
-    if triggers.world ~= world or triggers.bodyCount ~= count or triggers.steps <= 0 then
+    triggerScan.steps = triggerScan.steps - 1
+    if triggerScan.world ~= world or triggerScan.bodyCount ~= count or triggerScan.steps <= 0 then
         local list = {}
         for _, body in ipairs(world:getBodies()) do
             local socket, plate = behaviors.find(body, 'SIGNAL_SOCKET'), behaviors.find(body, 'SIGNAL_PLATE')
             if socket or plate then list[#list + 1] = body end
         end
-        triggers.world, triggers.bodyCount, triggers.steps, triggers.list = world, count, lib.rescanSteps, list
+        triggerScan.world, triggerScan.bodyCount = world, count
+        triggerScan.steps, triggerScan.list = lib.rescanSteps, list
     end
-    return triggers.list
+    return triggerScan.list
 end
 
 function lib.update()

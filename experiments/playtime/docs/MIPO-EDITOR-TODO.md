@@ -137,7 +137,7 @@ guy.tweenVars.mouthWide = 1   -- horizontal scaling
 - [x] **Leg stance width** — `positioners.leg.x` (0–1, default 0.5)
 - [x] **Ear vertical position** — `positioners.ear.y` (0–1, default 0.5)
 - [x] **Ear stance angle** — per-ear stanceAngle sliders (lear + rear independent)
-- [x] **Ears over/under head** — zOffset toggle (190=behind, 210=in front). Fixed: `addTexturesFromInstance2` now re-applies `zGroupOffset` to recreated fixtures.
+- [x] **Ears over/under head** — zOffset toggle (190=behind, 210=in front). Fixed: `rebuildTextures` now re-applies `zGroupOffset` to recreated fixtures.
 - [x] **Head/torso flip** — our sx can go negative, same effect as flipx/flipy
 - [x] **Symmetric editing** — checkbox mirrors changes to left/right counterpart
 

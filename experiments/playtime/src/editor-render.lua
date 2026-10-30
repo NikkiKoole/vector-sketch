@@ -92,15 +92,15 @@ function lib.renderActiveEditorThings()
         -- see what `bindRadius` actually covers in world space. A capsule is
         -- the set of points within `radius` of the bone segment — the
         -- influence zone used by applySegmentWeights.
-        if ud.subtype == 'meshusert' and ud.extra.nodes and #ud.extra.nodes >= 2 then
+        if ud.subtype == subtypes.MESHUSERT and ud.extra.nodes and #ud.extra.nodes >= 2 then
             local radius = tonumber(ud.extra.bindRadius) or 80
             local function endpointsOnSharedBody(nA, nB)
                 local function resolve(n)
                     if n.type == NT.JOINT then
-                        local j = registry.getJointByID(n.id)
-                        if not j then return {} end
-                        local x1, y1, x2, y2 = j:getAnchors()
-                        local bA, bB = j:getBodies()
+                        local joint = registry.getJointByID(n.id)
+                        if not joint then return {} end
+                        local x1, y1, x2, y2 = joint:getAnchors()
+                        local bA, bB = joint:getBodies()
                         return { { body = bA, wx = x1, wy = y1 }, { body = bB, wx = x2, wy = y2 } }
                     end
                     local f = registry.getSFixtureByID(n.id)

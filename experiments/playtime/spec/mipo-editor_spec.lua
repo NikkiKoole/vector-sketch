@@ -42,8 +42,8 @@ describe('mipo editor', function()
         mipoEditor._test.accordionStates['torso1 skin'] = true
         mipoEditor._test.accordionStates['torso1_skin_patch1'] = true -- its x/y/sx/sy/rot sliders
         local rebuilds = 0
-        local original = CM.addTexturesFromInstance2
-        CM.addTexturesFromInstance2 = function(...)
+        local original = CM.rebuildTextures
+        CM.rebuildTextures = function(...)
             rebuilds = rebuilds + 1
             return original(...)
         end
@@ -52,7 +52,7 @@ describe('mipo editor', function()
         local ok, err = pcall(mipoEditor.drawMipoEditor, instance, 'torso1', 800, 0, 380, 768)
         love.graphics.setCanvas()
         canvas:release()
-        CM.addTexturesFromInstance2 = original
+        CM.rebuildTextures = original
         assert.is_true(ok, tostring(err))
         assert.are.equal(0, rebuilds)
     end)
@@ -99,10 +99,10 @@ describe('mipo editor', function()
 
         it('edits both and rebuilds the textures once', function()
             local edited, rebuilds = {}, 0
-            local original = CM.addTexturesFromInstance2
-            CM.addTexturesFromInstance2 = function() rebuilds = rebuilds + 1 end
+            local original = CM.rebuildTextures
+            CM.rebuildTextures = function() rebuilds = rebuilds + 1 end
             t.editPartAndMirror(instance, 'lfoot', function(name) edited[#edited + 1] = name end)
-            CM.addTexturesFromInstance2 = original
+            CM.rebuildTextures = original
             assert.are.same({ 'lfoot', 'rfoot' }, edited)
             assert.are.equal(1, rebuilds)
         end)

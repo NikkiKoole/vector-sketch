@@ -118,7 +118,7 @@ end
 -- fn(name) on the part and its mirror (see partAndMirror), then the textures once.
 local function editPartAndMirror(instance, partName, fn)
     for _, name in ipairs(partAndMirror(instance, partName)) do fn(name) end
-    CharacterManager.addTexturesFromInstance2(instance)
+    CharacterManager.rebuildTextures(instance)
 end
 
 -- Bodyhair is edited on the whole torso (every segment), else on a part and its mirror.
@@ -302,7 +302,7 @@ local function drawFaceEyesUI(instance, faceOwner, partName, face, x, y, panelX,
             local shapeNum = tonumber(url:match('eye(%d+)%.png'))
             if shapeNum then
                 CharacterManager.updateFaceOfPart(instance, faceOwner, { eyeShape = shapeNum })
-                CharacterManager.addTexturesFromInstance2(instance)
+                CharacterManager.rebuildTextures(instance)
             end
         end
     end)
@@ -317,7 +317,7 @@ local function drawFaceEyesUI(instance, faceOwner, partName, face, x, y, panelX,
             local shapeNum = tonumber(url:match('pupil(%d+)%.png'))
             if shapeNum then
                 CharacterManager.updateFaceOfPart(instance, faceOwner, { pupilShape = shapeNum })
-                CharacterManager.addTexturesFromInstance2(instance)
+                CharacterManager.rebuildTextures(instance)
             end
         end
     end)
@@ -328,7 +328,7 @@ local function drawFaceEyesUI(instance, faceOwner, partName, face, x, y, panelX,
     ui.alignedLabel(x, y, '  eye spacing')
     if eyeX and eyeX ~= eyePos.x then
         CharacterManager.updateFaceOfPart(instance, faceOwner, { eyeX = eyeX })
-        CharacterManager.addTexturesFromInstance2(instance)
+        CharacterManager.rebuildTextures(instance)
     end
     y = y + ROW
 
@@ -336,7 +336,7 @@ local function drawFaceEyesUI(instance, faceOwner, partName, face, x, y, panelX,
     ui.alignedLabel(x, y, '  eye vertical')
     if eyeY and eyeY ~= eyePos.y then
         CharacterManager.updateFaceOfPart(instance, faceOwner, { eyeY = eyeY })
-        CharacterManager.addTexturesFromInstance2(instance)
+        CharacterManager.rebuildTextures(instance)
     end
     y = y + ROW
 
@@ -345,7 +345,7 @@ local function drawFaceEyesUI(instance, faceOwner, partName, face, x, y, panelX,
     ui.alignedLabel(x, y, '  eye rotation')
     if eyeRVal and eyeRVal ~= eyePos.r then
         CharacterManager.updateFaceOfPart(instance, faceOwner, { eyeR = eyeRVal })
-        CharacterManager.addTexturesFromInstance2(instance)
+        CharacterManager.rebuildTextures(instance)
     end
     y = y + ROW
 
@@ -354,7 +354,7 @@ local function drawFaceEyesUI(instance, faceOwner, partName, face, x, y, panelX,
     ui.alignedLabel(x, y, '  eye width')
     if ewMul and ewMul ~= eye.wMul then
         CharacterManager.updateFaceOfPart(instance, faceOwner, { eyeWMul = ewMul })
-        CharacterManager.addTexturesFromInstance2(instance)
+        CharacterManager.rebuildTextures(instance)
     end
     y = y + ROW
 
@@ -362,7 +362,7 @@ local function drawFaceEyesUI(instance, faceOwner, partName, face, x, y, panelX,
     ui.alignedLabel(x, y, '  eye height')
     if ehMul and ehMul ~= eye.hMul then
         CharacterManager.updateFaceOfPart(instance, faceOwner, { eyeHMul = ehMul })
-        CharacterManager.addTexturesFromInstance2(instance)
+        CharacterManager.rebuildTextures(instance)
     end
     y = y + ROW
 
@@ -371,7 +371,7 @@ local function drawFaceEyesUI(instance, faceOwner, partName, face, x, y, panelX,
     ui.alignedLabel(x, y, '  pupil width')
     if pwMul and pwMul ~= pupil.wMul then
         CharacterManager.updateFaceOfPart(instance, faceOwner, { pupilWMul = pwMul })
-        CharacterManager.addTexturesFromInstance2(instance)
+        CharacterManager.rebuildTextures(instance)
     end
     y = y + ROW
 
@@ -379,7 +379,7 @@ local function drawFaceEyesUI(instance, faceOwner, partName, face, x, y, panelX,
     ui.alignedLabel(x, y, '  pupil height')
     if phMul and phMul ~= pupil.hMul then
         CharacterManager.updateFaceOfPart(instance, faceOwner, { pupilHMul = phMul })
-        CharacterManager.addTexturesFromInstance2(instance)
+        CharacterManager.rebuildTextures(instance)
     end
     y = y + ROW
 
@@ -387,7 +387,7 @@ local function drawFaceEyesUI(instance, faceOwner, partName, face, x, y, panelX,
     handlePaletteButton('mipo_eye_bg_' .. partName,
         x + 30, y, 140, eye.bgHex, function(color)
             CharacterManager.updateFaceOfPart(instance, faceOwner, { eyeBgHex = color })
-            CharacterManager.addTexturesFromInstance2(instance)
+            CharacterManager.rebuildTextures(instance)
         end)
     ui.alignedLabel(x + 180, y, 'eye outline')
     y = y + ROW
@@ -395,7 +395,7 @@ local function drawFaceEyesUI(instance, faceOwner, partName, face, x, y, panelX,
     handlePaletteButton('mipo_eye_fg_' .. partName,
         x + 30, y, 140, eye.fgHex, function(color)
             CharacterManager.updateFaceOfPart(instance, faceOwner, { eyeFgHex = color })
-            CharacterManager.addTexturesFromInstance2(instance)
+            CharacterManager.rebuildTextures(instance)
         end)
     ui.alignedLabel(x + 180, y, 'eye fill')
     y = y + ROW
@@ -404,7 +404,7 @@ local function drawFaceEyesUI(instance, faceOwner, partName, face, x, y, panelX,
     handlePaletteButton('mipo_pupil_bg_' .. partName,
         x + 30, y, 140, pupil.bgHex, function(color)
             CharacterManager.updateFaceOfPart(instance, faceOwner, { pupilBgHex = color })
-            CharacterManager.addTexturesFromInstance2(instance)
+            CharacterManager.rebuildTextures(instance)
         end)
     ui.alignedLabel(x + 180, y, 'pupil color')
     y = y + ROW
@@ -412,7 +412,7 @@ local function drawFaceEyesUI(instance, faceOwner, partName, face, x, y, panelX,
     local lookClicked, lookChecked = ui.checkbox(x, y, eye.lookAtMouse, 'pupils follow mouse')
     if lookClicked then
         CharacterManager.updateFaceOfPart(instance, faceOwner, { eyeLookAtMouse = lookChecked })
-        CharacterManager.addTexturesFromInstance2(instance)
+        CharacterManager.rebuildTextures(instance)
     end
     y = y + ROW
 
@@ -434,7 +434,7 @@ local function drawFaceBrowsUI(instance, faceOwner, partName, face, x, y, panelX
             local shapeNum = tonumber(url:match('brow(%d+)%.png'))
             if shapeNum then
                 CharacterManager.updateFaceOfPart(instance, faceOwner, { browShape = shapeNum })
-                CharacterManager.addTexturesFromInstance2(instance)
+                CharacterManager.rebuildTextures(instance)
             end
         end
     end)
@@ -446,7 +446,7 @@ local function drawFaceBrowsUI(instance, faceOwner, partName, face, x, y, panelX
     if browBend then browBend = math.floor(browBend + 0.5) end
     if browBend and browBend ~= brow.bend then
         CharacterManager.updateFaceOfPart(instance, faceOwner, { browBend = browBend })
-        CharacterManager.addTexturesFromInstance2(instance)
+        CharacterManager.rebuildTextures(instance)
     end
     y = y + ROW
 
@@ -455,7 +455,7 @@ local function drawFaceBrowsUI(instance, faceOwner, partName, face, x, y, panelX
     ui.alignedLabel(x, y, '  brow width')
     if bwMul and bwMul ~= brow.wMul then
         CharacterManager.updateFaceOfPart(instance, faceOwner, { browWMul = bwMul })
-        CharacterManager.addTexturesFromInstance2(instance)
+        CharacterManager.rebuildTextures(instance)
     end
     y = y + ROW
 
@@ -463,7 +463,7 @@ local function drawFaceBrowsUI(instance, faceOwner, partName, face, x, y, panelX
     ui.alignedLabel(x, y, '  brow height')
     if bhMul and bhMul ~= brow.hMul then
         CharacterManager.updateFaceOfPart(instance, faceOwner, { browHMul = bhMul })
-        CharacterManager.addTexturesFromInstance2(instance)
+        CharacterManager.rebuildTextures(instance)
     end
     y = y + ROW
 
@@ -472,7 +472,7 @@ local function drawFaceBrowsUI(instance, faceOwner, partName, face, x, y, panelX
     ui.alignedLabel(x, y, '  brow vertical')
     if browYVal and browYVal ~= browPos.y then
         CharacterManager.updateFaceOfPart(instance, faceOwner, { browY = browYVal })
-        CharacterManager.addTexturesFromInstance2(instance)
+        CharacterManager.rebuildTextures(instance)
     end
     y = y + ROW
 
@@ -480,7 +480,7 @@ local function drawFaceBrowsUI(instance, faceOwner, partName, face, x, y, panelX
     handlePaletteButton('mipo_brow_bg_' .. partName,
         x + 30, y, 140, brow.bgHex, function(color)
             CharacterManager.updateFaceOfPart(instance, faceOwner, { browBgHex = color })
-            CharacterManager.addTexturesFromInstance2(instance)
+            CharacterManager.rebuildTextures(instance)
         end)
     ui.alignedLabel(x + 180, y, 'brow color')
     y = y + ROW
@@ -502,11 +502,11 @@ local function drawFaceNoseUI(instance, faceOwner, partName, face, x, y, panelX,
             local shapeNum = tonumber(url:match('nose(%d+)%.png'))
             if shapeNum then
                 CharacterManager.updateFaceOfPart(instance, faceOwner, { noseShape = shapeNum })
-                CharacterManager.addTexturesFromInstance2(instance)
+                CharacterManager.rebuildTextures(instance)
             end
         else
             CharacterManager.updateFaceOfPart(instance, faceOwner, { noseShape = 0 })
-            CharacterManager.addTexturesFromInstance2(instance)
+            CharacterManager.rebuildTextures(instance)
         end
     end, true)
     y = y + gridHeight + BUTTON_SPACING
@@ -516,7 +516,7 @@ local function drawFaceNoseUI(instance, faceOwner, partName, face, x, y, panelX,
     ui.alignedLabel(x, y, '  nose width')
     if nwMul and nwMul ~= nose.wMul then
         CharacterManager.updateFaceOfPart(instance, faceOwner, { noseWMul = nwMul })
-        CharacterManager.addTexturesFromInstance2(instance)
+        CharacterManager.rebuildTextures(instance)
     end
     y = y + ROW
 
@@ -524,7 +524,7 @@ local function drawFaceNoseUI(instance, faceOwner, partName, face, x, y, panelX,
     ui.alignedLabel(x, y, '  nose height')
     if nhMul and nhMul ~= nose.hMul then
         CharacterManager.updateFaceOfPart(instance, faceOwner, { noseHMul = nhMul })
-        CharacterManager.addTexturesFromInstance2(instance)
+        CharacterManager.rebuildTextures(instance)
     end
     y = y + ROW
 
@@ -533,7 +533,7 @@ local function drawFaceNoseUI(instance, faceOwner, partName, face, x, y, panelX,
     ui.alignedLabel(x, y, '  nose vertical')
     if noseYVal and noseYVal ~= nosePos.y then
         CharacterManager.updateFaceOfPart(instance, faceOwner, { noseY = noseYVal })
-        CharacterManager.addTexturesFromInstance2(instance)
+        CharacterManager.rebuildTextures(instance)
     end
     y = y + ROW
 
@@ -541,7 +541,7 @@ local function drawFaceNoseUI(instance, faceOwner, partName, face, x, y, panelX,
     handlePaletteButton('mipo_nose_bg_' .. partName,
         x + 30, y, 140, nose.bgHex, function(color)
             CharacterManager.updateFaceOfPart(instance, faceOwner, { noseBgHex = color })
-            CharacterManager.addTexturesFromInstance2(instance)
+            CharacterManager.rebuildTextures(instance)
         end)
     ui.alignedLabel(x + 180, y, 'nose outline')
     y = y + ROW
@@ -549,7 +549,7 @@ local function drawFaceNoseUI(instance, faceOwner, partName, face, x, y, panelX,
     handlePaletteButton('mipo_nose_fg_' .. partName,
         x + 30, y, 140, nose.fgHex, function(color)
             CharacterManager.updateFaceOfPart(instance, faceOwner, { noseFgHex = color })
-            CharacterManager.addTexturesFromInstance2(instance)
+            CharacterManager.rebuildTextures(instance)
         end)
     ui.alignedLabel(x + 180, y, 'nose fill')
     y = y + ROW
@@ -572,7 +572,7 @@ local function drawFaceMouthUI(instance, faceOwner, partName, face, x, y, panelX
     if mShape then mShape = math.floor(mShape + 0.5) end
     if mShape and mShape ~= mouth.shape then
         CharacterManager.updateFaceOfPart(instance, faceOwner, { mouthShape = mShape })
-        CharacterManager.addTexturesFromInstance2(instance)
+        CharacterManager.rebuildTextures(instance)
     end
     y = y + ROW
 
@@ -585,7 +585,7 @@ local function drawFaceMouthUI(instance, faceOwner, partName, face, x, y, panelX
             local num = tonumber(url:match('upperlip(%d+)%.png'))
             if num then
                 CharacterManager.updateFaceOfPart(instance, faceOwner, { mouthUpperLipShape = num })
-                CharacterManager.addTexturesFromInstance2(instance)
+                CharacterManager.rebuildTextures(instance)
             end
         end
     end)
@@ -600,7 +600,7 @@ local function drawFaceMouthUI(instance, faceOwner, partName, face, x, y, panelX
             local num = tonumber(url:match('lowerlip(%d+)%.png'))
             if num then
                 CharacterManager.updateFaceOfPart(instance, faceOwner, { mouthLowerLipShape = num })
-                CharacterManager.addTexturesFromInstance2(instance)
+                CharacterManager.rebuildTextures(instance)
             end
         end
     end)
@@ -611,7 +611,7 @@ local function drawFaceMouthUI(instance, faceOwner, partName, face, x, y, panelX
     ui.alignedLabel(x, y, '  mouth vertical')
     if mY and mY ~= mouthPos.y then
         CharacterManager.updateFaceOfPart(instance, faceOwner, { mouthY = mY })
-        CharacterManager.addTexturesFromInstance2(instance)
+        CharacterManager.rebuildTextures(instance)
     end
     y = y + ROW
 
@@ -620,7 +620,7 @@ local function drawFaceMouthUI(instance, faceOwner, partName, face, x, y, panelX
     ui.alignedLabel(x, y, '  mouth width')
     if mwMul and mwMul ~= mouth.wMul then
         CharacterManager.updateFaceOfPart(instance, faceOwner, { mouthWMul = mwMul })
-        CharacterManager.addTexturesFromInstance2(instance)
+        CharacterManager.rebuildTextures(instance)
     end
     y = y + ROW
 
@@ -628,7 +628,7 @@ local function drawFaceMouthUI(instance, faceOwner, partName, face, x, y, panelX
     ui.alignedLabel(x, y, '  mouth height')
     if mhMul and mhMul ~= mouth.hMul then
         CharacterManager.updateFaceOfPart(instance, faceOwner, { mouthHMul = mhMul })
-        CharacterManager.addTexturesFromInstance2(instance)
+        CharacterManager.rebuildTextures(instance)
     end
     y = y + ROW
 
@@ -638,7 +638,7 @@ local function drawFaceMouthUI(instance, faceOwner, partName, face, x, y, panelX
     ui.alignedLabel(x, y, '  upper lip')
     if upperLipScale and upperLipScale ~= mouth.upperLipScale then
         CharacterManager.updateFaceOfPart(instance, faceOwner, { mouthUpperLipScale = upperLipScale })
-        CharacterManager.addTexturesFromInstance2(instance)
+        CharacterManager.rebuildTextures(instance)
     end
     y = y + ROW
 
@@ -647,7 +647,7 @@ local function drawFaceMouthUI(instance, faceOwner, partName, face, x, y, panelX
     ui.alignedLabel(x, y, '  lower lip')
     if lowerLipScale and lowerLipScale ~= mouth.lowerLipScale then
         CharacterManager.updateFaceOfPart(instance, faceOwner, { mouthLowerLipScale = lowerLipScale })
-        CharacterManager.addTexturesFromInstance2(instance)
+        CharacterManager.rebuildTextures(instance)
     end
     y = y + ROW
 
@@ -655,7 +655,7 @@ local function drawFaceMouthUI(instance, faceOwner, partName, face, x, y, panelX
     handlePaletteButton('mipo_lip_color_' .. partName,
         x + 30, y, 140, mouth.lipHex, function(color)
             CharacterManager.updateFaceOfPart(instance, faceOwner, { mouthLipHex = color })
-            CharacterManager.addTexturesFromInstance2(instance)
+            CharacterManager.rebuildTextures(instance)
         end)
     ui.alignedLabel(x + 180, y, 'lip color')
     y = y + ROW
@@ -664,7 +664,7 @@ local function drawFaceMouthUI(instance, faceOwner, partName, face, x, y, panelX
     handlePaletteButton('mipo_mouth_backdrop_' .. partName,
         x + 30, y, 140, mouth.backdropHex, function(color)
             CharacterManager.updateFaceOfPart(instance, faceOwner, { mouthBackdropHex = color })
-            CharacterManager.addTexturesFromInstance2(instance)
+            CharacterManager.rebuildTextures(instance)
         end)
     ui.alignedLabel(x + 180, y, 'mouth interior')
     y = y + ROW
@@ -680,11 +680,11 @@ local function drawFaceMouthUI(instance, faceOwner, partName, face, x, y, panelX
             local num = tonumber(url:match('teeth(%d+)%.png'))
             if num then
                 CharacterManager.updateFaceOfPart(instance, faceOwner, { teethShape = num })
-                CharacterManager.addTexturesFromInstance2(instance)
+                CharacterManager.rebuildTextures(instance)
             end
         else
             CharacterManager.updateFaceOfPart(instance, faceOwner, { teethShape = 0 })
-            CharacterManager.addTexturesFromInstance2(instance)
+            CharacterManager.rebuildTextures(instance)
         end
     end, true) -- showNone = true
     y = y + teethGridHeight + BUTTON_SPACING
@@ -694,7 +694,7 @@ local function drawFaceMouthUI(instance, faceOwner, partName, face, x, y, panelX
         ui.alignedLabel(x, y, '  teeth width')
         if twMul and twMul ~= (teeth.wMul or 1) then
             CharacterManager.updateFaceOfPart(instance, faceOwner, { teethWMul = twMul })
-            CharacterManager.addTexturesFromInstance2(instance)
+            CharacterManager.rebuildTextures(instance)
         end
         y = y + ROW
 
@@ -702,21 +702,21 @@ local function drawFaceMouthUI(instance, faceOwner, partName, face, x, y, panelX
         ui.alignedLabel(x, y, '  teeth height')
         if thMul and thMul ~= teeth.hMul then
             CharacterManager.updateFaceOfPart(instance, faceOwner, { teethHMul = thMul })
-            CharacterManager.addTexturesFromInstance2(instance)
+            CharacterManager.rebuildTextures(instance)
         end
         y = y + ROW
 
         local soClicked, soChecked = ui.checkbox(x, y, teeth.stickOut, 'stick out')
         if soClicked then
             CharacterManager.updateFaceOfPart(instance, faceOwner, { teethStickOut = soChecked })
-            CharacterManager.addTexturesFromInstance2(instance)
+            CharacterManager.rebuildTextures(instance)
         end
         y = y + ROW
 
         handlePaletteButton('mipo_teeth_bg_' .. partName,
             x + 30, y, 140, teeth.bgHex, function(color)
                 CharacterManager.updateFaceOfPart(instance, faceOwner, { teethBgHex = color })
-                CharacterManager.addTexturesFromInstance2(instance)
+                CharacterManager.rebuildTextures(instance)
             end)
         ui.alignedLabel(x + 180, y, 'teeth outline')
         y = y + ROW
@@ -724,7 +724,7 @@ local function drawFaceMouthUI(instance, faceOwner, partName, face, x, y, panelX
         handlePaletteButton('mipo_teeth_fg_' .. partName,
             x + 30, y, 140, teeth.fgHex, function(color)
                 CharacterManager.updateFaceOfPart(instance, faceOwner, { teethFgHex = color })
-                CharacterManager.addTexturesFromInstance2(instance)
+                CharacterManager.rebuildTextures(instance)
             end)
         ui.alignedLabel(x + 180, y, 'teeth fill')
         y = y + ROW
@@ -798,7 +798,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
             if cbClicked then
                 changed = true
                 CharacterManager.rebuildFromCreation(instance, { isPotatoHead = cbChecked })
-                CharacterManager.addTexturesFromInstance2(instance)
+                CharacterManager.rebuildTextures(instance)
             end
             y = y + ROW
 
@@ -810,7 +810,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                 if val ~= creation.torsoSegments then
                     changed = true
                     CharacterManager.rebuildFromCreation(instance, { torsoSegments = val })
-                    CharacterManager.addTexturesFromInstance2(instance)
+                    CharacterManager.rebuildTextures(instance)
                 end
             end
             y = y + ROW
@@ -822,7 +822,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                 local patch = { torsoSpine = spChecked }
                 if spChecked and (creation.torsoSegments or 1) < 2 then patch.torsoSegments = 2 end
                 CharacterManager.rebuildFromCreation(instance, patch)
-                CharacterManager.addTexturesFromInstance2(instance)
+                CharacterManager.rebuildTextures(instance)
             end
             y = y + ROW
             if creation.torsoSpine then
@@ -832,7 +832,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                 if bend and bend ~= creation.spineBend then
                     changed = true
                     CharacterManager.rebuildFromCreation(instance, { spineBend = bend })
-                    CharacterManager.addTexturesFromInstance2(instance)
+                    CharacterManager.rebuildTextures(instance)
                 end
                 y = y + ROW
                 local sway = ui.sliderWithInput('mipo_spineSway', x, y, 120, 0, 1, creation.spineSway or 0.3)
@@ -849,7 +849,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                 if val ~= creation.neckSegments then
                     changed = true
                     CharacterManager.rebuildFromCreation(instance, { neckSegments = val })
-                    CharacterManager.addTexturesFromInstance2(instance)
+                    CharacterManager.rebuildTextures(instance)
                 end
             end
             y = y + ROW
@@ -864,7 +864,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                     for i = 1, creation.neckSegments do
                         CharacterManager.updatePart('neck' .. i, { h = nh }, instance)
                     end
-                    CharacterManager.addTexturesFromInstance2(instance)
+                    CharacterManager.rebuildTextures(instance)
                 end
                 y = y + ROW
             end
@@ -880,7 +880,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                     for i = 1, creation.torsoSegments or 1 do
                         CharacterManager.updateConnectedAppearance(instance, 'torso' .. i, 'connected-skin', values)
                     end
-                    CharacterManager.addTexturesFromInstance2(instance)
+                    CharacterManager.rebuildTextures(instance)
                 end
                 ui.label(x, y, 'neck skin')
                 y = y + ROW
@@ -917,7 +917,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                         CharacterManager.updateFaceOfPart(instance, startParent, { noseShape = 0 })
                     end
                     CharacterManager.rebuildFromCreation(instance, updates)
-                    CharacterManager.addTexturesFromInstance2(instance)
+                    CharacterManager.rebuildTextures(instance)
                 end
             end
             y = y + ROW
@@ -933,7 +933,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                         CharacterManager.updateFaceOfPart(instance, startParent, { noseShape = 0 })
                     end
                     CharacterManager.rebuildFromCreation(instance, { noseMode = newMode })
-                    CharacterManager.addTexturesFromInstance2(instance)
+                    CharacterManager.rebuildTextures(instance)
                 end
                 y = y + ROW
             end
@@ -952,7 +952,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
             if legX and legX ~= pos.leg.x then
                 CharacterManager.updatePositioners(instance, { legX = legX })
                 CharacterManager.rebuildFromCreation(instance, {})
-                CharacterManager.addTexturesFromInstance2(instance)
+                CharacterManager.rebuildTextures(instance)
             end
             y = y + ROW
 
@@ -962,7 +962,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
             if earY and earY ~= pos.ear.y then
                 CharacterManager.updatePositioners(instance, { earY = earY })
                 CharacterManager.rebuildFromCreation(instance, {})
-                CharacterManager.addTexturesFromInstance2(instance)
+                CharacterManager.rebuildTextures(instance)
             end
             y = y + ROW
 
@@ -975,7 +975,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                 if lVal and lVal ~= lAngle then
                     learPart.stanceAngle = lVal
                     CharacterManager.rebuildFromCreation(instance, {})
-                    CharacterManager.addTexturesFromInstance2(instance)
+                    CharacterManager.rebuildTextures(instance)
                 end
                 y = y + ROW
             end
@@ -989,7 +989,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                 if rVal and rVal ~= rAngle then
                     rearPart.stanceAngle = rVal
                     CharacterManager.rebuildFromCreation(instance, {})
-                    CharacterManager.addTexturesFromInstance2(instance)
+                    CharacterManager.rebuildTextures(instance)
                 end
                 y = y + ROW
             end
@@ -1006,7 +1006,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                     local rearSkin = instance.dna.parts['rear'] and instance.dna.parts['rear'].appearance
                         and instance.dna.parts['rear'].appearance['skin']
                     if rearSkin then rearSkin.zOffset = newZ end
-                    CharacterManager.addTexturesFromInstance2(instance)
+                    CharacterManager.rebuildTextures(instance)
                 end
                 y = y + ROW
             end
@@ -1016,7 +1016,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
             ui.alignedLabel(x, y, '  face magnitude')
             if fmVal and fmVal ~= (instance.dna.faceMagnitude or 1) then
                 CharacterManager.updatePositioners(instance, { faceMagnitude = fmVal })
-                CharacterManager.addTexturesFromInstance2(instance)
+                CharacterManager.rebuildTextures(instance)
             end
             y = y + ROW
         end)
@@ -1246,7 +1246,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                                 bhPatch.cached = nil
                             end
                             for _, name in ipairs(bodyhairParts(instance, partName)) do clearOrSet(name) end
-                            CharacterManager.addTexturesFromInstance2(instance)
+                            CharacterManager.rebuildTextures(instance)
                         end, true)
                     y = y + gridHeight + BUTTON_SPACING
 
@@ -1256,7 +1256,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                             for _, name in ipairs(bodyhairParts(instance, partName)) do
                                 CharacterManager.updateBodyhairOfPart(instance, name, { bgHex = color })
                             end
-                            CharacterManager.addTexturesFromInstance2(instance)
+                            CharacterManager.rebuildTextures(instance)
                         end)
                     ui.alignedLabel(x + 180, y, 'outline')
                     y = y + ROW
@@ -1266,7 +1266,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                             for _, name in ipairs(bodyhairParts(instance, partName)) do
                                 CharacterManager.updateBodyhairOfPart(instance, name, { fgHex = color })
                             end
-                            CharacterManager.addTexturesFromInstance2(instance)
+                            CharacterManager.rebuildTextures(instance)
                         end)
                     ui.alignedLabel(x + 180, y, 'fill')
                     y = y + ROW
@@ -1326,7 +1326,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                                 instance.dna.parts['nose' .. i].dims.w = nw
                             end
                             CharacterManager.rebuildFromCreation(instance, {})
-                            CharacterManager.addTexturesFromInstance2(instance)
+                            CharacterManager.rebuildTextures(instance)
                         end
                         y = y + ROW
 
@@ -1338,7 +1338,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                                 instance.dna.parts['nose' .. i].dims.h = nh
                             end
                             CharacterManager.rebuildFromCreation(instance, {})
-                            CharacterManager.addTexturesFromInstance2(instance)
+                            CharacterManager.rebuildTextures(instance)
                         end
                         y = y + ROW
 
@@ -1356,7 +1356,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                                         local vals = { bgURL = url, fgURL = url:gsub('%.png', '-mask.png') }
                                         CharacterManager.updateConnectedAppearance(instance, 'nose1',
                                             'connected-skin', vals)
-                                        CharacterManager.addTexturesFromInstance2(instance)
+                                        CharacterManager.rebuildTextures(instance)
                                     end)
                                 y = y + gridHeight + BUTTON_SPACING
 
@@ -1366,7 +1366,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                                 if wmulVal and wmulVal ~= currentWmul then
                                     CharacterManager.updateConnectedAppearance(instance, 'nose1', 'connected-skin',
                                         { wmul = wmulVal })
-                                    CharacterManager.addTexturesFromInstance2(instance)
+                                    CharacterManager.rebuildTextures(instance)
                                 end
                                 y = y + ROW
 
@@ -1374,7 +1374,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                                     x + 30, y, 140, cs.bgHex, function(color)
                                         CharacterManager.updateConnectedAppearance(instance, 'nose1', 'connected-skin',
                                             { bgHex = color })
-                                        CharacterManager.addTexturesFromInstance2(instance)
+                                        CharacterManager.rebuildTextures(instance)
                                     end)
                                 ui.alignedLabel(x + 180, y, 'outline')
                                 y = y + ROW
@@ -1383,7 +1383,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                                     x + 30, y, 140, cs.fgHex, function(color)
                                         CharacterManager.updateConnectedAppearance(instance, 'nose1', 'connected-skin',
                                             { fgHex = color })
-                                        CharacterManager.addTexturesFromInstance2(instance)
+                                        CharacterManager.rebuildTextures(instance)
                                     end)
                                 ui.alignedLabel(x + 180, y, 'fill')
                                 y = y + ROW
@@ -1392,7 +1392,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                                     function(key, value)
                                         CharacterManager.updateConnectedAppearance(instance, 'nose1', 'connected-skin',
                                             { [key] = value })
-                                        CharacterManager.addTexturesFromInstance2(instance)
+                                        CharacterManager.rebuildTextures(instance)
                                     end)
                             end
                         end
@@ -1427,7 +1427,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                                         nose1Data.appearance['connected-hair'] = nil
                                     end
                                     CharacterManager.rebuildFromCreation(instance, {})
-                                    CharacterManager.addTexturesFromInstance2(instance)
+                                    CharacterManager.rebuildTextures(instance)
                                 end, true)
                             y = y + gridHeight + BUTTON_SPACING
 
@@ -1438,7 +1438,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                                 if wmulVal and wmulVal ~= currentWmul then
                                     CharacterManager.updateConnectedAppearance(instance, 'nose1', 'connected-hair',
                                         { wmul = wmulVal })
-                                    CharacterManager.addTexturesFromInstance2(instance)
+                                    CharacterManager.rebuildTextures(instance)
                                 end
                                 y = y + ROW
 
@@ -1446,7 +1446,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                                     x + 30, y, 140, ch.bgHex, function(color)
                                         CharacterManager.updateConnectedAppearance(instance, 'nose1', 'connected-hair',
                                             { bgHex = color })
-                                        CharacterManager.addTexturesFromInstance2(instance)
+                                        CharacterManager.rebuildTextures(instance)
                                     end)
                                 ui.alignedLabel(x + 180, y, 'outline')
                                 y = y + ROW
@@ -1456,7 +1456,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                                         x + 30, y, 140, ch.fgHex or 'ffffffff', function(color)
                                             CharacterManager.updateConnectedAppearance(instance, 'nose1',
                                                 'connected-hair', { fgHex = color })
-                                            CharacterManager.addTexturesFromInstance2(instance)
+                                            CharacterManager.rebuildTextures(instance)
                                         end)
                                     ui.alignedLabel(x + 180, y, 'fill')
                                     y = y + ROW
@@ -1465,7 +1465,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                                         function(key, value)
                                             CharacterManager.updateConnectedAppearance(instance, 'nose1',
                                                 'connected-hair', { [key] = value })
-                                            CharacterManager.addTexturesFromInstance2(instance)
+                                            CharacterManager.rebuildTextures(instance)
                                         end)
                                 end
                             end
@@ -1481,7 +1481,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                                 handlePaletteButton('mipo_nose_skin_bg',
                                     x + 30, y, 140, skin.main.bgHex, function(color)
                                         CharacterManager.updateSkinOfPart(instance, 'nose1', { bgHex = color }, 'main')
-                                        CharacterManager.addTexturesFromInstance2(instance)
+                                        CharacterManager.rebuildTextures(instance)
                                     end)
                                 ui.alignedLabel(x + 180, y, 'outline')
                                 y = y + ROW
@@ -1489,7 +1489,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                                 handlePaletteButton('mipo_nose_skin_fg',
                                     x + 30, y, 140, skin.main.fgHex, function(color)
                                         CharacterManager.updateSkinOfPart(instance, 'nose1', { fgHex = color }, 'main')
-                                        CharacterManager.addTexturesFromInstance2(instance)
+                                        CharacterManager.rebuildTextures(instance)
                                     end)
                                 ui.alignedLabel(x + 180, y, 'fill')
                                 y = y + ROW
@@ -1497,7 +1497,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                                 y = drawPatternControls(skin.main, 'mipo_nose_skin_pat', panelX, y,
                                     function(key, value)
                                         CharacterManager.updateSkinOfPart(instance, 'nose1', { [key] = value }, 'main')
-                                        CharacterManager.addTexturesFromInstance2(instance)
+                                        CharacterManager.rebuildTextures(instance)
                                     end)
                             end
                         end
@@ -1543,7 +1543,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                                 main.fgURL = nil
                                 main.cached = nil
                             end
-                            CharacterManager.addTexturesFromInstance2(instance)
+                            CharacterManager.rebuildTextures(instance)
                         end, true)
                     y = y + gridHeight + BUTTON_SPACING
 
@@ -1553,7 +1553,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                     ui.alignedLabel(x, y, '  width')
                     if wVal and wVal ~= currentWidth then
                         CharacterManager.updateHaircutOfPart(instance, haircutOwner, { width = wVal })
-                        CharacterManager.addTexturesFromInstance2(instance)
+                        CharacterManager.rebuildTextures(instance)
                     end
                     y = y + ROW
 
@@ -1564,7 +1564,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                         si = math.floor(si)
                         if si ~= hc.startIndex then
                             CharacterManager.updateHaircutOfPart(instance, haircutOwner, { startIndex = si })
-                            CharacterManager.addTexturesFromInstance2(instance)
+                            CharacterManager.rebuildTextures(instance)
                         end
                     end
                     y = y + ROW
@@ -1575,7 +1575,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                         ei = math.floor(ei)
                         if ei ~= hc.endIndex then
                             CharacterManager.updateHaircutOfPart(instance, haircutOwner, { endIndex = ei })
-                            CharacterManager.addTexturesFromInstance2(instance)
+                            CharacterManager.rebuildTextures(instance)
                         end
                     end
                     y = y + ROW
@@ -1584,7 +1584,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                     handlePaletteButton('mipo_hc_bg_' .. partName,
                         x + 30, y, 140, main.bgHex, function(color)
                             CharacterManager.updateHaircutOfPart(instance, haircutOwner, { bgHex = color })
-                            CharacterManager.addTexturesFromInstance2(instance)
+                            CharacterManager.rebuildTextures(instance)
                         end)
                     ui.alignedLabel(x + 180, y, 'outline')
                     y = y + ROW
@@ -1594,7 +1594,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                         handlePaletteButton('mipo_hc_fg_' .. partName,
                             x + 30, y, 140, main.fgHex or 'ffffffff', function(color)
                                 CharacterManager.updateHaircutOfPart(instance, haircutOwner, { fgHex = color })
-                                CharacterManager.addTexturesFromInstance2(instance)
+                                CharacterManager.rebuildTextures(instance)
                             end)
                         ui.alignedLabel(x + 180, y, 'fill')
                         y = y + ROW
@@ -1602,7 +1602,7 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
                         y = drawPatternControls(main, 'mipo_hc_pat_' .. partName, panelX, y,
                             function(key, value)
                                 CharacterManager.updateHaircutOfPart(instance, haircutOwner, { [key] = value })
-                                CharacterManager.addTexturesFromInstance2(instance)
+                                CharacterManager.rebuildTextures(instance)
                             end)
                     end
                 end

@@ -155,24 +155,24 @@ parentStrategies.none = function()
 end
 
 -- Attach at parent's bottom edge: 0, +h/2 * scale
-parentStrategies.parentBottom = function(_partName, guy, entry)
-    local parentPart = guy.dna.parts[entry.parent]
-    local scale = guy.scale
+parentStrategies.parentBottom = function(_partName, instance, entry)
+    local parentPart = instance.dna.parts[entry.parent]
+    local scale = instance.scale
     return 0, (parentPart.dims.h / 2) * scale
 end
 
 -- Attach at parent's top edge: 0, -h/2 * scale
-parentStrategies.parentTop = function(_partName, guy, entry)
-    local parentPart = guy.dna.parts[entry.parent]
-    local scale = guy.scale
+parentStrategies.parentTop = function(_partName, instance, entry)
+    local parentPart = instance.dna.parts[entry.parent]
+    local scale = instance.scale
     return 0, (-parentPart.dims.h / 2) * scale
 end
 
 -- Attach at parent's top vertex (SHAPE8) or top edge (fallback).
 -- Used for torso chains, neck→torso, head→torso.
-parentStrategies.chainTop = function(_partName, guy, entry)
-    local parentPart = guy.dna.parts[entry.parent]
-    local scale = guy.scale
+parentStrategies.chainTop = function(_partName, instance, entry)
+    local parentPart = instance.dna.parts[entry.parent]
+    local scale = instance.scale
     if isShape8(parentPart) then
         return getVertex(parentPart, 1, scale)
     else
@@ -181,10 +181,10 @@ parentStrategies.chainTop = function(_partName, guy, entry)
 end
 
 -- Attach at a specific vertex on parent's SHAPE8, with dimension fallback.
-parentStrategies.vertex = function(_partName, guy, entry)
-    local parentPart = guy.dna.parts[entry.parent]
+parentStrategies.vertex = function(_partName, instance, entry)
+    local parentPart = instance.dna.parts[entry.parent]
     local pa = entry.parentAttach
-    local scale = guy.scale
+    local scale = instance.scale
     if isShape8(parentPart) then
         return getVertex(parentPart, pa.vertex, scale)
     else
@@ -195,11 +195,11 @@ end
 
 -- Lerp between two parent vertices, driven by a positioner value.
 -- Used for legs (on lowest torso).
-parentStrategies.lerpVertices = function(_partName, guy, entry)
-    local parentPart = guy.dna.parts[entry.parent]
+parentStrategies.lerpVertices = function(_partName, instance, entry)
+    local parentPart = instance.dna.parts[entry.parent]
     local pa = entry.parentAttach
-    local scale = guy.scale
-    local t = guy.dna.positioners[pa.positioner][pa.posField]
+    local scale = instance.scale
+    local t = instance.dna.positioners[pa.positioner][pa.posField]
 
     if isShape8(parentPart) then
         local ax, ay = getVertex(parentPart, pa.vertex1, scale)
@@ -230,11 +230,11 @@ end
 -- 2,3,4 for the right ear, 8,7,6 for the left), t of the way by length. Ears used
 -- to mirror the right ear's point and cut straight from vertex 2 to 4: on a
 -- lopsided head the left ear floated off, and on a round one both sank in.
-parentStrategies.outline = function(partName, guy, entry)
-    local parentPart = guy.dna.parts[entry.parent]
+parentStrategies.outline = function(partName, instance, entry)
+    local parentPart = instance.dna.parts[entry.parent]
     local pa = entry.parentAttach
-    local scale = guy.scale
-    local t = guy.dna.positioners[pa.positioner][pa.posField]
+    local scale = instance.scale
+    local t = instance.dna.positioners[pa.positioner][pa.posField]
 
     if not isShape8(parentPart) then
         local w, h = parentPart.dims.w, parentPart.dims.h
@@ -263,7 +263,7 @@ parentStrategies.outline = function(partName, guy, entry)
         togo = togo - lengths[i]
     end
 
-    local part = guy.dna.parts[partName]
+    local part = instance.dna.parts[partName]
     local skin = part.appearance and part.appearance.skin
     local behind = not (skin and skin.zOffset and skin.zOffset > 200)
     local distance = math.sqrt(x * x + y * y)
@@ -275,10 +275,10 @@ parentStrategies.outline = function(partName, guy, entry)
 end
 
 -- Lerp along vertex 1→5 midline on parent (nose placement).
-parentStrategies.midlineLerp = function(_partName, guy, entry)
-    local parentPart = guy.dna.parts[entry.parent]
-    local scale = guy.scale
-    local t = guy.dna.positioners.nose.t
+parentStrategies.midlineLerp = function(_partName, instance, entry)
+    local parentPart = instance.dna.parts[entry.parent]
+    local scale = instance.scale
+    local t = instance.dna.positioners.nose.t
 
     if isShape8(parentPart) then
         local ax, ay = getVertex(parentPart, 1, scale)
@@ -291,9 +291,9 @@ end
 
 -- ─── Own-attach: offset on SELF where parent connects ───
 
-function lib.getOwnOffset(partName, guy, entry)
-    local part = guy.dna.parts[partName]
-    local scale = guy.scale
+function lib.getOwnOffset(partName, instance, entry)
+    local part = instance.dna.parts[partName]
+    local scale = instance.scale
     local oa = entry.ownAttach
 
     if oa.strategy == 'top' then
@@ -329,17 +329,17 @@ end
 
 -- ─── Parent-attach dispatch ───
 
-function lib.getOffsetFromParent(partName, guy, entry)
+function lib.getOffsetFromParent(partName, instance, entry)
     local strategy = parentStrategies[entry.parentAttach.strategy]
-    return strategy(partName, guy, entry)
+    return strategy(partName, instance, entry)
 end
 
 -- ─── Angle offset ───
 
-function lib.getAngleOffset(partName, guy, entry)
+function lib.getAngleOffset(partName, instance, entry)
     local ao = entry.angleOffset
     if ao == 'stanceAngle' then
-        return guy.dna.parts[partName].stanceAngle or 0
+        return instance.dna.parts[partName].stanceAngle or 0
     end
     return ao or 0
 end

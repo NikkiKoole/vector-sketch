@@ -165,7 +165,7 @@ function lib.updateSkinOfPart(instance, partName, values, optionalPatchName)
                     p.appearance['skin'][patch][k] = v
                 end
                 -- Clear cached RGB so makeCached() recalculates from the new hex values.
-                -- Without this, deepCopy in addTexturesFromInstance2 copies stale cached
+                -- Without this, deepCopy in rebuildTextures copies stale cached
                 -- values and makeCached skips recalculation (it only runs when cached is nil).
                 p.appearance['skin'][patch].cached = nil
             end
@@ -635,7 +635,7 @@ local function randomizeAll(instance, textureOpts, faceOpts)
     -- no physics nose: the randomized nose is drawn on the face
     lib.rebuildFromCreation(instance, { isPotatoHead = not instance.dna.creation.isPotatoHead, noseSegments = 0 })
     lib.limitArmReach(instance)
-    lib.addTexturesFromInstance2(instance)
+    lib.rebuildTextures(instance)
 end
 
 function lib.randomizeMipo(instance)
@@ -718,7 +718,7 @@ function lib.randomizePart(instance, partName)
         end
     end
 
-    lib.addTexturesFromInstance2(instance)
+    lib.rebuildTextures(instance)
 end
 
 -- Jitter all size/proportion values of a mipo while keeping shapes and colors identical.
@@ -821,7 +821,7 @@ function lib.mutateSizes(instance)
         end
     end
 
-    lib.addTexturesFromInstance2(instance)
+    lib.rebuildTextures(instance)
 end
 
 -- Torso layers: above the ears (190), below the head (200) with its bodyhair too. Both
@@ -1873,7 +1873,7 @@ local function addFaceDecals(body, partName, partData, faceData, instance, scale
     placeMouth(body, faceData, box)
 end
 
-function lib.addTexturesFromInstance2(instance)
+function lib.rebuildTextures(instance)
     local scale = instance.scale
     for k, v in pairs(instance.dna.parts) do
         if v.appearance then
@@ -2256,7 +2256,7 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
     --logger:info('calling defaultSetupTextures')
 
 
-    lib.addTexturesFromInstance2(instance)
+    lib.rebuildTextures(instance)
 
     -- Assign a unique negative group index to prevent self-collision.
     -- Reuse existing index if this is a rebuild, otherwise allocate a new one.
@@ -2433,7 +2433,7 @@ function lib.reconstructInstance(charData, partBodies)
     if groupTaken or zTaken then applyGroupAndZ(instance, true) end
     mipoRegistry.register(instance)
     if brokenTextures then
-        lib.addTexturesFromInstance2(instance)
+        lib.rebuildTextures(instance)
         applyGroupAndZ(instance, true) -- the redrawn texture fixtures start in group 0
     end
     lib.applyNeck(instance, true)

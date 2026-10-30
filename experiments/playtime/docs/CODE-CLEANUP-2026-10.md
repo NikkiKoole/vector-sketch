@@ -238,10 +238,14 @@ L = more.
   requires (checked on a copy: specs and a boot). behaviors' `signals()` stays: signals requires
   behaviors, a real cycle (comment says so now). Left: the ~130 requires inside functions; each
   needs a load-order check, so file by file, not one pass.
-- [ ] **CL25. Names.** `addTexturesFromInstance2` (131 call sites, no version 1) → `rebuildTextures`
+- [x] **CL25. Names.** `addTexturesFromInstance2` (131 call sites, no version 1) → `rebuildTextures`
   (alias for a while); `bud` (draw-textured:3359), `mud` (sfixture-editor:403, 707), `j` for joints
   (16 places), `fud` vs `ud` (38 places); raw subtype strings in editor-render:95 and draw-textured:180;
   topology's `guy` → `instance`; signals' module-level `triggers` vs the local in `lib.wires`. S.
+  **Done 2026-10-30:** `rebuildTextures` (108 calls; no alias, nothing outside src/ and spec/
+  called it); `j` → `joint` where it's a joint; `mud` gone (thingOf); `subtypes.MESHUSERT / DECAL`
+  instead of the strings; topology's `instance`; signals' cache is `triggerScan`. `bud` went in CL7.
+  Left: `fud` (fixture userData next to a body's `ud`: the two names keep them apart).
 - [ ] **CL26. Long functions in input and music.** `input-manager.lua` `handlePointer` (:333-614):
   `pressedPlaceSteiner`, `findVertexNear` (polyEdit and texFixtureEdit loops are the same),
   `clearSelectionAndPanels` (":533, todo this is dumb"), `brushTriangles` (6 deep, :728-809),

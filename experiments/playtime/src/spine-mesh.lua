@@ -164,9 +164,9 @@ function lib.buildChainFromNodes(nodes)
                 nx, ny = mathutils.getCenterOfPoints({ b:getWorldPoints(f:getShape():getPoints()) })
             end
         elseif n.type == NT.JOINT then
-            local j = registry.getJointByID(n.id)
-            if j and not j:isDestroyed() then
-                nx, ny = j:getAnchors()
+            local joint = registry.getJointByID(n.id)
+            if joint and not joint:isDestroyed() then
+                nx, ny = joint:getAnchors()
             end
         end
         if nx and ny then
