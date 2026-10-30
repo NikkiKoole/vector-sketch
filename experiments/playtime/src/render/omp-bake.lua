@@ -22,6 +22,10 @@ tex1:setWrap('mirroredrepeat', 'mirroredrepeat')
 local line = safeLoadImage('textures/shapes6.png')
 local maskTex = safeLoadImage('textures/shapes6-mask.png')
 local imageCache = {}
+-- Paths that aren't there, so they're looked up once, not every frame (a bodyhair's fgURL names a
+-- mask that doesn't exist: 40 filesystem lookups a frame with 20 Mipos). A picture added while the
+-- game runs shows after a hot reload of this file, which empties both.
+local missingImages = {}
 -- Baked OMP images are 1/shrinkFactor of the source size. 2 = a quarter of the texture
 -- memory (4.5 -> 1.1 MB per Mipo) and ~40% faster bakes; at the dollhouse zoom the
 -- sources carry ~4.5x more pixels than reach the screen, so it only shows close up as
@@ -36,9 +40,11 @@ local shrinkFactor = 2
 lib.texturesCreated = 0
 
 local function getLoveImage(path, settings)
+    if missingImages[path] then return nil, nil, nil end
     if not imageCache[path] then
         local info = love.filesystem.getInfo(path)
         if not info or info.type ~= 'file' then
+            missingImages[path] = true
             return nil, nil, nil
         end
         local img = love.graphics.newImage(path)

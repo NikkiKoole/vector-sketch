@@ -57,9 +57,11 @@ parts (music-theory, skinning's `meshusertVertices`, the polygon modules) run wi
 - [ ] **M7. The draw's garbage.** ~430 KB a frame from the textured draw (per-drawable tables, fan
   vertex tables, a Bezier curve per ribbon per frame, mouth polygons). Only ~1.3% of the time on
   the desktop, so after M8; worth it before an iPad build. Fix main.lua's "~1.6 KB" comment.
-- [ ] **M9. Missing bodyhair masks.** `borsthaar1..7-mask.png` don't exist, and getLoveImage asks the
-  filesystem again every frame (40 a frame in the crowd, 0.08 ms): remember misses too, and give
-  bodyhair no fgURL (or make the masks).
+- [x] **M9. Missing bodyhair masks.** `borsthaar1..7-mask.png` don't exist, and getLoveImage asked the
+  filesystem again every frame (40 a frame in the crowd, 0.08 ms). **Done 2026-10-30:** getLoveImage
+  and the Mipo editor's thumbnail grid remember what isn't there (`spec/omp-bake_spec.lua`); scenes
+  and Mipos identical. Left as is: bodyhair DNA still names the masks (changing it changes saved
+  Mipos for no visible difference).
 - [ ] **M6. The potato-torso click.** The editor snapshot forces every slider to its midpoint; on a
   potato head's torso1 panel that makes a shape Box2D refuses (`fixtures.lua:132: Box2D assertion
   failed`), and the next click finds the Mipo half rebuilt. Same before and after the splits, so

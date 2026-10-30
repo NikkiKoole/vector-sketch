@@ -130,12 +130,10 @@ local function drawThumbnailGrid(items, currentURL, panelX, startY, cellSize, on
 
         local url = item .. '.png'
         local img = imageCache[url]
-        if not img then
+        if img == nil then -- false: tried, not there (so not tried again every frame)
             local ok, loaded = pcall(love.graphics.newImage, 'textures/' .. url)
-            if ok then
-                imageCache[url] = loaded
-                img = loaded
-            end
+            img = ok and loaded or false
+            imageCache[url] = img
         end
 
         if img then
