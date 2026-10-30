@@ -18,6 +18,14 @@ local function styles()
     return { 'keep', 'set' }
 end
 
+-- music's arrangement presets ('cellar', 'full', ...), with 'keep' in front; only 'keep' until
+-- src/music.lua has them
+local function layerPresets()
+    local out = { 'keep' }
+    for _, name in ipairs(require('src.music').layerPresets or {}) do out[#out + 1] = name end
+    return out
+end
+
 local function field(key, label, kind, options)
     return { key = label, kind = kind, options = options,
         get = function(s) return s[key] end,
@@ -30,9 +38,14 @@ end
 lib.rows = {
     { key = 'about', kind = 'note', label = 'entering this room plays:' },
     field('style', 'style', 'choice', styles()),
+    field('layers', 'layers', 'choice', layerPresets()),
     field('at', 'turn at', 'choice', { 'phrase', 'bar' }),
 }
 
-function lib.target() return roomMusic().settings() end
+-- the choices follow music's styles and presets (they grow with a hot reload)
+function lib.target()
+    lib.rows[2].options, lib.rows[3].options = styles(), layerPresets()
+    return roomMusic().settings()
+end
 
 return lib

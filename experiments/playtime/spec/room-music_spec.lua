@@ -28,13 +28,34 @@ describe('room music', function()
     it('turns the music into the room style without music.cue', function()
         roomMusic.load({ style = 'satie' })
         assert.equals('satie', fakeMusic.style)
-        assert.same({ style = 'satie', at = 'phrase' }, roomMusic.save())
+        assert.same({ style = 'satie', at = 'phrase', layers = 'keep' }, roomMusic.save())
     end)
 
     it('goes through music.cue when there is one', function()
         fakeMusic.cue = function(style, opts) fakeMusic.cues[#fakeMusic.cues + 1] = { style, opts.at } end
         roomMusic.load({ style = 'bossa', at = 'bar' })
         assert.same({ { 'bossa', 'bar' } }, fakeMusic.cues)
+        assert.equals('set', fakeMusic.style)
+    end)
+
+    it('sends the layers along with the cue', function()
+        local sent
+        fakeMusic.cue = function(_, opts) sent = opts.layers end
+        roomMusic.load({ style = 'bossa', layers = 'cellar' })
+        assert.equals('cellar', sent)
+    end)
+
+    it('only re-arranges when the room keeps the style (Woodtick)', function()
+        local arranged
+        fakeMusic.cue = function() error('no song change') end
+        fakeMusic.layers = function(preset) arranged = preset end
+        roomMusic.load({ layers = 'cellar' })
+        assert.equals('cellar', arranged)
+        assert.same({ style = 'keep', at = 'phrase', layers = 'cellar' }, roomMusic.save())
+    end)
+
+    it('skips layers music does not have yet', function()
+        roomMusic.load({ layers = 'cellar' })
         assert.equals('set', fakeMusic.style)
     end)
 end)
