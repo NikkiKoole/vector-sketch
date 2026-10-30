@@ -122,6 +122,9 @@ local _mathutils = require('src.math-utils') -- luacheck: ignore 211
 local InputManager = require('src.input-manager')
 local bodyRotate = require('src.body-rotate')
 local state = require('src.state')
+local physicsUnits = require('src.physics-units')
+local synth = require('src.synth')
+require('src.physics.physics-callbacks') -- fills state.physicsCallbacks, wired up in love.load
 local sceneLoader = require('src.scene-loader')
 local editorRenderer = require('src.editor-render')
 local rightColumn = require('src.ui.right-column')
@@ -131,8 +134,7 @@ love.window.requestAttention()
 
 local FIXED_TIMESTEP = true
 -- physics steps per second: 60 at 100 px per metre, more at a bigger meter (src/physics-units.lua)
-local FPS = require('src.physics-units').stepsPerSecond(
-    require('src.physics-units').meterFromArgs(arg) or require('src.state').world.meter)
+local FPS = physicsUnits.stepsPerSecond(physicsUnits.meterFromArgs(arg) or state.world.meter)
 local TICKRATE = 1 / FPS
 
 function love.load(_args)
@@ -144,7 +146,7 @@ function love.load(_args)
 
     ui.init(font, fontHeight)
 
-    state.world.meter = require('src.physics-units').meterFromArgs(arg) or state.world.meter
+    state.world.meter = physicsUnits.meterFromArgs(arg) or state.world.meter
     love.physics.setMeter(state.world.meter)
     state.physicsWorld = love.physics.newWorld(0, state.world.gravity * love.physics.getMeter(), true)
 
@@ -153,12 +155,11 @@ function love.load(_args)
     camera.centerCameraOnPosition(325, 325, 2000, 2000)
 
     -- Wire physics callbacks so scene scripts can listen to beginContact /
-    -- endContact / preSolve / postSolve. physics-callbacks.lua populates
+    -- endContact / preSolve / postSolve. physics-callbacks.lua (required at the top) populates
     -- state.physicsCallbacks with {beginContact, endContact, preSolve, postSolve}.
     -- The world gets wrappers that look the callback up on every call: handing it the
     -- functions themselves kept the startup versions after a hot reload of
     -- physics-callbacks.lua (a new preSolve hook silently never ran until a restart).
-    require('src.physics.physics-callbacks')
     local function current(i)
         return function(...) return state.physicsCallbacks[i](...) end
     end
@@ -251,7 +252,7 @@ end
 function love.quit()
     -- stop the synth's render thread first: left running, it calls into the audio source while
     -- LÖVE tears audio down, and that aborts the process on the way out
-    require('src.synth').stop()
+    synth.stop()
     -- this takes annoyingly long
     local time = love.timer.getTime()
     prof.write("prof.mpack")
