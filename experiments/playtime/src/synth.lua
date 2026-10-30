@@ -204,6 +204,23 @@ lib.patches = {
     -- rollo's bass: a picked electric bass (the guitar model down low, dark, stopped after a beat)
     pickBass = { pool = true, wave = 'GUITAR', adsr = { 1, 0, 7, 160 }, harmonics = 0.3, timbre = 0.25, morph = 0.1,
                  filter = { mode = 1, cutoff = 900, resonance = 1 }, reverb = 0.1, level = 2.0 },
+    -- jingle's guitar (dreamengine's jingle.c): the clean electric fingerpicked, soft (a gentle pick,
+    -- darker), through a chorus with a slow 4.6 Hz pitch warble and a 3.9 Hz sway, on a cassette
+    jingleGuitar = { fx = true, wave = 'GUITAR', adsr = { 2, 0, 7, 700 }, harmonics = 0.4, timbre = 0.25, morph = 0.1,
+                     modes = { [0] = 0.7, [1] = 0.1 }, filter = { mode = 1, cutoff = 2000, resonance = 1 },
+                     reverb = 0.4, level = 0.7, chorus = { 0.8, 0.5, 0.45 },
+                     tape = { wow = 0.3, flutter = 0.08, saturation = 0.2, warble = 0.15 },
+                     lfo = { { 0, 4.6, 0.08 }, { 2, 3.9, 0.06 } } },
+    -- jingle's Juno chords (dreamengine's juno.c): a saw pad, slow in, through a warm resonant lowpass
+    -- and the Juno's chorus I (slow and lush; the chorus is what makes it a Juno)
+    junoPad = { fx = true, wave = 'SAW', adsr = { 24, 0, 6, 460 }, reverb = 0.35, level = 0.15,
+                filter = { mode = 1, cutoff = 1400, resonance = 4 }, chorus = { 0.6, 0.45, 0.5 } },
+    -- jingle's bass: a soft round sine, rolled off at 520 Hz
+    jingleBass = { pool = true, wave = 'SINE', adsr = { 3, 280, 4, 110 }, reverb = 0.05, level = 0.22,
+                   filter = { mode = 1, cutoff = 520, resonance = 0 } },
+    -- jingle's tune: a soft singing sine with a 5.1 Hz vibrato
+    jingleLead = { pool = true, wave = 'SINE', adsr = { 14, 200, 4, 240 }, reverb = 0.35, level = 0.25,
+                   filter = { mode = 1, cutoff = 2300, resonance = 1 }, lfo = { { 0, 5.1, 0.12 } } },
     ride  = { slot = 23, wave = 'SQUARE', adsr = { 1, 260, 0, 160 }, reverb = 0.2, level = 0.7,
               filter = { mode = 2, cutoff = 5400, resonance = 3 } },
     hat   = { slot = 24, wave = 'NOISE', adsr = { 0, 30, 0, 14 }, reverb = 0.1, level = 0.06,

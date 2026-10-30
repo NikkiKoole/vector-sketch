@@ -33,7 +33,7 @@ lib.rows = {
     field('melody', 'melody', 'bool'),
     field('style', 'style', 'choice',
           { 'set', 'bossa', 'guaraldi', 'island', 'dusk', 'dumont', 'supermarket', 'herbs', 'lofi', 'puppetmaker',
-            'strum', 'rollo', 'sesame', 'citypop', 'buymode', 'satie', 'ambient',
+            'strum', 'rollo', 'jingle', 'sesame', 'citypop', 'buymode', 'satie', 'ambient',
             'ballad' }),
     field('rhythmSection', 'band', 'choice', { 'auto', 'on', 'off' }),
     -- the play level (music.bump) as a bar up to twice where the band joins, '|' marks the join

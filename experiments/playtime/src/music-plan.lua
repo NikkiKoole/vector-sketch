@@ -171,7 +171,7 @@ local function planAmbient(song)
 end
 
 -- Data lookups for the planner: a style names its form set, its riffs and its horn figures
-local FORMS = { lofi = D.lofiForms, buymode = D.buymodeForms }
+local FORMS = { lofi = D.lofiForms, buymode = D.buymodeForms, jingle = D.jingleForms }
 local RIFFS = { dumont = D.dumontRiffs, dusk = D.duskRiffs }
 local HORN_HITS = { citypop = D.cityHornHits }
 
@@ -319,6 +319,27 @@ local function planParts(song, style)
     if style.horns then
         local hits = HORN_HITS[style.horns] or D.hornHits
         song.horns = hits[stream(song.seed, 10)(#hits) + 1]
+    end
+    if style.flavors then -- jingle: how this song voices its borrowed chords
+        local pick = stream(song.seed, 12)
+        song.flavor = {}
+        local names = {}
+        for name in pairs(style.flavors) do names[#names + 1] = name end
+        table.sort(names) -- a fixed order: the picks draw from one stream
+        for _, name in ipairs(names) do
+            local choices = style.flavors[name]
+            song.flavor[name] = choices[pick(#choices) + 1]
+        end
+    end
+    if style.picking == 'jingle' then -- the fingerpicking order, a strummed chorus or not, the tune's cell
+        local pick = stream(song.seed, 13)
+        song.pickOrder = D.jinglePicks[pick(#D.jinglePicks) + 1]
+        song.strumChorus = pick(100) < 50
+        song.cell = {}
+        for s = 0, 30, 2 do
+            if #song.cell < 5 and pick(100) < (s % 8 == 0 and 25 or 35) then song.cell[#song.cell + 1] = s end
+        end
+        if #song.cell < 3 then song.cell = { 2, 12, 20 } end
     end
     if style.drums == 'session' then
         local pick = stream(song.seed, 11)

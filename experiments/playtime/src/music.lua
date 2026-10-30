@@ -23,7 +23,9 @@
 -- buymode (the Sims 1 buy-mode piano trio: Mall Rat's moves, a key change up a half step),
 -- sesame (a 70s TV small band: clav, a walking upright, vibes, horn shouts), satie (a
 -- Gymnopédie-like 3/4 waltz on a felt piano), ambient (pentatonic loops of unequal lengths drifting
--- over a drone, Music for Airports) and ballad. lib.onNote lets other code hear every note
+-- over a drone, Music for Airports), jingle (Mac DeMarco at dusk: a chorused guitar fingerpicking his
+-- borrowed bVII and bIII chords, a soft bass walking down, rim and hats, a sine tune in the chorus) and
+-- ballad. lib.onNote lets other code hear every note
 -- (the Mipos react to the puppetmaker band).
 -- style = 'set' plays lib.set as a live set: each song ends on home, takes a breath, and the next
 -- one starts in a related key.
@@ -75,7 +77,7 @@ local lib = {}
 --   enabled
 --   style          'set' (lib.set in turn), or one style: 'bossa', 'guaraldi', 'island', 'dusk', 'dumont',
 --                  'supermarket', 'herbs', 'lofi', 'puppetmaker', 'strum', 'sesame', 'citypop', 'buymode',
---                  'satie', 'ambient', 'ballad'
+--                  'satie', 'ambient', 'jingle', 'ballad'
 --   rhythmSection  'auto' (joins when play gets busy), 'on' or 'off'
 --   upright        the upright in the rhythm section; off: the left hand keeps the bass
 --   melody         the tune on top
@@ -147,6 +149,7 @@ local function bookBar(synth, t0, song, b)
     end
     if style.picking == 'travis' then return parts.bookTravis(bar) end -- strum: the guitar alone
     if style.picking == 'jabs' then return parts.bookJabs(bar) end     -- rollo: bass and guitar stabs
+    if style.picking == 'jingle' then return parts.bookJingle(bar) end -- jingle: its own four parts
     local hits, sidestepAt, pushes = keysHits(bar)
     bookKeys(bar, hits)
     local groove = style.groove == 'lofi'

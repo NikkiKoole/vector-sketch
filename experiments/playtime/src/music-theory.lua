@@ -128,6 +128,7 @@ end
 
 local function qualityOf(song, name)
     if song.lydian and name == 'maj9' then name = 'lydian' end
+    if song.flavor and song.flavor[name] then name = song.flavor[name] end
     return D.qualities[name]
 end
 

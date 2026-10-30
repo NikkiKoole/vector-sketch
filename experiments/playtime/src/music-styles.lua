@@ -6,7 +6,7 @@
 local D = {}
 
 D.set = { 'bossa', 'guaraldi', 'island', 'dusk', 'dumont', 'supermarket', 'herbs', 'lofi', 'puppetmaker', 'strum',
-            'satie', 'ambient', 'sesame', 'citypop', 'buymode', 'rollo' }
+            'satie', 'ambient', 'sesame', 'citypop', 'buymode', 'rollo', 'jingle' }
 D.lookahead = 0.3          -- seconds of music booked ahead
 D.activityHalfLife = 8     -- seconds for the play level to halve
 D.bandJoins = 4            -- play level at which the rhythm section comes in...
@@ -33,7 +33,11 @@ D.qualities = { maj9 = { 4, 7, 11, 14 }, m9 = { 3, 7, 10, 14 }, dom9 = { 4, 10, 
                   -- strum's guitar chords (their grips are D.grips)
                   gmaj = { 0, 4, 7 }, gadd9 = { 0, 4, 7, 14 }, gmaj7 = { 0, 4, 7, 11 }, gmaj9 = { 0, 4, 7, 11, 14 },
                   gm7 = { 0, 3, 7, 10 }, gm9 = { 0, 3, 7, 10, 14 }, g9sus4 = { 0, 5, 7, 10, 14 },
-                  gsus4add9 = { 0, 5, 7, 14 } }
+                  gsus4add9 = { 0, 5, 7, 14 },
+                  -- jingle's rootless three-voice guitar shapes, every one with a 9 on top; jbVII and
+                  -- jbIII are the borrowed chords, voiced per song (song.flavor)
+                  jmaj = { 4, 7, 14 }, jmaj7 = { 4, 11, 14 }, j7 = { 4, 10, 14 },
+                  jm = { 3, 7, 14 }, jm7 = { 3, 10, 14 }, jm6 = { 3, 9, 14 } }
 
 -- strum's guitar: standard tuning low to high, and E-shape barre grips from dreamengine's
 -- pedalboard.c (fret offsets above the barre per string, -1 = damped). The barre sits on the
@@ -56,6 +60,12 @@ D.forms = {
 D.buymodeForms = {
     { { 'intro', 4, prog = 'sway' }, { 'A', 8 }, { 'A', 8 }, { 'B', 8 }, { 'A', 8, lift = 1 },
       { 'turn', 4, prog = 'turn', lead = false }, { 'A', 8 }, { 'outro', 4, prog = 'float' } },
+}
+
+-- jingle's form: verse (A), chorus (B), each a 4-chord progression played twice
+D.jingleForms = {
+    { { 'intro', 4 }, { 'A', 8 }, { 'B', 8 }, { 'A', 8 }, { 'B', 8 }, { 'outro', 4 } },
+    { { 'intro', 4 }, { 'A', 8 }, { 'A', 8 }, { 'B', 8 }, { 'B', 8 }, { 'outro', 4 } },
 }
 
 -- lofi city's forms (and a break: the keys holding, the drums out or on the rim): longer songs
@@ -336,6 +346,35 @@ D.styles = {
             outro = { tape = { 0.55, 0.18, 0.4, 0.35 }, flanger = { 0.25, 0.5, 0.5, 0 } },
         },
     },
+    -- jingle: Mac DeMarco at dusk, after dreamengine's jingle.c (Reverb Machine's "Mac DeMarco Chord
+    -- Theory"). A chorused electric guitar fingerpicking the chord's three voices in 8ths, a soft round
+    -- bass voice-led so the chromatic templates walk down by semitone, a rim and hat on 2 and 4 (the
+    -- kick joins in the chorus), Juno chords held under it all (juno.c's saw pad and chorus), a sine
+    -- tune with a vibrato in the chorus. Verse (A) and chorus (B)
+    -- progressions are lifted from the songs; the bVII (maj, 7 or 9) and the bIII (maj7 or m6) are
+    -- borrowed and voiced per song. Over a borrowed chord the tune keeps to that chord's own tones.
+    -- Parts: the guitar is 'keys', the Juno 'strings', so the layers keep the guitar (cellar: guitar and
+    -- bass; quiet: guitar, Juno and tune).
+    jingle = {
+        bpm = { 72, 92 }, swing = 0.52, chordBars = { 1 }, pushOdds = 0, turnaroundOdds = 0,
+        picking = 'jingle', pickPatch = 'jingleGuitar', bassPatch = 'jingleBass', lead = 'jingleLead',
+        padPatch = 'junoPad',
+        home = 'jmaj7', forms = 'jingle',
+        A = {
+            { { 0, 'jmaj' }, { 2, 'jm7' }, { 9, 'jm7' }, { 10, 'jbVII' } },     -- Blue Boy: I ii vi bVII
+            { { 0, 'jmaj' }, { 7, 'jmaj' }, { 10, 'jbVII' }, { 5, 'jmaj' } },   -- Dreaming: I V bVII IV
+            { { 0, 'jmaj7' }, { 9, 'jm7' }, { 2, 'jm7' }, { 7, 'j7' } },        -- Moonlight, verse: I vi ii V9
+            { { 5, 'jmaj' }, { 4, 'jm' }, { 3, 'jbIII' }, { 4, 'jm' } },        -- Another One: IV iii bIII iii
+        },
+        B = {
+            { { 0, 'jmaj7', 4 }, { 3, 'jbIII', 4 }, { 2, 'jm7', 4 }, { 7, 'j7', 4 } },   -- Stars Keep Calling
+            { { 3, 'jbIII', 4 }, { 9, 'jm7', 4 }, { 2, 'jm7', 4 }, { 7, 'j7', 4 } },     -- Moonlight, chorus
+            { { 5, 'jmaj', 4 }, { 4, 'jm', 4 }, { 3, 'jbIII', 4 }, { 4, 'jm', 4 } },     -- Another One
+            { { 9, 'jm7', 4 }, { 8, 'jmaj7', 4 }, { 7, 'jm', 4 }, { 0, 'j7', 4 } },      -- A Heart Like Hers
+        },
+        flavors = { jbVII = { 'jmaj', 'j7', 'j7' }, jbIII = { 'jmaj7', 'jmaj7', 'jm6' } },
+        comps = { { { 0, 16, 4 }, { 16, 16, 4 } } }, -- the planner wants one; the picking hand plays instead
+    },
     -- sesame: a 70s TV small band (old Sesame Street's jazz), quick and swung. A clavinet chopping
     -- the off-beats, the upright in two while it's calm and walking when the band joins, a vibes tune,
     -- sticks on the ride, and short horn shouts in the bar where the tune breathes (D.hornHits).
@@ -563,6 +602,11 @@ D.dumontRiffs = {
     { 4, 0, 3, 0, 0, 4, 3, 2 },
     { 0, 2, 4, 0, 3, 0, 4, 0 },
     { 3, 0, 0, 4, 0, 2, 0, 3 },
+}
+-- jingle's fingerpicking: per eighth, which of the chord's three voices (1 = lowest)
+D.jinglePicks = {
+    { 1, 3, 2, 3, 1, 3, 2, 3 },
+    { 1, 2, 3, 2, 1, 3, 2, 1 },
 }
 -- the answer's rhythms in bar 4, grouped the same way
 -- the sesame horns: one shout per song, in the bar the tune breathes { step, length, vol } (all before
