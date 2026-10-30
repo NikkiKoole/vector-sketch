@@ -25,7 +25,8 @@ lib.INSTR = {
     SING = 38, -- one recorded syllable sung at any note by the same speaker (timbre = size, morph = speed)
 }
 
--- Named patches in instrument slots 5..47 (pool = true: no slot of its own, see lib.poolSlots): wave,
+-- Named patches in instrument slots 5..47 (pool = true / fx = true: no slot of their own, see
+-- lib.poolSlots and lib.fxSlots): wave,
 -- attack/decay ms, sustain 0..7, release ms, macros,
 -- reverb send 0..1, level 0..1 (balances engines: some run much hotter), optional engine modes and filter,
 -- glide ms (held notes slide to a new pitch over this long), tape { wow, flutter, saturation, warble } 0..1
@@ -53,7 +54,7 @@ lib.patches = {
                harmonics = 0.05, timbre = 0.9, morph = 0, reverb = 0.1, level = 0.5 },
     -- background music (src/music.lua). The Rhodes is the epiano cart's 'suitcase' preset: mellow
     -- (harmonics 0.15 = the Rhodes detent), stereo vibrato (autopan) and a slow phaser swirl.
-    rhodes = { slot = 13, wave = 'EPIANO', adsr = { 1, 0, 7, 450 },
+    rhodes = { fx = true, wave = 'EPIANO', adsr = { 1, 0, 7, 450 },
                harmonics = 0.15, timbre = 0.2, morph = 0.12, reverb = 0.3, level = 0.35,
                autopan = { rate = 4, depth = 0.5 }, phaser = { rate = 0.8, depth = 0.65, feedback = 0.5, mix = 0.5 },
                tape = { wow = 0.25, flutter = 0.1, saturation = 0, warble = 0 } },
@@ -71,7 +72,7 @@ lib.patches = {
                 filter = { mode = 1, cutoff = 2600, resonance = 0 }, lfo = { { 0, 5.0, 0.04 } } },
     -- other melody voices: the Rhodes a little brighter for a tune on top, and a kalimba: a
     -- mallet halfway between wood and bell
-    rhodesLead = { slot = 19, wave = 'EPIANO', adsr = { 1, 0, 7, 450 },
+    rhodesLead = { fx = true, wave = 'EPIANO', adsr = { 1, 0, 7, 450 },
                    harmonics = 0.15, timbre = 0.35, morph = 0.15, reverb = 0.3, level = 0.8,
                    autopan = { rate = 4, depth = 0.4 } },
     kalimba = { slot = 20, wave = 'MALLET', adsr = { 0, 600, 0, 300 },
@@ -88,11 +89,11 @@ lib.patches = {
     -- hammer, lowpassed warm) and dreamengine cocktail.c's brushes kit: a brushed ride ping, a
     -- closed hat on 2 and 4, the circular brush sweep. The kick is the bossa one, feathered.
     -- Levels balanced on rendered stems (claudetools/render-music.lua SOLO=...) against the Rhodes.
-    piano = { slot = 22, wave = 'PIANO', adsr = { 1, 0, 7, 1200 },
+    piano = { fx = true, wave = 'PIANO', adsr = { 1, 0, 7, 1200 },
               harmonics = 0.08, timbre = 0.4, morph = 0.55, reverb = 0.3, level = 1.6,
               filter = { mode = 1, cutoff = 3400, resonance = 1 },
               tape = { wow = 0.15, flutter = 0.03, saturation = 0, warble = 0 } },
-    pianoLead = { slot = 26, wave = 'PIANO', adsr = { 1, 0, 7, 1200 },   -- the same piano, for the tune
+    pianoLead = { fx = true, wave = 'PIANO', adsr = { 1, 0, 7, 1200 },   -- the same piano, for the tune
                   harmonics = 0.08, timbre = 0.45, morph = 0.55, reverb = 0.3, level = 2.8,
                   filter = { mode = 1, cutoff = 4200, resonance = 1 },
                   tape = { wow = 0.15, flutter = 0.03, saturation = 0, warble = 0 } },
@@ -104,7 +105,7 @@ lib.patches = {
     -- (a triangle, lowpassed with a bit of bite), a steel pan for the tune (a mallet toward the bell,
     -- ringing), and a drum machine clap (high-passed noise, a big room).
     -- No tape/autopan/phaser here: each of those takes one of the engine's 7 aux FX buses
-    -- (SOUND_FX_BUSES), and five are taken (rhodes, rhodesLead, piano, pianoLead, guitar).
+    -- (SOUND_FX_BUSES); the patches with pedals share five of them through lib.fxSlots.
     stab = { pool = true, wave = 'SAW', adsr = { 3, 180, 2, 160 }, reverb = 0.35, level = 0.38,
              filter = { mode = 1, cutoff = 1500, resonance = 2 } },
     dubBass = { slot = 29, wave = 'TRI', adsr = { 3, 0, 7, 90 }, reverb = 0.05, level = 0.5,
@@ -173,8 +174,8 @@ lib.patches = {
     -- thick fundamental and a soft pick (modes: string weight, click), rolled off at 2.4 kHz, a little
     -- tube drive, a slow tremolo (a volume LFO), plenty of reverb, and its own tape (wow, flutter,
     -- saturation, warble) and flanger (rate, depth, feedback, mix) pedals, which the music turns while
-    -- a song plays (synth.slotTape, synth.slotFlanger). A fixed slot: its pedals take an FX bus.
-    guitar = { slot = 47, wave = 'GUITAR', adsr = { 2, 0, 7, 1600 }, harmonics = 0.4, timbre = 0.3, morph = 0.12,
+    -- a song plays (synth.slotTape, synth.slotFlanger). It shares the effect slots (fx = true).
+    guitar = { fx = true, wave = 'GUITAR', adsr = { 2, 0, 7, 1600 }, harmonics = 0.4, timbre = 0.3, morph = 0.12,
                modes = { [0] = 0.7, [1] = 0.15 }, filter = { mode = 1, cutoff = 2400, resonance = 1 },
                reverb = 0.45, level = 0.45, drive = 0.22, driveMode = 0,
                tape = { wow = 0.25, flutter = 0.08, saturation = 0.25, warble = 0.1 },
@@ -238,6 +239,11 @@ if ffi then pcall(ffi.cdef, CDEF) end
 state.synth = state.synth or { started = false, failed = nil, C = nil, thread = nil, quit = nil }
 local S = state.synth
 
+-- the engine's own mode values per slot (dreamengine sound.h's bank init): 0 and 1 the guitar/piano
+-- string weight and click (off), 2..5 the piano's decay, knock, stretch and stiffness (0.5 = as
+-- voiced), 6 the organ's leakage. A shared slot goes back to these before its next patch.
+local MODE_DEFAULTS = { [0] = 0, 0, 0.5, 0.5, 0.5, 0.5, 0 }
+
 local function definePatch(slot, patch)
     local a, d, s, r = unpack(patch.adsr)
     S.C.instrument(slot, lib.INSTR[patch.wave], a, d, s, r)
@@ -246,8 +252,8 @@ local function definePatch(slot, patch)
     S.C.instrument_morph(slot, patch.morph or 0)
     S.C.instrument_level(slot, lib.volume * (patch.level or 1))
     S.C.instrument_reverb(slot, patch.reverb or 0)
-    if patch.pool then -- a pool slot may still hold the last patch's modes and LFOs
-        for idx = 0, 2 do S.C.instrument_mode(slot, idx, patch.modes and patch.modes[idx] or 0) end
+    if patch.pool or patch.fx then -- a shared slot may still hold the last patch's modes and LFOs
+        for idx = 0, 6 do S.C.instrument_mode(slot, idx, patch.modes and patch.modes[idx] or MODE_DEFAULTS[idx]) end
         for i = 0, 2 do S.C.instrument_lfo(slot, i, 0, 0, 0) end
     else
         for idx, value in pairs(patch.modes or {}) do S.C.instrument_mode(slot, idx, value) end
@@ -257,6 +263,15 @@ local function definePatch(slot, patch)
     S.C.instrument_glide(slot, patch.glide or 0)
     for i, lfo in ipairs(patch.lfo or {}) do S.C.instrument_lfo(slot, i - 1, lfo[1], lfo[2], lfo[3]) end
     if patch.pool then return end -- inserts take an FX bus for good: never on a pool slot
+    if patch.fx then -- an effect slot: switch off the last patch's pedals on its bus, then put on these
+        S.C.instrument_chorus(slot, 1.5, 0, 0)
+        S.C.instrument_flanger(slot, 0.3, 0, 0, 0)
+        S.C.instrument_phaser(slot, 0.8, 0, 0, 0, 6)
+        S.C.instrument_autopan(slot, 1, 0, 0)
+        S.C.instrument_tape(slot, 0, 0, 0)
+        S.C.instrument_tape_warble(slot, 0)
+        S.C.instrument_drive(slot, 0)
+    end
     if patch.tape then
         S.C.instrument_tape(slot, patch.tape.wow, patch.tape.flutter, patch.tape.saturation)
         S.C.instrument_tape_warble(slot, patch.tape.warble or 0)
@@ -282,7 +297,7 @@ local function definePatches()
     for _, patch in pairs(lib.patches) do
         if patch.slot then definePatch(patch.slot, patch) end
     end
-    S.pool = {} -- the pool slots load their patches on first use
+    S.pool, S.fx = {}, {} -- the shared slots load their patches on first use
 end
 
 -- The engine has 48 instrument slots (SOUND_INSTR_SLOTS) and every one was taken. Patches that only
@@ -291,25 +306,50 @@ end
 -- that's the last style's). S.pool[slot] = { name, ends = audio time its last note is done }.
 lib.poolSlots = { 8, 18, 21, 28, 30, 32, 45, 46 } -- 8 was the slide whistle's (gone 2026-10-30)
 
-local function slotOf(name, patch, t, durMs)
-    if patch.slot then return patch.slot end
-    S.pool = S.pool or {}
+-- The FX buses: 7 (SOUND_FX_BUSES), and a slot's first pedal claims one for good (the engine can't
+-- give it back). So the patches with pedals (fx = true) share these effect slots the same way, each
+-- slot keeping its bus: loading a patch switches the bus's pedals off and puts on the patch's own.
+-- Any number of styles can have pedals, as long as no more than #lib.fxSlots of them sound at once.
+lib.fxSlots = { 13, 19, 22, 26, 47 }
+
+-- the shared slot a patch sits in now, taking one (free, or quiet longest) on its first note
+local function claim(name, patch, t, durMs, slots, residents)
     local ends = t + (durMs + patch.adsr[4]) / 1000
     local pick, oldest
-    for _, slot in ipairs(lib.poolSlots) do
-        local resident = S.pool[slot]
+    for _, slot in ipairs(slots) do
+        local resident = residents[slot]
         if resident and resident.name == name then
             resident.ends = math.max(resident.ends, ends)
             return slot
         end
         if not resident then pick = pick or slot
-        elseif not oldest or resident.ends < S.pool[oldest].ends then oldest = slot end
+        elseif not oldest or resident.ends < residents[oldest].ends then oldest = slot end
     end
     -- a free slot, else the one that went quiet longest ago (cut short only if every one still sounds)
     pick = pick or oldest
     definePatch(pick, patch)
-    S.pool[pick] = { name = name, ends = ends }
+    residents[pick] = { name = name, ends = ends }
     return pick
+end
+
+local function slotOf(name, patch, t, durMs)
+    if patch.slot then return patch.slot end
+    if patch.fx then
+        S.fx = S.fx or {}
+        return claim(name, patch, t, durMs, lib.fxSlots, S.fx)
+    end
+    S.pool = S.pool or {}
+    return claim(name, patch, t, durMs, lib.poolSlots, S.pool)
+end
+
+-- the slot a shared patch holds right now (nil if it holds none)
+local function residentSlot(name, patch)
+    if patch.slot then return patch.slot end
+    local residents
+    if patch.fx then residents = S.fx else residents = S.pool end -- not and/or: S.fx may still be nil
+    for slot, resident in pairs(residents or {}) do
+        if resident.name == name then return slot end
+    end
 end
 
 -- Loads the library and starts the render thread once; returns whether the synth is usable.
@@ -540,33 +580,30 @@ end
 
 -- Ride a patch's lowpass live (the music's tone automation); the patch keeps its filter mode.
 -- Turn a patch's flanger pedal now: rate 0.05..5 Hz, depth 0..1, feedback -0.95..0.95 (high = the jet,
--- below 0 = through-zero), mix 0..1 (0 = off). Fixed-slot patches only.
+-- below 0 = through-zero), mix 0..1 (0 = off). Patches with pedals (fx) only, while they hold a slot.
 function lib.slotFlanger(patchName, rate, depth, feedback, mix)
     if not S.started then return end
     local patch = lib.patches[patchName]
-    if not (patch and patch.slot) then return end
-    S.C.instrument_flanger(patch.slot, rate, depth, feedback, mix)
+    local slot = patch and patch.fx and residentSlot(patchName, patch)
+    if slot then S.C.instrument_flanger(slot, rate, depth, feedback, mix) end
 end
 
--- Turn a patch's tape pedal now: wow, flutter, saturation, warble, each 0..1. Fixed-slot patches only.
+-- Turn a patch's tape pedal now: wow, flutter, saturation, warble, each 0..1. fx patches only.
 function lib.slotTape(patchName, wow, flutter, saturation, warble)
     if not S.started then return end
     local patch = lib.patches[patchName]
-    if not (patch and patch.slot) then return end
-    S.C.instrument_tape(patch.slot, wow, flutter, saturation)
-    S.C.instrument_tape_warble(patch.slot, warble)
+    local slot = patch and patch.fx and residentSlot(patchName, patch)
+    if not slot then return end
+    S.C.instrument_tape(slot, wow, flutter, saturation)
+    S.C.instrument_tape_warble(slot, warble)
 end
 
 function lib.slotFilter(patchName, cutoff)
     if not S.started then return end
     local patch = lib.patches[patchName]
     if not (patch and patch.filter) then return end
-    local slot = patch.slot
-    if not slot then -- a pool patch: only while it holds a slot
-        for poolSlot, resident in pairs(S.pool or {}) do if resident.name == patchName then slot = poolSlot end end
-        if not slot then return end
-    end
-    S.C.instrument_filter(slot, patch.filter.mode, math.floor(cutoff), patch.filter.resonance)
+    local slot = residentSlot(patchName, patch) -- a shared patch: only while it holds a slot
+    if slot then S.C.instrument_filter(slot, patch.filter.mode, math.floor(cutoff), patch.filter.resonance) end
 end
 
 -- Held notes. noteOn returns a handle (nil when the synth isn't running); vol 0..7, fractions OK.
@@ -601,8 +638,10 @@ function lib.setVolume(v)
     for _, patch in pairs(lib.patches) do
         if patch.slot then S.C.instrument_level(patch.slot, v * (patch.level or 1)) end
     end
-    for slot, resident in pairs(S.pool or {}) do
-        S.C.instrument_level(slot, v * (lib.patches[resident.name].level or 1))
+    for _, residents in ipairs({ S.pool or {}, S.fx or {} }) do
+        for slot, resident in pairs(residents) do
+            S.C.instrument_level(slot, v * (lib.patches[resident.name].level or 1))
+        end
     end
 end
 
