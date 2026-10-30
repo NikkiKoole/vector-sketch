@@ -54,6 +54,32 @@ timestep, touch callbacks, scene-script hooks, snap fixtures (`src/physics/snap.
 
 ---
 
+## The road (order, 2026-10-30)
+
+How to get from here to the brainstorm in `DOLL-PLAY-MENU.md` ("From a brainstorm"). Most of it
+rests on two missing pieces: a reusable **place** to put a Mipo, and **snaps that break and heal**.
+Build those, and the rest is content. F4 (load your Mipo) stands apart: slot it in for a quick win.
+
+- [ ] **R1. The hand feels right.** Throw clamp, squash on a gentle drop, a held face, snap spots
+  glow while a Mipo is dragged near. F3 (tweens) lands here, everything after needs it.
+- [ ] **R2. One "place" primitive.** A seat = a snap point that sets a pose (sit/lie); a container
+  = a sensor that holds and can run something on what's inside. Chair, bed, box. After that the
+  fridge, washer, closet and bucket are small behaviors, not new systems.
+- [ ] **R3. Breakable snaps, properly.** Break on force or speed any time (not only while
+  dragged), pop + boing, the snap point heals. Unlocks the swing, the rider thrown off the
+  skateboard, the high-chair escape.
+- [ ] **R4. Building.** Weld stacks with a threshold that grows with the load above, a nudge into
+  alignment; a stack sways as one. Needs R3; snap blocks and the cart exist.
+- [ ] **R5. Rooms that remember.** W2, then W3 (`WORLDS-AND-DOORS.md`). Then decide: stacked
+  rooms with trapdoors in one scene, or doors between scenes? Slopes through floors and the
+  draining bathtub hang on that.
+- [ ] **R6. Room toys.** Content without end: one toy at a time, a week or less each (pulley,
+  fan, xylophone floor, wrecking ball, swappable wheels), picked per room.
+- [ ] **R7. Alive extras.** Personalities, boredom and wandering, day/night. Last: heavy and
+  helium Mipos fight "light and quick to throw".
+
+R1–R3 plus a few rooms is a whole Sago-sized app; the rest can be updates or a sequel.
+
 ## Picked from the menu
 
 (Nothing in progress. Move an item here from `DOLL-PLAY-MENU.md` when you start it.)
