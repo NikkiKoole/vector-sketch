@@ -185,7 +185,7 @@ function lib.showsBody(body, covered)
 end
 
 function lib.drawWorld(world, drawOutline)
-    local debugIds -- lazily allocated, only needed when showDebugIds is on
+    local debugIds = {} -- ids drawn this frame (showDebugIds): bodies and joints both use it
     if drawOutline == nil then drawOutline = true end
     if drawOutline == true then
         if state.world.drawOutline == false then
@@ -206,10 +206,10 @@ function lib.drawWorld(world, drawOutline)
 
 
     if DRAW_BODIES then
-        for _, body in ipairs(bodies) do
+        for _, body in ipairs(bodies) do repeat -- break = next body (no goto: the web build's Lua 5.1 has none)
             local bodyUD = body:getUserData()
             local bodyThing = bodyUD and bodyUD.thing
-            if skipTextured and not lib.showsBody(body, covered) then goto nextBody end
+            if skipTextured and not lib.showsBody(body, covered) then break end
             -- CUSTOM bodies get a single unified fill+outline pass that honors
             -- thing.extraSteiner (Phase 3 of STEINER-OWNERSHIP-PLAN.md). Kills
             -- the fan outline artifact from the per-fixture draw below.
@@ -225,7 +225,7 @@ function lib.drawWorld(world, drawOutline)
                 local ud = fixture:getUserData()
                 local shape = fixture:getShape()
                 local shapeType = shape:type()
-                if shapeType == 'PolygonShape' then
+                if shapeType == 'PolygonShape' then repeat -- break = done with this polygon
                     local fillColor = getBodyColor(body)
                     love.graphics.setColor(fillColor[1], fillColor[2], fillColor[3], alpha)
                     local hasSpecialFixtureData = ud and
@@ -235,7 +235,7 @@ function lib.drawWorld(world, drawOutline)
                     -- typed) keep their per-fixture pass so their distinct color
                     -- overlays the body fill as before.
                     if customHandled and not hasSpecialFixtureData then
-                        goto polyEnd
+                        break
                     end
                     if ud then
                         if ud.bodyType == "connector" then
@@ -262,7 +262,7 @@ function lib.drawWorld(world, drawOutline)
                     if drawOutline then
                         love.graphics.polygon('line', body:getWorldPoints(shape:getPoints()))
                     end
-                    ::polyEnd::
+                    until true
                 elseif shapeType == 'EdgeShape' or shapeType == 'ChainShape' then
                     love.graphics.setColor(0, 1, 1, alpha)
                     local points = { body:getWorldPoints(shape:getPoints()) }
@@ -290,7 +290,6 @@ function lib.drawWorld(world, drawOutline)
                 if state.world.showDebugIds then
                     if ud and ud.id then
                         local x1, y1 = body:getPosition()
-                        debugIds = debugIds or {}
                         if debugIds[ud.id] == true then
                             print('id already drawn in this loop', ud.id)
                         end
@@ -299,8 +298,7 @@ function lib.drawWorld(world, drawOutline)
                     end
                 end
             end
-            ::nextBody::
-        end
+        until true end
     end
     love.graphics.setColor(255, 255, 255, alpha)
     -- Joint debug

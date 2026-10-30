@@ -29,7 +29,8 @@ local gazeRadius = 1000 -- world units; cursor within this distance → track, o
 local mouthShapes = require('src.mouth-shapes')
 
 -- Blink system. Keyed by body:getUserData().thing, using wall-clock time.
-local blinkStates = {}
+-- Weak keys: a thing that's rebuilt or destroyed takes its blink state with it.
+local blinkStates = setmetatable({}, { __mode = 'k' })
 local prevMouseDown = false
 local closedNorm  -- lazy-init: normalized 'closed' mouth shape for tween start
 
@@ -322,7 +323,7 @@ lib.useDQS = true
 -- 25 randomizes took texture memory from 41 to 105 MB. main.lua runs a full
 -- collect once this passes a threshold.
 lib.texturesCreated = 0
-lib.drawMeshOutline = true -- debug: draw wireframe over deformed MESHUSERT meshes
+lib.drawMeshOutline = false -- debug: draw wireframe over deformed MESHUSERT meshes
 lib.useRibbonMiterClamp = true -- A/B toggle: per-sample bend-aware half-width in texturedCurve
 
 
@@ -1315,6 +1316,7 @@ function lib.makeCombinedImages()
         for i = 1, #fixtures do
             local ud = fixtures[i]:getUserData()
             if ud and type(ud) == 'table' and ud.extra and ud.extra.OMP and ud.extra.dirty then
+                repeat -- break = done (no goto: the web build's Lua 5.1 has none)
                 local patch1 = makePatch('patch1', ud)
                 local patch2 = makePatch('patch2', ud)
                 local patch3 = makePatch('patch3', ud)
@@ -1337,7 +1339,7 @@ function lib.makeCombinedImages()
                     releasePatches(patches)
                     ud.extra.ompImage = nil
                     ud.extra.dirty = false
-                    goto continue_omp_compose
+                    break
                 end
 
                 local outlineImage = getLoveImage('textures/' .. main.bgURL)
@@ -1374,7 +1376,7 @@ function lib.makeCombinedImages()
                 fixtures[i]:setUserData(ud)
 
                 ud.extra.dirty = false
-                ::continue_omp_compose::
+                until true
             end
         end
         --for i = 1, #fixtures do fixtures[i] = nil end
@@ -3258,6 +3260,7 @@ function lib.drawTexturedWorld(world)
         end
 
         if drawables[i].type == subtypes.TRACE_VERTICES then
+            repeat -- break = done (no goto: the web build's Lua 5.1 has none)
             -- a spine torso's haircut runs along the whole torso's top, not its lowest band's
             local hairBones = spineSkin.bonesOf(drawables[i].thing.body)
             local m = traceVerticesMesh(drawables[i].extra,
@@ -3276,7 +3279,7 @@ function lib.drawTexturedWorld(world)
                     -- than crash on the textures/ concat or fall through to a default.
                     local bg = extra.main.bgURL
                     if not bg or bg == '' then
-                        goto continue_trace_vertices
+                        break
                     end
                     img = getLoveImage('textures/' .. bg)
                     if not img then
@@ -3345,7 +3348,7 @@ function lib.drawTexturedWorld(world)
             end
             --logger:inspect(points)
             --logger:inspect()
-            ::continue_trace_vertices::
+            until true
         end
 
         if drawables[i].type == 'decal' then
@@ -3742,5 +3745,7 @@ function lib.drawTexturedWorld(world)
     --love.graphics.setShader()
     --love.graphics.setDepthMode()
 end
+
+lib._test = { blinkStates = blinkStates } -- for specs, not part of the API
 
 return lib
