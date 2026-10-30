@@ -755,6 +755,8 @@ end
 
 -- the drums, where the form and the play let them: lofi's groove (the snare and the rim laid back by
 -- the song's lag), or the style's kit
+local KIND_NUMBER = { intro = 1, A = 2, B = 3, ['break'] = 4, outro = 5, turn = 6 }
+local function neverRoll(n) return n and n - 1 or 0.999 end -- the highest roll: no odds come up
 local LOFI_LANES = { K = { 'lofiKick', 32 }, S = { 'snare', 60 }, H = { 'hat', 60 }, R = { 'rim', 79 } }
 local function bookDrums(bar, groove)
     local synth, song, style, t0, j, roles = bar.synth, bar.song, bar.style, bar.t0, bar.j, bar.roles
@@ -774,11 +776,18 @@ local function bookDrums(bar, groove)
     local drums = roles.drums == 'full' or (roles.drums == 'outro' and j < 2)
     if kit and bar.band and drums then
         local function hit(s, patch, midi, vol, dur, dt)
-            local drag = (style.swing > 0.5 and s % 8 == 4) and 0.008 or 0 -- the backbeat lays back a hair
+            local drag = (song.swing > 0.5 and s % 8 == 4) and 0.008 or 0 -- the backbeat lays back a hair
             local t = stepTime(song, t0, s) + drag + (dt or 0) + humanize(0.003)
             play(synth, 'drums', patch, t, midi, vol, dur)
         end
-        kit(hit, bar.rnd, bar.section.kind, j, song.fill[bar.b], song)
+        -- a steady song's kit rolls the same 2-bar pattern all section long; a song without kicks
+        -- (guaraldi's ballad) rolls nothing
+        local rnd = bar.rnd
+        if style.steady then
+            rnd = song.kicks == false and neverRoll
+                or stream(song.seed, 20000 + (KIND_NUMBER[bar.section.kind] or 0) * 10 + j % 2)
+        end
+        kit(hit, rnd, bar.section.kind, j, song.fill[bar.b], song)
     end
 end
 

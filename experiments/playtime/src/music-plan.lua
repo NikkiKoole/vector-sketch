@@ -20,7 +20,7 @@ local inKey = theory.inKey
 local lib = {}
 
 -- songs carry this; a different one on state.music (an old save after a change) starts afresh
-local VERSION = 3
+local VERSION = 4
 
 local function nextStyleName()
     local style = state.musicSettings.style
@@ -254,22 +254,32 @@ local function planForm(song, style, rnd)
 end
 
 -- A steady style decides once per song what the others roll per bar, and keeps to it: songs of the
--- style differ, a song holds its groove. One comp cell for the A sections and one for B, the push a
--- habit or not (always into a phrase's 4th bar), the side-step too, which of the cell's stabs are
--- light, and the comping: shells (3rd, 7th, a colour) or the full 9ths. Its own stream: the planner's
--- others keep their draws, so the other styles don't change.
-local function planSteady(song, style, weights, total)
+-- style differ, a song holds its groove. One comp cell for the A sections and one for B (or one for
+-- both: sameCell), the push a habit or not (always into the same bar: every pushEvery bars, the 4th
+-- by default), the side-step too, which of the cell's stabs are light, and the comping: shells (3rd,
+-- 7th, a colour) or the full 9ths. A mood (pickMood) narrows the cells and sets the habit. Its own
+-- stream: the planner's others keep their draws, so the other styles don't change.
+local function planSteady(song, style, weights, total, mood)
     local rnd = stream(song.seed, 14)
+    local allowed = mood and mood.cells
     local function pickCell()
-        local u = rnd() * total
+        local sum = 0
         for i, w in ipairs(weights) do
-            if u < w then return i end
-            u = u - w
+            if not allowed or allowed[i] then sum = sum + w end
+        end
+        local u = rnd() * (allowed and sum or total)
+        for i, w in ipairs(weights) do
+            if not allowed or allowed[i] then
+                if u < w then return i end
+                u = u - w
+            end
         end
         return #weights
     end
     local cells = { A = pickCell(), B = pickCell() }
-    song.pushes = rnd(100) < (style.pushOdds or 0) * 3
+    if style.sameCell then cells.B = cells.A end
+    local habit = mood and mood.pushHabit or style.pushHabit or (style.pushOdds or 0) * 3
+    song.pushes = rnd(100) < habit
     song.sidesteps = rnd(100) < (style.sidestepOdds or 0) * 2
     song.lightMask = {}
     for i, cell in ipairs(D.compsOf(style)) do
@@ -277,14 +287,16 @@ local function planSteady(song, style, weights, total)
         for h = 1, #cell do song.lightMask[i][h] = rnd(100) < (style.lightOdds or 30) end
     end
     song.comping = rnd(100) < (style.shellOdds or 50) and 'shell' or 'full'
+    song.kicks = not (mood and mood.kicks == false)
+    local every = style.pushEvery or 4
     for b = 1, song.bars do
         song.comp[b] = cells[song.barSection[b].kind] or cells.A
-        song.push[b] = song.pushes and song.barIndex[b] % 4 == 3
+        song.push[b] = song.pushes and song.barIndex[b] % every == every - 1
     end
 end
 
 -- per bar, knowing the next: the comp cell (per two bars), the push and a fill
-local function planBars(song, style, between)
+local function planBars(song, style, between, mood)
     song.comp, song.push, song.fill = {}, {}, {}
     local rnd = stream(song.seed, 2)
     local weights, total = {}, 0
@@ -304,7 +316,7 @@ local function planBars(song, style, between)
         song.fill[b] = b < song.bars and section.roles.drums == 'full'
             and song.barIndex[b] == section.bars - 1 and rnd(100) < 60
     end
-    if style.steady then planSteady(song, style, weights, total) end
+    if style.steady then planSteady(song, style, weights, total, mood) end
 end
 
 -- the tune: the motif rhythm and its cell's anchor pitches, the scale, and a ladder of the key's
@@ -400,6 +412,20 @@ local function planTone(song, style, rnd, between)
     song.tone = between(style.tone)
 end
 
+-- A style's moods are the kinds of tune it plays (guaraldi: a bounce or a ballad), one per song:
+-- its tempo, swing, comp cells and push habit. Its own stream.
+local function pickMood(style, seed)
+    if not style.moods then return nil end
+    local rnd, total = stream(seed, 15), 0
+    for _, mood in ipairs(style.moods) do total = total + mood.weight end
+    local u = rnd() * total
+    for _, mood in ipairs(style.moods) do
+        if u < mood.weight then return mood end
+        u = u - mood.weight
+    end
+    return style.moods[#style.moods]
+end
+
 -- setKey: the set's key for the song (a cue's choice); nil: a related key, a fourth from the last
 local function planSong(setKey)
     local styleName = nextStyleName()
@@ -410,9 +436,12 @@ local function planSong(setKey)
         return range[1] + love.math.random() * (range[2] - range[1])
     end
     setKey = setKey or nextKey(M.song and M.song.setKey)
+    local mood = pickMood(style, seed)
     local song = {
         version = VERSION, style = styleName, seed = seed, setKey = setKey, key = setKey,
-        beat = 60 / math.floor(between(style.bpm) + 0.5), swing = between(style.swing) or 0.5,
+        mood = mood and mood.name,
+        beat = 60 / math.floor(between(mood and mood.bpm or style.bpm) + 0.5),
+        swing = between(mood and mood.swing or style.swing) or 0.5,
         swing16 = style.swing16, snareLag = between(style.snareLagMs or 8) / 1000,
     }
     song.barLength = (style.meter or 4) * song.beat
@@ -423,7 +452,7 @@ local function planSong(setKey)
     local rnd = stream(seed, 1)
     planChords(song, style, rnd)
     planForm(song, style, rnd)
-    planBars(song, style, between)
+    planBars(song, style, between, mood)
     rnd = stream(seed, 9)
     planTune(song, style, rnd)
     planParts(song, style)
@@ -548,6 +577,7 @@ lib.LOOP_PLANS = LOOP_PLANS
 lib.planChords = planChords
 lib.sectionRoles = sectionRoles
 lib.planForm = planForm
+lib.pickMood = pickMood
 lib.planBars = planBars
 lib.planTune = planTune
 lib.planParts = planParts

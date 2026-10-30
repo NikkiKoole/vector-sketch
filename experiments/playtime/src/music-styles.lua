@@ -123,6 +123,16 @@ D.styles = {
         bpm = 132, swing = 0.62, chordBars = { 1, 2 }, lydianChance = 0, pushOdds = 35, motifRepeat = 30,
         strumMs = 12, keys = 'piano', lead = 'pianoLead', bass = 'guaraldi', bassLo = 38, drums = 'brushes',
         home = 'maj69',
+        -- per song a bounce (the Charleston or the anticipations, always pushing into bars 2 and 4, his
+        -- signature) or a ballad (slower, the chord held with a lift, no pushes, brushes without kicks);
+        -- the piano's full voicings, never shells
+        steady = true, shellOdds = 0, pushEvery = 2,
+        moods = {
+            { name = 'bounce', weight = 3, bpm = { 126, 144 }, swing = { 0.6, 0.66 }, cells = { true, true },
+              pushHabit = 100 },
+            { name = 'ballad', weight = 1, bpm = { 96, 108 }, swing = { 0.58, 0.62 }, cells = { [3] = true },
+              pushHabit = 0, kicks = false },
+        },
         A = {
             { { 0, 'maj69' }, { 5, 'dom9' } },                                -- I6/9 IV9, the rocking vamp
             { { 0, 'maj7' }, { 2, 'm7' }, { 4, 'm7' }, { 5, 'maj7' } },       -- I ii iii IV, stepping up
@@ -500,7 +510,11 @@ D.styles = {
 do
     local g = D.styles.guaraldi
     D.styles.vibesnight = {
-        bpm = { 108, 118 }, swing = 0.62, chordBars = { 1, 2 }, lydianChance = 0, pushOdds = 10, motifRepeat = 30,
+        bpm = { 100, 120 }, swing = { 0.58, 0.64 }, chordBars = { 1, 2 }, lydianChance = 0, pushOdds = 10,
+        motifRepeat = 30,
+        -- a cocktail night doesn't change gears: one comp cell all song, A and B; the pianist lays out
+        -- behind the vibes (shells, mostly); a push habit now and then
+        steady = true, sameCell = true, shellOdds = 70, pushHabit = 30,
         strumMs = 20, keys = 'feltKeys', lead = 'vibes', bass = 'walk', bassPatch = 'musicBass', bassLo = 34,
         drums = 'brushes', home = 'maj69', range = { 65, 84 }, staccato = 8, lightOdds = 50,
         A = g.A, B = g.B,
