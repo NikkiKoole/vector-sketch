@@ -40,10 +40,13 @@ each.
   maybe no split needed, look first). What's
   left: `ui/meshusert-panel.lua` (bind buttons, sliders, triangle painter; the plain sliders could be
   inspector rows), `ui/resource-panel.lua`, and sfixture-editor as dispatch (~150).
-- [ ] **SPLIT5. `music.lua` (1646).** `music-styles` (pure data), `music-theory` (pure functions,
+- [x] **SPLIT5. `music.lua` (1646).** `music-styles` (pure data), `music-theory` (pure functions,
   specs welcome), `music-plan` (planSong and friends), `music-parts` (bass, drums, lofi, strum,
   loop bars); music.lua keeps settings, `state.music`, bookBar/bookNext and the public API (~350).
   The music session owns this file: check with it first. It grew to 2470 with new styles.
+  **Done 2026-10-30** (7ca3f55f, playtime-b5): music.lua 2470 -> 418, music-styles (data), music-theory
+  (pure), music-plan, music-parts; requires one way (styles <- theory <- plan <- parts <- music); old
+  names re-exported; every note of all 15 styles the same as before.
 - [x] **SPLIT6. `io.lua` (1615).** `scene-save`, `scene-load` (buildWorld split into camera/backdrops,
   bodies, joints via handlers, sfixture fix-ups), `save-migrations` (everything only there for old
   files: one place to delete from later), `influences` (restoreInfluenceBodies with an optional id map,
