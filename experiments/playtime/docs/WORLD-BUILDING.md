@@ -116,6 +116,32 @@ The full ranked survey is planned at `EXPERIMENTS-HARVEST.md` (not written yet).
   not in Playtime's `vendor/`. Playtime sets no `package.path` to reach them, so copy one into
   `vendor/` when sway or tween work needs it (DOLL-PLAY F3).
 
+### 1e. scrolling-world: Playtime without Box2D (2026-10-30)
+
+`../scrolling-world` (2021-23) and `../scrolling-world-ecs` (the same on Concord) are the same toy
+as Playtime: an outside world to scroll, grab, throw, a door into a cave. Physics is home-made
+(`src/newton.lua`: gravity, velocity, stop at the ground line), characters are drawn actors with
+rubber-hose legs (`src/actor.lua`), not ragdolls.
+
+- **The lesson: scenery doesn't need to be physics.** Parallax layers, plants, the sky, the ground
+  plane and streamed-in props are only looked at (maybe tapped for a wiggle or a sound). In
+  Playtime anything placed is a Box2D body, and the only non-physics scenery is backdrop images.
+  A non-physics decor layer (vector or textured, in parallax camera layers, tappable) keeps bodies
+  for what's played with: cheaper to draw, and to step (the web build). That's G4; start from
+  scrolling-world's camera layers (`../../lib/camera.lua` `generateCameraLayer`) and streaming.
+- **Stacking** (`../scrolling-world-ecs/src/systems/StackSystem.lua`, `src/stackStuff.lua`): a
+  `stackable` item dropped on another lands exactly on its connector point; the stack is a
+  doubly linked list, moving the bottom one moves the stack, depth follows the order. It clicks
+  into place and never topples. Nikki likes that. In Playtime it could be snap points (SNAP
+  sfixtures, `src/physics/snap.lua`) on the top and bottom of some parts (blocks, pots, hats).
+  Snap joints are revolute now (`snap.lua:188`), so a stack would hinge at every joint: stacking
+  wants a stiff snap (weld, or a motor-held revolute) as an option.
+- **Also there:** the door into a cave (`scenes/world.lua:96` `door-hitarea`, `scenes/cave.lua` a
+  placeholder; early worlds-and-doors and burrow), the sky gradient by time of day
+  (`../../lib/gradient.lua` `makeSkyGradient`, for G5), drawings in `assets/` (doors `deurpaar*`,
+  a digger, ground `grond1-4`), and `designdocs/`: a paper on touch gestures for children's apps
+  (PDF), leaf placement, Tinybop's brand article, a 1950s artist brush pack.
+
 ## 2. What Playtime has
 
 - **tile-repeat sfixture**: this is the "grass" attach that already exists (`src/subtypes.lua:9`;
