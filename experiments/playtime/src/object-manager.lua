@@ -314,6 +314,10 @@ function lib.destroyBody(body)
         end
     end
     registry.unregisterBody(thing.id)
+    -- a body rebuilt while held (an editor slider on a Mipo part) must not stay the one being dragged
+    if state.interaction.draggingObj and state.interaction.draggingObj.body == body then
+        state.interaction.draggingObj = nil
+    end
     body:destroy()
 end
 

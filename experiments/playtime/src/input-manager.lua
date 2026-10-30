@@ -576,6 +576,10 @@ local function handlePointer(x, y, id, action, button)
 end
 
 function lib.handleDraggingObj()
+    if state.interaction.draggingObj.body:isDestroyed() then
+        state.interaction.draggingObj = nil
+        return
+    end
     local mx, my = love.mouse.getPosition()
     local wx, wy = cam:getWorldCoordinates(mx, my)
     local offx = state.interaction.offsetDragging[1]
