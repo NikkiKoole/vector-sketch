@@ -28,7 +28,29 @@ echo "=== Web build of '$SCENE' ==="
 cp "$PLAYTIME_DIR/main.lua" "$PLAYTIME_DIR/conf.lua" "$BUILD_DIR/"
 cp -r "$PLAYTIME_DIR/src" "$PLAYTIME_DIR/vendor" "$PLAYTIME_DIR/assets" "$PLAYTIME_DIR/textures" "$BUILD_DIR/"
 mkdir -p "$BUILD_DIR/scripts"
-cp "$PLAYTIME_DIR/scripts/${SCENE}.playtime."* "$BUILD_DIR/scripts/"
+# The scene and every room its doors lead to, door by door (DOOR behaviors' `to`, src/doors.lua):
+# with only the start scene, going through a door had nothing to load.
+ROOMS="$(python3 - "$PLAYTIME_DIR/scripts" "$SCENE" <<'EOF'
+import json, os, sys
+scripts, start = sys.argv[1], sys.argv[2]
+seen, todo = [], [start]
+while todo:
+    room = todo.pop()
+    path = os.path.join(scripts, room + '.playtime.json')
+    if room in seen or not os.path.exists(path):
+        continue
+    seen.append(room)
+    for body in json.load(open(path)).get('bodies', []):
+        for behavior in body.get('behaviors') or []:
+            if behavior.get('name') == 'DOOR' and behavior.get('to'):
+                todo.append(behavior['to'])
+print(' '.join(seen))
+EOF
+)"
+for room in $ROOMS; do
+    cp "$PLAYTIME_DIR/scripts/${room}.playtime."* "$BUILD_DIR/scripts/"
+done
+echo "rooms: $ROOMS"
 
 # LuaJIT's ffi doesn't exist here (src/synth.lua doesn't need it on the web); the stand-in keeps
 # anything else that requires it (the voice lab) from failing at load.
