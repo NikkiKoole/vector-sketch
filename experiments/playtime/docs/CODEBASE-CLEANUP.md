@@ -1,6 +1,6 @@
 # Codebase Cleanup — AI-Friendliness Pass
 
-status: parked — checked 2026-10-30: 1, 2 and 8 are done, 4 lives on in CODE-SPLITS-2026-10.md; left are retiring UVUSERT (7) and the comment/dead-code passes (3, 5, 6)
+status: done — closed 2026-10-30: 1, 2, 3, 6 and 8 done, 4 went into CODE-SPLITS-2026-10.md, 5 dropped, 7 kept on purpose (UVUSERT is its own feature)
 
 Painpoints identified 2026-02-28. Work through top-to-bottom.
 
@@ -20,7 +20,9 @@ Painpoints identified 2026-02-28. Work through top-to-bottom.
 **Task:** Pick one canonical name per module, rename all aliases to match.
 
 ## 3. Add param docs to table-parameter functions
-**Status:** TODO
+**Status:** done (2026-10-30): every target has its key list (the character setters now live in
+`mipo-build.lua` and `mipo-appearance.lua`; updateFaceOfPart's was missing eyeR, eyeLookAtMouse and
+teethWMul). Beyond these: add a key list when touching such a function, not as a pass.
 **Why:** Functions like `updatePart(partName, values, instance)` accept tables with implicit keys. Have to trace callers to understand the contract.
 **Priority targets:**
 - `character-manager.lua`: `updatePart`, `updateSkinOfPart`, `updateFaceAppearance`, `updatePositioners`, `updateConnectedAppearance`
@@ -39,7 +41,10 @@ Painpoints identified 2026-02-28. Work through top-to-bottom.
 **Task:** Extract named sub-functions within same file. No new modules needed.
 
 ## 5. Add module export comments
-**Status:** TODO
+**Status:** dropped (2026-10-30): nothing keeps such a list true, and `grep 'function lib\.'`
+gives the real one. The bug behind it (randomizeMipo on the wrong module) is solved by the
+character split: randomizing is `src/mipo-randomize.lua` now, and each module says what it's for
+in its header.
 **Why:** `randomizeMipo` lives on CharacterManager but sounds like it belongs to MipoEditor. Caused two bugs.
 **Task:** Add a `-- Exports: functionA, functionB, ...` comment block near the top of each src/ module listing its public `lib.*` functions. Start with the most-used modules:
 - `character-manager.lua`
@@ -50,7 +55,7 @@ Painpoints identified 2026-02-28. Work through top-to-bottom.
 - `registry.lua`
 
 ## 6. Clean up dead code / stale comments
-**Status:** TODO
+**Status:** done (2026-10-30) as CODE-CLEANUP-2026-10.md CL4: ~640 lines of commented-out code gone.
 **Why:** Commented-out code blocks add noise when scanning files. 45+ blocks across 14 files.
 **Worst offenders:**
 - `physics/box2d-draw-textured.lua` — 22 comment blocks
@@ -59,7 +64,11 @@ Painpoints identified 2026-02-28. Work through top-to-bottom.
 **Task:** Remove commented-out code that's been dead for 2+ commits. Keep genuine TODO comments.
 
 ## 7. Retire UVUSERT
-**Status:** TODO
+**Status:** kept (2026-10-30, Nikki). The premise below is wrong: a UVUSERT draws *its own body's*
+polygon and takes the RESOURCE's UVs by vertex number, so one UV map dresses several bodies of
+different shapes with the same vertex count (scripts/tech/uvs and resources do exactly that). A
+MESHUSERT draws *the RESOURCE's* polygon. Converting would change those scenes; folding the
+feature into MESHUSERT as an option was more work than the type costs.
 **Why:** UVUSERT is the ancestor of MESHUSERT — textured polygon riding a body, no skinning. MESHUSERT with no bound influences does the same thing, with cached triangulation and access to z-order groups. UVUSERT re-runs ear-clip every frame, so it's also slower at runtime. Kept around only because `scripts/tech/uvs.playtime.json` and `scripts/tech/resources.playtime.json` still reference it.
 **Where:** `src/physics/box2d-draw-textured.lua:1851-1975` (draw path, ~125 lines incl. commented debug blocks), `src/subtypes.lua:11`, `src/object-manager.lua` creation path.
 **Task:** Migrate UVUSERT → MESHUSERT-without-bones on load (`src/io.lua` subtypes.migrate already has the pattern — see `uvmappert` → `uvusert` rename). Delete the UVUSERT draw branch. Delete UVUSERT from the attach group in `src/ui/tool-rail.lua`. Retire the constant.

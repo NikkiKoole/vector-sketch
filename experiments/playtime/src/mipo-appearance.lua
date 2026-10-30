@@ -107,12 +107,13 @@ end
 
 -- Update face appearance (eye/pupil/brow/nose/mouth shape, colors, positions).
 -- values can contain: eyeShape, eyeBgHex, eyeFgHex, eyeWMul, eyeHMul,
+-- eyeR, eyeLookAtMouse,
 -- pupilShape, pupilBgHex, pupilFgHex, pupilWMul, pupilHMul, eyeX, eyeY,
 -- browShape, browBgHex, browWMul, browHMul, browBend, browY,
 -- noseShape, noseBgHex, noseFgHex, noseWMul, noseHMul, noseY,
 -- mouthShape, mouthUpperLipShape, mouthLowerLipShape, mouthLipHex,
 -- mouthBackdropHex, mouthUpperLipScale, mouthLowerLipScale, mouthWMul, mouthHMul, mouthY,
--- teethShape, teethHMul, teethStickOut, teethBgHex, teethFgHex
+-- teethShape, teethWMul, teethHMul, teethStickOut, teethBgHex, teethFgHex
 function lib.updateFaceOfPart(instance, partName, values)
     local p = instance.dna.parts[partName]
     if not p or not p.appearance or not p.appearance['face'] then return end
