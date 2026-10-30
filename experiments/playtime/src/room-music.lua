@@ -15,7 +15,7 @@ local lib = {}
 
 lib.defaults = {
     style = 'keep',  -- 'keep', 'set' or a music style name
-    at = 'phrase',   -- 'phrase': turn at the end of the phrase; 'bar': at the next bar line
+    at = 'bar',      -- 'bar': the handoff starts at the next bar line; 'phrase': at the phrase end
     layers = 'keep', -- 'keep' or one of music.layerPresets
 }
 

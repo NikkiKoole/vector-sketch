@@ -1,5 +1,5 @@
 {
-  "music":{"style":"ambient","at":"phrase"},
+  "music":{"style":"ambient","at":"bar"},
   "characters":[],
   "joints":[],
   "camera":{

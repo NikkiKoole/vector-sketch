@@ -39,7 +39,7 @@ lib.rows = {
     { key = 'about', kind = 'note', label = 'entering this room plays:' },
     field('style', 'style', 'choice', styles()),
     field('layers', 'layers', 'choice', layerPresets()),
-    field('at', 'turn at', 'choice', { 'phrase', 'bar' }),
+    field('at', 'turn at', 'choice', { 'bar', 'phrase' }),
 }
 
 -- the choices follow music's styles and presets (they grow with a hot reload)
