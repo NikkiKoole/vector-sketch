@@ -9,7 +9,7 @@ local lib = {}
 local utils = require('src.utils')
 
 local state = require('src.state')
-local textured = require('src.physics.box2d-draw-textured')
+local shaders = require('src.render.shaders') -- the shader defaults
 local fixtures = require('src.fixtures')
 local mathutils = require('src.math-utils')
 local modes = require('src.modes')
@@ -230,7 +230,7 @@ local function shaderNumber(key, label, min, max, extra)
     local row = { key = key, label = label, kind = 'number', min = min, max = max,
         get = function(fixture)
             local v = extraOf(fixture)[key]
-            if v == nil then v = textured[key] end
+            if v == nil then v = shaders[key] end
             return v
         end,
         set = function(fixture, v) extraOf(fixture)[key] = v end }
@@ -240,7 +240,7 @@ end
 
 local function shaderColor(key, label)
     return { key = key, label = label, kind = 'color',
-        get = function(fixture) return extraOf(fixture)[key] or textured[key] end,
+        get = function(fixture) return extraOf(fixture)[key] or shaders[key] end,
         set = function(fixture, v) extraOf(fixture)[key] = v end }
 end
 

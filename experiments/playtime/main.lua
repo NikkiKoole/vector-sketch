@@ -94,6 +94,7 @@ local objectManager = require('src.object-manager')
 local utils = require('src.utils')
 local box2dDraw = require('src.physics.box2d-draw')
 local box2dDrawTextured = require('src.physics.box2d-draw-textured')
+local ompBake = require('src.render.omp-bake')
 local mipoVoice = require('src.mipo-voice')
 local sound = require('src.sound')
 local mipoChatter = require('src.mipo-chatter')
@@ -242,8 +243,8 @@ function love.update(dt)
     -- frame) and with ceiling 2 MB even forced a full collect every update.
     -- Exception: replaced textures hold GPU memory the GC doesn't feel, so after
     -- a batch of new ones (randomize, editor tweaks) do one full collect.
-    if box2dDrawTextured.texturesCreated >= 32 then
-        box2dDrawTextured.texturesCreated = 0
+    if ompBake.texturesCreated >= 32 then
+        ompBake.texturesCreated = 0
         collectgarbage('collect')
     end
     prof.pop('frame')

@@ -198,7 +198,7 @@ Both should report **0 warnings / 0 errors**; keep it that way.
 
 ## Mesh deformation & skinning
 
-**MESHUSERT** sfixtures support Dual Quaternion Skinning (DQS) for deforming a polygon mesh across multiple Box2D body "bones". Toggle: `box2dDrawTextured.useDQS` (default true). Falls back to LBS per-vertex when bind data is missing. Bind-pose data (`bindAngle` per influence, `bindVerts` per vertex) is captured during bind and backfilled on load for old scenes (`io.lua`).
+**MESHUSERT** sfixtures support Dual Quaternion Skinning (DQS) for deforming a polygon mesh across multiple Box2D body "bones". Toggle: `useDQS` in `src/render/skinning.lua` (default true; as written it blends the same as LBS, see CL16 in `docs/CODE-CLEANUP-2026-10.md`). Falls back to LBS per-vertex when bind data is missing. Bind-pose data (`bindAngle` per influence, `bindVerts` per vertex) is captured during bind and backfilled on load for old scenes (`io.lua`).
 
 **CONNECTED_TEXTURE** textured ribbons (Bezier through joints) have per-sample miter-limit width clamping to prevent bow-tie artifacts at sharp bends (e.g. arm hair at a flexed elbow).
 
