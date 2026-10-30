@@ -140,7 +140,57 @@ local function makeSquishableUVsFromPoints(v)
     return verts
 end
 
-local function drawSquishableHairOver(img, x, y, r, sx, sy, growFactor, vertices)
+-- Meshes that belong to one drawable (`owner`: its extra; `slot` tells its layers apart), kept
+-- until what they're made from changes (docs/MIPO-DRAWING.md L1). The shared ones (getStrip,
+-- _getFanMesh: one per picture) are rewritten by every user every frame.
+local owned = setmetatable({}, { __mode = 'k' }) -- [owner] = { [slot] = record }
+local function ownedRecord(owner, slot)
+    local byOwner = owned[owner]
+    if not byOwner then byOwner = {}; owned[owner] = byOwner end
+    return byOwner, byOwner[slot]
+end
+
+local function samePoints(a, b)
+    if not a or #a ~= #b then return false end
+    for i = 1, #b do
+        if a[i] ~= b[i] then return false end
+    end
+    return true
+end
+
+local function copyPoints(points, into)
+    into = into or {}
+    for i = 1, #points do into[i] = points[i] end
+    for i = #points + 1, #into do into[i] = nil end
+    return into
+end
+
+-- A fan over `vertices` (a texfixture's corners, in its body's frame) with `img`, built once and
+-- kept until the picture, the corners or growFactor change.
+local function ownFan(owner, slot, img, growFactor, vertices)
+    local byOwner, rec = ownedRecord(owner, slot)
+    if rec and rec.img == img and rec.growFactor == growFactor and samePoints(rec.vertices, vertices) then
+        return rec.mesh
+    end
+    local n = math.floor(#vertices / 2)
+    local grown = {}
+    for i = 1, #vertices do grown[i] = vertices[i] * growFactor end
+    local ring = makeSquishableUVsFromPoints(grown)
+    local cx, cy = mathutils.getCenterOfPoints(vertices)
+    local verts = { { cx, cy, 0.5, 0.5 } }
+    for i = 1, (n + 1) do verts[i + 1] = ring[i] or { 0, 0, 0, 0 } end
+    if rec then rec.mesh:release() end
+    local mesh = love.graphics.newMesh(verts, 'fan')
+    mesh:setTexture(img)
+    byOwner[slot] = { mesh = mesh, img = img, growFactor = growFactor, vertices = copyPoints(vertices) }
+    return mesh
+end
+
+local function drawSquishableHairOver(img, x, y, r, sx, sy, growFactor, vertices, owner, slot)
+    if owner then
+        love.graphics.draw(ownFan(owner, slot, img, growFactor, vertices), x, y, r, sx, sy)
+        return
+    end
     -- grow once into a flat array (reuse a local)
     local nnums = #vertices         -- flat x,y,... array
     local n = math.floor(nnums / 2) -- number of polygon points
@@ -312,6 +362,35 @@ local function traceVerticesMesh(extra, outline)
     return mesh
 end
 
+
+-- A strip along the Bezier through `points`, with `img` `scaleW` wide (texturedCurve's dir, shift),
+-- that belongs to `owner`: the curve is only laid again when the points or the picture change.
+-- `curve` (optional): the Bezier through `points` and its derivative, when a drawer lays several
+-- layers along one curve (made only if a layer needs laying).
+function lib.ownStrip(owner, slot, img, scaleW, points, dir, shift, curve)
+    local byOwner, rec = ownedRecord(owner, slot)
+    if not rec or rec.img ~= img or rec.scaleW ~= scaleW or rec.dir ~= dir or rec.shift ~= shift then
+        if rec then rec.mesh:release() end
+        rec = { mesh = createTexturedTriangleStrip(img, scaleW), img = img, scaleW = scaleW, dir = dir,
+            shift = shift }
+        byOwner[slot] = rec
+    end
+    if not samePoints(rec.points, points) then
+        local bezier, derivative
+        if curve then bezier, derivative = curve() else bezier = love.math.newBezierCurve(points) end
+        texturedCurve(bezier, img, rec.mesh, dir, scaleW, derivative, shift)
+        rec.points = copyPoints(points, rec.points)
+    end
+    return rec.mesh
+end
+
+-- Forget every owned strip and fan (spec/draw-cache_spec.lua draws a frame from scratch).
+function lib.clearOwned()
+    for _, byOwner in pairs(owned) do
+        for _, rec in pairs(byOwner) do rec.mesh:release() end
+    end
+    owned = setmetatable({}, { __mode = 'k' })
+end
 
 -- A baked image is being replaced: free the strips and fans made for it.
 function lib.releaseImage(img)

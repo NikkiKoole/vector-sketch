@@ -1,6 +1,6 @@
 # Drawing Mipos — what it costs and how to make it cheaper
 
-status: parked — measure on the iPad first (MEASURING.md); then L0 + L1 are the safe start
+status: parked — L0 and L1 done (2026-10-30); measure on the iPad before L2
 
 How a Mipo is drawn now, from the crowd measurements of 2026-10-30 (MEASURING.md: 20 to 200 Mipos,
 Apple M1) and a read of `physics/box2d-draw-textured.lua` and `src/render/`.
@@ -44,15 +44,29 @@ About **30 drawables and 30 draw calls per Mipo, ~0.6 ms of drawing each** (all 
 Each level keeps what you see the same (`claudetools/snapshot.sh` proves it for L0-L2) and is measured
 before and after with `claudetools/frame-profile.lua`. Gains are estimates until measured.
 
-- [ ] **L0. Cull what's off screen.** Skip a Mipo (or any drawable) whose box is outside the camera.
+- [x] **L0. Cull what's off screen.** Skip a Mipo (or any drawable) whose box is outside the camera.
   *Cost:* small (a box per Mipo, kept as it moves). *Gain:* nothing in the crowd (all on screen); in
   the overworld or a long room most of the draw. *Risk:* low (a margin for hair and ribbons sticking out).
-- [ ] **L1. Don't redo what didn't change.** Build each texfixture fan once per fixture (rebuild when
+- [x] **L1. Don't redo what didn't change.** Build each texfixture fan once per fixture (rebuild when
   its picture or shape changes); rewrite a ribbon or brow strip only when its anchors moved (like
   `stripHolds`); keep the draw list and its order until a sfixture is added, removed or re-layered;
   reuse tables. Same ~30 draw calls. *Cost:* 1-2 days. *Gain:* most of the Lua side of drawing and
   most of the garbage; maybe a third of the draw time (to measure). *Risk:* low-medium: a stale cache
   shows as a part not following (the snapshots and the editor test catch most).
+  **L0 + L1 done 2026-10-30.** Culling: per Mipo, its part bodies' box grown by how far its pictures
+  reach (the furthest fixture corner from its body's centre, measured when the list is built, + 200 for
+  ribbon and hair width; a Mipo's `scale` doesn't say how big it is: heads stuck out 318 at scale 0.3).
+  Kept: the draw list (rebuilt when `registry.sfixtureVersion` moves or an sfixture's fixture, userData,
+  subtype, z or the fields it's built from change), a fan per texfixture layer, a strip per ribbon, brow
+  and lip (`ribbon.ownStrip`, laid again only when its control points change; ribbon and lip curves are
+  read by the drawers now). Pictures and Mipos identical (snapshots); `spec/draw-cache_spec.lua`: a frame
+  after moves, z changes, a Mipo added and removed looks like the same frame drawn from scratch, and
+  culling changes no pixel (it caught a too-small margin; mutation-tested).
+  Measured (crowd, Apple M1): textured draw 8.6 -> 6.7 ms moving, 4.6 ms paused; garbage 610 -> 335 KB a
+  frame. 200 Mipos paused, all on screen: 90.6 -> 53.6 ms; the normal camera (~13 visible): 11.4 ms. While
+  Mipos move, ribbons cost what they did (their curve changes every frame). Draw calls unchanged (L2).
+  Found: outside the textured draw ~33 ms at 200 Mipos in the editor (box2d-draw's outlines of every
+  body, not culled) and ~22 ms in play mode; the paused update (26 ms at 200) is untouched by this.
 - [ ] **L2. One texture per Mipo, a few draw calls.** Pack a Mipo's baked part pictures into one atlas at
   bake time, and draw its rigid parts (texfixtures, decals) as one mesh per Mipo, the part vertices
   moved on the CPU each frame; ribbons too if their strips use the atlas. The mouth (stencil) stays

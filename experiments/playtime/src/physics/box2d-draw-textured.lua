@@ -27,6 +27,7 @@ local faceDrawables = { decal = true, brow = true, ['mouth-backdrop'] = true, ['
 local gazeRadius = 1000 -- world units; cursor within this distance → track, outside → look ahead
 local mipoFace = require('src.mipo-face')
 local utils = require('src.utils')
+local mipoRegistry = require('src.mipo-registry')
 local ompBake = require('src.render.omp-bake')
 local shaders = require('src.render.shaders')
 local ribbon = require('src.render.ribbon')
@@ -35,7 +36,7 @@ local skinning = require('src.render.skinning')
 
 local getLoveImage = ompBake.getLoveImage
 local setSurfaceShader = shaders.setSurfaceShader
-local getStrip, texturedCurve, growLine = ribbon.getStrip, ribbon.texturedCurve, ribbon.growLine
+local ownStrip, growLine = ribbon.ownStrip, ribbon.growLine
 local drawSquishableHairOver, traceVerticesMesh = ribbon.drawSquishableHairOver, ribbon.traceVerticesMesh
 local lookupUV, buildPolyVertexIndex = skinning.lookupUV, skinning.buildPolyVertexIndex
 
@@ -94,7 +95,7 @@ local function drawImageLayerSquishRGBA(url, r, g, b, a, extra, texfixture)
         local sx = 1 --ww / imgw
         local sy = 1 --hh / imgh
         love.graphics.setColor(r, g, b, a)
-        drawSquishableHairOver(img, body:getX(), body:getY(), body:getAngle(), sx, sy, 1, vertices)
+        drawSquishableHairOver(img, body:getX(), body:getY(), body:getAngle(), sx, sy, 1, vertices, extra, url)
     end
 end
 
@@ -121,13 +122,52 @@ local function drawCombinedImageVanilla(ompImage, extra, texfixture, _thing)
             love.graphics.setColor(r, g, b, a)
         end
 
-        drawSquishableHairOver(img, body:getX(), body:getY(), body:getAngle(), sx, sy, 1, vertices)
+        drawSquishableHairOver(img, body:getX(), body:getY(), body:getAngle(), sx, sy, 1, vertices, extra, 'omp')
     end
 end
 
--- One drawables array reused across frames (cleared in place); only the
--- small per-drawable tables still allocate per frame.
+-- The draw list, kept between frames (docs/MIPO-DRAWING.md L1): built again (and sorted) only when
+-- an sfixture comes or goes (registry.sfixtureVersion) or one of them changed what it draws: its
+-- fixture, userData, subtype, z, or the extra fields createDrawables reads. Each frame only that is
+-- checked. What moves every frame (ribbon curves, lip curves) is read by the drawers.
 local drawablesList = {}
+local listState = { version = nil, entries = {} }
+local reachOf = setmetatable({}, { __mode = 'k' }) -- [Mipo] = how far its pictures reach (culling)
+
+local function fullMouth(extra) return extra.curvePoints ~= nil and #extra.curvePoints == 16 end
+
+-- what createDrawables made this sfixture's drawables from
+local function sfixtureLooks(e, fixture, ud)
+    local extra = ud.extra
+    e.fixture, e.ud, e.extra, e.subtype = fixture, ud, extra, ud.subtype
+    if extra then
+        e.z = (extra.zGroupOffset or 0) * 1000 + (extra.zOffset or 0)
+        e.brow, e.mouth, e.points = extra.browCurve, extra.mouthCurve, fullMouth(extra)
+        e.front, e.nodes = extra.front, extra.nodes ~= nil
+    end
+    return e
+end
+
+local function looksTheSame(e)
+    local fixture = e.fixture
+    if fixture:isDestroyed() then return false end
+    local ud = fixture:getUserData()
+    if ud ~= e.ud or ud.extra ~= e.extra or ud.subtype ~= e.subtype then return false end
+    local extra = e.extra
+    if not extra then return true end
+    return e.z == (extra.zGroupOffset or 0) * 1000 + (extra.zOffset or 0)
+        and e.brow == extra.browCurve and e.mouth == extra.mouthCurve and e.points == fullMouth(extra)
+        and e.front == extra.front and e.nodes == (extra.nodes ~= nil)
+end
+
+local function listStillHolds()
+    if listState.version ~= registry.sfixtureVersion then return false end
+    local entries = listState.entries
+    for i = 1, #entries do
+        if not looksTheSame(entries[i]) then return false end
+    end
+    return true
+end
 
 -- Everything drawn here hangs off an sfixture, so the list is built from the registry's
 -- sfixtures, not by walking every fixture of every body (1500 fixtures, 650 of them
@@ -136,6 +176,8 @@ local drawablesList = {}
 local function createDrawables()
     local drawables = drawablesList
     for i = #drawables, 1, -1 do drawables[i] = nil end
+    listState.entries = {}
+    reachOf = setmetatable({}, { __mode = 'k' }) -- parts may have been rebuilt or resized
     for _, fixture in pairs(registry.sfixtures) do
         local ud = not fixture:isDestroyed() and fixture:getUserData()
         if type(ud) ~= 'table' then -- only table userData is an sfixture
@@ -237,34 +279,15 @@ local function createDrawables()
                         body = body,
                     })
                 else
-                    -- Mouth bezier curve decal (upper or lower lip)
+                    -- Mouth bezier curve decal (upper or lower lip); its curve comes from
+                    -- extra.curvePoints when drawn (src/render/mouth.lua)
                     local pts = ud.extra.curvePoints
                     if pts and #pts == 16 then
-                        local s = pts
-                        local curveData
-                        if ud.extra.mouthCurve == 'upper' then
-                            curveData = {
-                                s[1], s[2], s[3], s[4],
-                                s[3], s[4], s[5], s[6],
-                                s[5], s[6], s[7], s[8],
-                                s[7], s[8], s[9], s[10],
-                            }
-                        else
-                            -- Reverse lower lip curve to go left-to-right
-                            -- (matching upper lip direction) so texture orientation is consistent
-                            curveData = {
-                                s[1], s[2], s[15], s[16],
-                                s[15], s[16], s[13], s[14],
-                                s[13], s[14], s[11], s[12],
-                                s[11], s[12], s[9], s[10],
-                            }
-                        end
                         table.insert(drawables, {
                             type = 'mouth-' .. ud.extra.mouthCurve,
                             z = composedZ,
                             extra = ud.extra,
                             body = body,
-                            curveData = curveData,
                         })
                         if ud.extra.mouthCurve == 'lower' then
                             -- Dark interior fill renders below teeth so teeth always
@@ -289,78 +312,15 @@ local function createDrawables()
         end
 
         if ud and subtypes.is(ud, subtypes.CONNECTED_TEXTURE) and ud.extra.nodes then
-            local points = {}
-            for j = 1, #ud.extra.nodes do
-                local it = ud.extra.nodes[j]
-                if it.type == NT.ANCHOR then
-                    local f = registry.getSFixtureByID(it.id)
-                    if f then
-                        local b = f:getBody()
-                        local centerX, centerY = mathutils.getCenterOfPoints({ b:getWorldPoints(f:getShape()
-                            :getPoints()) })
-                        table.insert(points, centerX)
-                        table.insert(points, centerY)
-                    else
-                        print('issue with finding achor, id:', it.id)
-                    end
-                end
-                if it.type == NT.JOINT then
-                    local jnt = registry.getJointByID(it.id)
-                    if jnt and not jnt:isDestroyed() then
-                        local x1, y1, _, _ = jnt:getAnchors()
-                        table.insert(points, x1)
-                        table.insert(points, y1)
-                    end
-                end
-            end
-
-            if #points == 4 then
-                -- here we will just introduce a little midle thingie
-                -- -- becaue i cannot draw a curve of 2 points
-                local function addMidpoint(pts)
-                    if #pts ~= 4 then
-                        error("Expected array of exactly 2 points (4 numbers)")
-                    end
-
-                    local x1, y1, x2, y2 = pts[1], pts[2], pts[3], pts[4]
-                    local midX = (x1 + x2) / 2
-                    local midY = (y1 + y2) / 2
-
-                    return { x1, y1, midX, midY, x2, y2 }
-                end
-
-                points = addMidpoint(points)
-            end
-
-            if #points >= 6 then
-                -- todo here we might want to grow the curve... so it will stick a little bit from the sides
-
-                -- todo parameterize this
-                local growLength = ud.extra.growExtra or 20
-                points[1], points[2] = growLine({ points[1], points[2] }, { points[3], points[4] }, growLength)
-                points[5], points[6] = growLine({ points[5], points[6] }, { points[3], points[4] }, growLength)
-
-                -- bendiness controls control-point duplication for the bezier through
-                -- joint anchors. 0 = soft/rubbery (curve smooths across the elbow),
-                -- 6 = crisp (curve hugs each joint tightly). Default 2 matches the
-                -- pre-knob behaviour. See doubleControlPoints in src/spine-mesh.lua.
-                local bendiness = (ud.extra.main and ud.extra.main.bendiness) or 2
-                points = spineMesh.doubleControlPoints(points, bendiness)
-
-                table.insert(drawables,
-                    {
-                        z = composedZ,
-                        type = 'connected-texture',
-                        curve = love.math.newBezierCurve(points),
-                        --texfixture = fixture,
-                        extra = ud.extra,
-                        --body = body,
-                    })
-            end
+            -- its curve follows the joints: laid in drawConnectedTexture (ribbonPoints)
+            table.insert(drawables, { z = composedZ, type = 'connected-texture', extra = ud.extra, body = body })
         end
+        local thing = body and utils.thingOf(body)
         for k = before + 1, #drawables do
             drawables[k].key, drawables[k].sub = ud.id, k - before
+            drawables[k].mipoThing = thing and thing.mipoId and thing -- for culling (L0)
         end
+        if ud then listState.entries[#listState.entries + 1] = sfixtureLooks({}, fixture, ud) end
     end
     return drawables
 end
@@ -543,32 +503,104 @@ local function drawUvusert(d)
     end
 end
 
+-- A connected texture's control points this frame: through its nodes (anchors, joint anchors), a
+-- midpoint added for two, the ends grown, the inner points doubled by bendiness; nil when it has
+-- fewer than three.
+local function ribbonPoints(extra)
+    local points = {}
+    for j = 1, #extra.nodes do
+        local it = extra.nodes[j]
+        if it.type == NT.ANCHOR then
+            local f = registry.getSFixtureByID(it.id)
+            if f then
+                local b = f:getBody()
+                local centerX, centerY = mathutils.getCenterOfPoints({ b:getWorldPoints(f:getShape()
+                    :getPoints()) })
+                table.insert(points, centerX)
+                table.insert(points, centerY)
+            else
+                print('issue with finding achor, id:', it.id)
+            end
+        end
+        if it.type == NT.JOINT then
+            local jnt = registry.getJointByID(it.id)
+            if jnt and not jnt:isDestroyed() then
+                local x1, y1, _, _ = jnt:getAnchors()
+                table.insert(points, x1)
+                table.insert(points, y1)
+            end
+        end
+    end
+
+    if #points == 4 then
+        -- here we will just introduce a little midle thingie
+        -- -- becaue i cannot draw a curve of 2 points
+        local function addMidpoint(pts)
+            if #pts ~= 4 then
+                error("Expected array of exactly 2 points (4 numbers)")
+            end
+
+            local x1, y1, x2, y2 = pts[1], pts[2], pts[3], pts[4]
+            local midX = (x1 + x2) / 2
+            local midY = (y1 + y2) / 2
+
+            return { x1, y1, midX, midY, x2, y2 }
+        end
+
+        points = addMidpoint(points)
+    end
+
+    if #points < 6 then return nil end
+
+    -- todo here we might want to grow the curve... so it will stick a little bit from the sides
+
+    -- todo parameterize this
+    local growLength = extra.growExtra or 20
+    points[1], points[2] = growLine({ points[1], points[2] }, { points[3], points[4] }, growLength)
+    points[5], points[6] = growLine({ points[5], points[6] }, { points[3], points[4] }, growLength)
+
+    -- bendiness controls control-point duplication for the bezier through
+    -- joint anchors. 0 = soft/rubbery (curve smooths across the elbow),
+    -- 6 = crisp (curve hugs each joint tightly). Default 2 matches the
+    -- pre-knob behaviour. See doubleControlPoints in src/spine-mesh.lua.
+    local bendiness = (extra.main and extra.main.bendiness) or 2
+    points = spineMesh.doubleControlPoints(points, bendiness)
+    return points
+end
+
 local function drawConnectedTexture(d)
-    local curve = d.curve
-    local derivate = curve:getDerivative()
     local extra = d.extra
+    local points = ribbonPoints(extra)
+    if not points then return end
+    local main = extra.main
+    local wmul, dir = main.wmul or 1, main.dir or 1
+    local bezier, derivative -- one curve for the layers, made when the first needs laying
+    local function curve()
+        if not bezier then
+            bezier = love.math.newBezierCurve(points)
+            derivative = bezier:getDerivative()
+        end
+        return bezier, derivative
+    end
     local shaded = setSurfaceShader(extra, nil)
     if not extra.OMP then -- this is the BG and FG routine
-        local main = extra.main
         if not main.cached then
             ompBake.makeCached(main)
         end
         local cached = main.cached
 
-        if extra.main and extra.main.bgURL then
-            local img = getLoveImage('textures/' .. extra.main.bgURL)
+        if main.bgURL then
+            local img = getLoveImage('textures/' .. main.bgURL)
             if img then
-                local mesh = getStrip(img, extra.main.wmul or 1)
-                texturedCurve(curve, img, mesh, extra.main.dir or 1, extra.main.wmul or 1, derivate)
+                local mesh = ownStrip(extra, 'bg', img, wmul, points, dir, nil, curve)
                 love.graphics.setColor(cached.bgR, cached.bgG, cached.bgB, cached.bgA)
                 love.graphics.draw(mesh)
             end
         end
-        if extra.main and extra.main.fgURL then
-            local img = getLoveImage('textures/' .. extra.main.fgURL)
+        if main.fgURL then
+            local img = getLoveImage('textures/' .. main.fgURL)
             if img then
-                local mesh = getStrip(img, extra.main.wmul or 1)
-                texturedCurve(curve, img, mesh, extra.main.dir or 1, extra.main.wmul or 1, derivate)
+                local mesh = ownStrip(extra, 'fg', img, wmul, points, dir, nil, curve)
                 love.graphics.setColor(cached.fgR, cached.fgG, cached.fgB, cached.fgA)
                 love.graphics.draw(mesh)
             end
@@ -577,8 +609,7 @@ local function drawConnectedTexture(d)
     if extra.OMP then
         local img = extra.ompImage
         if img then
-            local mesh = getStrip(img, extra.main.wmul or 1)
-            texturedCurve(curve, img, mesh, extra.main.dir or 1, extra.main.wmul or 1, derivate)
+            local mesh = ownStrip(extra, 'omp', img, wmul, points, dir, nil, curve)
             love.graphics.setColor(1, 1, 1, 1)
             love.graphics.draw(mesh)
         end
@@ -834,12 +865,10 @@ local function drawBrow(d)
                 p3x, p3y,
             }
 
-            local curve = love.math.newBezierCurve(curveData)
             local lipScale = h / (browImg:getHeight() * 2)
-            local mesh = getStrip(browImg, lipScale)
+            local mesh = ownStrip(extra, 'brow', browImg, lipScale, curveData, -1)
             local r, g, b, a = color.hexToColor(extra.bgHex or '000000ff')
             love.graphics.setColor(r, g, b, a)
-            texturedCurve(curve, browImg, mesh, -1, lipScale)
             -- Mirror right brow via sx=-1, matching puppet-maker2 approach
             local mirrorSx = extra.browMirror and -1 or 1
             love.graphics.draw(mesh, ox, oy, 0, mirrorSx, 1)
@@ -852,6 +881,74 @@ end
 
 
 
+
+-- Skip Mipos that are off screen (docs/MIPO-DRAWING.md L0): their part bodies' box, grown by how far
+-- their pictures reach, against the screen corners in world space (whatever transform the camera or
+-- a canvas set). lib.cull = false draws everything.
+lib.cull = true
+local hiddenMipos = {}
+local cullStats = { culled = 0 }
+
+-- How far a Mipo's pictures reach past its part bodies' centres: the furthest corner of any fixture
+-- from its body's centre (texfixtures are the pictures' quads; a Mipo's `scale` says little, its parts
+-- are sized on their own: heads stuck out 318 at scale 0.3), plus CULL_PAD for what's drawn past
+-- the fixtures (ribbon and hair width). Measured when the draw list is built, not every frame.
+local CULL_PAD = 200
+local function mipoReach(instance)
+    local reach = reachOf[instance]
+    if reach then return reach end
+    reach = 0
+    for _, part in pairs(instance.parts) do
+        local body = part.body
+        if body and not body:isDestroyed() then
+            for _, fixture in ipairs(body:getFixtures()) do
+                local shape = fixture:getShape()
+                if shape:getType() == 'circle' then
+                    local px, py = shape:getPoint()
+                    reach = math.max(reach, math.sqrt(px * px + py * py) + shape:getRadius())
+                else
+                    local points = { shape:getPoints() }
+                    for i = 1, #points, 2 do
+                        reach = math.max(reach, math.sqrt(points[i] * points[i] + points[i + 1] * points[i + 1]))
+                    end
+                end
+            end
+        end
+    end
+    reach = reach + CULL_PAD
+    reachOf[instance] = reach
+    return reach
+end
+local function hideOffscreenMipos()
+    for id in pairs(hiddenMipos) do hiddenMipos[id] = nil end
+    if not lib.cull then return end
+    local w, h = love.graphics.getDimensions()
+    local canvas = love.graphics.getCanvas()
+    if type(canvas) == 'userdata' then w, h = canvas:getDimensions() end
+    local ax, ay = love.graphics.inverseTransformPoint(0, 0)
+    local bx, by = love.graphics.inverseTransformPoint(w, 0)
+    local cx, cy = love.graphics.inverseTransformPoint(0, h)
+    local dx, dy = love.graphics.inverseTransformPoint(w, h)
+    local vx1, vx2 = math.min(ax, bx, cx, dx), math.max(ax, bx, cx, dx)
+    local vy1, vy2 = math.min(ay, by, cy, dy), math.max(ay, by, cy, dy)
+    for id, instance in pairs(mipoRegistry.getAll()) do
+        local x1, y1, x2, y2 = math.huge, math.huge, -math.huge, -math.huge
+        for _, part in pairs(instance.parts) do
+            local body = part.body
+            if body and not body:isDestroyed() then
+                local x, y = body:getPosition()
+                if x < x1 then x1 = x end
+                if x > x2 then x2 = x end
+                if y < y1 then y1 = y end
+                if y > y2 then y2 = y end
+            end
+        end
+        local margin = mipoReach(instance)
+        if x1 - margin > vx2 or x2 + margin < vx1 or y1 - margin > vy2 or y2 + margin < vy1 then
+            hiddenMipos[id] = true
+        end
+    end
+end
 
 -- One function per drawable type: drawers[d.type](d). `d` is a drawable from createDrawables.
 -- Named, so a profiler (POST /profile/frames) reports them by name.
@@ -877,30 +974,43 @@ function lib.drawTexturedWorld(_world) -- draws what's registered (createDrawabl
     -- code a fresh lib, so a flag set on the old one from outside is never seen
     local times, counts = state.drawTimes and state.drawTimes.ms, state.drawTimes and state.drawTimes.count
     local tStart = times and love.timer.getTime()
-    local drawables = createDrawables()
+    local drawables = drawablesList
+    local rebuilt = not listStillHolds()
+    if rebuilt then
+        listState.version = registry.sfixtureVersion
+        drawables = createDrawables()
+    end
     local tBuilt = times and love.timer.getTime()
-    table.sort(drawables, sorter)
+    if rebuilt then table.sort(drawables, sorter) end
+    hideOffscreenMipos()
+    local culled = 0
     local tCreate = times and tBuilt - tStart
     local tSort = times and love.timer.getTime() - tBuilt
 
     for i = 1, #drawables do
         local t0 = times and love.timer.getTime()
-        -- a face on a spine torso (a potato head) moves and turns with the bend where it sits
-        local faceBend = faceDrawables[drawables[i].type] and drawables[i].body and drawables[i].extra
-            and spineSkin.transformAt(drawables[i].body, drawables[i].extra.ox or 0, drawables[i].extra.oy or 0)
-        if faceBend then
-            love.graphics.push()
-            love.graphics.applyTransform(faceBend)
-        end
-        local draw = drawers[drawables[i].type]
-        if draw then draw(drawables[i]) end
-        if faceBend then love.graphics.pop() end
-        if times then
-            local kind = drawables[i].type
-            times[kind] = (times[kind] or 0) + love.timer.getTime() - t0
-            counts[kind] = (counts[kind] or 0) + 1
+        local mipoThing = drawables[i].mipoThing
+        if mipoThing and mipoThing.mipoId and hiddenMipos[mipoThing.mipoId] then
+            culled = culled + 1
+        else
+            -- a face on a spine torso (a potato head) moves and turns with the bend where it sits
+            local faceBend = faceDrawables[drawables[i].type] and drawables[i].body and drawables[i].extra
+                and spineSkin.transformAt(drawables[i].body, drawables[i].extra.ox or 0, drawables[i].extra.oy or 0)
+            if faceBend then
+                love.graphics.push()
+                love.graphics.applyTransform(faceBend)
+            end
+            local draw = drawers[drawables[i].type]
+            if draw then draw(drawables[i]) end
+            if faceBend then love.graphics.pop() end
+            if times then
+                local kind = drawables[i].type
+                times[kind] = (times[kind] or 0) + love.timer.getTime() - t0
+                counts[kind] = (counts[kind] or 0) + 1
+            end
         end
     end
+    cullStats.culled = culled
     if times then
         times['(createDrawables)'] = (times['(createDrawables)'] or 0) + tCreate
         times['(sort)'] = (times['(sort)'] or 0) + tSort
@@ -909,6 +1019,22 @@ function lib.drawTexturedWorld(_world) -- draws what's registered (createDrawabl
 
 end
 
-lib._test = { setSurfaceShader = shaders.setSurfaceShader } -- for specs, not part of the API
+-- for specs, not part of the API
+lib._test = {
+    setSurfaceShader = shaders.setSurfaceShader,
+    -- forget the kept list and the owned strips and fans: the next frame is drawn from scratch
+    clearCaches = function()
+        listState.version = nil
+        ribbon.clearOwned()
+    end,
+    -- how many drawables the last frame skipped as off screen
+    culled = function() return cullStats.culled end,
+    -- the kept list's order: one 'type key sub z' line per drawable
+    order = function()
+        local out = {}
+        for i, d in ipairs(drawablesList) do out[i] = d.type .. ' ' .. tostring(d.key) .. ' ' .. d.sub .. ' ' .. d.z end
+        return table.concat(out, '\n')
+    end,
+}
 
 return lib

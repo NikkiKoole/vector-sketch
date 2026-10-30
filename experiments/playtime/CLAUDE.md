@@ -63,6 +63,10 @@ A hot-swap re-runs the file, so module-local state (`local cache = {}`) starts e
 State that must survive belongs on `state` (see `src/mipo-registry.lua`).
 Editing `src/state.lua` itself hot-swaps it too: `state.world.paused` goes back to true and the
 world and registry fall out of step (2026-10-29). Restart the game after changing it.
+The same for `src/registry.lua` (2026-10-30): after a swap its functions write to the reloaded
+file's own table while every other module reads the old one, so a room load's `registry.reset()`
+clears the wrong table ("Attempt to use destroyed fixture" in scene-load). Change it with the
+game stopped, or restart after.
 
 ## Testing
 

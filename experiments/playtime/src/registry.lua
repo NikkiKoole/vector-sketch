@@ -6,6 +6,9 @@ local registry = {
     joints = {}, -- [id] = joint
     sfixtures = {},
     -- Add more categories if needed
+    -- goes up whenever an sfixture is added, replaced or removed: the renderer keeps its draw
+    -- list until it changes (physics/box2d-draw-textured.lua)
+    sfixtureVersion = 0,
 }
 
 function registry.print()
@@ -51,6 +54,7 @@ end
 -- sfixtures
 function registry.registerSFixture(id, sfix)
     registry.sfixtures[id] = sfix
+    registry.sfixtureVersion = registry.sfixtureVersion + 1
 end
 
 function registry.unregisterSFixture(id)
@@ -58,6 +62,7 @@ function registry.unregisterSFixture(id)
         logger:info('no s fixture to unregister here')
     end
     registry.sfixtures[id] = nil
+    registry.sfixtureVersion = registry.sfixtureVersion + 1
 end
 
 function registry.getSFixtureByID(id)
@@ -73,6 +78,7 @@ function registry.reset()
     registry.bodies = {}
     registry.joints = {}
     registry.sfixtures = {}
+    registry.sfixtureVersion = registry.sfixtureVersion + 1
 end
 
 return registry

@@ -3,7 +3,8 @@ local lib = {}
 local color = require('src.color')
 local ompBake = require('src.render.omp-bake')
 local ribbon = require('src.render.ribbon')
-local getLoveImage, getStrip, texturedCurve = ompBake.getLoveImage, ribbon.getStrip, ribbon.texturedCurve
+local getLoveImage = ompBake.getLoveImage
+local ownStrip = ribbon.ownStrip
 local shapes = require('src.shapes')
 local utils = require('src.utils')
 
@@ -29,25 +30,25 @@ local function mouthTriangles(extra, slot, poly)
     return tris
 end
 
--- Lip strips are in the mouth's own space and a mouth only moves while it talks: a strip
--- already holding this curve (same 16 numbers, written last into this mesh) is drawn as
--- is. Lips sharing a picture share a mesh; then the last writer differs and it's redone.
-local stripCurve = setmetatable({}, { __mode = 'k' }) -- [mesh] = the curve data last written
-local function stripHolds(mesh, data)
-    local last = stripCurve[mesh]
-    local same = last ~= nil and #last == #data
-    if same then
-        for k = 1, #data do
-            if last[k] ~= data[k] then same = false; break end
-        end
+-- A lip's Bezier from the mouth's 8 curve points `s` (16 numbers): the upper lip over p1..p5, the
+-- lower one back from p1 over p8..p5, so both run left to right (the picture the same way up).
+-- Written into `into` (reused: drawn every frame). Each lip owns its strip (ribbon.ownStrip), laid
+-- again only when its curve changes: a mouth only moves while it talks.
+local function lipCurve(s, side, into)
+    if side == 'upper' then
+        into[1], into[2], into[3], into[4] = s[1], s[2], s[3], s[4]
+        into[5], into[6], into[7], into[8] = s[3], s[4], s[5], s[6]
+        into[9], into[10], into[11], into[12] = s[5], s[6], s[7], s[8]
+        into[13], into[14], into[15], into[16] = s[7], s[8], s[9], s[10]
+    else
+        into[1], into[2], into[3], into[4] = s[1], s[2], s[15], s[16]
+        into[5], into[6], into[7], into[8] = s[15], s[16], s[13], s[14]
+        into[9], into[10], into[11], into[12] = s[13], s[14], s[11], s[12]
+        into[13], into[14], into[15], into[16] = s[11], s[12], s[9], s[10]
     end
-    if not same then
-        local copy = {}
-        for k = 1, #data do copy[k] = data[k] end
-        stripCurve[mesh] = copy
-    end
-    return same
+    return into
 end
+local lipScratch = {}
 
 -- buildMouthPolygon makes two Bezier curves and renders them: kept per input (the 16
 -- curve points), as most mouths are still most of the time.
@@ -226,8 +227,8 @@ end
 local function drawLowerLip(d)
     local extra = d.extra
     local body = d.body
-    local curveData = d.curveData
-    if body and not body:isDestroyed() and curveData then
+    local points = extra.curvePoints
+    if body and not body:isDestroyed() and points and #points == 16 then
         local angle = body:getAngle()
         local bx, by = body:getPosition()
 
@@ -235,38 +236,26 @@ local function drawLowerLip(d)
         love.graphics.translate(bx, by)
         love.graphics.rotate(angle)
 
-        local animated = animatedCurvePoints(extra, body)
-        local s = animated or extra.curvePoints
-        local activeCurveData = animated and {
-            s[1], s[2], s[15], s[16],
-            s[15], s[16], s[13], s[14],
-            s[13], s[14], s[11], s[12],
-            s[11], s[12], s[9], s[10],
-        } or curveData
+        local curve = lipCurve(animatedCurvePoints(extra, body) or points, 'lower', lipScratch)
         local lipImg = extra.ompImage
         if not lipImg and extra.main and extra.main.bgURL then
             lipImg = getLoveImage('textures/' .. extra.main.bgURL)
         end
         if lipImg then
-            local mesh = getStrip(lipImg, extra.lipScale or 0.25)
+            local scale = extra.lipScale or 0.25
             love.graphics.setColor(1, 1, 1, 1)
-            if not stripHolds(mesh, activeCurveData) then
-                texturedCurve(love.math.newBezierCurve(activeCurveData), lipImg, mesh, -1,
-                    extra.lipScale or 0.25, nil, lipShift(extra, 'lower', lipImg))
-            end
-            love.graphics.draw(mesh)
+            love.graphics.draw(ownStrip(extra, 'lip', lipImg, scale, curve, -1, lipShift(extra, 'lower', lipImg)))
         end
 
         love.graphics.pop()
     end
 end
 
-    -- Mouth upper lip: draw upper lip curve on top
 local function drawUpperLip(d)
     local extra = d.extra
     local body = d.body
-    local curveData = d.curveData
-    if body and not body:isDestroyed() and curveData then
+    local points = extra.curvePoints
+    if body and not body:isDestroyed() and points and #points == 16 then
         local angle = body:getAngle()
         local bx, by = body:getPosition()
 
@@ -274,28 +263,15 @@ local function drawUpperLip(d)
         love.graphics.translate(bx, by)
         love.graphics.rotate(angle)
 
-        local activeCurveData = curveData
-        local s = animatedCurvePoints(extra, body)
-        if s then
-            activeCurveData = {
-                s[1], s[2], s[3], s[4],
-                s[3], s[4], s[5], s[6],
-                s[5], s[6], s[7], s[8],
-                s[7], s[8], s[9], s[10],
-            }
-        end
+        local curve = lipCurve(animatedCurvePoints(extra, body) or points, 'upper', lipScratch)
         local lipImg = extra.ompImage
         if not lipImg and extra.main and extra.main.bgURL then
             lipImg = getLoveImage('textures/' .. extra.main.bgURL)
         end
         if lipImg then
-            local mesh = getStrip(lipImg, extra.lipScale or 0.25)
+            local scale = extra.lipScale or 0.25
             love.graphics.setColor(1, 1, 1, 1)
-            if not stripHolds(mesh, activeCurveData) then
-                texturedCurve(love.math.newBezierCurve(activeCurveData), lipImg, mesh, -1,
-                    extra.lipScale or 0.25, nil, lipShift(extra, 'upper', lipImg))
-            end
-            love.graphics.draw(mesh)
+            love.graphics.draw(ownStrip(extra, 'lip', lipImg, scale, curve, -1, lipShift(extra, 'upper', lipImg)))
         end
 
         love.graphics.pop()
