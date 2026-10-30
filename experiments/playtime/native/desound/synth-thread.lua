@@ -22,12 +22,17 @@ for i = 1, BUFFERS do buffers[i] = love.sound.newSoundData(FRAMES, RATE, 16, 2) 
 local nextBuffer = 1
 
 -- How it keeps up, on the 'synth-stats' channel about once a second (read it with
--- love.thread.getChannel('synth-stats'):peek()): `empty` = refills that found the queue
--- run dry (a gap: crackle), `restarts` = the source had stopped (a drop), `maxGapMs` =
+-- love.thread.getChannel('synth-stats'):peek()): `empty` = passes that found the queue
+-- run dry (a gap: a pop), `restarts` = the source had stopped (a drop), `maxGapMs` =
 -- the longest time between two passes of this loop (> ~35 ms runs the queue dry).
+-- Each dry pass also goes out on 'synth-dropouts' as it happens ({ at, gapMs, stopped }),
+-- for src/synth.lua to log with what the game was doing (synth.audioReport()).
+-- A stopped source counts as dry: `empty` used to look at free buffers only and missed
+-- most drops (13 empty against 74 restarts, 2026-10-30).
 local stats = love.thread.getChannel('synth-stats')
+local dropouts = love.thread.getChannel('synth-dropouts')
 local window = { empty = 0, restarts = 0, maxGapMs = 0, passes = 0 }
-local total = { empty = 0, restarts = 0 }
+local total = { empty = 0, restarts = 0, passes = 0 }
 local lastPass, lastReport = love.timer.getTime(), love.timer.getTime()
 
 while not quit:pop() do
@@ -36,7 +41,11 @@ while not quit:pop() do
     lastPass = now
     if gapMs > window.maxGapMs then window.maxGapMs = gapMs end
     window.passes = window.passes + 1
-    if source:getFreeBufferCount() == BUFFERS then window.empty = window.empty + 1 end
+    local stopped = not source:isPlaying()
+    if window.passes + total.passes > 1 and (stopped or source:getFreeBufferCount() == BUFFERS) then
+        window.empty = window.empty + 1
+        if dropouts:getCount() < 100 then dropouts:push({ at = now, gapMs = gapMs, stopped = stopped }) end
+    end
     while source:getFreeBufferCount() > 0 do
         local soundData = buffers[nextBuffer]
         nextBuffer = nextBuffer % BUFFERS + 1
@@ -49,9 +58,11 @@ while not quit:pop() do
     end
     if now - lastReport >= 1 then
         total.empty, total.restarts = total.empty + window.empty, total.restarts + window.restarts
+        total.passes = total.passes + window.passes
         stats:clear()
         stats:push({ empty = window.empty, restarts = window.restarts, maxGapMs = window.maxGapMs,
-            passes = window.passes, totalEmpty = total.empty, totalRestarts = total.restarts })
+            passes = window.passes, totalEmpty = total.empty, totalRestarts = total.restarts,
+            queueMs = BUFFERS * FRAMES / RATE * 1000 })
         window.empty, window.restarts, window.maxGapMs, window.passes = 0, 0, 0, 0
         lastReport = now
     end

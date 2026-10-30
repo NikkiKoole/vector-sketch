@@ -11,6 +11,7 @@
 ./playtime.sh log      # show stdout/stderr log
 ./playtime.sh errors   # show startup errors + bridge /errors
 ./playtime.sh todo     # the work board: active plans + next steps, parked plans, drift warnings
+./playtime.sh audio    # music pops: the synth's dropouts and what was busy then (docs/SOUND-SYNTH.md)
 METER=400 ./playtime.sh start  # another px-per-metre (default 200, state.world.meter; love . --meter 400)
 ```
 

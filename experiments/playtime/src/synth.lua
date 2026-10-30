@@ -290,10 +290,117 @@ function lib.stop()
     S.started = false
 end
 
+-- Dropouts: the render thread came round too late, the queue ran dry and the sound broke
+-- up (a pop). The thread reports each one ('synth-dropouts'); here each gets what the game
+-- was doing then: window in front or not, this frame's time and the worst of the last
+-- second, and (at most every 5 s) the busiest processes on the machine. Newest last on
+-- state.synth.dropouts, one console line each; synth.audioReport() sums them up.
+lib.dropoutsKept = 50
+
+-- 'love', 'Google Chrome', 'node drag-check.js': an app's name, else the program's, with
+-- the script it runs when it runs one
+local function processName(args)
+    local app = args:match('([^/]+)%.app/')
+    if app then return app end
+    local program = (args:match('^(%S+)') or args):match('[^/]+$')
+    local script = args:match('([^/%s]+%.js)%f[%s%z]') or args:match('([^/%s]+%.py)%f[%s%z]')
+        or args:match('([^/%s]+%.lua)%f[%s%z]')
+    return script and (program .. ' ' .. script) or program
+end
+lib.processName = processName
+
+local function busyProcesses()
+    if not io.popen then return nil end
+    -- LC_ALL=C: with a Dutch locale ps writes 94,8
+    local ok, pipe = pcall(io.popen, 'LC_ALL=C ps -Ao pcpu=,args= -r 2>/dev/null | head -4')
+    if not (ok and pipe) then return nil end
+    local list = {}
+    for line in pipe:lines() do
+        local cpu, args = line:match('^%s*([%d%.]+)%s+(.+)$')
+        if cpu then
+            list[#list + 1] = string.format('%s %d%%', processName(args), math.floor(tonumber(cpu) + 0.5))
+        end
+    end
+    pipe:close()
+    return table.concat(list, ', ')
+end
+
+local function noteFrame(dt)
+    S.frames = S.frames or {}
+    S.frameIndex = (S.frameIndex or 0) % 60 + 1
+    S.frames[S.frameIndex] = dt
+end
+
+local function worstFrameMs()
+    local worst = 0
+    for _, dt in ipairs(S.frames or {}) do worst = math.max(worst, dt) end
+    return worst * 1000
+end
+
+local function collectDropouts(dt)
+    local channel = love.thread.getChannel('synth-dropouts')
+    local event = channel:pop()
+    while event do
+        local now = love.timer.getTime()
+        local busy
+        if not S.lastBusyAt or now - S.lastBusyAt > 5 then
+            busy = busyProcesses()
+            S.lastBusyAt = now
+        end
+        local focused = love.window and love.window.hasFocus and love.window.hasFocus()
+        local dropout = {
+            at = event.at, gapMs = event.gapMs, stopped = event.stopped, focused = focused,
+            frameMs = dt * 1000, worstFrameMs = worstFrameMs(), busy = busy,
+        }
+        S.dropouts = S.dropouts or {}
+        table.insert(S.dropouts, dropout)
+        if #S.dropouts > lib.dropoutsKept then table.remove(S.dropouts, 1) end
+        S.dropoutCount = (S.dropoutCount or 0) + 1
+        print(string.format('[synth] dropout: render thread away %d ms%s; window %s, frame %d ms (worst %d)%s',
+            dropout.gapMs, dropout.stopped and ', sound stopped' or '',
+            focused and 'in front' or 'in the background', dropout.frameMs, dropout.worstFrameMs,
+            busy and ('; busy: ' .. busy) or ''))
+        event = channel:pop()
+    end
+end
+
+-- What the dropouts look like: counts, the queue's margin, the last few with their context.
+-- From the bridge: require('src.synth').audioReport(); from the shell: ./playtime.sh audio
+function lib.audioReport()
+    if not S.started then return 'synth not running' .. (S.failed and (': ' .. S.failed) or '') end
+    if not S.thread then return 'no render thread (web: the page has its own worklet)' end
+    local stats = love.thread.getChannel('synth-stats'):peek() or {}
+    local now = love.timer.getTime()
+    local dropouts = S.dropouts or {}
+    local lastMinute, background = 0, 0
+    for _, d in ipairs(dropouts) do
+        if now - d.at < 60 then lastMinute = lastMinute + 1 end
+        if not d.focused then background = background + 1 end
+    end
+    local lines = {
+        string.format('dropouts: %d since the synth started, %d in the last minute; '
+            .. '%d of the last %d with the window in the background',
+            S.dropoutCount or 0, lastMinute, background, #dropouts),
+        string.format('render thread, last second: longest gap %d ms (the queue holds %d ms; longer runs it dry)',
+            stats.maxGapMs or 0, stats.queueMs or 0),
+    }
+    for i = math.max(1, #dropouts - 9), #dropouts do
+        local d = dropouts[i]
+        lines[#lines + 1] = string.format('  %ds ago: away %d ms%s, %s, frame %d ms (worst %d)%s',
+            now - d.at, d.gapMs, d.stopped and ' (stopped)' or '', d.focused and 'in front' or 'background',
+            d.frameMs, d.worstFrameMs, d.busy and (', busy: ' .. d.busy) or '')
+    end
+    return table.concat(lines, '\n')
+end
+
 -- Main thread, every frame: advances the engine clock, keeps the listener on the camera
--- and reports render-thread errors.
+-- and reports render-thread errors and dropouts.
 function lib.update(dt, camera)
     if not S.started then return end
+    if S.thread then
+        noteFrame(dt)
+        collectDropouts(dt)
+    end
     S.C.de_lua_tick(dt)
     if camera then
         local cx, cy = camera:getTranslation()

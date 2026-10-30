@@ -131,6 +131,15 @@ do_errors() {
     fi
 }
 
+# Music pops: the synth's dropouts (render thread too late) with what was going on then
+do_audio() {
+    if ! is_running; then echo "not running"; return 1; fi
+    curl -s -X POST "localhost:$PORT/eval" \
+        --data-binary '{"code":"return require(\"src.synth\").audioReport()"}' \
+        | lua -e 'local s = io.read("*a"); local d = s:match([=["data":"(.-)"[,}]]=]) or s
+            print((d:gsub("\\n", "\n"):gsub([[\"]], [["]])))'
+}
+
 do_restart() {
     do_stop
     do_start "${1:-dollhouse}"
@@ -145,5 +154,6 @@ case "${1:-status}" in
     log)     do_log ;;
     errors)  do_errors ;;
     todo)    (cd "$DIR" && lua claudetools/plans.lua "${2:-}") ;;
-    *)       echo "Usage: $0 [start|play|stop|restart|status|log|errors|todo] [scene]" ;;
+    audio)   do_audio ;;
+    *)       echo "Usage: $0 [start|play|stop|restart|status|log|errors|todo|audio] [scene]" ;;
 esac
