@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Playtime: __SCENE__</title>
+    <style>
+      * { box-sizing: border-box; }
+      html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
+                   background: rgb(245, 245, 220); font-family: arial; }
+      #loadingCanvas, #canvas { position: absolute; top: 0; left: 0; border: 0; }
+      #loadingCanvas { width: 100%; height: 100%; }
+      #canvas { visibility: hidden; }
+    </style>
+  </head>
+  <body>
+    <!-- made by webtest/build-web.sh from index.template.html; __SCENE__ is the scene -->
+    <canvas id="loadingCanvas" oncontextmenu="event.preventDefault()"></canvas>
+    <canvas id="canvas" oncontextmenu="event.preventDefault()"></canvas>
+    <script>
+      function resizeCanvas() {
+        var canvas = document.getElementById('canvas');
+        var dpr = window.devicePixelRatio || 1;
+        canvas.width = window.innerWidth * dpr;
+        canvas.height = window.innerHeight * dpr;
+        canvas.style.width = window.innerWidth + 'px';
+        canvas.style.height = window.innerHeight + 'px';
+        var loading = document.getElementById('loadingCanvas');
+        loading.width = window.innerWidth;
+        loading.height = window.innerHeight;
+      }
+
+      var loadingContext = document.getElementById('loadingCanvas').getContext('2d');
+      function drawLoadingText(text) {
+        var c = loadingContext.canvas;
+        loadingContext.fillStyle = 'rgb(245, 245, 220)';
+        loadingContext.fillRect(0, 0, c.width, c.height);
+        loadingContext.font = '2em arial';
+        loadingContext.textAlign = 'center';
+        loadingContext.fillStyle = 'rgb(60, 60, 60)';
+        loadingContext.fillText(text, c.width / 2, c.height / 2);
+      }
+
+      window.onload = function () { window.focus(); };
+      window.onclick = function () { window.focus(); };
+      window.addEventListener('keydown', function (e) {
+        if ([32, 37, 38, 39, 40, 9].indexOf(e.keyCode) > -1) e.preventDefault(); // tab toggles the editor
+      }, false);
+      window.addEventListener('resize', resizeCanvas);
+      resizeCanvas();
+
+      var Module = {
+        arguments: ['./game.love', '--play', '__SCENE__'],
+        INITIAL_MEMORY: 268435456,
+        print: console.log.bind(console),
+        printErr: console.error.bind(console),
+        canvas: (function () {
+          var canvas = document.getElementById('canvas');
+          canvas.addEventListener('webglcontextlost', function (e) {
+            alert('WebGL context lost. Reload the page.'); e.preventDefault();
+          }, false);
+          canvas.addEventListener('wheel', function (e) { e.preventDefault(); }, { passive: false });
+          return canvas;
+        })(),
+        setStatus: function (text) {
+          if (text) {
+            drawLoadingText(text);
+          } else if (Module.remainingDependencies === 0) {
+            document.getElementById('loadingCanvas').style.display = 'none';
+            document.getElementById('canvas').style.visibility = 'visible';
+            resizeCanvas();
+          }
+        },
+        totalDependencies: 0,
+        remainingDependencies: 0,
+        monitorRunDependencies: function (left) {
+          this.remainingDependencies = left;
+          this.totalDependencies = Math.max(this.totalDependencies, left);
+          Module.setStatus(left ? 'Loading... (' + (this.totalDependencies - left) + '/' + this.totalDependencies + ')' : '');
+        }
+      };
+      Module.setStatus('Downloading...');
+      window.onerror = function () { Module.setStatus('Error, see the JavaScript console'); };
+
+      var applicationLoad = function () {
+        Love(Module);
+        var tries = 0;
+        var timer = setInterval(function () {
+          resizeCanvas();
+          window.dispatchEvent(new Event('resize'));
+          if (++tries > 20) clearInterval(timer);
+        }, 200);
+      };
+    </script>
+    <script src="game.js"></script>
+    <script async src="love.js" onload="applicationLoad(this)"></script>
+  </body>
+</html>

@@ -1,26 +1,42 @@
 # Web Export via love.js
 
-status: parked — worked 2026-04-11 (catapult, Knut); not tried since. Since then the synth came in through LuaJIT FFI (`src/synth.lua`), which the browser build (PUC Lua 5.1) doesn't have, so it needs a guard first
+status: active
 
 ## Overview
 
 love.js (Davidobot/love.js) compiles LÖVE to WebAssembly via Emscripten. Supports LÖVE 11.4 natively (11.5 experimental). This lets us package Playtime scenes as shareable browser links — key for demoing to publishers and distributing Knut content.
 
-**Status:** Working (2026-04-11). Catapult and Knut scenes run in browser with physics, scripting, and textures. ~2MB per scene build.
+Worked 2026-04-11 (catapult, Knut). Rebuilt 2026-10-30: the dollhouse runs in Chrome in play mode,
+Mipos and all, with no errors; no sound from the synth yet (see WEB2).
+
+- [x] **WEB1. Build from the real game** (2026-10-30). `build-web.sh` packages the real `main.lua`
+  and `src/` instead of its own copy of main.lua (that copy had fallen behind: it still loaded the
+  removed loveblobs). Desktop-only modules get stand-ins (profilers, LuaJIT's `ffi`); the bridge and
+  lurker are already skipped by main.lua on the web. The four `goto`s in the draw loops are gone
+  from the source (`spec/draw-skips_spec.lua`), so the goto patcher isn't needed any more.
+- [ ] **WEB2. The synth in the browser.** dreamengine's `sound.h` already has web output (an
+  AudioWorklet, with a ScriptProcessor fallback). So `native/desound/desound.c` can be built with
+  emcc into its own small wasm module on the page. The open part is Lua talking to it: love.js has
+  no FFI. Two ways: (a) Lua prints command lines (`hit`, `noteOn`, …) that the page's `Module.print`
+  catches and passes to the synth module; `audioTime` comes back by the page writing it into
+  love's filesystem. (b) Build love.js from source with desound linked in and a small Lua C binding.
+  (a) is a day-sized experiment, (b) is the solid one.
+- [ ] **WEB3. Check by hand**: grab and throw Mipos (an automated drag didn't take, probably too
+  fast for a frame), touch on an iPad, tab into the editor.
 
 ## Quick start
 
 ```bash
 # Build any scene for web:
-./webtest/build-web.sh catapult
+./webtest/build-web.sh dollhouse
 
 # Serve it locally:
-./webtest/serve.sh 8080 catapult
+./webtest/serve.sh 8080 dollhouse
 
 # Open http://localhost:8080
 ```
 
-Replace `catapult` with any scene name from `scripts/` (e.g., `knut`, `platforms`, `water`).
+Replace `dollhouse` with any scene name from `scripts/`. The page starts it in play mode (`--play`); tab goes to the editor.
 
 ## Why web matters
 
@@ -65,14 +81,12 @@ Default pattern/outline textures loaded with `safeLoadImage()` which returns nil
 ## Build pipeline
 
 ### What build-web.sh does
-1. Copies src/, vendor/, assets/, scripts/ to temp dir
-2. **Parses scene JSON** for `bgURL`, `outlineURL`, `maskURL`, `patternURL` — only copies referenced textures (not the whole textures/ folder)
-3. Creates a web-specific main.lua (scene player, no editor chrome)
-4. Stubs out vendor modules (bridge, lurker, jprof, ProFi, peeker)
-5. Patches goto/continue if any remain (Lua 5.1 compat)
-6. Zips into .love file, packages with love.js
-7. Overwrites love.js default HTML with responsive fullscreen layout
-8. Output: static files ready for any web host
+1. Copies main.lua, conf.lua, src/, vendor/, assets/, textures/ and the scene's files to a temp dir
+2. Puts a stand-in `ffi` in front of main.lua (src/synth.lua then stays off) and stubs the profilers
+   (jprof, ProFi, peeker); main.lua itself skips the bridge and lurker when `love.system.getOS() == "Web"`
+3. Zips a .love and packages it with love.js (found on PATH or under ~/.nvm; or set LOVEJS)
+4. Writes index.html from `index.template.html`: full window, `--play <scene>`
+5. Output: `webtest/output-<scene>/`, static files for any web host (not in git)
 
 ### What serve.sh does
 Serves the output directory with `Cross-Origin-Opener-Policy` and `Cross-Origin-Embedder-Policy` headers (required for SharedArrayBuffer / love.js threads).

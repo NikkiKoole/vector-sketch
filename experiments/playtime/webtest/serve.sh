@@ -1,10 +1,10 @@
 #!/bin/bash
 # Serve a web build with required CORS headers
 # Usage: ./serve.sh [port] [scene-name]
-# Example: ./serve.sh 8080 catapult
+# Example: ./serve.sh 8080 dollhouse
 
 PORT="${1:-8080}"
-SCENE="${2:-catapult}"
+SCENE="${2:-dollhouse}"
 DIR="$(dirname "$0")/output-${SCENE}"
 
 if [ ! -d "$DIR" ]; then
