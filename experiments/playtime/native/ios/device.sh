@@ -54,6 +54,17 @@ fi
 # The home-screen name. Not PRODUCT_NAME on the command line: that renames liblove.a too.
 PLIST=love/platform/xcode/ios/love-ios.plist
 /usr/libexec/PlistBuddy -c 'Set :CFBundleDisplayName Playtime' "$PLIST"
+# Landscape only, both ways round, on iPhone and iPad. (For the App Store an iPad app that
+# can't rotate to every orientation also needs UIRequiresFullScreen: dreamengine's
+# ios/project.yml records that rejection.)
+for key in UISupportedInterfaceOrientations 'UISupportedInterfaceOrientations~ipad'; do
+    /usr/libexec/PlistBuddy -c "Delete :$key" "$PLIST" 2>/dev/null || true
+    /usr/libexec/PlistBuddy -c "Add :$key array" \
+        -c "Add :$key:0 string UIInterfaceOrientationLandscapeRight" \
+        -c "Add :$key:1 string UIInterfaceOrientationLandscapeLeft" "$PLIST"
+done
+/usr/libexec/PlistBuddy -c 'Delete :UIRequiresFullScreen' "$PLIST" 2>/dev/null || true
+/usr/libexec/PlistBuddy -c 'Add :UIRequiresFullScreen bool true' "$PLIST"
 # Dev builds play through the silent switch (the seam: native/ios/patch-love.py)
 /usr/bin/python3 patch-love.py love/src/common/ios.mm
 /usr/libexec/PlistBuddy -c 'Delete :LoveIgnoreSilentSwitch' "$PLIST" 2>/dev/null || true

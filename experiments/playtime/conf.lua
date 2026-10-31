@@ -32,11 +32,16 @@ function love.conf(t)
     t.window.display = 1                   -- Index of the monitor to show the window in (number)
     t.window.highdpi = false               -- Enable high-dpi mode for the window on a Retina display (boolean)
     t.window.usedpiscale = false           -- Enable automatic DPI scaling when highdpi is set to true as well (boolean)
-    -- Phones draw at their full resolution, in points: the game sees 375x667 on an iPhone SE,
-    -- LÖVE draws it at 2x (love._os: love.system isn't loaded yet here)
+    -- Phones draw at their full resolution, in points: the game sees 667x375 on an iPhone SE,
+    -- LÖVE draws it at 2x (love._os: love.system isn't loaded yet here).
+    -- Fullscreen: no status bar, and SDL defers the system swipes from the edges (Control
+    -- Center, notifications, home): a first swipe only shows a tab. Not resizable, so the
+    -- window keeps to landscape (the orientations themselves: native/ios/device.sh).
     if love._os == 'iOS' or love._os == 'Android' then
         t.window.highdpi = true
         t.window.usedpiscale = true
+        t.window.fullscreen = true
+        t.window.resizable = false
     end
     t.window.x = nil                       -- The x-coordinate of the window's position in the specified display (number)
     t.window.y = nil                       -- The y-coordinate of the window's position in the specified display (number)
