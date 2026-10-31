@@ -1,6 +1,6 @@
 # Hair locks — long hair that swings
 
-status: parked — "i dont really like this after all", kept as an experiment for dreadlocks or the like (2026-10-31)
+status: parked — three hair tries (2026-10-31); tufts as real physics "still not a great success but the most promising"
 
 A spike: locks of hair as chains of points rooted on the head, moved by a small verlet step of
 their own (not Box2D) and drawn as ribbons with the hair pictures. `src/hair-locks.lua`, the scene
@@ -28,3 +28,18 @@ The other try the same day: the haircut strip as it is, its outer edge on a spri
 acceleration, sagging when tilted, pinned at the ends with the wobble in the middle (`focus`).
 "this isnt it really either": too loose, and a whole haircut moving as one sheet. Costs nothing
 when off (one call per haircut a frame).
+
+## Hair tufts (the most promising)
+
+The third try: a few tufts on top of the head as real Box2D bodies, short chains soft-welded like
+the ears (`src/hair-tufts.lua`, `scripts/tufts.playtime.lua`: run it on a scene with Mipos, panel
+in play mode). They collide with nothing (category 16, masked against all), are light (a share of
+the head's density) and are drawn as ribbons through the chain, over the faces for now.
+"still not a great success but the most promising": the motion is the ears' motion, which works.
+Open:
+
+- Pictures made for it: the fuzzy ear already reads as hair; a blob-shaped tuft on one or two
+  bodies may beat a long strand
+- Its place in the Mipo's z-layers (now over everything)
+- In the DNA and the Mipo editor, saved and rebuilt like the ears (now only the script makes them)
+- The cost: 2 bodies and 2 joints a tuft in Box2D (3 tufts: +6 bodies a Mipo)
