@@ -146,6 +146,8 @@ rubber-hose legs (`src/actor.lua`), not ragdolls.
 
 ### 1f. Idea: building with big chunky parts (Fabuland)
 
+**Now its own plan: `FABULAND.md`** (spike 2026-10-31: the parts machine, `src/fabuland.lua`).
+
 Nikki 2026-10-30: Fabuland is a big inspiration. Big chunky Lego/Duplo-like parts you snap
 together quickly to make a house, a windmill, a well, for the Mipos to live in and play with.
 It grows out of the click-in stacking above:

@@ -34,6 +34,7 @@ local lib = {}
 lib.mipoHands = true
 lib.handOverlap = 0.5         -- how far into each other holding hands are pulled: 0 their edges touch,
                               -- 1 their centres meet (a joint turns off collision between the two)
+lib.stiffDistance = 120       -- building parts (stiff points, src/fabuland.lua) click in from this far
 lib.handMargin = 30           -- a hand grabs what it touches: centres within both reach radii + this
                               -- (a fixed 70 was less than one hand's own radius, 100-124: two
                               -- solid hands could never get that close, so never held hands)
@@ -77,7 +78,8 @@ function lib.points()
             local body = fixture:getBody()
             local lx, ly = localCentre(fixture)
             local x, y = body:getWorldPoint(lx, ly)
-            out[#out + 1] = { id = id, fixture = fixture, body = body, x = x, y = y }
+            out[#out + 1] = { id = id, fixture = fixture, body = body, x = x, y = y,
+                stiff = fixture:getUserData().extra.stiff }
         end
     end
     if lib.mipoHands then
@@ -214,7 +216,16 @@ local function createSnapJoint(p, q)
             qx, qy = px, py
         end
     end
-    local joint = love.physics.newRevoluteJoint(p.body, q.body, px, py, qx, qy)
+    local joint
+    if p.stiff and q.stiff then
+        -- building parts click in square: welded, turned to the nearest quarter turn
+        local rel = q.body:getAngle() - p.body:getAngle()
+        local quarter = math.pi / 2
+        joint = love.physics.newWeldJoint(p.body, q.body, px, py, qx, qy, false,
+            math.floor(rel / quarter + 0.5) * quarter)
+    else
+        joint = love.physics.newRevoluteJoint(p.body, q.body, px, py, qx, qy)
+    end
     local ax, ay = p.body:getLocalPoint(px, py)
     local bx, by = q.body:getLocalPoint(qx, qy)
     joint:setUserData({
@@ -248,7 +259,7 @@ local function checkForSnaps(points, snapJoints, interacted)
         for j = i + 1, #free do
             local p, q = free[i], free[j]
             local dist = (p.hand or q.hand) and ((p.radius or 0) + (q.radius or 0) + lib.handMargin)
-                or state.snap.snapDistance
+                or (p.stiff and q.stiff and lib.stiffDistance) or state.snap.snapDistance
             local d2 = (p.x - q.x) ^ 2 + (p.y - q.y) ^ 2
             if p.body ~= q.body and d2 <= dist * dist and not sameMipo(p, q) then
                 candidates[#candidates + 1] = { p = p, q = q, d2 = d2 }
@@ -368,9 +379,11 @@ function lib.onSceneLoaded()
 end
 
 -- Add a snap point to a body at local (x, y). Returns its sfixture id.
-function lib.addPoint(body, x, y, radius)
+-- stiff: a building point (src/fabuland.lua): two stiff points weld square instead of hinging.
+function lib.addPoint(body, x, y, radius, stiff)
     local fixtures = require('src.fixtures') -- lazy: fixtures -> registry -> ...
     local fixture = fixtures.createSFixture(body, x, y, subtypes.SNAP, { radius = radius or 10 })
+    if fixture and stiff then fixture:getUserData().extra.stiff = true end
     return fixture and fixture:getUserData().id
 end
 

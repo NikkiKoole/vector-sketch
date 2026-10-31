@@ -5,6 +5,7 @@
 local lib = {}
 
 local props = require('src.props')
+local fabuland = require('src.fabuland')
 local objectManager = require('src.object-manager')
 
 -- { name, make(wx, wy) -> list of things (may contain nils) }
@@ -43,6 +44,11 @@ lib.LIST = {
         return { base, base and props.makeGate(base.body, wx, wy - 15, 'signal1', 1) }
     end },
 }
+
+-- Fabuland building parts (src/fabuland.lua), one toy each
+for _, part in ipairs(fabuland.PARTS) do
+    lib.LIST[#lib.LIST + 1] = { 'fab ' .. part.name, function(wx, wy) return { fabuland.make(part.name, wx, wy) } end }
+end
 
 -- Build a toy at a world position; returns its things (no nils), first one to drag by.
 function lib.make(name, wx, wy)

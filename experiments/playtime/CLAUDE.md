@@ -130,6 +130,7 @@ Both should report **0 warnings / 0 errors**; keep it that way.
 - `src/editor-render.lua` — editor overlay rendering: selection boxes, handles, guides
 - `src/camera.lua` — camera singleton (pan, zoom via vendor/brady); `src/camera-follow.lua` — Sago-style follow camera, per-scene camera settings
 - `src/modes.lua` — the editor tool modes; set them with `modes.set` / `modes.clear`, not by writing `state.currentMode`
+- `src/fabuland.lua` — chunky building parts (window/door blocks, roofs, stairs…) that weld square on a 250 grid; one `PARTS` entry per part (`docs/FABULAND.md`)
 - `src/library.lua` — prefabs: save selection to `library/<name>.playtime.json`, place a copy (ids renewed); `src/toys.lua` — built-in toys (`src/props.lua` recipes) on the library's 'toys' shelf
 - `src/play-mode.lua` — play mode (no editor; tab toggles)
 
