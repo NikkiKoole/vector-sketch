@@ -31,7 +31,7 @@ local function drawFaceEyesUI(instance, faceOwner, partName, face, x, y, panelX,
     -- Eye shape thumbnail grid
     ui.label(x, y, 'eye shape')
     y = y + ROW
-    local currentEyeURL = 'eye' .. eye.shape .. '.png'
+    local currentEyeURL = eye.shape > 0 and ('eye' .. eye.shape .. '.png') or ''
     local gridHeight = drawThumbnailGrid(eyeShapes, currentEyeURL, panelX, y, cellSize, function(url)
         if url then
             local shapeNum = tonumber(url:match('eye(%d+)%.png'))
@@ -39,8 +39,11 @@ local function drawFaceEyesUI(instance, faceOwner, partName, face, x, y, panelX,
                 CharacterManager.updateFaceOfPart(instance, faceOwner, { eyeShape = shapeNum })
                 CharacterManager.rebuildTextures(instance)
             end
+        else -- null: no eye white, only the pupil
+            CharacterManager.updateFaceOfPart(instance, faceOwner, { eyeShape = 0 })
+            CharacterManager.rebuildTextures(instance)
         end
-    end)
+    end, true)
     y = y + gridHeight + BUTTON_SPACING
 
     -- Pupil shape thumbnail grid

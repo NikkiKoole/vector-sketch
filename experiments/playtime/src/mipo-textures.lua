@@ -338,18 +338,22 @@ end
 local function placeEyes(body, face, box)
     local eye, pupil, eyeR = face.eye, face.pupil, face.positioners.eye.r
     local eyeW, eyeH = box.headW * 0.25 * box.fm * eye.wMul, box.headH * 0.25 * box.fm * eye.hMul
-    local eyeName = 'eye' .. eye.shape
+    -- eye shape 0: no white, only the pupil (cartoon dot eyes); it still moves within the eye's size
+    local eyeName = eye.shape > 0 and ('eye' .. eye.shape) or nil
     for _, side in ipairs({ { x = box.leftEyeX, label = 'l', mirror = true, rot = -eyeR },
                             { x = box.rightEyeX, label = 'r', mirror = false, rot = eyeR } }) do
-        addDecal(body, side.label .. 'eye', {
-            ox = side.x, oy = box.eyeY, w = eyeW, h = eyeH, mirror = side.mirror, rot = side.rot,
-            zOffset = FACE_Z.eye, isEye = true, OMP = true,
-            main = omp(eyeName .. '.png', eyeName .. '-mask.png', eye.bgHex, eye.fgHex),
-        })
+        if eyeName then
+            addDecal(body, side.label .. 'eye', {
+                ox = side.x, oy = box.eyeY, w = eyeW, h = eyeH, mirror = side.mirror, rot = side.rot,
+                zOffset = FACE_Z.eye, isEye = true, OMP = true,
+                main = omp(eyeName .. '.png', eyeName .. '-mask.png', eye.bgHex, eye.fgHex),
+            })
+        end
         -- a pupil with a mask is two colours, without one a tinted outline
         addDecal(body, side.label .. 'pupil', maskedOrPlain({
             ox = side.x, oy = box.eyeY, w = eyeW * pupil.wMul, h = eyeH * pupil.hMul, mirror = side.mirror,
-            zOffset = FACE_Z.pupil, isEye = true, eyeW = eyeW, eyeH = eyeH, eyeMaskURL = eyeName .. '-mask.png',
+            zOffset = FACE_Z.pupil, isEye = true, eyeW = eyeW, eyeH = eyeH,
+            eyeMaskURL = eyeName and (eyeName .. '-mask.png'),
             eyeMirror = side.mirror, eyeRot = side.rot, lookAtMouse = eye.lookAtMouse,
         }, 'pupil' .. pupil.shape, pupil.bgHex, pupil.fgHex))
     end
