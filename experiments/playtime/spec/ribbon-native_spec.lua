@@ -14,11 +14,29 @@ local function vertices(mesh)
     return out
 end
 
-local function strip(useNative, owner, img, scaleW, points, dir, shift)
+local function strip(useNative, owner, img, scaleW, points, dir, shift, pinch)
     ribbon.useNative = useNative
-    local mesh = ribbon.ownStrip(owner, 'test', img, scaleW, points, dir, shift)
+    local mesh = ribbon.ownStrip(owner, 'test', img, scaleW, points, dir, shift, nil, pinch)
     ribbon.useNative = true
     return vertices(mesh)
+end
+
+-- An upper lip's Bezier (mouth.lua lipCurve) whose last stretch curls ~80 degrees in ~13 px
+local CURLED_LIP = { -48.6, 24.3, -38.3, 15.7, -38.3, 15.7, -0.66, 0.93, -0.66, 0.93, 49.4, 17.3, 49.4, 17.3,
+    45.3, 28.2 }
+
+-- How many times an edge of the strip steps backwards against the curve: a fold
+local function folds(verts)
+    local n = 0
+    for i = 1, #verts - 2, 2 do
+        local tx = (verts[i + 2][1] + verts[i + 3][1]) - (verts[i][1] + verts[i + 1][1])
+        local ty = (verts[i + 2][2] + verts[i + 3][2]) - (verts[i][2] + verts[i + 1][2])
+        for side = 0, 1 do
+            local a, b = verts[i + side], verts[i + 2 + side]
+            if (b[1] - a[1]) * tx + (b[2] - a[2]) * ty < 0 then n = n + 1 end
+        end
+    end
+    return n
 end
 
 describe('ribbon-native', function()
@@ -32,6 +50,9 @@ describe('ribbon-native', function()
             scaleW = 0.25, dir = -1, shift = 3 },
         -- a sharp bend: the half-width clamp at work
         { name = 'sharp', points = { 0, 0, 100, 0, 100, 0, 100, 0, 0, 10 }, scaleW = 1, dir = 1 },
+        -- a thick upper lip curling into the mouth corner (it folded into a zigzag, 2026-10-31):
+        -- pinched, it tapers instead
+        { name = 'pinched lip', points = CURLED_LIP, scaleW = 0.3, dir = -1, shift = 0.6, pinch = true },
         -- (not two points: Lua's Bezier can't make their derivative, and no caller passes two)
     }
 
@@ -41,8 +62,8 @@ describe('ribbon-native', function()
                 pending('no native library (native/desound/build.sh)')
                 return
             end
-            local lua = strip(false, {}, img, case.scaleW, case.points, case.dir, case.shift)
-            local c = strip(true, {}, img, case.scaleW, case.points, case.dir, case.shift)
+            local lua = strip(false, {}, img, case.scaleW, case.points, case.dir, case.shift, case.pinch)
+            local c = strip(true, {}, img, case.scaleW, case.points, case.dir, case.shift, case.pinch)
             assert.are.equal(#lua, #c)
             for i = 1, #lua do
                 for k = 1, 4 do
@@ -52,6 +73,18 @@ describe('ribbon-native', function()
             end
         end)
     end
+
+    it('pinch: a thick lip curling into its corner tapers instead of folding', function()
+        local lipImg = love.graphics.newImage(love.image.newImageData(100, 128))
+        for _, useNative in ipairs({ false, true }) do
+            if useNative and not native.available() then break end
+            local plain = strip(useNative, {}, lipImg, 0.3, CURLED_LIP, -1, 0)
+            local pinched = strip(useNative, {}, lipImg, 0.3, CURLED_LIP, -1, 0, true)
+            assert.is_true(folds(plain) > 0, 'the plain clamp folds this lip (else the case is too easy)')
+            assert.are.equal(0, folds(pinched))
+            assert.are.equal(ribbon.pinchSegments * 2, #pinched)
+        end
+    end)
 
     it('lays a strip again when its points change', function()
         if not native.available() then

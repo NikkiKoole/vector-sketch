@@ -29,14 +29,15 @@ local nodeBuf = ffi and ffi.new('float[128]')
 
 -- nodes: flat { x1, y1, x2, y2, ... } anchors. Writes into `data` (a ByteData of at least
 -- segments * 2 * BYTES_PER_VERTEX bytes); returns the number of vertices (0: no curve).
-function lib.strip(nodes, grow, bendiness, segments, halfWidth, shift, miterClamp, data)
+-- pinch: the stricter clamp for ribbons that curl at their ends (lips, ribbon.c), over miterClamp.
+function lib.strip(nodes, grow, bendiness, segments, halfWidth, shift, miterClamp, data, pinch)
     local c = load()
     if not c then return 0 end
     local n = #nodes
     if n > 128 then return 0 end
     for i = 1, n do nodeBuf[i - 1] = nodes[i] end
     return c.ribbon_strip(nodeBuf, n / 2, grow, bendiness, segments, halfWidth, shift or 0,
-        miterClamp and 1 or 0, ffi.cast('float *', data:getFFIPointer()))
+        pinch and 2 or (miterClamp and 1 or 0), ffi.cast('float *', data:getFFIPointer()))
 end
 
 return lib

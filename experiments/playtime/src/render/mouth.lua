@@ -271,7 +271,8 @@ local function drawLowerLip(d)
         if lipImg then
             local scale = extra.lipScale or 0.25
             love.graphics.setColor(1, 1, 1, 1)
-            love.graphics.draw(ownStrip(extra, 'lip', lipImg, scale, curve, -1, lipShift(extra, 'lower', lipImg)))
+            love.graphics.draw(ownStrip(extra, 'lip', lipImg, scale, curve, -1, lipShift(extra, 'lower', lipImg),
+                nil, true))
         end
 
         love.graphics.pop()
@@ -298,7 +299,8 @@ local function drawUpperLip(d)
         if lipImg then
             local scale = extra.lipScale or 0.25
             love.graphics.setColor(1, 1, 1, 1)
-            love.graphics.draw(ownStrip(extra, 'lip', lipImg, scale, curve, -1, lipShift(extra, 'upper', lipImg)))
+            love.graphics.draw(ownStrip(extra, 'lip', lipImg, scale, curve, -1, lipShift(extra, 'upper', lipImg),
+                nil, true))
         end
 
         love.graphics.pop()

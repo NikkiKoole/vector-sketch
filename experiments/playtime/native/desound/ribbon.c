@@ -37,8 +37,48 @@ static void grow_line(double *x1, double *y1, double x2, double y2, double lengt
     *y1 += length * dy * inv;
 }
 
+// Pinch (miterClamp 2, lips): a lip curls into the mouth corner more tightly than it is thick,
+// and its inner edge folded there. Only the edge on the inside of a bend is pulled in, to
+// PINCH_FACTOR of the miter limit, and its u with it: the picture is cut, not squeezed (a
+// squeezed picture kinks along each section's diagonal: a sawtooth edge). The limit grows by at
+// most PINCH_SLOPE per px of curve. The same as pinchLimits in src/render/ribbon.lua.
+#define PINCH_FACTOR 0.4
+#define PINCH_SLOPE 0.5
+
+static void pinch_limits(const double *sx, const double *sy, int segments, double *left, double *right) {
+    const double eps = 1e-12;
+    for (int p = 0; p < segments; p++) { left[p] = 1e30; right[p] = 1e30; }
+    for (int p = 1; p < segments - 1; p++) {
+        double ax = sx[p] - sx[p - 1], ay = sy[p] - sy[p - 1];
+        double bx = sx[p + 1] - sx[p], by = sy[p + 1] - sy[p];
+        double la = sqrt(ax * ax + ay * ay), lb = sqrt(bx * bx + by * by);
+        if (la <= eps || lb <= eps) continue;
+        double dot = (ax * bx + ay * by) / (la * lb);
+        if (dot >= 0.9999) continue;
+        if (dot < -1) dot = -1;
+        double limit = PINCH_FACTOR * (la < lb ? la : lb) * tan((M_PI - acos(dot)) * 0.5);
+        // turning toward the left normal: the left edge is inside the bend
+        if (ax * by - ay * bx > 0) left[p] = limit; else right[p] = limit;
+    }
+    if (segments > 2) {
+        left[0] = left[1]; right[0] = right[1];
+        left[segments - 1] = left[segments - 2]; right[segments - 1] = right[segments - 2];
+    }
+    for (int p = 1; p < segments; p++) {
+        double d = PINCH_SLOPE * sqrt((sx[p] - sx[p - 1]) * (sx[p] - sx[p - 1]) + (sy[p] - sy[p - 1]) * (sy[p] - sy[p - 1]));
+        if (left[p - 1] + d < left[p]) left[p] = left[p - 1] + d;
+        if (right[p - 1] + d < right[p]) right[p] = right[p - 1] + d;
+    }
+    for (int p = segments - 2; p >= 0; p--) {
+        double d = PINCH_SLOPE * sqrt((sx[p] - sx[p + 1]) * (sx[p] - sx[p + 1]) + (sy[p] - sy[p + 1]) * (sy[p] - sy[p + 1]));
+        if (left[p + 1] + d < left[p]) left[p] = left[p + 1] + d;
+        if (right[p + 1] + d < right[p]) right[p] = right[p + 1] + d;
+    }
+}
+
 // nodes: nNodes (x, y) pairs, the anchors. Returns the number of vertices written to `out`
 // (2 * segments), or 0 when there is no curve (fewer than 2 nodes, too many).
+// miterClamp: 0 none, 1 the miter clamp, 2 pinch (above).
 int ribbon_strip(const float *nodes, int nNodes, float grow, int bendiness, int segments,
                  float halfWidth, float shift, int miterClamp, float *out) {
     double px[RIBBON_MAX_POINTS], py[RIBBON_MAX_POINTS];
@@ -81,11 +121,13 @@ int ribbon_strip(const float *nodes, int nNodes, float grow, int bendiness, int 
 
     double absHW = halfWidth < 0 ? -halfWidth : halfWidth;
     double signHW = halfWidth < 0 ? -1 : 1;
+    double limitLeft[256], limitRight[256];
+    if (miterClamp == 2) pinch_limits(sx, sy, segments, limitLeft, limitRight);
     for (int p = 0; p < segments; p++) {
         double x = sx[p], y = sy[p];
         double nx = -ty[p], ny = tx[p];
         double hw = absHW;
-        if (miterClamp && p > 0 && p < segments - 1) {
+        if (miterClamp == 1 && p > 0 && p < segments - 1) {
             double ax = x - sx[p - 1], ay = y - sy[p - 1];
             double bx = sx[p + 1] - x, by = sy[p + 1] - y;
             double la = sqrt(ax * ax + ay * ay), lb = sqrt(bx * bx + by * by);
@@ -100,12 +142,21 @@ int ribbon_strip(const float *nodes, int nNodes, float grow, int bendiness, int 
             }
         }
         hw *= signHW;
+        // the u=0 and u=1 edges, as offsets along the left normal
+        double oL = hw + shift, oR = shift - hw, uL = 0, uR = 1;
+        if (miterClamp == 2 && oL != oR) {
+            // pull in the edge inside the bend; u follows the offset, so the picture is cut
+            double a = oL, b = oR, left = limitLeft[p], right = limitRight[p];
+            if (oL > left) oL = left; else if (oL < -right) oL = -right;
+            if (oR > left) oR = left; else if (oR < -right) oR = -right;
+            uL = (a - oL) / (a - b); uR = (a - oR) / (a - b);
+        }
         double v = segMinus1 > 0 ? (double)p / segMinus1 : 0;
         float *o = out + p * 8;
-        o[0] = (float)(x + (hw + shift) * nx); o[1] = (float)(y + (hw + shift) * ny);
-        o[2] = 0; o[3] = (float)v;
-        o[4] = (float)(x - (hw - shift) * nx); o[5] = (float)(y - (hw - shift) * ny);
-        o[6] = 1; o[7] = (float)v;
+        o[0] = (float)(x + oL * nx); o[1] = (float)(y + oL * ny);
+        o[2] = (float)uL; o[3] = (float)v;
+        o[4] = (float)(x + oR * nx); o[5] = (float)(y + oR * ny);
+        o[6] = (float)uR; o[7] = (float)v;
     }
     return segments * 2;
 }

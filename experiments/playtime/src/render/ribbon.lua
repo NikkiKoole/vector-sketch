@@ -23,14 +23,17 @@ end
 -- curve is evaluated and the strip rewritten): 32 -> 16 took 20 ribbons-per-Mipo from
 -- 3.4 to 2.2 ms with 20 Mipos. Only new strips pick up a change (hot reload makes new ones).
 lib.ribbonSegments = 16
+-- Pinched strips (lips) take more, for a round curl into the mouth corner (at 16 it was
+-- chunky). Lips are laid only while a mouth moves.
+lib.pinchSegments = 48
 
-local function createTexturedTriangleStrip(image, optionalWidthMultiplier)
+local function createTexturedTriangleStrip(image, optionalWidthMultiplier, segments)
     -- this assumes an strip that is oriented vertically
     local w, h = image:getDimensions()
     w = w * (optionalWidthMultiplier or 1)
 
     local vertices = {}
-    local segments = lib.ribbonSegments
+    segments = segments or lib.ribbonSegments
     local segMinus1 = segments - 1
     local hPart = h / (segMinus1)
     local hv = 1 / (segMinus1)
@@ -232,7 +235,53 @@ local _tcX, _tcY, _tcDX, _tcDY = {}, {}, {}, {}
 --   halfWidth ≤ min(prevSegLen, nextSegLen) × tan((π − turnAngle) / 2)
 -- where turnAngle = acos(segDirPrev · segDirNext). Straight joins are unaffected
 -- (tan(π/2) = ∞); 90° joins are capped at min-seg-len; sharper joins taper toward zero.
-local function texturedCurve(curve, image, mesh, dir, scaleW, dl, shift)
+-- Pinch (lips): a lip curls into the mouth corner more tightly than it is thick, and its inner
+-- edge folded there (a zigzag; the miter clamp below skips the ends and lets through about twice
+-- what a smooth bend over several samples can take). Pinched, only the edge on the inside of a
+-- bend is pulled in, to PINCH_FACTOR of the miter limit, and its u with it: the picture is cut
+-- there, not squeezed. (Narrowing the whole strip squeezed the picture, and a squeezed picture
+-- kinks along each section's diagonal: a sawtooth edge.) The limit may grow by at most PINCH_SLOPE
+-- per px of curve, so the cut eases in. Tuned on a lip at lipScale 0.3 (2026-10-31). The same
+-- in native/desound/ribbon.c.
+local PINCH_FACTOR, PINCH_SLOPE = 0.4, 0.5
+local _limitLeft, _limitRight = {}, {} -- per sample: how far the edge may reach to the left / right
+local function pinchLimits(segments)
+    local sqrt_, xs, ys = math.sqrt, _tcX, _tcY
+    local left, right = _limitLeft, _limitRight
+    for i = 1, segments do left[i], right[i] = math.huge, math.huge end
+    for i = 2, segments - 1 do
+        local ax, ay = xs[i] - xs[i - 1], ys[i] - ys[i - 1]
+        local bx, by = xs[i + 1] - xs[i], ys[i + 1] - ys[i]
+        local la, lb = sqrt_(ax * ax + ay * ay), sqrt_(bx * bx + by * by)
+        if la > 1e-12 and lb > 1e-12 then
+            local dot = (ax * bx + ay * by) / (la * lb)
+            if dot < 0.9999 then
+                if dot < -1 then dot = -1 end
+                local limit = PINCH_FACTOR * (la < lb and la or lb) * math.tan((math.pi - math.acos(dot)) * 0.5)
+                -- turning toward the left normal: the left edge is inside the bend
+                if ax * by - ay * bx > 0 then left[i] = limit else right[i] = limit end
+            end
+        end
+    end
+    if segments > 2 then
+        left[1], right[1] = left[2], right[2]
+        left[segments], right[segments] = left[segments - 1], right[segments - 1]
+    end
+    for i = 2, segments do
+        local dx, dy = xs[i] - xs[i - 1], ys[i] - ys[i - 1]
+        local d = PINCH_SLOPE * sqrt_(dx * dx + dy * dy)
+        if left[i - 1] + d < left[i] then left[i] = left[i - 1] + d end
+        if right[i - 1] + d < right[i] then right[i] = right[i - 1] + d end
+    end
+    for i = segments - 1, 1, -1 do
+        local dx, dy = xs[i] - xs[i + 1], ys[i] - ys[i + 1]
+        local d = PINCH_SLOPE * sqrt_(dx * dx + dy * dy)
+        if left[i + 1] + d < left[i] then left[i] = left[i + 1] + d end
+        if right[i + 1] + d < right[i] then right[i] = right[i + 1] + d end
+    end
+end
+
+local function texturedCurve(curve, image, mesh, dir, scaleW, dl, shift, pinch)
     dir             = dir or 1
     shift           = shift or 0 -- moves the ribbon's middle this far along the curve's left normal
     scaleW          = scaleW or 1
@@ -270,6 +319,8 @@ local function texturedCurve(curve, image, mesh, dir, scaleW, dl, shift)
         _tcDY[p + 1]       = dy * invlen
     end
 
+    if pinch then pinchLimits(segments) end
+
     -- Pass 2: write ribbon vertices with bend-aware half-width.
     local p = 0
     for j = 1, count, 2 do
@@ -285,7 +336,7 @@ local function texturedCurve(curve, image, mesh, dir, scaleW, dl, shift)
         -- A/B toggle (lib.useRibbonMiterClamp): false skips the clamp, restoring the
         -- pre-2026-04-13 constant-width behaviour (bow-tie at flexed elbows).
         local hw   = absHW
-        if lib.useRibbonMiterClamp and i > 1 and i < segments then
+        if not pinch and lib.useRibbonMiterClamp and i > 1 and i < segments then
             local ax = x - _tcX[i - 1]
             local ay = y - _tcY[i - 1]
             local bx = _tcX[i + 1] - x
@@ -306,19 +357,29 @@ local function texturedCurve(curve, image, mesh, dir, scaleW, dl, shift)
         end
         hw = hw * signHW
 
-        local xL                   = x + (hw + shift) * nx
-        local yL                   = y + (hw + shift) * ny
-        local xR                   = x - (hw - shift) * nx
-        local yR                   = y - (hw - shift) * ny
+        -- the u=0 and u=1 edges, as offsets along the left normal
+        local oL, oR = hw + shift, shift - hw
+        local uL, uR = 0, 1
+        if pinch and oL ~= oR then
+            -- pull in the edge inside the bend; u follows the offset, so the picture is cut
+            local a, b, left, right = oL, oR, _limitLeft[i], _limitRight[i]
+            if oL > left then oL = left elseif oL < -right then oL = -right end
+            if oR > left then oR = left elseif oR < -right then oR = -right end
+            uL, uR = (a - oL) / (a - b), (a - oR) / (a - b)
+        end
+        local xL                   = x + oL * nx
+        local yL                   = y + oL * ny
+        local xR                   = x + oR * nx
+        local yR                   = y + oR * ny
 
         -- UVs: left u=0, right u=1; v increases 0..1 per pair
         local v                    = (segMinus1 > 0) and (p / segMinus1) or 0
 
         local vL                   = verts[j]
-        vL[1], vL[2], vL[3], vL[4] = xL, yL, 0, v
+        vL[1], vL[2], vL[3], vL[4] = xL, yL, uL, v
 
         local vR                   = verts[j + 1]
-        vR[1], vR[2], vR[3], vR[4] = xR, yR, 1, v
+        vR[1], vR[2], vR[3], vR[4] = xR, yR, uR, v
 
         p                          = p + 1
     end
@@ -367,7 +428,8 @@ end
 -- A strip along the Bezier through `points`, with `img` `scaleW` wide (texturedCurve's dir, shift),
 -- that belongs to `owner`: the curve is only laid again when the points or the picture change.
 -- `curve` (optional): the Bezier through `points` and its derivative, when a drawer lays several
--- layers along one curve (made only if a layer needs laying).
+-- layers along one curve (made only if a layer needs laying). `pinch`: cut the inside of tight
+-- curls instead of folding (lips, pinchLimits above).
 --
 -- Laid in C when the native library is there (src/ribbon-native.lua, lib.useNative): the same
 -- vertices (to float rounding), 28 -> ~4 us a strip on an iPhone SE 2 (2026-10-31). Laying
@@ -376,8 +438,8 @@ end
 lib.useNative = true
 local nativeData -- one ByteData the C writes into; setVertices copies it into the mesh
 
-local function nativeStrip(img)
-    local count = lib.ribbonSegments * 2
+local function nativeStrip(img, segments)
+    local count = segments * 2
     local mesh = love.graphics.newMesh(native.FORMAT, count, 'strip', 'dynamic')
     mesh:setTexture(img)
     if not nativeData or nativeData:getSize() < count * native.BYTES_PER_VERTEX then
@@ -386,14 +448,15 @@ local function nativeStrip(img)
     return mesh
 end
 
-function lib.ownStrip(owner, slot, img, scaleW, points, dir, shift, curve)
+function lib.ownStrip(owner, slot, img, scaleW, points, dir, shift, curve, pinch)
     local byOwner, rec = ownedRecord(owner, slot)
     local useNative = lib.useNative and native.available()
     if not rec or rec.img ~= img or rec.scaleW ~= scaleW or rec.dir ~= dir or rec.shift ~= shift
-        or rec.native ~= useNative then
+        or rec.native ~= useNative or rec.pinch ~= pinch then
         if rec then rec.mesh:release() end
-        rec = { mesh = useNative and nativeStrip(img) or createTexturedTriangleStrip(img, scaleW),
-            img = img, scaleW = scaleW, dir = dir, shift = shift, native = useNative }
+        local segments = pinch and lib.pinchSegments or lib.ribbonSegments
+        rec = { mesh = useNative and nativeStrip(img, segments) or createTexturedTriangleStrip(img, scaleW, segments),
+            img = img, scaleW = scaleW, dir = dir, shift = shift, native = useNative, pinch = pinch }
         byOwner[slot] = rec
     end
     if not samePoints(rec.points, points) then
@@ -401,12 +464,12 @@ function lib.ownStrip(owner, slot, img, scaleW, points, dir, shift, curve)
             -- `points` are the Bezier's control points as they are: no growing, no doubling
             local segments = rec.mesh:getVertexCount() / 2
             local n = native.strip(points, 0, 0, segments, img:getWidth() * (dir or 1) * (scaleW or 1),
-                shift or 0, lib.useRibbonMiterClamp, nativeData)
+                shift or 0, lib.useRibbonMiterClamp, nativeData, pinch)
             if n > 0 then rec.mesh:setVertices(nativeData, 1, n) end
         else
             local bezier, derivative
             if curve then bezier, derivative = curve() else bezier = love.math.newBezierCurve(points) end
-            texturedCurve(bezier, img, rec.mesh, dir, scaleW, derivative, shift)
+            texturedCurve(bezier, img, rec.mesh, dir, scaleW, derivative, shift, pinch)
         end
         rec.points = copyPoints(points, rec.points)
     end
