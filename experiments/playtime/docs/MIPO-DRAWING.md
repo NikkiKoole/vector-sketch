@@ -1,6 +1,6 @@
 # Drawing Mipos — what it costs and how to make it cheaper
 
-status: parked — L0, L1, L1b and L1c done (2026-10-30); measure on the iPad before L2
+status: parked — measured on the iPhone SE 2 2026-10-31 (MEASURING M10): ~20 Mipos a room is comfortable without L2; L2a when more Mipos on screen are wanted
 
 How a Mipo is drawn now, from the crowd measurements of 2026-10-30 (MEASURING.md: 20 to 200 Mipos,
 Apple M1) and a read of `physics/box2d-draw-textured.lua` and `src/render/`.
@@ -126,6 +126,13 @@ before and after with `claudetools/frame-profile.lua`. Gains are estimates until
   pointing into the atlas, takes the switches away without any new per-frame Lua: maybe ~5 of the ~24 ms
   the pictures take with 100 Mipos on screen (the rest is our own per-part Lua). The shaders are no risk:
   no scene turns `plasticine` or `hairs` on (2026-10-30). Run the bench on the iPad before choosing.
+  **On the iPhone SE 2 (2026-10-31,** `LOVE_DIR=claudetools/drawcall-bench native/ios/device.sh`):
+  a draw is **1.9 us** of CPU, and **the texture switch costs nothing** there (A 5.8 ms = D 5.9 ms
+  for 3000 draws); B 1.0 ms, C 14.4 ms; the GPU kept every case at 60 fps. So on the phone L2a
+  gains nothing: what a Mipo's ~30 draws cost is their number (~0.06 ms a Mipo, ~1.2 ms for the
+  crowd's ~600), not their textures. Fewer draws only pays as one mesh per Mipo whose vertices
+  aren't laid in Lua (B: as L3, L4, or laid in C like the ribbons, `native/desound/ribbon.c`).
+  (The bench times only the draws: on iOS the frame's first graphics call waits for vsync.)
 - [ ] **L2. One texture per Mipo, a few draw calls.**
   (Bench: merged meshes only pay off if their vertices aren't rewritten from Lua each frame, so for
   Mipos standing still (as L3) or with the GPU placing the parts (as L4).) Pack a Mipo's baked part pictures into one atlas at

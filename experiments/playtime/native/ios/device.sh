@@ -6,6 +6,7 @@
 #   native/ios/device.sh [scene] [--play]   # or: ./playtime.sh device [scene]
 #   DEVICE=iPad native/ios/device.sh        # pick a device by name (default: an iPhone if one is there)
 #   CONFIG=Debug native/ios/device.sh       # default Release (what players get; Debug is slower)
+#   LOVE_DIR=claudetools/drawcall-bench native/ios/device.sh  # another LÖVE program instead (replaces Playtime there)
 #
 # The LÖVE iOS source is appelflap (NikkiKoole/appelflap, LÖVE 11.5 + IAP, ios/libraries
 # included), cloned into native/ios/love (gitignored) on the first run. Its project packs
@@ -38,7 +39,13 @@ for a in "$@"; do
         *) SCENE="$a" ;;
     esac
 done
-[ -f "$PLAYTIME_DIR/scripts/$SCENE.playtime.json" ] || { echo "✗ no scene scripts/$SCENE.playtime.json"; exit 1; }
+# LOVE_DIR=<folder>: pack that LÖVE program instead of Playtime (a bench, a spike), same app
+# id, so it replaces Playtime on the device until the next plain run
+LOVE_DIR="${LOVE_DIR:-}"
+[ -n "$LOVE_DIR" ] && LOVE_DIR="$(cd "$PLAYTIME_DIR" && cd "$LOVE_DIR" && pwd)"
+if [ -z "$LOVE_DIR" ]; then
+    [ -f "$PLAYTIME_DIR/scripts/$SCENE.playtime.json" ] || { echo "✗ no scene scripts/$SCENE.playtime.json"; exit 1; }
+fi
 
 # appelflap's repo has the ios/libraries in it, so on a new machine this is all the setup there is
 if [ ! -d love/platform/xcode/ios/libraries ]; then
@@ -137,6 +144,12 @@ fi
 # room its doors lead to.
 STAGE="$IOS_DIR/build/stage"
 rm -rf "$STAGE"; mkdir -p "$STAGE/scripts"
+if [ -n "$LOVE_DIR" ]; then
+    rm -rf "$STAGE"; cp -r "$LOVE_DIR" "$STAGE"
+    rm -f "$IOS_DIR/flap.love"
+    (cd "$STAGE" && zip -q -r -9 "$IOS_DIR/flap.love" . -x '.*' -x '*/.DS_Store')
+    echo "▸ packed: $LOVE_DIR (not Playtime)"
+else
 cp "$PLAYTIME_DIR/conf.lua" "$STAGE/"
 cp -r "$PLAYTIME_DIR/src" "$PLAYTIME_DIR/vendor" "$PLAYTIME_DIR/assets" "$PLAYTIME_DIR/textures" "$STAGE/"
 mkdir -p "$STAGE/native/desound" # the synth's render thread
@@ -199,6 +212,7 @@ LUA
 rm -f "$IOS_DIR/flap.love"
 (cd "$STAGE" && zip -q -r -9 "$IOS_DIR/flap.love" . -x '.*' -x '*/.DS_Store')
 echo "▸ packed: $SCENE${PLAY:+ (play mode)}, rooms: $ROOMS ($(du -h "$IOS_DIR/flap.love" | cut -f1))"
+fi
 
 # ── build, install, launch ────────────────────────────────────────────────────────────────
 # Build for the device itself, not generic/platform=iOS: only then does automatic signing
