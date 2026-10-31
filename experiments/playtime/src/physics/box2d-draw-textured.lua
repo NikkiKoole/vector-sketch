@@ -560,8 +560,12 @@ local function shapeRibbon(points, extra)
 
     -- todo parameterize this
     local growLength = extra.growExtra or 20
+    -- both ends stick out a little: the first point away from the second, the last away
+    -- from the one before it (this grew the third point until 2026-10-31: the same with
+    -- three anchors, a bend in the middle of a ribbon with more)
+    local n = #points
     points[1], points[2] = growLine({ points[1], points[2] }, { points[3], points[4] }, growLength)
-    points[5], points[6] = growLine({ points[5], points[6] }, { points[3], points[4] }, growLength)
+    points[n - 1], points[n] = growLine({ points[n - 1], points[n] }, { points[n - 3], points[n - 2] }, growLength)
 
     -- bendiness controls control-point duplication for the bezier through
     -- joint anchors. 0 = soft/rubbery (curve smooths across the elbow),

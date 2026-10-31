@@ -53,10 +53,9 @@ int ribbon_strip(const float *nodes, int nNodes, float grow, int bendiness, int 
         for (int i = 0; i < nNodes; i++) { px[i] = nodes[2 * i]; py[i] = nodes[2 * i + 1]; }
         n = nNodes;
     }
-    // shapeRibbon grows the first point away from the second and the THIRD from the second
-    // (points[5], points[6]): the last point only when there are three
+    // both ends stick out: the first point away from the second, the last from the one before
     grow_line(&px[0], &py[0], px[1], py[1], grow);
-    grow_line(&px[2], &py[2], px[1], py[1], grow);
+    grow_line(&px[n - 1], &py[n - 1], px[n - 2], py[n - 2], grow);
 
     // doubleControlPoints: each middle point written `bendiness` more times
     double cx[RIBBON_MAX_POINTS], cy[RIBBON_MAX_POINTS];
