@@ -10,9 +10,11 @@ R="$DREAMENGINE/runtime"
 [ -f "$R/sound.h" ] || { echo "no dreamengine runtime at $R" >&2; exit 1; }
 OUT="${1:-libdesound-ios.a}"
 OBJ="$(mktemp -t desound).o"
-xcrun -sdk iphoneos clang -arch arm64 -miphoneos-version-min=12.0 -std=gnu11 -O2 -DDE_NO_RAYLIB \
-    -I"$R" -c desound.c -o "$OBJ"
+RIBBON_OBJ="$(mktemp -t ribbon).o"
+CC="xcrun -sdk iphoneos clang -arch arm64 -miphoneos-version-min=12.0 -std=gnu11 -O2"
+$CC -DDE_NO_RAYLIB -I"$R" -c desound.c -o "$OBJ"
+$CC -c ribbon.c -o "$RIBBON_OBJ" # limb ribbons (src/ribbon-native.lua)
 rm -f "$OUT"
-xcrun libtool -static -o "$OUT" "$OBJ" 2>/dev/null
-rm -f "$OBJ"
+xcrun libtool -static -o "$OUT" "$OBJ" "$RIBBON_OBJ" 2>/dev/null
+rm -f "$OBJ" "$RIBBON_OBJ"
 echo "built $OUT from dreamengine $(git -C "$DREAMENGINE" rev-parse --short HEAD)"

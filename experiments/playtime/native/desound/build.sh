@@ -8,6 +8,6 @@ cd "$(dirname "$0")"
 DREAMENGINE="${DREAMENGINE:-$HOME/Projects/dreamengine}"
 R="$DREAMENGINE/runtime"
 [ -f "$R/sound.h" ] || { echo "no dreamengine runtime at $R" >&2; exit 1; }
-clang -std=gnu11 -O2 -DDE_NO_RAYLIB -I"$R" -dynamiclib desound.c -o libdesound.dylib \
+clang -std=gnu11 -O2 -DDE_NO_RAYLIB -I"$R" -dynamiclib desound.c ribbon.c -o libdesound.dylib \
     -undefined dynamic_lookup
 echo "built $(pwd)/libdesound.dylib from dreamengine $(git -C "$DREAMENGINE" rev-parse --short HEAD)"

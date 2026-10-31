@@ -2,6 +2,7 @@
 local lib = {}
 local mathutils = require('src.math-utils')
 local polyline = require('src.polyline')
+local native = require('src.ribbon-native')
 
 lib.useRibbonMiterClamp = true -- A/B toggle: per-sample bend-aware half-width in texturedCurve
 -- Weak-keyed side tables so meshes GC cleanly.
@@ -367,18 +368,46 @@ end
 -- that belongs to `owner`: the curve is only laid again when the points or the picture change.
 -- `curve` (optional): the Bezier through `points` and its derivative, when a drawer lays several
 -- layers along one curve (made only if a layer needs laying).
+--
+-- Laid in C when the native library is there (src/ribbon-native.lua, lib.useNative): the same
+-- vertices (to float rounding), 28 -> ~4 us a strip on an iPhone SE 2 (2026-10-31). Laying
+-- them was ~3 ms a frame with 20 moving Mipos. Without it (the web, a desktop without
+-- native/desound/build.sh) texturedCurve lays them in Lua.
+lib.useNative = true
+local nativeData -- one ByteData the C writes into; setVertices copies it into the mesh
+
+local function nativeStrip(img)
+    local count = lib.ribbonSegments * 2
+    local mesh = love.graphics.newMesh(native.FORMAT, count, 'strip', 'dynamic')
+    mesh:setTexture(img)
+    if not nativeData or nativeData:getSize() < count * native.BYTES_PER_VERTEX then
+        nativeData = love.data.newByteData(count * native.BYTES_PER_VERTEX)
+    end
+    return mesh
+end
+
 function lib.ownStrip(owner, slot, img, scaleW, points, dir, shift, curve)
     local byOwner, rec = ownedRecord(owner, slot)
-    if not rec or rec.img ~= img or rec.scaleW ~= scaleW or rec.dir ~= dir or rec.shift ~= shift then
+    local useNative = lib.useNative and native.available()
+    if not rec or rec.img ~= img or rec.scaleW ~= scaleW or rec.dir ~= dir or rec.shift ~= shift
+        or rec.native ~= useNative then
         if rec then rec.mesh:release() end
-        rec = { mesh = createTexturedTriangleStrip(img, scaleW), img = img, scaleW = scaleW, dir = dir,
-            shift = shift }
+        rec = { mesh = useNative and nativeStrip(img) or createTexturedTriangleStrip(img, scaleW),
+            img = img, scaleW = scaleW, dir = dir, shift = shift, native = useNative }
         byOwner[slot] = rec
     end
     if not samePoints(rec.points, points) then
-        local bezier, derivative
-        if curve then bezier, derivative = curve() else bezier = love.math.newBezierCurve(points) end
-        texturedCurve(bezier, img, rec.mesh, dir, scaleW, derivative, shift)
+        if useNative then
+            -- `points` are the Bezier's control points as they are: no growing, no doubling
+            local segments = rec.mesh:getVertexCount() / 2
+            local n = native.strip(points, 0, 0, segments, img:getWidth() * (dir or 1) * (scaleW or 1),
+                shift or 0, lib.useRibbonMiterClamp, nativeData)
+            if n > 0 then rec.mesh:setVertices(nativeData, 1, n) end
+        else
+            local bezier, derivative
+            if curve then bezier, derivative = curve() else bezier = love.math.newBezierCurve(points) end
+            texturedCurve(bezier, img, rec.mesh, dir, scaleW, derivative, shift)
+        end
         rec.points = copyPoints(points, rec.points)
     end
     return rec.mesh
