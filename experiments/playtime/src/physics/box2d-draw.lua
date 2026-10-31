@@ -126,12 +126,24 @@ end
 lib.cull = true
 local OUTLINE_PAD = 100
 
+-- Remembered per body until an sfixture comes or goes (it depends only on which sfixtures a
+-- body has): asked for every body every frame, getFixtures made a new table and a userdata per
+-- fixture each time; drawWorld was 0.83 ms a frame with 20 Mipos on an iPhone SE 2 drawing
+-- nearly nothing (2026-10-31).
+local texturedCache = { version = nil, of = nil }
 function lib.hasTexture(body)
+    if texturedCache.version ~= registry.sfixtureVersion then
+        texturedCache.version, texturedCache.of = registry.sfixtureVersion, setmetatable({}, { __mode = 'k' })
+    end
+    local known = texturedCache.of[body]
+    if known ~= nil then return known end
+    known = false
     for _, fixture in ipairs(body:getFixtures()) do
         local ud = fixture:getUserData()
-        if type(ud) == 'table' and texturedKinds[ud.subtype] then return true end
+        if type(ud) == 'table' and texturedKinds[ud.subtype] then known = true; break end
     end
-    return false
+    texturedCache.of[body] = known
+    return known
 end
 
 local function hasURL(extra)
@@ -191,6 +203,7 @@ end
 -- 'mipo body' is on.
 function lib.showsBody(body, covered)
     if not lib.hasTexture(body) and not (covered and covered[body]) then return true end
+    if state.world.mipoBodies ~= true then return false end
     local ud = body:getUserData()
     return state.world.mipoBodies == true and ud ~= nil and ud.thing ~= nil and ud.thing.mipoId ~= nil
 end
@@ -221,6 +234,9 @@ function lib.drawWorld(world, drawOutline)
 
     if DRAW_BODIES then
         for _, body in ipairs(bodies) do repeat -- break = next body (no goto: the web build's Lua 5.1 has none)
+            -- a body under its picture first: in play mode that's nearly all of them, and this is
+            -- a table lookup (hasTexture remembers) where the cull asks the body twice
+            if skipTextured and not lib.showsBody(body, covered) then break end
             if cull then
                 local x, y = body:getPosition()
                 local reach = view.bodyReach(body) + OUTLINE_PAD
@@ -228,7 +244,6 @@ function lib.drawWorld(world, drawOutline)
             end
             local bodyUD = body:getUserData()
             local bodyThing = bodyUD and bodyUD.thing
-            if skipTextured and not lib.showsBody(body, covered) then break end
             -- CUSTOM bodies get a single unified fill+outline pass that honors
             -- thing.extraSteiner (Phase 3 of STEINER-OWNERSHIP-PLAN.md). Kills
             -- the fan outline artifact from the per-fixture draw below.
@@ -319,10 +334,11 @@ function lib.drawWorld(world, drawOutline)
     love.graphics.setColor(1, 1, 1, alpha)
     -- Joint debug
 
-    local joints = world:getJoints()
     local DRAW_JOINTS = state.world.debugDrawJoints
     if DRAW_JOINTS then
-        for _, joint in ipairs(joints) do
+        -- only when drawn: getJoints makes a table and a userdata per joint (305 with 20 Mipos),
+        -- every frame, for nothing in play mode
+        for _, joint in ipairs(world:getJoints()) do
             local x1, y1, x2, y2 = joint:getAnchors()
 
             if (x1 and y1 and x2 and y2) then

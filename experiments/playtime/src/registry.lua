@@ -94,6 +94,27 @@ function registry.unregisterSFixture(id)
     registry.sfixtureVersion = registry.sfixtureVersion + 1
 end
 
+-- The sfixtures of one subtype, a list kept until an sfixture comes or goes (sfixtureVersion).
+-- For what runs every frame: blob.beforeStep and liquid.update walked all ~650 sfixtures of
+-- the crowd (two calls into C each) to find none, ~0.55 ms a frame on an iPhone SE 2
+-- (2026-10-31). A fixture can still be destroyed in between: check isDestroyed.
+local bySubtype = { version = nil, lists = {} }
+function registry.sfixturesOf(subtype)
+    if bySubtype.version ~= registry.sfixtureVersion then
+        bySubtype.version, bySubtype.lists = registry.sfixtureVersion, {}
+    end
+    local list = bySubtype.lists[subtype]
+    if not list then
+        list = {}
+        for _, fixture in pairs(registry.sfixtures) do
+            local ud = not fixture:isDestroyed() and fixture:getUserData()
+            if type(ud) == 'table' and ud.subtype == subtype then list[#list + 1] = fixture end
+        end
+        bySubtype.lists[subtype] = list
+    end
+    return list
+end
+
 function registry.getSFixtureByID(id)
     return registry.sfixtures[id]
 end

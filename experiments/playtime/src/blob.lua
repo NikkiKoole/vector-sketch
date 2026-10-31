@@ -406,8 +406,9 @@ function lib.beforeStep(paused, dt)
     local world = state.physicsWorld
     if not world then return end
     local seen = {}
-    -- the registered sfixtures, not every fixture of every body (BUG17)
-    for _, fixture in pairs(registry.sfixtures) do
+    -- the softbody sfixtures only (registry.sfixturesOf: walking all of them every step was
+    -- ~0.4 ms a frame in a scene with none), not every fixture of every body (BUG17)
+    for _, fixture in ipairs(registry.sfixturesOf(subtypes.SOFTBODY)) do
         local ud = not fixture:isDestroyed() and fixture:getUserData()
         local body = ud and fixture:getBody()
         if type(ud) == 'table' and subtypes.is(ud, subtypes.SOFTBODY) and ud.extra

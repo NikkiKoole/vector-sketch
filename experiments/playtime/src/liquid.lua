@@ -457,7 +457,7 @@ end
 -- Once per frame after the physics step: while playing, every container spills what it can't hold.
 function lib.update(paused)
     if paused then return end
-    for _, fixture in pairs(registry.sfixtures) do
+    for _, fixture in ipairs(registry.sfixturesOf(subtypes.LIQUID)) do -- not all of them (registry)
         if not fixture:isDestroyed() then
             local ud = fixture:getUserData()
             if type(ud) == 'table' and subtypes.is(ud, subtypes.LIQUID) then
