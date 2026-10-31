@@ -117,6 +117,8 @@ STAGE="$IOS_DIR/build/stage"
 rm -rf "$STAGE"; mkdir -p "$STAGE/scripts"
 cp "$PLAYTIME_DIR/conf.lua" "$STAGE/"
 cp -r "$PLAYTIME_DIR/src" "$PLAYTIME_DIR/vendor" "$PLAYTIME_DIR/assets" "$PLAYTIME_DIR/textures" "$STAGE/"
+mkdir -p "$STAGE/native/desound" # the synth's render thread
+cp "$PLAYTIME_DIR/native/desound/synth-thread.lua" "$STAGE/native/desound/"
 ROOMS="$(/usr/bin/python3 - "$PLAYTIME_DIR/scripts" "$SCENE" <<'EOF'
 import json, os, sys
 scripts, start = sys.argv[1], sys.argv[2]
@@ -179,13 +181,29 @@ echo "▸ packed: $SCENE${PLAY:+ (play mode)}, rooms: $ROOMS ($(du -h "$IOS_DIR/
 # ── build, install, launch ────────────────────────────────────────────────────────────────
 # Build for the device itself, not generic/platform=iOS: only then does automatic signing
 # register the device and make a profile that includes it.
+# The synth (src/synth.lua) linked in. Nothing in the app calls its functions, Lua finds them
+# by name (ffi.C), so the linker would strip them: -u keeps each one src/synth.lua declares
+# (its CDEF, as webtest's build-web.sh exports them) and the de_lua_* ones the thread uses.
+# Without dreamengine the game is silent.
+SYNTH_FLAGS=""
+if "$PLAYTIME_DIR/native/desound/build-ios.sh" "$IOS_DIR/build/libdesound-ios.a" >/dev/null 2>&1; then
+    SYNTH_FLAGS="-force_load $IOS_DIR/build/libdesound-ios.a"
+    for f in $(sed -n '/^local CDEF = \[\[/,/^\]\]/p' "$PLAYTIME_DIR/src/synth.lua" \
+        | grep -oE '[a-z_0-9]+\(' | tr -d '(' | sort -u) de_lua_init de_lua_render_s16; do
+        SYNTH_FLAGS="$SYNTH_FLAGS -Wl,-u,_$f"
+    done
+    echo "▸ synth: linked in"
+else
+    echo "  ⚠ no synth: native/desound/build-ios.sh failed (needs dreamengine, DREAMENGINE=…)"
+fi
+
 echo "▸ building ($CONFIG, signed for the device)…"
 LOG="$IOS_DIR/build/xcodebuild.log"
 if ! xcodebuild -project love/platform/xcode/love.xcodeproj -scheme love-ios -configuration "$CONFIG" \
     -destination "$DEST" -derivedDataPath build \
     -allowProvisioningUpdates -allowProvisioningDeviceRegistration \
     DEVELOPMENT_TEAM="$TEAM" CODE_SIGN_STYLE=Automatic CODE_SIGN_IDENTITY="Apple Development" \
-    PRODUCT_BUNDLE_IDENTIFIER="$BUNDLE_ID" \
+    PRODUCT_BUNDLE_IDENTIFIER="$BUNDLE_ID" ${SYNTH_FLAGS:+OTHER_LDFLAGS="$SYNTH_FLAGS"} \
     build >"$LOG" 2>&1; then
     grep -E 'error:|warning: .*(provision|sign)' "$LOG" | sort -u | head -20
     echo "✗ build failed, full log: $LOG"

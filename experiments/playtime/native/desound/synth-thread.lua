@@ -2,7 +2,7 @@
 -- Render thread for src/synth.lua: pulls samples from the dreamengine synth into a
 -- QueueableSource. This is the engine's single consumer; the main thread is its single producer.
 
-local libPath = ...
+local libPath = ... -- nil on iOS: the synth is linked into the app (src/synth.lua)
 
 require('love.audio')
 require('love.sound')
@@ -10,9 +10,15 @@ require('love.timer')
 local ffi = require('ffi')
 
 ffi.cdef [[ void de_lua_render_s16(int16_t *out, int frames); ]]
-local C = ffi.load(libPath)
+local C = libPath and ffi.load(libPath) or ffi.C
 
 local RATE, FRAMES, BUFFERS = 44100, 512, 3 -- 3 x 512 frames ~ 35 ms of queued audio
+-- A phone's audio takes bigger bites: on an iPhone SE 2 the 35 ms ran dry ~26 times a second
+-- while this loop never missed a beat (2026-10-31). 4 x 1024 is ~93 ms; impacts land ~60 ms
+-- later, the music is booked 0.3 s ahead and doesn't mind.
+require('love.system')
+local system = love.system.getOS()
+if system == 'iOS' or system == 'Android' then FRAMES, BUFFERS = 1024, 4 end
 local source = love.audio.newQueueableSource(RATE, 16, 2, BUFFERS)
 local quit = love.thread.getChannel('synth-quit')
 

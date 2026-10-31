@@ -10,6 +10,7 @@ Ideas for the music: [MUSIC-IDEAS.md](MUSIC-IDEAS.md). The Mipo voices, Puppetma
 1. Clone dreamengine to `~/Projects/dreamengine`, or anywhere else and set `DREAMENGINE=/path`.
 2. Run `native/desound/build.sh` to make `native/desound/libdesound.dylib`. The dylib is gitignored, so every machine builds its own. Rebuild after pulling dreamengine. It was last built against dreamengine `2572e0e5` (2026-10-29: INSTR_SING with its one-shot mode, sample_formant, INSTR_SCRAPE).
 3. Without the dylib the app still runs. Every synth call does nothing, and `[synth] missing ...` is printed once.
+4. On iOS (`./playtime.sh device`, 2026-10-31) there's no dylib: `native/desound/build-ios.sh` makes a static library that `native/ios/device.sh` links into the app, with `-u` for every function in synth.lua's `CDEF` (the linker strips what nothing in C calls). `synth.lua` and the render thread then use `ffi.C`. Phones queue 4 × 1024 frames (~93 ms): the desktop's 3 × 512 ran dry ~26 times a second on an iPhone SE 2.
 
 ## How it fits together
 | File | What it does |

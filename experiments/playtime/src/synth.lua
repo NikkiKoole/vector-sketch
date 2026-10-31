@@ -6,6 +6,7 @@
 -- In the browser (no FFI) src/synth-web.lua stands in for the library and the page plays it.
 
 local IS_WEB = love ~= nil and love.system ~= nil and love.system.getOS() == 'Web'
+local IS_IOS = love ~= nil and love.system ~= nil and love.system.getOS() == 'iOS'
 local ffi = not IS_WEB and require('ffi') or nil
 local state = require('src.state')
 
@@ -460,22 +461,31 @@ function lib.start()
         S.failed = 'no love.thread/love.audio'
         return false
     end
-    local path = love.filesystem.getSource() .. '/' .. lib.libPath
-    if not love.filesystem.getInfo(lib.libPath) then
-        S.failed = 'missing ' .. lib.libPath .. ' (run native/desound/build.sh)'
-        print('[synth] ' .. S.failed)
-        return false
-    end
-    local ok, C = pcall(ffi.load, path)
-    if not ok then
-        S.failed = tostring(C)
-        print('[synth] ' .. S.failed)
-        return false
+    local path, C -- path stays nil on iOS: the render thread then uses ffi.C too
+    if IS_IOS then
+        -- iOS loads no dylib of ours: native/ios/device.sh links the synth into the app
+        -- (native/desound/build-ios.sh), so its functions are the app's own
+        C = ffi.C
+    else
+        path = love.filesystem.getSource() .. '/' .. lib.libPath
+        if not love.filesystem.getInfo(lib.libPath) then
+            S.failed = 'missing ' .. lib.libPath .. ' (run native/desound/build.sh)'
+            print('[synth] ' .. S.failed)
+            return false
+        end
+        local ok, loaded = pcall(ffi.load, path)
+        if not ok then
+            S.failed = tostring(loaded)
+            print('[synth] ' .. S.failed)
+            return false
+        end
+        C = loaded
     end
     local missing = lib.missingFunctions(C)
     if #missing > 0 then
-        S.failed = lib.libPath .. ' is older than src/synth.lua, it lacks ' .. table.concat(missing, ', ')
-            .. ' (rerun native/desound/build.sh)'
+        S.failed = (IS_IOS and 'the app was built without the synth (native/ios/device.sh needs dreamengine)'
+            or lib.libPath .. ' is older than src/synth.lua (rerun native/desound/build.sh)')
+            .. ', it lacks ' .. table.concat(missing, ', ')
         print('[synth] ' .. S.failed)
         return false
     end
