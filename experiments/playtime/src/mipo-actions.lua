@@ -6,6 +6,7 @@
 -- Actions work by toggling the KEEP_ANGLE behaviors on the parts (src/keep-angle.lua):
 -- enabled = false makes a part limp, enabled = nil (default) keeps it upright.
 local mipoRegistry = require('src.mipo-registry')
+local registry = require('src.registry')
 local box2dPointerJoints = require('src.physics.box2d-pointerjoints')
 local units = require('src.physics-units')
 local utils = require('src.utils')
@@ -46,11 +47,11 @@ function lib.ensureKeepAngle(part, angle, kp)
 end
 
 local function anything() return true end
-local groundParts = { 'lfoot', 'rfoot', 'llleg', 'rlleg' }
 
--- A foot or lower leg touches something (anything, sensors too).
+-- A foot or lower leg touches something (anything, sensors too: their sfixtures keep their
+-- contacts for this, registry.GROUND_PARTS).
 function lib.isGrounded(instance)
-    for _, pname in ipairs(groundParts) do
+    for pname in pairs(registry.GROUND_PARTS) do
         local p = instance.parts and instance.parts[pname]
         if p and p.body and not p.body:isDestroyed() and contactTracker.any(p.body, anything) then
             return true

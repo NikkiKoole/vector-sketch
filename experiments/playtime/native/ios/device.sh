@@ -239,7 +239,15 @@ if [ -n "$DC_ID" ]; then
         echo "    'Turn On' after the reboot. Then run this again."
         exit 1
     fi
-    xcrun devicectl device process launch --terminate-existing --device "$DC_ID" "$BUNDLE_ID" >/dev/null
+    if ! LAUNCH="$(xcrun devicectl device process launch --terminate-existing --device "$DC_ID" "$BUNDLE_ID" 2>&1)"; then
+        if echo "$LAUNCH" | grep -q 'Locked'; then
+            echo "✗ installed, but the device is locked: unlock it and run this again (or open Playtime)"
+        else
+            echo "$LAUNCH" | tail -5
+            echo "✗ installed, but it didn't start"
+        fi
+        exit 1
+    fi
 else
     ios-deploy --id "$XT_ID" --bundle "$APP_PATH" --justlaunch >/dev/null
 fi

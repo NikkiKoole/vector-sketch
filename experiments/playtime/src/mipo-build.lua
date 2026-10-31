@@ -195,6 +195,7 @@ local function makePart(partName, instance, settings)
         thing.body:setAngle(prevA + xangle)
         thing.mipoId = instance.id
         thing.mipoPartName = partName
+        registry.updateSFixtureMasks(thing.body) -- a foot keeps its contacts (registry.GROUND_PARTS)
         applyFootMaterial(thing, partName)
 
         if extractNeckIndex(partName) then

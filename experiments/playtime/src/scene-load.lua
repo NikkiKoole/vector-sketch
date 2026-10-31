@@ -192,6 +192,7 @@ local function buildBody(bodyData, world, builtSFixtures)
     shapes.copyDims(bodyData, thing, bodyData.dims) -- older files: sizes on bodyData itself
     body:setUserData({ thing = thing })
     registry.registerBody(thing.id, body)
+    if thing.mipoPartName then registry.updateSFixtureMasks(body) end -- a foot keeps its contacts
     return thing
 end
 
