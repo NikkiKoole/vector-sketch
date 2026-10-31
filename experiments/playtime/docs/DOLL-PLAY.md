@@ -31,11 +31,11 @@ scene, tick it. One at a time. The Mipo's voice items (V1–V6) live in
   `onKeyPress`. Leaving puts back the editor's pause; selection and tool mode are kept. A 'tab: editor'
   hint fades out after going in. Spec: `spec/input-manager_spec.lua` "play mode". The `x > w - 300`
   gates are only on the editor path now; removing them there is still open.
-- [x] **F3. Tween/timer layer** (2026-10-31, `src/timers.lua`): hump.timer in `vendor/hump-timer.lua`
-  (the one Puppetmaker 2 used), `timer` in the script sandbox: `after`, `every`, `tween`, `script`
-  (`wait(0.4)` steps), `cancel`. Runs with the physics (paused world, paused timers), cleared on a scene
-  load and a script reload. Head turns, blinks, reactions and smooth camera moves all need it.
-  Spec: `spec/timers_spec.lua`.
+- **F3. Tween/timer layer — postponed until something really needs it** (2026-10-31). Built once
+  (hump.timer as `timer` in scene scripts) and reverted: nothing used it, and the always-on things
+  (blinks, brows, mouths, cooldowns) are fine and cheaper as timestamps. A layer like this costs a
+  little everywhere it creeps in, so add it only for a real sequence (a splash/intro like Puppetmaker 2's,
+  a chained reaction): bring back commit 1534dc50 (`git revert` of its revert), and use it there only.
 - [ ] **F4. Load *your* Mipo**: spawn characters from saved DNA/JSON
   (`characterManager.createCharacterFromJustDNA`). Puppetmaker-style continuity:
   the Mipo you made shows up in the world.
@@ -63,7 +63,7 @@ rests on two missing pieces: a reusable **place** to put a Mipo, and **snaps tha
 Build those, and the rest is content. F4 (load your Mipo) stands apart: slot it in for a quick win.
 
 - [ ] **R1. The hand feels right.** Throw clamp, squash on a gentle drop, a held face, snap spots
-  glow while a Mipo is dragged near. F3 (tweens) lands here, everything after needs it.
+  glow while a Mipo is dragged near. F3 (tweens) is postponed: do this with timestamps unless a real sequence needs it.
 - [ ] **R2. One "place" primitive.** A seat = a snap point that sets a pose (sit/lie); a container
   = a sensor that holds and can run something on what's inside. Chair, bed, box. After that the
   fridge, washer, closet and bucket are small behaviors, not new systems.

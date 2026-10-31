@@ -8,7 +8,6 @@ local camera = require('src.camera')
 local SE = require('src.script-events')
 local FEXT = require('src.file-extensions')
 local signals = require('src.signals')
-local timers = require('src.timers')
 local cam = camera.getInstance()
 
 local hotReloadTimer = 0
@@ -62,7 +61,6 @@ function lib.loadSceneData(data, name)
         state.scene.sceneScript = nil
         state.scene.scriptPath = nil
     end
-    timers.clear() -- the old scene's waits and tweens point at bodies about to go
     sceneIO.load(data, state.physicsWorld, cam)
     signals.applySavedStates() -- gates back to their saved open/closed
     logger:info("Scene loaded: " .. name)
@@ -125,7 +123,6 @@ function lib.loadAndRunScript(name)
     if state.scene.sceneScript then
         script.call(SE.ON_UNLOAD)
     end
-    timers.clear() -- and the old script's, before the new one starts its own
     state.scene.sceneScript = script.loadScript(data, name)
     state.scene.scriptPath = name
     script.setEnv({ worldState = state.world, world = state.physicsWorld, state = state })
