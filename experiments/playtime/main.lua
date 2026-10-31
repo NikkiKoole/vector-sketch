@@ -108,6 +108,7 @@ local flightRecorder = require('src.flight-recorder')
 local mipoJointGuard = require('src.mipo-joint-guard')
 local mipoActions = require('src.mipo-actions')
 local fabuland = require('src.fabuland')
+local sceneCatalog = require('src.scene-catalog')
 local blobs = require('src.blob') -- blob rims (SOFTBODY sfixtures)
 local liquid = require('src.liquid')
 local signals = require('src.signals')
@@ -206,6 +207,7 @@ function love.update(dt)
     Peeker.update(dt)
     sceneLoader.maybeHotReload(dt)
     doors.update(dt) -- going through a door happens here, outside input and physics
+    sceneCatalog.update() -- a scene picked in the scenes tab loads here, not mid-draw
 
     local scaled_dt = dt * state.world.speedMultiplier
     prof.push('physics-update')

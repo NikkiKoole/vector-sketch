@@ -136,7 +136,7 @@ Both should report **0 warnings / 0 errors**; keep it that way.
 
 **UI:**
 - `src/playtime-ui.lua` — editor UI orchestrator (~500 lines)
-- `src/ui/` — extracted UI panels: all.lua (theme), textinput.lua, inspector.lua (generic panel from declared `params`), body-editor.lua, sfixture-editor.lua, joint-update.lua, mipo-editor.lua, world-settings.lua, tool-rail.lua (left rail: play/shape/draw/joint/attach/mipo/settings), right-column.lua (tabs properties | on stage | library), library-tab.lua, on-stage.lua, recording-panel.lua
+- `src/ui/` — extracted UI panels: all.lua (theme), textinput.lua, inspector.lua (generic panel from declared `params`), body-editor.lua, sfixture-editor.lua, joint-update.lua, mipo-editor.lua, world-settings.lua, tool-rail.lua (left rail: play/shape/draw/joint/attach/mipo/settings), right-column.lua (tabs properties | on stage | library | scenes), library-tab.lua, on-stage.lua, scenes-tab.lua (every scene in scripts/, from `src/scene-catalog.lua`: a scene's script's first comment line is its description, so start new scene scripts with `-- <name>: what it is`), recording-panel.lua
 
 **Physics & rendering:**
 - `src/physics/` — Box2D modules (box2d-draw, box2d-draw-textured, box2d-pointerjoints, physics-callbacks, snap)

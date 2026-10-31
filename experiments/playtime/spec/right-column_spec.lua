@@ -65,6 +65,14 @@ describe('right column', function()
         assert.are.equal('properties', state.rightColumn.tab)
     end)
 
+    it('the scenes tab lists the scenes, and picking one offers load', function()
+        clickTab('scenes')
+        assert.are.equal('scenes', state.rightColumn.tab)
+        state.rightColumn.pickedScene = 'dollhouse'
+        frame(0, 0, false, false) -- draws the list with the picked scene's buttons, no error
+        state.rightColumn.pickedScene = nil
+    end)
+
     it('properties get a rect below the tab bar, inside the window', function()
         state.rightColumn.tab = 'properties'
         local got

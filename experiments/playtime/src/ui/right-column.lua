@@ -1,5 +1,5 @@
 -- The right column: a fixed rect on the right with tabs on top
--- (properties | on stage | library). The tab choice lives on state, so it
+-- (properties | on stage | library | scenes). The tab choice lives on state, so it
 -- survives hot reload. See docs/EDITOR-INSPECTOR-LIBRARY.md.
 local lib = {}
 
@@ -7,8 +7,9 @@ local ui = require('src.ui.all')
 local state = require('src.state')
 local onStage = require('src.ui.on-stage')
 local libraryTab = require('src.ui.library-tab')
+local scenesTab = require('src.ui.scenes-tab')
 
-lib.TABS = { 'properties', 'on stage', 'library' }
+lib.TABS = { 'properties', 'on stage', 'library', 'scenes' }
 
 -- the whole column: x, y, w, h
 function lib.rect()
@@ -67,6 +68,7 @@ end
 function lib.draw(drawProperties)
     drawTabBar()
     local tab = state.rightColumn.tab
+    scenesTab.tick(tab == 'scenes')
     if tab == 'properties' then
         if not drawProperties(lib.contentRect()) then
             if state.scene.sceneScript and not state.world.paused then
@@ -79,6 +81,8 @@ function lib.draw(drawProperties)
         onStage.draw(lib.contentRect())
     elseif tab == 'library' then
         libraryTab.draw(lib.contentRect())
+    elseif tab == 'scenes' then
+        scenesTab.draw(lib.contentRect())
     end
 end
 
