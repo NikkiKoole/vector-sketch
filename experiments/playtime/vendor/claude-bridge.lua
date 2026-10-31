@@ -2192,7 +2192,7 @@ function bridge.update()
         local client = bridge.server:accept()
         if not client then break end
         client:settimeout(0)
-        local addr = client:getsockname()
+        local addr = client:getpeername() -- the caller (getsockname is our own address: the same only on localhost)
         if check_whitelist(addr) then
             local conn = coroutine.wrap(function()
                 xpcall(function() handle_connection(client) end, function(err)

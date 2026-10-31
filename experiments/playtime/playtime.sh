@@ -1,6 +1,6 @@
 #!/bin/bash
 # Helper script for managing the playtime LÖVE app
-# Usage: ./playtime.sh [start|play|stop|restart|status|log|errors|todo] [scene]
+# Usage: ./playtime.sh [start|play|stop|restart|status|log|errors|todo|audio|device] [scene]
 #   todo [--all]: the work board from the docs' status lines and checkboxes (docs/readme.md)
 #   play <scene>: start straight in play mode (no editor; tab goes to the editor)
 
@@ -155,5 +155,6 @@ case "${1:-status}" in
     errors)  do_errors ;;
     todo)    (cd "$DIR" && lua claudetools/plans.lua "${2:-}") ;;
     audio)   do_audio ;;
-    *)       echo "Usage: $0 [start|play|stop|restart|status|log|errors|todo|audio] [scene]" ;;
+    device)  shift; "$DIR/native/ios/device.sh" "$@" ;;
+    *)       echo "Usage: $0 [start|play|stop|restart|status|log|errors|todo|audio|device] [scene]" ;;
 esac

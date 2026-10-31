@@ -5,3 +5,6 @@ profilingReport.txt
 native/desound/libdesound.dylib
 native/desound/desound.wasm
 .snapshots/
+native/ios/love/
+native/ios/build/
+native/ios/flap.love

@@ -14,6 +14,8 @@
 ./playtime.sh audio    # music pops: the synth's dropouts and what was busy then (docs/SOUND-SYNTH.md)
 METER=400 ./playtime.sh start  # another px-per-metre (default 200, state.world.meter; love . --meter 400)
 ./webtest/build-web.sh dollhouse && ./webtest/serve.sh 8080 dollhouse  # browser build, see docs/WEB-EXPORT-LOVEJS.md
+./playtime.sh device dollhouse [--play]  # build + install on the iPhone/iPad on the cable (~20 s); the bridge
+                                         # answers over wifi at the address it prints. Setup: native/ios/device.sh
 ```
 
 Tuned physics numbers (speeds, forces, impulses, gains, Hz) are written as at 100 px per metre
