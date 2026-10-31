@@ -126,6 +126,7 @@ local _registry = require('src.registry') -- luacheck: ignore 211
 local _mathutils = require('src.math-utils') -- luacheck: ignore 211
 
 local InputManager = require('src.input-manager')
+local touchGestures = require('src.touch-gestures')
 local bodyRotate = require('src.body-rotate')
 local state = require('src.state')
 local physicsUnits = require('src.physics-units')
@@ -499,8 +500,15 @@ function love.mousepressed(x, y, button, istouch)
     InputManager.handleMousePressed(x, y, button, istouch)
 end
 
+-- Two fingers pinch-zoom and pan (src/touch-gestures.lua); their touches don't reach the
+-- input manager, and a grab by the first finger is let go when the second lands.
 function love.touchpressed(id, x, y, dx, dy, pressure)
+    if touchGestures.pressed(id, x, y, InputManager.handleTouchReleased) then return end
     InputManager.handleTouchPressed(id, x, y, dx, dy, pressure)
+end
+
+function love.touchmoved(id, x, y)
+    touchGestures.moved(id, x, y)
 end
 
 function love.mousereleased(x, y, button, istouch)
@@ -508,6 +516,7 @@ function love.mousereleased(x, y, button, istouch)
 end
 
 function love.touchreleased(id, x, y, dx, dy, pressure)
+    if touchGestures.released(id) then return end
     InputManager.handleTouchReleased(id, x, y, dx, dy, pressure)
 end
 

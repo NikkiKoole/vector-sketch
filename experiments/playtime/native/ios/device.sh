@@ -75,23 +75,29 @@ done
 
 # ── the device ──────────────────────────────────────────────────────────────────────────────
 # devicectl (CoreDevice, iOS 17+) first; xctrace + ios-deploy for older devices. Parse the JSON,
-# not the table (model names have spaces and parentheses). Only a device on the cable or with a
-# `connected` tunnel counts: devicectl also lists every device it ever paired with, as
-# `disconnected` or `unavailable`, and a cabled one stays `disconnected` until first used.
+# not the table (model names have spaces and parentheses). devicectl also lists every device it
+# ever paired with; a cabled one stays `disconnected` until first used, so go by the transport:
+# the cable, then a live tunnel, then wifi (a paired device on the same network; if it's not
+# really there, the install fails).
 DC_ID=""; DC_UDID=""; DC_NAME=""
 JSON="$(mktemp -t playtime-devices)"
 if xcrun devicectl list devices --json-output "$JSON" >/dev/null 2>&1; then
     # (a plain $(...): macOS's bash 3.2 loses a heredoc inside < <(...))
-    PICKED="$(/usr/bin/python3 - "$JSON" "${DEVICE:-iPhone}" <<'EOF'
+    PICKED="$(/usr/bin/python3 - "$JSON" "${DEVICE:-}" <<'EOF'
 import json, sys
-want = sys.argv[2]
+want = sys.argv[2].lower()
+def label(x):
+    return (x['deviceProperties'].get('name', '') + ' ' + x.get('hardwareProperties', {}).get('productType', '')).lower()
+def rank(x):  # the cable first, then a live tunnel, then wifi (a paired device on the same network)
+    c = x.get('connectionProperties', {})
+    if c.get('transportType') == 'wired': return 0
+    if c.get('tunnelState') == 'connected': return 1
+    if c.get('transportType') == 'localNetwork': return 2
+    return None
 d = [x for x in json.load(open(sys.argv[1]))['result']['devices']
-     if (x.get('connectionProperties', {}).get('tunnelState', '') == 'connected'
-         or x.get('connectionProperties', {}).get('transportType', '') == 'wired')
-     and any(k in x['deviceProperties'].get('name', '') + x.get('hardwareProperties', {}).get('productType', '')
-             for k in ('iPhone', 'iPad'))]
-d.sort(key=lambda x: want.lower() not in (x['deviceProperties'].get('name', '')
-                                           + x.get('hardwareProperties', {}).get('productType', '')).lower())
+     if rank(x) is not None and ('iphone' in label(x) or 'ipad' in label(x))]
+# DEVICE= wins, then the best connection, then an iPhone over an iPad
+d.sort(key=lambda x: (bool(want) and want not in label(x), rank(x), 'iphone' not in label(x)))
 if d:
     x = d[0]
     print(x['identifier'], x.get('hardwareProperties', {}).get('udid', ''), x['deviceProperties'].get('name', '').replace(' ', '_'))
