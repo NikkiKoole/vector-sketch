@@ -33,3 +33,20 @@ rule on), standing on a flat floor with friction 0.9. World units.
 - **Heights to sit or climb**: a Mipo is 360-950 tall, so a slide top at 700 is about
   one Mipo high.
 - **Toys to hold or throw**: balls 55-130 radius feel right next to a 200-wide foot.
+
+## How many Mipos a room can hold
+
+Measured 2026-10-31 on the floor device, an iPhone SE 2 (Retina, sound on, play mode), with
+the Mipos dropped into one pile (the worst case). Details and how: [MEASURING.md](MEASURING.md) M10.
+
+- **Up to ~20 Mipos in a room is comfortable**: ~10.5 of the 16.7 ms a frame. What's left
+  covers a warm phone (~25% slower), props and the scene's script.
+- **25 is the ceiling** (1 frame in 10 late, worse when they pile up). Past 30 the game plays
+  in slow motion (smooth, not jerky: the loop's time budget), so don't design for it.
+- **Count in Mipos**: one is ~16 bodies, 15 joints, ~30 sfixtures, ~0.3 ms of drawing and
+  ~0.2-0.3 ms of physics on the phone. A plain prop is a fraction of that; a toy of many
+  joints counts like part of a Mipo.
+- **The limit is per room**: off-screen Mipos aren't drawn, but every Mipo in the room takes
+  part in the physics. More Mipos in all: spread them over rooms behind doors.
+- **Piles cost most** (contacts grow faster than the Mipos): a pit full of Mipos reaches the
+  limit sooner than a room where they stand apart.

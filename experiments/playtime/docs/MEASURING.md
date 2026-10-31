@@ -116,9 +116,23 @@ parts (music-theory, skinning's `meshusertVertices`, the polygon modules) run wi
   -1.5 ms); sfixtures masked, feet and lower legs excepted (contacts 4950 -> 2100, Box2D
   3.6 -> 2 ms). Desktop: 60 fps up to ~30-35 Mipos (40: 10 -> 37 fps); past that the loop's time
   budget plays it in slow motion (`state.loopBudgetMs`, 60 Mipos 28 fps at a third of real time).
+  **How far it goes** (the same day, Mipos dropped into the crowd in steps, one pile):
+
+  | Mipos | fps | late frames | frame used | game speed |
+  |---|---|---|---|---|
+  | 20 | 59 | 0.4% | ~10.6 ms | real time |
+  | 25 | 57 | 11% | ~15.4 ms | real time |
+  | 30 | 43 | 96% | ~22 ms | 98% |
+  | 35 | 35 | all | ~26 ms | 82% |
+  | 40 | 32 | all | ~27 ms | 54% |
+
+  So ~20 Mipos a room is the comfortable design limit, 25 the ceiling
+  ([WORLD-METRICS.md](WORLD-METRICS.md) has the rules for scenes). The next step up is resting
+  Mipos that sleep (Box2D skips sleeping bodies; the balance keeps them all awake now).
   Lessons: a phone warms up and throttles (everything ~25% slower, parts nothing touched too):
   compare by switching live in one session, or let it cool. Say before pausing or switching
-  things on a phone someone is holding. iOS has no JIT: count calls into C (each costs), not
+  things on a phone someone is holding. `device.sh` picks an iPhone before an iPad
+  (`DEVICE=iPad` for the iPad). iOS has no JIT: count calls into C (each costs), not
   arithmetic.
 - [ ] **M6. The potato-torso click.** The editor snapshot forces every slider to its midpoint; on a
   potato head's torso1 panel that makes a shape Box2D refuses (`fixtures.lua:132: Box2D assertion
