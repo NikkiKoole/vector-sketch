@@ -367,7 +367,8 @@ function love.draw()
 
     if editing then -- play mode: no HUD
         if FIXED_TIMESTEP then
-            love.graphics.print('f' .. string.format("%02d", 1 / TICKRATE), w - 80, 10)
+            -- frames drawn a second, and the physics steps a second (f84 at 200 px per metre)
+            love.graphics.print(string.format("%d fps  f%02d", love.timer.getFPS(), 1 / TICKRATE), w - 140, 10)
             local timediff = love.timer.getTime() - beginframetime
             if timediff > TICKRATE then
                 love.graphics.setColor(1, 0, 0)

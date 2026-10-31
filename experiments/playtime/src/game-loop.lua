@@ -38,7 +38,9 @@ function lib.createFixedTimestepRun(tickrate)
                 end
             end
 
-            -- time
+            -- time. The step is only for love.timer.getFPS/getDelta (the HUD, the bridge):
+            -- without it they read 0 here; the loop keeps its own clock below
+            if love.timer then love.timer.step() end
             local now = love.timer.getTime()
             local elapsed = now - previous
             previous = now
