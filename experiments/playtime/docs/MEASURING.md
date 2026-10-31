@@ -91,6 +91,13 @@ parts (music-theory, skinning's `meshusertVertices`, the polygon modules) run wi
   **2026-10-31:** measured on the iPhone instead (M10) and cut there. Left: the textured shapes'
   draw calls (~1.7 ms on the phone with nothing moving: L2a), Box2D (~2 ms: resting Mipos never
   sleep, the balance keeps them awake), spine skin and ear bends in C (≤0.5 ms).
+  **Later that day** (the crowd on the phone, live A/B where a switch allowed): bent pictures in C
+  (texfixtures 1.65 -> 0.98 ms), blobs and liquid only asked about their own sfixtures (0.55 ms
+  -> ~0), drawWorld remembering which bodies hide under pictures (0.83 -> 0.57, the rest draws
+  the props). The crowd: update ~4.4, draw ~5.2, ~9.6 of 16.7 ms. Tried and dropped: the ribbon
+  prep in C (no change: what's left per ribbon is reading the joints, the upload, the draw), L2
+  (MIPO-DRAWING.md). Next if needed: Box2D (resting Mipos asleep), the Mipo update parts
+  (joint guard 0.7, actions 0.5, keep-angle 0.4).
 - [ ] **M7. The draw's garbage.** ~430 KB a frame from the textured draw (per-drawable tables, fan
   vertex tables, a Bezier curve per ribbon per frame, mouth polygons). Only ~1.3% of the time on
   the desktop, so after M8; worth it before an iPad build.
