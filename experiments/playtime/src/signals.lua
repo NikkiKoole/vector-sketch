@@ -65,6 +65,17 @@ end
 state.gatesTravelling = state.gatesTravelling or setmetatable({}, { __mode = 'k' })
 local travelling = state.gatesTravelling
 
+-- The list for the world in play: emptied when it's another world than the one it was filled in
+-- (a scene loaded since, or a spec's own world): those bodies are gone, and their objects may be
+-- released already, so even isDestroyed() on them fails.
+local function travellingNow()
+    if state.gatesTravellingWorld ~= state.physicsWorld then
+        for body in pairs(travelling) do travelling[body] = nil end
+        state.gatesTravellingWorld = state.physicsWorld
+    end
+    return travelling
+end
+
 -- Gate: a body on a prismatic joint; the motor drives it to the closed end or
 -- to the open (world-down) end of its limits.
 function lib.setGate(body, open)
@@ -78,6 +89,7 @@ function lib.setGate(body, open)
     joint:setMaxMotorForce(units.force(lib.gateForce))
     joint:setMotorSpeed((open and dir or -dir) * lib.gateSpeed)
     body:setAwake(true)
+    travellingNow()
     local wasAllowed = travelling[body] and travelling[body].sleepingAllowed or body:isSleepingAllowed()
     body:setSleepingAllowed(false)
     local travel = joint:getUpperLimit() - joint:getLowerLimit()
@@ -299,7 +311,7 @@ end
 
 function lib.update()
     if not state.physicsWorld then return end
-    for body, trip in pairs(travelling) do
+    for body, trip in pairs(travellingNow()) do
         if body:isDestroyed() or type(trip) ~= 'table' then
             travelling[body] = nil
         elseif trip.steps <= 1 then
