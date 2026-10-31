@@ -4,7 +4,8 @@
 -- frequency is a spring that keeps the rest angle), so a tuft stands, sways and bounces with
 -- the head. They collide with nothing (category 16, masked against all): no contacts, so they
 -- can't snag, push things, or call contact callbacks. Light, so they hardly pull on the head.
--- Drawn as a ribbon through the chain with a hair picture.
+-- Drawn as a ribbon through the chain: with the Mipo's own ear picture (baked, its colours and
+-- pattern: a fuzzy ear already reads as a tuft of hair), else a hair picture.
 local lib = {}
 
 local state = require('src.state')
@@ -24,7 +25,22 @@ lib.defaults = {
     dampingRatio = 0.25, -- the ears' 0.25: higher settles sooner
     density = 0.2,      -- of the head's: light
     drawWidth = 0.25,   -- ribbon half-width as a share of the picture's width
-    texture = 7,        -- hairN.png (and hairN-mask.png when there is one)
+    texture = 7,        -- hairN.png (and hairN-mask.png when there is one), when not `ear`
+    ear = 1,            -- 1: draw with the Mipo's own ear picture, 0: with hairN
+    style = 1,          -- lib.haircuts[style]; 0: `count` tufts spread evenly (spread, lean)
+}
+
+-- Haircuts: where each tuft sits and which way it points; the welds keep pulling it back there.
+-- at: on the head's outline, -1 the left side, 0 the top, 1 the right side. angle: degrees from
+-- straight up (head space), + leans right, 180 hangs down. len/width: times the sliders.
+local function T(at, angle, len, width) return { at = at, angle = angle, len = len or 1, width = width or 1 } end
+lib.haircuts = {
+    { name = 'spiky', T(-0.6, -35), T(-0.3, -15), T(0, 0, 1.1), T(0.3, 15), T(0.6, 35) },
+    { name = 'mohawk', T(-0.15, -5, 1.2), T(0, 0, 1.4), T(0.15, 5, 1.2) },
+    { name = 'swept', T(-0.6, 70, 1.1), T(-0.3, 60, 1.2), T(0, 55, 1.2), T(0.3, 50, 1) },
+    { name = 'pigtails', T(-0.95, -120, 1.4, 1.2), T(0.95, 120, 1.4, 1.2) },
+    { name = 'cowlick', T(0.15, -25, 1.3, 0.8) },
+    { name = 'fringe', T(-0.4, 160, 0.8), T(-0.15, 175, 0.9), T(0.15, 185, 0.9), T(0.4, 200, 0.8) },
 }
 
 local images = {}
@@ -100,24 +116,38 @@ function lib.attach(instance, opts)
     if not vertices or #vertices < 6 then return end
     local world = head:getWorld()
     local density = headDensity(head) * o.density
-    local segLen = o.length / o.segments
     local a = head:getAngle()
     local tufts = {}
-    for k = 1, o.count do
-        local f = o.count > 1 and (k - 1) / (o.count - 1) or 0.5
-        local angle = -math.pi / 2 + (f - 0.5) * o.spread
-        local lx, ly = outlinePoint(vertices, angle)
+    -- where the tufts go: (root angle on the outline, direction, length, width), head space
+    local placements = {}
+    local haircut = lib.haircuts[o.style]
+    if haircut then
+        for _, t in ipairs(haircut) do
+            placements[#placements + 1] = { root = -math.pi / 2 + t.at * math.pi / 2 * 0.95,
+                dir = -math.pi / 2 + math.rad(t.angle), len = t.len, width = t.width }
+        end
+    else
+        for k = 1, o.count do
+            local f = o.count > 1 and (k - 1) / (o.count - 1) or 0.5
+            local root = -math.pi / 2 + (f - 0.5) * o.spread
+            placements[k] = { root = root, dir = root + (f - 0.5) * 2 * o.lean, len = 1, width = 1 }
+        end
+    end
+    for k, place in ipairs(placements) do
+        local lx, ly = outlinePoint(vertices, place.root)
         lx, ly = lx * 0.9, ly * 0.9 -- a little inside the head
-        local dir = angle + (f - 0.5) * 2 * o.lean + a
+        local dir = place.dir + a
         local dx, dy = math.cos(dir), math.sin(dir)
         local rootX, rootY = head:getWorldPoint(lx, ly)
-        local tuft = { rootX = lx, rootY = ly, bodies = {}, segLen = segLen }
+        local segLen = o.length * place.len / o.segments
+        local tuft = { rootX = lx, rootY = ly, bodies = {}, segLen = segLen, drawWidth = o.drawWidth * place.width }
         local prev, jx, jy = head, rootX, rootY
         for i = 1, o.segments do
             local cx, cy = jx + dx * segLen / 2, jy + dy * segLen / 2
             local body = love.physics.newBody(world, cx, cy, 'dynamic')
             body:setAngle(dir + math.pi / 2) -- local -y along the tuft, outward
-            local fixture = love.physics.newFixture(body, love.physics.newRectangleShape(o.width, segLen), density)
+            local shape = love.physics.newRectangleShape(o.width * place.width, segLen)
+            local fixture = love.physics.newFixture(body, shape, density)
             fixture:setCategory(16)
             fixture:setMask(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16)
             local vx, vy = head:getLinearVelocityFromWorldPoint(cx, cy)
@@ -129,6 +159,19 @@ function lib.attach(instance, opts)
         tufts[k] = tuft
     end
     instance.hairTufts = { opts = o, tufts = tufts, head = head }
+end
+
+-- The Mipo's baked ear picture (nil without ears).
+local function earImage(instance)
+    for _, name in ipairs({ 'lear', 'rear' }) do
+        local part = instance.parts and instance.parts[name]
+        if part and part.body and not part.body:isDestroyed() then
+            for _, fixture in ipairs(part.body:getFixtures()) do
+                local ud = fixture:getUserData()
+                if ud and ud.extra and ud.extra.ompImage then return ud.extra.ompImage end
+            end
+        end
+    end
 end
 
 local scratch = {}
@@ -145,6 +188,8 @@ function lib.draw()
             local main = cut and cut.main or {}
             local fr, fg, fb = color.hexToColor(main.fgHex or 'bf1a2dff')
             local lr, lg, lb = color.hexToColor(main.bgHex or '000000ff')
+            local ear = o.ear == 1 and earImage(instance)
+            if ear then mask, line = nil, nil end
             for _, tuft in ipairs(t.tufts) do
                 -- the root on the head, then each body's tip
                 local points = tuft.points or {}
@@ -160,13 +205,17 @@ function lib.draw()
                     scratch[5], scratch[6] = points[3], points[4]
                     points = scratch
                 end
+                if ear then
+                    love.graphics.setColor(1, 1, 1, 1)
+                    love.graphics.draw(ribbon.ownStrip(tuft, 'ear', ear, tuft.drawWidth, points, 1, 0, nil, true))
+                end
                 if mask then
                     love.graphics.setColor(fr, fg, fb, 1)
-                    love.graphics.draw(ribbon.ownStrip(tuft, 'fill', mask, o.drawWidth, points, 1, 0, nil, true))
+                    love.graphics.draw(ribbon.ownStrip(tuft, 'fill', mask, tuft.drawWidth, points, 1, 0, nil, true))
                 end
                 if line then
                     love.graphics.setColor(lr, lg, lb, 1)
-                    love.graphics.draw(ribbon.ownStrip(tuft, 'line', line, o.drawWidth, points, 1, 0, nil, true))
+                    love.graphics.draw(ribbon.ownStrip(tuft, 'line', line, tuft.drawWidth, points, 1, 0, nil, true))
                 end
             end
         end

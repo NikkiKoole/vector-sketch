@@ -1,6 +1,6 @@
 # Hair locks — long hair that swings
 
-status: parked — three hair tries (2026-10-31); tufts as real physics "still not a great success but the most promising"
+status: parked — the route is the tufts (real bodies, ear pictures, haircuts): "when we revisit hair this is the route" (2026-10-31)
 
 A spike: locks of hair as chains of points rooted on the head, moved by a small verlet step of
 their own (not Box2D) and drawn as ribbons with the hair pictures. `src/hair-locks.lua`, the scene
@@ -29,7 +29,10 @@ acceleration, sagging when tilted, pinned at the ends with the wobble in the mid
 "this isnt it really either": too loose, and a whole haircut moving as one sheet. Costs nothing
 when off (one call per haircut a frame).
 
-## Hair tufts (the most promising)
+## Hair tufts — the route
+
+**When hair comes back, start here** (Nikki, 2026-10-31: "definitely leaning this direction";
+needs more work).
 
 The third try: a few tufts on top of the head as real Box2D bodies, short chains soft-welded like
 the ears (`src/hair-tufts.lua`, `scripts/tufts.playtime.lua`: run it on a scene with Mipos, panel
@@ -38,8 +41,10 @@ the head's density) and are drawn as ribbons through the chain, over the faces f
 "still not a great success but the most promising": the motion is the ears' motion, which works.
 Open:
 
-- Pictures made for it: the fuzzy ear already reads as hair; a blob-shaped tuft on one or two
-  bodies may beat a long strand
+- Drawn with the Mipo's own baked ear picture (`ear` 1, the default): the fuzzy ear (`earx2r`)
+  reads as hair, in the Mipo's colours. Tuft pictures of their own can come from a drawing session
+- Haircuts (`lib.haircuts`, the `style` slider): each tuft's place on the head and the angle it
+  springs back to. spiky, mohawk, swept, pigtails, cowlick, fringe: first guesses, to tune
 - Its place in the Mipo's z-layers (now over everything)
 - In the DNA and the Mipo editor, saved and rebuilt like the ears (now only the script makes them)
 - The cost: 2 bodies and 2 joints a tuft in Box2D (3 tufts: +6 bodies a Mipo)

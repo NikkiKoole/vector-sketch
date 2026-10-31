@@ -31,6 +31,7 @@ function s.draw()
 end
 
 local SLIDERS = {
+    { key = 'style', min = 0, max = #hairTufts.haircuts, step = 1 },
     { key = 'count', min = 1, max = 9, step = 1 },
     { key = 'segments', min = 1, max = 5, step = 1 },
     { key = 'length', min = 20, max = 250 },
@@ -42,6 +43,7 @@ local SLIDERS = {
     { key = 'density', min = 0.02, max = 1 },
     { key = 'drawWidth', min = 0.05, max = 0.6 },
     { key = 'texture', min = 1, max = 11, step = 1 },
+    { key = 'ear', min = 0, max = 1, step = 1 },
 }
 
 -- A slider moved: make the tufts again once it's let go (not every frame of the drag:
@@ -65,7 +67,8 @@ function s.drawUI()
                 opts[sl.key] = v
                 pending = true
             end
-            ui.label(x + 260, y, sl.key)
+            local name = sl.key == 'style' and (hairTufts.haircuts[opts.style] or { name = 'even' }).name
+            ui.label(x + 260, y, name or sl.key)
         end
         local x, y = ui.nextLayoutPosition(layout, w - 20, BH)
         if ui.button(x, y, w - 20, 'make them again (r)') then pending = true end
