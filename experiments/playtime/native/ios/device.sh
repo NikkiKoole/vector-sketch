@@ -217,14 +217,16 @@ fi
 # ── build, install, launch ────────────────────────────────────────────────────────────────
 # Build for the device itself, not generic/platform=iOS: only then does automatic signing
 # register the device and make a profile that includes it.
-# The native library linked in: the synth (src/synth.lua) and the limb ribbons
-# (src/ribbon-native.lua). Nothing in the app calls its functions, Lua finds them by name
-# (ffi.C), so the linker would strip them: -u keeps each one those two files declare (their
-# CDEFs) and the de_lua_* ones the synth's thread uses. Without dreamengine the game is silent.
+# The native library linked in: the synth (src/synth.lua), the limb ribbons
+# (src/ribbon-native.lua) and whatever a LOVE_DIR program declares. Nothing in the app calls
+# its functions, Lua finds them by name (ffi.C), so the linker would strip them: -u keeps each
+# one a `local CDEF = [[ ... ]]` block declares, in src/ and in LOVE_DIR, and the de_lua_* ones
+# the synth's thread uses. Without dreamengine the game is silent.
 SYNTH_FLAGS=""
 if "$PLAYTIME_DIR/native/desound/build-ios.sh" "$IOS_DIR/build/libdesound-ios.a" >/dev/null 2>&1; then
     SYNTH_FLAGS="-force_load $IOS_DIR/build/libdesound-ios.a"
-    for f in $(sed -n '/^local CDEF = \[\[/,/^\]\]/p' "$PLAYTIME_DIR/src/synth.lua" "$PLAYTIME_DIR/src/ribbon-native.lua" \
+    CDEF_FILES="$(grep -rl '^local CDEF = \[\[' "$PLAYTIME_DIR/src" ${LOVE_DIR:+"$LOVE_DIR"} --include='*.lua')"
+    for f in $(sed -n '/^local CDEF = \[\[/,/^\]\]/p' $CDEF_FILES \
         | grep -oE '[a-z_0-9]+\(' | tr -d '(' | sort -u) de_lua_init de_lua_render_s16; do
         SYNTH_FLAGS="$SYNTH_FLAGS -Wl,-u,_$f"
     done

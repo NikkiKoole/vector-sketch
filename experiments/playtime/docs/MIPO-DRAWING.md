@@ -1,6 +1,6 @@
 # Drawing Mipos — what it costs and how to make it cheaper
 
-status: parked — measured on the iPhone SE 2 2026-10-31 (MEASURING M10): ~20 Mipos a room is comfortable without L2; there L2a gains nothing (texture switches are free), more Mipos on screen would need one mesh a Mipo (L2 laid in C, L3, L4)
+status: parked — measured on the iPhone SE 2 2026-10-31 (MEASURING M10): ~20 Mipos a room is comfortable without L2; on the phone L2 (atlas, merged meshes, even laid in C) saves ~nothing: our per-part Lua is ~80% of the draw
 
 How a Mipo is drawn now, from the crowd measurements of 2026-10-30 (MEASURING.md: 20 to 200 Mipos,
 Apple M1) and a read of `physics/box2d-draw-textured.lua` and `src/render/`.
@@ -133,6 +133,15 @@ before and after with `claudetools/frame-profile.lua`. Gains are estimates until
   crowd's ~600), not their textures. Fewer draws only pays as one mesh per Mipo whose vertices
   aren't laid in Lua (B: as L3, L4, or laid in C like the ribbons, `native/desound/ribbon.c`).
   (The bench times only the draws: on iOS the frame's first graphics call waits for vsync.)
+  **The "laid in C" spike (2026-10-31):** case E, one mesh per Mipo whose vertices C moves to
+  its 16 Box2D bodies each frame (`native/desound/place.c`: 16 body reads, 1 C call, 1
+  setVertices, 1 draw), against A2, today's draw per part at its body, both with the JIT off.
+  Mac M1: E 0.89 ms against A2 8.55 ms for 100 Mipos. **iPhone SE 2: E 5.32 ms against A2
+  6.20** (B, the same meshes static, 0.91): on the phone the per-frame upload is what costs
+  (~45 of E's 53 us a Mipo), not the draw calls. So L2 saves ~0.01 ms a Mipo there: not worth
+  its weeks. What is: a Mipo draws in ~0.3 ms on the phone but its draws, bodies read, are
+  ~0.06 ms of it: ~80% is our own Lua per part (drawer, transforms, colours, caches, face).
+  Slimming that hot path is the next draw win, no atlas needed.
 - [ ] **L2. One texture per Mipo, a few draw calls.**
   (Bench: merged meshes only pay off if their vertices aren't rewritten from Lua each frame, so for
   Mipos standing still (as L3) or with the GPU placing the parts (as L4).) Pack a Mipo's baked part pictures into one atlas at
