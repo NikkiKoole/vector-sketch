@@ -67,6 +67,11 @@ if not IS_WEB then
     lurker.errorupdate = function(_dt)
         bridge.update()
     end
+    -- On a phone the files are inside the app (nothing to hot-reload) and one look at them
+    -- took 25 ms on an iPhone SE 2: a dropped frame every half second (2026-10-31).
+    -- Lurker stays loaded: src/frame-bench.lua wraps its lovefuncs.
+    local system = love.system.getOS()
+    if system == 'iOS' or system == 'Android' then lurker.interval = math.huge end
 else
     bridge = require('src.web-bridge') -- eval from the page: playtime.eval(code)
     lurker = { update = function() end }
