@@ -11,7 +11,41 @@ local lib = {}
 
 local SLOW_MS = 20 -- a frame later than this missed a vsync at 60 Hz
 
-function lib.start()
+-- With parts: what love.update calls, timed one by one ({ module, function name }).
+-- Box2D's world:update can't be wrapped (a userdata method): it's in what's left.
+local PARTS = {
+    { 'src.blob', 'beforeStep' }, { 'src.blob', 'afterStep' },
+    { 'src.script', 'call' },
+    { 'src.mipo-joint-guard', 'update' }, { 'src.mipo-actions', 'update' },
+    { 'src.signals', 'update' }, { 'src.mipo-voice', 'update' }, { 'src.mipo-chatter', 'update' },
+    { 'src.mipo-band', 'update' }, { 'src.physics.snap', 'update' }, { 'src.keep-angle', 'update' },
+    { 'src.sound', 'update' }, { 'src.liquid', 'update' },
+    { 'src.physics.box2d-pointerjoints', 'handlePointerUpdate' }, { 'src.mipo-face', 'update' },
+    { 'src.camera-follow', 'update' },
+}
+
+local function wrapParts(run, now)
+    run.parts, run.unwrap = {}, {}
+    for _, p in ipairs(PARTS) do
+        local ok, module = pcall(require, p[1])
+        local fn = ok and type(module) == 'table' and module[p[2]]
+        if type(fn) == 'function' then
+            local name = p[1]:gsub('^src%.', ''):gsub('^physics%.', '') .. '.' .. p[2]
+            local part = { name = name, ms = 0 }
+            run.parts[#run.parts + 1] = part
+            module[p[2]] = function(...)
+                local t = now()
+                local a, b, c, d = fn(...)
+                part.ms = part.ms + (now() - t) * 1000
+                return a, b, c, d
+            end
+            run.unwrap[#run.unwrap + 1] = function() module[p[2]] = fn end
+        end
+    end
+end
+
+-- parts: also time each part of love.update (PARTS)
+function lib.start(parts)
     if state.benchRun then return 'already running' end
     local lf = require('vendor.lurker').lovefuncs
     local now = love.timer.getTime
@@ -20,6 +54,7 @@ function lib.start()
         origUpdate = lf.update, origDraw = lf.draw,
     }
     state.benchRun = run
+    if parts then wrapParts(run, now) end
     lf.update = function(...)
         local kb = collectgarbage('count')
         local t = now()
@@ -62,6 +97,7 @@ function lib.stop()
     if not run then return 'not running' end
     local lf = require('vendor.lurker').lovefuncs
     lf.update, lf.draw = run.origUpdate, run.origDraw
+    for _, unwrap in ipairs(run.unwrap or {}) do unwrap() end
     state.benchRun = nil
     local frames = run.frames
     if #frames == 0 then return 'no frames' end
@@ -83,6 +119,20 @@ function lib.stop()
         string.format('  over %d ms: %d frames (%.1f%%); frames with a GC step: %d', SLOW_MS, #slow,
             100 * #slow / #frames, gcFrames),
     }
+    if run.parts then
+        local updateMs, partsMs = 0, 0
+        for _, f in ipairs(frames) do updateMs = updateMs + f.u end
+        table.sort(run.parts, function(a, b) return a.ms > b.ms end)
+        lines[#lines + 1] = '  update, ms a frame:'
+        for _, p in ipairs(run.parts) do
+            partsMs = partsMs + p.ms
+            if p.ms / #frames >= 0.05 then
+                lines[#lines + 1] = string.format('    %5.2f  %s', p.ms / #frames, p.name)
+            end
+        end
+        lines[#lines + 1] = string.format('    %5.2f  the rest: Box2D world:update, input, the loop',
+            (updateMs - partsMs) / #frames)
+    end
     -- The slow frames themselves. A slow frame's own update/draw can be small: then the time
     -- went before it (the frame before ran long) or outside Lua (present, the GPU, the OS).
     for n, i in ipairs(slow) do

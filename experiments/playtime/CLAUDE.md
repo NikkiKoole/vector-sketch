@@ -11,7 +11,8 @@
 ./playtime.sh log      # show stdout/stderr log
 ./playtime.sh errors   # show startup errors + bridge /errors
 ./playtime.sh todo     # the work board: active plans + next steps, parked plans, drift warnings
-./playtime.sh bench [device] [secs]  # frame timing: update/draw/frame ms, the slow frames and why (src/frame-bench.lua)
+./playtime.sh bench [device] [secs] [--parts]  # frame timing: update/draw/frame ms, the slow frames and why;
+                                               # --parts times each part of love.update (src/frame-bench.lua)
 ./playtime.sh audio    # music pops: the synth's dropouts and what was busy then (docs/SOUND-SYNTH.md)
 METER=400 ./playtime.sh start  # another px-per-metre (default 200, state.world.meter; love . --meter 400)
 ./webtest/build-web.sh dollhouse && ./webtest/serve.sh 8080 dollhouse  # browser build, see docs/WEB-EXPORT-LOVEJS.md

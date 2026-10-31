@@ -140,14 +140,15 @@ do_audio() {
             print((d:gsub("\\n", "\n"):gsub([[\"]], [["]])))'
 }
 
-# bench [localhost|device|<ip>] [seconds]: frame timing (src/frame-bench.lua). 'device' is the
-# phone ./playtime.sh device last installed to.
+# bench [localhost|device|<ip>] [seconds] [--parts]: frame timing (src/frame-bench.lua). 'device'
+# is the phone ./playtime.sh device last installed to; --parts also times each part of love.update.
 do_bench() {
-    local host="${1:-localhost}" secs="${2:-5}"
+    local host="${1:-localhost}" secs="${2:-5}" parts="${3:-}"
+    [ "$parts" = --parts ] && parts=true || parts=false
     [ "$host" = device ] && host="$(cat "$DIR/native/ios/build/device-ip" 2>/dev/null)"
     [ -n "$host" ] || { echo "no device address: run ./playtime.sh device first"; return 1; }
     local eval="http://$host:$PORT/eval"
-    curl -s -m 5 -X POST "$eval" --data-binary '{"code":"return require(\"src.frame-bench\").start()"}' \
+    curl -s -m 5 -X POST "$eval" --data-binary "{\"code\":\"return require('src.frame-bench').start($parts)\"}" \
         >/dev/null || { echo "no bridge at $host:$PORT"; return 1; }
     sleep "$secs"
     curl -s -m 20 -X POST "$eval" --data-binary '{"code":"return require(\"src.frame-bench\").stop()"}' \
@@ -170,7 +171,7 @@ case "${1:-status}" in
     errors)  do_errors ;;
     todo)    (cd "$DIR" && lua claudetools/plans.lua "${2:-}") ;;
     audio)   do_audio ;;
-    bench)   do_bench "${2:-}" "${3:-}" ;;
+    bench)   do_bench "${2:-}" "${3:-}" "${4:-}" ;;
     device)  shift; "$DIR/native/ios/device.sh" "$@" ;;
     *)       echo "Usage: $0 [start|play|stop|restart|status|log|errors|todo|audio|bench|device] [scene]" ;;
 esac
