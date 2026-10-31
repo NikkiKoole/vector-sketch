@@ -37,7 +37,7 @@ end
 -- A .playtime.json dropped on this tab becomes a prefab (instead of loading
 -- as a scene, src/main.lua). Returns true when it took the file.
 function lib.fileDropped(file, x, y, w, h)
-    local mx, my = love.mouse.getPosition()
+    local mx, my = ui.toUI(love.mouse.getPosition())
     if mx < x or mx > x + w or my < y or my > y + h then return false end
     local filename = file:getFilename()
     if not filename:find('%.playtime%.json$') then return false end

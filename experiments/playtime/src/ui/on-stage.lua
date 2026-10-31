@@ -116,7 +116,7 @@ end
 local function showOnStage(body)
     local cam = camera.getInstance()
     local sx, sy = cam:getScreenCoordinates(body:getPosition())
-    local w, h = love.graphics.getDimensions()
+    local w, h = ui.getDimensions()
     if sx < 0 or sy < 0 or sx > w - 340 or sy > h then
         cam:setTranslation(body:getPosition())
     end

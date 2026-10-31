@@ -37,7 +37,7 @@ lib.assignTrianglesToBone = meshusertPanel.assignTrianglesToBone
 
 -- panelX, panelY, panelWidth, panelH: the panel rect (default: the right edge, full height)
 function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
-    local w, h = love.graphics.getDimensions()
+    local w, h = ui.getDimensions()
     panelWidth = panelWidth or PANEL_WIDTH
     panelX, panelY, panelH = panelX or (w - panelWidth - 20), panelY or 20, panelH or (h - 40)
     if lastSFixtureForCleanup ~= state.selection.selectedSFixture then

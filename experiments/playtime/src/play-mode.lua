@@ -36,6 +36,47 @@ function lib.toggle()
     if lib.isOn() then lib.exit() else lib.enter() end
 end
 
+-- The way back to the editor on a phone (no tab key there): a small faint circle in the
+-- top-left corner. Phones only; on a desktop play mode stays clean and tab goes back.
+-- (A kids' build would hide this behind a parent gate, a long press say.)
+local EXIT_X, EXIT_Y, EXIT_R = 30, 30, 18 -- screen points; the hit area is a bit bigger
+
+local function onPhone()
+    local system = love.system.getOS()
+    return system == 'iOS' or system == 'Android'
+end
+
+function lib.drawExitButton()
+    if not lib.isOn() or not onPhone() then return end
+    love.graphics.setColor(1, 1, 1, 0.25)
+    love.graphics.circle('fill', EXIT_X, EXIT_Y, EXIT_R)
+    love.graphics.setColor(0, 0, 0, 0.35)
+    love.graphics.setLineWidth(2)
+    love.graphics.circle('line', EXIT_X, EXIT_Y, EXIT_R)
+    -- two bars: 'pause, back to the editor'
+    love.graphics.rectangle('fill', EXIT_X - 6, EXIT_Y - 7, 4, 14)
+    love.graphics.rectangle('fill', EXIT_X + 2, EXIT_Y - 7, 4, 14)
+    love.graphics.setColor(1, 1, 1, 1)
+end
+
+-- True when touch `id` at (x, y) (screen points) pressed the exit button. Play mode is left
+-- when that finger lifts (releasedExitButton): left on the press, the finger was still
+-- down in the editor, on its play button, and lifting it went straight back in.
+function lib.pressedExitButton(id, x, y)
+    if not lib.isOn() or not onPhone() then return false end
+    if (x - EXIT_X) ^ 2 + (y - EXIT_Y) ^ 2 > (EXIT_R + 12) ^ 2 then return false end
+    state.playModeExitTouch = id
+    return true
+end
+
+-- True when touch `id` was the exit button's; leaves play mode.
+function lib.releasedExitButton(id)
+    if state.playModeExitTouch == nil or state.playModeExitTouch ~= id then return false end
+    state.playModeExitTouch = nil
+    lib.exit()
+    return true
+end
+
 -- A small 'tab: editor' that fades out after going in (screen space).
 function lib.drawHint()
     if not lib.isOn() or not state.playModeEnteredAt then return end

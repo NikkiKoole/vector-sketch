@@ -28,6 +28,7 @@ local uiSFixtureEditor = require('src.ui.sfixture-editor')
 local uiBodyEditor = require('src.ui.body-editor')
 local fileBrowser  = require('src.file-browser')
 local uiMipoEditor = require('src.ui.mipo-editor')
+local playMode = require('src.play-mode')
 local inspector = require('src.ui.inspector')
 local mipoRegistry = require('src.mipo-registry')
 local rightColumn = require('src.ui.right-column')
@@ -61,7 +62,7 @@ function lib.drawSelectedSFixture(...) return uiSFixtureEditor.drawSelectedSFixt
 
 -- panelX, panelY, panelWidth, panelH: the panel rect (default: the right edge, full height)
 function lib.drawSelectedBodiesUI(panelX, panelY, panelWidth, panelH)
-    local w, h = love.graphics.getDimensions()
+    local w, h = ui.getDimensions()
     panelWidth = panelWidth or PANEL_WIDTH
     panelX, panelY, panelH = panelX or (w - panelWidth - 20), panelY or 20, panelH or (h - 40)
     ui.panel(panelX, panelY, panelWidth, panelH, '∞ selection ∞', function()
@@ -155,7 +156,7 @@ function lib.drawUpdateSelectedObjectUI(...) return uiBodyEditor.drawUpdateSelec
 
 function lib.drawUI()
     ui.startFrame()
-    local w, h = love.graphics.getDimensions()
+    local w, h = ui.getDimensions()
     if state.world.paused then
         love.graphics.setColor({ 244 / 255, 164 / 255, 97 / 255 })
         love.graphics.setColor({ 1, 0, 0, .5 })
@@ -166,6 +167,9 @@ function lib.drawUI()
 
     love.graphics.rectangle('line', 10, 10, w - 20, h - 20, 20, 20)
     love.graphics.setColor(1, 1, 1)
+
+    -- into play mode (tab does the same): above the rail, so a phone has a way in
+    if ui.button(10, 18, 76, 'play', 36) then playMode.enter() end
 
     -- the left tool rail: shapes, draw, joints, attach, mipos (toys are on the library tab)
     toolRail.draw()
@@ -181,7 +185,7 @@ function lib.drawUI()
 
     if modes.is(modes.PICK_AUTO_ROPIFY) then
         local panelWidth = PANEL_WIDTH
-        w, h = love.graphics.getDimensions()
+        w, h = ui.getDimensions()
         ui.panel(w - panelWidth - 20, 20, panelWidth, h - 40, '∞ autoropify ∞', function()
             local padding = BUTTON_SPACING
             local layout = ui.createLayout({
@@ -243,7 +247,7 @@ function lib.drawUI()
     end
 
     if state.panelVisibility.showPalette then
-        w, h = love.graphics.getDimensions()
+        w, h = ui.getDimensions()
         ui.panel(10, h - 400, w - 300, 400, '• pick color •', function()
             local cellHeight = 50
             local itemsPerRow = math.floor((w - 300) / cellHeight)
@@ -437,8 +441,7 @@ function lib.drawUI()
 
     if ui.draggingActive then
         love.graphics.setColor(ui.theme.draggedElement.fill)
-        local x, y = love.mouse.getPosition()
-        love.graphics.circle('fill', x, y, 10)
+        love.graphics.circle('fill', ui.mouseX, ui.mouseY, 10)
         love.graphics.setColor(1, 1, 1)
     end
 

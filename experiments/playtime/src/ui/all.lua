@@ -92,7 +92,23 @@ local clipStack = {}
 function ui.pushClip(x, y, w, h)
     local sx, sy, sw, sh = love.graphics.getScissor()
     clipStack[#clipStack + 1] = { sx, sy, sw, sh }
-    love.graphics.intersectScissor(x, y - (ui._scrollShift or 0), math.max(0, w), math.max(0, h))
+    local k = ui.scale -- scissor rectangles are in screen pixels (see ui.scale)
+    love.graphics.intersectScissor(x * k, (y - (ui._scrollShift or 0)) * k, math.max(0, w) * k, math.max(0, h) * k)
+end
+
+-- The UI drawn smaller or bigger than the screen's points (phones: main.lua sets it).
+-- playtime-ui draws under love.graphics.scale(ui.scale), and the UI works in its own
+-- coordinates throughout: ui.getDimensions() is the screen in UI units, ui.mouseX/Y the
+-- pointer. Something that means the real screen (a world position) keeps love.mouse.
+ui.scale = ui.scale or 1
+
+function ui.getDimensions()
+    local w, h = love.graphics.getDimensions()
+    return w / ui.scale, h / ui.scale
+end
+
+function ui.toUI(x, y)
+    return x / ui.scale, y / ui.scale
 end
 
 function ui.popClip()
@@ -135,6 +151,32 @@ function ui.sameLine(spacing)
     return ui._cursor.x + ui._cursor.w + spacing, ui._cursor.y
 end
 
+-- Drag to scroll, for touch (a finger has no wheel): one finger that moves more than
+-- DRAG_SCROLL_START from where it landed, not holding a slider, scrolls the panel under
+-- it. Its vertical movement goes into ui.dragScrollDy, which scroll panels take like
+-- the wheel; the button it landed on is let go, so lifting the finger clicks nothing.
+local DRAG_SCROLL_START = 10 -- UI units
+local function updateDragScroll(down)
+    ui.dragScrollDy = 0
+    local fingers = love.touch and #love.touch.getTouches() or 0
+    if not down or fingers ~= 1 then
+        ui._dragScroll = nil
+        return
+    end
+    local d = ui._dragScroll
+    if not d then
+        ui._dragScroll = { x = ui.mouseX, y = ui.mouseY, lastY = ui.mouseY, on = false }
+        return
+    end
+    if not d.on and not ui.draggingSliderID
+        and math.abs(ui.mouseY - d.y) + math.abs(ui.mouseX - d.x) > DRAG_SCROLL_START then
+        d.on = true
+        ui.activeElementID = nil
+    end
+    if d.on then ui.dragScrollDy = ui.mouseY - d.lastY end
+    d.lastY = ui.mouseY
+end
+
 --- Resets UI state at the start of each frame.
 function ui.startFrame()
     -- Self-heal font after hot-reload
@@ -163,8 +205,9 @@ function ui.startFrame()
     end
     ui.mouseIsDown = down
 
-    ui.mouseX, ui.mouseY = love.mouse.getPosition()
+    ui.mouseX, ui.mouseY = ui.toUI(love.mouse.getPosition())
     ui.overPanel = false
+    updateDragScroll(down)
 end
 
 function ui.generateID()
@@ -233,6 +276,10 @@ function ui.scrollArea(_id, x, y, w, h, scrollY, drawFunc)
         scrollY.value = math.max(0, scrollY.value - ui.mouseWheelDy * 20)
         scrollY.value = math.min(scrollY.value, contentHeight - h)
         ui.mouseWheelDy = 0
+    end
+    if isHover and maxContentY > h and (ui.dragScrollDy or 0) ~= 0 then -- a finger drags the content
+        scrollY.value = scrollY.value - ui.dragScrollDy
+        ui.dragScrollDy = 0
     end
     scrollY.value = mathutils.clamp(scrollY.value, 0, maxContentY - h)
     ui.popClip()
@@ -319,7 +366,7 @@ end
 --- Where a prompt or small dialog goes: centred at the top, in the strip the old
 -- toolbar used (the tool rail is on the left, the right column on the right).
 function ui.topCenter(width)
-    return math.floor((love.graphics.getWidth() - width) / 2), 20
+    return math.floor((ui.getDimensions() - width) / 2), 20
 end
 
 --- A one-line prompt at the top centre, wide not tall: the text, then its buttons
@@ -760,6 +807,10 @@ function ui.scrollPanel(id, x, y, w, h, drawFunc)
     if inside and overflow > 0 and ui.mouseWheelDy ~= 0 then
         scroll.value = scroll.value - ui.mouseWheelDy * 30
         ui.mouseWheelDy = 0
+    end
+    if inside and overflow > 0 and ui.dragScrollDy ~= 0 then -- a finger drags the content
+        scroll.value = scroll.value - ui.dragScrollDy
+        ui.dragScrollDy = 0
     end
     scroll.value = mathutils.clamp(scroll.value, 0, overflow)
 

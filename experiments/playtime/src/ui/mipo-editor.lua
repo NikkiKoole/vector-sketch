@@ -18,7 +18,7 @@ local BUTTON_SPACING = ui.theme.spacing
 function lib.shapePartFor(...) return bodyPanel.shapePartFor(...) end
 
 function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, panelH)
-    local w, h = love.graphics.getDimensions()
+    local w, h = ui.getDimensions()
     panelWidth = panelWidth or PANEL_WIDTH
     panelX, panelY, panelH = panelX or (w - panelWidth - 20), panelY or 20, panelH or (h - 40)
     widgets.setEditing(instance)

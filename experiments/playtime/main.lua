@@ -152,6 +152,10 @@ function love.load(_args)
     love.graphics.setFont(font)
 
     ui.init(font, fontHeight)
+    -- A phone's screen is ~667x375 points: the editor UI at 0.75 fits the tool rail and
+    -- keeps its buttons at ~42 points, about a fingertip (Apple asks for 44)
+    local system = love.system.getOS()
+    if system == 'iOS' or system == 'Android' then ui.scale = 0.75 end
 
     state.world.meter = physicsUnits.meterFromArgs(arg) or state.world.meter
     love.physics.setMeter(state.world.meter)
@@ -354,9 +358,15 @@ function love.draw()
     end
 
     doors.drawFade()
-    if editing then playtimeui.drawUI() end
+    if editing then -- the UI at its own scale (ui.scale, src/ui/all.lua)
+        love.graphics.push()
+        love.graphics.scale(ui.scale)
+        playtimeui.drawUI()
+        love.graphics.pop()
+    end
     script.call('drawUI')
     playMode.drawHint()
+    playMode.drawExitButton() -- phones: the way back to the editor
 
     if editing and recorder.isRecording then
         love.graphics.setColor(1, 0, 0)
@@ -503,6 +513,7 @@ end
 -- Two fingers pinch-zoom and pan (src/touch-gestures.lua); their touches don't reach the
 -- input manager, and a grab by the first finger is let go when the second lands.
 function love.touchpressed(id, x, y, dx, dy, pressure)
+    if playMode.pressedExitButton(id, x, y) then return end
     if touchGestures.pressed(id, x, y, InputManager.handleTouchReleased) then return end
     InputManager.handleTouchPressed(id, x, y, dx, dy, pressure)
 end
@@ -516,6 +527,7 @@ function love.mousereleased(x, y, button, istouch)
 end
 
 function love.touchreleased(id, x, y, dx, dy, pressure)
+    if playMode.releasedExitButton(id) then return end
     if touchGestures.released(id) then return end
     InputManager.handleTouchReleased(id, x, y, dx, dy, pressure)
 end

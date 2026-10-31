@@ -12,7 +12,7 @@ lib.TABS = { 'properties', 'on stage', 'library' }
 
 -- the whole column: x, y, w, h
 function lib.rect()
-    local w, h = love.graphics.getDimensions()
+    local w, h = ui.getDimensions()
     local top, width = ui.theme.columnTop, ui.theme.panelWidth -- below the toolbar row
     return w - width - 20, top, width, h - top - 20
 end

@@ -59,7 +59,7 @@ local function drawBackdrops(x, y, w)
 end
 
 function lib.drawWorldSettingsUI()
-    local _, h = love.graphics.getDimensions()
+    local _, h = ui.getDimensions()
     local panelHeight = math.min(usedHeight + ui.theme.panelHeader + 20, h - START_Y - 20)
     worldParams.tick(state.world)
     ui.panel(START_X, START_Y, PANEL_WIDTH, panelHeight, '• settings •', function()

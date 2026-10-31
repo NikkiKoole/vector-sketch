@@ -36,7 +36,7 @@ function lib.setAllAccordions(open) forceOpen = open end
 -- panelX, panelY, panelWidth, panelH: the panel rect (default: the right edge, full height)
 function lib.drawUpdateSelectedObjectUI(panelX, panelY, panelWidth, panelH)
     if recorder.isRecording then return end
-    local w, h = love.graphics.getDimensions()
+    local w, h = ui.getDimensions()
     panelWidth = panelWidth or PANEL_WIDTH
     panelX, panelY, panelH = panelX or (w - panelWidth - 20), panelY or 20, panelH or (h - 40)
     -- title: what kind of thing it is (its name is the first row)
