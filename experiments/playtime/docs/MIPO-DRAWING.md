@@ -1,6 +1,6 @@
 # Drawing Mipos — what it costs and how to make it cheaper
 
-status: parked — measured on the iPhone SE 2 2026-10-31 (MEASURING M10): ~20 Mipos a room is comfortable without L2; L2a when more Mipos on screen are wanted
+status: parked — measured on the iPhone SE 2 2026-10-31 (MEASURING M10): ~20 Mipos a room is comfortable without L2; there L2a gains nothing (texture switches are free), more Mipos on screen would need one mesh a Mipo (L2 laid in C, L3, L4)
 
 How a Mipo is drawn now, from the crowd measurements of 2026-10-30 (MEASURING.md: 20 to 200 Mipos,
 Apple M1) and a read of `physics/box2d-draw-textured.lua` and `src/render/`.
