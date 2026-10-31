@@ -1,0 +1,6631 @@
+{
+ "bodies": [
+  {
+   "position": [
+    1131.47,
+    -689.4233
+   ],
+   "mirrorX": 1,
+   "mirrorY": 1,
+   "angularVelocity": 0.0277,
+   "id": "3xito3",
+   "shapeType": "shape8",
+   "mipoId": "P4re5",
+   "mipoPartName": "rear",
+   "linearDamping": 0,
+   "angularDamping": 0,
+   "vertices": [
+    -5.7402682028077,
+    -48.867694400024,
+    32.528186482577,
+    -16.790438588726,
+    26.405233732916,
+    8.7711246359018,
+    20.664965530108,
+    24.057941858474,
+    -4.9748991091,
+    24.559148980525,
+    -28.318656467185,
+    23.306131175396,
+    -35.206978310554,
+    8.520521074876,
+    -41.329931060216,
+    -17.041042149752
+   ],
+   "angle": 0.9354,
+   "sharedFixtureData": {
+    "density": 1,
+    "friction": 0.2,
+    "restitution": 0.3,
+    "sensor": false,
+    "groupIndex": -39,
+    "shapeType": "polygon"
+   },
+   "fixtures": [
+    {
+     "sensor": true,
+     "userData": {
+      "id": "6V3HW",
+      "subtype": "texfixture",
+      "type": "sfixture",
+      "extra": {
+       "main": {
+        "pURL": "type8.png",
+        "fgURL": "earx4r-mask.png",
+        "bgHex": "000000ff",
+        "pHex": "547EC9FF",
+        "bgURL": "earx4r.png",
+        "fgHex": "19946BFF",
+        "cached": {
+         "fgB": 0.41960784313725,
+         "fgA": 1,
+         "fgRGB": [
+          0.098039215686275,
+          0.58039215686275,
+          0.41960784313725
+         ],
+         "bgG": 0,
+         "pR": 0.32941176470588,
+         "pG": 0.49411764705882,
+         "pB": 0.78823529411765,
+         "bgR": 0,
+         "pRGB": [
+          0.32941176470588,
+          0.49411764705882,
+          0.78823529411765
+         ],
+         "bgB": 0,
+         "bgA": 1,
+         "bgRGB": [
+          0,
+          0,
+          0
+         ],
+         "pA": 1,
+         "fgR": 0.098039215686275,
+         "fgG": 0.58039215686275
+        }
+       },
+       "vertexCount": 4,
+       "zGroupOffset": 39,
+       "OMP": true,
+       "vertices": [
+        -64.405809235503,
+        -66.572835986495,
+        64.405809235503,
+        -66.572835986495,
+        64.405809235503,
+        66.572835986495,
+        -64.405809235503,
+        66.572835986495
+       ],
+       "dirty": true,
+       "zOffset": 190
+      },
+      "label": ""
+     },
+     "points": [
+      64.406,
+      -66.573,
+      64.406,
+      66.573,
+      -64.406,
+      66.573,
+      -64.406,
+      -66.573
+     ]
+    },
+    {
+     "points": [
+      36.929,
+      -4.636,
+      30.806,
+      20.925,
+      25.066,
+      36.212,
+      -0.574,
+      36.713,
+      -23.918,
+      35.46,
+      -30.806,
+      20.675,
+      -36.929,
+      -4.887,
+      -1.339,
+      -36.713
+     ]
+    }
+   ],
+   "fixedRotation": false,
+   "label": "rear",
+   "bodyType": "dynamic",
+   "dims": {
+    "width": 30,
+    "height": 90
+   },
+   "linearVelocity": [
+    -250.6142578125,
+    144.6873626709
+   ]
+  },
+  {
+   "position": [
+    938.2948,
+    -646.2311
+   ],
+   "mirrorX": 1,
+   "mirrorY": 1,
+   "angularVelocity": 0.05,
+   "id": "D60iC",
+   "shapeType": "shape8",
+   "mipoId": "P4re5",
+   "mipoPartName": "lear",
+   "linearDamping": 0,
+   "angularDamping": 0,
+   "vertices": [
+    5.7402682028077,
+    -48.867694400024,
+    -32.528186482577,
+    -16.790438588726,
+    -26.405233732916,
+    8.7711246359018,
+    -20.664965530108,
+    24.057941858474,
+    4.9748991091,
+    24.559148980525,
+    28.318656467185,
+    23.306131175396,
+    35.206978310554,
+    8.520521074876,
+    41.329931060216,
+    -17.041042149752
+   ],
+   "angle": -1.3843,
+   "sharedFixtureData": {
+    "density": 1,
+    "friction": 0.2,
+    "restitution": 0.3,
+    "sensor": false,
+    "groupIndex": -39,
+    "shapeType": "polygon"
+   },
+   "fixtures": [
+    {
+     "sensor": true,
+     "userData": {
+      "id": "2TH26B",
+      "subtype": "texfixture",
+      "type": "sfixture",
+      "extra": {
+       "main": {
+        "pURL": "type8.png",
+        "fgURL": "earx4r-mask.png",
+        "bgHex": "000000ff",
+        "bgURL": "earx4r.png",
+        "pHex": "547EC9FF",
+        "fgHex": "19946BFF",
+        "fx": -1,
+        "cached": {
+         "fgB": 0.41960784313725,
+         "fgA": 1,
+         "fgRGB": [
+          0.098039215686275,
+          0.58039215686275,
+          0.41960784313725
+         ],
+         "bgG": 0,
+         "pR": 0.32941176470588,
+         "pG": 0.49411764705882,
+         "pB": 0.78823529411765,
+         "bgR": 0,
+         "pRGB": [
+          0.32941176470588,
+          0.49411764705882,
+          0.78823529411765
+         ],
+         "bgB": 0,
+         "bgA": 1,
+         "bgRGB": [
+          0,
+          0,
+          0
+         ],
+         "pA": 1,
+         "fgR": 0.098039215686275,
+         "fgG": 0.58039215686275
+        }
+       },
+       "vertexCount": 4,
+       "zGroupOffset": 39,
+       "OMP": true,
+       "vertices": [
+        -64.405809235503,
+        -66.572835986495,
+        64.405809235503,
+        -66.572835986495,
+        64.405809235503,
+        66.572835986495,
+        -64.405809235503,
+        66.572835986495
+       ],
+       "dirty": true,
+       "zOffset": 190
+      },
+      "label": ""
+     },
+     "points": [
+      64.406,
+      -66.573,
+      64.406,
+      66.573,
+      -64.406,
+      66.573,
+      -64.406,
+      -66.573
+     ]
+    },
+    {
+     "points": [
+      36.929,
+      -4.887,
+      30.806,
+      20.675,
+      23.918,
+      35.46,
+      0.574,
+      36.713,
+      -25.066,
+      36.212,
+      -30.806,
+      20.925,
+      -36.929,
+      -4.636,
+      1.339,
+      -36.713
+     ]
+    }
+   ],
+   "fixedRotation": false,
+   "label": "lear",
+   "bodyType": "dynamic",
+   "dims": {
+    "width": 30,
+    "height": 90
+   },
+   "linearVelocity": [
+    -251.81430053711,
+    139.06384277344
+   ]
+  },
+  {
+   "position": [
+    1148.2612,
+    -221.4901
+   ],
+   "mirrorX": 1,
+   "mirrorY": 1,
+   "angularVelocity": -0.1578,
+   "id": "6emmO",
+   "shapeType": "shape8",
+   "mipoId": "P4re5",
+   "mipoPartName": "rhand",
+   "linearDamping": 0,
+   "angularDamping": 0,
+   "vertices": [
+    -1.8109324758384,
+    -76.964630223132,
+    -32.144051446132,
+    -64.740836011223,
+    -34.860450159889,
+    -21.278456591101,
+    -20.372990353182,
+    74.700964628334,
+    4.9800643085556,
+    82.397427650647,
+    32.144051446132,
+    73.795498390415,
+    30.333118970293,
+    -23.08938906694,
+    19.014790996303,
+    -65.193569130182
+   ],
+   "angle": -0.2197,
+   "sharedFixtureData": {
+    "density": 1,
+    "friction": 0.2,
+    "restitution": 0.3,
+    "sensor": false,
+    "groupIndex": -39,
+    "shapeType": "polygon"
+   },
+   "fixtures": [
+    {
+     "sensor": true,
+     "userData": {
+      "id": "MD93H",
+      "subtype": "texfixture",
+      "type": "sfixture",
+      "extra": {
+       "main": {
+        "pURL": "type1.png",
+        "fgURL": "feet7xr-mask.png",
+        "bgHex": "000000ff",
+        "bgURL": "feet7xr.png",
+        "pHex": "2712B2FF",
+        "fgHex": "05F41DFF",
+        "fx": -1,
+        "cached": {
+         "fgB": 0.11372549019608,
+         "fgA": 1,
+         "fgRGB": [
+          0.019607843137255,
+          0.95686274509804,
+          0.11372549019608
+         ],
+         "bgG": 0,
+         "pR": 0.15294117647059,
+         "pG": 0.070588235294118,
+         "pB": 0.69803921568627,
+         "bgR": 0,
+         "pRGB": [
+          0.15294117647059,
+          0.070588235294118,
+          0.69803921568627
+         ],
+         "bgB": 0,
+         "bgA": 1,
+         "bgRGB": [
+          0,
+          0,
+          0
+         ],
+         "pA": 1,
+         "fgR": 0.019607843137255,
+         "fgG": 0.95686274509804
+        }
+       },
+       "vertexCount": 4,
+       "zGroupOffset": 39,
+       "OMP": true,
+       "vertices": [
+        -53.7846945324,
+        -102.09131832539,
+        53.7846945324,
+        -102.09131832539,
+        53.7846945324,
+        102.09131832539,
+        -53.7846945324,
+        102.09131832539
+       ],
+       "dirty": true,
+       "zOffset": 500
+      },
+      "label": ""
+     },
+     "points": [
+      53.785,
+      -102.091,
+      53.785,
+      102.091,
+      -53.785,
+      102.091,
+      -53.785,
+      -102.091
+     ]
+    },
+    {
+     "points": [
+      33.502,
+      71.079,
+      6.338,
+      79.681,
+      -19.015,
+      71.985,
+      -33.502,
+      -23.995,
+      -30.786,
+      -67.457,
+      -0.453,
+      -79.681,
+      20.373,
+      -67.91,
+      31.691,
+      -25.806
+     ]
+    }
+   ],
+   "fixedRotation": false,
+   "label": "rhand",
+   "bodyType": "dynamic",
+   "dims": {
+    "width": 12,
+    "height": 12
+   },
+   "linearVelocity": [
+    -140.69958496094,
+    118.96772766113
+   ]
+  },
+  {
+   "position": [
+    924.3798,
+    -234.7587
+   ],
+   "mirrorX": 1,
+   "mirrorY": 1,
+   "angularVelocity": 1.2612,
+   "id": "2gw7ZX",
+   "shapeType": "shape8",
+   "mipoId": "P4re5",
+   "mipoPartName": "lhand",
+   "linearDamping": 0,
+   "angularDamping": 0,
+   "vertices": [
+    1.8109324758384,
+    -76.964630223132,
+    32.144051446132,
+    -64.740836011223,
+    34.860450159889,
+    -21.278456591101,
+    20.372990353182,
+    74.700964628334,
+    -4.9800643085556,
+    82.397427650647,
+    -32.144051446132,
+    73.795498390415,
+    -30.333118970293,
+    -23.08938906694,
+    -19.014790996303,
+    -65.193569130182
+   ],
+   "angle": 0.5154,
+   "sharedFixtureData": {
+    "density": 1,
+    "friction": 0.2,
+    "restitution": 0.3,
+    "sensor": false,
+    "groupIndex": -39,
+    "shapeType": "polygon"
+   },
+   "fixtures": [
+    {
+     "sensor": true,
+     "userData": {
+      "id": "3ylODF",
+      "subtype": "texfixture",
+      "type": "sfixture",
+      "extra": {
+       "main": {
+        "pURL": "type1.png",
+        "fgURL": "feet7xr-mask.png",
+        "bgHex": "000000ff",
+        "bgURL": "feet7xr.png",
+        "pHex": "2712B2FF",
+        "dir": -1,
+        "fgHex": "05F41DFF",
+        "cached": {
+         "fgB": 0.11372549019608,
+         "fgA": 1,
+         "fgRGB": [
+          0.019607843137255,
+          0.95686274509804,
+          0.11372549019608
+         ],
+         "bgG": 0,
+         "pR": 0.15294117647059,
+         "pG": 0.070588235294118,
+         "pB": 0.69803921568627,
+         "bgR": 0,
+         "pRGB": [
+          0.15294117647059,
+          0.070588235294118,
+          0.69803921568627
+         ],
+         "bgB": 0,
+         "bgA": 1,
+         "bgRGB": [
+          0,
+          0,
+          0
+         ],
+         "pA": 1,
+         "fgR": 0.019607843137255,
+         "fgG": 0.95686274509804
+        }
+       },
+       "vertexCount": 4,
+       "zGroupOffset": 39,
+       "OMP": true,
+       "vertices": [
+        -53.7846945324,
+        -102.09131832539,
+        53.7846945324,
+        -102.09131832539,
+        53.7846945324,
+        102.09131832539,
+        -53.7846945324,
+        102.09131832539
+       ],
+       "dirty": true,
+       "zOffset": 500
+      },
+      "label": ""
+     },
+     "points": [
+      53.785,
+      -102.091,
+      53.785,
+      102.091,
+      -53.785,
+      102.091,
+      -53.785,
+      -102.091
+     ]
+    },
+    {
+     "points": [
+      33.502,
+      -23.995,
+      19.015,
+      71.985,
+      -6.338,
+      79.681,
+      -33.502,
+      71.079,
+      -31.691,
+      -25.806,
+      -20.373,
+      -67.91,
+      0.453,
+      -79.681,
+      30.786,
+      -67.457
+     ]
+    }
+   ],
+   "fixedRotation": false,
+   "label": "lhand",
+   "bodyType": "dynamic",
+   "dims": {
+    "width": 12,
+    "height": 12
+   },
+   "linearVelocity": [
+    -101.90319061279,
+    131.78593444824
+   ]
+  },
+  {
+   "position": [
+    1123.4952,
+    -368.3503
+   ],
+   "mirrorX": 1,
+   "mirrorY": 1,
+   "angularVelocity": -0.4369,
+   "id": "1cBJDc",
+   "shapeType": "capsule",
+   "mipoId": "P4re5",
+   "mipoPartName": "rlarm",
+   "linearDamping": 0,
+   "angularDamping": 0,
+   "vertices": [
+    -6,
+    -62.40791693813,
+    4,
+    -72.40791693813,
+    -4,
+    -72.40791693813,
+    6,
+    -62.40791693813,
+    6,
+    62.40791693813,
+    -4,
+    72.40791693813,
+    4,
+    72.40791693813,
+    -6,
+    62.40791693813
+   ],
+   "angle": -0.0861,
+   "sharedFixtureData": {
+    "density": 2.5402,
+    "friction": 0.2,
+    "restitution": 0.3,
+    "sensor": false,
+    "groupIndex": -39,
+    "shapeType": "polygon"
+   },
+   "fixtures": [
+    {
+     "points": [
+      6,
+      -62.408,
+      6,
+      62.408,
+      4,
+      72.408,
+      -4,
+      72.408,
+      -6,
+      62.408,
+      -6,
+      -62.408,
+      -4,
+      -72.408,
+      4,
+      -72.408
+     ]
+    }
+   ],
+   "fixedRotation": false,
+   "label": "rlarm",
+   "bodyType": "dynamic",
+   "dims": {
+    "width": 12,
+    "height": 144.81583387626,
+    "height2": 0
+   },
+   "linearVelocity": [
+    -184.05012512207,
+    124.62059020996
+   ]
+  },
+  {
+   "position": [
+    976.4703,
+    -372.1396
+   ],
+   "mirrorX": 1,
+   "mirrorY": 1,
+   "angularVelocity": -0.5917,
+   "id": "2aBg14",
+   "shapeType": "capsule",
+   "mipoId": "P4re5",
+   "mipoPartName": "llarm",
+   "linearDamping": 0,
+   "angularDamping": 0,
+   "vertices": [
+    -6,
+    -62.40791693813,
+    4,
+    -72.40791693813,
+    -4,
+    -72.40791693813,
+    6,
+    -62.40791693813,
+    6,
+    62.40791693813,
+    -4,
+    72.40791693813,
+    4,
+    72.40791693813,
+    -6,
+    62.40791693813
+   ],
+   "angle": 0.1746,
+   "sharedFixtureData": {
+    "density": 2.5402,
+    "friction": 0.2,
+    "restitution": 0.3,
+    "sensor": false,
+    "groupIndex": -39,
+    "shapeType": "polygon"
+   },
+   "fixtures": [
+    {
+     "points": [
+      6,
+      -62.408,
+      6,
+      62.408,
+      4,
+      72.408,
+      -4,
+      72.408,
+      -6,
+      62.408,
+      -6,
+      -62.408,
+      -4,
+      -72.408,
+      4,
+      -72.408
+     ]
+    }
+   ],
+   "fixedRotation": false,
+   "label": "llarm",
+   "bodyType": "dynamic",
+   "dims": {
+    "width": 12,
+    "height": 144.81583387626,
+    "height2": 0
+   },
+   "linearVelocity": [
+    -60.252540588379,
+    174.14575195313
+   ]
+  },
+  {
+   "position": [
+    1112.6049,
+    -512.7351
+   ],
+   "mirrorX": 1,
+   "mirrorY": 1,
+   "angularVelocity": -0.2237,
+   "id": "4u1jP8",
+   "shapeType": "capsule",
+   "mipoId": "P4re5",
+   "mipoPartName": "ruarm",
+   "linearDamping": 0,
+   "angularDamping": 0,
+   "vertices": [
+    -6,
+    -62.40791693813,
+    4,
+    -72.40791693813,
+    -4,
+    -72.40791693813,
+    6,
+    -62.40791693813,
+    6,
+    62.40791693813,
+    -4,
+    72.40791693813,
+    4,
+    72.40791693813,
+    -6,
+    62.40791693813
+   ],
+   "angle": -0.0644,
+   "sharedFixtureData": {
+    "density": 2.5402,
+    "friction": 0.2,
+    "restitution": 0.3,
+    "sensor": false,
+    "groupIndex": -39,
+    "shapeType": "polygon"
+   },
+   "fixtures": [
+    {
+     "sensor": true,
+     "userData": {
+      "id": "2xy8v3",
+      "subtype": "connected-texture",
+      "type": "sfixture",
+      "extra": {
+       "attachTo": "ruarm",
+       "main": {
+        "dir": 1,
+        "fgURL": "leg5-mask.png",
+        "bgHex": "020202ff",
+        "fgHex": "C1E233FF",
+        "cached": {
+         "fgB": 0.2,
+         "fgA": 1,
+         "fgRGB": [
+          0.75686274509804,
+          0.88627450980392,
+          0.2
+         ],
+         "bgG": 0.007843137254902,
+         "pR": 0.31764705882353,
+         "pG": 0.48235294117647,
+         "pB": 0.69411764705882,
+         "bgR": 0.007843137254902,
+         "pRGB": [
+          0.31764705882353,
+          0.48235294117647,
+          0.69411764705882
+         ],
+         "bgB": 0.007843137254902,
+         "bgA": 1,
+         "bgRGB": [
+          0.007843137254902,
+          0.007843137254902,
+          0.007843137254902
+         ],
+         "pA": 1,
+         "fgR": 0.75686274509804,
+         "fgG": 0.88627450980392
+        },
+        "pURL": "type5.png",
+        "wmul": 0.37220673695611,
+        "pHex": "517BB1FF",
+        "bgURL": "leg5.png"
+       },
+       "OMP": true,
+       "nodes": [
+        {
+         "id": "4k6CTt",
+         "type": "joint"
+        },
+        {
+         "id": "1wI57",
+         "type": "joint"
+        },
+        {
+         "id": "zWADH",
+         "type": "joint"
+        }
+       ],
+       "zGroupOffset": 39,
+       "growExtra": 6,
+       "dirty": true,
+       "zOffset": 402
+      },
+      "label": ""
+     },
+     "points": [
+      4.5,
+      -4.5,
+      4.5,
+      4.5,
+      -4.5,
+      4.5,
+      -4.5,
+      -4.5
+     ]
+    },
+    {
+     "sensor": true,
+     "userData": {
+      "id": "18dKjR",
+      "subtype": "connected-texture",
+      "type": "sfixture",
+      "extra": {
+       "attachTo": "ruarm",
+       "main": {
+        "dir": 1,
+        "fgURL": "",
+        "bgHex": "E60871FF",
+        "fgHex": "",
+        "cached": {
+         "fgB": 1,
+         "fgA": 1,
+         "fgRGB": [
+          1,
+          1,
+          1
+         ],
+         "bgG": 0.031372549019608,
+         "pR": 1,
+         "pG": 1,
+         "pB": 0,
+         "bgR": 0.90196078431373,
+         "pRGB": [
+          1,
+          1,
+          0
+         ],
+         "bgB": 0.44313725490196,
+         "bgA": 1,
+         "bgRGB": [
+          0.90196078431373,
+          0.031372549019608,
+          0.44313725490196
+         ],
+         "pA": 1,
+         "fgR": 1,
+         "fgG": 1
+        },
+        "pURL": "type2t.png",
+        "wmul": 0.3,
+        "pHex": "ffff00ff",
+        "bgURL": "hair4.png"
+       },
+       "OMP": true,
+       "nodes": [
+        {
+         "id": "4k6CTt",
+         "type": "joint"
+        },
+        {
+         "id": "1wI57",
+         "type": "joint"
+        },
+        {
+         "id": "zWADH",
+         "type": "joint"
+        }
+       ],
+       "zGroupOffset": 39,
+       "growExtra": 6,
+       "dirty": true,
+       "zOffset": 403
+      },
+      "label": ""
+     },
+     "points": [
+      4.5,
+      -4.5,
+      4.5,
+      4.5,
+      -4.5,
+      4.5,
+      -4.5,
+      -4.5
+     ]
+    },
+    {
+     "points": [
+      6,
+      -62.408,
+      6,
+      62.408,
+      4,
+      72.408,
+      -4,
+      72.408,
+      -6,
+      62.408,
+      -6,
+      -62.408,
+      -4,
+      -72.408,
+      4,
+      -72.408
+     ]
+    }
+   ],
+   "fixedRotation": false,
+   "label": "ruarm",
+   "bodyType": "dynamic",
+   "dims": {
+    "width": 12,
+    "height": 144.81583387626,
+    "height2": 0
+   },
+   "linearVelocity": [
+    -231.76773071289,
+    128.62568664551
+   ]
+  },
+  {
+   "position": [
+    993.1661,
+    -515.7452
+   ],
+   "mirrorX": 1,
+   "mirrorY": 1,
+   "angularVelocity": -1.0127,
+   "id": "2Rv8cB",
+   "shapeType": "capsule",
+   "mipoId": "P4re5",
+   "mipoPartName": "luarm",
+   "linearDamping": 0,
+   "angularDamping": 0,
+   "vertices": [
+    -6,
+    -62.40791693813,
+    4,
+    -72.40791693813,
+    -4,
+    -72.40791693813,
+    6,
+    -62.40791693813,
+    6,
+    62.40791693813,
+    -4,
+    72.40791693813,
+    4,
+    72.40791693813,
+    -6,
+    62.40791693813
+   ],
+   "angle": 0.0569,
+   "sharedFixtureData": {
+    "density": 2.5402,
+    "friction": 0.2,
+    "restitution": 0.3,
+    "sensor": false,
+    "groupIndex": -39,
+    "shapeType": "polygon"
+   },
+   "fixtures": [
+    {
+     "sensor": true,
+     "userData": {
+      "id": "KC0x3",
+      "subtype": "connected-texture",
+      "type": "sfixture",
+      "extra": {
+       "attachTo": "luarm",
+       "main": {
+        "dir": -1,
+        "fgURL": "leg5-mask.png",
+        "bgHex": "020202ff",
+        "fgHex": "C1E233FF",
+        "cached": {
+         "fgB": 0.2,
+         "fgA": 1,
+         "fgRGB": [
+          0.75686274509804,
+          0.88627450980392,
+          0.2
+         ],
+         "bgG": 0.007843137254902,
+         "pR": 0.31764705882353,
+         "pG": 0.48235294117647,
+         "pB": 0.69411764705882,
+         "bgR": 0.007843137254902,
+         "pRGB": [
+          0.31764705882353,
+          0.48235294117647,
+          0.69411764705882
+         ],
+         "bgB": 0.007843137254902,
+         "bgA": 1,
+         "bgRGB": [
+          0.007843137254902,
+          0.007843137254902,
+          0.007843137254902
+         ],
+         "pA": 1,
+         "fgR": 0.75686274509804,
+         "fgG": 0.88627450980392
+        },
+        "pURL": "type5.png",
+        "wmul": 0.37220673695611,
+        "pHex": "517BB1FF",
+        "bgURL": "leg5.png"
+       },
+       "OMP": true,
+       "nodes": [
+        {
+         "id": "3IgGtz",
+         "type": "joint"
+        },
+        {
+         "id": "1GmDfz",
+         "type": "joint"
+        },
+        {
+         "id": "33tbD0",
+         "type": "joint"
+        }
+       ],
+       "zGroupOffset": 39,
+       "growExtra": 6,
+       "dirty": true,
+       "zOffset": 402
+      },
+      "label": ""
+     },
+     "points": [
+      4.5,
+      -4.5,
+      4.5,
+      4.5,
+      -4.5,
+      4.5,
+      -4.5,
+      -4.5
+     ]
+    },
+    {
+     "sensor": true,
+     "userData": {
+      "id": "unBGR",
+      "subtype": "connected-texture",
+      "type": "sfixture",
+      "extra": {
+       "attachTo": "luarm",
+       "main": {
+        "dir": -1,
+        "fgURL": "",
+        "bgHex": "E60871FF",
+        "fgHex": "",
+        "cached": {
+         "fgB": 1,
+         "fgA": 1,
+         "fgRGB": [
+          1,
+          1,
+          1
+         ],
+         "bgG": 0.031372549019608,
+         "pR": 1,
+         "pG": 1,
+         "pB": 0,
+         "bgR": 0.90196078431373,
+         "pRGB": [
+          1,
+          1,
+          0
+         ],
+         "bgB": 0.44313725490196,
+         "bgA": 1,
+         "bgRGB": [
+          0.90196078431373,
+          0.031372549019608,
+          0.44313725490196
+         ],
+         "pA": 1,
+         "fgR": 1,
+         "fgG": 1
+        },
+        "pURL": "type2t.png",
+        "wmul": 0.3,
+        "pHex": "ffff00ff",
+        "bgURL": "hair4.png"
+       },
+       "OMP": true,
+       "nodes": [
+        {
+         "id": "3IgGtz",
+         "type": "joint"
+        },
+        {
+         "id": "1GmDfz",
+         "type": "joint"
+        },
+        {
+         "id": "33tbD0",
+         "type": "joint"
+        }
+       ],
+       "zGroupOffset": 39,
+       "growExtra": 6,
+       "dirty": true,
+       "zOffset": 403
+      },
+      "label": ""
+     },
+     "points": [
+      4.5,
+      -4.5,
+      4.5,
+      4.5,
+      -4.5,
+      4.5,
+      -4.5,
+      -4.5
+     ]
+    },
+    {
+     "points": [
+      6,
+      -62.408,
+      6,
+      62.408,
+      4,
+      72.408,
+      -4,
+      72.408,
+      -6,
+      62.408,
+      -6,
+      -62.408,
+      -4,
+      -72.408,
+      4,
+      -72.408
+     ]
+    }
+   ],
+   "fixedRotation": false,
+   "label": "luarm",
+   "bodyType": "dynamic",
+   "dims": {
+    "width": 12,
+    "height": 144.81583387626,
+    "height2": 0
+   },
+   "linearVelocity": [
+    -175.55902099609,
+    161.29878234863
+   ]
+  },
+  {
+   "position": [
+    1277.1329,
+    -75.7641
+   ],
+   "mirrorX": 1,
+   "mirrorY": 1,
+   "angularVelocity": -1.3842,
+   "id": "2JKoFy",
+   "shapeType": "shape8",
+   "mipoId": "P4re5",
+   "mipoPartName": "rfoot",
+   "linearDamping": 0,
+   "angularDamping": 0,
+   "vertices": [
+    -1.7834921039003,
+    -75.798414415762,
+    -31.65698484423,
+    -63.759842714435,
+    -34.33222300008,
+    -20.956032220828,
+    -20.064286168878,
+    73.569049285887,
+    4.9046032857258,
+    81.148890727463,
+    31.65698484423,
+    72.677303233936,
+    29.87349274033,
+    -22.739524324729,
+    18.726667090953,
+    -64.20571574041
+   ],
+   "angle": -2.5427,
+   "sharedFixtureData": {
+    "density": 1,
+    "friction": 1,
+    "restitution": 0,
+    "sensor": false,
+    "groupIndex": -39,
+    "shapeType": "polygon"
+   },
+   "fixtures": [
+    {
+     "sensor": true,
+     "userData": {
+      "id": "32cSw9",
+      "subtype": "texfixture",
+      "type": "sfixture",
+      "extra": {
+       "main": {
+        "dir": 1,
+        "fgURL": "feet7xr-mask.png",
+        "bgHex": "000000ff",
+        "pHex": "6E19DFFF",
+        "cached": {
+         "fgB": 0.73333333333333,
+         "fgA": 1,
+         "fgRGB": [
+          0.63921568627451,
+          0.96862745098039,
+          0.73333333333333
+         ],
+         "bgG": 0,
+         "pR": 0.43137254901961,
+         "pG": 0.098039215686275,
+         "pB": 0.87450980392157,
+         "bgR": 0,
+         "pRGB": [
+          0.43137254901961,
+          0.098039215686275,
+          0.87450980392157
+         ],
+         "bgB": 0,
+         "bgA": 1,
+         "bgRGB": [
+          0,
+          0,
+          0
+         ],
+         "pA": 1,
+         "fgR": 0.63921568627451,
+         "fgG": 0.96862745098039
+        },
+        "pURL": "type8.png",
+        "fx": -1,
+        "fgHex": "A3F7BBFF",
+        "bgURL": "feet7xr.png"
+       },
+       "vertexCount": 4,
+       "zGroupOffset": 39,
+       "OMP": true,
+       "vertices": [
+        -52.969715485838,
+        -100.54436735738,
+        52.969715485838,
+        -100.54436735738,
+        52.969715485838,
+        100.54436735738,
+        -52.969715485838,
+        100.54436735738
+       ],
+       "dirty": true,
+       "zOffset": 399
+      },
+      "label": ""
+     },
+     "points": [
+      52.97,
+      -100.544,
+      52.97,
+      100.544,
+      -52.97,
+      100.544,
+      -52.97,
+      -100.544
+     ]
+    },
+    {
+     "points": [
+      32.995,
+      70.002,
+      6.242,
+      78.474,
+      -18.727,
+      70.894,
+      -32.995,
+      -23.631,
+      -30.319,
+      -66.435,
+      -0.446,
+      -78.474,
+      20.064,
+      -66.881,
+      31.211,
+      -25.415
+     ]
+    }
+   ],
+   "fixedRotation": false,
+   "label": "rfoot",
+   "bodyType": "dynamic",
+   "dims": {
+    "width": 24,
+    "height": 45
+   },
+   "linearVelocity": [
+    -103.06365203857,
+    -17.65299987793
+   ]
+  },
+  {
+   "position": [
+    883.3022,
+    -34.2405
+   ],
+   "mirrorX": 1,
+   "mirrorY": 1,
+   "angularVelocity": -2.5343,
+   "id": "2em10M",
+   "shapeType": "shape8",
+   "mipoId": "P4re5",
+   "mipoPartName": "lfoot",
+   "linearDamping": 0,
+   "angularDamping": 0,
+   "vertices": [
+    1.7834921039003,
+    -75.798414415762,
+    31.65698484423,
+    -63.759842714435,
+    34.33222300008,
+    -20.956032220828,
+    20.064286168878,
+    73.569049285887,
+    -4.9046032857258,
+    81.148890727463,
+    -31.65698484423,
+    72.677303233936,
+    -29.87349274033,
+    -22.739524324729,
+    -18.726667090953,
+    -64.20571574041
+   ],
+   "angle": 1.4685,
+   "sharedFixtureData": {
+    "density": 1,
+    "friction": 1,
+    "restitution": 0,
+    "sensor": false,
+    "groupIndex": -39,
+    "shapeType": "polygon"
+   },
+   "fixtures": [
+    {
+     "sensor": true,
+     "userData": {
+      "id": "48wSNA",
+      "subtype": "texfixture",
+      "type": "sfixture",
+      "extra": {
+       "main": {
+        "pURL": "type8.png",
+        "fgURL": "feet7xr-mask.png",
+        "bgHex": "000000ff",
+        "bgURL": "feet7xr.png",
+        "pHex": "6E19DFFF",
+        "dir": -1,
+        "fgHex": "A3F7BBFF",
+        "cached": {
+         "fgB": 0.73333333333333,
+         "fgA": 1,
+         "fgRGB": [
+          0.63921568627451,
+          0.96862745098039,
+          0.73333333333333
+         ],
+         "bgG": 0,
+         "pR": 0.43137254901961,
+         "pG": 0.098039215686275,
+         "pB": 0.87450980392157,
+         "bgR": 0,
+         "pRGB": [
+          0.43137254901961,
+          0.098039215686275,
+          0.87450980392157
+         ],
+         "bgB": 0,
+         "bgA": 1,
+         "bgRGB": [
+          0,
+          0,
+          0
+         ],
+         "pA": 1,
+         "fgR": 0.63921568627451,
+         "fgG": 0.96862745098039
+        }
+       },
+       "vertexCount": 4,
+       "zGroupOffset": 39,
+       "OMP": true,
+       "vertices": [
+        -52.969715485838,
+        -100.54436735738,
+        52.969715485838,
+        -100.54436735738,
+        52.969715485838,
+        100.54436735738,
+        -52.969715485838,
+        100.54436735738
+       ],
+       "dirty": true,
+       "zOffset": 399
+      },
+      "label": ""
+     },
+     "points": [
+      52.97,
+      -100.544,
+      52.97,
+      100.544,
+      -52.97,
+      100.544,
+      -52.97,
+      -100.544
+     ]
+    },
+    {
+     "points": [
+      32.995,
+      -23.631,
+      18.727,
+      70.894,
+      -6.242,
+      78.474,
+      -32.995,
+      70.002,
+      -31.211,
+      -25.415,
+      -20.064,
+      -66.881,
+      0.446,
+      -78.474,
+      30.319,
+      -66.435
+     ]
+    }
+   ],
+   "fixedRotation": false,
+   "label": "lfoot",
+   "bodyType": "dynamic",
+   "dims": {
+    "width": 24,
+    "height": 45
+   },
+   "linearVelocity": [
+    -86.724700927734,
+    66.951034545898
+   ]
+  },
+  {
+   "position": [
+    1210.8187,
+    -52.5823
+   ],
+   "mirrorX": 1,
+   "mirrorY": 1,
+   "angularVelocity": 21.2132,
+   "id": "4Ej4QS",
+   "shapeType": "capsule",
+   "mipoId": "P4re5",
+   "mipoPartName": "rlleg",
+   "linearDamping": 0,
+   "angularDamping": 0,
+   "vertices": [
+    -12,
+    -27.563931029916,
+    8,
+    -47.563931029916,
+    -8,
+    -47.563931029916,
+    12,
+    -27.563931029916,
+    12,
+    27.563931029916,
+    -8,
+    47.563931029916,
+    8,
+    47.563931029916,
+    -12,
+    27.563931029916
+   ],
+   "angle": -0.5548,
+   "sharedFixtureData": {
+    "density": 1,
+    "friction": 0.2,
+    "restitution": 0.3,
+    "sensor": false,
+    "groupIndex": -39,
+    "shapeType": "polygon"
+   },
+   "fixtures": [
+    {
+     "points": [
+      12,
+      -27.564,
+      12,
+      27.564,
+      8,
+      47.564,
+      -8,
+      47.564,
+      -12,
+      27.564,
+      -12,
+      -27.564,
+      -8,
+      -47.564,
+      8,
+      -47.564
+     ]
+    }
+   ],
+   "fixedRotation": false,
+   "label": "rlleg",
+   "bodyType": "dynamic",
+   "dims": {
+    "width": 24,
+    "height": 95.127862059831,
+    "height2": 0
+   },
+   "behaviors": [
+    {
+     "angle": 0,
+     "name": "KEEP_ANGLE",
+     "kp": 40
+    }
+   ],
+   "linearVelocity": [
+    -72.294700622559,
+    71.58177947998
+   ]
+  },
+  {
+   "position": [
+    935.4611,
+    -81.6057
+   ],
+   "mirrorX": 1,
+   "mirrorY": 1,
+   "angularVelocity": 21.2132,
+   "id": "4zmolZ",
+   "shapeType": "capsule",
+   "mipoId": "P4re5",
+   "mipoPartName": "llleg",
+   "linearDamping": 0,
+   "angularDamping": 0,
+   "vertices": [
+    -12,
+    -27.563931029916,
+    8,
+    -47.563931029916,
+    -8,
+    -47.563931029916,
+    12,
+    -27.563931029916,
+    12,
+    27.563931029916,
+    -8,
+    47.563931029916,
+    8,
+    47.563931029916,
+    -12,
+    27.563931029916
+   ],
+   "angle": -0.515,
+   "sharedFixtureData": {
+    "density": 1,
+    "friction": 0.2,
+    "restitution": 0.3,
+    "sensor": false,
+    "groupIndex": -39,
+    "shapeType": "polygon"
+   },
+   "fixtures": [
+    {
+     "points": [
+      12,
+      -27.564,
+      12,
+      27.564,
+      8,
+      47.564,
+      -8,
+      47.564,
+      -12,
+      27.564,
+      -12,
+      -27.564,
+      -8,
+      -47.564,
+      8,
+      -47.564
+     ]
+    }
+   ],
+   "fixedRotation": false,
+   "label": "llleg",
+   "bodyType": "dynamic",
+   "dims": {
+    "width": 24,
+    "height": 95.127862059831,
+    "height2": 0
+   },
+   "behaviors": [
+    {
+     "angle": 0,
+     "name": "KEEP_ANGLE",
+     "kp": 40
+    }
+   ],
+   "linearVelocity": [
+    -200.08583068848,
+    -70.302703857422
+   ]
+  },
+  {
+   "position": [
+    1161.2665,
+    -134.0052
+   ],
+   "mirrorX": 1,
+   "mirrorY": 1,
+   "angularVelocity": 21.2132,
+   "id": "1w3HK6",
+   "shapeType": "capsule",
+   "mipoId": "P4re5",
+   "mipoPartName": "ruleg",
+   "linearDamping": 0,
+   "angularDamping": 0,
+   "vertices": [
+    -12,
+    -27.563931029916,
+    8,
+    -47.563931029916,
+    -8,
+    -47.563931029916,
+    12,
+    -27.563931029916,
+    12,
+    27.563931029916,
+    -8,
+    47.563931029916,
+    8,
+    47.563931029916,
+    -12,
+    27.563931029916
+   ],
+   "angle": -0.5388,
+   "sharedFixtureData": {
+    "density": 1,
+    "friction": 0.2,
+    "restitution": 0.3,
+    "sensor": false,
+    "groupIndex": -39,
+    "shapeType": "polygon"
+   },
+   "fixtures": [
+    {
+     "sensor": true,
+     "userData": {
+      "id": "lR0Dh",
+      "subtype": "connected-texture",
+      "type": "sfixture",
+      "extra": {
+       "attachTo": "ruleg",
+       "main": {
+        "dir": 1,
+        "fgURL": "leg5-mask.png",
+        "bgHex": "020202ff",
+        "fgHex": "EF46C8FF",
+        "cached": {
+         "fgB": 0.7843137254902,
+         "fgA": 1,
+         "fgRGB": [
+          0.93725490196078,
+          0.27450980392157,
+          0.7843137254902
+         ],
+         "bgG": 0.007843137254902,
+         "pR": 0.070588235294118,
+         "pG": 0.49019607843137,
+         "pB": 0.050980392156863,
+         "bgR": 0.007843137254902,
+         "pRGB": [
+          0.070588235294118,
+          0.49019607843137,
+          0.050980392156863
+         ],
+         "bgB": 0.007843137254902,
+         "bgA": 1,
+         "bgRGB": [
+          0.007843137254902,
+          0.007843137254902,
+          0.007843137254902
+         ],
+         "pA": 1,
+         "fgR": 0.93725490196078,
+         "fgG": 0.27450980392157
+        },
+        "pURL": "type5.png",
+        "wmul": 0.29728586997406,
+        "pHex": "127D0DFF",
+        "bgURL": "leg5.png"
+       },
+       "OMP": true,
+       "nodes": [
+        {
+         "id": "1vTG7e",
+         "type": "joint"
+        },
+        {
+         "id": "452q0Q",
+         "type": "joint"
+        },
+        {
+         "id": "3JfZ2w",
+         "type": "joint"
+        }
+       ],
+       "zGroupOffset": 39,
+       "growExtra": 6,
+       "dirty": true,
+       "zOffset": 300
+      },
+      "label": ""
+     },
+     "points": [
+      4.5,
+      -4.5,
+      4.5,
+      4.5,
+      -4.5,
+      4.5,
+      -4.5,
+      -4.5
+     ]
+    },
+    {
+     "sensor": true,
+     "userData": {
+      "id": "sNelB",
+      "subtype": "connected-texture",
+      "type": "sfixture",
+      "extra": {
+       "attachTo": "ruleg",
+       "main": {
+        "dir": 1,
+        "fgURL": "",
+        "bgHex": "E60871FF",
+        "fgHex": "",
+        "cached": {
+         "fgB": 1,
+         "fgA": 1,
+         "fgRGB": [
+          1,
+          1,
+          1
+         ],
+         "bgG": 0.031372549019608,
+         "pR": 1,
+         "pG": 1,
+         "pB": 0,
+         "bgR": 0.90196078431373,
+         "pRGB": [
+          1,
+          1,
+          0
+         ],
+         "bgB": 0.44313725490196,
+         "bgA": 1,
+         "bgRGB": [
+          0.90196078431373,
+          0.031372549019608,
+          0.44313725490196
+         ],
+         "pA": 1,
+         "fgR": 1,
+         "fgG": 1
+        },
+        "pURL": "type2t.png",
+        "wmul": 0.3,
+        "pHex": "ffff00ff",
+        "bgURL": "hair1.png"
+       },
+       "OMP": true,
+       "nodes": [
+        {
+         "id": "1vTG7e",
+         "type": "joint"
+        },
+        {
+         "id": "452q0Q",
+         "type": "joint"
+        },
+        {
+         "id": "3JfZ2w",
+         "type": "joint"
+        }
+       ],
+       "zGroupOffset": 39,
+       "growExtra": 6,
+       "dirty": true,
+       "zOffset": 301
+      },
+      "label": ""
+     },
+     "points": [
+      4.5,
+      -4.5,
+      4.5,
+      4.5,
+      -4.5,
+      4.5,
+      -4.5,
+      -4.5
+     ]
+    },
+    {
+     "points": [
+      12,
+      -27.564,
+      12,
+      27.564,
+      8,
+      47.564,
+      -8,
+      47.564,
+      -12,
+      27.564,
+      -12,
+      -27.564,
+      -8,
+      -47.564,
+      8,
+      -47.564
+     ]
+    }
+   ],
+   "fixedRotation": false,
+   "label": "ruleg",
+   "bodyType": "dynamic",
+   "dims": {
+    "width": 24,
+    "height": 95.127862059831,
+    "height2": 0
+   },
+   "behaviors": [
+    {
+     "angle": 0,
+     "name": "KEEP_ANGLE",
+     "kp": 40
+    }
+   ],
+   "linearVelocity": [
+    -144.48831176758,
+    114.94270324707
+   ]
+  },
+  {
+   "position": [
+    952.4008,
+    -148.2232
+   ],
+   "mirrorX": 1,
+   "mirrorY": 1,
+   "angularVelocity": -21.2132,
+   "id": "2l9sPm",
+   "shapeType": "capsule",
+   "mipoId": "P4re5",
+   "mipoPartName": "luleg",
+   "linearDamping": 0,
+   "angularDamping": 0,
+   "vertices": [
+    -12,
+    -27.563931029916,
+    8,
+    -47.563931029916,
+    -8,
+    -47.563931029916,
+    12,
+    -27.563931029916,
+    12,
+    27.563931029916,
+    -8,
+    47.563931029916,
+    8,
+    47.563931029916,
+    -12,
+    27.563931029916
+   ],
+   "angle": 1.0126,
+   "sharedFixtureData": {
+    "density": 1,
+    "friction": 0.2,
+    "restitution": 0.3,
+    "sensor": false,
+    "groupIndex": -39,
+    "shapeType": "polygon"
+   },
+   "fixtures": [
+    {
+     "sensor": true,
+     "userData": {
+      "id": "4A1adZ",
+      "subtype": "connected-texture",
+      "type": "sfixture",
+      "extra": {
+       "attachTo": "luleg",
+       "main": {
+        "dir": -1,
+        "fgURL": "leg5-mask.png",
+        "bgHex": "020202ff",
+        "fgHex": "EF46C8FF",
+        "cached": {
+         "fgB": 0.7843137254902,
+         "fgA": 1,
+         "fgRGB": [
+          0.93725490196078,
+          0.27450980392157,
+          0.7843137254902
+         ],
+         "bgG": 0.007843137254902,
+         "pR": 0.070588235294118,
+         "pG": 0.49019607843137,
+         "pB": 0.050980392156863,
+         "bgR": 0.007843137254902,
+         "pRGB": [
+          0.070588235294118,
+          0.49019607843137,
+          0.050980392156863
+         ],
+         "bgB": 0.007843137254902,
+         "bgA": 1,
+         "bgRGB": [
+          0.007843137254902,
+          0.007843137254902,
+          0.007843137254902
+         ],
+         "pA": 1,
+         "fgR": 0.93725490196078,
+         "fgG": 0.27450980392157
+        },
+        "pURL": "type5.png",
+        "wmul": 0.29728586997406,
+        "pHex": "127D0DFF",
+        "bgURL": "leg5.png"
+       },
+       "OMP": true,
+       "nodes": [
+        {
+         "id": "xNT1d",
+         "type": "joint"
+        },
+        {
+         "id": "3GTacz",
+         "type": "joint"
+        },
+        {
+         "id": "3avDCC",
+         "type": "joint"
+        }
+       ],
+       "zGroupOffset": 39,
+       "growExtra": 6,
+       "dirty": true,
+       "zOffset": 300
+      },
+      "label": ""
+     },
+     "points": [
+      4.5,
+      -4.5,
+      4.5,
+      4.5,
+      -4.5,
+      4.5,
+      -4.5,
+      -4.5
+     ]
+    },
+    {
+     "sensor": true,
+     "userData": {
+      "id": "1qN3oR",
+      "subtype": "connected-texture",
+      "type": "sfixture",
+      "extra": {
+       "attachTo": "luleg",
+       "main": {
+        "dir": -1,
+        "fgURL": "",
+        "bgHex": "E60871FF",
+        "fgHex": "",
+        "cached": {
+         "fgB": 1,
+         "fgA": 1,
+         "fgRGB": [
+          1,
+          1,
+          1
+         ],
+         "bgG": 0.031372549019608,
+         "pR": 1,
+         "pG": 1,
+         "pB": 0,
+         "bgR": 0.90196078431373,
+         "pRGB": [
+          1,
+          1,
+          0
+         ],
+         "bgB": 0.44313725490196,
+         "bgA": 1,
+         "bgRGB": [
+          0.90196078431373,
+          0.031372549019608,
+          0.44313725490196
+         ],
+         "pA": 1,
+         "fgR": 1,
+         "fgG": 1
+        },
+        "pURL": "type2t.png",
+        "wmul": 0.3,
+        "pHex": "ffff00ff",
+        "bgURL": "hair1.png"
+       },
+       "OMP": true,
+       "nodes": [
+        {
+         "id": "xNT1d",
+         "type": "joint"
+        },
+        {
+         "id": "3GTacz",
+         "type": "joint"
+        },
+        {
+         "id": "3avDCC",
+         "type": "joint"
+        }
+       ],
+       "zGroupOffset": 39,
+       "growExtra": 6,
+       "dirty": true,
+       "zOffset": 301
+      },
+      "label": ""
+     },
+     "points": [
+      4.5,
+      -4.5,
+      4.5,
+      4.5,
+      -4.5,
+      4.5,
+      -4.5,
+      -4.5
+     ]
+    },
+    {
+     "points": [
+      12,
+      -27.564,
+      12,
+      27.564,
+      8,
+      47.564,
+      -8,
+      47.564,
+      -12,
+      27.564,
+      -12,
+      -27.564,
+      -8,
+      -47.564,
+      8,
+      -47.564
+     ]
+    }
+   ],
+   "fixedRotation": false,
+   "label": "luleg",
+   "bodyType": "dynamic",
+   "dims": {
+    "width": 24,
+    "height": 95.127862059831,
+    "height2": 0
+   },
+   "behaviors": [
+    {
+     "angle": 0,
+     "name": "KEEP_ANGLE",
+     "kp": 40
+    }
+   ],
+   "linearVelocity": [
+    -234.81382751465,
+    65.157356262207
+   ]
+  },
+  {
+   "position": [
+    1037.386,
+    -656.6838
+   ],
+   "mirrorX": 1,
+   "mirrorY": 1,
+   "angularVelocity": -0.1826,
+   "id": "hJmen",
+   "shapeType": "shape8",
+   "mipoId": "P4re5",
+   "mipoPartName": "head",
+   "linearDamping": 0,
+   "angularDamping": 0,
+   "vertices": [
+    6.3459110334927,
+    48.15426607768,
+    77.644087939205,
+    28.369955208556,
+    92.948932196452,
+    -4.1061777275541,
+    71.298176905712,
+    -40.688488391218,
+    3.3595999589079,
+    -53.00702157388,
+    -85.109865625667,
+    -38.448755085279,
+    -92.202354427806,
+    0.3732888843231,
+    -65.325554756543,
+    33.969288473402
+   ],
+   "angle": -0.2184,
+   "sharedFixtureData": {
+    "density": 1,
+    "friction": 0.2,
+    "restitution": 0.3,
+    "sensor": false,
+    "groupIndex": -39,
+    "shapeType": "polygon"
+   },
+   "fixtures": [
+    {
+     "sensor": true,
+     "userData": {
+      "id": "RBf9o",
+      "subtype": "trace-vertices",
+      "type": "sfixture",
+      "extra": {
+       "width": 72.595586482641,
+       "main": {
+        "pURL": "type2t.png",
+        "fgURL": "",
+        "bgHex": "E60871FF",
+        "pHex": "0D3825FF",
+        "bgURL": "hair2.png",
+        "fgHex": "BF1A2DFF",
+        "cached": {
+         "fgB": 0.17647058823529,
+         "fgA": 1,
+         "fgRGB": [
+          0.74901960784314,
+          0.10196078431373,
+          0.17647058823529
+         ],
+         "bgG": 0.031372549019608,
+         "pR": 0.050980392156863,
+         "pG": 0.21960784313725,
+         "pB": 0.14509803921569,
+         "bgR": 0.90196078431373,
+         "pRGB": [
+          0.050980392156863,
+          0.21960784313725,
+          0.14509803921569
+         ],
+         "bgB": 0.44313725490196,
+         "bgA": 1,
+         "bgRGB": [
+          0.90196078431373,
+          0.031372549019608,
+          0.44313725490196
+         ],
+         "pA": 1,
+         "fgR": 0.74901960784314,
+         "fgG": 0.10196078431373
+        }
+       },
+       "startIndex": 10,
+       "endIndex": 7,
+       "zGroupOffset": 39,
+       "OMP": false,
+       "dirty": true,
+       "zOffset": 220
+      },
+      "label": ""
+     },
+     "points": [
+      15,
+      -15,
+      15,
+      15,
+      -15,
+      15,
+      -15,
+      -15
+     ]
+    },
+    {
+     "sensor": true,
+     "userData": {
+      "id": "1bHIwo",
+      "subtype": "texfixture",
+      "type": "sfixture",
+      "extra": {
+       "vertexCount": 4,
+       "zGroupOffset": 39,
+       "vertices": [
+        -114.56235859876,
+        -66.314770299999,
+        114.56235859876,
+        -66.314770299999,
+        114.56235859876,
+        66.314770299999,
+        -114.56235859876,
+        66.314770299999
+       ],
+       "patch2": {
+        "bgURL": "",
+        "fgURL": "",
+        "bgHex": "020202ff",
+        "fgHex": "D6020DFF",
+        "cached": {
+         "fgB": 0.050980392156863,
+         "fgA": 1,
+         "fgRGB": [
+          0.83921568627451,
+          0.007843137254902,
+          0.050980392156863
+         ],
+         "pRGB": [
+          0.76862745098039,
+          0.40392156862745,
+          0.96078431372549
+         ],
+         "pR": 0.76862745098039,
+         "pG": 0.40392156862745,
+         "pB": 0.96078431372549,
+         "pA": 1,
+         "bgG": 0.007843137254902,
+         "bgB": 0.007843137254902,
+         "bgA": 1,
+         "bgRGB": [
+          0.007843137254902,
+          0.007843137254902,
+          0.007843137254902
+         ],
+         "bgR": 0.007843137254902,
+         "fgR": 0.83921568627451,
+         "fgG": 0.007843137254902
+        },
+        "pURL": "type2t.png",
+        "pHex": "C467F5FF",
+        "tx": 0.33,
+        "ty": 0
+       },
+       "patch3": {
+        "bgURL": "",
+        "fgURL": "",
+        "bgHex": "020202ff",
+        "pHex": "45E2F4FF",
+        "cached": {
+         "fgB": 0.29411764705882,
+         "fgA": 1,
+         "fgRGB": [
+          0.98823529411765,
+          0.3843137254902,
+          0.29411764705882
+         ],
+         "pRGB": [
+          0.27058823529412,
+          0.88627450980392,
+          0.95686274509804
+         ],
+         "pR": 0.27058823529412,
+         "pG": 0.88627450980392,
+         "pB": 0.95686274509804,
+         "pA": 1,
+         "bgG": 0.007843137254902,
+         "bgB": 0.007843137254902,
+         "bgA": 1,
+         "bgRGB": [
+          0.007843137254902,
+          0.007843137254902,
+          0.007843137254902
+         ],
+         "bgR": 0.007843137254902,
+         "fgR": 0.98823529411765,
+         "fgG": 0.3843137254902
+        },
+        "pURL": "type2t.png",
+        "sx": 2,
+        "fgHex": "FC624BFF",
+        "tx": 0,
+        "ty": 0.83
+       },
+       "main": {
+        "pURL": "type3_.png",
+        "fgURL": "shapes12-mask.png",
+        "bgHex": "000000ff",
+        "bgURL": "shapes12.png",
+        "pHex": "5CC42DFF",
+        "fy": -1,
+        "fgHex": "F392C5FF",
+        "cached": {
+         "fgB": 0.77254901960784,
+         "fgA": 1,
+         "fgRGB": [
+          0.95294117647059,
+          0.57254901960784,
+          0.77254901960784
+         ],
+         "bgG": 0,
+         "pR": 0.36078431372549,
+         "pG": 0.76862745098039,
+         "pB": 0.17647058823529,
+         "bgR": 0,
+         "pRGB": [
+          0.36078431372549,
+          0.76862745098039,
+          0.17647058823529
+         ],
+         "bgB": 0,
+         "bgA": 1,
+         "bgRGB": [
+          0,
+          0,
+          0
+         ],
+         "pA": 1,
+         "fgR": 0.95294117647059,
+         "fgG": 0.57254901960784
+        }
+       },
+       "OMP": true,
+       "patch1": {
+        "bgURL": "",
+        "fgURL": "",
+        "bgHex": "020202ff",
+        "fgHex": "234BE0FF",
+        "cached": {
+         "fgB": 0.87843137254902,
+         "fgA": 1,
+         "fgRGB": [
+          0.13725490196078,
+          0.29411764705882,
+          0.87843137254902
+         ],
+         "pRGB": [
+          0.76470588235294,
+          0.69803921568627,
+          0.65098039215686
+         ],
+         "pR": 0.76470588235294,
+         "pG": 0.69803921568627,
+         "pB": 0.65098039215686,
+         "pA": 1,
+         "bgG": 0.007843137254902,
+         "bgB": 0.007843137254902,
+         "bgA": 1,
+         "bgRGB": [
+          0.007843137254902,
+          0.007843137254902,
+          0.007843137254902
+         ],
+         "bgR": 0.007843137254902,
+         "fgR": 0.13725490196078,
+         "fgG": 0.29411764705882
+        },
+        "pURL": "type2t.png",
+        "pHex": "C3B2A6FF",
+        "tx": -0.33,
+        "ty": 0
+       },
+       "dirty": true,
+       "zOffset": 200
+      },
+      "label": ""
+     },
+     "points": [
+      114.562,
+      -66.315,
+      114.562,
+      66.315,
+      -114.562,
+      66.315,
+      -114.562,
+      -66.315
+     ]
+    },
+    {
+     "sensor": true,
+     "userData": {
+      "id": "3cTSwC",
+      "subtype": "texfixture",
+      "type": "sfixture",
+      "extra": {
+       "main": {
+        "pURL": "type7.png",
+        "fgURL": "borsthaar4-mask.png",
+        "bgHex": "E60871FF",
+        "pHex": "F7A075FF",
+        "bgURL": "borsthaar4.png",
+        "fgHex": "A61ABDFF",
+        "cached": {
+         "fgB": 0.74117647058824,
+         "fgA": 1,
+         "fgRGB": [
+          0.65098039215686,
+          0.10196078431373,
+          0.74117647058824
+         ],
+         "bgG": 0.031372549019608,
+         "pR": 0.96862745098039,
+         "pG": 0.62745098039216,
+         "pB": 0.45882352941176,
+         "bgR": 0.90196078431373,
+         "pRGB": [
+          0.96862745098039,
+          0.62745098039216,
+          0.45882352941176
+         ],
+         "bgB": 0.44313725490196,
+         "bgA": 1,
+         "bgRGB": [
+          0.90196078431373,
+          0.031372549019608,
+          0.44313725490196
+         ],
+         "pA": 1,
+         "fgR": 0.65098039215686,
+         "fgG": 0.10196078431373
+        }
+       },
+       "vertexCount": 8,
+       "OMP": false,
+       "zGroupOffset": 39,
+       "vertices": [
+        85.557812286855,
+        -48.826186069461,
+        4.0315199506895,
+        -63.608425888656,
+        -102.1318387508,
+        -46.138506102335,
+        -110.64282531337,
+        0.44794666118772,
+        -78.390665707851,
+        40.763146168083,
+        7.6150932401912,
+        57.785119293216,
+        93.172905527046,
+        34.043946250267,
+        111.53871863574,
+        -4.9274132730649
+       ],
+       "dirty": true,
+       "zOffset": 210
+      },
+      "label": ""
+     },
+     "points": [
+      111.091,
+      -60.697,
+      111.091,
+      60.697,
+      -111.091,
+      60.697,
+      -111.091,
+      -60.697
+     ]
+    },
+    {
+     "sensor": true,
+     "userData": {
+      "id": "14SfET",
+      "subtype": "decal",
+      "type": "sfixture",
+      "extra": {
+       "oy": 19.863899236667,
+       "fgURL": "",
+       "bgHex": "ffffffff",
+       "fgHex": "",
+       "main": {
+        "bgURL": "upperlip4.png",
+        "fgURL": "upperlip4-mask.png",
+        "bgHex": "000000ff",
+        "fgHex": "cc5555ff",
+        "pURL": "",
+        "pHex": "ffffff00",
+        "cached": {
+         "fgB": 0.33333333333333,
+         "fgA": 1,
+         "fgRGB": [
+          0.8,
+          0.33333333333333,
+          0.33333333333333
+         ],
+         "bgG": 0,
+         "pR": 1,
+         "pG": 1,
+         "pB": 1,
+         "bgR": 0,
+         "pRGB": [
+          1,
+          1,
+          1
+         ],
+         "bgB": 0,
+         "bgA": 1,
+         "bgRGB": [
+          0,
+          0,
+          0
+         ],
+         "pA": 0,
+         "fgR": 0.8,
+         "fgG": 0.33333333333333
+        }
+       },
+       "zOffset": 253,
+       "lipScale": 0.14094354589596,
+       "mouthScaleY": 0.38936643364285,
+       "bgURL": "",
+       "zGroupOffset": 39,
+       "w": 50,
+       "h": 50,
+       "mouthScaleX": 0.51595842526762,
+       "mouthY": 19.863899236667,
+       "mouthCurve": "upper",
+       "mouthX": 0.3732888843231,
+       "curvePoints": [
+        -48.642761516101,
+        24.292942419354,
+        -38.323593010748,
+        15.726880879211,
+        -0.65862796621214,
+        0.93095640078301,
+        49.389339284747,
+        17.284346613783,
+        45.261671882606,
+        28.186606755783,
+        38.038253928859,
+        30.912171791283,
+        -1.1745863914798,
+        9.4970179409258,
+        -40.903385137086,
+        32.080271092211
+       ],
+       "OMP": true,
+       "rot": 0,
+       "dirty": true,
+       "ox": 0.3732888843231
+      },
+      "label": "upperlip"
+     },
+     "points": [
+      5,
+      -5,
+      5,
+      5,
+      -5,
+      5,
+      -5,
+      -5
+     ]
+    },
+    {
+     "sensor": true,
+     "userData": {
+      "id": "6o4pn",
+      "subtype": "decal",
+      "type": "sfixture",
+      "extra": {
+       "oy": 19.863899236667,
+       "fgURL": "",
+       "bgHex": "ffffffff",
+       "fgHex": "",
+       "main": {
+        "bgURL": "lowerlip3.png",
+        "fgURL": "lowerlip3-mask.png",
+        "bgHex": "000000ff",
+        "fgHex": "cc5555ff",
+        "pURL": "",
+        "pHex": "ffffff00",
+        "cached": {
+         "fgB": 0.33333333333333,
+         "fgA": 1,
+         "fgRGB": [
+          0.8,
+          0.33333333333333,
+          0.33333333333333
+         ],
+         "bgG": 0,
+         "pR": 1,
+         "pG": 1,
+         "pB": 1,
+         "bgR": 0,
+         "pRGB": [
+          1,
+          1,
+          1
+         ],
+         "bgB": 0,
+         "bgA": 1,
+         "bgRGB": [
+          0,
+          0,
+          0
+         ],
+         "pA": 0,
+         "fgR": 0.8,
+         "fgG": 0.33333333333333
+        }
+       },
+       "zOffset": 252,
+       "lipScale": 0.12866137742622,
+       "mouthScaleY": 0.38936643364285,
+       "bgURL": "",
+       "zGroupOffset": 39,
+       "mouthScaleX": 0.51595842526762,
+       "w": 50,
+       "h": 50,
+       "backdropHex": "00000099",
+       "ox": 0.3732888843231,
+       "mouthCurve": "lower",
+       "mouthX": 0.3732888843231,
+       "curvePoints": [
+        -48.642761516101,
+        24.292942419354,
+        -38.323593010748,
+        15.726880879211,
+        -0.65862796621214,
+        0.93095640078301,
+        49.389339284747,
+        17.284346613783,
+        45.261671882606,
+        28.186606755783,
+        38.038253928859,
+        30.912171791283,
+        -1.1745863914798,
+        9.4970179409258,
+        -40.903385137086,
+        32.080271092211
+       ],
+       "OMP": true,
+       "mouthY": 19.863899236667,
+       "dirty": true,
+       "rot": 0
+      },
+      "label": "lowerlip"
+     },
+     "points": [
+      5,
+      -5,
+      5,
+      5,
+      -5,
+      5,
+      -5,
+      -5
+     ]
+    },
+    {
+     "sensor": true,
+     "userData": {
+      "id": "4db7Iz",
+      "subtype": "decal",
+      "type": "sfixture",
+      "extra": {
+       "oy": 5.0387232654102,
+       "fgURL": "",
+       "bgHex": "ffffffff",
+       "fgHex": "",
+       "w": 45.070067466821,
+       "h": 44.968789375727,
+       "rot": 0,
+       "main": {
+        "bgURL": "nose15.png",
+        "fgURL": "nose15-mask.png",
+        "bgHex": "000000ff",
+        "fgHex": "09D0FAFF",
+        "pURL": "",
+        "pHex": "ffffff00",
+        "cached": {
+         "fgB": 0.98039215686275,
+         "fgA": 1,
+         "fgRGB": [
+          0.035294117647059,
+          0.8156862745098,
+          0.98039215686275
+         ],
+         "bgG": 0,
+         "pR": 1,
+         "pG": 1,
+         "pB": 1,
+         "bgR": 0,
+         "pRGB": [
+          1,
+          1,
+          1
+         ],
+         "bgB": 0,
+         "bgA": 1,
+         "bgRGB": [
+          0,
+          0,
+          0
+         ],
+         "pA": 0,
+         "fgR": 0.035294117647059,
+         "fgG": 0.8156862745098
+        }
+       },
+       "bgURL": "",
+       "ox": 0.3732888843231,
+       "OMP": true,
+       "zGroupOffset": 39,
+       "dirty": true,
+       "zOffset": 254
+      },
+      "label": "nose"
+     },
+     "points": [
+      5,
+      -5,
+      5,
+      5,
+      -5,
+      5,
+      -5,
+      -5
+     ]
+    },
+    {
+     "sensor": true,
+     "userData": {
+      "id": "2bUNBp",
+      "subtype": "decal",
+      "type": "sfixture",
+      "extra": {
+       "oy": -23.917505881052,
+       "fgURL": "",
+       "bgHex": "E60871FF",
+       "zGroupOffset": 39,
+       "w": 42.197266373293,
+       "h": 11.930243734859,
+       "rot": 0,
+       "bgURL": "brow4.png",
+       "browCurve": true,
+       "browMirror": true,
+       "zOffset": 252,
+       "browBend": 7,
+       "fgHex": "",
+       "ox": 70.903990209513
+      },
+      "label": "rbrow"
+     },
+     "points": [
+      5,
+      -5,
+      5,
+      5,
+      -5,
+      5,
+      -5,
+      -5
+     ]
+    },
+    {
+     "sensor": true,
+     "userData": {
+      "id": "a2K7B",
+      "subtype": "decal",
+      "type": "sfixture",
+      "extra": {
+       "oy": -23.917505881052,
+       "fgURL": "",
+       "bgHex": "E60871FF",
+       "zGroupOffset": 39,
+       "w": 42.197266373293,
+       "h": 11.930243734859,
+       "rot": 0,
+       "bgURL": "brow4.png",
+       "browCurve": true,
+       "browMirror": false,
+       "zOffset": 252,
+       "browBend": 7,
+       "fgHex": "",
+       "ox": -70.157412440867
+      },
+      "label": "lbrow"
+     },
+     "points": [
+      5,
+      -5,
+      5,
+      5,
+      -5,
+      5,
+      -5,
+      -5
+     ]
+    },
+    {
+     "sensor": true,
+     "userData": {
+      "id": "3HpWOt",
+      "subtype": "decal",
+      "type": "sfixture",
+      "extra": {
+       "oy": -8.857988900746,
+       "fgURL": "",
+       "bgHex": "000000ff",
+       "fgHex": "",
+       "eyeH": 30.577071173541,
+       "eyeRot": 0,
+       "eyeMaskURL": "eye4-mask.png",
+       "eyeMirror": false,
+       "zOffset": 251,
+       "eyeW": 40.874964739225,
+       "lookAtMouse": true,
+       "w": 20.405619359268,
+       "h": 19.368485583397,
+       "isEye": true,
+       "ox": 70.903990209513,
+       "zGroupOffset": 39,
+       "OMP": false,
+       "bgURL": "pupil4.png",
+       "mirror": false,
+       "rot": 0
+      },
+      "label": "rpupil"
+     },
+     "points": [
+      5,
+      -5,
+      5,
+      5,
+      -5,
+      5,
+      -5,
+      -5
+     ]
+    },
+    {
+     "sensor": true,
+     "userData": {
+      "id": "4qrH5j",
+      "subtype": "decal",
+      "type": "sfixture",
+      "extra": {
+       "oy": -8.857988900746,
+       "fgURL": "",
+       "bgHex": "000000ff",
+       "fgHex": "",
+       "eyeH": 30.577071173541,
+       "eyeRot": 0,
+       "eyeMaskURL": "eye4-mask.png",
+       "eyeMirror": true,
+       "zOffset": 251,
+       "eyeW": 40.874964739225,
+       "lookAtMouse": true,
+       "w": 20.405619359268,
+       "h": 19.368485583397,
+       "isEye": true,
+       "ox": -70.157412440867,
+       "zGroupOffset": 39,
+       "OMP": false,
+       "bgURL": "pupil4.png",
+       "mirror": true,
+       "rot": 0
+      },
+      "label": "lpupil"
+     },
+     "points": [
+      5,
+      -5,
+      5,
+      5,
+      -5,
+      5,
+      -5,
+      -5
+     ]
+    },
+    {
+     "sensor": true,
+     "userData": {
+      "id": "jLv4a",
+      "subtype": "decal",
+      "type": "sfixture",
+      "extra": {
+       "oy": -8.857988900746,
+       "fgURL": "",
+       "bgHex": "ffffffff",
+       "ox": 70.903990209513,
+       "fgHex": "",
+       "w": 40.874964739225,
+       "h": 30.577071173541,
+       "mirror": false,
+       "isEye": true,
+       "main": {
+        "bgURL": "eye4.png",
+        "fgURL": "eye4-mask.png",
+        "bgHex": "000000ff",
+        "fgHex": "ffffffff",
+        "pURL": "",
+        "pHex": "ffffff00",
+        "cached": {
+         "fgB": 1,
+         "fgA": 1,
+         "fgRGB": [
+          1,
+          1,
+          1
+         ],
+         "bgG": 0,
+         "pR": 1,
+         "pG": 1,
+         "pB": 1,
+         "bgR": 0,
+         "pRGB": [
+          1,
+          1,
+          1
+         ],
+         "bgB": 0,
+         "bgA": 1,
+         "bgRGB": [
+          0,
+          0,
+          0
+         ],
+         "pA": 0,
+         "fgR": 1,
+         "fgG": 1
+        }
+       },
+       "rot": 0,
+       "bgURL": "",
+       "OMP": true,
+       "zGroupOffset": 39,
+       "dirty": true,
+       "zOffset": 250
+      },
+      "label": "reye"
+     },
+     "points": [
+      5,
+      -5,
+      5,
+      5,
+      -5,
+      5,
+      -5,
+      -5
+     ]
+    },
+    {
+     "sensor": true,
+     "userData": {
+      "id": "4knHfZ",
+      "subtype": "decal",
+      "type": "sfixture",
+      "extra": {
+       "oy": -8.857988900746,
+       "fgURL": "",
+       "bgHex": "ffffffff",
+       "ox": -70.157412440867,
+       "fgHex": "",
+       "w": 40.874964739225,
+       "h": 30.577071173541,
+       "mirror": true,
+       "isEye": true,
+       "main": {
+        "bgURL": "eye4.png",
+        "fgURL": "eye4-mask.png",
+        "bgHex": "000000ff",
+        "fgHex": "ffffffff",
+        "pURL": "",
+        "pHex": "ffffff00",
+        "cached": {
+         "fgB": 1,
+         "fgA": 1,
+         "fgRGB": [
+          1,
+          1,
+          1
+         ],
+         "bgG": 0,
+         "pR": 1,
+         "pG": 1,
+         "pB": 1,
+         "bgR": 0,
+         "pRGB": [
+          1,
+          1,
+          1
+         ],
+         "bgB": 0,
+         "bgA": 1,
+         "bgRGB": [
+          0,
+          0,
+          0
+         ],
+         "pA": 0,
+         "fgR": 1,
+         "fgG": 1
+        }
+       },
+       "rot": 0,
+       "bgURL": "",
+       "OMP": true,
+       "zGroupOffset": 39,
+       "dirty": true,
+       "zOffset": 250
+      },
+      "label": "leye"
+     },
+     "points": [
+      5,
+      -5,
+      5,
+      5,
+      -5,
+      5,
+      -5,
+      -5
+     ]
+    },
+    {
+     "points": [
+      92.576,
+      -1.68,
+      77.271,
+      30.796,
+      5.973,
+      50.581,
+      -65.699,
+      36.396,
+      -92.576,
+      2.8,
+      -85.483,
+      -36.022,
+      2.986,
+      -50.581,
+      70.925,
+      -38.262
+     ]
+    }
+   ],
+   "fixedRotation": false,
+   "label": "head",
+   "bodyType": "dynamic",
+   "dims": {
+    "width": 30,
+    "height": 54
+   },
+   "behaviors": [
+    {
+     "angle": -12.88445524911,
+     "name": "KEEP_ANGLE"
+    }
+   ],
+   "linearVelocity": [
+    -251.32183837891,
+    142.22645568848
+   ]
+  },
+  {
+   "position": [
+    1055.9187,
+    -496.8496
+   ],
+   "mirrorX": 1,
+   "mirrorY": 1,
+   "angularVelocity": -0.2298,
+   "id": "103Vsx",
+   "shapeType": "shape8",
+   "mipoId": "P4re5",
+   "mipoPartName": "torso2",
+   "linearDamping": 0.1,
+   "angularDamping": 0.1,
+   "vertices": [
+    1.9740143007043,
+    -109.4344177953,
+    54.285393269369,
+    -86.733253337196,
+    74.570371427838,
+    11.35058222905,
+    94.855349586307,
+    109.4344177953,
+    -2.9123719594541,
+    109.4344177953,
+    -100.68009350522,
+    109.4344177953,
+    -78.469750537644,
+    8.3895607779934,
+    -56.259407570073,
+    -92.655296239309
+   ],
+   "angle": -0.0259,
+   "sharedFixtureData": {
+    "density": 1,
+    "friction": 0.2,
+    "restitution": 0.3,
+    "sensor": false,
+    "groupIndex": -39,
+    "shapeType": "polygon"
+   },
+   "fixtures": [
+    {
+     "sensor": true,
+     "userData": {
+      "id": "11g5Wd",
+      "subtype": "connected-texture",
+      "type": "sfixture",
+      "extra": {
+       "attachTo": "torso2",
+       "main": {
+        "pURL": "type2t.png",
+        "fgURL": "leg5-mask.png",
+        "bgHex": "020202ff",
+        "pHex": "911D0EFF",
+        "fgHex": "56BC6DFF",
+        "wmul": 0.3,
+        "bgURL": "leg5.png",
+        "cached": {
+         "fgB": 0.42745098039216,
+         "fgA": 1,
+         "fgRGB": [
+          0.33725490196078,
+          0.73725490196078,
+          0.42745098039216
+         ],
+         "bgG": 0.007843137254902,
+         "pR": 0.56862745098039,
+         "pG": 0.11372549019608,
+         "pB": 0.054901960784314,
+         "pA": 1,
+         "pRGB": [
+          0.56862745098039,
+          0.11372549019608,
+          0.054901960784314
+         ],
+         "bgB": 0.007843137254902,
+         "bgA": 1,
+         "bgRGB": [
+          0.007843137254902,
+          0.007843137254902,
+          0.007843137254902
+         ],
+         "bgR": 0.007843137254902,
+         "fgR": 0.33725490196078,
+         "fgG": 0.73725490196078
+        }
+       },
+       "OMP": true,
+       "nodes": [
+        {
+         "id": "1aao6p",
+         "type": "joint"
+        }
+       ],
+       "zGroupOffset": 39,
+       "growExtra": 6,
+       "dirty": true,
+       "zOffset": 100
+      },
+      "label": ""
+     },
+     "points": [
+      4.5,
+      -4.5,
+      4.5,
+      4.5,
+      -4.5,
+      4.5,
+      -4.5,
+      -4.5
+     ]
+    },
+    {
+     "sensor": true,
+     "userData": {
+      "id": "1oq6gD",
+      "subtype": "connected-texture",
+      "type": "sfixture",
+      "extra": {
+       "attachTo": "torso2",
+       "main": {
+        "bgURL": "hair10.png",
+        "fgURL": "",
+        "bgHex": "020202ff",
+        "pHex": "ffff00ff",
+        "cached": {
+         "fgB": 1,
+         "fgA": 1,
+         "fgRGB": [
+          1,
+          1,
+          1
+         ],
+         "bgG": 0.007843137254902,
+         "pR": 1,
+         "pG": 1,
+         "pB": 0,
+         "pA": 1,
+         "pRGB": [
+          1,
+          1,
+          0
+         ],
+         "bgB": 0.007843137254902,
+         "bgA": 1,
+         "bgRGB": [
+          0.007843137254902,
+          0.007843137254902,
+          0.007843137254902
+         ],
+         "bgR": 0.007843137254902,
+         "fgR": 1,
+         "fgG": 1
+        },
+        "pURL": "type2t.png",
+        "wmul": 0.3,
+        "fgHex": "",
+        "dir": 1
+       },
+       "OMP": true,
+       "nodes": [
+        {
+         "id": "1aao6p",
+         "type": "joint"
+        }
+       ],
+       "zGroupOffset": 39,
+       "growExtra": 6,
+       "dirty": true,
+       "zOffset": 101
+      },
+      "label": ""
+     },
+     "points": [
+      4.5,
+      -4.5,
+      4.5,
+      4.5,
+      -4.5,
+      4.5,
+      -4.5,
+      -4.5
+     ]
+    },
+    {
+     "points": [
+      97.768,
+      109.434,
+      -97.768,
+      109.434,
+      -75.557,
+      8.39,
+      -53.347,
+      -92.655,
+      4.886,
+      -109.434,
+      57.198,
+      -86.733
+     ]
+    }
+   ],
+   "fixedRotation": false,
+   "label": "torso2",
+   "bodyType": "dynamic",
+   "dims": {
+    "width": 84,
+    "height": 90
+   },
+   "behaviors": [],
+   "linearVelocity": [
+    -223.83549499512,
+    142.5108795166
+   ]
+  },
+  {
+   "position": [
+    1058.3429,
+    -277.9157
+   ],
+   "mirrorX": 1,
+   "mirrorY": 1,
+   "angularVelocity": -0.1093,
+   "id": "2SOs2B",
+   "shapeType": "shape8",
+   "mipoId": "P4re5",
+   "mipoPartName": "torso1",
+   "linearDamping": 0.1,
+   "angularDamping": 0.1,
+   "vertices": [
+    -2.9123719594541,
+    -109.4344177953,
+    94.855349586307,
+    -109.4344177953,
+    122.7028506719,
+    -6.9090500524651,
+    151.01209400388,
+    95.616317690365,
+    6.415546477289,
+    109.4344177953,
+    -136.70049032377,
+    100.05784986695,
+    -118.74401023844,
+    -4.6882839641728,
+    -100.68009350522,
+    -109.4344177953
+   ],
+   "angle": 0.0039,
+   "sharedFixtureData": {
+    "density": 1,
+    "friction": 0.2,
+    "restitution": 0.3,
+    "sensor": false,
+    "groupIndex": -39,
+    "shapeType": "polygon"
+   },
+   "fixtures": [
+    {
+     "sensor": true,
+     "userData": {
+      "id": "1kZsls",
+      "subtype": "texfixture",
+      "type": "sfixture",
+      "extra": {
+       "vertexCount": 4,
+       "zGroupOffset": 39,
+       "vertices": [
+        -176.97038205814,
+        -358.70307361673,
+        176.97038205814,
+        -358.70307361673,
+        176.97038205814,
+        147.23679165378,
+        -176.97038205814,
+        147.23679165378
+       ],
+       "patch2": {
+        "pURL": "type3_.png",
+        "fgURL": "",
+        "bgHex": "000000ff",
+        "pHex": "5CC42DFF",
+        "fgHex": "F392C5FF",
+        "bgURL": "",
+        "tx": 0.33,
+        "ty": 0
+       },
+       "patch3": {
+        "bgURL": "",
+        "fgURL": "",
+        "bgHex": "020202ff",
+        "pHex": "D4A0D3FF",
+        "cached": {
+         "fgB": 0.047058823529412,
+         "fgA": 1,
+         "fgRGB": [
+          0.023529411764706,
+          0.83921568627451,
+          0.047058823529412
+         ],
+         "bgG": 0.007843137254902,
+         "pR": 0.83137254901961,
+         "pG": 0.62745098039216,
+         "pB": 0.82745098039216,
+         "bgR": 0.007843137254902,
+         "pRGB": [
+          0.83137254901961,
+          0.62745098039216,
+          0.82745098039216
+         ],
+         "bgB": 0.007843137254902,
+         "bgA": 1,
+         "bgRGB": [
+          0.007843137254902,
+          0.007843137254902,
+          0.007843137254902
+         ],
+         "pA": 1,
+         "fgR": 0.023529411764706,
+         "fgG": 0.83921568627451
+        },
+        "pURL": "type2t.png",
+        "sx": 2,
+        "fgHex": "06D60CFF",
+        "tx": 0,
+        "ty": 0.83
+       },
+       "main": {
+        "pURL": "type3_.png",
+        "fgURL": "shapes11-mask.png",
+        "bgHex": "000000ff",
+        "pHex": "5CC42DFF",
+        "bgURL": "shapes11.png",
+        "fgHex": "F392C5FF",
+        "cached": {
+         "fgB": 0.77254901960784,
+         "fgA": 1,
+         "fgRGB": [
+          0.95294117647059,
+          0.57254901960784,
+          0.77254901960784
+         ],
+         "bgG": 0,
+         "pR": 0.36078431372549,
+         "pG": 0.76862745098039,
+         "pB": 0.17647058823529,
+         "bgR": 0,
+         "pRGB": [
+          0.36078431372549,
+          0.76862745098039,
+          0.17647058823529
+         ],
+         "bgB": 0,
+         "bgA": 1,
+         "bgRGB": [
+          0,
+          0,
+          0
+         ],
+         "pA": 1,
+         "fgR": 0.95294117647059,
+         "fgG": 0.57254901960784
+        }
+       },
+       "OMP": true,
+       "patch1": {
+        "pURL": "type3_.png",
+        "fgURL": "",
+        "bgHex": "000000ff",
+        "pHex": "5CC42DFF",
+        "fgHex": "F392C5FF",
+        "bgURL": "",
+        "tx": -0.33,
+        "ty": 0
+       },
+       "dirty": true,
+       "zOffset": 192
+      },
+      "label": ""
+     },
+     "points": [
+      176.97,
+      -358.703,
+      176.97,
+      147.237,
+      -176.97,
+      147.237,
+      -176.97,
+      -358.703
+     ]
+    },
+    {
+     "sensor": true,
+     "userData": {
+      "id": "3wcnmy",
+      "subtype": "connected-texture",
+      "type": "sfixture",
+      "extra": {
+       "attachTo": "torso1",
+       "main": {
+        "pURL": "type5.png",
+        "fgURL": "leg5-mask.png",
+        "bgHex": "020202ff",
+        "bgURL": "leg5.png",
+        "pHex": "127D0DFF",
+        "wmul": 0.3,
+        "fgHex": "EF46C8FF",
+        "cached": {
+         "fgB": 0.7843137254902,
+         "fgA": 1,
+         "fgRGB": [
+          0.93725490196078,
+          0.27450980392157,
+          0.7843137254902
+         ],
+         "bgG": 0.007843137254902,
+         "pR": 0.070588235294118,
+         "pG": 0.49019607843137,
+         "pB": 0.050980392156863,
+         "bgR": 0.007843137254902,
+         "pRGB": [
+          0.070588235294118,
+          0.49019607843137,
+          0.050980392156863
+         ],
+         "bgB": 0.007843137254902,
+         "bgA": 1,
+         "bgRGB": [
+          0.007843137254902,
+          0.007843137254902,
+          0.007843137254902
+         ],
+         "pA": 1,
+         "fgR": 0.93725490196078,
+         "fgG": 0.27450980392157
+        }
+       },
+       "OMP": true,
+       "nodes": [],
+       "zGroupOffset": 39,
+       "growExtra": 6,
+       "dirty": true,
+       "zOffset": 100
+      },
+      "label": ""
+     },
+     "points": [
+      4.5,
+      -4.5,
+      4.5,
+      4.5,
+      -4.5,
+      4.5,
+      -4.5,
+      -4.5
+     ]
+    },
+    {
+     "sensor": true,
+     "userData": {
+      "id": "1f8qZ0",
+      "subtype": "connected-texture",
+      "type": "sfixture",
+      "extra": {
+       "attachTo": "torso1",
+       "main": {
+        "dir": 1,
+        "fgURL": "",
+        "bgHex": "E60871FF",
+        "fgHex": "",
+        "cached": {
+         "fgB": 1,
+         "fgA": 1,
+         "fgRGB": [
+          1,
+          1,
+          1
+         ],
+         "bgG": 0.031372549019608,
+         "pR": 1,
+         "pG": 1,
+         "pB": 0,
+         "bgR": 0.90196078431373,
+         "pRGB": [
+          1,
+          1,
+          0
+         ],
+         "bgB": 0.44313725490196,
+         "bgA": 1,
+         "bgRGB": [
+          0.90196078431373,
+          0.031372549019608,
+          0.44313725490196
+         ],
+         "pA": 1,
+         "fgR": 1,
+         "fgG": 1
+        },
+        "pURL": "type2t.png",
+        "wmul": 0.3,
+        "pHex": "ffff00ff",
+        "bgURL": "hair1.png"
+       },
+       "OMP": true,
+       "nodes": [],
+       "zGroupOffset": 39,
+       "growExtra": 6,
+       "dirty": true,
+       "zOffset": 101
+      },
+      "label": ""
+     },
+     "points": [
+      4.5,
+      -4.5,
+      4.5,
+      4.5,
+      -4.5,
+      4.5,
+      -4.5,
+      -4.5
+     ]
+    },
+    {
+     "sensor": true,
+     "userData": {
+      "id": "3vodCg",
+      "subtype": "texfixture",
+      "type": "sfixture",
+      "extra": {
+       "main": {
+        "pURL": "type7.png",
+        "fgURL": "borsthaar4-mask.png",
+        "bgHex": "E60871FF",
+        "pHex": "F7A075FF",
+        "bgURL": "borsthaar4.png",
+        "fgHex": "A61ABDFF",
+        "cached": {
+         "fgB": 0.74117647058824,
+         "fgA": 1,
+         "fgRGB": [
+          0.65098039215686,
+          0.10196078431373,
+          0.74117647058824
+         ],
+         "bgG": 0.031372549019608,
+         "pR": 0.96862745098039,
+         "pG": 0.62745098039216,
+         "pB": 0.45882352941176,
+         "bgR": 0.90196078431373,
+         "pRGB": [
+          0.96862745098039,
+          0.62745098039216,
+          0.45882352941176
+         ],
+         "bgB": 0.44313725490196,
+         "bgA": 1,
+         "bgRGB": [
+          0.90196078431373,
+          0.031372549019608,
+          0.44313725490196
+         ],
+         "pA": 1,
+         "fgR": 0.65098039215686,
+         "fgG": 0.10196078431373
+        }
+       },
+       "vertexCount": 8,
+       "OMP": false,
+       "zGroupOffset": 39,
+       "vertices": [
+        -67.511289084088,
+        -352.68232999959,
+        2.3688171608452,
+        -372.81727586677,
+        65.142471923243,
+        -345.57587851705,
+        115.4798365912,
+        -102.17991524021,
+        181.21451280466,
+        135.88620942473,
+        7.6986557727468,
+        152.46792955065,
+        -164.04058838853,
+        141.21604803664,
+        -121.40187949332,
+        -107.50975385211
+       ],
+       "dirty": true,
+       "zOffset": 197
+      },
+      "label": ""
+     },
+     "points": [
+      172.628,
+      -131.321,
+      172.628,
+      131.321,
+      -172.628,
+      131.321,
+      -172.628,
+      -131.321
+     ]
+    },
+    {
+     "points": [
+      -10.068,
+      -109.434,
+      -125.9,
+      -4.688,
+      -107.836,
+      -109.434
+     ]
+    },
+    {
+     "points": [
+      -10.068,
+      -109.434,
+      -143.856,
+      100.058,
+      -125.9,
+      -4.688
+     ]
+    },
+    {
+     "points": [
+      -0.74,
+      109.434,
+      -143.856,
+      100.058,
+      -10.068,
+      -109.434
+     ]
+    },
+    {
+     "points": [
+      143.856,
+      95.616,
+      -0.74,
+      109.434,
+      -10.068,
+      -109.434
+     ]
+    },
+    {
+     "points": [
+      143.856,
+      95.616,
+      -10.068,
+      -109.434,
+      115.547,
+      -6.909
+     ]
+    },
+    {
+     "points": [
+      115.547,
+      -6.909,
+      -10.068,
+      -109.434,
+      87.7,
+      -109.434
+     ]
+    }
+   ],
+   "fixedRotation": false,
+   "label": "torso1",
+   "bodyType": "dynamic",
+   "dims": {
+    "width": 84,
+    "height": 90
+   },
+   "behaviors": [
+    {
+     "angle": 0,
+     "name": "KEEP_ANGLE"
+    }
+   ],
+   "linearVelocity": [
+    -186.20198059082,
+    143.31825256348
+   ]
+  },
+  {
+   "position": [
+    2984.1001,
+    -600.12
+   ],
+   "mirrorX": 1,
+   "mirrorY": 1,
+   "angularVelocity": 0,
+   "id": "spineWallR",
+   "shapeType": "rectangle",
+   "linearDamping": 0,
+   "angularDamping": 0,
+   "vertices": [
+    -200,
+    -20,
+    200,
+    -20,
+    200,
+    20,
+    -200,
+    20
+   ],
+   "angle": 0,
+   "sharedFixtureData": {
+    "density": 1,
+    "friction": 0.2,
+    "restitution": 0.3,
+    "sensor": false,
+    "groupIndex": 0,
+    "shapeType": "polygon"
+   },
+   "fixtures": [
+    {
+     "points": [
+      40,
+      -600,
+      40,
+      600,
+      -40,
+      600,
+      -40,
+      -600
+     ]
+    }
+   ],
+   "fixedRotation": false,
+   "label": "wall",
+   "bodyType": "static",
+   "dims": {
+    "width": 80,
+    "height": 1200
+   },
+   "linearVelocity": [
+    0,
+    0
+   ]
+  },
+  {
+   "position": [
+    -15.9,
+    -600.12
+   ],
+   "mirrorX": 1,
+   "mirrorY": 1,
+   "angularVelocity": 0,
+   "id": "spineWallL",
+   "shapeType": "rectangle",
+   "linearDamping": 0,
+   "angularDamping": 0,
+   "vertices": [
+    -200,
+    -20,
+    200,
+    -20,
+    200,
+    20,
+    -200,
+    20
+   ],
+   "angle": 0,
+   "sharedFixtureData": {
+    "density": 1,
+    "friction": 0.2,
+    "restitution": 0.3,
+    "sensor": false,
+    "groupIndex": 0,
+    "shapeType": "polygon"
+   },
+   "fixtures": [
+    {
+     "points": [
+      40,
+      -600,
+      40,
+      600,
+      -40,
+      600,
+      -40,
+      -600
+     ]
+    }
+   ],
+   "fixedRotation": false,
+   "label": "wall",
+   "bodyType": "static",
+   "dims": {
+    "width": 80,
+    "height": 1200
+   },
+   "linearVelocity": [
+    0,
+    0
+   ]
+  },
+  {
+   "position": [
+    1484.1,
+    39.88
+   ],
+   "mirrorX": 1,
+   "mirrorY": 1,
+   "angularVelocity": 0,
+   "id": "spineFloor",
+   "shapeType": "rectangle",
+   "linearDamping": 0,
+   "angularDamping": 0,
+   "vertices": [
+    -200,
+    -20,
+    200,
+    -20,
+    200,
+    20,
+    -200,
+    20
+   ],
+   "angle": 0,
+   "sharedFixtureData": {
+    "density": 1,
+    "friction": 0.2,
+    "restitution": 0.3,
+    "sensor": false,
+    "groupIndex": 0,
+    "shapeType": "polygon"
+   },
+   "fixtures": [
+    {
+     "points": [
+      1500,
+      -40,
+      1500,
+      40,
+      -1500,
+      40,
+      -1500,
+      -40
+     ]
+    }
+   ],
+   "fixedRotation": false,
+   "label": "floor",
+   "bodyType": "static",
+   "dims": {
+    "width": 3000,
+    "height": 80
+   },
+   "linearVelocity": [
+    0,
+    0
+   ]
+  }
+ ],
+ "joints": [
+  {
+   "properties": {
+    "lowerLimit": -0.1963495016098,
+    "upperLimit": 0.19634957611561,
+    "motorEnabled": false,
+    "limitsEnabled": true
+   },
+   "id": "172Xul",
+   "anchorB": [
+    1108.751,
+    -678.852
+   ],
+   "bodyA": "hJmen",
+   "bodyB": "3xito3",
+   "anchorA": [
+    1108.753,
+    -678.834
+   ],
+   "type": "revolute",
+   "collideConnected": false
+  },
+  {
+   "properties": {
+    "lowerLimit": -0.19634951651096,
+    "upperLimit": 0.19634956121445,
+    "motorEnabled": false,
+    "limitsEnabled": true
+   },
+   "id": "2Fl8OE",
+   "anchorB": [
+    963.35,
+    -646.566
+   ],
+   "bodyA": "hJmen",
+   "bodyB": "D60iC",
+   "anchorA": [
+    963.35,
+    -646.56
+   ],
+   "type": "revolute",
+   "collideConnected": false
+  },
+  {
+   "properties": {
+    "lowerLimit": -0.39269909262657,
+    "upperLimit": 0.39269909262657,
+    "motorEnabled": false,
+    "limitsEnabled": true
+   },
+   "id": "zWADH",
+   "anchorB": [
+    1129.722,
+    -296.211
+   ],
+   "bodyA": "1cBJDc",
+   "bodyB": "6emmO",
+   "anchorA": [
+    1129.722,
+    -296.211
+   ],
+   "type": "revolute",
+   "collideConnected": false
+  },
+  {
+   "properties": {
+    "lowerLimit": -0.39269909262657,
+    "upperLimit": 0.39269909262657,
+    "motorEnabled": false,
+    "limitsEnabled": true
+   },
+   "id": "33tbD0",
+   "anchorB": [
+    963.89,
+    -300.833
+   ],
+   "bodyA": "2aBg14",
+   "bodyB": "2gw7ZX",
+   "anchorA": [
+    963.89,
+    -300.833
+   ],
+   "type": "revolute",
+   "collideConnected": false
+  },
+  {
+   "properties": {
+    "lowerLimit": -2.6179938316345,
+    "upperLimit": 0.17453292012215,
+    "motorEnabled": false,
+    "limitsEnabled": true
+   },
+   "id": "1wI57",
+   "anchorB": [
+    1117.268,
+    -440.49
+   ],
+   "bodyA": "4u1jP8",
+   "bodyB": "1cBJDc",
+   "anchorA": [
+    1117.268,
+    -440.477
+   ],
+   "type": "revolute",
+   "collideConnected": false
+  },
+  {
+   "properties": {
+    "lowerLimit": -0.17453292012215,
+    "upperLimit": 2.6179938316345,
+    "motorEnabled": false,
+    "limitsEnabled": true
+   },
+   "id": "1GmDfz",
+   "anchorB": [
+    989.051,
+    -443.446
+   ],
+   "bodyA": "2Rv8cB",
+   "bodyB": "2aBg14",
+   "anchorA": [
+    989.05,
+    -443.454
+   ],
+   "type": "revolute",
+   "collideConnected": false
+  },
+  {
+   "properties": {
+    "lowerLimit": -3.1415927410126,
+    "upperLimit": 0,
+    "motorEnabled": false,
+    "limitsEnabled": true
+   },
+   "id": "4k6CTt",
+   "anchorB": [
+    1107.941,
+    -584.993
+   ],
+   "bodyA": "103Vsx",
+   "bodyB": "4u1jP8",
+   "anchorA": [
+    1107.941,
+    -584.959
+   ],
+   "type": "revolute",
+   "collideConnected": false
+  },
+  {
+   "properties": {
+    "lowerLimit": 0,
+    "upperLimit": 3.1415927410126,
+    "motorEnabled": false,
+    "limitsEnabled": true
+   },
+   "id": "3IgGtz",
+   "anchorB": [
+    997.283,
+    -588.036
+   ],
+   "bodyA": "103Vsx",
+   "bodyB": "2Rv8cB",
+   "anchorA": [
+    997.28,
+    -588.018
+   ],
+   "type": "revolute",
+   "collideConnected": false
+  },
+  {
+   "properties": {
+    "lowerLimit": -0.39269915223122,
+    "upperLimit": 0.3926990032196,
+    "motorEnabled": false,
+    "limitsEnabled": true
+   },
+   "id": "3JfZ2w",
+   "anchorB": [
+    1235.875,
+    -12.153
+   ],
+   "bodyA": "4Ej4QS",
+   "bodyB": "2JKoFy",
+   "anchorA": [
+    1235.875,
+    -12.153
+   ],
+   "type": "revolute",
+   "collideConnected": false
+  },
+  {
+   "properties": {
+    "lowerLimit": -0.39269912242889,
+    "upperLimit": 0.39269903302193,
+    "motorEnabled": false,
+    "limitsEnabled": true
+   },
+   "id": "3avDCC",
+   "anchorB": [
+    958.886,
+    -40.21
+   ],
+   "bodyA": "4zmolZ",
+   "bodyB": "2em10M",
+   "anchorA": [
+    958.886,
+    -40.21
+   ],
+   "type": "revolute",
+   "collideConnected": false
+  },
+  {
+   "properties": {
+    "lowerLimit": 0,
+    "upperLimit": 1.5707963705063,
+    "motorEnabled": false,
+    "limitsEnabled": true
+   },
+   "id": "452q0Q",
+   "anchorB": [
+    1185.763,
+    -93.011
+   ],
+   "bodyA": "1w3HK6",
+   "bodyB": "4Ej4QS",
+   "anchorA": [
+    1185.67,
+    -93.179
+   ],
+   "type": "revolute",
+   "collideConnected": false
+  },
+  {
+   "properties": {
+    "lowerLimit": -1.5707963705063,
+    "upperLimit": 0,
+    "motorEnabled": false,
+    "limitsEnabled": true
+   },
+   "id": "3GTacz",
+   "anchorB": [
+    912.036,
+    -123.001
+   ],
+   "bodyA": "2l9sPm",
+   "bodyB": "4zmolZ",
+   "anchorA": [
+    912.056,
+    -123.031
+   ],
+   "type": "revolute",
+   "collideConnected": false
+  },
+  {
+   "properties": {
+    "lowerLimit": -1.5707963705063,
+    "upperLimit": 0,
+    "motorEnabled": false,
+    "limitsEnabled": true
+   },
+   "id": "1vTG7e",
+   "anchorB": [
+    1136.863,
+    -174.832
+   ],
+   "bodyA": "2SOs2B",
+   "bodyB": "1w3HK6",
+   "anchorA": [
+    1136.66,
+    -175.087
+   ],
+   "type": "revolute",
+   "collideConnected": false
+  },
+  {
+   "properties": {
+    "lowerLimit": 0,
+    "upperLimit": 1.5707963705063,
+    "motorEnabled": false,
+    "limitsEnabled": true
+   },
+   "id": "xNT1d",
+   "anchorB": [
+    992.745,
+    -173.415
+   ],
+   "bodyA": "2SOs2B",
+   "bodyB": "2l9sPm",
+   "anchorA": [
+    992.796,
+    -173.422
+   ],
+   "type": "revolute",
+   "collideConnected": false
+  },
+  {
+   "properties": {
+    "lowerLimit": -0.78539818525314,
+    "upperLimit": 0.78539818525314,
+    "motorEnabled": false,
+    "limitsEnabled": true
+   },
+   "id": "1aao6p",
+   "anchorB": [
+    1055.067,
+    -606.311
+   ],
+   "bodyA": "103Vsx",
+   "bodyB": "hJmen",
+   "anchorA": [
+    1055.06,
+    -606.299
+   ],
+   "type": "revolute",
+   "collideConnected": false
+  },
+  {
+   "properties": {
+    "motorEnabled": true,
+    "limitsEnabled": true,
+    "lowerLimit": -0.78539818525314,
+    "upperLimit": 0.78539818525314,
+    "motorSpeed": -0.089395418763161,
+    "maxMotorTorque": 524555.4375
+   },
+   "id": "4bXalv",
+   "anchorB": [
+    1055.84,
+    -387.377
+   ],
+   "bodyA": "2SOs2B",
+   "bodyB": "103Vsx",
+   "anchorA": [
+    1055.854,
+    -387.361
+   ],
+   "type": "revolute",
+   "collideConnected": false
+  }
+ ],
+ "backdrops": [],
+ "characters": [
+  {
+   "id": "P4re5",
+   "scale": 0.3,
+   "zGroupOffset": 39,
+   "dna": {
+    "faceMagnitude": 1,
+    "creation": {
+     "spineSway": 1,
+     "neckSegments": 0,
+     "isPotatoHead": false,
+     "noseSegments": 0,
+     "torsoSpine": true,
+     "spineBend": 45,
+     "torsoSegments": 2,
+     "noseMode": "overlay"
+    },
+    "parts": {
+     "neck-segment-template": {
+      "dims": {
+       "w": 80,
+       "h": 150,
+       "w2": 4
+      },
+      "shape": "capsule",
+      "j": {
+       "limits": {
+        "low": -0.39269908169872,
+        "up": 0.39269908169872
+       },
+       "type": "revolute"
+      }
+     },
+     "lfoot": {
+      "appearance": {
+       "skin": {
+        "zOffset": 399,
+        "main": {
+         "pURL": "type8.png",
+         "fgURL": "-mask.png",
+         "bgHex": "000000ff",
+         "pHex": "6E19DFFF",
+         "fgHex": "A3F7BBFF",
+         "dir": -1,
+         "bgURL": ".png"
+        }
+       }
+      },
+      "shape8URL": "feet7xr.png",
+      "j": {
+       "limits": {
+        "low": -0.39269908169872,
+        "up": 0.39269908169872
+       },
+       "type": "revolute"
+      },
+      "dims": {
+       "sy": 1.4862434199169,
+       "w": 80,
+       "h": 150,
+       "sx": 1.4862434199169
+      },
+      "shape": "shape8"
+     },
+     "rfoot": {
+      "appearance": {
+       "skin": {
+        "zOffset": 399,
+        "main": {
+         "pURL": "type8.png",
+         "fgURL": "-mask.png",
+         "bgHex": "000000ff",
+         "pHex": "6E19DFFF",
+         "fgHex": "A3F7BBFF",
+         "dir": 1,
+         "bgURL": ".png"
+        }
+       }
+      },
+      "shape8URL": "feet7xr.png",
+      "j": {
+       "limits": {
+        "low": -0.39269908169872,
+        "up": 0.39269908169872
+       },
+       "type": "revolute"
+      },
+      "dims": {
+       "sy": 1.4862434199169,
+       "w": 80,
+       "h": 150,
+       "sx": -1.4862434199169
+      },
+      "shape": "shape8"
+     },
+     "llleg": {
+      "shape": "capsule",
+      "dims": {
+       "w": 80,
+       "h": 317.09287353277,
+       "w2": 4
+      },
+      "behaviors": [
+       {
+        "angle": 0,
+        "name": "KEEP_ANGLE",
+        "kp": 40
+       }
+      ],
+      "j": {
+       "limits": {
+        "low": -1.5707963267949,
+        "up": 0
+       },
+       "type": "revolute"
+      }
+     },
+     "rlleg": {
+      "shape": "capsule",
+      "dims": {
+       "w": 80,
+       "h": 317.09287353277,
+       "w2": 4
+      },
+      "behaviors": [
+       {
+        "angle": 0,
+        "name": "KEEP_ANGLE",
+        "kp": 40
+       }
+      ],
+      "j": {
+       "limits": {
+        "low": 0,
+        "up": 1.5707963267949
+       },
+       "type": "revolute"
+      }
+     },
+     "head": {
+      "appearance": {
+       "haircut": {
+        "width": 241.98528827547,
+        "main": {
+         "pURL": "type2t.png",
+         "fgURL": "",
+         "bgHex": "E60871FF",
+         "pHex": "0D3825FF",
+         "fgHex": "BF1A2DFF",
+         "bgURL": "hair2.png"
+        },
+        "startIndex": 6,
+        "endIndex": 3
+       },
+       "bodyhair": {
+        "main": {
+         "pURL": "type7.png",
+         "fgURL": "borsthaar4-mask.png",
+         "bgHex": "E60871FF",
+         "pHex": "F7A075FF",
+         "fgHex": "A61ABDFF",
+         "bgURL": "borsthaar4.png"
+        }
+       },
+       "skin": {
+        "main": {
+         "pURL": "type3_.png",
+         "fgURL": "-mask.png",
+         "bgHex": "000000ff",
+         "pHex": "5CC42DFF",
+         "fgHex": "F392C5FF",
+         "bgURL": ".png"
+        },
+        "zOffset": 200,
+        "patch1": {
+         "bgURL": "",
+         "fgURL": "",
+         "bgHex": "020202ff",
+         "fgHex": "234BE0FF",
+         "cached": {
+          "fgB": 0.87843137254902,
+          "fgA": 1,
+          "fgRGB": [
+           0.13725490196078,
+           0.29411764705882,
+           0.87843137254902
+          ],
+          "bgG": 0.007843137254902,
+          "pR": 0.76470588235294,
+          "pG": 0.69803921568627,
+          "pB": 0.65098039215686,
+          "pA": 1,
+          "pRGB": [
+           0.76470588235294,
+           0.69803921568627,
+           0.65098039215686
+          ],
+          "bgB": 0.007843137254902,
+          "bgA": 1,
+          "bgRGB": [
+           0.007843137254902,
+           0.007843137254902,
+           0.007843137254902
+          ],
+          "bgR": 0.007843137254902,
+          "fgR": 0.13725490196078,
+          "fgG": 0.29411764705882
+         },
+         "pURL": "type2t.png",
+         "pHex": "C3B2A6FF",
+         "tx": -0.33,
+         "ty": 0
+        },
+        "patch2": {
+         "bgURL": "",
+         "fgURL": "",
+         "bgHex": "020202ff",
+         "fgHex": "D6020DFF",
+         "cached": {
+          "fgB": 0.050980392156863,
+          "fgA": 1,
+          "fgRGB": [
+           0.83921568627451,
+           0.007843137254902,
+           0.050980392156863
+          ],
+          "bgG": 0.007843137254902,
+          "pR": 0.76862745098039,
+          "pG": 0.40392156862745,
+          "pB": 0.96078431372549,
+          "pA": 1,
+          "pRGB": [
+           0.76862745098039,
+           0.40392156862745,
+           0.96078431372549
+          ],
+          "bgB": 0.007843137254902,
+          "bgA": 1,
+          "bgRGB": [
+           0.007843137254902,
+           0.007843137254902,
+           0.007843137254902
+          ],
+          "bgR": 0.007843137254902,
+          "fgR": 0.83921568627451,
+          "fgG": 0.007843137254902
+         },
+         "pURL": "type2t.png",
+         "pHex": "C467F5FF",
+         "tx": 0.33,
+         "ty": 0
+        },
+        "patch3": {
+         "bgURL": "",
+         "fgURL": "",
+         "bgHex": "020202ff",
+         "pHex": "45E2F4FF",
+         "cached": {
+          "fgB": 0.29411764705882,
+          "fgA": 1,
+          "fgRGB": [
+           0.98823529411765,
+           0.3843137254902,
+           0.29411764705882
+          ],
+          "bgG": 0.007843137254902,
+          "pR": 0.27058823529412,
+          "pG": 0.88627450980392,
+          "pB": 0.95686274509804,
+          "pA": 1,
+          "pRGB": [
+           0.27058823529412,
+           0.88627450980392,
+           0.95686274509804
+          ],
+          "bgB": 0.007843137254902,
+          "bgA": 1,
+          "bgRGB": [
+           0.007843137254902,
+           0.007843137254902,
+           0.007843137254902
+          ],
+          "bgR": 0.007843137254902,
+          "fgR": 0.98823529411765,
+          "fgG": 0.3843137254902
+         },
+         "pURL": "type2t.png",
+         "sx": 2,
+         "fgHex": "FC624BFF",
+         "tx": 0,
+         "ty": 0.83
+        }
+       },
+       "face": {
+        "eye": {
+         "lookAtMouse": true,
+         "fgHex": "ffffffff",
+         "wMul": 0.88306088463055,
+         "shape": 4,
+         "hMul": 1.2090423869993,
+         "bgHex": "000000ff"
+        },
+        "mouth": {
+         "lowerLipScale": 0.12866137742622,
+         "backdropHex": "00000099",
+         "upperLipShape": 4,
+         "lowerLipShape": 3,
+         "lipHex": "cc5555ff",
+         "wMul": 0.69667140136419,
+         "upperLipScale": 0.14094354589596,
+         "hMul": 0.9622416901809,
+         "shape": 14
+        },
+        "brow": {
+         "bgHex": "E60871FF",
+         "bend": 7,
+         "wMul": 1.1395347864616,
+         "hMul": 1.1793289717655,
+         "shape": 4
+        },
+        "teeth": {
+         "stickOut": false,
+         "bgHex": "000000ff",
+         "fgHex": "eeeeeeff",
+         "wMul": 1.3260522849106,
+         "shape": 0,
+         "hMul": 1.6210900777142
+        },
+        "positioners": {
+         "eye": {
+          "x": 0.38093551825175,
+          "r": 0,
+          "y": 0.43642220950371
+         },
+         "brow": {
+          "y": 0.28755580685197
+         },
+         "mouth": {
+          "y": 0.72034394284841
+         },
+         "nose": {
+          "y": 0.57379404895698
+         }
+        },
+        "pupil": {
+         "bgHex": "000000ff",
+         "fgHex": "",
+         "wMul": 0.49922047613869,
+         "hMul": 0.63343168066918,
+         "shape": 4
+        },
+        "nose": {
+         "bgHex": "000000ff",
+         "fgHex": "09D0FAFF",
+         "wMul": 1.6228194895304,
+         "hMul": 2.9635044801339,
+         "shape": 15
+        }
+       }
+      },
+      "shape8URL": "shapes12.png",
+      "j": {
+       "limits": {
+        "low": -0.78539816339745,
+        "up": 0.78539816339745
+       },
+       "type": "revolute"
+      },
+      "dims": {
+       "sx": 1.244296281077,
+       "sy": -1.244296281077,
+       "w": 100,
+       "h": 180,
+       "w2": 4
+      },
+      "behaviors": [
+       {
+        "angle": -12.88445524911,
+        "name": "KEEP_ANGLE"
+       }
+      ],
+      "shape": "shape8"
+     },
+     "ruarm": {
+      "appearance": {
+       "connected-hair": {
+        "endNode": "rhand",
+        "main": {
+         "pURL": "type2t.png",
+         "fgURL": "",
+         "bgHex": "E60871FF",
+         "pHex": "ffff00ff",
+         "fgHex": "",
+         "dir": 1,
+         "bgURL": "hair4.png"
+        },
+        "zOffset": 403
+       },
+       "connected-skin": {
+        "endNode": "rhand",
+        "main": {
+         "pURL": "type5.png",
+         "fgURL": "leg5-mask.png",
+         "bgHex": "020202ff",
+         "fgHex": "C1E233FF",
+         "pHex": "517BB1FF",
+         "wmul": 0.37220673695611,
+         "dir": 1,
+         "bgURL": "leg5.png"
+        },
+        "zOffset": 402
+       }
+      },
+      "dims": {
+       "w": 40,
+       "h": 482.7194462542,
+       "w2": 4
+      },
+      "shape": "capsule",
+      "j": {
+       "limits": {
+        "low": -3.1415926535898,
+        "up": 0
+       },
+       "type": "revolute"
+      }
+     },
+     "llarm": {
+      "dims": {
+       "w": 40,
+       "h": 482.7194462542,
+       "w2": 4
+      },
+      "shape": "capsule",
+      "j": {
+       "limits": [],
+       "type": "revolute"
+      }
+     },
+     "rlarm": {
+      "dims": {
+       "w": 40,
+       "h": 482.7194462542,
+       "w2": 4
+      },
+      "shape": "capsule",
+      "j": {
+       "limits": [],
+       "type": "revolute"
+      }
+     },
+     "lhand": {
+      "appearance": {
+       "skin": {
+        "zOffset": 500,
+        "main": {
+         "pURL": "type1.png",
+         "fgURL": "-mask.png",
+         "bgHex": "000000ff",
+         "pHex": "2712B2FF",
+         "fgHex": "05F41DFF",
+         "dir": -1,
+         "bgURL": ".png"
+        }
+       }
+      },
+      "shape8URL": "feet7xr.png",
+      "j": {
+       "limits": {
+        "low": -0.39269908169872,
+        "up": 0.39269908169872
+       },
+       "type": "revolute"
+      },
+      "dims": {
+       "sy": 1.509110396532,
+       "w": 40,
+       "h": 40,
+       "sx": 1.509110396532
+      },
+      "shape": "shape8"
+     },
+     "rhand": {
+      "appearance": {
+       "skin": {
+        "zOffset": 500,
+        "main": {
+         "pURL": "type1.png",
+         "fgURL": "-mask.png",
+         "bgHex": "000000ff",
+         "pHex": "2712B2FF",
+         "fgHex": "05F41DFF",
+         "bgURL": ".png"
+        }
+       }
+      },
+      "shape8URL": "feet7xr.png",
+      "j": {
+       "limits": {
+        "low": -0.39269908169872,
+        "up": 0.39269908169872
+       },
+       "type": "revolute"
+      },
+      "dims": {
+       "sy": 1.509110396532,
+       "w": 40,
+       "h": 40,
+       "sx": -1.509110396532
+      },
+      "shape": "shape8"
+     },
+     "lear": {
+      "appearance": {
+       "skin": {
+        "zOffset": 190,
+        "main": {
+         "pURL": "type8.png",
+         "fgURL": "-mask.png",
+         "bgHex": "000000ff",
+         "pHex": "547EC9FF",
+         "fgHex": "19946BFF",
+         "bgURL": ".png"
+        }
+       }
+      },
+      "stanceAngle": -0.94247779607694,
+      "j": {
+       "limits": {
+        "low": -0.19634954084936,
+        "up": 0.19634954084936
+       },
+       "type": "revolute"
+      },
+      "dims": {
+       "sy": 0.83534520341922,
+       "w": 100,
+       "h": 300,
+       "sx": -1.2756151561795
+      },
+      "shape": "shape8",
+      "shape8URL": "earx4r.png"
+     },
+     "rear": {
+      "appearance": {
+       "skin": {
+        "zOffset": 190,
+        "main": {
+         "pURL": "type8.png",
+         "fgURL": "-mask.png",
+         "bgHex": "000000ff",
+         "pHex": "547EC9FF",
+         "fgHex": "19946BFF",
+         "bgURL": ".png"
+        }
+       }
+      },
+      "stanceAngle": 0.94247779607694,
+      "j": {
+       "limits": {
+        "low": -0.19634954084936,
+        "up": 0.19634954084936
+       },
+       "type": "revolute"
+      },
+      "dims": {
+       "sy": 0.83534520341922,
+       "w": 100,
+       "h": 300,
+       "sx": 1.2756151561795
+      },
+      "shape": "shape8",
+      "shape8URL": "earx4r.png"
+     },
+     "nose-segment-template": {
+      "dims": {
+       "w": 40,
+       "h": 40,
+       "w2": 4
+      },
+      "shape": "capsule",
+      "j": {
+       "limits": {
+        "low": -0.098174770424681,
+        "up": 0.098174770424681
+       },
+       "type": "revolute"
+      }
+     },
+     "torso1": {
+      "appearance": {
+       "connected-skin": {
+        "endNode": "head",
+        "main": {
+         "pURL": "type5.png",
+         "fgURL": "leg5-mask.png",
+         "bgHex": "020202ff",
+         "pHex": "127D0DFF",
+         "fgHex": "EF46C8FF",
+         "bgURL": "leg5.png"
+        },
+        "zOffset": 100
+       },
+       "connected-hair": {
+        "endNode": "head",
+        "main": {
+         "pURL": "type2t.png",
+         "fgURL": "",
+         "bgHex": "E60871FF",
+         "pHex": "ffff00ff",
+         "fgHex": "",
+         "dir": 1,
+         "bgURL": "hair1.png"
+        },
+        "zOffset": 101
+       },
+       "face": {
+        "eye": {
+         "lookAtMouse": true,
+         "fgHex": "ffffffff",
+         "wMul": 0.88306088463055,
+         "hMul": 1.2090423869993,
+         "shape": 4,
+         "bgHex": "000000ff"
+        },
+        "mouth": {
+         "lowerLipScale": 0.12866137742622,
+         "backdropHex": "00000099",
+         "upperLipShape": 4,
+         "lowerLipShape": 3,
+         "lipHex": "cc5555ff",
+         "wMul": 0.69667140136419,
+         "upperLipScale": 0.14094354589596,
+         "shape": 14,
+         "hMul": 0.9622416901809
+        },
+        "brow": {
+         "bgHex": "E60871FF",
+         "bend": 7,
+         "wMul": 1.1395347864616,
+         "hMul": 1.1793289717655,
+         "shape": 4
+        },
+        "teeth": {
+         "stickOut": false,
+         "bgHex": "000000ff",
+         "fgHex": "eeeeeeff",
+         "wMul": 1.3260522849106,
+         "shape": 0,
+         "hMul": 1.6210900777142
+        },
+        "positioners": {
+         "eye": {
+          "r": 0,
+          "x": 0.38093551825175,
+          "y": 0.43642220950371
+         },
+         "nose": {
+          "y": 0.57379404895698
+         },
+         "mouth": {
+          "y": 0.72034394284841
+         },
+         "brow": {
+          "y": 0.28755580685197
+         }
+        },
+        "pupil": {
+         "bgHex": "000000ff",
+         "fgHex": "",
+         "wMul": 0.49922047613869,
+         "hMul": 0.63343168066918,
+         "shape": 4
+        },
+        "nose": {
+         "bgHex": "000000ff",
+         "fgHex": "09D0FAFF",
+         "wMul": 1.6228194895304,
+         "hMul": 2.9635044801339,
+         "shape": 15
+        }
+       },
+       "haircut": {
+        "width": 241.98528827547,
+        "main": {
+         "pURL": "type2t.png",
+         "fgURL": "",
+         "bgHex": "E60871FF",
+         "pHex": "BE8D1EFF",
+         "fgHex": "EB06ADFF",
+         "bgURL": "hair2.png"
+        },
+        "startIndex": 6,
+        "endIndex": 3
+       },
+       "skin": {
+        "main": {
+         "pURL": "type3_.png",
+         "fgURL": "-mask.png",
+         "bgHex": "000000ff",
+         "pHex": "5CC42DFF",
+         "fgHex": "F392C5FF",
+         "bgURL": ".png"
+        },
+        "zOffset": 192,
+        "patch1": {
+         "pURL": "type3_.png",
+         "fgURL": "",
+         "bgHex": "000000ff",
+         "fgHex": "F392C5FF",
+         "pHex": "5CC42DFF",
+         "bgURL": "",
+         "tx": -0.33,
+         "ty": 0
+        },
+        "patch2": {
+         "pURL": "type3_.png",
+         "fgURL": "",
+         "bgHex": "000000ff",
+         "fgHex": "F392C5FF",
+         "pHex": "5CC42DFF",
+         "bgURL": "",
+         "tx": 0.33,
+         "ty": 0
+        },
+        "patch3": {
+         "bgURL": "",
+         "fgURL": "",
+         "bgHex": "020202ff",
+         "pHex": "D4A0D3FF",
+         "cached": {
+          "fgB": 0.047058823529412,
+          "fgA": 1,
+          "fgRGB": [
+           0.023529411764706,
+           0.83921568627451,
+           0.047058823529412
+          ],
+          "pRGB": [
+           0.83137254901961,
+           0.62745098039216,
+           0.82745098039216
+          ],
+          "pR": 0.83137254901961,
+          "pG": 0.62745098039216,
+          "pB": 0.82745098039216,
+          "bgR": 0.007843137254902,
+          "bgG": 0.007843137254902,
+          "bgB": 0.007843137254902,
+          "bgA": 1,
+          "bgRGB": [
+           0.007843137254902,
+           0.007843137254902,
+           0.007843137254902
+          ],
+          "pA": 1,
+          "fgR": 0.023529411764706,
+          "fgG": 0.83921568627451
+         },
+         "pURL": "type2t.png",
+         "sx": 2,
+         "fgHex": "06D60CFF",
+         "tx": 0,
+         "ty": 0.83
+        }
+       },
+       "bodyhair": {
+        "main": {
+         "pURL": "type7.png",
+         "fgURL": "borsthaar4-mask.png",
+         "bgHex": "E60871FF",
+         "pHex": "F7A075FF",
+         "fgHex": "A61ABDFF",
+         "bgURL": "borsthaar4.png"
+        }
+       }
+      },
+      "shape8URL": "shapes11.png",
+      "j": {
+       "limits": {
+        "low": -0.39269908169872,
+        "up": 0.39269908169872
+       },
+       "type": "revolute"
+      },
+      "shape": "shape8",
+      "spineBand": [
+       1,
+       2
+      ],
+      "behaviors": [
+       {
+        "angle": 0,
+        "name": "KEEP_ANGLE"
+       }
+      ],
+      "dims": {
+       "sx": 1.6450119172536,
+       "sy": 1.6450119172536,
+       "w": 280,
+       "h": 300,
+       "w2": 5
+      }
+     },
+     "nose-single-template": {
+      "appearance": {
+       "skin": {
+        "zOffset": 350,
+        "main": {
+         "pURL": "type2t.png",
+         "fgURL": "shapeA2-mask.png",
+         "bgHex": "020202ff",
+         "pHex": "C014A9FF",
+         "fgHex": "CBB297FF",
+         "bgURL": "shapeA2.png",
+         "cached": {
+          "fgB": 0.5921568627451,
+          "fgA": 1,
+          "fgRGB": [
+           0.79607843137255,
+           0.69803921568627,
+           0.5921568627451
+          ],
+          "bgG": 0.007843137254902,
+          "pR": 0.75294117647059,
+          "pG": 0.07843137254902,
+          "pB": 0.66274509803922,
+          "pA": 1,
+          "pRGB": [
+           0.75294117647059,
+           0.07843137254902,
+           0.66274509803922
+          ],
+          "bgB": 0.007843137254902,
+          "bgA": 1,
+          "bgRGB": [
+           0.007843137254902,
+           0.007843137254902,
+           0.007843137254902
+          ],
+          "bgR": 0.007843137254902,
+          "fgR": 0.79607843137255,
+          "fgG": 0.69803921568627
+         }
+        }
+       }
+      },
+      "shape8URL": "shapeA2.png",
+      "j": {
+       "limits": {
+        "low": -0.098174770424681,
+        "up": 0.098174770424681
+       },
+       "type": "revolute"
+      },
+      "dims": {
+       "sx": 1,
+       "sy": 1,
+       "w": 40,
+       "h": 40,
+       "w2": 4
+      },
+      "shape": "shape8"
+     },
+     "torso-segment-template": {
+      "appearance": {
+       "bodyhair": {
+        "main": {
+         "pURL": "type2t.png",
+         "fgURL": "borsthaar4-mask.png",
+         "bgHex": "020202ff",
+         "pHex": "51145AFF",
+         "fgHex": "2E41EBFF",
+         "bgURL": "borsthaar4.png",
+         "cached": {
+          "fgB": 0.92156862745098,
+          "fgA": 1,
+          "fgRGB": [
+           0.18039215686275,
+           0.25490196078431,
+           0.92156862745098
+          ],
+          "bgG": 0.007843137254902,
+          "pR": 0.31764705882353,
+          "pG": 0.07843137254902,
+          "pB": 0.35294117647059,
+          "pA": 1,
+          "pRGB": [
+           0.31764705882353,
+           0.07843137254902,
+           0.35294117647059
+          ],
+          "bgB": 0.007843137254902,
+          "bgA": 1,
+          "bgRGB": [
+           0.007843137254902,
+           0.007843137254902,
+           0.007843137254902
+          ],
+          "bgR": 0.007843137254902,
+          "fgR": 0.18039215686275,
+          "fgG": 0.25490196078431
+         }
+        }
+       },
+       "connected-hair": {
+        "endNode": "head",
+        "main": {
+         "pURL": "type2t.png",
+         "fgURL": "",
+         "bgHex": "020202ff",
+         "fgHex": "",
+         "pHex": "ffff00ff",
+         "dir": 1,
+         "bgURL": "hair10.png",
+         "cached": {
+          "fgB": 1,
+          "fgA": 1,
+          "fgRGB": [
+           1,
+           1,
+           1
+          ],
+          "bgG": 0.007843137254902,
+          "pR": 1,
+          "pG": 1,
+          "pB": 0,
+          "pA": 1,
+          "pRGB": [
+           1,
+           1,
+           0
+          ],
+          "bgB": 0.007843137254902,
+          "bgA": 1,
+          "bgRGB": [
+           0.007843137254902,
+           0.007843137254902,
+           0.007843137254902
+          ],
+          "bgR": 0.007843137254902,
+          "fgR": 1,
+          "fgG": 1
+         }
+        },
+        "zOffset": 101
+       },
+       "face": {
+        "eye": {
+         "lookAtMouse": true,
+         "fgHex": "ffffffff",
+         "wMul": 1,
+         "shape": 1,
+         "hMul": 1,
+         "bgHex": "000000ff"
+        },
+        "mouth": {
+         "lowerLipScale": 0.25,
+         "backdropHex": "00000099",
+         "upperLipShape": 1,
+         "lowerLipShape": 1,
+         "lipHex": "cc5555ff",
+         "wMul": 1,
+         "upperLipScale": 0.15,
+         "hMul": 1,
+         "shape": 2
+        },
+        "brow": {
+         "bgHex": "000000ff",
+         "bend": 1,
+         "wMul": 1,
+         "hMul": 1,
+         "shape": 1
+        },
+        "teeth": {
+         "stickOut": false,
+         "bgHex": "000000ff",
+         "fgHex": "eeeeeeff",
+         "wMul": 1,
+         "shape": 0,
+         "hMul": 1
+        },
+        "positioners": {
+         "eye": {
+          "x": 0.2,
+          "r": 0,
+          "y": 0.5
+         },
+         "brow": {
+          "y": 0.3
+         },
+         "mouth": {
+          "y": 0.7
+         },
+         "nose": {
+          "y": 0.5
+         }
+        },
+        "pupil": {
+         "bgHex": "000000ff",
+         "fgHex": "",
+         "wMul": 0.5,
+         "hMul": 0.5,
+         "shape": 1
+        },
+        "nose": {
+         "bgHex": "000000ff",
+         "fgHex": "ffffffff",
+         "wMul": 1,
+         "hMul": 1,
+         "shape": 0
+        }
+       },
+       "connected-skin": {
+        "endNode": "head",
+        "main": {
+         "pURL": "type2t.png",
+         "fgURL": "leg5-mask.png",
+         "bgHex": "020202ff",
+         "pHex": "911D0EFF",
+         "fgHex": "56BC6DFF",
+         "bgURL": "leg5.png",
+         "cached": {
+          "fgB": 0.42745098039216,
+          "fgA": 1,
+          "fgRGB": [
+           0.33725490196078,
+           0.73725490196078,
+           0.42745098039216
+          ],
+          "bgG": 0.007843137254902,
+          "pR": 0.56862745098039,
+          "pG": 0.11372549019608,
+          "pB": 0.054901960784314,
+          "pA": 1,
+          "pRGB": [
+           0.56862745098039,
+           0.11372549019608,
+           0.054901960784314
+          ],
+          "bgB": 0.007843137254902,
+          "bgA": 1,
+          "bgRGB": [
+           0.007843137254902,
+           0.007843137254902,
+           0.007843137254902
+          ],
+          "bgR": 0.007843137254902,
+          "fgR": 0.33725490196078,
+          "fgG": 0.73725490196078
+         }
+        },
+        "zOffset": 100
+       },
+       "skin": {
+        "main": {
+         "pURL": "type2t.png",
+         "fgURL": "-mask.png",
+         "bgHex": "020202ff",
+         "pHex": "F9465AFF",
+         "fgHex": "F9B42DFF",
+         "bgURL": ".png",
+         "cached": {
+          "fgB": 0.17647058823529,
+          "fgA": 1,
+          "fgRGB": [
+           0.97647058823529,
+           0.70588235294118,
+           0.17647058823529
+          ],
+          "bgG": 0.007843137254902,
+          "pR": 0.97647058823529,
+          "pG": 0.27450980392157,
+          "pB": 0.35294117647059,
+          "pA": 1,
+          "pRGB": [
+           0.97647058823529,
+           0.27450980392157,
+           0.35294117647059
+          ],
+          "bgB": 0.007843137254902,
+          "bgA": 1,
+          "bgRGB": [
+           0.007843137254902,
+           0.007843137254902,
+           0.007843137254902
+          ],
+          "bgR": 0.007843137254902,
+          "fgR": 0.97647058823529,
+          "fgG": 0.70588235294118
+         }
+        },
+        "zOffset": 200,
+        "patch1": {
+         "bgURL": "patch2.png",
+         "fgURL": "patch2-mask.png",
+         "bgHex": "020202ff",
+         "fgHex": "78AD93FF",
+         "cached": {
+          "fgB": 0.57647058823529,
+          "fgA": 1,
+          "fgRGB": [
+           0.47058823529412,
+           0.67843137254902,
+           0.57647058823529
+          ],
+          "bgG": 0.007843137254902,
+          "pR": 0.8,
+          "pG": 0.45098039215686,
+          "pB": 0.18039215686275,
+          "pA": 1,
+          "pRGB": [
+           0.8,
+           0.45098039215686,
+           0.18039215686275
+          ],
+          "bgB": 0.007843137254902,
+          "bgA": 1,
+          "bgRGB": [
+           0.007843137254902,
+           0.007843137254902,
+           0.007843137254902
+          ],
+          "bgR": 0.007843137254902,
+          "fgR": 0.47058823529412,
+          "fgG": 0.67843137254902
+         },
+         "pURL": "type2t.png",
+         "pHex": "CC732EFF",
+         "tx": -0.33,
+         "ty": 0
+        },
+        "patch2": {
+         "bgURL": "patch1.png",
+         "fgURL": "patch1-mask.png",
+         "bgHex": "020202ff",
+         "fgHex": "A83698FF",
+         "cached": {
+          "fgB": 0.59607843137255,
+          "fgA": 1,
+          "fgRGB": [
+           0.65882352941176,
+           0.21176470588235,
+           0.59607843137255
+          ],
+          "bgG": 0.007843137254902,
+          "pR": 0.14117647058824,
+          "pG": 0.83137254901961,
+          "pB": 0.5843137254902,
+          "pA": 1,
+          "pRGB": [
+           0.14117647058824,
+           0.83137254901961,
+           0.5843137254902
+          ],
+          "bgB": 0.007843137254902,
+          "bgA": 1,
+          "bgRGB": [
+           0.007843137254902,
+           0.007843137254902,
+           0.007843137254902
+          ],
+          "bgR": 0.007843137254902,
+          "fgR": 0.65882352941176,
+          "fgG": 0.21176470588235
+         },
+         "pURL": "type2t.png",
+         "pHex": "24D495FF",
+         "tx": 0.33,
+         "ty": 0
+        },
+        "patch3": {
+         "bgURL": "patch1.png",
+         "fgURL": "patch1-mask.png",
+         "bgHex": "020202ff",
+         "pHex": "D4A0D3FF",
+         "cached": {
+          "fgB": 0.047058823529412,
+          "fgA": 1,
+          "fgRGB": [
+           0.023529411764706,
+           0.83921568627451,
+           0.047058823529412
+          ],
+          "bgG": 0.007843137254902,
+          "pR": 0.83137254901961,
+          "pG": 0.62745098039216,
+          "pB": 0.82745098039216,
+          "pA": 1,
+          "pRGB": [
+           0.83137254901961,
+           0.62745098039216,
+           0.82745098039216
+          ],
+          "bgB": 0.007843137254902,
+          "bgA": 1,
+          "bgRGB": [
+           0.007843137254902,
+           0.007843137254902,
+           0.007843137254902
+          ],
+          "bgR": 0.007843137254902,
+          "fgR": 0.023529411764706,
+          "fgG": 0.83921568627451
+         },
+         "pURL": "type2t.png",
+         "sx": 2,
+         "fgHex": "06D60CFF",
+         "tx": 0,
+         "ty": 0.83
+        }
+       },
+       "haircut": {
+        "main": {
+         "pURL": "type2t.png",
+         "fgURL": "hair7-mask.png",
+         "bgHex": "020202ff",
+         "pHex": "BE8D1EFF",
+         "fgHex": "EB06ADFF",
+         "bgURL": "hair7.png",
+         "cached": {
+          "fgB": 0.67843137254902,
+          "fgA": 1,
+          "fgRGB": [
+           0.92156862745098,
+           0.023529411764706,
+           0.67843137254902
+          ],
+          "bgG": 0.007843137254902,
+          "pR": 0.74509803921569,
+          "pG": 0.55294117647059,
+          "pB": 0.11764705882353,
+          "pA": 1,
+          "pRGB": [
+           0.74509803921569,
+           0.55294117647059,
+           0.11764705882353
+          ],
+          "bgB": 0.007843137254902,
+          "bgA": 1,
+          "bgRGB": [
+           0.007843137254902,
+           0.007843137254902,
+           0.007843137254902
+          ],
+          "bgR": 0.007843137254902,
+          "fgR": 0.92156862745098,
+          "fgG": 0.023529411764706
+         }
+        },
+        "startIndex": 6,
+        "endIndex": 3
+       }
+      },
+      "shape8URL": "shapeA1.png",
+      "j": {
+       "limits": {
+        "low": -0.39269908169872,
+        "up": 0.39269908169872
+       },
+       "type": "revolute"
+      },
+      "dims": {
+       "sx": 1,
+       "sy": 1,
+       "w": 280,
+       "h": 300,
+       "w2": 5
+      },
+      "behaviors": [
+       {
+        "angle": 0,
+        "name": "KEEP_ANGLE"
+       }
+      ],
+      "shape": "shape8"
+     },
+     "torso2": {
+      "appearance": {
+       "connected-skin": {
+        "endNode": "head",
+        "main": {
+         "pURL": "type2t.png",
+         "fgURL": "leg5-mask.png",
+         "bgHex": "020202ff",
+         "pHex": "911D0EFF",
+         "fgHex": "56BC6DFF",
+         "bgURL": "leg5.png",
+         "cached": {
+          "fgB": 0.42745098039216,
+          "fgA": 1,
+          "fgRGB": [
+           0.33725490196078,
+           0.73725490196078,
+           0.42745098039216
+          ],
+          "pRGB": [
+           0.56862745098039,
+           0.11372549019608,
+           0.054901960784314
+          ],
+          "pR": 0.56862745098039,
+          "pG": 0.11372549019608,
+          "pB": 0.054901960784314,
+          "pA": 1,
+          "bgG": 0.007843137254902,
+          "bgB": 0.007843137254902,
+          "bgA": 1,
+          "bgRGB": [
+           0.007843137254902,
+           0.007843137254902,
+           0.007843137254902
+          ],
+          "bgR": 0.007843137254902,
+          "fgR": 0.33725490196078,
+          "fgG": 0.73725490196078
+         }
+        },
+        "zOffset": 100
+       },
+       "connected-hair": {
+        "endNode": "head",
+        "main": {
+         "pURL": "type2t.png",
+         "fgURL": "",
+         "bgHex": "020202ff",
+         "pHex": "ffff00ff",
+         "fgHex": "",
+         "bgURL": "hair10.png",
+         "dir": 1,
+         "cached": {
+          "fgB": 1,
+          "fgA": 1,
+          "fgRGB": [
+           1,
+           1,
+           1
+          ],
+          "pRGB": [
+           1,
+           1,
+           0
+          ],
+          "pR": 1,
+          "pG": 1,
+          "pB": 0,
+          "pA": 1,
+          "bgG": 0.007843137254902,
+          "bgB": 0.007843137254902,
+          "bgA": 1,
+          "bgRGB": [
+           0.007843137254902,
+           0.007843137254902,
+           0.007843137254902
+          ],
+          "bgR": 0.007843137254902,
+          "fgR": 1,
+          "fgG": 1
+         }
+        },
+        "zOffset": 101
+       },
+       "face": {
+        "eye": {
+         "lookAtMouse": true,
+         "bgHex": "000000ff",
+         "fgHex": "ffffffff",
+         "hMul": 1,
+         "shape": 1,
+         "wMul": 1
+        },
+        "mouth": {
+         "lowerLipScale": 0.25,
+         "backdropHex": "00000099",
+         "upperLipShape": 1,
+         "lowerLipShape": 1,
+         "lipHex": "cc5555ff",
+         "wMul": 1,
+         "shape": 2,
+         "hMul": 1,
+         "upperLipScale": 0.15
+        },
+        "brow": {
+         "bgHex": "000000ff",
+         "bend": 1,
+         "shape": 1,
+         "hMul": 1,
+         "wMul": 1
+        },
+        "teeth": {
+         "stickOut": false,
+         "bgHex": "000000ff",
+         "fgHex": "eeeeeeff",
+         "hMul": 1,
+         "shape": 0,
+         "wMul": 1
+        },
+        "nose": {
+         "bgHex": "000000ff",
+         "fgHex": "ffffffff",
+         "shape": 0,
+         "hMul": 1,
+         "wMul": 1
+        },
+        "pupil": {
+         "bgHex": "000000ff",
+         "fgHex": "",
+         "shape": 1,
+         "hMul": 0.5,
+         "wMul": 0.5
+        },
+        "positioners": {
+         "eye": {
+          "r": 0,
+          "x": 0.2,
+          "y": 0.5
+         },
+         "nose": {
+          "y": 0.5
+         },
+         "mouth": {
+          "y": 0.7
+         },
+         "brow": {
+          "y": 0.3
+         }
+        }
+       },
+       "haircut": {
+        "main": {
+         "pURL": "type2t.png",
+         "fgURL": "hair7-mask.png",
+         "bgHex": "020202ff",
+         "pHex": "BE8D1EFF",
+         "fgHex": "EB06ADFF",
+         "bgURL": "hair7.png",
+         "cached": {
+          "fgB": 0.67843137254902,
+          "fgA": 1,
+          "fgRGB": [
+           0.92156862745098,
+           0.023529411764706,
+           0.67843137254902
+          ],
+          "pRGB": [
+           0.74509803921569,
+           0.55294117647059,
+           0.11764705882353
+          ],
+          "pR": 0.74509803921569,
+          "pG": 0.55294117647059,
+          "pB": 0.11764705882353,
+          "pA": 1,
+          "bgG": 0.007843137254902,
+          "bgB": 0.007843137254902,
+          "bgA": 1,
+          "bgRGB": [
+           0.007843137254902,
+           0.007843137254902,
+           0.007843137254902
+          ],
+          "bgR": 0.007843137254902,
+          "fgR": 0.92156862745098,
+          "fgG": 0.023529411764706
+         }
+        },
+        "startIndex": 6,
+        "endIndex": 3
+       },
+       "skin": {
+        "main": {
+         "pURL": "type2t.png",
+         "fgURL": "-mask.png",
+         "bgHex": "020202ff",
+         "pHex": "F9465AFF",
+         "fgHex": "F9B42DFF",
+         "bgURL": ".png",
+         "cached": {
+          "fgB": 0.17647058823529,
+          "fgA": 1,
+          "fgRGB": [
+           0.97647058823529,
+           0.70588235294118,
+           0.17647058823529
+          ],
+          "pRGB": [
+           0.97647058823529,
+           0.27450980392157,
+           0.35294117647059
+          ],
+          "pR": 0.97647058823529,
+          "pG": 0.27450980392157,
+          "pB": 0.35294117647059,
+          "pA": 1,
+          "bgG": 0.007843137254902,
+          "bgB": 0.007843137254902,
+          "bgA": 1,
+          "bgRGB": [
+           0.007843137254902,
+           0.007843137254902,
+           0.007843137254902
+          ],
+          "bgR": 0.007843137254902,
+          "fgR": 0.97647058823529,
+          "fgG": 0.70588235294118
+         }
+        },
+        "patch3": {
+         "bgURL": "patch1.png",
+         "fgURL": "patch1-mask.png",
+         "bgHex": "020202ff",
+         "pHex": "D4A0D3FF",
+         "cached": {
+          "fgB": 0.047058823529412,
+          "fgA": 1,
+          "fgRGB": [
+           0.023529411764706,
+           0.83921568627451,
+           0.047058823529412
+          ],
+          "pRGB": [
+           0.83137254901961,
+           0.62745098039216,
+           0.82745098039216
+          ],
+          "pR": 0.83137254901961,
+          "pG": 0.62745098039216,
+          "pB": 0.82745098039216,
+          "pA": 1,
+          "bgG": 0.007843137254902,
+          "bgB": 0.007843137254902,
+          "bgA": 1,
+          "bgRGB": [
+           0.007843137254902,
+           0.007843137254902,
+           0.007843137254902
+          ],
+          "bgR": 0.007843137254902,
+          "fgR": 0.023529411764706,
+          "fgG": 0.83921568627451
+         },
+         "pURL": "type2t.png",
+         "sx": 2,
+         "fgHex": "06D60CFF",
+         "tx": 0,
+         "ty": 0.83
+        },
+        "patch1": {
+         "bgURL": "patch2.png",
+         "fgURL": "patch2-mask.png",
+         "bgHex": "020202ff",
+         "fgHex": "78AD93FF",
+         "cached": {
+          "fgB": 0.57647058823529,
+          "fgA": 1,
+          "fgRGB": [
+           0.47058823529412,
+           0.67843137254902,
+           0.57647058823529
+          ],
+          "pRGB": [
+           0.8,
+           0.45098039215686,
+           0.18039215686275
+          ],
+          "pR": 0.8,
+          "pG": 0.45098039215686,
+          "pB": 0.18039215686275,
+          "pA": 1,
+          "bgG": 0.007843137254902,
+          "bgB": 0.007843137254902,
+          "bgA": 1,
+          "bgRGB": [
+           0.007843137254902,
+           0.007843137254902,
+           0.007843137254902
+          ],
+          "bgR": 0.007843137254902,
+          "fgR": 0.47058823529412,
+          "fgG": 0.67843137254902
+         },
+         "pURL": "type2t.png",
+         "pHex": "CC732EFF",
+         "tx": -0.33,
+         "ty": 0
+        },
+        "patch2": {
+         "bgURL": "patch1.png",
+         "fgURL": "patch1-mask.png",
+         "bgHex": "020202ff",
+         "fgHex": "A83698FF",
+         "cached": {
+          "fgB": 0.59607843137255,
+          "fgA": 1,
+          "fgRGB": [
+           0.65882352941176,
+           0.21176470588235,
+           0.59607843137255
+          ],
+          "pRGB": [
+           0.14117647058824,
+           0.83137254901961,
+           0.5843137254902
+          ],
+          "pR": 0.14117647058824,
+          "pG": 0.83137254901961,
+          "pB": 0.5843137254902,
+          "pA": 1,
+          "bgG": 0.007843137254902,
+          "bgB": 0.007843137254902,
+          "bgA": 1,
+          "bgRGB": [
+           0.007843137254902,
+           0.007843137254902,
+           0.007843137254902
+          ],
+          "bgR": 0.007843137254902,
+          "fgR": 0.65882352941176,
+          "fgG": 0.21176470588235
+         },
+         "pURL": "type2t.png",
+         "pHex": "24D495FF",
+         "tx": 0.33,
+         "ty": 0
+        },
+        "zOffset": 192
+       },
+       "bodyhair": {
+        "main": {
+         "pURL": "type2t.png",
+         "fgURL": "borsthaar4-mask.png",
+         "bgHex": "020202ff",
+         "pHex": "51145AFF",
+         "fgHex": "2E41EBFF",
+         "bgURL": "borsthaar4.png",
+         "cached": {
+          "fgB": 0.92156862745098,
+          "fgA": 1,
+          "fgRGB": [
+           0.18039215686275,
+           0.25490196078431,
+           0.92156862745098
+          ],
+          "pRGB": [
+           0.31764705882353,
+           0.07843137254902,
+           0.35294117647059
+          ],
+          "pR": 0.31764705882353,
+          "pG": 0.07843137254902,
+          "pB": 0.35294117647059,
+          "pA": 1,
+          "bgG": 0.007843137254902,
+          "bgB": 0.007843137254902,
+          "bgA": 1,
+          "bgRGB": [
+           0.007843137254902,
+           0.007843137254902,
+           0.007843137254902
+          ],
+          "bgR": 0.007843137254902,
+          "fgR": 0.18039215686275,
+          "fgG": 0.25490196078431
+         }
+        }
+       }
+      },
+      "shape8URL": "shapes11.png",
+      "j": {
+       "type": "revolute",
+       "limits": {
+        "low": -0.78539816339745,
+        "up": 0.78539816339745
+       }
+      },
+      "shape": "shape8",
+      "spineBand": [
+       2,
+       2
+      ],
+      "behaviors": [],
+      "dims": {
+       "sx": 1.6450119172536,
+       "sy": 1.6450119172536,
+       "w": 280,
+       "h": 300,
+       "w2": 5
+      }
+     },
+     "luleg": {
+      "appearance": {
+       "connected-hair": {
+        "endNode": "lfoot",
+        "main": {
+         "pURL": "type2t.png",
+         "fgURL": "",
+         "bgHex": "E60871FF",
+         "pHex": "ffff00ff",
+         "fgHex": "",
+         "dir": -1,
+         "bgURL": "hair1.png"
+        },
+        "zOffset": 301
+       },
+       "connected-skin": {
+        "endNode": "lfoot",
+        "main": {
+         "pURL": "type5.png",
+         "fgURL": "leg5-mask.png",
+         "bgHex": "020202ff",
+         "fgHex": "EF46C8FF",
+         "pHex": "127D0DFF",
+         "wmul": 0.29728586997406,
+         "dir": -1,
+         "bgURL": "leg5.png"
+        },
+        "zOffset": 300
+       }
+      },
+      "j": {
+       "limits": {
+        "low": 0,
+        "up": 1.5707963267949
+       },
+       "type": "revolute"
+      },
+      "dims": {
+       "w": 80,
+       "h": 317.09287353277,
+       "w2": 4
+      },
+      "shape": "capsule",
+      "behaviors": [
+       {
+        "angle": 0,
+        "name": "KEEP_ANGLE",
+        "kp": 40
+       }
+      ]
+     },
+     "ruleg": {
+      "appearance": {
+       "connected-hair": {
+        "endNode": "rfoot",
+        "main": {
+         "pURL": "type2t.png",
+         "fgURL": "",
+         "bgHex": "E60871FF",
+         "pHex": "ffff00ff",
+         "fgHex": "",
+         "dir": 1,
+         "bgURL": "hair1.png"
+        },
+        "zOffset": 301
+       },
+       "connected-skin": {
+        "endNode": "rfoot",
+        "main": {
+         "pURL": "type5.png",
+         "fgURL": "leg5-mask.png",
+         "bgHex": "020202ff",
+         "fgHex": "EF46C8FF",
+         "pHex": "127D0DFF",
+         "wmul": 0.29728586997406,
+         "dir": 1,
+         "bgURL": "leg5.png"
+        },
+        "zOffset": 300
+       }
+      },
+      "j": {
+       "limits": {
+        "low": -1.5707963267949,
+        "up": 0
+       },
+       "type": "revolute"
+      },
+      "dims": {
+       "w": 80,
+       "h": 317.09287353277,
+       "w2": 4
+      },
+      "shape": "capsule",
+      "behaviors": [
+       {
+        "angle": 0,
+        "name": "KEEP_ANGLE",
+        "kp": 40
+       }
+      ]
+     },
+     "torso3": {
+      "appearance": {
+       "connected-skin": {
+        "endNode": "head",
+        "main": {
+         "pURL": "type2t.png",
+         "fgURL": "leg5-mask.png",
+         "bgHex": "020202ff",
+         "pHex": "911D0EFF",
+         "fgHex": "56BC6DFF",
+         "bgURL": "leg5.png",
+         "cached": {
+          "fgB": 0.42745098039216,
+          "fgA": 1,
+          "fgRGB": [
+           0.33725490196078,
+           0.73725490196078,
+           0.42745098039216
+          ],
+          "pRGB": [
+           0.56862745098039,
+           0.11372549019608,
+           0.054901960784314
+          ],
+          "pR": 0.56862745098039,
+          "pG": 0.11372549019608,
+          "pB": 0.054901960784314,
+          "pA": 1,
+          "bgG": 0.007843137254902,
+          "bgB": 0.007843137254902,
+          "bgA": 1,
+          "bgRGB": [
+           0.007843137254902,
+           0.007843137254902,
+           0.007843137254902
+          ],
+          "bgR": 0.007843137254902,
+          "fgR": 0.33725490196078,
+          "fgG": 0.73725490196078
+         }
+        },
+        "zOffset": 100
+       },
+       "connected-hair": {
+        "endNode": "head",
+        "main": {
+         "pURL": "type2t.png",
+         "fgURL": "",
+         "bgHex": "020202ff",
+         "pHex": "ffff00ff",
+         "fgHex": "",
+         "bgURL": "hair10.png",
+         "dir": 1,
+         "cached": {
+          "fgB": 1,
+          "fgA": 1,
+          "fgRGB": [
+           1,
+           1,
+           1
+          ],
+          "pRGB": [
+           1,
+           1,
+           0
+          ],
+          "pR": 1,
+          "pG": 1,
+          "pB": 0,
+          "pA": 1,
+          "bgG": 0.007843137254902,
+          "bgB": 0.007843137254902,
+          "bgA": 1,
+          "bgRGB": [
+           0.007843137254902,
+           0.007843137254902,
+           0.007843137254902
+          ],
+          "bgR": 0.007843137254902,
+          "fgR": 1,
+          "fgG": 1
+         }
+        },
+        "zOffset": 101
+       },
+       "face": {
+        "eye": {
+         "lookAtMouse": true,
+         "bgHex": "000000ff",
+         "fgHex": "ffffffff",
+         "hMul": 1,
+         "shape": 1,
+         "wMul": 1
+        },
+        "mouth": {
+         "lowerLipScale": 0.25,
+         "backdropHex": "00000099",
+         "upperLipShape": 1,
+         "lowerLipShape": 1,
+         "lipHex": "cc5555ff",
+         "wMul": 1,
+         "shape": 2,
+         "hMul": 1,
+         "upperLipScale": 0.15
+        },
+        "brow": {
+         "bgHex": "000000ff",
+         "bend": 1,
+         "shape": 1,
+         "hMul": 1,
+         "wMul": 1
+        },
+        "teeth": {
+         "stickOut": false,
+         "bgHex": "000000ff",
+         "fgHex": "eeeeeeff",
+         "hMul": 1,
+         "shape": 0,
+         "wMul": 1
+        },
+        "nose": {
+         "bgHex": "000000ff",
+         "fgHex": "ffffffff",
+         "shape": 0,
+         "hMul": 1,
+         "wMul": 1
+        },
+        "pupil": {
+         "bgHex": "000000ff",
+         "fgHex": "",
+         "shape": 1,
+         "hMul": 0.5,
+         "wMul": 0.5
+        },
+        "positioners": {
+         "eye": {
+          "r": 0,
+          "x": 0.2,
+          "y": 0.5
+         },
+         "nose": {
+          "y": 0.5
+         },
+         "mouth": {
+          "y": 0.7
+         },
+         "brow": {
+          "y": 0.3
+         }
+        }
+       },
+       "haircut": {
+        "main": {
+         "pURL": "type2t.png",
+         "fgURL": "hair7-mask.png",
+         "bgHex": "020202ff",
+         "pHex": "BE8D1EFF",
+         "fgHex": "EB06ADFF",
+         "bgURL": "hair7.png",
+         "cached": {
+          "fgB": 0.67843137254902,
+          "fgA": 1,
+          "fgRGB": [
+           0.92156862745098,
+           0.023529411764706,
+           0.67843137254902
+          ],
+          "pRGB": [
+           0.74509803921569,
+           0.55294117647059,
+           0.11764705882353
+          ],
+          "pR": 0.74509803921569,
+          "pG": 0.55294117647059,
+          "pB": 0.11764705882353,
+          "pA": 1,
+          "bgG": 0.007843137254902,
+          "bgB": 0.007843137254902,
+          "bgA": 1,
+          "bgRGB": [
+           0.007843137254902,
+           0.007843137254902,
+           0.007843137254902
+          ],
+          "bgR": 0.007843137254902,
+          "fgR": 0.92156862745098,
+          "fgG": 0.023529411764706
+         }
+        },
+        "startIndex": 6,
+        "endIndex": 3
+       },
+       "skin": {
+        "main": {
+         "pURL": "type2t.png",
+         "fgURL": "-mask.png",
+         "bgHex": "020202ff",
+         "pHex": "F9465AFF",
+         "fgHex": "F9B42DFF",
+         "bgURL": ".png",
+         "cached": {
+          "fgB": 0.17647058823529,
+          "fgA": 1,
+          "fgRGB": [
+           0.97647058823529,
+           0.70588235294118,
+           0.17647058823529
+          ],
+          "pRGB": [
+           0.97647058823529,
+           0.27450980392157,
+           0.35294117647059
+          ],
+          "pR": 0.97647058823529,
+          "pG": 0.27450980392157,
+          "pB": 0.35294117647059,
+          "pA": 1,
+          "bgG": 0.007843137254902,
+          "bgB": 0.007843137254902,
+          "bgA": 1,
+          "bgRGB": [
+           0.007843137254902,
+           0.007843137254902,
+           0.007843137254902
+          ],
+          "bgR": 0.007843137254902,
+          "fgR": 0.97647058823529,
+          "fgG": 0.70588235294118
+         }
+        },
+        "patch3": {
+         "bgURL": "patch1.png",
+         "fgURL": "patch1-mask.png",
+         "bgHex": "020202ff",
+         "pHex": "D4A0D3FF",
+         "cached": {
+          "fgB": 0.047058823529412,
+          "fgA": 1,
+          "fgRGB": [
+           0.023529411764706,
+           0.83921568627451,
+           0.047058823529412
+          ],
+          "pRGB": [
+           0.83137254901961,
+           0.62745098039216,
+           0.82745098039216
+          ],
+          "pR": 0.83137254901961,
+          "pG": 0.62745098039216,
+          "pB": 0.82745098039216,
+          "pA": 1,
+          "bgG": 0.007843137254902,
+          "bgB": 0.007843137254902,
+          "bgA": 1,
+          "bgRGB": [
+           0.007843137254902,
+           0.007843137254902,
+           0.007843137254902
+          ],
+          "bgR": 0.007843137254902,
+          "fgR": 0.023529411764706,
+          "fgG": 0.83921568627451
+         },
+         "pURL": "type2t.png",
+         "sx": 2,
+         "fgHex": "06D60CFF",
+         "tx": 0,
+         "ty": 0.83
+        },
+        "patch1": {
+         "bgURL": "patch2.png",
+         "fgURL": "patch2-mask.png",
+         "bgHex": "020202ff",
+         "fgHex": "78AD93FF",
+         "cached": {
+          "fgB": 0.57647058823529,
+          "fgA": 1,
+          "fgRGB": [
+           0.47058823529412,
+           0.67843137254902,
+           0.57647058823529
+          ],
+          "pRGB": [
+           0.8,
+           0.45098039215686,
+           0.18039215686275
+          ],
+          "pR": 0.8,
+          "pG": 0.45098039215686,
+          "pB": 0.18039215686275,
+          "pA": 1,
+          "bgG": 0.007843137254902,
+          "bgB": 0.007843137254902,
+          "bgA": 1,
+          "bgRGB": [
+           0.007843137254902,
+           0.007843137254902,
+           0.007843137254902
+          ],
+          "bgR": 0.007843137254902,
+          "fgR": 0.47058823529412,
+          "fgG": 0.67843137254902
+         },
+         "pURL": "type2t.png",
+         "pHex": "CC732EFF",
+         "tx": -0.33,
+         "ty": 0
+        },
+        "patch2": {
+         "bgURL": "patch1.png",
+         "fgURL": "patch1-mask.png",
+         "bgHex": "020202ff",
+         "fgHex": "A83698FF",
+         "cached": {
+          "fgB": 0.59607843137255,
+          "fgA": 1,
+          "fgRGB": [
+           0.65882352941176,
+           0.21176470588235,
+           0.59607843137255
+          ],
+          "pRGB": [
+           0.14117647058824,
+           0.83137254901961,
+           0.5843137254902
+          ],
+          "pR": 0.14117647058824,
+          "pG": 0.83137254901961,
+          "pB": 0.5843137254902,
+          "pA": 1,
+          "bgG": 0.007843137254902,
+          "bgB": 0.007843137254902,
+          "bgA": 1,
+          "bgRGB": [
+           0.007843137254902,
+           0.007843137254902,
+           0.007843137254902
+          ],
+          "bgR": 0.007843137254902,
+          "fgR": 0.65882352941176,
+          "fgG": 0.21176470588235
+         },
+         "pURL": "type2t.png",
+         "pHex": "24D495FF",
+         "tx": 0.33,
+         "ty": 0
+        },
+        "zOffset": 192
+       },
+       "bodyhair": {
+        "main": {
+         "pURL": "type2t.png",
+         "fgURL": "borsthaar4-mask.png",
+         "bgHex": "020202ff",
+         "pHex": "51145AFF",
+         "fgHex": "2E41EBFF",
+         "bgURL": "borsthaar4.png",
+         "cached": {
+          "fgB": 0.92156862745098,
+          "fgA": 1,
+          "fgRGB": [
+           0.18039215686275,
+           0.25490196078431,
+           0.92156862745098
+          ],
+          "pRGB": [
+           0.31764705882353,
+           0.07843137254902,
+           0.35294117647059
+          ],
+          "pR": 0.31764705882353,
+          "pG": 0.07843137254902,
+          "pB": 0.35294117647059,
+          "pA": 1,
+          "bgG": 0.007843137254902,
+          "bgB": 0.007843137254902,
+          "bgA": 1,
+          "bgRGB": [
+           0.007843137254902,
+           0.007843137254902,
+           0.007843137254902
+          ],
+          "bgR": 0.007843137254902,
+          "fgR": 0.18039215686275,
+          "fgG": 0.25490196078431
+         }
+        }
+       }
+      },
+      "shape8URL": "shapes11.png",
+      "j": {
+       "type": "revolute",
+       "limits": {
+        "low": -0.78539816339745,
+        "up": 0.78539816339745
+       }
+      },
+      "shape": "shape8",
+      "spineBand": [
+       3,
+       3
+      ],
+      "behaviors": [],
+      "dims": {
+       "sx": 1.6450119172536,
+       "sy": 1.6450119172536,
+       "w": 280,
+       "h": 300,
+       "w2": 5
+      }
+     },
+     "luarm": {
+      "appearance": {
+       "connected-hair": {
+        "endNode": "lhand",
+        "main": {
+         "pURL": "type2t.png",
+         "fgURL": "",
+         "bgHex": "E60871FF",
+         "pHex": "ffff00ff",
+         "fgHex": "",
+         "dir": -1,
+         "bgURL": "hair4.png"
+        },
+        "zOffset": 403
+       },
+       "connected-skin": {
+        "endNode": "lhand",
+        "main": {
+         "pURL": "type5.png",
+         "fgURL": "leg5-mask.png",
+         "bgHex": "020202ff",
+         "fgHex": "C1E233FF",
+         "pHex": "517BB1FF",
+         "wmul": 0.37220673695611,
+         "dir": -1,
+         "bgURL": "leg5.png"
+        },
+        "zOffset": 402
+       }
+      },
+      "dims": {
+       "w": 40,
+       "h": 482.7194462542,
+       "w2": 4
+      },
+      "shape": "capsule",
+      "j": {
+       "limits": {
+        "low": 0,
+        "up": 3.1415926535898
+       },
+       "type": "revolute"
+      }
+     }
+    },
+    "positioners": {
+     "ear": {
+      "y": 0.5
+     },
+     "leg": {
+      "x": 0.5
+     },
+     "nose": {
+      "t": 0.35
+     }
+    }
+   },
+   "version": 1
+  }
+ ],
+ "version": "1.0",
+ "camera": {
+  "x": 1484.10090625,
+  "y": -500.1171,
+  "scale": 0.6,
+  "rotation": 0,
+  "settings": {
+   "lookAhead": 0.35,
+   "edgeLag": 150,
+   "minZoom": 0.1,
+   "maxZoom": 5,
+   "maxLead": 0.25,
+   "edgeMargin": 80,
+   "follow": true,
+   "edgePan": true,
+   "deadZone": 0.3,
+   "speed": 3,
+   "edgeSpeed": 900
+  }
+ }
+}
