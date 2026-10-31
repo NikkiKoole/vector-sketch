@@ -150,15 +150,16 @@ parts (music-theory, skinning's `meshusertVertices`, the polygon modules) run wi
   things on a phone someone is holding. `device.sh` picks an iPhone before an iPad
   (`DEVICE=iPad` for the iPad). iOS has no JIT: count calls into C (each costs), not
   arithmetic.
-- [ ] **M11. The Mipo update, what's left (parked 2026-10-31).** The untangle: done the same day.
-  Checking only Mipos that touch another Mipo would have been safe (0 of 37296 hooks in 90 s of
-  a 35-Mipo pile were on one that didn't) but useless (13 of 22041 checks skipped: in a crowd
-  everyone touches someone). Instead each Mipo is looked over every 36 steps, not 12
-  (`hookCheckSteps`, ~0.43 s; an untangle waits 2 s anyway): the joint guard 0.64 -> 0.45 ms.
+- [x] **M11. The Mipo update, what's left.** **Done 2026-10-31.** The untangle: checking only
+  Mipos that touch another Mipo would have been safe (0 of 37296 hooks in 90 s of a 35-Mipo
+  pile were on one that didn't) but useless (13 of 22041 checks skipped: in a crowd everyone
+  touches someone). Instead each Mipo is looked over every 36 steps, not 12 (`hookCheckSteps`,
+  ~0.43 s; an untangle waits 2 s anyway): the joint guard 0.64 -> 0.45 ms. keep-angle: each
+  body's thing remembered (it never changes for a body: a new thing comes with a new body, a
+  flip keeps it; the behaviors are read live, spec/keep-angle_spec.lua) and passed along instead
+  of asked three times a part: 0.40 -> 0.33 ms. The crowd's update ~4.0 ms on the phone.
   Seen on the way: that pile untangled 109 times in 90 s, more than once a second (the twitching
-  in a crowd?). Left: keep-angle's walk over all bodies for their behaviors (0.18 ms: a list of
-  the balancing parts, kept right through editor flips, which give a body a new thing). Bigger,
-  with Box2D: resting Mipos asleep.
+  in a crowd?). Bigger, with Box2D, if ever needed: resting Mipos asleep.
 - [ ] **M6. The potato-torso click.** The editor snapshot forces every slider to its midpoint; on a
   potato head's torso1 panel that makes a shape Box2D refuses (`fixtures.lua:132: Box2D assertion
   failed`), and the next click finds the Mipo half rebuilt. Same before and after the splits, so

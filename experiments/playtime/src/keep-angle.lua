@@ -23,23 +23,36 @@ lib.maxKpPerStep = 0.9
 lib.legDeadband = 0
 local deadbandParts = { luleg = true, ruleg = true, llleg = true, rlleg = true }
 
+-- A body's thing, remembered: it never changes for a body (a new thing comes with a new body:
+-- addThing, a scene load, recreateThingFromBody; a flip keeps it). Its behaviors are read from
+-- it live every step. Asked for every body every step (380 with 20 Mipos) and three times per
+-- part balanced, getUserData was ~0.2 ms a frame on an iPhone SE 2 (2026-10-31).
+local thingOfBody = setmetatable({}, { __mode = 'k' })
+local function thingOf(body)
+    local thing = thingOfBody[body]
+    if thing == nil then
+        thing = utils.thingOf(body)
+        if thing then thingOfBody[body] = thing end
+    end
+    return thing
+end
+
 -- only another Mipo counts (piles); standing on a skateboard or leaning on a ball
 -- needs full strength
 local function solidOtherMipo(own, other, otherBody, ownMipo)
     if own:isSensor() or other:isSensor() then return false end
-    local otherThing = utils.thingOf(otherBody)
+    local otherThing = thingOf(otherBody)
     local otherMipo = otherThing and otherThing.mipoId
     return otherMipo ~= nil and otherMipo ~= ownMipo
 end
 
 -- Touching another Mipo (props and floors are fine).
-local function touchingOthers(body)
-    local thing = utils.thingOf(body)
+local function touchingOthers(body, thing)
     return contactTracker.any(body, solidOtherMipo, thing and thing.mipoId)
 end
 
 -- PD controller on angular velocity
-local function rotateBodyTowards(body, dt, targetAngle, data)
+local function rotateBodyTowards(body, dt, targetAngle, data, thing)
     local currentAngle = body:getAngle()
     local diff = math.rad(targetAngle) - currentAngle
     -- wrap to [-pi, pi]
@@ -47,7 +60,6 @@ local function rotateBodyTowards(body, dt, targetAngle, data)
 
     local omega = body:getAngularVelocity()
 
-    local thing = utils.thingOf(body)
     local partName = thing and thing.mipoPartName
     if partName and deadbandParts[partName] and math.abs(diff) < lib.legDeadband then return end
 
@@ -66,7 +78,7 @@ local function rotateBodyTowards(body, dt, targetAngle, data)
     if omega_cmd > maxOmega then omega_cmd = maxOmega end
     if omega_cmd < -maxOmega then omega_cmd = -maxOmega end
 
-    if not touchingOthers(body) then
+    if not touchingOthers(body, thing) then
         body:setAngularVelocity(omega_cmd)
         return
     end
@@ -84,7 +96,7 @@ end
 function lib.update(dt, hitted)
     local bods = registry.bodies
     for _, v in pairs(bods) do
-        local thing = utils.thingOf(v)
+        local thing = thingOf(v)
         if thing and thing.behaviors then
             local behaviors = thing.behaviors
             local same = false
@@ -104,7 +116,7 @@ function lib.update(dt, hitted)
 
                     -- Drive the live registry body (v), not thing.body —
                     -- that ref can be stale after a recreate.
-                    rotateBodyTowards(v, dt, vb.angle or 0, vb)
+                    rotateBodyTowards(v, dt, vb.angle or 0, vb, thing)
                 end
             end
         end
