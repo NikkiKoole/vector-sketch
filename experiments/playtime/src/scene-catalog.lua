@@ -20,7 +20,6 @@ local NOTES = {
     ['spine-test'] = 'one Mipo on a floor',
     spine = 'Mipos with spine torsos (docs/MIPO-SPINE.md) test',
     miposhader = 'the start scene: Mipos in the claymation light',
-    catapult = 'a catapult: the cup flings a ball (p)',
     elasto = 'an elastic band between two points',
     mudready = 'the Bathhouse mud: foam on a Mipo, a shower (parked)',
     planets = 'planets that pull what comes near',

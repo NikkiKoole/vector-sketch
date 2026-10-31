@@ -1,9 +1,18 @@
+-- catapult: load the ball into the cup (p), pull the cup back and let go to fling it
 local s = {}
 
 local function calculateDistance(x1, y1, x2, y2)
     local dx = x2 - x1
     local dy = y2 - y1
     return math.sqrt(dx * dx + dy * dy)
+end
+
+-- A thing's collision shape: its body's first fixture without userData (sfixtures come first).
+-- (Things used to carry it as thing.fixture.)
+local function solid(thing)
+    for _, fixture in ipairs(thing.body:getFixtures()) do
+        if not fixture:getUserData() then return fixture end
+    end
 end
 
 local function mapInto(x, in_min, in_max, out_min, out_max)
@@ -17,15 +26,15 @@ function s.onStart()
     projectile = getObjectsByLabel('projectile')[1]
 
 
-    projectile.fixture:setCategory(2)
-    projectile.fixture:setMask(2)
+    solid(projectile):setCategory(2)
+    solid(projectile):setMask(2)
 
     projectile.body:setBullet(true)
 
-    base.fixture:setCategory(2)
-    base.fixture:setMask(2)
-    cup.fixture:setCategory(2)
-    cup.fixture:setMask(2)
+    solid(base):setCategory(2)
+    solid(base):setMask(2)
+    solid(cup):setCategory(2)
+    solid(cup):setMask(2)
 
     maxLength = 0
     local joints = cup.body:getJoints()
@@ -44,7 +53,7 @@ function s.onKeyPress(key)
     if key == 'p' then
         local bx, by = cup.body:getPosition()
         projectile.body:setPosition(bx, by)
-        projectile.fixture:setSensor(true)
+        solid(projectile):setSensor(true)
         -- now i want to connect the projectile to the cup, probably with a weld joint
         --if (not weldJoint) then
         local attachedJoints = projectile.body:getJoints()
@@ -105,7 +114,7 @@ function s.onReleased(objs)
                         if attachedJoints[i]:getType() == 'weld' then projectileWasAttachedTpCup = true end
                         attachedJoints[i]:destroy()
                     end
-                    projectile.fixture:setSensor(false)
+                    solid(projectile):setSensor(false)
                     if projectileWasAttachedTpCup then
                         projectile.body:setLinearVelocity(dx * forceMultiplier, dy * forceMultiplier)
                     end
