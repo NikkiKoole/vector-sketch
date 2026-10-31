@@ -54,6 +54,10 @@ fi
 # The home-screen name. Not PRODUCT_NAME on the command line: that renames liblove.a too.
 PLIST=love/platform/xcode/ios/love-ios.plist
 /usr/libexec/PlistBuddy -c 'Set :CFBundleDisplayName Playtime' "$PLIST"
+# Dev builds play through the silent switch (the seam: native/ios/patch-love.py)
+/usr/bin/python3 patch-love.py love/src/common/ios.mm
+/usr/libexec/PlistBuddy -c 'Delete :LoveIgnoreSilentSwitch' "$PLIST" 2>/dev/null || true
+/usr/libexec/PlistBuddy -c 'Add :LoveIgnoreSilentSwitch bool true' "$PLIST"
 # The wording of the Local Network prompt (see the packet in main.lua below)
 /usr/libexec/PlistBuddy -c 'Delete :NSLocalNetworkUsageDescription' "$PLIST" 2>/dev/null || true
 /usr/libexec/PlistBuddy -c 'Add :NSLocalNetworkUsageDescription string "So the Mac can talk to the game while testing (the Claude bridge)."' "$PLIST"
