@@ -285,6 +285,9 @@ function lib.recreateThingFromBody(body, newSettings)
 
     registry.registerBody(thing.id, thing.body)
     newBody:setUserData({ thing = thing })
+    -- the sfixtures above were registered before the body had its thing: a Mipo foot or lower
+    -- leg gets its contacts back (registry.GROUND_PARTS) now that it says which part it is
+    if thing.mipoPartName then registry.updateSFixtureMasks(newBody) end
 
     joints.reattachJoints(jointData, newBody, oldVertices)
 
