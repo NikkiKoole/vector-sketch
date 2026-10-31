@@ -18,7 +18,7 @@ describe('meshusert-bind', function()
         registry.reset()
         world = love.physics.newWorld(0, 0, true)
         state.physicsWorld = world
-        sceneIO.load(love.filesystem.read('scripts/knut/hoop.playtime.json'), world, camera.getInstance())
+        sceneIO.load(love.filesystem.read('scripts/tech/hoop.playtime.json'), world, camera.getInstance())
         for _, fixture in pairs(registry.sfixtures) do
             if fixture:getUserData().subtype == 'meshusert' then mesh = fixture end
         end

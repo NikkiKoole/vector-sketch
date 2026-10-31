@@ -165,7 +165,7 @@ It grows out of the click-in stacking above:
 - **tile-repeat sfixture**: this is the "grass" attach that already exists (`src/subtypes.lua:9`;
   tool rail → attach → looks → "tile", `src/ui/tool-rail.lua:256`). It fills the host body's whole
   polygon with a repeating texture (`src/physics/box2d-draw-textured.lua` ~2923, UVs from world
-  position). It's used in `scripts/knut/knutjump.playtime.json` with `knut/gras.png`.
+  position). It's used in `scripts/tech/knutjump.playtime.json` with `knut/gras.png`.
   The inspector has texture, tint, tile w/h, rotation and z (`src/sfixture-params.lua:118`).
   Limits: it can't do edge grass, and the vertex alpha is hardcoded to 140.
 - **Ground:** free polygon, freepath ribbon (`object-manager.lua:53/103`) and soft surface (`:21`), all

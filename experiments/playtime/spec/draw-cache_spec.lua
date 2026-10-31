@@ -204,7 +204,7 @@ describe('drawing with caches (L1) and culling (L0)', function()
     end)
 
     it('every picture that can be baked is on a registered sfixture, in every scene', function()
-        for _, dir in ipairs({ 'scripts', 'scripts/knut', 'scripts/tech' }) do
+        for _, dir in ipairs({ 'scripts', 'scripts/tech' }) do
             for _, name in ipairs(love.filesystem.getDirectoryItems(dir)) do
                 if name:match('%.playtime%.json$') then
                     local w = love.physics.newWorld(0, 0, true)

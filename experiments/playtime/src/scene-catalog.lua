@@ -24,18 +24,13 @@ local NOTES = {
     mudready = 'the Bathhouse mud: foam on a Mipo, a shower (parked)',
     planets = 'planets that pull what comes near',
     platforms = 'platforms you jump up through test',
-    straight = 'bodies that keep themselves upright, tuned with sliders',
-    torso = 'torso shape sliders: shoulders, waist, hips',
     water = 'floating in water: drag and density sliders',
     meta = 'the save/load round-trip test scene',
-    puppet = 'an early jointed puppet test (2025)',
 }
 local FOLDER_NOTES = {
-    knut = 'the Knut commission (fizzled 2026-04)',
-    tech = 'tests of one engine piece',
-    scratch = 'scratch scenes',
+    tech = 'one engine piece each',
 }
-lib.GROUP_ORDER = { 'rooms', 'spikes', 'tests', 'tech', 'scratch', 'knut' }
+lib.GROUP_ORDER = { 'rooms', 'spikes', 'tests', 'tech' }
 
 -- A script's first comment line, its 'name:' / 'name.playtime.lua —' prefix dropped.
 local function firstComment(path)

@@ -16,7 +16,7 @@ local box2dDrawTextured = require('src.physics.box2d-draw-textured')
 love.mouse.getPosition = function() return 0, 0 end
 local function scenes()
     local list = {}
-    for _, dir in ipairs({ 'scripts', 'scripts/knut', 'scripts/tech' }) do
+    for _, dir in ipairs({ 'scripts', 'scripts/tech' }) do
         for _, name in ipairs(love.filesystem.getDirectoryItems(dir)) do
             if name:match('%.playtime%.json$') then list[#list + 1] = dir .. '/' .. name end
         end

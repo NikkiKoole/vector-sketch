@@ -12,8 +12,13 @@ What it doesn't check: things you do by hand (dragging, throwing), and whether a
 what it was for. "Runs" here means no errors, not "good".
 
 **Leave alone:** scenes loaded by name by a spec or tool (marked *spec*). `draw-cache_spec` and
-`claudetools/snapshots` also draw every scene in `scripts/`, `scripts/knut` and `scripts/tech` as
-test material: removing one costs a little coverage, nothing breaks.
+`claudetools/snapshots` also draw every scene in `scripts/` and `scripts/tech` as test material:
+removing one costs a little coverage, nothing breaks.
+
+**Archived 2026-10-31** (Nikki agreed to the drop list): 20 scenes moved to `archive/scenes/`
+(`archive/README.md`): the scratch scenes, ten Knut scenes, puppet, torso, straight, stapel. The
+three Knut scenes worth keeping moved to `scripts/tech/`. UVUSERT lives on in `tech/resources` and
+`tech/uvs`, MESHUSERT in `tech/hoop` and `tech/workmoreclean`.
 
 ## Keep
 
@@ -29,26 +34,21 @@ test material: removing one costs a little coverage, nothing breaks.
 | snap, tech/snap2, tech/snapstatic | snap points and old snap joints | *spec* (snap-scenes) |
 | sm-demo | the state-machine helper example | *spec* |
 | meta | the save/load round-trip scene | round-trip tests |
-| tech/connected, multi, resources, uvs | one engine piece each | test material; resources/uvs in UV-BACKDROP-FRAGILITY |
-| knut/hoop, knut/workmoreclean | Knut scenes | *spec* (meshusert-bind, resource-link): skinning and resources. Move to `tech/` if Knut goes |
+| tech/connected, multi, resources, uvs | one engine piece each | test material; resources and uvs: the UVUSERT scenes (UV-BACKDROP-FRAGILITY) |
+| tech/hoop, tech/workmoreclean | from Knut | *spec* (meshusert-bind, resource-link): the MESHUSERT (skinning) and resource scenes |
+| tech/knutjump | from Knut | WORLD-BUILDING's tile-repeat grass example |
 | catapult | a catapult toy | works again, a fun room toy |
 | burrow, fabuland, hair, tufts | today's and yesterday's spikes | parked plans point at them |
 
 ## Might not need (Nikki decides)
 
+The "drop" rows were archived (above). Left to decide:
+
 | scene | last change | what | thought |
 |---|---|---|---|
-| scratch/empty, empty2, ding2, grow, lekker, beginmesh | 2026-05 | scratch files, 1–4 kB | **drop**: leftovers (beginmesh is only named in an old note) |
-| knut/beach3, bettert, cliff, ding, knut, maan, smaller2, soemwhere7, test, work | 2026-05 | the Knut commission | **drop or archive**: fizzled 2026-04-22; ~900 kB. knut/knutjump is WORLD-BUILDING's tile-repeat grass example: keep that one if it's still wanted as one |
-| puppet | 2025-01 | an early jointed puppet, empty script | **drop**: the Mipo editor made it |
-| torso | 2025-01 | torso shape sliders | **drop**: the Mipo editor has these |
-| straight | 2025-09 | bodies keeping themselves upright, with sliders | **drop?** keep-angle in the game does this now |
-| stapel | 2026-05 | stone balancing (space, c) | **drop**: stapelaar is the same and more (b: a stone at the base) |
 | water | 2025-04 | floating in water: drag, density sliders | **maybe**: an older water than kitchen's; floating could come back for a bath (WATER, parked) |
 | elasto | 2025-04 | an elastic band between two points | **maybe**: a room toy (slingshot, trampoline) |
 | planets | 2025-04 | planets that pull | **maybe**: the sky experiment's moon pull (WORLD-BUILDING G5) |
 | platforms | 2025-04 | platforms you jump up through | **maybe**: a one-way floor is useful for stacked rooms (R5) |
 | mudready | 2026-05 | the Bathhouse mud | **keep while Bathhouse is parked**, drop if it's let go |
 | stapelaar | 2026-05 | stone balancing | **maybe**: fun, unrelated to the plans |
-
-Dropping the "drop" rows: 20 scenes, ~1 MB. Nothing loads them; the scenes tab gets shorter.

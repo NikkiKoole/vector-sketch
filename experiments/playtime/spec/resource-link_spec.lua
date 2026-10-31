@@ -116,7 +116,7 @@ describe('resource link', function()
     it('an old skinned scene (Knut) links every mesh to its label partner and draws', function()
         local camera = require('src.camera')
         local box2dDrawTextured = require('src.physics.box2d-draw-textured')
-        local contents = love.filesystem.read('scripts/knut/workmoreclean.playtime.json')
+        local contents = love.filesystem.read('scripts/tech/workmoreclean.playtime.json')
         sceneIO.load(contents, world, camera.getInstance())
         local meshes = 0
         for _, v in pairs(registry.sfixtures) do
@@ -161,7 +161,7 @@ describe('resource link', function()
         it('a skinned Knut draws textured with no backdrops on stage', function()
             local camera = require('src.camera')
             local box2dDrawTextured = require('src.physics.box2d-draw-textured')
-            sceneIO.load(love.filesystem.read('scripts/knut/workmoreclean.playtime.json'), world, camera.getInstance())
+            sceneIO.load(love.filesystem.read('scripts/tech/workmoreclean.playtime.json'), world, camera.getInstance())
             for _, v in pairs(registry.sfixtures) do
                 local ud = v:getUserData()
                 if ud.subtype == 'resource' then

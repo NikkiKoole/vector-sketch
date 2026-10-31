@@ -15,7 +15,7 @@ local wasOpen = false
 
 local function groupsOpen()
     state.rightColumn.sceneGroups = state.rightColumn.sceneGroups
-        or { rooms = true, spikes = true, tests = false, tech = false, scratch = false, knut = false }
+        or { rooms = true, spikes = true, tests = false, tech = false }
     return state.rightColumn.sceneGroups
 end
 
