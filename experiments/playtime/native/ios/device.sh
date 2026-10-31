@@ -96,8 +96,9 @@ def rank(x):  # the cable first, then a live tunnel, then wifi (a paired device 
     return None
 d = [x for x in json.load(open(sys.argv[1]))['result']['devices']
      if rank(x) is not None and ('iphone' in label(x) or 'ipad' in label(x))]
-# DEVICE= wins, then the best connection, then an iPhone over an iPad
-d.sort(key=lambda x: (bool(want) and want not in label(x), rank(x), 'iphone' not in label(x)))
+# DEVICE= wins, then an iPhone over an iPad (the iPad nearby is not ours to install on unasked:
+# on the cable it beat the phone on wifi, 2026-10-31), then the best connection
+d.sort(key=lambda x: (bool(want) and want not in label(x), 'iphone' not in label(x), rank(x)))
 if d:
     x = d[0]
     print(x['identifier'], x.get('hardwareProperties', {}).get('udid', ''), x['deviceProperties'].get('name', '').replace(' ', '_'))
