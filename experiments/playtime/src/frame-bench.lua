@@ -52,6 +52,7 @@ function lib.start(parts)
     local run = {
         frames = {}, cur = { u = 0, steps = 0, gc = false },
         origUpdate = lf.update, origDraw = lf.draw,
+        dropped = state.loopDroppedSteps or 0, -- steps the game loop let go (src/game-loop.lua)
     }
     state.benchRun = run
     if parts then wrapParts(run, now) end
@@ -119,6 +120,11 @@ function lib.stop()
         string.format('  over %d ms: %d frames (%.1f%%); frames with a GC step: %d', SLOW_MS, #slow,
             100 * #slow / #frames, gcFrames),
     }
+    local dropped = (state.loopDroppedSteps or 0) - run.dropped
+    if dropped > 0 then -- the loop's time budget or cap: the game ran slower than real time
+        lines[#lines + 1] = string.format('  slow motion: game time at %.0f%% of real time (%d steps dropped)',
+            100 * steps / (steps + dropped), dropped)
+    end
     if run.parts then
         local updateMs, partsMs = 0, 0
         for _, f in ipairs(frames) do updateMs = updateMs + f.u end

@@ -2,10 +2,12 @@
 -- Fixed-timestep game loop for LÖVE2D
 -- Extracted from main.lua (Phase 6.3)
 
+local state = require('src.state')
+
 local lib = {}
 
---- Returns a love.run() function with fixed-timestep physics,
---- panic detection, and adaptive sleep.
+--- Returns a love.run() function with fixed-timestep physics, a cap and a time budget
+--- for catching up (past them the game plays in slow motion: state.loopDroppedSteps).
 function lib.createFixedTimestepRun(tickrate)
     tickrate = tickrate or (1 / 60)
 
@@ -17,9 +19,6 @@ function lib.createFixedTimestepRun(tickrate)
         local MAX_ACCUMULATOR = 0.25  -- never try to catch up more than 250ms
         local MAX_STEPS_PER_FRAME = math.ceil(4 / 60 / tickrate - 1e-9) -- hard cap to prevent death spiral
                                                                          -- (4 at 60 steps a second)
-        local PANIC_HORIZON = 30      -- frames before we say "we're saturated"
-        local panicFrames = 0
-        local adaptiveSleep = 0       -- additional sleep to soften render rate under load
 
         local previous = love.timer.getTime()
         local lag = 0.0
@@ -58,21 +57,29 @@ function lib.createFixedTimestepRun(tickrate)
             -- skipping whole updates for slow motion also skipped input (BUG6)
 
             -- cap steps to avoid runaway
-            local didPanic = false
             if steps > MAX_STEPS_PER_FRAME then
+                -- ditch the backlog past the cap (panic): render latest state
+                state.loopDroppedSteps = (state.loopDroppedSteps or 0) + steps - MAX_STEPS_PER_FRAME
                 steps = MAX_STEPS_PER_FRAME
-                -- drop anything older than our budget
-                lag = lag - steps * dt
-                -- ditch remaining backlog (panic): render latest state
                 lag = 0
-                didPanic = true
             else
                 lag = lag - steps * dt
             end
 
-            -- do fixed updates
-            for _ = 1, steps do
+            -- do fixed updates, within a time budget (state.loopBudgetMs): catching up costs
+            -- time too, so a late frame made the next one later, up to the cap every frame (10
+            -- fps with 40 Mipos on a desktop). Past the budget the rest of the backlog is
+            -- dropped and the game plays in slow motion, as smooth as it can; a light scene
+            -- never reaches it and keeps real time. At least one step every frame.
+            local budget = (state.loopBudgetMs or 10) / 1000
+            local started = love.timer.getTime()
+            for i = 1, steps do
                 if love.update then love.update(dt) end
+                if i < steps and love.timer.getTime() - started > budget then
+                    state.loopDroppedSteps = (state.loopDroppedSteps or 0) + steps - i
+                    lag = lag % dt
+                    break
+                end
             end
 
             -- render with interpolation (alpha in [0,1))
@@ -83,24 +90,12 @@ function lib.createFixedTimestepRun(tickrate)
                 love.graphics.present()
             end
 
-            -- simple adaptive backoff: if we keep panicking, lower render cadence a tad
-            if didPanic then
-                panicFrames = panicFrames + 1
-                if panicFrames >= PANIC_HORIZON then
-                    adaptiveSleep = math.min(adaptiveSleep + 0.001, 0.008) -- up to ~125 FPS → ~60–80 FPS
-                end
-            else
-                panicFrames = math.max(0, panicFrames - 1)
-                if panicFrames == 0 then
-                    adaptiveSleep = math.max(0, adaptiveSleep - 0.001)
-                end
-            end
-
-            -- tiny sleep to yield + adaptive backoff under sustained load. Not with vsync:
-            -- present() already waits, and the 1 ms (~1.2 on macOS) came out of a frame
-            -- that has to fit in 16.7 ms or drop to 30 fps
-            if love.timer and (adaptiveSleep > 0 or not (love.window and love.window.getVSync() ~= 0)) then
-                love.timer.sleep(0.001 + adaptiveSleep)
+            -- tiny sleep to yield. Not with vsync: present() already waits, and the 1 ms (~1.2
+            -- on macOS) came out of a frame that has to fit in 16.7 ms or drop to 30 fps.
+            -- (There was an extra sleep of up to 8 ms after 30 panicking frames: it made an
+            -- overloaded frame longer still, removed 2026-10-31.)
+            if love.timer and not (love.window and love.window.getVSync() ~= 0) then
+                love.timer.sleep(0.001)
             end
         end
     end
