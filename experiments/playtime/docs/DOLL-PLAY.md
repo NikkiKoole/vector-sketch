@@ -31,9 +31,11 @@ scene, tick it. One at a time. The Mipo's voice items (V1–V6) live in
   `onKeyPress`. Leaving puts back the editor's pause; selection and tool mode are kept. A 'tab: editor'
   hint fades out after going in. Spec: `spec/input-manager_spec.lua` "play mode". The `x > w - 300`
   gates are only on the editor path now; removing them there is still open.
-- [ ] **F3. Tween/timer layer**: put `hump.timer` in `vendor/` and expose it in the
-  script sandbox (`script.lua` baseEnv). Head turns, blinks, reactions and
-  smooth camera moves all need it.
+- [x] **F3. Tween/timer layer** (2026-10-31, `src/timers.lua`): hump.timer in `vendor/hump-timer.lua`
+  (the one Puppetmaker 2 used), `timer` in the script sandbox: `after`, `every`, `tween`, `script`
+  (`wait(0.4)` steps), `cancel`. Runs with the physics (paused world, paused timers), cleared on a scene
+  load and a script reload. Head turns, blinks, reactions and smooth camera moves all need it.
+  Spec: `spec/timers_spec.lua`.
 - [ ] **F4. Load *your* Mipo**: spawn characters from saved DNA/JSON
   (`characterManager.createCharacterFromJustDNA`). Puppetmaker-style continuity:
   the Mipo you made shows up in the world.
