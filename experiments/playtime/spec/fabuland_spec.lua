@@ -68,3 +68,34 @@ describe('fabuland', function()
         assert.is_near(0, joints[1]:getReferenceAngle(), 1e-6)
     end)
 end)
+
+describe('the fabuland scene', function()
+    local sceneLoader = require('src.scene-loader')
+    local script = require('src.script')
+
+    it('loads, turns the drawing on, builds the kit with a welded house, once', function()
+        if not state.physicsWorld or state.physicsWorld:isDestroyed() then
+            state.physicsWorld = love.physics.newWorld(0, 9.8 * love.physics.getMeter(), true)
+        end
+        sceneLoader.loadScriptAndScene('fabuland')
+        assert.is_true(state.fabuland and state.fabuland.on)
+        local parts = 0
+        for _, body in ipairs(state.physicsWorld:getBodies()) do
+            if fabuland.partOf(body) then parts = parts + 1 end
+        end
+        assert.are.equal(9, parts)
+        local welds = 0
+        for _, joint in ipairs(snap.joints()) do
+            if joint:getType() == 'weld' then welds = welds + 1 end
+        end
+        assert.is_true(welds >= 3) -- the blocks side by side, the roofs on them
+        script.call('onStart') -- again: no second kit
+        parts = 0
+        for _, body in ipairs(state.physicsWorld:getBodies()) do
+            if fabuland.partOf(body) then parts = parts + 1 end
+        end
+        assert.are.equal(9, parts)
+        script.call('onUnload')
+        assert.is_nil(state.fabuland)
+    end)
+end)

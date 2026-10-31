@@ -1,6 +1,6 @@
 # Fabuland — chunky parts that click together
 
-status: active
+status: parked — "pretty nice", left as a spike in its own scene (`fabuland`): "got me thinking" (2026-10-31)
 
 **Started:** 2026-10-31 (spike). Grew out of `WORLD-BUILDING.md` 1f. Pictures behind it: Fabuland
 window and door blocks, shingle roofs, stairs, the slide, the Town Hall (`INSPIRATIONS.md`).
@@ -35,8 +35,8 @@ Everything lives in `src/fabuland.lua`, and **one entry in `PARTS` is a whole pa
 
 From the entry follow: the body (objectManager, saves with the scene), its label
 `fab:<part>:<set>` (how the look is found after a load), the snap points, the look (`fabuland.draw`,
-called in `main.lua` behind the Mipos) and a button on the library's toys shelf (`fab <name>`,
-`src/toys.lua`). Spec: `spec/fabuland_spec.lua` builds every part in `PARTS`, so a new entry is
+called in `main.lua` behind the Mipos, only while `state.fabuland.on`) and a button in the
+`fabuland` scene's panel (`scripts/fabuland.playtime.lua`). Spec: `spec/fabuland_spec.lua` builds every part in `PARTS`, so a new entry is
 tested by being there.
 
 **A new detail** (a chimney pot, a clock, a balcony door) is a function in `DETAILS`:
@@ -47,6 +47,12 @@ on their centroid); a rectangle's are body-local. `localOutline` handles both: u
 `thing.vertices`, to draw.
 
 ## Where it stands
+
+**To try it:** `./playtime.sh play fabuland`: a Mipo, a wide floor, a house of four blocks with a
+roof, stairs, a railing and a plank; the panel makes any part. It's a spike, kept out of the
+app: no toys-shelf buttons, and the drawing runs only in that scene. To bring it into the app,
+put the parts back on the toys shelf (`src/toys.lua`, one line looping over `fabuland.PARTS`) and
+turn `state.fabuland.on` on for every scene (or drop the check).
 
 - [x] **F1. The machine and a first set** (2026-10-31): window blocks (round, wheel, arch), door
   block (door drawn open), block, half block, roof left/right (shingles), stairs, post, plank,
@@ -72,5 +78,5 @@ on their centroid); a rectangle's are body-local. `localOutline` handles both: u
 - `fabuland.draw` walks every body in the world each frame and reads its label: fine for a room,
   but on the phone cache the list (the registry's version, as `omp-bake` does).
 - Parts spawned overlapping are pushed apart hard and can fly off (seen while placing the kit).
-- In spine-test there's a `fab-ground` (two static floors, 3100–10100) holding the kit, right of
-  the walls; it's not saved unless the scene is.
+- The scene is spine-test's copy; the kit (and its `fab-ground`, 3100–10100) is built by the
+  script when there are no parts, so a saved scene with parts keeps its own.

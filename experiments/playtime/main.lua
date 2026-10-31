@@ -326,7 +326,7 @@ function love.draw()
     box2dDraw.drawWorld(state.physicsWorld, state.world.debugDrawMode)
     prof.pop('drawworld')
     doors.drawBehind() -- a door swinging open: over the door's own shape, behind the Mipos in it
-    fabuland.draw() -- building parts: their colours, windows and doors, behind the Mipos (src/fabuland.lua)
+    fabuland.draw() -- building parts, behind the Mipos; only while a scene turns it on (src/fabuland.lua)
     prof.push('drawtexturedworld')
     if state.world.showTextures then
         box2dDrawTextured.drawTexturedWorld(state.physicsWorld)

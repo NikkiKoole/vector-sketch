@@ -22,6 +22,7 @@ local snap = require('src.physics.snap')
 local cameraFollow = require('src.camera-follow')
 local hairLocks = require('src.hair-locks')
 local hairTufts = require('src.hair-tufts')
+local fabuland = require('src.fabuland')
 --- here a tiny collection of helper function will grow, function i am sure that will be reused in various scripts.
 local function getObjectsByLabel(label)
     local objects = {}
@@ -77,6 +78,7 @@ local baseEnv = {
     snap                     = snap,
     hairLocks                = hairLocks,
     hairTufts                = hairTufts,
+    fabuland                 = fabuland,
     tostring                 = tostring,
     tonumber                 = tonumber
     -- Add global utilities like NeedManager, etc.
