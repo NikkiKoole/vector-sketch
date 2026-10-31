@@ -150,12 +150,15 @@ parts (music-theory, skinning's `meshusertVertices`, the polygon modules) run wi
   things on a phone someone is holding. `device.sh` picks an iPhone before an iPad
   (`DEVICE=iPad` for the iPad). iOS has no JIT: count calls into C (each costs), not
   arithmetic.
-- [ ] **M11. The Mipo update, what's left (parked 2026-10-31).** Two measured, left on purpose
-  (M10's probes): the untangle (0.31 ms with 20 Mipos on the phone: check only Mipos that touch
-  another Mipo, as the contact tracker knows; a behaviour change, so try it in play) and
-  keep-angle's walk over all bodies for their behaviors (0.18 ms: a list of the balancing parts,
-  kept right through editor flips, which give a body a new thing). Bigger, with Box2D: resting
-  Mipos asleep.
+- [ ] **M11. The Mipo update, what's left (parked 2026-10-31).** The untangle: done the same day.
+  Checking only Mipos that touch another Mipo would have been safe (0 of 37296 hooks in 90 s of
+  a 35-Mipo pile were on one that didn't) but useless (13 of 22041 checks skipped: in a crowd
+  everyone touches someone). Instead each Mipo is looked over every 36 steps, not 12
+  (`hookCheckSteps`, ~0.43 s; an untangle waits 2 s anyway): the joint guard 0.64 -> 0.45 ms.
+  Seen on the way: that pile untangled 109 times in 90 s, more than once a second (the twitching
+  in a crowd?). Left: keep-angle's walk over all bodies for their behaviors (0.18 ms: a list of
+  the balancing parts, kept right through editor flips, which give a body a new thing). Bigger,
+  with Box2D: resting Mipos asleep.
 - [ ] **M6. The potato-torso click.** The editor snapshot forces every slider to its midpoint; on a
   potato head's torso1 panel that makes a shape Box2D refuses (`fixtures.lua:132: Box2D assertion
   failed`), and the next click finds the Mipo half rebuilt. Same before and after the splits, so

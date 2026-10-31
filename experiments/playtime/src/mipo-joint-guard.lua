@@ -62,6 +62,11 @@ lib.untangleRest = 3.0      -- seconds before the same pair untangles again
 lib.untangleRetry = 0.5     -- ...but if the time ran out while still hooked, this soon
 lib.untangleHop = { 250, 650 } -- the hop out: sideways (away from the other), up (world units/s)
 lib.untangleCheckEvery = 0.25
+-- Each Mipo is looked over for hooks once every this many physics steps (a slice of them each
+-- step): ~0.43 s at 84 steps a second. The raycasts were ~0.3 ms a frame with 20 Mipos on an
+-- iPhone SE 2 at every 12 steps (2026-10-31), and an untangle waits untangleAfter (2 s) anyway.
+-- A hook seen within this many steps counts as still there.
+lib.hookCheckSteps = 36
 
 -- passThrough: Mipos put down overlapping (several stepping out of one door, src/doors.lua)
 -- pass through each other, still standing on the floor, while a soft sideways push moves
@@ -570,10 +575,10 @@ end
 local hookSeen = {}
 
 local function lookForHooks()
-    local slice, k = stepCount % lib.slowCheckSteps, 0
+    local slice, k = stepCount % lib.hookCheckSteps, 0
     for _, owner in pairs(mipoRegistry.getAll()) do
         k = k + 1
-        if k % lib.slowCheckSteps == slice then
+        if k % lib.hookCheckSteps == slice then
             for _, hook in ipairs(hooksOf(owner, {})) do
                 local key, a, b = pairKey(hook.a.id, hook.b.id)
                 hookSeen[key] = { a = a, b = b, step = stepCount }
@@ -588,7 +593,7 @@ local function untangleMipos(now)
     lastTangleCheck = now
     local hooked = {}
     for key, seen in pairs(hookSeen) do
-        if stepCount - seen.step <= lib.slowCheckSteps then
+        if stepCount - seen.step <= lib.hookCheckSteps then
             hooked[key] = seen
         else
             hookSeen[key] = nil
