@@ -1,6 +1,6 @@
 # Measuring — speed, memory, and "nothing changed"
 
-status: parked — pick up when something feels slow, or before the next big refactor
+status: parked — the phone baseline is in (M10, 2026-10-31); pick up when something feels slow, or before the next big refactor
 
 After the October cleanup and splits (CODE-CLEANUP-2026-10, CODE-SPLITS-2026-10) the work sits in
 named modules: the renderer in `src/render/` with one draw function per kind, Mipos in `mipo-*`,
@@ -9,8 +9,15 @@ parts (music-theory, skinning's `meshusertVertices`, the polygon modules) run wi
 
 ## What there is
 
+- `./playtime.sh device [scene] [--play]`: Playtime on the iPhone/iPad (cable or wifi, ~20 s), its
+  bridge on the phone's wifi address. `./playtime.sh bench [localhost|device] [secs] [--parts]`
+  (`src/frame-bench.lua`): frame, update and draw times, the slow frames with the frame before and
+  whether a GC step ran, how much slow motion the loop's budget made; `--parts` times each part of
+  `love.update` (Box2D is what's left).
+- Live switches for A/B in one session: `require('src.render.ribbon').useNative`,
+  `require('src.mipo-joint-guard').scanEvery`, `state.loopBudgetMs`.
 - `state.drawTimes = { frames = 0, ms = {}, count = {} }` over the bridge: draw time per drawable kind,
-  plus building and sorting the list.
+  plus building and sorting the list (seconds in `ms`, despite the name).
 - `POST /profile/frames` (ProFi over real frames, ms and calls per frame per function) and
   `POST /profile/benchmark` (a snippet). ProFi names a function by how it's called: the draw loop
   calls `draw(d)`, so the drawers show as `draw  box2d-draw-textured.lua:<line>` (the line says which).
@@ -81,6 +88,9 @@ parts (music-theory, skinning's `meshusertVertices`, the polygon modules) run wi
   **2026-10-30:** the Lua half done in MIPO-DRAWING L0-L1c (kept draw list, kept fans and strips,
   culling): draw 11.9 -> 10.5 ms at 20 Mipos, 62 -> 6 ms at 100 with a normal camera. Left: the
   draw calls (L2a, measure on the iPad first) and the update (unchanged, Box2D the biggest part).
+  **2026-10-31:** measured on the iPhone instead (M10) and cut there. Left: the textured shapes'
+  draw calls (~1.7 ms on the phone with nothing moving: L2a), Box2D (~2 ms: resting Mipos never
+  sleep, the balance keeps them awake), spine skin and ear bends in C (≤0.5 ms).
 - [ ] **M7. The draw's garbage.** ~430 KB a frame from the textured draw (per-drawable tables, fan
   vertex tables, a Bezier curve per ribbon per frame, mouth polygons). Only ~1.3% of the time on
   the desktop, so after M8; worth it before an iPad build.
@@ -92,6 +102,24 @@ parts (music-theory, skinning's `meshusertVertices`, the polygon modules) run wi
   and the Mipo editor's thumbnail grid remember what isn't there (`spec/omp-bake_spec.lua`); scenes
   and Mipos identical. Left as is: bodyhair DNA still names the masks (changing it changes saved
   Mipos for no visible difference).
+- [x] **M10. On the phone.** The floor is an iPhone SE 2 (A13, iOS 18; Retina, sound on).
+  **Done 2026-10-31.** Dollhouse: 60 fps, ~5 ms a frame. The crowd in play mode (20 Mipos):
+
+  | | update | draw | frame used | fps |
+  |---|---|---|---|---|
+  | before | 7.1 ms | 9.2 ms | ~16.3 ms | ~54, 30-40% late |
+  | after | 4.5 ms | 6.0 ms | ~10.5 ms | 60 |
+
+  What it took: lurker's file check off on phones (a 25 ms scan every 0.5 s); mouth backdrops
+  from a cached mesh, no stencil (1.0 -> 0.5 ms); the joint guard's all-Mipo scan every 2nd step
+  (-0.5 ms); ribbons (limbs, lips, brows) laid in C, `native/desound/ribbon.c` (28 -> 4 us a strip,
+  -1.5 ms); sfixtures masked, feet and lower legs excepted (contacts 4950 -> 2100, Box2D
+  3.6 -> 2 ms). Desktop: 60 fps up to ~30-35 Mipos (40: 10 -> 37 fps); past that the loop's time
+  budget plays it in slow motion (`state.loopBudgetMs`, 60 Mipos 28 fps at a third of real time).
+  Lessons: a phone warms up and throttles (everything ~25% slower, parts nothing touched too):
+  compare by switching live in one session, or let it cool. Say before pausing or switching
+  things on a phone someone is holding. iOS has no JIT: count calls into C (each costs), not
+  arithmetic.
 - [ ] **M6. The potato-torso click.** The editor snapshot forces every slider to its midpoint; on a
   potato head's torso1 panel that makes a shape Box2D refuses (`fixtures.lua:132: Box2D assertion
   failed`), and the next click finds the Mipo half rebuilt. Same before and after the splits, so
