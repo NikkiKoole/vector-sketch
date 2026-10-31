@@ -142,6 +142,17 @@ before and after with `claudetools/frame-profile.lua`. Gains are estimates until
   its weeks. What is: a Mipo draws in ~0.3 ms on the phone but its draws, bodies read, are
   ~0.06 ms of it: ~80% is our own Lua per part (drawer, transforms, colours, caches, face).
   Slimming that hot path is the next draw win, no atlas needed.
+  **Where the texfixture drawer goes on the phone** (the crowd, play mode, 2026-10-31; timing
+  probes in the drawer, not kept: LuaJIT's sampler hangs the game on iOS). 190 texfixtures a
+  frame, 2.06 ms: the **38 bent pictures** (spine torsos and ears, `spineSkin.drawGrid`) take
+  **1.13 ms, ~30 us each**: 55% of it for 20% of the parts. The 114 plain OMP pictures ~6.5 us
+  each (the draw call 1.3, the fan cache check 0.7, the bones lookup 0.8, shader, colour, body
+  each 0.1-0.3), the 38 bg/fg pictures ~4.9 us. drawGrid every frame: a 4 x 13 grid bent onto the
+  bones with 3 C calls a point (getWorldPoint twice, getLocalPoint: ~156 a picture), 52 vertex
+  tables, setVertices of tables. The ribbons' disease: next, read each bone's transform once and
+  bend in plain maths, or lay the grid in C into a ByteData (as `native/desound/ribbon.c`):
+  ~30 -> ~5 us, ~1 ms a frame back. Face parts riding a spine torso (`spineSkin.transformAt`)
+  call deform too; measure them with it.
 - [ ] **L2. One texture per Mipo, a few draw calls.**
   (Bench: merged meshes only pay off if their vertices aren't rewritten from Lua each frame, so for
   Mipos standing still (as L3) or with the GPU placing the parts (as L4).) Pack a Mipo's baked part pictures into one atlas at
