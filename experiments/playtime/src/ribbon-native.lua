@@ -5,9 +5,8 @@
 -- without native/desound/build.sh): the Lua path draws then.
 local lib = {}
 
-local OS = love and love.system and love.system.getOS() -- nil in pure specs (busted)
-local IS_IOS = OS == 'iOS'
-local ffi = OS and OS ~= 'Web' and require('ffi') or nil
+local nativeLib = require('src.native-lib')
+local ffi = nativeLib.ffi
 
 local CDEF = [[
 int ribbon_strip(const float *nodes, int nNodes, float grow, int bendiness, int segments,
@@ -15,24 +14,12 @@ int ribbon_strip(const float *nodes, int nNodes, float grow, int bendiness, int 
 ]]
 
 -- The vertex layout ribbon_strip writes: 4 floats a vertex
-lib.FORMAT = { { 'VertexPosition', 'float', 2 }, { 'VertexTexCoord', 'float', 2 } }
-lib.BYTES_PER_VERTEX = 16
+lib.FORMAT = nativeLib.FORMAT
+lib.BYTES_PER_VERTEX = nativeLib.BYTES_PER_VERTEX
 
 local C
 local function load()
-    if C ~= nil then return C end
-    C = false
-    if not ffi then return C end
-    pcall(ffi.cdef, CDEF)
-    local ok, found
-    if IS_IOS then
-        ok, found = pcall(function() return ffi.C.ribbon_strip and ffi.C end)
-    else
-        local path = love.filesystem.getSource() .. '/native/desound/libdesound.dylib'
-        ok, found = pcall(ffi.load, path)
-        if ok then ok = pcall(function() return found.ribbon_strip end) end
-    end
-    if ok and found then C = found end
+    if C == nil then C = nativeLib.load(CDEF, 'ribbon_strip') end
     return C
 end
 

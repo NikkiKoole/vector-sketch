@@ -177,11 +177,80 @@ end
 -- lib.deform (a Mipo ear: src/ear-bend.lua).
 local meshes = setmetatable({}, { __mode = 'k' }) -- [extra] = { mesh, img, rest, verts }
 
+-- The grid laid and bent in C when the native library is there (native/desound/grid.c,
+-- lib.useNative): spine torsos and ears. In Lua each point cost three calls into Box2D
+-- (getWorldPoint twice, getLocalPoint): ~30 us a picture on an iPhone SE 2, the bent pictures
+-- were 55% of the textured draw with 20 Mipos (2026-10-31). C gets each bone's transform once.
+lib.useNative = true
+local nativeLib = require('src.native-lib')
+local ffi = nativeLib.ffi
+local CDEF = [[
+int grid_spine(const float *corners, int cols, int rows, const float *bones, const float *middles,
+               int nBones, float blend, float *out);
+int grid_ear(const float *corners, int cols, int rows, const float *ear, const float *parent,
+             float restAngle, float anchorX, float anchorY, float rootX, float rootY,
+             float axisX, float axisY, float length, float bendLength, float *out);
+]]
+local C -- the library, false without one (nil: not asked yet)
+local cornerBuf = ffi and ffi.new('float[8]')
+local boneBuf = ffi and ffi.new('float[96]') -- 32 bones x { x, y, angle } (grid.c's most)
+local middleBuf = ffi and ffi.new('float[32]')
+local earBuf, parentBuf = ffi and ffi.new('float[3]'), ffi and ffi.new('float[3]')
+local gridData, gridOut -- one ByteData the C writes into; setVertices copies it
+
+local function xformInto(buf, offset, body)
+    buf[offset], buf[offset + 1], buf[offset + 2] = body:getX(), body:getY(), body:getAngle()
+end
+
+-- The bent grid written by C into gridData; returns the vertex count, or nil for the Lua path.
+local function bendInC(corners, bones, cols, rows)
+    for k = 1, 8 do cornerBuf[k - 1] = corners[k] end
+    if bones.ear then
+        xformInto(earBuf, 0, bones.ear)
+        xformInto(parentBuf, 0, bones.parent)
+        local bendLength = require('src.ear-bend').bendLength -- here, not on top: no require loop
+        return C.grid_ear(cornerBuf, cols, rows, earBuf, parentBuf, bones.restAngle, bones.anchorX,
+            bones.anchorY, bones.rootX, bones.rootY, bones.axisX, bones.axisY, bones.length, bendLength,
+            gridOut)
+    end
+    local bodies, middles = bones.bodies, bones.middles
+    if #bodies > 32 then return nil end
+    for i, b in ipairs(bodies) do
+        xformInto(boneBuf, (i - 1) * 3, b)
+        middleBuf[i - 1] = middles[i]
+    end
+    return C.grid_spine(cornerBuf, cols, rows, boneBuf, middleBuf, #bodies, lib.blend, gridOut)
+end
+
+local function ensureGridData(count)
+    if not gridData or gridData:getSize() < count * nativeLib.BYTES_PER_VERTEX then
+        gridData = love.data.newByteData(count * nativeLib.BYTES_PER_VERTEX)
+        gridOut = ffi.cast('float *', gridData:getFFIPointer())
+    end
+end
+
+-- For specs (spec/grid-native_spec.lua): the bent grid as C lays it, flat { x, y, ... } row by
+-- row; nil without the library.
+function lib.bentGridC(corners, bones)
+    if C == nil then C = nativeLib.load(CDEF, 'grid_spine') end
+    if not C then return nil end
+    local cols, rows = lib.columns, lib.rows
+    ensureGridData((cols + 1) * (rows + 1))
+    local n = bendInC(corners, bones, cols, rows)
+    if not n then return nil end
+    local out = {}
+    for i = 0, n - 1 do out[i * 2 + 1], out[i * 2 + 2] = gridOut[i * 4], gridOut[i * 4 + 1] end
+    return out
+end
+
 function lib.drawGrid(img, corners, bones, body, extra)
     local cols, rows = lib.columns, lib.rows
+    if C == nil then C = nativeLib.load(CDEF, 'grid_spine') end
+    -- an ear's bones or a spine's (no deform of their own); anything else bends in Lua
+    local useNative = lib.useNative and C and (bones.ear ~= nil or not bones.deform) and #corners == 8
+    local count = (cols + 1) * (rows + 1)
     local cache = meshes[extra]
-    if not cache or cache.img ~= img then
-        local count = (cols + 1) * (rows + 1)
+    if not cache or cache.img ~= img or cache.native ~= useNative or cache.count ~= count then
         local verts, map = {}, {}
         for i = 1, count do verts[i] = { 0, 0, 0, 0 } end
         for r = 0, rows - 1 do
@@ -191,11 +260,22 @@ function lib.drawGrid(img, corners, bones, body, extra)
                 for _, idx in ipairs(list) do map[#map + 1] = idx end
             end
         end
-        local mesh = love.graphics.newMesh(verts, 'triangles', 'stream')
+        local mesh = useNative and love.graphics.newMesh(nativeLib.FORMAT, count, 'triangles', 'stream')
+            or love.graphics.newMesh(verts, 'triangles', 'stream')
         mesh:setVertexMap(map)
         mesh:setTexture(img)
-        cache = { mesh = mesh, img = img, rest = {}, bent = {}, verts = verts }
+        if cache then cache.mesh:release() end
+        cache = { mesh = mesh, img = img, rest = {}, bent = {}, verts = verts, native = useNative, count = count }
         meshes[extra] = cache
+    end
+    if useNative then
+        ensureGridData(count)
+        local n = bendInC(corners, bones, cols, rows)
+        if n and n > 0 then
+            cache.mesh:setVertices(gridData, 1, n)
+            love.graphics.draw(cache.mesh, body:getX(), body:getY(), body:getAngle())
+            return
+        end
     end
     -- rest grid over the rectangle (bilinear between its corners)
     local x1, y1, x2, y2, x3, y3, x4, y4 = unpack(corners)

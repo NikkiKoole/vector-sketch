@@ -153,6 +153,11 @@ before and after with `claudetools/frame-profile.lua`. Gains are estimates until
   bend in plain maths, or lay the grid in C into a ByteData (as `native/desound/ribbon.c`):
   ~30 -> ~5 us, ~1 ms a frame back. Face parts riding a spine torso (`spineSkin.transformAt`)
   call deform too; measure them with it.
+  **Done the same day, in C** (`native/desound/grid.c`, `spineSkin.useNative`): each bone's
+  transform read once, the grid bent and written into a ByteData. Live A/B on the phone: the
+  texfixture drawer 1.65 -> 0.98 ms a frame, all textured drawing 4.5 -> 3.85; the crowd now
+  draws in 4.7 ms (was 6.0), ~9 of the 16.7 ms a frame used. spec/grid-native_spec.lua: the
+  same points as Lua's deform for spines and ears; the spine room pixel-identical.
 - [ ] **L2. One texture per Mipo, a few draw calls.**
   (Bench: merged meshes only pay off if their vertices aren't rewritten from Lua each frame, so for
   Mipos standing still (as L3) or with the GPU placing the parts (as L4).) Pack a Mipo's baked part pictures into one atlas at
