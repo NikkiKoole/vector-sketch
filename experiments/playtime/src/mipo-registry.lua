@@ -67,10 +67,28 @@ end
 
 -- The joint from a parent part's body to a child's (Mipo joints go parent = A, child = B),
 -- of `jointType` when given; nil when there's none.
+-- The joint found, remembered until it's destroyed: getJoints makes a table and a userdata
+-- per joint, getBodies two more, and the arm posing asked ~6 times a Mipo every step (~0.3 ms a
+-- frame with 20 Mipos on an iPhone SE 2, 2026-10-31). A rebuilt part is a new body (not
+-- found here), a replaced joint is a destroyed one. 'No joint' isn't remembered: one made
+-- later is found. Weak keys: bodies that go, go.
+local jointCache = setmetatable({}, { __mode = 'k' }) -- [childBody] = { [parentBody] = { [type] = joint } }
 function lib.jointBetween(parentBody, childBody, jointType)
+    local typeKey = jointType or 'any'
+    local byParent = jointCache[childBody]
+    local byType = byParent and byParent[parentBody]
+    local known = byType and byType[typeKey]
+    if known and not known:isDestroyed() then return known end
     for _, joint in ipairs(childBody:getJoints()) do
         local bodyA, bodyB = joint:getBodies()
         if bodyA == parentBody and bodyB == childBody and (not jointType or joint:getType() == jointType) then
+            if not byParent then
+                byParent = setmetatable({}, { __mode = 'k' })
+                jointCache[childBody] = byParent
+            end
+            byType = byParent[parentBody] or {}
+            byParent[parentBody] = byType
+            byType[typeKey] = joint
             return joint
         end
     end

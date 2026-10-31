@@ -98,6 +98,15 @@ parts (music-theory, skinning's `meshusertVertices`, the polygon modules) run wi
   prep in C (no change: what's left per ribbon is reading the joints, the upload, the draw), L2
   (MIPO-DRAWING.md). Next if needed: Box2D (resting Mipos asleep), the Mipo update parts
   (joint guard 0.7, actions 0.5, keep-angle 0.4).
+  **The Mipo update parts, probed** (timing points, not kept): arm posing 0.32 (of actions 0.48),
+  the untangle 0.31 (of the guard 0.66: per Mipo checked, up to 3 raycasts a joint, and a ray
+  reports every sensor it crosses to Lua), keep-angle's balancing 0.24 (170 parts, honest work)
+  and its walk over all 380 bodies for their behaviors 0.18, unstick 0.16, the rest < 0.1 each.
+  `mipoRegistry.jointBetween` now remembers the joint (getJoints and getBodies every call, ~6 a
+  Mipo a step from the arm posing): arm posing 0.32 -> 0.22. Left on purpose: keep-angle's walk
+  (remembering each body's thing breaks on an editor flip, which gives a body a new thing) and
+  the untangle (cheaper means checking less, a behaviour change: e.g. only Mipos touching
+  another Mipo, as the contact tracker knows).
 - [ ] **M7. The draw's garbage.** ~430 KB a frame from the textured draw (per-drawable tables, fan
   vertex tables, a Bezier curve per ribbon per frame, mouth polygons). Only ~1.3% of the time on
   the desktop, so after M8; worth it before an iPad build.

@@ -52,4 +52,32 @@ describe('mipo registry helpers', function()
             assert.is_nil(mipoRegistry.jointBetween(earParent, mipo.parts.lear.body, 'revolute'))
         end
     end)
+
+    -- jointBetween remembers what it found: through a joint replaced, made later, or a part rebuilt
+    it('finds the new joint when the old one is replaced, and one made later', function()
+        local torso, arm = mipo.parts.torso1.body, mipo.parts.luarm.body
+        local old = mipoRegistry.jointBetween(torso, arm, 'revolute')
+        assert.are.equal(old, mipoRegistry.jointBetween(torso, arm, 'revolute')) -- remembered
+        local x, y = old:getAnchors()
+        old:destroy()
+        assert.is_nil(mipoRegistry.jointBetween(torso, arm, 'revolute'))
+        local new = love.physics.newRevoluteJoint(torso, arm, x, y, false)
+        assert.are.equal(new, mipoRegistry.jointBetween(torso, arm, 'revolute'))
+        assert.are.equal(new, mipoRegistry.jointBetween(torso, arm)) -- any type too
+    end)
+
+    it('finds the joint on a part the editor rebuilt', function()
+        local objectManager = require('src.object-manager')
+        local torso = mipo.parts.torso1.body
+        local before = mipoRegistry.jointBetween(torso, mipo.parts.luarm.body, 'revolute')
+        local thing = mipo.parts.luarm
+        local verts = {}
+        for i, v in ipairs(thing.vertices) do verts[i] = v * 1.1 end
+        local rebuilt = objectManager.recreateThingFromBody(thing.body, { optionalVertices = verts })
+        local after = mipoRegistry.jointBetween(torso, rebuilt.body, 'revolute')
+        assert.is_not_nil(after)
+        assert.are_not.equal(before, after)
+        local _, bodyB = after:getBodies()
+        assert.are.equal(rebuilt.body, bodyB)
+    end)
 end)
