@@ -111,6 +111,34 @@ describe('sfixtures through editing', function()
         assert.is_false(box2dDraw.hasTexture(body))
     end)
 
+    it('an anchor\'s point follows its body and an edit of the anchor', function()
+        local mathutils = require('src.math-utils')
+        local drawTextured = require('src.physics.box2d-draw-textured')
+        local body = love.physics.newBody(world, 300, 200, 'dynamic')
+        love.physics.newFixture(body, love.physics.newRectangleShape(100, 100))
+        body:setUserData({ thing = { id = 'arm' } })
+        body:setAngle(0.7)
+        local anchor = fixtures.createSFixture(body, 20, -10, subtypes.ANCHOR, { radius = 10 })
+        -- what nodePositions worked out every frame before: the middle of its world points
+        local function oldPoint(f)
+            return mathutils.getCenterOfPoints({ f:getBody():getWorldPoints(f:getShape():getPoints()) })
+        end
+        local function close(f)
+            local x1, y1 = drawTextured.anchorPoint(f)
+            local x2, y2 = oldPoint(f)
+            return math.abs(x1 - x2) < 1e-3 and math.abs(y1 - y2) < 1e-3
+        end
+        assert.is_true(close(anchor))
+        body:setPosition(500, -100) -- the body moves: the remembered centre is in its frame
+        body:setAngle(-1.2)
+        assert.is_true(close(anchor))
+        -- the editor moves the anchor: a new fixture (fixtures.replaceShape), a new centre
+        local points = { anchor:getShape():getPoints() }
+        for i = 1, #points, 2 do points[i] = points[i] + 40 end
+        local moved = fixtures.replaceShape(anchor, points)
+        assert.is_true(close(moved))
+    end)
+
     it('sfixturesOf follows an sfixture added and removed', function()
         local body = love.physics.newBody(world, 0, 0, 'static')
         love.physics.newFixture(body, love.physics.newRectangleShape(200, 100))

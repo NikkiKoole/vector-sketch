@@ -504,6 +504,25 @@ local function drawUvusert(d)
     end
 end
 
+-- An anchor sfixture's centre in its body's frame: it never changes for that fixture (moving
+-- or resizing one makes a new fixture), so it's worked out once. Every frame it was the
+-- shape's points and their world points as new tables, for every anchor of every ribbon.
+local anchorCentres = setmetatable({}, { __mode = 'k' }) -- [fixture] = { x, y }
+local function anchorCentre(f)
+    local c = anchorCentres[f]
+    if not c then
+        local x, y = mathutils.getCenterOfPoints({ f:getShape():getPoints() })
+        c = { x, y }
+        anchorCentres[f] = c
+    end
+    return c[1], c[2]
+end
+
+-- Where an anchor sfixture is in the world (a ribbon passes through it)
+function lib.anchorPoint(f)
+    return f:getBody():getWorldPoint(anchorCentre(f))
+end
+
 -- A connected texture's control points this frame: through its nodes (anchors, joint anchors), a
 -- midpoint added for two, the ends grown, the inner points doubled by bendiness; nil when it has
 -- fewer than three.
@@ -514,11 +533,9 @@ local function nodePositions(extra, points)
         if it.type == NT.ANCHOR then
             local f = registry.getSFixtureByID(it.id)
             if f then
-                local b = f:getBody()
-                local centerX, centerY = mathutils.getCenterOfPoints({ b:getWorldPoints(f:getShape()
-                    :getPoints()) })
-                table.insert(points, centerX)
-                table.insert(points, centerY)
+                local centerX, centerY = lib.anchorPoint(f)
+                points[#points + 1] = centerX
+                points[#points + 1] = centerY
             else
                 print('issue with finding achor, id:', it.id)
             end
