@@ -249,15 +249,38 @@ describe('snap core', function()
             moveMipo(b, ax - bx + gap, ay - by)
             step()
             -- small Mipos have both hands within reach of the other's hands, so one or
-            -- two pairs hold on; every joint is between a hand of each Mipo, held where
-            -- they touch (not pulled into each other)
+            -- two pairs hold on; every joint is between a hand of each Mipo
             assert.is_true(#snap.joints() >= 1)
             for _, joint in ipairs(snap.joints()) do
                 local j1, j2 = joint:getBodies()
                 local m1, m2 = mipoRegistry.getFromBody(j1), mipoRegistry.getFromBody(j2)
                 assert.is_true(m1 ~= m2)
-                local x1, y1, x2, y2 = joint:getAnchors()
-                assert.is_near(0, math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2), 1)
+            end
+        end)
+
+        it('a hand that grabs across a gap holds on with its edge: the hands are pulled until they touch', function()
+            local a = CharacterManager.createCharacter('humanoid', 0, 0, 0.3)
+            local b = CharacterManager.createCharacter('humanoid', 0, 0, 0.3)
+            local ah, bh = a.parts.lhand.body, b.parts.rhand.body
+            local ax, ay = ah:getWorldCenter()
+            local bx, by = bh:getWorldCenter()
+            local gap = snap.reachRadius(ah, ax, ay) + snap.reachRadius(bh, bx, by)
+            moveMipo(b, ax - bx + gap, ay - by)
+            step()
+            local joint
+            for _, j in ipairs(snap.joints()) do
+                local j1, j2 = j:getBodies()
+                if (j1 == ah and j2 == bh) or (j1 == bh and j2 == ah) then joint = j end
+            end
+            assert.is_truthy(joint)
+            -- each anchor on its own hand's edge, facing the other hand: apart at first
+            local x1, y1, x2, y2 = joint:getAnchors()
+            local before = math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2)
+            assert.is_true(before > 5)
+            for _ = 1, 30 do world:update(1 / 60) step() end
+            if not joint:isDestroyed() then
+                x1, y1, x2, y2 = joint:getAnchors()
+                assert.is_true(math.sqrt((x2 - x1) ^ 2 + (y2 - y1) ^ 2) < before / 4)
             end
         end)
 

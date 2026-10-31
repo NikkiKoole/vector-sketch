@@ -11,8 +11,9 @@
 --
 -- Mipo hands are snap points too (no fixture: id = the hand part's thing id),
 -- so a hand grabs a climbing hold, a snap block, or another Mipo's hand.
--- A hand grabs what it touches (reach radius + handMargin), holds on where it
--- touches, and lets go when pulled hard for its weight (handLetGo); never its own Mipo.
+-- A hand grabs what it touches (reach radius + handMargin), holds on with its edge (pulled
+-- until it touches what it holds), and lets go when pulled hard for its weight (handLetGo);
+-- never its own Mipo.
 --
 -- (Before: links lived in each snap point as live body refs (at/to) plus two
 -- cached arrays kept in sync by hand. Deleting a body left its partner point
@@ -31,6 +32,8 @@ local units = require('src.physics-units')
 local lib = {}
 
 lib.mipoHands = true
+lib.handOverlap = 0.5         -- how far into each other holding hands are pulled: 0 their edges touch,
+                              -- 1 their centres meet (a joint turns off collision between the two)
 lib.handMargin = 30           -- a hand grabs what it touches: centres within both reach radii + this
                               -- (a fixed 70 was less than one hand's own radius, 100-124: two
                               -- solid hands could never get that close, so never held hands)
@@ -175,15 +178,41 @@ local function destroySnapJoint(joint)
     joint:destroy()
 end
 
+-- Where `body`'s solid shapes face (tx, ty), seen from its centre (cx, cy): the first hit of a ray
+-- from (tx, ty) to the centre. nil when (tx, ty) is inside them.
+local function edgeToward(body, cx, cy, tx, ty)
+    local best
+    for _, fixture in ipairs(body:getFixtures()) do
+        if not fixture:isSensor() then
+            local _, _, fraction = fixture:rayCast(tx, ty, cx, cy, 1)
+            if fraction and (not best or fraction < best) then best = fraction end
+        end
+    end
+    if not best then return nil end
+    return tx + (cx - tx) * best, ty + (cy - ty) * best
+end
+
 local function createSnapJoint(p, q)
     local id = uuid.generateID()
-    -- snap points click together (anchors pull into one point); a hand holds on
-    -- where it touches (one shared anchor between them), or two solid hands
-    -- would be pulled into each other
+    -- snap points click together (anchors pull into one point). A hand holds on past its edge:
+    -- its anchor where its solid shapes face the other point, moved handOverlap of the way in to
+    -- its centre, so the joint pulls the hands into each other and they read as holding (one
+    -- shared anchor halfway between froze the gap a hand grabbed across, up to ~250 px). The
+    -- joint turns off collision between them. Overlapping already: that shared anchor.
     local px, py, qx, qy = p.x, p.y, q.x, q.y
     if p.hand or q.hand then
-        px, py = (p.x + q.x) / 2, (p.y + q.y) / 2
-        qx, qy = px, py
+        local ex, ey, fx, fy = px, py, qx, qy
+        if p.hand then ex, ey = edgeToward(p.body, p.x, p.y, q.x, q.y) end
+        if q.hand then fx, fy = edgeToward(q.body, q.x, q.y, p.x, p.y) end
+        local k = lib.handOverlap
+        if p.hand and ex then ex, ey = ex + (p.x - ex) * k, ey + (p.y - ey) * k end
+        if q.hand and fx then fx, fy = fx + (q.x - fx) * k, fy + (q.y - fy) * k end
+        if ex and fx then
+            px, py, qx, qy = ex, ey, fx, fy
+        else
+            px, py = (p.x + q.x) / 2, (p.y + q.y) / 2
+            qx, qy = px, py
+        end
     end
     local joint = love.physics.newRevoluteJoint(p.body, q.body, px, py, qx, qy)
     local ax, ay = p.body:getLocalPoint(px, py)
