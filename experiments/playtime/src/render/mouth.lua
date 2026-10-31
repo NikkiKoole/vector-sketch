@@ -30,6 +30,21 @@ local function mouthTriangles(extra, slot, poly)
     return tris
 end
 
+-- The same triangles as one Mesh (one draw call), made when first asked and kept with them.
+local function mouthMesh(extra, slot, poly)
+    local tris = mouthTriangles(extra, slot, poly)
+    if not tris or #tris == 0 then return nil end
+    local cached = mouthTrisCache[extra][slot]
+    if not cached.mesh then
+        local vertices = {}
+        for _, t in ipairs(tris) do
+            for k = 1, 6, 2 do vertices[#vertices + 1] = { t[k], t[k + 1] } end
+        end
+        cached.mesh = love.graphics.newMesh(vertices, 'triangles', 'static')
+    end
+    return cached.mesh
+end
+
 -- A lip's Bezier from the mouth's 8 curve points `s` (16 numbers): the upper lip over p1..p5, the
 -- lower one back from p1 over p8..p5, so both run left to right (the picture the same way up).
 -- Written into `into` (reused: drawn every frame). Each lip owns its strip (ribbon.ownStrip), laid
@@ -56,8 +71,35 @@ local mouthPolyCache = { keys = {}, polys = {}, next = 1 }
 local MOUTH_POLY_SLOTS = 64
 
 local buildMouthPolygonUncached
-local function buildMouthPolygon(curvePoints)
+local buildMouthPolygonCached
+
+-- A mouth's polygon: the one from last frame while its 16 curve numbers are the same (most
+-- frames: a mouth only moves while it talks), else from the shared cache. The shared cache's
+-- key is a string of all 16 numbers, and making it every frame for every mouth cost more than
+-- the rest of the draw on an iPhone (2026-10-31). Per mouth and slot, weak keys like above.
+local lastPolys = setmetatable({}, { __mode = 'k' })
+local function buildMouthPolygon(curvePoints, extra, slot)
     if not curvePoints or #curvePoints ~= 16 then return nil end
+    if not extra then return buildMouthPolygonCached(curvePoints) end
+    local perExtra = lastPolys[extra]
+    if not perExtra then perExtra = {}; lastPolys[extra] = perExtra end
+    local last = perExtra[slot]
+    if last then
+        local same = true
+        for k = 1, 16 do
+            if last.points[k] ~= curvePoints[k] then same = false; break end
+        end
+        if same then return last.poly end
+    else
+        last = { points = {} }
+        perExtra[slot] = last
+    end
+    for k = 1, 16 do last.points[k] = curvePoints[k] end
+    last.poly = buildMouthPolygonCached(curvePoints)
+    return last.poly
+end
+
+buildMouthPolygonCached = function(curvePoints)
     local key = table.concat(curvePoints, ',')
     local cache = mouthPolyCache
     local hit = cache.polys[key]
@@ -194,29 +236,14 @@ local function drawMouthBackdrop(d)
         love.graphics.rotate(angle)
 
         local curvePoints = animatedCurvePoints(extra, body) or extra.curvePoints
-        local cleaned = buildMouthPolygon(curvePoints)
-        if cleaned then
-            local tris = mouthTriangles(extra, 'backdrop', cleaned)
-            if tris and #tris > 0 then
-                love.graphics.stencil(function()
-                    for ti = 1, #tris do
-                        love.graphics.polygon("fill", tris[ti])
-                    end
-                end, "replace", 1)
-                love.graphics.setStencilTest("equal", 1)
-
-                local br, bg, bb, ba = color.hexToColor(extra.backdropHex or '00000099')
-                love.graphics.setColor(br, bg, bb, ba)
-                local minX, minY, maxX, maxY = cleaned[1], cleaned[2], cleaned[1], cleaned[2]
-                for pi = 3, #cleaned, 2 do
-                    if cleaned[pi] < minX then minX = cleaned[pi] end
-                    if cleaned[pi + 1] < minY then minY = cleaned[pi + 1] end
-                    if cleaned[pi] > maxX then maxX = cleaned[pi] end
-                    if cleaned[pi + 1] > maxY then maxY = cleaned[pi + 1] end
-                end
-                love.graphics.rectangle("fill", minX - 2, minY - 2, maxX - minX + 4, maxY - minY + 4)
-                love.graphics.setStencilTest()
-            end
+        local cleaned = buildMouthPolygon(curvePoints, extra, 'backdrop')
+        -- The triangles filled straight away: they don't overlap (simple loops, triangulated),
+        -- so the see-through colour comes out even, as it did through a stencil. A stencil
+        -- pass per mouth was ~50 µs each on an iPhone SE 2 (2026-10-31).
+        local mesh = cleaned and mouthMesh(extra, 'backdrop', cleaned)
+        if mesh then
+            love.graphics.setColor(color.hexToColor(extra.backdropHex or '00000099'))
+            love.graphics.draw(mesh)
         end
 
         love.graphics.pop()
@@ -333,7 +360,7 @@ local function drawTeeth(d)
                 curvePoints[16] = curvePoints[16] + drop  -- p8.y
             end
 
-            local cleaned = buildMouthPolygon(curvePoints)
+            local cleaned = buildMouthPolygon(curvePoints, extra, 'teeth')
 
             if cleaned then
                 local tris = mouthTriangles(extra, 'teeth', cleaned)

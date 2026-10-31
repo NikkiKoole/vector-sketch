@@ -92,8 +92,11 @@ lib.standUpSpeed = 500          -- hop speed (world units/s), like the grab hop
 -- steps, a slice of them on every step: all at once, with 20 Mipos, they were 2-3 ms
 -- spikes (contacts of every part, three raycasts per joint) that threw the fixed timestep
 -- off. Counted in steps, not seconds, so a slow frame or a spec stepping faster than real
--- time sees the same thing. Heal, unwind and pulling a ghost back run every step.
+-- time sees the same thing. Heal and pulling a ghost back run every step.
 lib.slowCheckSteps = 12
+-- Going through every Mipo's joints (unwind, and the search for stuck limbs, which then
+-- comes round every slowCheckSteps scans) happens every this many steps
+lib.scanEvery = 2
 
 local lastHeld = {} -- [mipoId] = time the Mipo was last held by a pointer
 -- [pairKey] = { a, b, since, untilT, restUntil }; on state: preSolve reads it every step
@@ -101,6 +104,7 @@ state.mipoTangles = state.mipoTangles or {}
 local tangles = state.mipoTangles
 local lastTangleCheck = 0
 local stepCount = 0
+local scanCount = 0 -- the steps that went through every Mipo's joints (lib.scanEvery)
 local splayedSince = {} -- [mipoId] = time its legs became splayed
 local lastStandUp = {}  -- [mipoId] = time of its last stand-up hop
 -- Parts that can carry the Mipo: legs normally, arms in a handstand (flip).
@@ -358,7 +362,9 @@ end
 
 lib.unstickPull = 6 -- a ghost moves toward the good side's centre at this many times the gap per second
 
-local function unstickJoints(joints, now)
+-- joints: the revolute joints to look through, a slice at a time (empty on steps without a
+-- scan); `slice` counts scans, not steps, so every joint still comes round
+local function unstickJoints(joints, now, scan)
     -- ghosts first: pull them toward the good side, solid again once they're clear
     for key, entry in pairs(ghosts) do
         local joint = entry.joint
@@ -385,7 +391,7 @@ local function unstickJoints(joints, now)
             end
         end
     end
-    local slice = stepCount % lib.slowCheckSteps
+    local slice = scan % lib.slowCheckSteps
     for j, joint in ipairs(joints) do
         if j % lib.slowCheckSteps == slice and not ghosts[jointKey(joint)] then
             local wall = wallAcrossLimb(joint)
@@ -699,20 +705,30 @@ function lib.update()
     if lib.untangle then untangleMipos(now) end
     if next(tangles) ~= nil then pushApart() end
     if not lib.unwind and not lib.heal and not lib.unstick then return end
+    -- Every Mipo's joints only every scanEvery steps (unwind, finding stuck limbs): going
+    -- through all ~300 of them every step was ~1 ms a frame with 20 Mipos on an iPhone SE 2
+    -- (2026-10-31). A held Mipo's joints still every step (heal), and ghosts are pulled
+    -- back every step (unstickJoints).
+    local scan = stepCount % lib.scanEvery == 0
+    if scan then scanCount = scanCount + 1 end
     local revolute, limited, held = {}, {}, {}
     for id, instance in pairs(mipoRegistry.getAll()) do
         local recentlyHeld = wasHeld(id, now)
-        eachRevolute(instance, function(joint)
-            revolute[#revolute + 1] = joint
-            if joint:areLimitsEnabled() then limited[#limited + 1] = joint end
-            if recentlyHeld then held[#held + 1] = joint end
-        end)
+        if scan or recentlyHeld then
+            eachRevolute(instance, function(joint)
+                if scan then
+                    revolute[#revolute + 1] = joint
+                    if joint:areLimitsEnabled() then limited[#limited + 1] = joint end
+                end
+                if recentlyHeld then held[#held + 1] = joint end
+            end)
+        end
     end
     if lib.heal then
         for _, joint in ipairs(held) do healJoint(joint) end
     end
-    if lib.unwind then unwindJoints(limited) end
-    if lib.unstick then unstickJoints(revolute, now) end
+    if lib.unwind and scan then unwindJoints(limited) end
+    if lib.unstick then unstickJoints(revolute, now, scanCount) end
 end
 
 return lib
