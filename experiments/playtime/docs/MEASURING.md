@@ -150,6 +150,12 @@ parts (music-theory, skinning's `meshusertVertices`, the polygon modules) run wi
   things on a phone someone is holding. `device.sh` picks an iPhone before an iPad
   (`DEVICE=iPad` for the iPad). iOS has no JIT: count calls into C (each costs), not
   arithmetic.
+- [ ] **M11. The Mipo update, what's left (parked 2026-10-31).** Two measured, left on purpose
+  (M10's probes): the untangle (0.31 ms with 20 Mipos on the phone: check only Mipos that touch
+  another Mipo, as the contact tracker knows; a behaviour change, so try it in play) and
+  keep-angle's walk over all bodies for their behaviors (0.18 ms: a list of the balancing parts,
+  kept right through editor flips, which give a body a new thing). Bigger, with Box2D: resting
+  Mipos asleep.
 - [ ] **M6. The potato-torso click.** The editor snapshot forces every slider to its midpoint; on a
   potato head's torso1 panel that makes a shape Box2D refuses (`fixtures.lua:132: Box2D assertion
   failed`), and the next click finds the Mipo half rebuilt. Same before and after the splits, so
