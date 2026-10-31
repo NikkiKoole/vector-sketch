@@ -38,17 +38,28 @@ if not IS_WEB then
     -- `describe` as a top-level call which is nil outside busted. Skip both
     -- so lurker doesn't try to hotswap them into its error overlay.
     lurker.preswap = function(f)
-        return f:match('scripts/.+%.playtime%.lua$') ~= nil
-            or f:match('spec/.+_spec%.lua$') ~= nil
+        if f:match('scripts/.+%.playtime%.lua$') then
+            -- scene scripts aren't modules; the open one loads again through the scene loader,
+            -- right now: after an error its update would otherwise run (old) once more before
+            -- the loader's once-a-second check and put lurker straight back on its error screen
+            local sceneLoader = require('src.scene-loader') -- (main's own is declared below)
+            if f == sceneLoader.scriptFile() then sceneLoader.reloadIfChanged() end
+            return true
+        end
+        return f:match('spec/.+_spec%.lua$') ~= nil
     end
     -- Only watch src/ and the top-level .lua files. The default walks the whole
     -- project (2200+ files incl. textures/) every 0.5s: a 25 ms frame hitch.
-    -- Scene scripts hot-reload through scene-loader, specs are skipped above.
+    -- Scene scripts hot-reload through scene-loader, specs are skipped above. The
+    -- open scene's script is watched too (preswap skips swapping it): an error in
+    -- it puts lurker in its error state, which stops love.update and with it the
+    -- scene loader's reload, and only a change lurker sees gets out of it again.
     lurker.getchanged = function()
         local candidates = lurker.listdir('src', true, true)
         for _, f in ipairs(love.filesystem.getDirectoryItems('')) do
             candidates[#candidates + 1] = f
         end
+        candidates[#candidates + 1] = require('src.scene-loader').scriptFile() -- (declared below)
         local changed = {}
         for _, f in ipairs(candidates) do
             if f:match('%.lua$') then

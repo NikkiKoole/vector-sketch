@@ -10,9 +10,11 @@ local FEXT = require('src.file-extensions')
 local signals = require('src.signals')
 local cam = camera.getInstance()
 
-local hotReloadTimer = 0
+-- The scene script's hot reload (maybeHotReload): on state, so a hot swap of this file doesn't
+-- forget what was loaded and reload for nothing.
+state.sceneReload = state.sceneReload or { timer = 0, modTime = 0, contents = nil }
+local reload = state.sceneReload
 local hotReloadInterval = 1
-local lastModTime = 0
 
 local function getFiledata(filename)
     -- io.open works on native (LuaJIT), not available on web (PUC Lua 5.1 in love.js)
@@ -123,30 +125,50 @@ function lib.loadAndRunScript(name)
     if state.scene.sceneScript then
         script.call(SE.ON_UNLOAD)
     end
+    -- remembered before the script runs: one whose onStart errors isn't loaded again every second
+    reload.modTime, reload.contents = getFileModificationTime(name), data
     state.scene.sceneScript = script.loadScript(data, name)
     state.scene.scriptPath = name
     script.setEnv({ worldState = state.world, world = state.physicsWorld, state = state })
     script.call(SE.ON_START)
+end
 
-    lastModTime = getFileModificationTime(name)
+-- Has the scene script changed since it was loaded? Its time first; file times are whole seconds,
+-- so a save in the same second as the load looked unchanged for good (missed until a later save):
+-- while the time is that recent, the contents are compared too.
+local function scriptChanged(path)
+    local modTime = getFileModificationTime(path)
+    if modTime == 0 then return false end -- gone (deleted, renamed): nothing to load
+    if modTime ~= reload.modTime then return true end
+    if os.time() - modTime > 2 then return false end
+    local filedata = getFiledata(path)
+    return filedata ~= nil and filedata:getString() ~= reload.contents
+end
+
+-- Load the scene script again if it changed (now, not at the next once-a-second check).
+function lib.reloadIfChanged()
+    if state.scene.scriptPath and scriptChanged(state.scene.scriptPath) then
+        logger:info('scene script changed: loading it again')
+        lib.loadAndRunScript(state.scene.scriptPath)
+    end
 end
 
 function lib.maybeHotReload(dt)
-    -- Accumulate time
-    hotReloadTimer = hotReloadTimer + dt
-    -- Check if the accumulated time exceeds the interval
-    --if state.scene.hotReloadTimer >= state.scene.hotReloadInterval then
-    if hotReloadTimer >= hotReloadInterval then
-        hotReloadTimer = hotReloadTimer - hotReloadInterval
-        if state.scene.scriptPath then
-            local newModeTime = (getFileModificationTime(state.scene.scriptPath))
-            if (newModeTime ~= lastModTime) then
-                logger:info('trying to load file because timestamp differs.')
-                lib.loadAndRunScript(state.scene.scriptPath)
-            end
-            lastModTime = newModeTime
-        end
+    reload.timer = reload.timer + dt
+    if reload.timer >= hotReloadInterval then
+        reload.timer = reload.timer - hotReloadInterval
+        lib.reloadIfChanged()
     end
+end
+
+-- The scene script as a path inside the game (scripts/x.playtime.lua), or nil: main.lua lets
+-- lurker watch it, so saving a fix gets the game out of lurker's error screen.
+function lib.scriptFile()
+    local path = state.scene.scriptPath
+    if not path then return nil end
+    local diff = utils.getPathDifference(love.filesystem.getWorkingDirectory(), path)
+    if diff then return (diff:gsub('^/', '')) end
+    return (path:gsub('^/', ''))
 end
 
 return lib

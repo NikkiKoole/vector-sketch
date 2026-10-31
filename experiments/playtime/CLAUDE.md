@@ -62,7 +62,10 @@ HTTP JSON API for interacting with the running game. All endpoints return `{ok, 
 
 Lurker watches files every 0.5s and hot-swaps Lua modules. Check `/errors` after changes.
 It only watches `src/` and top-level `.lua` files (override in `main.lua`; walking the whole
-project was a 25 ms hitch). Scene scripts reload via scene-loader instead.
+project was a 25 ms hitch). Scene scripts reload via scene-loader instead (`maybeHotReload`,
+once a second; a save in the same second is caught by comparing contents). Lurker also watches
+the open scene's script, so saving a fix gets you off lurker's error screen (2026-10-31; before,
+only a change in `src/` did).
 A hot-swap re-runs the file, so module-local state (`local cache = {}`) starts empty again.
 State that must survive belongs on `state` (see `src/mipo-registry.lua`).
 Editing `src/state.lua` itself hot-swaps it too: `state.world.paused` goes back to true and the
