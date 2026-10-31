@@ -20,3 +20,11 @@ mass, not hair, and long hair mostly hides behind the body. Left open if it come
 - Locks lying on the torso and arms, not only the head
 - Its cost on the phone (not measured; guess 1–1.5 ms for 20 Mipos with 10 locks each)
 - Dreadlocks: fewer, thicker, stiffer locks are probably where this fits best
+
+## Hair bounce (also parked)
+
+The other try the same day: the haircut strip as it is, its outer edge on a spring
+(`src/hair-bounce.lua`, settings → hair bounce, off by default). Pushed by the head's
+acceleration, sagging when tilted, pinned at the ends with the wobble in the middle (`focus`).
+"this isnt it really either": too loose, and a whole haircut moving as one sheet. Costs nothing
+when off (one call per haircut a frame).

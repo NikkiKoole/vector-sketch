@@ -38,6 +38,7 @@ local skinning = require('src.render.skinning')
 local getLoveImage = ompBake.getLoveImage
 local setSurfaceShader = shaders.setSurfaceShader
 local ownStrip, growLine = ribbon.ownStrip, ribbon.growLine
+local hairBounce = require('src.hair-bounce')
 local drawSquishableHairOver, traceVerticesMesh = ribbon.drawSquishableHairOver, ribbon.traceVerticesMesh
 local lookupUV, buildPolyVertexIndex = skinning.lookupUV, skinning.buildPolyVertexIndex
 
@@ -745,9 +746,10 @@ end
 local function drawTraceVertices(d)
     -- a spine torso's haircut runs along the whole torso's top, not its lowest band's
     local hairBones = spineSkin.bonesOf(d.thing.body)
-    local m = traceVerticesMesh(d.extra,
+    local m, rest = traceVerticesMesh(d.extra,
         hairBones and hairBones.outline or d.thing.vertices)
     if m then
+        hairBounce.apply(d.extra, d.thing.body, m, rest, love.timer.getDelta())
         --if d.extra.main.bgURL
         local extra = d.extra
         local useOMP = extra.OMP and extra.ompImage

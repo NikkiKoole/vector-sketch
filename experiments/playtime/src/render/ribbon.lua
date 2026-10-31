@@ -391,7 +391,8 @@ end
 -- The hair strip along part of a body's outline (TRACE_VERTICES), in body space: it only
 -- changes when the outline or the strip's settings do, so the mesh is kept until then.
 -- Building it every frame (curve, polyline, newMesh) was ~120 us per Mipo.
--- Weak keys, not on `extra`: that's saved.
+-- Weak keys, not on `extra`: that's saved. Returns the mesh and its rest vertices (body space,
+-- { x, y, u, v }), which src/hair-bounce.lua bends from.
 local traceMeshCache = setmetatable({}, { __mode = 'k' })
 local function traceVerticesMesh(extra, outline)
     local sum = 0
@@ -399,14 +400,14 @@ local function traceVerticesMesh(extra, outline)
     local key = table.concat({ #outline, sum, tostring(extra.startIndex), tostring(extra.endIndex),
         extra.tension or .02, extra.spacing or 5, extra.width or 100 }, '|')
     local cached = traceMeshCache[extra]
-    if cached and cached.key == key then return cached.mesh end
+    if cached and cached.key == key then return cached.mesh, cached.rest end
 
     local indices = getIndices(#outline / 2, extra.startIndex, extra.endIndex)
     local points = {}
     for j = 1, #indices do
         points[#points + 1] = { outline[indices[j] * 2 + 1], outline[indices[j] * 2 + 2] }
     end
-    local mesh
+    local mesh, rest
     if #points >= 2 then
         local coords = mathutils.unloosenVanillaline(points, extra.tension or .02, extra.spacing or 5)
         local verts = polyline.miter(coords, extra.width or 100)
@@ -418,10 +419,11 @@ local function traceVerticesMesh(extra, outline)
             vertsWithUVs[vi] = { verts[vi][1] - cx, verts[vi][2] - cy, u, v }
         end
         mesh = love.graphics.newMesh(vertsWithUVs, "strip")
+        rest = vertsWithUVs
     end
     if cached and cached.mesh then cached.mesh:release() end
-    traceMeshCache[extra] = { key = key, mesh = mesh }
-    return mesh
+    traceMeshCache[extra] = { key = key, mesh = mesh, rest = rest }
+    return mesh, rest
 end
 
 

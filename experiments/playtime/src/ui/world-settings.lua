@@ -12,6 +12,7 @@ local musicParams = require('src.music-params')
 local cameraParams = require('src.camera-params')
 local roomMusicParams = require('src.room-music-params')
 local voiceLabParams = require('src.voice-lab-params')
+local hairBounce = require('src.hair-bounce')
 
 local PANEL_WIDTH = ui.theme.panelWidth
 local START_X, START_Y = 102, 60 -- right of the tool rail
@@ -100,6 +101,13 @@ function lib.drawWorldSettingsUI()
             if clicked then f.music = not f.music end
             if f.music then
                 y = y + inspector.drawParams('music', musicParams.rows, musicParams.target(), nil, x, y, w)
+            end
+
+            -- haircuts that bounce and sag (src/hair-bounce.lua)
+            clicked, y = sectionHeader(x, y, w, 'hair bounce', f.hairBounce)
+            if clicked then f.hairBounce = not f.hairBounce end
+            if f.hairBounce then
+                y = y + inspector.drawParams('hairbounce', hairBounce.rows, hairBounce.settings, nil, x, y, w)
             end
 
             -- a test bench for Mipo voices on the synth (src/voice-lab.lua)
