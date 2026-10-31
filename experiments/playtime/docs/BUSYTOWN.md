@@ -57,6 +57,7 @@ Hands already grab and hold (`src/physics/snap.lua`); hats are a snap point on t
 
 - **Cut-open buildings**: Fabuland blocks with the front off, floors you see into, stairs and a
   pole between them. Stacked rooms in one scene (R5's open question) fit Scarry's way of drawing.
+  Needs depth layers (`DEPTH-LAYERS.md`): walls as back parts Mipos walk in front of, floors solid.
 - **Vehicles everywhere**: carts from snap parts (exist), with the job's look: a bread van, a fire
   engine, a post van, a bus. Lowly Worm's apple car: a car shaped like a thing.
 - **Mishaps, never harm**: a cart of apples tips and the apples roll everywhere, a parcel bounces

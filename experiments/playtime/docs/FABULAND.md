@@ -67,6 +67,8 @@ turn `state.fabuland.on` on for every scene (or drop the check).
 - [ ] **F4. Parts that move:** the door swinging on a hinge snap (a separate leaf, revolute), the
   windmill's sails, a well's winch. Then the door block as a real door into a room (`src/doors.lua`,
   W1), which pulls in `WORLDS-AND-DOORS.md` W2.
+  Before the door can be reached at all: depth layers (`DEPTH-LAYERS.md`): window and door blocks are
+  *back* parts that Mipos walk in front of, with a one-way top to stand on.
 - [ ] **F5. More from the pictures:** the slide with a snap at its top (`props.makeSlide` exists),
   balcony railing with a gap, chimney, the lollipop tree, the parasol, the clock, a back panel
   between posts (drawn behind Mipos, not solid), the car chassis (the snap cart is close).

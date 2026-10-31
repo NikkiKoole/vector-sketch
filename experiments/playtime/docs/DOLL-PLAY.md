@@ -75,6 +75,7 @@ Build those, and the rest is content. F4 (load your Mipo) stands apart: slot it 
 - [ ] **R5. Rooms that remember.** W2, then W3 (`WORLDS-AND-DOORS.md`). Then decide: stacked
   rooms with trapdoors in one scene, or doors between scenes? Slopes through floors and the
   draining bathtub hang on that.
+  Stacked rooms want one-way floors and walls Mipos pass in front of: `DEPTH-LAYERS.md`.
 - [ ] **R6. Room toys.** Content without end: one toy at a time, a week or less each (pulley,
   fan, xylophone floor, wrecking ball, swappable wheels), picked per room.
 - [ ] **R7. Alive extras.** Personalities, boredom and wandering, day/night. Last: heavy and

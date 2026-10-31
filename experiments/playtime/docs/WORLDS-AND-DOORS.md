@@ -98,6 +98,9 @@ home, and the Puppetmaker Mipo (DOLL-PLAY F4) can move in.
 
 ---
 
+A door in a building: a Fabuland door block as a *back* part Mipos stand in front of, with the
+DOOR behaviour (`DEPTH-LAYERS.md`).
+
 ## Open questions
 
 - **Holding something with the mouse while going in?** Probably: it comes along

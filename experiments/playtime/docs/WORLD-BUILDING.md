@@ -131,6 +131,7 @@ rubber-hose legs (`src/actor.lua`), not ragdolls.
   A non-physics decor layer (vector or textured, in parallax camera layers, tappable) keeps bodies
   for what's played with: cheaper to draw, and to step (the web build). That's G4; start from
   scrolling-world's camera layers (`../../lib/camera.lua` `generateCameraLayer`) and streaming.
+  Worked out as depth layers in `DEPTH-LAYERS.md`.
 - **Stacking** (`../scrolling-world-ecs/src/systems/StackSystem.lua`, `src/stackStuff.lua`): a
   `stackable` item dropped on another lands exactly on its connector point; the stack is a
   doubly linked list, moving the bottom one moves the stack, depth follows the order. It clicks
@@ -220,6 +221,7 @@ It grows out of the click-in stacking above:
   `createCamData`, brady's `addLayer`). A `parallax` value 0..1 per backdrop (0 = fixed to the
   screen, 1 = moves with the world). It's a small change where `main.lua` draws backdrops, plus a slider in world
   settings. It's saved with the scene, with a default of 1 for old scenes.
+  Part of a bigger idea: back / play / front layers for any body, collisions and parallax (`DEPTH-LAYERS.md`).
 - [ ] **G5. Sky.** **Tried in an experiment first: `../sky-atmosphere/` (2026-10-29, Nikki: "looking
   promising", still thinking it over).** What Nikki wants: one sky you can drag a Mipo up through, from
   the ground's horizon through the atmosphere to black space and the moon, with day and night colours

@@ -49,6 +49,6 @@ The "drop" rows were archived (above). Left to decide:
 | water | 2025-04 | floating in water: drag, density sliders | **maybe**: an older water than kitchen's; floating could come back for a bath (WATER, parked) |
 | elasto | 2025-04 | an elastic band between two points | **maybe**: a room toy (slingshot, trampoline) |
 | planets | 2025-04 | planets that pull | **maybe**: the sky experiment's moon pull (WORLD-BUILDING G5) |
-| platforms | 2025-04 | platforms you jump up through | **maybe**: a one-way floor is useful for stacked rooms (R5) |
+| platforms | 2025-04 | platforms you jump up through | **keep**: its one-way floors are the top of a back-layer block (`DEPTH-LAYERS.md`) and stacked rooms (R5) |
 | mudready | 2026-05 | the Bathhouse mud | **keep while Bathhouse is parked**, drop if it's let go |
 | stapelaar | 2026-05 | stone balancing | **maybe**: fun, unrelated to the plans |
