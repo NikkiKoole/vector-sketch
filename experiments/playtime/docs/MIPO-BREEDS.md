@@ -149,6 +149,15 @@ lists, puts them back after) and sets the colours through `characterManager.setR
 the hook for B3. Shapes are grouped by eye in the script until B1 tags them. Teddy, fat, tall,
 hairy, bad, geometric, bathhouse, and 'any' (as today) to compare.
 
+## rubberleg, the first breed (2026-11-01)
+
+Defined by hand from the vanilla scene: rope-like limbs (`leg1`, `leg5`), limb hair none half
+the time, else one of the last three (`hair9`-`hair11`). It lives in `src/mipo-breeds.lua`
+(`lib.breeds`, the same swap-for-the-draw as the spike) and has a button in the Mipo editor,
+**random rubberleg**, next to **undo**: every random button there remembers the Mipo from
+before, and undo rebuilds it from that DNA, up to 20 steps back. In a breed's list `''` is
+"none" (limb hair, for now).
+
 ## Steps, if it becomes a plan
 
 - [ ] **B1. Tag the catalogs.** Look at each torso/head, ear, hand/foot and pattern picture and

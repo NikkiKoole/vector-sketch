@@ -199,10 +199,11 @@ local function randomizeTextures(instance, hairColor, opts)
     end
     for _, part in ipairs(torsos) do appearance.updateConnectedAppearance(instance, part, 'connected-skin', skin) end
 
-    -- limb hair in the hair colour, the same way
+    -- limb hair in the hair colour, the same way ('' in the list: no hair, src/mipo-breeds.lua)
     local hair
     for _, parts in ipairs(limbs) do
-        hair = { bgURL = pick(C.limbHairTextures) .. '.png', bgHex = hairColor }
+        local url = pick(C.limbHairTextures)
+        hair = url ~= '' and { bgURL = url .. '.png', bgHex = hairColor } or { bgURL = '', fgURL = '' }
         for _, part in ipairs(parts) do appearance.updateConnectedAppearance(instance, part, 'connected-hair', hair) end
     end
     for _, part in ipairs(torsos) do appearance.updateConnectedAppearance(instance, part, 'connected-hair', hair) end

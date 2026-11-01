@@ -4,6 +4,7 @@ local lib = {}
 local mipoVoice = require('src.mipo-voice')
 local utils = require('src.utils')
 local CharacterManager = require('src.character-manager')
+local mipoBreeds = require('src.mipo-breeds')
 local mipoRegistry = require('src.mipo-registry')
 local mipoActions = require('src.mipo-actions')
 local ST = require('src.shape-types')
@@ -424,22 +425,36 @@ function lib.drawRandomize(p, y)
     elseif partName:match('arm') then partLabel = 'arms'
     elseif partName:match('leg') then partLabel = 'legs'
     end
+    -- every roll keeps the Mipo from before it: undo goes back a step at a time (mipo-breeds)
     if ui.button(x, y, panelWidth - 40, 'randomize ' .. partLabel) then
+        mipoBreeds.remember(instance)
         CharacterManager.randomizePart(instance, partName)
         mipoVoice.dice(instance)
     end
     y = y + ROW
     local hw = math.floor((panelWidth - 40) / 2) - 2
     if ui.button(x, y, hw, 'randomize all') then
+        mipoBreeds.remember(instance)
         CharacterManager.randomizeMipo(instance)
         mipoVoice.dice(instance)
     end
     if ui.button(x + hw + 4, y, hw, 'randomize *') then
+        mipoBreeds.remember(instance)
         CharacterManager.randomizeMipoConstrained(instance)
         mipoVoice.dice(instance)
     end
     y = y + ROW
+    if ui.button(x, y, hw, 'random rubberleg') then
+        mipoBreeds.remember(instance)
+        mipoBreeds.randomize(instance, 'rubberleg')
+        mipoVoice.dice(instance)
+    end
+    if mipoBreeds.canUndo(instance) and ui.button(x + hw + 4, y, hw, 'undo') then
+        mipoBreeds.undo(instance)
+    end
+    y = y + ROW
     if ui.button(x, y, hw, 'mutate sizes') then
+        mipoBreeds.remember(instance)
         CharacterManager.mutateSizes(instance)
         mipoVoice.dice(instance)
     end
