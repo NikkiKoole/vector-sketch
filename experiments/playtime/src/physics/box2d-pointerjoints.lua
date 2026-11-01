@@ -5,6 +5,7 @@ local BT = require('src.body-types')
 local mipoRegistry = require('src.mipo-registry')
 local units = require('src.physics-units')
 local utils = require('src.utils')
+local contactTracker = require('src.physics.contact-tracker')
 local pointerJoints = {}
 
 function lib.getPointerPosition(id)
@@ -40,6 +41,7 @@ function lib.makePointerJoint(id, bodyToAttachTo, wx, wy, force, damp)
     -- force (src/input-manager.lua, from state.world.dragStrength) and Box2D's 5 Hz spring
     -- as at 100 px per metre
     pointerJoint.joint:setMaxForce(units.force(force))
+    pointerJoint.fullForce = pointerJoint.joint:getMaxForce() -- (touchingDragStrength)
     pointerJoint.joint:setFrequency(units.rate(pointerJoint.joint:getFrequency()))
     return pointerJoint
 end
@@ -82,6 +84,38 @@ end
 -- handle that and the cap made dragging feel laggy. 3000 if it's ever needed again.
 lib.maxMipoDragSpeed = false
 
+-- While a dragged Mipo touches another Mipo, the drag pulls with at most this many of its
+-- weights (it may pull with state.world.dragStrength, 40, in the air: throws stay snappy).
+-- Pressed into a Mipo backed against a wall, 40 forced limbs through each other (21 crossed
+-- in 10 tries, 0 at 8; in a pile they stayed knotted, scripts/hands-mess, 2026-11-01).
+lib.touchingDragStrength = 8
+
+local function solidOtherMipo(own, other, otherBody, ownId)
+    if own:isSensor() or other:isSensor() then return false end
+    local instance = mipoRegistry.getFromBody(otherBody)
+    return instance ~= nil and instance.id ~= ownId
+end
+
+local function touchingOtherMipo(instance)
+    for _, part in pairs(instance.parts) do
+        if part.body and not part.body:isDestroyed()
+            and contactTracker.any(part.body, solidOtherMipo, instance.id) then
+            return true
+        end
+    end
+    return false
+end
+
+-- A drag on a Mipo pulls softly while it touches another Mipo (touchingDragStrength), fully
+-- otherwise. Each frame, from handlePointerUpdate.
+function lib.softenWhenTouching(pointerJoint)
+    local mipo = mipoRegistry.getFromBody(pointerJoint.jointBody)
+    if not (mipo and pointerJoint.fullForce and pointerJoint.joint) then return end
+    local strength = state.world.dragStrength or 40
+    local soft = pointerJoint.fullForce * math.min(1, lib.touchingDragStrength / math.max(strength, 1e-9))
+    pointerJoint.joint:setMaxForce(touchingOtherMipo(mipo) and soft or pointerJoint.fullForce)
+end
+
 -- Move a target toward (wx, wy), at most maxStep far.
 function lib.stepToward(tx, ty, wx, wy, maxStep)
     local dx, dy = wx - tx, wy - ty
@@ -99,6 +133,7 @@ function lib.handlePointerUpdate(dt, cam)
         if (mj.joint) then
             local mx, my = lib.getPointerPosition(mj.id)
             local wx, wy = cam:getWorldCoordinates(mx, my)
+            lib.softenWhenTouching(mj)
             if lib.maxMipoDragSpeed and dt and mipoRegistry.getFromBody(mj.jointBody) then
                 local tx, ty = mj.joint:getTarget()
                 wx, wy = lib.stepToward(tx, ty, wx, wy, lib.maxMipoDragSpeed * dt)
