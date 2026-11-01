@@ -308,6 +308,11 @@ local function drawUpperLip(d)
 end
 
     -- Teeth: positioned image, optionally stencil-clipped to mouth interior
+-- The gum's stroke: a brow picture (thick hand-drawn chalk), tinted. gumSolid: across its width,
+-- where the stroke is (brow5: from 30% to its rough edge at 89%, measured 2026-11-01).
+lib.gumPicture = 'brow5.png'
+lib.gumSolid = { 0.3, 0.89 }
+
 local function drawTeeth(d)
     local extra = d.extra
     local body = d.body
@@ -373,6 +378,35 @@ local function drawTeeth(d)
                         end
                     end, "replace", 1)
                     love.graphics.setStencilTest("equal", 1)
+
+                    -- the gum (face.teeth.gum, dna-defaults): a chalky stroke (a brow picture) lying flat
+                    -- across the mouth like the teeth, not bent along it, from the top of the opening
+                    -- down to gumDepth into the teeth picture, so the teeth grow out of its lower edge
+                    -- (they draw over it); clipped to the opening like the teeth, so a smile's curled-up
+                    -- corners show gum (only the dark backdrop before).
+                    if extra.gum and curvePoints then
+                        local minX, maxX, minY = math.huge, -math.huge, math.huge
+                        for ci = 1, #curvePoints, 2 do
+                            minX, maxX = math.min(minX, curvePoints[ci]), math.max(maxX, curvePoints[ci])
+                            minY = math.min(minY, curvePoints[ci + 1])
+                        end
+                        local gumBottom = oy - h / 2 + h * (extra.gumDepth or 0.1)
+                        local gumImg = gumBottom > minY and getLoveImage('textures/' .. lib.gumPicture)
+                        if gumImg then
+                            local iw, ih = gumImg:getDimensions()
+                            local long = (maxX - minX) * 1.2 -- past the corners: its rough ends are clipped
+                            -- the stroke fills the picture's width only from gumSolid[1] to gumSolid[2]: its
+                            -- lower edge (gumSolid[2]) goes on the gum line, and it's made tall enough that
+                            -- its solid part reaches above the opening's top (clipped there)
+                            local from, to = lib.gumSolid[1], lib.gumSolid[2]
+                            local thick = (gumBottom - minY) / (to - from) * 1.3
+                            local centreY = gumBottom - (to - 0.5) * thick
+                            love.graphics.setColor(color.hexToColor(extra.gumHex or 'D9868Bff'))
+                            -- the picture stands upright: turned a quarter, its width becomes the thickness
+                            love.graphics.draw(gumImg, (minX + maxX) / 2, centreY, math.pi / 2,
+                                thick / iw, long / ih, iw / 2, ih / 2)
+                        end
+                    end
 
                     love.graphics.setColor(1, 1, 1, 1)
                     love.graphics.draw(img, ox - w / 2, oy - h / 2, 0, scaleX, scaleY)

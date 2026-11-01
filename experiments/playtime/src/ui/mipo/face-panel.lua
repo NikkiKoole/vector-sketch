@@ -466,6 +466,31 @@ local function drawFaceMouthUI(instance, faceOwner, partName, face, x, y, panelX
             end)
         ui.alignedLabel(x + 180, y, 'teeth fill')
         y = y + ROW
+
+        -- gum: the opening above the teeth (src/render/mouth.lua drawTeeth)
+        local gumClicked, gumChecked = ui.checkbox(x, y, teeth.gum, 'gum')
+        if gumClicked then
+            CharacterManager.updateFaceOfPart(instance, faceOwner, { teethGum = gumChecked })
+            CharacterManager.rebuildTextures(instance)
+        end
+        y = y + ROW
+        if teeth.gum then
+            handlePaletteButton('mipo_teeth_gum_' .. partName,
+                x + 30, y, 140, teeth.gumHex, function(color)
+                    CharacterManager.updateFaceOfPart(instance, faceOwner, { teethGumHex = color })
+                    CharacterManager.rebuildTextures(instance)
+                end)
+            ui.alignedLabel(x + 180, y, 'gum colour')
+            y = y + ROW
+
+            local depth = ui.sliderWithInput('mipo_teeth_gum_depth', x, y, 120, 0, 0.5, teeth.gumDepth or 0.1)
+            ui.alignedLabel(x, y, '  gum behind teeth')
+            if depth and depth ~= teeth.gumDepth then
+                CharacterManager.updateFaceOfPart(instance, faceOwner, { teethGumDepth = depth })
+                CharacterManager.rebuildTextures(instance)
+            end
+            y = y + ROW
+        end
     end
 
     return y

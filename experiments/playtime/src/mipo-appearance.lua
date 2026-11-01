@@ -137,7 +137,8 @@ end
 -- noseShape, noseBgHex, noseFgHex, noseWMul, noseHMul, noseY,
 -- mouthShape, mouthUpperLipShape, mouthLowerLipShape, mouthLipHex,
 -- mouthBackdropHex, mouthUpperLipScale, mouthLowerLipScale, mouthWMul, mouthHMul, mouthY,
--- teethShape, teethWMul, teethHMul, teethStickOut, teethBgHex, teethFgHex
+-- teethShape, teethWMul, teethHMul, teethStickOut, teethBgHex, teethFgHex, teethGum, teethGumHex,
+-- teethGumDepth
 function lib.updateFaceOfPart(instance, partName, values)
     local p = instance.dna.parts[partName]
     if not p or not p.appearance or not p.appearance['face'] then return end
@@ -190,6 +191,9 @@ function lib.updateFaceOfPart(instance, partName, values)
     if values.teethStickOut ~= nil then face.teeth.stickOut = values.teethStickOut end
     if values.teethBgHex then face.teeth.bgHex = values.teethBgHex end
     if values.teethFgHex then face.teeth.fgHex = values.teethFgHex end
+    if values.teethGum ~= nil then face.teeth.gum = values.teethGum end
+    if values.teethGumHex then face.teeth.gumHex = values.teethGumHex end
+    if values.teethGumDepth then face.teeth.gumDepth = values.teethGumDepth end
 end
 
 -- Update top-level positioners (leg.x, ear.y, nose.t) and faceMagnitude.

@@ -1008,7 +1008,9 @@ local drawers = {
     ['decal'] = drawDecal,
     ['brow'] = drawBrow,
 }
-for kind, draw in pairs(mouth.drawers) do drawers[kind] = draw end -- backdrop, lips, teeth
+-- backdrop, lips, teeth: looked up in mouth.drawers each time, so a hot reload of
+-- src/render/mouth.lua reaches them (a copy kept drawing the old ones)
+for kind in pairs(mouth.drawers) do drawers[kind] = function(d) return mouth.drawers[kind](d) end end
 
 function lib.drawTexturedWorld(_world) -- draws what's registered (createDrawables)
 

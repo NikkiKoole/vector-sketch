@@ -47,6 +47,10 @@ lib.nose = {
 lib.teeth = {
     shape = 0, bgHex = '000000ff', fgHex = 'eeeeeeff',
     wMul = 1, hMul = 1, stickOut = false,
+    -- gum: a stroke in gumHex along the inside of the upper lip (a smile's curled-up corners showed
+    -- the dark backdrop), down to gumDepth of the teeth picture: they grow out of it
+    -- (src/render/mouth.lua)
+    gum = true, gumHex = 'D9868Bff', gumDepth = 0.1,
 }
 
 lib.mouth = {
@@ -169,7 +173,8 @@ lib.faceSchema = {
     nose = { shape = 'number', bgHex = 'string', fgHex = 'string',
              wMul = 'number', hMul = 'number' },
     teeth = { shape = 'number', bgHex = 'string', fgHex = 'string',
-              wMul = 'number', hMul = 'number', stickOut = 'boolean' },
+              wMul = 'number', hMul = 'number', stickOut = 'boolean',
+              gum = 'boolean', gumHex = 'string', gumDepth = 'number' },
     mouth = { shape = 'number', upperLipShape = 'number', lowerLipShape = 'number',
               lipHex = 'string', backdropHex = 'string',
               upperLipScale = 'number', lowerLipScale = 'number', wMul = 'number', hMul = 'number' },

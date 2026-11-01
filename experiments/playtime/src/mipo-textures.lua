@@ -432,6 +432,7 @@ local function placeMouth(body, face, box)
     local part = mouthPart('teeth', teeth.stickOut and FACE_Z.teethOut or FACE_Z.teeth)
     part.w, part.h = teethW, teethW * aspect * teeth.hMul
     part.teethStickOut = teeth.stickOut
+    part.gum, part.gumHex, part.gumDepth = teeth.gum, teeth.gumHex, teeth.gumDepth
     part.main = omp(teethName .. '.png', teethName .. '-mask.png', teeth.bgHex, teeth.fgHex)
     addDecal(body, 'teeth', part)
 end
