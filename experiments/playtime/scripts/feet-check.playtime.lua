@@ -4,7 +4,11 @@
 -- off level, and STOP when it's pressed against the ankle's stop. spec/feet-stand checks
 -- the same (three drops, each foot at rest on its sole). Load the scene again for fresh Mipos
 -- after changing how feet are built.
--- keys: d: drop them all again   p: pause the world
+-- Springy ankle experiment, parked (2026-11-01, docs/MIPO-EDITOR-LEFTOVERS.md E8), off at the
+-- start; turn it on in the panel (play mode): a weld joint next to each ankle hinge, soft in
+-- its turn only (as the ears are), pulls the foot back to flat; the hinge's stop can be widened
+-- to give it room. Only in this scene.
+-- keys: d: drop them all again   p: pause the world   h: hide/show the panel
 
 local s = {}
 
@@ -13,10 +17,16 @@ local SPACING = 650
 local ROW_GAP = 1300
 local GROUND_Y = 900 -- of the first row
 local ZOOM = 0.45
+local ANKLES = { { foot = 'lfoot', shin = 'llleg' }, { foot = 'rfoot', shin = 'rlleg' } }
 
 local function check() -- on state: a script hot reload keeps the Mipos
-    state.feetCheck = state.feetCheck or { mipos = {}, grounds = {} }
-    return state.feetCheck
+    state.feetCheck = state.feetCheck or { mipos = {}, grounds = {}, ankles = {} }
+    local c = state.feetCheck
+    c.ankles = c.ankles or {}
+    -- the experiment's settings, off: the ankle as built (a free hinge, stop pi / 8 either way)
+    c.spring = c.spring or { on = false, frequency = 4, damping = 0.4, stop = 22.5 }
+    if c.showPanel == nil then c.showPanel = true end
+    return c
 end
 
 local function alive(inst)
@@ -60,6 +70,68 @@ local function build()
     end
 end
 
+-- the ankle: the revolute joint between a foot and its shin
+local function ankle(inst, foot, shin)
+    local fb, sb = inst.parts[foot] and inst.parts[foot].body, inst.parts[shin] and inst.parts[shin].body
+    if not (fb and sb) or fb:isDestroyed() or sb:isDestroyed() then return end
+    for _, joint in ipairs(fb:getJoints()) do
+        local a, b = joint:getBodies()
+        if joint:getType() == 'revolute' and (a == sb or b == sb) then return joint end
+    end
+end
+
+-- Each ankle hinge, remembered with the middle of its range as built (flat) and its spring.
+local function ankleEntry(hinge)
+    local c = check()
+    local entry = c.ankles[hinge]
+    if not entry then
+        local low, up = hinge:getLimits()
+        entry = { mid = (low + up) / 2 }
+        c.ankles[hinge] = entry
+    end
+    return entry
+end
+
+-- Springs on (a weld at the ankle, soft in its turn, its rest the middle of the range) or off,
+-- the settings applied, and the hinge's stop at spring.stop either way of flat.
+local function applySprings()
+    local c = check()
+    local spring = c.spring
+    for hinge in pairs(c.ankles) do
+        if hinge:isDestroyed() then
+            c.ankles[hinge] = nil
+        end
+    end
+    for _, inst in pairs(c.mipos) do
+        if alive(inst) then
+            for _, a in ipairs(ANKLES) do
+                local hinge = ankle(inst, a.foot, a.shin)
+                if hinge then
+                    local entry = ankleEntry(hinge)
+                    local stop = math.rad(spring.stop)
+                    hinge:setLimits(entry.mid - stop, entry.mid + stop)
+                    local weld = entry.weld
+                    if weld and weld:isDestroyed() then weld, entry.weld = nil, nil end
+                    if spring.on and not weld then
+                        local bodyA, bodyB = hinge:getBodies()
+                        local x, y = hinge:getAnchors()
+                        weld = love.physics.newWeldJoint(bodyA, bodyB, x, y, x, y, false,
+                            hinge:getReferenceAngle() + entry.mid)
+                        entry.weld = weld
+                    elseif not spring.on and weld then
+                        weld:destroy()
+                        weld, entry.weld = nil, nil
+                    end
+                    if weld then
+                        weld:setFrequency(spring.frequency)
+                        weld:setDampingRatio(spring.damping)
+                    end
+                end
+            end
+        end
+    end
+end
+
 local function lookAtAll()
     cam:setScale(ZOOM)
     cam:setTranslation((PER_ROW - 1) * SPACING / 2, GROUND_Y + (rows() - 1) * ROW_GAP / 2 - 250)
@@ -69,11 +141,13 @@ end
 function s.onStart()
     makeGrounds()
     build()
+    applySprings()
     lookAtAll()
 end
 
--- the follow camera moves the view: hold it on all the Mipos until you touch, drag or zoom
 function s.update()
+    applySprings()
+    -- the follow camera moves the view: hold it on all the Mipos until you touch, drag or zoom
     local c = check()
     if not c.hold then return end
     if love.mouse.isDown(1, 2, 3) or #love.touch.getTouches() > 0 or cam.scale ~= ZOOM then
@@ -109,16 +183,7 @@ end
 function s.onKeyPress(key)
     if key == 'p' then worldState.paused = not worldState.paused end
     if key == 'd' then dropAll() end
-end
-
--- the ankle: the revolute joint between a foot and its shin
-local function ankle(inst, foot, shin)
-    local fb, sb = inst.parts[foot] and inst.parts[foot].body, inst.parts[shin] and inst.parts[shin].body
-    if not (fb and sb) or fb:isDestroyed() or sb:isDestroyed() then return end
-    for _, joint in ipairs(fb:getJoints()) do
-        local a, b = joint:getBodies()
-        if joint:getType() == 'revolute' and (a == sb or b == sb) then return joint end
-    end
+    if key == 'h' then check().showPanel = not check().showPanel end
 end
 
 -- built a quarter turn from its shin: flat is ±90 degrees
@@ -139,7 +204,7 @@ function s.draw()
     for i, name in ipairs(shapeCatalogs.handShapes) do
         local inst = c.mipos[i]
         local x, groundY = slot(i)
-        love.graphics.setColor(0, 0, 0)
+        love.graphics.setColor(0.95, 0.92, 0.8)
         love.graphics.printf(name, x - 300, groundY + 110, 300, 'center', 0, 2, 2)
         if alive(inst) then
             love.graphics.printf(footText(inst, 'lfoot', 'llleg') .. '   ' .. footText(inst, 'rfoot', 'rlleg'),
@@ -161,6 +226,39 @@ function s.draw()
     end
     love.graphics.setLineWidth(1)
     love.graphics.setColor(1, 1, 1)
+end
+
+local SLIDERS = {
+    { key = 'frequency', label = 'stiffness (Hz)', min = 0.5, max = 15 },
+    { key = 'damping', label = 'bounce (damping)', min = 0, max = 1.5 },
+    { key = 'stop', label = 'stop (degrees)', min = 5, max = 60, step = 1 },
+}
+
+function s.drawUI()
+    local c = check()
+    if not (state.playMode and c.showPanel) then return end
+    ui.startFrame() -- play mode draws no editor UI, so nothing else starts the frame
+    local spring = c.spring
+    local BH, pad, w = 34, 8, 380
+    local h = BH * (#SLIDERS + 2) + pad * (#SLIDERS + 3) + 20
+    local _, sh = love.graphics.getDimensions()
+    local x0, y0 = 20, sh - h - 20
+    ui.panel(x0, y0, w, h, '•• springy ankle ••', function()
+        local layout = ui.createLayout({ type = 'columns', spacing = pad, startX = x0 + pad, startY = y0 + pad + 20 })
+        local x, y = ui.nextLayoutPosition(layout, w - 20, BH)
+        if ui.button(x, y, w - 20, spring.on and 'spring: on' or 'spring: off (a free hinge, as built)') then
+            spring.on = not spring.on
+        end
+        for _, sl in ipairs(SLIDERS) do
+            x, y = ui.nextLayoutPosition(layout, w - 20, BH)
+            local v = ui.sliderWithInput('feetSpring' .. sl.key, x, y, 160, sl.min, sl.max, spring[sl.key], nil,
+                sl.step)
+            if v and v ~= spring[sl.key] then spring[sl.key] = v end
+            ui.label(x + 260, y, sl.label)
+        end
+        x, y = ui.nextLayoutPosition(layout, w - 20, BH)
+        if ui.button(x, y, w - 20, 'drop them all (d)') then dropAll() end
+    end)
 end
 
 return s

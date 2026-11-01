@@ -21,6 +21,14 @@ and `FACE-SYSTEM-PLAN.md` (gaze, blink, brows done). Checked against the code 20
   rolls over its toes and lands softer instead of a stiff plank (idea, 2026-11-01; not for now).
   The feet hang from their ankle point (`ankle` in `src/shape8-dict.lua`) and rest on their
   sole (`spec/feet-stand_spec.lua`, `scripts/feet-check`); a split would need a second point.
+  Costs: one picture over two bodies (cut, or bent like `spine-skin.lua`), two outlines and a
+  toe joint per picture, a softer base to retune standing on, two more bodies per Mipo on the
+  phone. Worth a spike if Mipos walk or climb steps for real.
+  Tried first, parked: a **springy ankle** (a soft weld next to the hinge, the panel in
+  `scripts/feet-check`). Nothing to see on a landing: the straight soles already land flat and a
+  falling foot doesn't turn. Only a held Mipo shows it: its feet hang 16-24 degrees down instead
+  of 33-36 (the stop) at 4 Hz; stiffer (8-10 Hz) keeps them nearer flat. Pick it up if dangling
+  feet should look livelier.
 
 Covered elsewhere since: saving a Mipo's DNA is the library (a Mipo saved there grows fresh from
 its DNA); hair colour is shared by all hair parts when randomizing (`randomizeTextures`).
