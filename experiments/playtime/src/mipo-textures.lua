@@ -165,24 +165,6 @@ local function addConnectedTexture(body, partName, _partData, connData, instance
     local noseSegments  = instance.dna.creation.noseSegments
     local jointLabels   = {}
 
-    local fixture       = fixtures.createSFixture(body, 0, 0, subtypes.CONNECTED_TEXTURE,
-        { radius = 30 * scale })
-
-    local ud            = fixture:getUserData()
-
-    ud.extra            = {
-        attachTo = partName,
-        OMP = true,
-        dirty = true,
-        main = utils.deepCopy(connData.main),
-        zOffset = connData.zOffset or 0,
-        nodes = {},
-        growExtra = 20 * scale,
-    }
-
-    -- wmul controls the rendered width of the connected texture.
-    -- Use DNA value if set, otherwise default to instance scale.
-    ud.extra.main.wmul  = connData.main.wmul or scale
     if partName:find('uleg') then
         if partName == 'luleg' then
             jointLabels = { "torso1->luleg", "luleg->llleg", "llleg->lfoot" }
@@ -221,6 +203,32 @@ local function addConnectedTexture(body, partName, _partData, connData, instance
             table.insert(jointLabels, 'nose' .. i .. '->nose' .. (i + 1))
         end
     end
+
+    -- A ribbon along a joint the Mipo doesn't have draws nothing: a potato head's torso asked for
+    -- torso1->head (its neck skin, no head to go to). Saved like that, every load took it for a
+    -- broken scene and redrew all the Mipo's textures (mipo-build reconstructInstance).
+    for j = 1, #jointLabels do
+        if not instance.joints[jointLabels[j]] then return end
+    end
+
+    local fixture       = fixtures.createSFixture(body, 0, 0, subtypes.CONNECTED_TEXTURE,
+        { radius = 30 * scale })
+
+    local ud            = fixture:getUserData()
+
+    ud.extra            = {
+        attachTo = partName,
+        OMP = true,
+        dirty = true,
+        main = utils.deepCopy(connData.main),
+        zOffset = connData.zOffset or 0,
+        nodes = {},
+        growExtra = 20 * scale,
+    }
+
+    -- wmul controls the rendered width of the connected texture.
+    -- Use DNA value if set, otherwise default to instance scale.
+    ud.extra.main.wmul  = connData.main.wmul or scale
 
     for j = 1, #jointLabels do
         local jointID = jointLabels[j]
