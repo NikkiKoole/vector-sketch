@@ -444,12 +444,13 @@ function lib.drawRandomize(p, y)
         mipoVoice.dice(instance)
     end
     y = y + ROW
-    if ui.button(x, y, hw, 'random rubberleg') then
+    if ui.button(x, y, panelWidth - 40, 'random rubberleg-pearbod') then
         mipoBreeds.remember(instance)
-        mipoBreeds.randomize(instance, 'rubberleg')
+        mipoBreeds.randomize(instance, 'rubberleg-pearbod')
         mipoVoice.dice(instance)
     end
-    if mipoBreeds.canUndo(instance) and ui.button(x + hw + 4, y, hw, 'undo') then
+    y = y + ROW
+    if mipoBreeds.canUndo(instance) and ui.button(x, y, hw, 'undo') then
         mipoBreeds.undo(instance)
     end
     y = y + ROW

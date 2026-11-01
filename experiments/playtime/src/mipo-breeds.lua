@@ -17,12 +17,13 @@ local CharacterManager = require('src.character-manager')
 
 lib.breeds = {
     -- rope-like limbs instead of shaped ones (leg1, leg5); limb hair: none half the time ('' is
-    -- no hair, three of them), else one of the last three; the widest leg stance (2026-11-01,
-    -- Nikki in the vanilla scene)
-    rubberleg = {
+    -- no hair, three of them), else one of the last three; the widest leg stance; a pear body
+    -- that is the head too (2026-11-01, Nikki in the vanilla scene)
+    ['rubberleg-pearbod'] = {
         lists = {
             limbSkinTextures = { 'leg1', 'leg5' },
             limbHairTextures = { '', '', '', 'hair9', 'hair10', 'hair11' },
+            torsoHeadShapes = { 'shapes7' },
         },
         positioners = { legX = 0 },
         face = { allowedEyeShapes = { 1 }, allowedPupilShapes = { 2, 3 } }, -- eye white 1, pupil 2 or 3

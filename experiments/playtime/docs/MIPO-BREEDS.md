@@ -149,18 +149,18 @@ lists, puts them back after) and sets the colours through `characterManager.setR
 the hook for B3. Shapes are grouped by eye in the script until B1 tags them. Teddy, fat, tall,
 hairy, bad, geometric, bathhouse, and 'any' (as today) to compare.
 
-## rubberleg, the first breed (2026-11-01)
+## rubberleg-pearbod, the first breed (2026-11-01)
 
-Defined by hand from the vanilla scene: rope-like limbs (`leg1`, `leg5`), limb hair none half
-the time, else one of the last three (`hair9`-`hair11`), and the widest leg stance (`legX = 0`:
-the hips at the body's lower corners; positioners aren't randomized, so a breed sets them),
-eye white 1 and pupil 2 or 3 (`face`: the face randomizer's options, `allowedEyeShapes` and
-`allowedPupilShapes`, indexes into the catalogs), always a potato head (`creation`: set after the
-roll, which flips potato head every time). It lives in `src/mipo-breeds.lua`
-(`lib.breeds`, the same swap-for-the-draw as the spike) and has a button in the Mipo editor,
-**random rubberleg**, next to **undo**: every random button there remembers the Mipo from
-before, and undo rebuilds it from that DNA, up to 20 steps back. In a breed's list `''` is
-"none" (limb hair, for now).
+Defined by hand from the vanilla scene (first called rubberleg): the pear body (`shapes7`) only,
+rope-like limbs (`leg1`, `leg5`), limb hair none half the time, else one of the last three
+(`hair9`-`hair11`), and the widest leg stance (`legX = 0`: the hips at the body's lower corners;
+positioners aren't randomized, so a breed sets them), eye white 1 and pupil 2 or 3 (`face`: the
+face randomizer's options, `allowedEyeShapes` and `allowedPupilShapes`, indexes into the
+catalogs), always a potato head (`creation`: set after the roll, which flips potato head every
+time). It lives in `src/mipo-breeds.lua` (`lib.breeds`, the same swap-for-the-draw as the spike)
+and has a button in the Mipo editor, **random rubberleg-pearbod**, above **undo**: every random
+button there remembers the Mipo from before, and undo rebuilds it from that DNA, up to 20 steps
+back. In a breed's list `''` is "none" (limb hair, for now).
 
 ## Steps, if it becomes a plan
 
