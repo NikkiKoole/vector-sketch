@@ -334,6 +334,25 @@ end
 
 -- Snap joints on a body that's about to be destroyed. Linking lives only on the
 -- joint, so the partner point is free again automatically.
+-- Two Mipos let go of each other: every snap joint between a part of one and a part of the
+-- other goes (with the usual cooldown before those points snap again). An untangle starts with
+-- it (src/mipo-joint-guard.lua): held hands kept the arms crossed, so the two stayed hooked,
+-- and a hold only breaks while someone holds one of them (onlyBreakWhenInteracted).
+function lib.letGo(instanceA, instanceB)
+    local function owner(body)
+        return (mipoRegistry.getFromBody(body))
+    end
+    for _, joint in ipairs(lib.joints()) do
+        if not joint:isDestroyed() then
+            local a, b = joint:getBodies()
+            local ma, mb = owner(a), owner(b)
+            if (ma == instanceA and mb == instanceB) or (ma == instanceB and mb == instanceA) then
+                destroySnapJoint(joint)
+            end
+        end
+    end
+end
+
 function lib.destroySnapJointAboutBody(body)
     for _, joint in ipairs(lib.joints()) do
         local a, b = joint:getBodies()

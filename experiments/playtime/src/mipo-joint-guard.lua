@@ -65,6 +65,7 @@ lib.untangleHop = { 250, 650 } -- the hop out: sideways (away from the other), u
 -- on their feet with its hands caught, it hopped away from one into the other, fell back with
 -- contacts off and re-hooked, every ~2.5 s for good (scripts/feet-pile, 2026-11-01). After
 -- untangleMaxTries in untangleQuiet seconds it stays put and collides; picking it up starts over.
+lib.untangleLetsGo = true -- an untangle starts with the two letting go of each other's hands
 lib.untangleMaxTries = 4
 lib.untangleQuiet = 60
 lib.untangleCheckEvery = 0.25
@@ -557,10 +558,12 @@ local function calmPileKicks(now)
     end
 end
 
--- The upper of two knotted Mipos hops up and away from the other.
+-- The upper of two knotted Mipos hops up and away from the other; first they let go of each
+-- other's hands (holding hands keeps the arms crossed: still hooked).
 local function hopOut(idA, idB)
     local all = mipoRegistry.getAll()
     local a, b = all[idA], all[idB]
+    if lib.untangleLetsGo and a and b then require('src.physics.snap').letGo(a, b) end
     local ta = a and a.parts.torso1 and a.parts.torso1.body
     local tb = b and b.parts.torso1 and b.parts.torso1.body
     if not ta or not tb or ta:isDestroyed() or tb:isDestroyed() then return end

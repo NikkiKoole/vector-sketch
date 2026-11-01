@@ -18,6 +18,7 @@ local jointGuard = require('src.mipo-joint-guard')
 local mipoActions = require('src.mipo-actions')
 local sceneLoader = require('src.scene-loader')
 local callbacks = require('src.physics.physics-callbacks')
+local snap = require('src.physics.snap')
 
 local DT = 1 / 60
 
@@ -42,12 +43,16 @@ local function simulate(world, seconds, clock)
     end
 end
 
+-- The clock goes on from test to test: the untangle remembers when it last looked (a clock
+-- that went back to the start sat out a whole test waiting for that time to come again).
+local clockT = 1000
 local function withClock(fn)
-    local clock = { t = 1000 }
+    local clock = { t = clockT }
     local realGetTime = love.timer.getTime
     love.timer.getTime = function() return clock.t end
     local ok, err = pcall(fn, clock)
     love.timer.getTime = realGetTime
+    clockT = clock.t + 10
     if not ok then error(err, 0) end
 end
 
@@ -114,6 +119,29 @@ describe('Mipo untangle', function()
             for _, t in pairs(state.mipoTangles) do
                 assert.is_nil(t.untilT, 'a pair still passing through each other')
             end
+            world:destroy()
+        end)
+    end)
+
+    -- holding hands kept the arms crossed, and a hold only breaks while one of them is held
+    it('two Mipos let go of each other\'s hands when they untangle', function()
+        withClock(function(clock)
+            local world = newWorld()
+            sceneLoader.loadScriptAndScene('feet-pile')
+            local function heldHands()
+                local n = 0
+                for _, joint in ipairs(snap.joints()) do
+                    local a, b = joint:getBodies()
+                    local ma, mb = mipoRegistry.getFromBody(a), mipoRegistry.getFromBody(b)
+                    if ma and mb and ma ~= mb then n = n + 1 end
+                end
+                return n
+            end
+            assert.is_true(heldHands() > 0, 'nobody holds hands in feet-pile')
+            local before = jointGuard.stats.untangles or 0
+            simulate(world, 30, clock)
+            assert.is_true((jointGuard.stats.untangles or 0) > before, 'nothing untangled')
+            assert.are.equal(0, heldHands())
             world:destroy()
         end)
     end)
