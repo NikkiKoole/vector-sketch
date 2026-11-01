@@ -221,8 +221,9 @@ local function randomizeFace(instance, hairColor, opts)
     local pupilShapeIdx = allowedPupils
         and pick(allowedPupils)
         or math.ceil(math.random() * #C.pupilShapes)
+    local allowedEyes = opts and opts.allowedEyeShapes
     local faceValues = {
-        eyeShape = math.ceil(math.random() * #C.eyeShapes),
+        eyeShape = allowedEyes and pick(allowedEyes) or math.ceil(math.random() * #C.eyeShapes),
         pupilShape = pupilShapeIdx,
         eyeX = D.randomInRangeWeighted('eyeX'),
         eyeY = randomEyeY,
@@ -336,6 +337,7 @@ function lib.limitArmReach(instance)
 end
 
 -- Everything at random; textureOpts / faceOpts narrow it down (see randomizeMipoConstrained).
+-- faceOpts: uniformEyeScale, allowedPupilShapes, allowedEyeShapes (indexes into the catalogs).
 local function randomizeAll(instance, textureOpts, faceOpts)
     if not instance then return end
     local hairColor = randomHexColor() -- haircut, bodyhair, limb hair and brows share it
@@ -351,8 +353,10 @@ local function randomizeAll(instance, textureOpts, faceOpts)
     textures.rebuildTextures(instance)
 end
 
-function lib.randomizeMipo(instance)
-    randomizeAll(instance)
+-- textureOpts / faceOpts (optional) narrow it down, as randomizeMipoConstrained does: a breed
+-- (src/mipo-breeds.lua) passes its face rules this way.
+function lib.randomizeMipo(instance, textureOpts, faceOpts)
+    randomizeAll(instance, textureOpts, faceOpts)
 end
 
 -- Coherent but varied (Bathhouse Mipos): limb skin locked to leg1, round-ish eyes, calm pupils.

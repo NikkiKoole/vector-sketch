@@ -25,6 +25,7 @@ lib.breeds = {
             limbHairTextures = { '', '', '', 'hair9', 'hair10', 'hair11' },
         },
         positioners = { legX = 0 },
+        face = { allowedEyeShapes = { 1 }, allowedPupilShapes = { 2, 3 } }, -- eye white 1, pupil 2 or 3
     },
 }
 
@@ -41,7 +42,8 @@ function lib.randomize(instance, name)
         savedLists[key] = C[key]
         C[key] = list
     end
-    local ok, err = pcall(CharacterManager.randomizeMipo, instance)
+    -- face: randomizeFace's options (allowedEyeShapes, allowedPupilShapes, uniformEyeScale)
+    local ok, err = pcall(CharacterManager.randomizeMipo, instance, nil, breed.face)
     for key, r in pairs(savedRanges) do D.randomRanges[key] = r end
     for key, list in pairs(savedLists) do C[key] = list end
     if not ok then error(err) end
