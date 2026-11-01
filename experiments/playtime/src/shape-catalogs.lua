@@ -25,6 +25,12 @@ lib.handShapes = {
     'hand3r', 'feet2r', 'feet3xr', 'feet5xr', 'feet6r', 'feet7r', 'feet7xr', 'feet8r'
 }
 
+-- What the randomizer draws a hand's and a foot's picture from: both the list above (a hand can
+-- wear a foot picture, a foot the hand), separate names so a breed can narrow one of them
+-- (src/mipo-breeds.lua).
+lib.randomHandShapes = lib.handShapes
+lib.randomFootShapes = lib.handShapes
+
 lib.bodyhairTextures = {
     'borsthaar1', 'borsthaar2', 'borsthaar3', 'borsthaar4',
     'borsthaar5', 'borsthaar6', 'borsthaar7'

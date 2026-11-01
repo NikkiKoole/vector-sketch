@@ -24,9 +24,12 @@ lib.breeds = {
             limbSkinTextures = { 'leg1', 'leg5' },
             limbHairTextures = { '', '', '', 'hair9', 'hair10', 'hair11' },
             torsoHeadShapes = { 'shapes7' },
+            randomHandShapes = { 'hand3r' }, -- real hands
+            randomFootShapes = { 'feet3xr' }, -- bare feet (the editor's feet grid: 2)
         },
-        -- the pear the right way up (wide at the bottom), sizes around Nikki's 1.48
-        ranges = { bodyFlipChance = 0, bodyScale = { min = 1.35, max = 1.6 } },
+        -- the pear the right way up (wide at the bottom), sizes around Nikki's 1.48; hands about
+        -- half the size (any Mipo: 1-2)
+        ranges = { bodyFlipChance = 0, bodyScale = { min = 1.35, max = 1.6 }, handScale = { min = 0.5, max = 1 } },
         positioners = { legX = 0 },
         -- eye white 1, pupil 2 or 3; noses 7 (the snout), 8, 9, 12
         face = { allowedEyeShapes = { 1 }, allowedPupilShapes = { 2, 3 }, allowedNoseShapes = { 7, 8, 9, 12 } },

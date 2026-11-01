@@ -131,8 +131,7 @@ end
 
 -- Randomize feet/hand shapes, scales, and colors.
 local function randomizeFeetAndHands(instance)
-    local fhUrls = C.handShapes
-    local fUrl = pick(fhUrls)
+    local fUrl = pick(C.randomFootShapes)
     local fS = D.randomInRangeWeighted('feetScale')
 
     build.updatePart('lfoot',
@@ -143,7 +142,7 @@ local function randomizeFeetAndHands(instance)
         instance)
 
     local handScale = D.randomInRangeWeighted('handScale')
-    local handUrl = pick(fhUrls)
+    local handUrl = pick(C.randomHandShapes)
     build.updatePart('lhand',
         { shape8URL = handUrl .. '.png', sy = handScale, sx = handScale },
         instance)
@@ -411,7 +410,7 @@ function lib.randomizePart(instance, partName)
     elseif partName:match('foot$') or partName:match('hand$') then
         -- both feet (or both hands): a shape and a size, mirrored, and one look
         local kind = partName:match('foot$') and 'foot' or 'hand'
-        local url = pick(C.handShapes)
+        local url = pick(kind == 'foot' and C.randomFootShapes or C.randomHandShapes)
         local size = D.randomInRangeWeighted(kind == 'foot' and 'feetScale' or 'handScale')
         build.updatePart('l' .. kind, { shape8URL = url .. '.png', sy = size, sx = size }, instance)
         build.updatePart('r' .. kind, { shape8URL = url .. '.png', sy = size, sx = -size }, instance)
