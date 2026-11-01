@@ -1,8 +1,14 @@
 # Mipo breeds — kinds of Mipo that share DNA but still vary
 
-status: idea
+status: active, focus
 
-**Started:** 2026-10-30.
+**Started:** 2026-10-30. **Focus since 2026-11-01.**
+
+**Why now (2026-11-01):** a time to get to grips with the Mipo character: stronger, designed
+characters instead of leaving it to the player, and a story that grows from playing with the kids.
+Nothing about the world is decided. A hunch from that day: a world with an underground part, the
+pear-bodied Mipos (rubberleg-pearbod) living below and other breeds above (`BURROW.md`,
+`DEPTH-LAYERS.md`).
 
 **The idea:** right now a random Mipo is random in every way at once. Breeds narrow that down:
 little teddy bears, cats, dogs, fat ones, tall ones with long necks, hairy ones, bad ones,
@@ -134,8 +140,8 @@ added without code.
   house").
 - **Doll play** (`DOLL-PLAY.md`, F4 load your Mipo): a breed picker next to randomize.
 - **King Rollo shorts** (`KING-ROLLO.md`): breeds as the cast of a season.
-- **The Sago Rule:** breeds feed the follow-up app's Mipo, they're not a feature of their own.
-  Keep it to "random Mipos look better and come in kinds".
+- **Burrow / depth layers** (`BURROW.md`, `DEPTH-LAYERS.md`): which breed lives where, if the
+  underground hunch holds.
 
 ---
 
@@ -169,7 +175,7 @@ rubberleg-pearbod**, above **undo**: every random button there remembers the Mip
 and undo rebuilds it from that DNA, up to 20 steps back. In a breed's list `''` is "none" (limb
 hair, for now).
 
-## Steps, if it becomes a plan
+## Steps
 
 - [ ] **B1. Tag the catalogs.** Look at each torso/head, ear, hand/foot and pattern picture and
   give it tags (round, square, pointy, long, floppy, simple). `C.tags['shapes3'] = {'round'}`.
