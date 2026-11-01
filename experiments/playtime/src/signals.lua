@@ -312,7 +312,9 @@ end
 function lib.update()
     if not state.physicsWorld then return end
     for body, trip in pairs(travellingNow()) do
-        if body:isDestroyed() or type(trip) ~= 'table' then
+        -- a scene load in the same world releases its bodies: isDestroyed() itself errors then
+        local ok, destroyed = pcall(body.isDestroyed, body)
+        if not ok or destroyed or type(trip) ~= 'table' then
             travelling[body] = nil
         elseif trip.steps <= 1 then
             body:setSleepingAllowed(trip.sleepingAllowed)
