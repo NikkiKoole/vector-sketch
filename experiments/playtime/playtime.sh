@@ -1,6 +1,6 @@
 #!/bin/bash
 # Helper script for managing the playtime LÖVE app
-# Usage: ./playtime.sh [start|play|stop|restart|status|log|errors|todo|audio|bench|device] [scene]
+# Usage: ./playtime.sh [start|play|stop|restart|status|log|errors|todo|tried|audio|bench|device] [scene]
 #   todo [--all]: the work board from the docs' status lines and checkboxes (docs/readme.md)
 #   play <scene>: start straight in play mode (no editor; tab goes to the editor)
 
@@ -161,6 +161,23 @@ do_restart() {
     do_start "${1:-dollhouse}"
 }
 
+# Was this tried before? Doc lines and commit subjects naming the word, the
+# tried/dropped/parked/reverted ones first. Run once when starting something new.
+do_tried() {
+    local word="$1"
+    [ -z "$word" ] && { echo "Usage: $0 tried <word>"; return 1; }
+    local verdict='tried|dropped|parked|revert|didn.t work|gave up|abandon'
+    cd "$DIR" || return 1
+    echo "== docs"
+    grep -rniIE --include='*.md' -- "\\<$word" docs MANIFESTO.md 2>/dev/null \
+        | awk -v v="$verdict" '{ if (tolower($0) ~ v) print "1\t" $0; else print "2\t" $0 }' \
+        | sort -s -t$'\t' -k1,1 | cut -f2- | cut -c1-200 | head -10
+    echo "== commits"
+    git log --format='%ad %s' --date=short -i -E --grep="(^|[^a-z])$word" -- . \
+        | awk -v v="$verdict" '{ if (tolower($0) ~ v) print "1\t" $0; else print "2\t" $0 }' \
+        | sort -s -t$'\t' -k1,1 | cut -f2- | cut -c1-200 | head -6
+}
+
 case "${1:-status}" in
     start)   do_start "${2:-}" ;;
     play)    do_start "${2:-}" --play ;;
@@ -170,8 +187,9 @@ case "${1:-status}" in
     log)     do_log ;;
     errors)  do_errors ;;
     todo)    (cd "$DIR" && lua claudetools/plans.lua "${2:-}") ;;
+    tried)   do_tried "${2:-}" ;;
     audio)   do_audio ;;
     bench)   do_bench "${2:-}" "${3:-}" "${4:-}" ;;
     device)  shift; "$DIR/native/ios/device.sh" "$@" ;;
-    *)       echo "Usage: $0 [start|play|stop|restart|status|log|errors|todo|audio|bench|device] [scene]" ;;
+    *)       echo "Usage: $0 [start|play|stop|restart|status|log|errors|todo|tried|audio|bench|device] [scene]" ;;
 esac

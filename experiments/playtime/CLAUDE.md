@@ -11,6 +11,7 @@
 ./playtime.sh log      # show stdout/stderr log
 ./playtime.sh errors   # show startup errors + bridge /errors
 ./playtime.sh todo     # the work board: active plans + next steps, parked plans, drift warnings
+./playtime.sh tried <word>  # was it tried before? doc lines + commits naming it, dropped/parked first
 ./playtime.sh bench [device] [secs] [--parts]  # frame timing: update/draw/frame ms, the slow frames and why;
                                                # --parts times each part of love.update (src/frame-bench.lua)
 ./playtime.sh audio    # music pops: the synth's dropouts and what was busy then (docs/SOUND-SYNTH.md)
@@ -238,7 +239,14 @@ Older findings and hidden constraints: `docs/DEEPER-ISSUES.md`. Risks to keep in
 `./playtime.sh todo` is the work board (also shown at session start): the active plans with their
 next steps, the ideas, the parked plans and drift warnings. `./playtime.sh todo --all` also lists
 the done and reference docs, with titles. It's built from each doc's `status:` line and checkboxes,
-so it doesn't go stale; the rules are in `docs/readme.md`. When a step is done, tick its box in the
+so it doesn't go stale; the rules are in `docs/readme.md`.
+
+**Before building something new** (a feature, part, spike or tweak with a name: "a gum", "springy
+ankle"), run `./playtime.sh tried <word>` once and read what comes back: it may have been tried
+and dropped, with the reason written down (the gum: tried 2026-05-25, rebuilt 2026-11-01 without
+knowing). Only then, not for questions, bug fixes or work already under way; if nothing relevant
+turns up, carry on without mentioning it. When parking or dropping something, write
+`tried <date>:` and the reason, so the search finds it. When a step is done, tick its box in the
 same commit and name its id (W2, P8, BUG3) in the message. Don't write plan progress here.
 
 Reference docs worth knowing when touching an area:
