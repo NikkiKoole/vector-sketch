@@ -28,6 +28,7 @@ local function newWorld()
     registry.reset()
     mipoRegistry.reset()
     for key in pairs(state.mipoTangles) do state.mipoTangles[key] = nil end
+    for key in pairs(state.untangleTries) do state.untangleTries[key] = nil end
     return world
 end
 
@@ -90,6 +91,28 @@ describe('Mipo untangle', function()
             for _, instance in pairs(mipoRegistry.getAll()) do
                 local vx, vy = instance.parts.torso1.body:getLinearVelocity()
                 assert.is_true(math.sqrt(vx * vx + vy * vy) < 600, 'a Mipo is flying')
+            end
+            world:destroy()
+        end)
+    end)
+
+    -- scripts/feet-pile: a Mipo standing on two others' feet, its hands caught in both. It hopped
+    -- away from one into the other and back, contacts off, every ~2.5 s for good (2026-11-01).
+    it('a Mipo wedged between two others stops untangling after a few tries', function()
+        withClock(function(clock)
+            local world = newWorld()
+            sceneLoader.loadScriptAndScene('feet-pile')
+            local start = jointGuard.stats.untangles or 0
+            simulate(world, 30, clock) -- tries start after ~10 s and end by ~25 s (at 60 steps a second)
+            local early = jointGuard.stats.untangles or 0
+            simulate(world, 15, clock)
+            local late = jointGuard.stats.untangles or 0
+            -- before: ~6 in these 15 s, and on for good. A pile plays out a little differently from run
+            -- to run (one late try in ~7 full-suite runs), so one is allowed.
+            assert.is_true(late - early <= 1, string.format('still untangling after 30 s: %d in the first 30 s, %d after',
+                early - start, late - early))
+            for _, t in pairs(state.mipoTangles) do
+                assert.is_nil(t.untilT, 'a pair still passing through each other')
             end
             world:destroy()
         end)

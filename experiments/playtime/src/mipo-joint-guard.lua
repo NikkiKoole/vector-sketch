@@ -61,6 +61,12 @@ lib.untangleMaxTime = 4.0   -- seconds of passing through at most
 lib.untangleRest = 3.0      -- seconds before the same pair untangles again
 lib.untangleRetry = 0.5     -- ...but if the time ran out while still hooked, this soon
 lib.untangleHop = { 250, 650 } -- the hop out: sideways (away from the other), up (world units/s)
+-- A Mipo that has to untangle again and again stops trying: wedged between two others, standing
+-- on their feet with its hands caught, it hopped away from one into the other, fell back with
+-- contacts off and re-hooked, every ~2.5 s for good (scripts/feet-pile, 2026-11-01). After
+-- untangleMaxTries in untangleQuiet seconds it stays put and collides; picking it up starts over.
+lib.untangleMaxTries = 4
+lib.untangleQuiet = 60
 lib.untangleCheckEvery = 0.25
 -- Each Mipo is looked over for hooks once every this many physics steps (a slice of them each
 -- step): ~0.43 s at 84 steps a second. The raycasts were ~0.3 ms a frame with 20 Mipos on an
@@ -587,6 +593,30 @@ local function lookForHooks()
     end
 end
 
+-- [mipoId] = { n = untangles, firstT }: a Mipo that keeps re-hooking gives up (untangleMaxTries)
+state.untangleTries = state.untangleTries or {}
+local untangleTries = state.untangleTries
+
+local function countTry(id, now)
+    local rec = untangleTries[id]
+    if not rec or now - rec.firstT > lib.untangleQuiet then
+        rec = { n = 0, firstT = now }
+        untangleTries[id] = rec
+    end
+    rec.n = rec.n + 1
+end
+
+-- Given up on (too many tries lately), unless picked up since.
+local function gaveUp(id, now)
+    local rec = untangleTries[id]
+    if not rec then return false end
+    if wasHeld(id, now) or now - rec.firstT > lib.untangleQuiet then
+        untangleTries[id] = nil
+        return false
+    end
+    return rec.n >= lib.untangleMaxTries
+end
+
 local function untangleMipos(now)
     lookForHooks()
     if now - lastTangleCheck < lib.untangleCheckEvery then return end
@@ -625,8 +655,11 @@ local function untangleMipos(now)
         if not t.untilT and not t.soft then
             -- the wait starts once both are let go
             if wasHeld(h.a, now) or wasHeld(h.b, now) or not t.since then t.since = now end
-            if now - t.since >= lib.untangleAfter and not (t.restUntil and now < t.restUntil) then
+            if now - t.since >= lib.untangleAfter and not (t.restUntil and now < t.restUntil)
+                and not gaveUp(h.a, now) and not gaveUp(h.b, now) then
                 t.untilT = now + lib.untangleMaxTime
+                countTry(h.a, now)
+                countTry(h.b, now)
                 hopOut(h.a, h.b)
                 lib.stats.untangles = (lib.stats.untangles or 0) + 1
                 print(string.format('[untangle] %s and %s', h.a, h.b))

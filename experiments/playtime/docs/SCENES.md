@@ -39,7 +39,8 @@ three Knut scenes worth keeping moved to `scripts/tech/`. UVUSERT lives on in `t
 | feet-check | every foot picture on a Mipo of its own, ankles against their stop marked | how each foot stands; *spec* feet-stand checks the same |
 | breeds | a litter of six Mipos of one breed; a panel picks the breed | the MIPO-BREEDS spike: breeds as tables in the script |
 | vanilla | one plain Mipo (the humanoid template, not randomized) on a floor | tweaking a Mipo by hand in the Mipo editor (n: a fresh one) |
-| feet-pile | five Mipos knotted on each other's feet and hands (saved from vanilla) | the untangle that never ends: about every 2.5 s the same pairs hop and pass through, 8 in 20 s |
+| feet-pile | five Mipos knotted on each other's feet and hands (saved from vanilla) | *spec* (mipo-untangle): the untangle looped here (8 in 20 s); now the wedged Mipo gives up after 4 tries |
+| hands-mess | Mipos holding hands in a big knot (saved paused from vanilla) | holding hands keeps them hooked: the untangle tries 6 times, then they rest knotted |
 | tech/connected, multi, resources, uvs | one engine piece each | test material; resources and uvs: the UVUSERT scenes (UV-BACKDROP-FRAGILITY) |
 | tech/hoop, tech/workmoreclean | from Knut | *spec* (meshusert-bind, resource-link): the MESHUSERT (skinning) and resource scenes |
 | tech/knutjump | from Knut | WORLD-BUILDING's tile-repeat grass example |
