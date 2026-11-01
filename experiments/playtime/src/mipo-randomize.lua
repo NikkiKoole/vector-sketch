@@ -43,14 +43,15 @@ local function randomizeShapes(instance)
 
     for i = 1, count do
         build.updatePart('torso' .. i,
-            { shape8URL = url .. '.png', sy = s * (math.random() < 0.5 and -1 or 1), sx = s },
+            { shape8URL = url .. '.png', sy = s * (math.random() < D.randomRanges.bodyFlipChance and -1 or 1), sx = s },
             instance)
     end
 
     local headScale = D.randomInRangeWeighted('bodyScale')
     local headUrl = pick(urls)
     build.updatePart('head',
-        { shape8URL = headUrl .. '.png', sy = headScale * (math.random() < 0.5 and -1 or 1), sx = headScale },
+        { shape8URL = headUrl .. '.png', sy = headScale * (math.random() < D.randomRanges.headFlipChance and -1 or 1),
+          sx = headScale },
         instance)
 
     -- Random colors + pattern — shared across all torso segments + head
@@ -377,7 +378,7 @@ function lib.randomizePart(instance, partName)
         local url = pick(C.torsoHeadShapes)
         local s = D.randomInRangeWeighted('bodyScale')
         build.updatePart('head',
-            { shape8URL = url .. '.png', sy = s * (math.random() < 0.5 and -1 or 1), sx = s },
+            { shape8URL = url .. '.png', sy = s * (math.random() < D.randomRanges.bodyFlipChance and -1 or 1), sx = s },
             instance)
         local fgHex, pHex, pURL = randomLook()
         appearance.updateSkinOfPart(instance, 'head', { bgHex = '000000ff', fgHex = fgHex, pHex = pHex, pURL = pURL })
@@ -393,7 +394,7 @@ function lib.randomizePart(instance, partName)
         local url = pick(C.torsoHeadShapes)
         local s = D.randomInRangeWeighted('bodyScale')
         build.updatePart(partName,
-            { shape8URL = url .. '.png', sy = s * (math.random() < 0.5 and -1 or 1), sx = s },
+            { shape8URL = url .. '.png', sy = s * (math.random() < D.randomRanges.bodyFlipChance and -1 or 1), sx = s },
             instance)
         local fgHex, pHex, pURL = randomLook()
         appearance.updateSkinOfPart(instance, partName, { bgHex = '000000ff', fgHex = fgHex, pHex = pHex, pURL = pURL })

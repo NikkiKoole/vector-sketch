@@ -152,6 +152,7 @@ hairy, bad, geometric, bathhouse, and 'any' (as today) to compare.
 ## rubberleg-pearbod, the first breed (2026-11-01)
 
 Defined by hand from the vanilla scene (first called rubberleg): the pear body (`shapes7`) only,
+always the right way up (`bodyFlipChance = 0`) and sized 1.35-1.6 (`bodyScale`; any Mipo: 1-2),
 rope-like limbs (`leg1`, `leg5`), limb hair none half the time, else one of the last three
 (`hair9`-`hair11`), and the widest leg stance (`legX = 0`: the hips at the body's lower corners;
 positioners aren't randomized, so a breed sets them), eye white 1 and pupil 2 or 3 (`face`: the

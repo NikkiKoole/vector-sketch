@@ -129,6 +129,8 @@ lib.randomRanges = {
     teethChance   = 0.3,
     teethStickOut = 0.2,
     limbWMul      = { min = 0.2, max = 0.5 },
+    bodyFlipChance = 0.5, -- a torso drawn upside down (sy < 0); a breed can rule it out
+    headFlipChance = 0.5,
 }
 
 function lib.randomInRange(key)

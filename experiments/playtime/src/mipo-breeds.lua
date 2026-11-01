@@ -25,6 +25,8 @@ lib.breeds = {
             limbHairTextures = { '', '', '', 'hair9', 'hair10', 'hair11' },
             torsoHeadShapes = { 'shapes7' },
         },
+        -- the pear the right way up (wide at the bottom), sizes around Nikki's 1.48
+        ranges = { bodyFlipChance = 0, bodyScale = { min = 1.35, max = 1.6 } },
         positioners = { legX = 0 },
         face = { allowedEyeShapes = { 1 }, allowedPupilShapes = { 2, 3 } }, -- eye white 1, pupil 2 or 3
         creation = { isPotatoHead = true }, -- the body is the head
