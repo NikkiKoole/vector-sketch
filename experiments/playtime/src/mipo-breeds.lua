@@ -29,10 +29,14 @@ lib.breeds = {
         },
         -- the pear the right way up (wide at the bottom), sizes around Nikki's 1.48; hands about
         -- half the size (any Mipo: 1-2)
-        ranges = { bodyFlipChance = 0, bodyScale = { min = 1.35, max = 1.6 }, handScale = { min = 0.5, max = 1 } },
+        ranges = { bodyFlipChance = 0, bodyScale = { min = 1.35, max = 1.6 }, handScale = { min = 0.5, max = 1 },
+                   eyeWMul = { min = 1.1, max = 1.5 }, -- big eyes (any Mipo: 0.5-1.5)
+                   eyeX = { min = 0.24, max = 0.36 } }, -- set wide apart (any Mipo: 0.1-0.4)
         positioners = { legX = 0 },
-        -- eye white 1, pupil 2 or 3; noses 7 (the snout), 8, 9, 12
-        face = { allowedEyeShapes = { 1 }, allowedPupilShapes = { 2, 3 }, allowedNoseShapes = { 7, 8, 9, 12 } },
+        -- eye white 1, pupil 2 or 3; noses 7 (the snout), 8, 9, 12; round eyes (and pupils): the same
+        -- width and height scale
+        face = { allowedEyeShapes = { 1 }, allowedPupilShapes = { 2, 3 }, allowedNoseShapes = { 7, 8, 9, 12 },
+                 uniformEyeScale = true },
         creation = { isPotatoHead = true }, -- the body is the head
     },
 }
