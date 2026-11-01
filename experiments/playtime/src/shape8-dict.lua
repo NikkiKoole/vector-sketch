@@ -1,8 +1,15 @@
 -- shape8-dict.lua
--- The 8-vertex polygon shapes of Mipo body parts (and blob outlines), keyed by texture
--- file name: the drawing's size, its 8 outline vertices, and for ears the root (where the
--- drawing meets the head). Data only; used by character-manager, character-topology,
--- spine-skin and blob.
+-- The 8-vertex outlines of Mipo part pictures (and blob rest shapes), keyed by texture
+-- file name: the drawing's size, its 8 outline points, and for ears the root (where the
+-- drawing meets the head).
+--
+-- Traced on scripts/meta.playtime.json: each picture is a rectangle with an 8-point
+-- sensor labelled meta8. This file is the copy the game reads; the scene is the sheet.
+-- Copied by hand (there is no writer that regenerates it). How to add a picture, and
+-- where the sheet and this file have diverged: docs/SCENES.md. Ear roots were measured
+-- from the mask and are not on the sheet.
+--
+-- Read by mipo-build, character-topology, mipo-textures, spine-skin and blob.
 local shape8Dict = {
     ['shapeA1.png'] = { dimensions = { 339, 560 },
         vertices = { 1, -272, 112, -133, 154, 76, 123, 229, 1, 273, -134, 225, -145, 73, -91, -132 } },

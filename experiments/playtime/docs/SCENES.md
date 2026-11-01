@@ -11,7 +11,8 @@ is fixed. The spec stays in the suite, so a scene that breaks shows up there.
 What it doesn't check: things you do by hand (dragging, throwing), and whether a scene still does
 what it was for. "Runs" here means no errors, not "good".
 
-**Leave alone:** scenes loaded by name by a spec or tool (marked *spec*). `draw-cache_spec` and
+**Leave alone:** scenes loaded by name by a spec or tool (marked *spec*), and `meta` (the
+shape8 outline sheet, below). `draw-cache_spec` and
 `claudetools/snapshots` also draw every scene in `scripts/` and `scripts/tech` as test material:
 removing one costs a little coverage, nothing breaks.
 
@@ -33,7 +34,7 @@ three Knut scenes worth keeping moved to `scripts/tech/`. UVUSERT lives on in `t
 | crowd | twenty Mipos | the phone measurement (MEASURING M10) |
 | snap, tech/snap2, tech/snapstatic | snap points and old snap joints | *spec* (snap-scenes) |
 | sm-demo | the state-machine helper example | *spec* |
-| meta | the save/load round-trip scene | round-trip tests |
+| meta | the shape8 outline sheet, and a round-trip scene | source of `src/shape8-dict.lua`; don't archive (below) |
 | tech/connected, multi, resources, uvs | one engine piece each | test material; resources and uvs: the UVUSERT scenes (UV-BACKDROP-FRAGILITY) |
 | tech/hoop, tech/workmoreclean | from Knut | *spec* (meshusert-bind, resource-link): the MESHUSERT (skinning) and resource scenes |
 | tech/knutjump | from Knut | WORLD-BUILDING's tile-repeat grass example |
@@ -52,3 +53,73 @@ The "drop" rows were archived (above). Left to decide:
 | platforms | 2025-04 | platforms you jump up through | **keep**: its one-way floors are the top of a back-layer block (`DEPTH-LAYERS.md`) and stacked rooms (R5) |
 | mudready | 2026-05 | the Bathhouse mud | **keep while Bathhouse is parked**, drop if it's let go |
 | stapelaar | 2026-05 | stone balancing | **maybe**: fun, unrelated to the plans |
+
+## meta — the shape outlines
+
+`scripts/meta.playtime.json` is the sheet the Mipo part pictures were traced on. The
+save/load specs load it with every other scene in `scripts/`. **Don't archive or delete
+it.** No spec names it, so an archive pass that only keeps scenes a spec names would take
+it, and the traces with it.
+
+41 pictures: a hand (`hand3r`), seven feet (`feet2r`, `feet3xr`, `feet5xr`, `feet6r`,
+`feet7r`, `feet7xr`, `feet8r`), sixteen ears (`earx1r` through `earx16r`), and the body and head
+shapes (`shapeA1` through `shapeA4`, `shapes1` through `shapes13`). Each body is one rectangle. The picture sits on a
+texfixture (`bgURL`). The outline is an 8-point sensor labelled `meta8`. The game's outline
+is that sensor's `extra.vertices`, point 1 first, origin at the centre of the rectangle,
+y down. `points` on the same fixture is Box2D's order and can drop a point.
+
+`src/shape8-dict.lua` is the copy the game reads: the same 41 names, each with `dimensions`
+(the rectangle's width and height), `vertices` (the 8 points) and, for ears, `root`. It was
+split out of `character-manager.lua` on 30 Oct 2026 (30ab4d7). The numbers are older. They
+were copied by hand while the pictures were traced. Nothing writes the dict back from the
+scene. `lua claudetools/shape8-from-meta.lua` compares the two and, for a picture that is on
+the sheet but not in the dict yet, prints a line to paste. `spec/shape8-dict_spec.lua` is
+that comparison.
+
+Parts are built from the dict: the collision polygon and the joint
+points (`mipo-build.lua`, `character-topology.lua`), the picture's size and the body-hair
+outline (`mipo-textures.lua`), a spine torso cut into bands (`spine-skin.lua`), a blob's
+rest shape (`blob.lua`). Which of those pictures the editor and the randomizer offer is a
+second list, `src/shape-catalogs.lua`.
+
+While a `meta8` fixture is being edited, `editor-render.lua` logs the outline rounded with
+`math.floor(v + 0.5)`. That log is how the numbers were copied. The early pictures were
+stored as the raw trace and later cut to whole pixels by dropping the fraction (2025-07-04,
+"added some ears"), so rounding the sheet again lands within a pixel of the dict, not always
+on the same integer.
+
+These were changed in the dict and the sheet was not updated. The game follows the dict:
+
+| picture | sheet vs dict |
+|---|---|
+| hand3r | outline, up to 124px (retuned 2025-07, "hands are good now") |
+| earx3r | outline, up to 222px |
+| feet3xr | outline, up to 68px, and the width (sheet 213, dict 231) |
+| shapeA3 | the centre line, up to 8px |
+| earx2r | width only (sheet 352, dict 354); the outline matches |
+
+Ear `root` is not on the sheet. It is where the drawing meets the head, measured from the
+mask (the middle of the bottom fifth; earx9r's two legs by hand, 2026-10-30). The other
+parts have no root. `dimensions` is the rectangle on the sheet, the size the picture is
+stretched to. Many of the pngs were scaled down later, so a file's pixel size is often
+smaller than this.
+
+### Adding a picture
+
+1. Add `textures/<name>.png` and `textures/<name>-mask.png`.
+2. On the meta scene, add a rectangle of that document size, put the picture on it, and add
+   a sensor labelled `meta8` with 8 points in order: 1 at the top, then clockwise (2 upper
+   right, 5 at the bottom, 8 upper left). The editor draws a line between opposites
+   (1-5, 2-8, 3-7, 4-6), so a scrambled order shows. Joints use these indices.
+3. Save the scene. `lua claudetools/shape8-from-meta.lua` prints a `shape8-dict.lua` entry
+   for the new picture. Paste it in. For an ear, set `root` yourself; the tool does not
+   measure one.
+4. Add the name, without `.png`, to the right list in `src/shape-catalogs.lua`:
+   `torsoHeadShapes`, `earShapes`, `feetShapes` or `handShapes`. The feet pictures are
+   listed as hands too. Without a list entry the editor and the randomizer never offer it.
+5. `busted spec/shape8-dict_spec.lua`. It fails when a picture is on only one side, when
+   an outline that matched moves by more than a pixel, or when a new ear has no root.
+   The five rows above are the differences it allows.
+
+Paste the one new entry. Replacing the whole dict from the sheet would move hand3r,
+earx3r, feet3xr and shapeA3, and those parts would collide and joint differently.
