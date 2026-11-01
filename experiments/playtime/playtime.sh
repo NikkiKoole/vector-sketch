@@ -187,7 +187,7 @@ case "${1:-status}" in
     log)     do_log ;;
     errors)  do_errors ;;
     todo)    (cd "$DIR" && lua claudetools/plans.lua "${2:-}") ;;
-    tried)   do_tried "${2:-}" ;;
+    tried)   shift; do_tried "$*" ;;
     audio)   do_audio ;;
     bench)   do_bench "${2:-}" "${3:-}" "${4:-}" ;;
     device)  shift; "$DIR/native/ios/device.sh" "$@" ;;
