@@ -26,6 +26,7 @@ lib.breeds = {
         },
         positioners = { legX = 0 },
         face = { allowedEyeShapes = { 1 }, allowedPupilShapes = { 2, 3 } }, -- eye white 1, pupil 2 or 3
+        creation = { isPotatoHead = true }, -- the body is the head
     },
 }
 
@@ -48,10 +49,12 @@ function lib.randomize(instance, name)
     for key, list in pairs(savedLists) do C[key] = list end
     if not ok then error(err) end
     -- positioners (where the legs, ears and nose sit; mipo-appearance updatePositioners) are
-    -- not drawn at random: a breed sets them after
-    if breed.positioners then
-        CharacterManager.updatePositioners(instance, breed.positioners)
-        CharacterManager.rebuildFromCreation(instance, {})
+    -- not drawn at random, and the randomizer flips potato head every roll: a breed sets both
+    -- after it, in one rebuild
+    if breed.positioners or breed.creation then
+        if breed.positioners then CharacterManager.updatePositioners(instance, breed.positioners) end
+        CharacterManager.rebuildFromCreation(instance, breed.creation or {})
+        CharacterManager.limitArmReach(instance)
         CharacterManager.rebuildTextures(instance)
     end
 end
