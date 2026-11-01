@@ -88,7 +88,10 @@ lib.maxMipoDragSpeed = false
 -- weights (it may pull with state.world.dragStrength, 40, in the air: throws stay snappy).
 -- Pressed into a Mipo backed against a wall, 40 forced limbs through each other (21 crossed
 -- in 10 tries, 0 at 8; in a pile they stayed knotted, scripts/hands-mess, 2026-11-01).
-lib.touchingDragStrength = 8
+-- PARKED (false = off), 2026-11-01: liked, but pulling a Mipo out of a group was weak too. To
+-- tweak when it's picked up: soften only while the pull points into the Mipo it touches, not
+-- away from it (spec/mipo-drag-press_spec.lua is pending until then; 8 to try).
+lib.touchingDragStrength = false
 
 local function solidOtherMipo(own, other, otherBody, ownId)
     if own:isSensor() or other:isSensor() then return false end
@@ -109,6 +112,7 @@ end
 -- A drag on a Mipo pulls softly while it touches another Mipo (touchingDragStrength), fully
 -- otherwise. Each frame, from handlePointerUpdate.
 function lib.softenWhenTouching(pointerJoint)
+    if not lib.touchingDragStrength then return end
     local mipo = mipoRegistry.getFromBody(pointerJoint.jointBody)
     if not (mipo and pointerJoint.fullForce and pointerJoint.joint) then return end
     local strength = state.world.dragStrength or 40
