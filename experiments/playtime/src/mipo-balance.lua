@@ -185,10 +185,25 @@ function lib.settlePose(instance)
 end
 
 -- Part masses that by area alone make a Mipo hard to move: a heavy head, thin arms and neck.
+-- A shape8 part's collision sits where its picture is (src/shapes.lua, keepOrigin), so for
+-- a lopsided outline Box2D's centre of mass is off the body's origin. The Mipo was tuned
+-- (standing, the neck, snapping hands) with it on the origin, where the joints are: keep it
+-- there. The same mass and turning inertia around the origin, only the centre moves.
+local function centreMassesOnOrigin(instance)
+    for name, part in pairs(instance.parts) do
+        local partData = instance.dna.parts[name]
+        if partData and partData.shape == ST.SHAPE8 and part.body and not part.body:isDestroyed() then
+            local _, _, mass, inertia = part.body:getMassData()
+            if mass > 0 then part.body:setMassData(0, 0, mass, inertia) end
+        end
+    end
+end
+
 function lib.balanceMasses(instance)
     lib.balanceHead(instance)
     lib.balanceArms(instance)
     lib.balanceNeck(instance)
+    centreMassesOnOrigin(instance)
 end
 
 -- A spine (creation.torsoSpine, docs/MIPO-SPINE.md): the torso segments are bands of

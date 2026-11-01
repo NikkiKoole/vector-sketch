@@ -258,14 +258,18 @@ function shapes.makeTrianglesFromPolygon(polygon, _internalPoints)
     return triangles
 end
 
-local function makeShapeListFromPolygon(polygon)
+-- The shapes are centred on the polygon's centroid, unless keepOrigin: a shape8 outline is
+-- already around its picture's centre (where the picture and the joints are), and centring it
+-- slid a lopsided part's collision off its drawing (hand3r's thumb: 20px, docs/SCENES.md).
+local function makeShapeListFromPolygon(polygon, keepOrigin)
     local shapesList = {}
     local allowComplex = true -- TODO: parameterize this
     local triangles = {}
 
     -- first figure out if we are maybe a simple polygon we can use -as is- by box2d
     if #polygon <= 16 and love.math.isConvex(polygon) then
-        local centroidX, centroidY = mathutils.computeCentroid(polygon)
+        local centroidX, centroidY = 0, 0
+        if not keepOrigin then centroidX, centroidY = mathutils.computeCentroid(polygon) end
         local localVertices = {}
         for i = 1, #polygon, 2 do
             local x = polygon[i] - centroidX
@@ -316,7 +320,8 @@ local function makeShapeListFromPolygon(polygon)
             logger:error("No valid triangles were created.")
             return nil
         end
-        local centroidX, centroidY = mathutils.computeCentroid(polygon)
+        local centroidX, centroidY = 0, 0
+        if not keepOrigin then centroidX, centroidY = mathutils.computeCentroid(polygon) end
         for _, triangle in ipairs(triangles) do
             -- Adjust triangle vertices relative to body position
             local localVertices = {}
@@ -424,8 +429,7 @@ function shapes.createShape(shapeType, settings)
         table.insert(shapesList, love.physics.newPolygonShape(vertices))
     elseif shapeType == ST.SHAPE8 then
         vertices = settings.optionalVertices
-
-        shapesList = makeShapeListFromPolygon(vertices) or {}
+        shapesList = makeShapeListFromPolygon(vertices, true) or {}
     elseif shapeType == ST.RIBBON then
         vertices = settings.optionalVertices or ribbon(settings.width, settings.height * 10, 0, 0, 5, 'vertical')
         local tris = triangulateRibbon(vertices)
