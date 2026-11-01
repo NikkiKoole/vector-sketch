@@ -23,6 +23,8 @@ local cameraFollow = require('src.camera-follow')
 local hairLocks = require('src.hair-locks')
 local hairTufts = require('src.hair-tufts')
 local fabuland = require('src.fabuland')
+local shape8Dict = require('src.shape8-dict')
+local shapeCatalogs = require('src.shape-catalogs')
 --- here a tiny collection of helper function will grow, function i am sure that will be reused in various scripts.
 local function getObjectsByLabel(label)
     local objects = {}
@@ -79,6 +81,8 @@ local baseEnv = {
     hairLocks                = hairLocks,
     hairTufts                = hairTufts,
     fabuland                 = fabuland,
+    shape8Dict               = shape8Dict,
+    shapeCatalogs            = shapeCatalogs,
     tostring                 = tostring,
     tonumber                 = tonumber
     -- Add global utilities like NeedManager, etc.

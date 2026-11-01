@@ -35,6 +35,8 @@ three Knut scenes worth keeping moved to `scripts/tech/`. UVUSERT lives on in `t
 | snap, tech/snap2, tech/snapstatic | snap points and old snap joints | *spec* (snap-scenes) |
 | sm-demo | the state-machine helper example | *spec* |
 | meta | the shape8 outline sheet, and a round-trip scene | source of `src/shape8-dict.lua`; don't archive (below) |
+| shape8-check | a shape8 outline in the game next to another one, two Mipos per case | trying a trace before it goes in the dict (meta, below) |
+| feet-check | every foot picture on a Mipo of its own, ankles against their stop marked | how each foot stands; *spec* feet-stand checks the same |
 | tech/connected, multi, resources, uvs | one engine piece each | test material; resources and uvs: the UVUSERT scenes (UV-BACKDROP-FRAGILITY) |
 | tech/hoop, tech/workmoreclean | from Knut | *spec* (meshusert-bind, resource-link): the MESHUSERT (skinning) and resource scenes |
 | tech/knutjump | from Knut | WORLD-BUILDING's tile-repeat grass example |
@@ -62,64 +64,61 @@ it.** No spec names it, so an archive pass that only keeps scenes a spec names w
 it, and the traces with it.
 
 41 pictures: a hand (`hand3r`), seven feet (`feet2r`, `feet3xr`, `feet5xr`, `feet6r`,
-`feet7r`, `feet7xr`, `feet8r`), sixteen ears (`earx1r` through `earx16r`), and the body and head
-shapes (`shapeA1` through `shapeA4`, `shapes1` through `shapes13`). Each body is one rectangle. The picture sits on a
-texfixture (`bgURL`). The outline is an 8-point sensor labelled `meta8`. The game's outline
-is that sensor's `extra.vertices`, point 1 first, origin at the centre of the rectangle,
-y down. `points` on the same fixture is Box2D's order and can drop a point.
+`feet7r`, `feet7xr`, `feet8r`), sixteen ears (`earx1r` through `earx16r`), and the body and
+head shapes (`shapeA1` through `shapeA4`, `shapes1` through `shapes13`). Each body is one
+static rectangle (dynamic until 2026-11-01: pressing play dropped the whole sheet). The
+picture sits on a texfixture (`bgURL`). The outline is an 8-point sensor labelled `meta8`:
+its `extra.vertices`, point 1 first, origin at the centre of the rectangle, y down.
+`points` on the same fixture is Box2D's hull and can drop a point.
 
 `src/shape8-dict.lua` is the copy the game reads: the same 41 names, each with `dimensions`
-(the rectangle's width and height), `vertices` (the 8 points) and, for ears, `root`. It was
-split out of `character-manager.lua` on 30 Oct 2026 (30ab4d7). The numbers are older. They
-were copied by hand while the pictures were traced. Nothing writes the dict back from the
-scene. `lua claudetools/shape8-from-meta.lua` compares the two and, for a picture that is on
-the sheet but not in the dict yet, prints a line to paste. `spec/shape8-dict_spec.lua` is
-that comparison.
+(the rectangle's width and height), `vertices` (the 8 points) and, for ears, `root`. The
+sheet and the dict agree exactly. `spec/shape8-dict_spec.lua` (and
+`lua claudetools/shape8-from-meta.lua`) fails on any difference: a name on one side only, a
+point or a size that isn't the same, a picture missing from the catalogs, an ear without a
+root.
 
-Parts are built from the dict: the collision polygon and the joint
-points (`mipo-build.lua`, `character-topology.lua`), the picture's size and the body-hair
-outline (`mipo-textures.lua`), a spine torso cut into bands (`spine-skin.lua`), a blob's
-rest shape (`blob.lua`). Which of those pictures the editor and the randomizer offer is a
-second list, `src/shape-catalogs.lua`.
-
-While a `meta8` fixture is being edited, `editor-render.lua` logs the outline rounded with
-`math.floor(v + 0.5)`. That log is how the numbers were copied. The early pictures were
-stored as the raw trace and later cut to whole pixels by dropping the fraction (2025-07-04,
-"added some ears"), so rounding the sheet again lands within a pixel of the dict, not always
-on the same integer.
-
-These were changed in the dict and the sheet was not updated. The game follows the dict:
-
-| picture | sheet vs dict |
-|---|---|
-| hand3r | outline, up to 124px (retuned 2025-07, "hands are good now") |
-| earx3r | outline, up to 222px |
-| feet3xr | outline, up to 68px, and the width (sheet 213, dict 231) |
-| shapeA3 | the centre line, up to 8px |
-| earx2r | width only (sheet 352, dict 354); the outline matches |
+Parts are built from the dict: the collision polygon and the joint points
+(`mipo-build.lua`, `character-topology.lua`), the picture's size and the body-hair outline
+(`mipo-textures.lua`), a spine torso cut into bands (`spine-skin.lua`), a blob's rest shape
+(`blob.lua`). Which of those pictures the editor and the randomizer offer is a second list,
+`src/shape-catalogs.lua`.
 
 Ear `root` is not on the sheet. It is where the drawing meets the head, measured from the
 mask (the middle of the bottom fifth; earx9r's two legs by hand, 2026-10-30). The other
 parts have no root. `dimensions` is the rectangle on the sheet, the size the picture is
-stretched to. Many of the pngs were scaled down later, so a file's pixel size is often
-smaller than this.
+stretched to. Many of the pngs were scaled down later (2026-05), so a file's pixel size is
+often smaller, but the shape (width to height) must be the png's, or the picture is squashed
+(the spec checks it).
 
-### Adding a picture
+History, 2026-11-01: until then the dict was copied by hand from a log line, and the two
+had drifted: hand3r, earx3r, feet3xr and shapeA3 had been retuned in the dict only, and
+feet3xr and earx2r had other widths on the sheet. The dict's versions were kept (compared
+in `shape8-check`) and the sheet now has them. shapes9 (520x468) and earx13r (225x336) had
+two digits swapped against their pngs (520x648, 225x366) and were squashed in the game; they
+have the png's size now, the outline stretched along. shapes1 and shapeA4's pictures sat
+2px off centre on the sheet.
+
+### Seeing an outline in the game
+
+`scripts/shape8-check` puts two Mipos side by side per case: the dict's outline on the
+left, another one for the same picture on the right (a dict entry with `picture` set
+borrows the original's png), the collision outline in red. Left/right steps through the
+cases. Add a case to try a new trace before pasting it.
+
+### Adding or changing a picture
 
 1. Add `textures/<name>.png` and `textures/<name>-mask.png`.
-2. On the meta scene, add a rectangle of that document size, put the picture on it, and add
-   a sensor labelled `meta8` with 8 points in order: 1 at the top, then clockwise (2 upper
-   right, 5 at the bottom, 8 upper left). The editor draws a line between opposites
-   (1-5, 2-8, 3-7, 4-6), so a scrambled order shows. Joints use these indices.
-3. Save the scene. `lua claudetools/shape8-from-meta.lua` prints a `shape8-dict.lua` entry
-   for the new picture. Paste it in. For an ear, set `root` yourself; the tool does not
-   measure one.
-4. Add the name, without `.png`, to the right list in `src/shape-catalogs.lua`:
-   `torsoHeadShapes`, `earShapes`, `feetShapes` or `handShapes`. The feet pictures are
-   listed as hands too. Without a list entry the editor and the randomizer never offer it.
-5. `busted spec/shape8-dict_spec.lua`. It fails when a picture is on only one side, when
-   an outline that matched moves by more than a pixel, or when a new ear has no root.
-   The five rows above are the differences it allows.
-
-Paste the one new entry. Replacing the whole dict from the sheet would move hand3r,
-earx3r, feet3xr and shapeA3, and those parts would collide and joint differently.
+2. On the meta scene, add a rectangle of the picture's size (or its shape, scaled), put the
+   picture on it, and add a texfixture sensor with corners 8, labelled `meta8`. Points in
+   order: 1 at the top, then clockwise (2 upper right, 5 at the bottom, 8 upper left). The
+   editor draws a line between opposites (1-5, 2-8, 3-7, 4-6), so a scrambled order shows.
+   Joints use these indices.
+3. Select the `meta8` sensor and press **copy dict entry** (position section). It puts the
+   line for `src/shape8-dict.lua` on the clipboard. Paste it (replacing the old line when
+   you retraced). For an ear, add `root` yourself.
+4. A new picture: add the name, without `.png`, to the right list in
+   `src/shape-catalogs.lua`: `torsoHeadShapes`, `earShapes`, `feetShapes` or `handShapes`.
+   The feet pictures are listed as hands too. Without a list entry the editor and the
+   randomizer never offer it.
+5. Save the scene, then `busted spec/shape8-dict_spec.lua`. It tells you what doesn't match.

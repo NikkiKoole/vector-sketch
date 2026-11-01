@@ -1,7 +1,6 @@
 -- here we just have small functions that render things for the editor
 -- (not ui but active state, selection boxes that sort of thing)
 --
-local logger = require('src.logger')
 local registry = require('src.registry')
 local state = require('src.state')
 local modes = require('src.modes')
@@ -205,17 +204,7 @@ function lib.renderActiveEditorThings()
             love.graphics.line(verts[3 * 2 - 1], verts[3 * 2 - 0], verts[7 * 2 - 1], verts[7 * 2 - 0])
             -- index 4 -> 6
             love.graphics.line(verts[4 * 2 - 1], verts[4 * 2 - 0], verts[6 * 2 - 1], verts[6 * 2 - 0])
-
-            local function roundArray(values)
-                local result = {}
-                for i, v in ipairs(values) do
-                    result[i] = math.floor(v + 0.5)
-                end
-                return result
-            end
-
-            logger:info(isMeta8)
-            logger:inspect(roundArray(state.texFixtureEdit.tempVerts))
+            -- the numbers for src/shape8-dict.lua: 'copy dict entry' in the panel
         end
     end
 

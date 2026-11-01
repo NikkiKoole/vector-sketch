@@ -109,8 +109,11 @@ local function addSkinTexture(body, partData, skinData, scale)
     ud.extra.OMP = true
     ud.extra.dirty = true
     ud.extra.main = utils.deepCopy(skinData.main)
-    ud.extra.main.bgURL = partData.shape8URL
-    ud.extra.main.fgURL = partData.shape8URL:gsub('.png', '-mask.png')
+    -- an entry can borrow another file's picture (scripts/shape8-check: before and after side by side)
+    local shape = shape8Dict[partData.shape8URL]
+    local picture = shape and shape.picture or partData.shape8URL
+    ud.extra.main.bgURL = picture
+    ud.extra.main.fgURL = picture:gsub('.png', '-mask.png')
     ud.extra.zOffset = skinData.zOffset or 0
     if partData.dims.sy ~= nil and partData.dims.sy < 0 then
         ud.extra.main.fy = -1

@@ -1,6 +1,6 @@
 -- scripts/meta.playtime.json is the sheet the shape8 outlines were traced on.
 -- src/shape8-dict.lua is the copy the game uses. Same picture names, and the
--- outlines that were not retuned still agree. docs/SCENES.md.
+-- outlines agree exactly. docs/SCENES.md.
 -- Pure: busted spec/shape8-dict_spec.lua
 
 local sheet = require('claudetools.shape8-from-meta')

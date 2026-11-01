@@ -4,6 +4,7 @@ local lib = {}
 local mipoDna = require('src.mipo-dna')
 local appearance = require('src.mipo-appearance')
 local shape8Dict = require('src.shape8-dict')
+local shapeCatalogs = require('src.shape-catalogs')
 local balance = require('src.mipo-balance')
 local textures = require('src.mipo-textures')
 local objectManager = require('src.object-manager')
@@ -138,6 +139,13 @@ end
 
 -- How makePart builds a part from its DNA at this scale.
 local function partSettings(partName, partData, scale, x, y)
+    -- feet are mirrored left/right like hands; a hand picture the other way round, so it
+    -- stands on its palm edge with the thumb up, not on the thumb
+    if (partName == 'lfoot' or partName == 'rfoot') and partData.shape8URL then
+        local mirrored = (partName == 'rfoot') ~= shapeCatalogs.isHandPicture(partData.shape8URL)
+        local size = math.abs(partData.dims.sx or 1)
+        partData.dims.sx = mirrored and -size or size
+    end
     local settings = {
         x = x,
         y = y,

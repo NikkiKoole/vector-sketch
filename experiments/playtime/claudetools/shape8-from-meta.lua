@@ -5,9 +5,9 @@
 --   lua claudetools/shape8-from-meta.lua
 --
 -- Compares scripts/meta.playtime.json to the dict and to the shape catalogs.
--- A picture on the sheet that is not in the dict yet is printed as a line to
--- paste into src/shape8-dict.lua. This does not write the dict: four outlines
--- on the sheet were retuned in the dict, and the game uses the dict.
+-- The two agree exactly (synced 2026-11-01). A picture on the sheet that is not
+-- in the dict yet is printed as a line to paste into src/shape8-dict.lua (the
+-- editor's 'copy dict entry' on a meta8 sensor gives the same line).
 
 local json = require('vendor.dkjson')
 
@@ -17,21 +17,6 @@ local M = {}
 function M.roundCoord(v)
     return math.floor(v + 0.5)
 end
-
--- Outlines retuned in the dict after the sheet was saved. Within a pixel means
--- "still the same trace"; these are not. The game uses the dict.
-M.vertexDrift = {
-    ['hand3r.png'] = true,  -- up to 124px; retuned 2025-07 ("hands are good now")
-    ['earx3r.png'] = true,  -- up to 222px
-    ['feet3xr.png'] = true, -- up to 68px
-    ['shapeA3.png'] = true, -- the centre line, up to 8px
-}
-
--- Sheet size, then the dict size. earx2r's outline matches; only the width differs.
-M.dimensionDrift = {
-    ['earx2r.png'] = { sheet = { 352, 420 }, dict = { 354, 420 } },
-    ['feet3xr.png'] = { sheet = { 213, 505 }, dict = { 231, 505 } },
-}
 
 local function moduleRoot()
     local src = debug.getinfo(1, 'S').source
@@ -61,13 +46,20 @@ end
 function M.outlines(scene)
     local rows = {}
     for _, body in ipairs(scene.bodies or {}) do
-        local url, meta
+        local url, meta, ankle
         for _, fix in ipairs(body.fixtures or {}) do
             local ud = fix.userData
             if type(ud) == 'table' then
                 local extra = ud.extra or {}
                 local bg = extra.main and extra.main.bgURL
                 if ud.label == 'meta8' then meta = extra end
+                if ud.label == 'ankle' and type(fix.points) == 'table' and #fix.points > 0 then
+                    -- an anchor: a small square around the point
+                    local x, y = 0, 0
+                    for i = 1, #fix.points, 2 do x, y = x + fix.points[i], y + fix.points[i + 1] end
+                    local n = #fix.points / 2
+                    ankle = { M.roundCoord(x / n), M.roundCoord(y / n) }
+                end
                 if type(bg) == 'string' and bg ~= '' and ud.label ~= 'meta8' then
                     url = bg
                 end
@@ -85,7 +77,7 @@ function M.outlines(scene)
             if body.dims and body.dims.width and body.dims.height then
                 dims = { body.dims.width, body.dims.height }
             end
-            rows[#rows + 1] = { url = url, dimensions = dims, vertices = vertices }
+            rows[#rows + 1] = { url = url, dimensions = dims, vertices = vertices, ankle = ankle }
         end
     end
     return rows
@@ -111,6 +103,20 @@ function M.catalogUrls(catalogs)
     return set
 end
 
+-- Width and height of a png, from its header; nil when there's no such file.
+function M.pngSize(path)
+    local f = io.open(path, 'rb')
+    if not f then return nil end
+    local header = f:read(24)
+    f:close()
+    if not header or #header < 24 then return nil end
+    local function u32(i)
+        local b1, b2, b3, b4 = header:byte(i, i + 3)
+        return ((b1 * 256 + b2) * 256 + b3) * 256 + b4
+    end
+    return u32(17), u32(21)
+end
+
 local function samePair(a, b)
     return a and b and a[1] == b[1] and a[2] == b[2]
 end
@@ -119,8 +125,7 @@ local function add(problems, msg)
     problems[#problems + 1] = msg
 end
 
--- Empty when the sheet, the dict and the catalogs still correspond, including
--- the known drifts above (those must still be the recorded difference).
+-- Empty when the sheet, the dict and the catalogs still correspond.
 function M.problems(rows, dict, catalogs)
     local problems = {}
     local seen = {}
@@ -140,30 +145,23 @@ function M.problems(rows, dict, catalogs)
                     add(problems, url .. ' outline is not 8 points')
                 else
                     local delta = M.maxDelta(row.vertices, shape.vertices)
-                    if M.vertexDrift[url] then
-                        if delta <= 1 then
-                            add(problems, url ..
-                                ' outline matches the sheet now; remove it from vertexDrift in claudetools/shape8-from-meta.lua')
-                        end
-                    elseif delta > 1 then
+                    if delta > 0 then
                         add(problems, url .. ' outline differs from the sheet by ' .. delta ..
-                            'px (the game uses the dict; see docs/SCENES.md)')
+                            'px (paste the sheet\'s, or put the dict\'s back on the sheet; docs/SCENES.md)')
                     end
                 end
-                local expect = M.dimensionDrift[url]
-                if expect then
-                    if not samePair(row.dimensions, expect.sheet) then
-                        add(problems, url .. ' sheet size is no longer ' ..
-                            expect.sheet[1] .. 'x' .. expect.sheet[2])
-                    end
-                    if not samePair(shape.dimensions, expect.dict) then
-                        add(problems, url .. ' dict size is no longer ' ..
-                            expect.dict[1] .. 'x' .. expect.dict[2])
-                    end
-                elseif not samePair(row.dimensions, shape.dimensions) then
+                if not samePair(row.dimensions, shape.dimensions) then
                     local sw = row.dimensions and (row.dimensions[1] .. 'x' .. row.dimensions[2]) or 'missing'
                     local dw = shape.dimensions and (shape.dimensions[1] .. 'x' .. shape.dimensions[2]) or 'missing'
                     add(problems, url .. ' size differs (sheet ' .. sw .. ', dict ' .. dw .. ')')
+                end
+                -- the pngs were scaled down, so only the shape has to match (shapes9 and earx13r
+                -- had two digits swapped and were squashed)
+                local pw, ph = M.pngSize(M.root .. '/textures/' .. url)
+                local dims = shape.dimensions
+                if pw and dims and math.abs((dims[1] / dims[2]) / (pw / ph) - 1) > 0.02 then
+                    add(problems, url .. ' is ' .. dims[1] .. 'x' .. dims[2] .. ' in the dict, but the png is ' ..
+                        pw .. 'x' .. ph .. ': another shape, so the picture is squashed')
                 end
                 if url:match('^earx%d+r%.png$') then
                     if type(shape.root) ~= 'table' or #shape.root ~= 2 then
@@ -172,6 +170,25 @@ function M.problems(rows, dict, catalogs)
                 elseif shape.root then
                     add(problems, url .. ' has a root; only ears do')
                 end
+            end
+        end
+    end
+    -- feet hang from their ankle (src/character-topology.lua): every picture a foot can wear
+    -- has one, on the sheet (an anchor labelled ankle) and in the dict, the same point
+    local feet = catalogs and M.catalogUrls({ handShapes = catalogs.handShapes }) or {}
+    for _, row in ipairs(rows) do
+        local shape = row.url and dict[row.url]
+        if shape then
+            if feet[row.url] and not (row.ankle and shape.ankle) then
+                add(problems, row.url .. ' is worn as a foot but has no ankle ' ..
+                    (row.ankle and 'in the dict' or 'on the sheet (an anchor labelled ankle)'))
+            elseif row.ankle and not shape.ankle then
+                add(problems, row.url .. ' has an ankle on the sheet but not in the dict')
+            elseif shape.ankle and not row.ankle then
+                add(problems, row.url .. ' has an ankle in the dict but not on the sheet')
+            elseif row.ankle and not samePair(row.ankle, shape.ankle) then
+                add(problems, row.url .. ' ankle: sheet ' .. row.ankle[1] .. ',' .. row.ankle[2] ..
+                    ', dict ' .. shape.ankle[1] .. ',' .. shape.ankle[2])
             end
         end
     end
@@ -203,8 +220,9 @@ function M.entryText(row)
     for i, n in ipairs(row.vertices) do
         coords[i] = string.format('%d', n)
     end
-    return string.format("    ['%s'] = { dimensions = { %d, %d },\n        vertices = { %s } },",
-        row.url, row.dimensions[1], row.dimensions[2], table.concat(coords, ', '))
+    local ankle = row.ankle and string.format(' ankle = { %d, %d },', row.ankle[1], row.ankle[2]) or ''
+    return string.format("    ['%s'] = { dimensions = { %d, %d },%s\n        vertices = { %s } },",
+        row.url, row.dimensions[1], row.dimensions[2], ankle, table.concat(coords, ', '))
 end
 
 function M.main()
@@ -228,9 +246,7 @@ function M.main()
     end
     local problems = M.problems(rows, dict, catalogs)
     if #problems == 0 then
-        print(#rows .. ' pictures. The sheet and src/shape8-dict.lua agree within a pixel,')
-        print('except the known drifts (hand3r, earx3r, feet3xr, shapeA3, and the earx2r / feet3xr sizes).')
-        print('The game uses the dict. docs/SCENES.md')
+        print(#rows .. ' pictures. The sheet and src/shape8-dict.lua agree. docs/SCENES.md')
         return
     end
     print(#problems .. ' difference(s) between the meta sheet and src/shape8-dict.lua:')

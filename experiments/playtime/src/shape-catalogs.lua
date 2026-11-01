@@ -78,4 +78,17 @@ lib.patternTextures = {
     'pat/type4', 'pat/type5', 'pat/type6', 'pat/type7', 'pat/type8',
 }
 
+-- A hand picture (in handShapes, not a foot picture): used as a foot it's mirrored, so the
+-- thumb points up instead of the Mipo standing on it (mipo-build partSettings).
+function lib.isHandPicture(url)
+    local name = url and url:gsub('%.png$', '')
+    for _, foot in ipairs(lib.feetShapes) do
+        if foot == name then return false end
+    end
+    for _, hand in ipairs(lib.handShapes) do
+        if hand == name then return true end
+    end
+    return false
+end
+
 return lib

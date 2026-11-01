@@ -318,7 +318,14 @@ function lib.getOwnOffset(partName, instance, entry)
         end
         return 0, (-part.dims.h / 2) * scale
     elseif oa.strategy == 'bottom' then
-        if type(oa.shape8) == 'number' and isShape8(part) then
+        local ankle = oa.ankle and isShape8(part) and shape8Dict[part.shape8URL].ankle
+        if ankle then
+            -- a foot hangs from its picture's ankle point (src/shape8-dict.lua, marked on the
+            -- meta sheet): above the middle of the edge it stands on. Point 1 (the top of the
+            -- picture) stuck out past that edge on several feet and the Mipo's weight tipped
+            -- them against the ankle stop (spec/feet-stand_spec.lua)
+            return -ankle[1] * (part.dims.sx or 1) * scale, -ankle[2] * (part.dims.sy or 1) * scale
+        elseif type(oa.shape8) == 'number' and isShape8(part) then
             return getAnchor(part, oa.shape8, scale)
         else
             return 0, (part.dims.h / 2) * scale
@@ -468,10 +475,10 @@ function lib.resolve(creation)
           ownAttach = { strategy = 'bottom' }, angleOffset = 0 },
         { name = 'lfoot', parent = 'llleg',
           parentAttach = { strategy = 'parentBottom' },
-          ownAttach = { strategy = 'bottom', shape8 = 1 }, angleOffset = math.pi / 2 },
+          ownAttach = { strategy = 'bottom', shape8 = 1, ankle = true }, angleOffset = math.pi / 2 },
         { name = 'rfoot', parent = 'rlleg',
           parentAttach = { strategy = 'parentBottom' },
-          ownAttach = { strategy = 'bottom', shape8 = 1 }, angleOffset = -math.pi / 2 },
+          ownAttach = { strategy = 'bottom', shape8 = 1, ankle = true }, angleOffset = -math.pi / 2 },
         -- Arms
         { name = 'luarm', parent = highestTorso,
           parentAttach = { strategy = 'vertex', vertex = isPotato and 7 or 8,

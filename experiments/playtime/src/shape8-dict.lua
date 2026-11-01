@@ -7,7 +7,10 @@
 -- sensor labelled meta8. This file is the copy the game reads; the scene is the sheet.
 -- Copied by hand (there is no writer that regenerates it). How to add a picture, and
 -- where the sheet and this file have diverged: docs/SCENES.md. Ear roots were measured
--- from the mask and are not on the sheet.
+-- from the mask and are not on the sheet. Foot pictures (and the hand, worn as a foot too)
+-- have an `ankle`: where the shin holds the foot, marked on the sheet with an anchor
+-- labelled ankle. An entry may name another file's `picture`
+-- (scripts/shape8-check shows a fix next to the original that way).
 --
 -- Read by mipo-build, character-topology, mipo-textures, spine-skin and blob.
 local shape8Dict = {
@@ -35,8 +38,8 @@ local shape8Dict = {
         vertices = { -3, -452, 127, -245, 305, 19, 247, 384, -2, 451, -276, 378, -283, 15, -207, -238 } },
     ['shapes8.png'] = { dimensions = { 788, 708 },
         vertices = { 3, -154, 271, -307, 341, 26, 89, 298, -9, 332, -166, 299, -302, 34, -238, -319 } },
-    ['shapes9.png'] = { dimensions = { 520, 468 },
-        vertices = { -0, -236, 233, -191, 198, 24, 174, 206, -18, 216, -226, 205, -233, 19, -234, -198 } },
+    ['shapes9.png'] = { dimensions = { 520, 648 },
+        vertices = { 0, -327, 233, -264, 198, 33, 174, 285, -18, 299, -226, 284, -233, 26, -234, -274 } },
     ['shapes10.png'] = { dimensions = { 520, 856 },
         vertices = { 4, -407, 166, -232, 231, 24, 141, 344, -16, 418, -186, 332, -233, 19, -182, -233 } },
     ['shapes11.png'] = { dimensions = { 652, 932 },
@@ -45,22 +48,22 @@ local shape8Dict = {
         vertices = { 17, -129, 208, -76, 249, 11, 191, 109, 9, 142, -228, 103, -247, -1, -175, -91 } },
     ['shapes13.png'] = { dimensions = { 486, 556 },
         vertices = { 22, -239, 175, -101, 197, 11, 177, 219, 14, 260, -168, 210, -156, 12, -125, -105 } },
-    ['feet2r.png'] = { dimensions = { 261, 475 },
-        vertices = { 46, -189, 96, -184, 131, 48, 109, 180, 45, 234, -15, 176, -70, 53, -87, -193 } },
-    ['feet6r.png'] = { dimensions = { 293, 612 },
-        vertices = { -28, -264, 46, -180, 110, 42, 117, 167, -7, 274, -109, 268, -110, 47, -102, -182 } },
-    ['feet5xr.png'] = { dimensions = { 174, 621 },
-        vertices = { -4, -243, 25, -216, 46, 31, 66, 244, 3, 275, -69, 245, -71, 29, -41, -233 } },
-    ['feet3xr.png'] = { dimensions = { 231, 505 },
-        vertices = { 8, -199, 56, -154, 46, 31, 61, 196, 5, 245, -54, 191, -71, 29, -38, -150 } },
-    ['feet7r.png'] = { dimensions = { 300, 546 },
-        vertices = { -4, -243, 57, -227, 111, 6, 87, 218, 3, 256, -69, 213, -96, 10, -50, -223 } },
-    ['feet8r.png'] = { dimensions = { 303, 465 },
-        vertices = { -11, -200, 37, -151, 87, 6, 110, 180, -7, 203, -100, 176, -96, 10, -74, -149 } },
-    ['hand3r.png'] = { dimensions = { 294, 489 },
-        vertices = { -31, -215, 99, -111, 26, 52, 39, 192, -32, 242, -121, 188, -140, 50, -132, -110 } },
-    ['feet7xr.png'] = { dimensions = { 216, 410 },
-        vertices = { 4, -170, 71, -143, 77, -47, 45, 165, -11, 182, -71, 163, -67, -51, -42, -144 } },
+    ['feet2r.png'] = { dimensions = { 261, 475 }, ankle = { 46, -126 },
+        vertices = { 46, -189, 116, -184, 116, 48, 116, 180, 45, 234, -15, 176, -70, 53, -87, -193 } },
+    ['feet6r.png'] = { dimensions = { 293, 612 }, ankle = { -28, -183 },
+        vertices = { -28, -264, 66, -183, 66, 42, 66, 193, -7, 274, -109, 268, -110, 47, -102, -182 } },
+    ['feet5xr.png'] = { dimensions = { 174, 621 }, ankle = { -4, -165 },
+        vertices = { -4, -243, 42, -216, 42, 31, 42, 244, 3, 275, -69, 245, -71, 29, -41, -233 } },
+    ['feet3xr.png'] = { dimensions = { 231, 505 }, ankle = { 8, -132 },
+        vertices = { 8, -199, 56, -154, 56, 31, 56, 196, 5, 245, -54, 191, -71, 29, -38, -150 } },
+    ['feet7r.png'] = { dimensions = { 300, 546 }, ankle = { -4, -168 },
+        vertices = { -4, -243, 104, -227, 104, 6, 104, 218, 3, 256, -69, 213, -96, 10, -50, -223 } },
+    ['feet8r.png'] = { dimensions = { 303, 465 }, ankle = { -11, -140 },
+        vertices = { -11, -200, 30, -151, 30, 6, 30, 180, -7, 203, -100, 176, -96, 10, -74, -149 } },
+    ['hand3r.png'] = { dimensions = { 294, 489 }, ankle = { -31, -146 },
+        vertices = { -31, -215, 99, -111, 26, 52, 39, 192, -32, 242, -129, 188, -129, 50, -129, -146 } },
+    ['feet7xr.png'] = { dimensions = { 216, 410 }, ankle = { 4, -117 },
+        vertices = { 4, -170, 66, -143, 66, -47, 66, 165, -11, 182, -71, 163, -67, -51, -42, -144 } },
     -- Ears: root is where the drawing meets the head, the middle of the bottom fifth of
     -- the mask (measured; earx9r's two legs by hand). Vertex 5, used before, was off
     -- to one side or well above the drawing's end on most of them.
@@ -88,8 +91,8 @@ local shape8Dict = {
         vertices = { -1, -33, 29, -16, 32, 16, 14, 47, -16, 41, -50, 45, -45, 13, -37, -15 } },
     ['earx12r.png'] = { dimensions = { 240, 330 }, root = { 4, 101 },
         vertices = { -19, -66, 39, -28, 76, 13, 49, 73, -9, 86, -45, 72, -57, 15, -62, -21 } },
-    ['earx13r.png'] = { dimensions = { 225, 336 }, root = { 31, 129 },
-        vertices = { -33, -100, 12, -33, 29, 16, 43, 73, -9, 86, -54, 72, -57, 15, -62, -33 } },
+    ['earx13r.png'] = { dimensions = { 225, 366 }, root = { 31, 141 },
+        vertices = { -33, -109, 12, -36, 29, 17, 43, 80, -9, 94, -54, 78, -57, 16, -62, -36 } },
     ['earx14r.png'] = { dimensions = { 270, 465 }, root = { 25, 156 },
         vertices = { -54, -172, 47, -41, 76, 18, 102, 82, -39, 86, -105, 83, -117, 23, -104, -42 } },
     ['earx15r.png'] = { dimensions = { 132, 228 }, root = { -16, 63 },

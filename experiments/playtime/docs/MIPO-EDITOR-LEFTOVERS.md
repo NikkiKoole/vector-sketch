@@ -17,6 +17,10 @@ and `FACE-SYSTEM-PLAN.md` (gaze, blink, brows done). Checked against the code 20
   `randValue(min, max, step, preferMiddle)`).
 - [ ] **E6. Screenshot export** of a Mipo at a few sizes.
 - [ ] **E7. Pupil look-at polish**: how the movement feels, masking pupils by the eye shape.
+- [ ] **E8. Feet that bend.** A foot in two shapes, heel and toes, on a springy joint, so it
+  rolls over its toes and lands softer instead of a stiff plank (idea, 2026-11-01; not for now).
+  The feet hang from their ankle point (`ankle` in `src/shape8-dict.lua`) and rest on their
+  sole (`spec/feet-stand_spec.lua`, `scripts/feet-check`); a split would need a second point.
 
 Covered elsewhere since: saving a Mipo's DNA is the library (a Mipo saved there grows fresh from
 its DNA); hair colour is shared by all hair parts when randomizing (`randomizeTextures`).

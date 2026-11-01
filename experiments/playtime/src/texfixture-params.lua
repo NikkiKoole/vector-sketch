@@ -45,6 +45,36 @@ local function imageSize(fixture)
     if ok then return img:getDimensions() end
 end
 
+-- A meta8 sensor (scripts/meta.playtime.json) as a line for src/shape8-dict.lua: the
+-- picture on the same body, its rectangle, the 8 points rounded, and the ankle when the
+-- body has an anchor labelled ankle. docs/SCENES.md.
+local function shape8Entry(fixture)
+    local body = fixture:getBody()
+    local url, ankle
+    for _, other in ipairs(body:getFixtures()) do
+        local ud = other:getUserData()
+        local bg = ud and ud.label ~= 'meta8' and ud.extra and ud.extra.main and ud.extra.main.bgURL
+        if bg and bg ~= '' then url = bg end
+        if ud and ud.label == 'ankle' then -- an anchor: the middle of its little square
+            local points = { other:getShape():getPoints() }
+            local x, y = 0, 0
+            for i = 1, #points, 2 do x, y = x + points[i], y + points[i + 1] end
+            ankle = string.format(' ankle = { %d, %d },', math.floor(x / (#points / 2) + 0.5),
+                math.floor(y / (#points / 2) + 0.5))
+        end
+    end
+    local thing = utils.thingOf(body)
+    local coords = {}
+    for i, v in ipairs(extraOf(fixture).vertices) do coords[i] = string.format('%d', math.floor(v + 0.5)) end
+    local entry = string.format("    ['%s'] = { dimensions = { %d, %d },%s\n        vertices = { %s } },",
+        url or '?.png', math.floor(thing.width + 0.5), math.floor(thing.height + 0.5), ankle or '',
+        table.concat(coords, ', '))
+    if url and url:match('^ear') then
+        entry = entry .. '\n    -- ear: add root = { x, y } where the drawing meets the head'
+    end
+    return entry
+end
+
 lib.position = {
     { kind = 'action', label = '∆ move',
       run = function() modes.set(modes.POSITIONING_SFIXTURE) end },
@@ -84,6 +114,13 @@ lib.position = {
               edit.tempVerts = nil
               edit.centroid = nil
           end
+      end },
+    { kind = 'action', label = 'copy dict entry',
+      visible = function(fixture) return fixture:getUserData().label == 'meta8' end,
+      run = function(_, fixture)
+          local entry = shape8Entry(fixture)
+          love.system.setClipboardText(entry)
+          print('copied for src/shape8-dict.lua:\n' .. entry)
       end },
     { key = 'corners', kind = 'choice', options = { 4, 8 },
       get = function(fixture) return extraOf(fixture).vertexCount or 4 end,
