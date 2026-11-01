@@ -252,3 +252,4 @@ Reference docs worth knowing when touching an area:
 - `INSPIRATIONS.md` — the pictures, toys and apps behind Mipo's look and play (Childcraft, Fabuland, Hancock's Underworld, …)
 - `TOOLING-SETUP.md` — luacheck, busted, profiling
 - `MEASURING.md` — profiling, and `claudetools/snapshot.sh` (before/after snapshots of scenes, Mipos, the Mipo editor) for refactors
+- `SCENES.md` — which scenes to keep. `scripts/meta.playtime.json` is the shape8 outline sheet behind `src/shape8-dict.lua`; don't archive it
