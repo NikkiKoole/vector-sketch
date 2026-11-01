@@ -73,7 +73,10 @@ end
 -- the light chain stretched past its limits. What held it (tested together; neither alone
 -- did): each neck segment weighs at least neckMinShare of the head (density only), and keeps
 -- itself upright (KEEP_ANGLE, as torso segments do; applyNeck). Head 200 -> 30 to the side.
-lib.neckMinShare = 1 / 4
+-- A quarter wasn't enough: such a neck had two resting poses, upright and bent, and which one
+-- a Mipo landed in was luck (7 of 20 random long-neck Mipos ended bent; seed 1 flipped with
+-- every change to the feet). Half: 0 of 20 (spec/mipo-neck_spec, 2026-11-01).
+lib.neckMinShare = 1 / 2
 
 function lib.balanceNeck(instance, share)
     share = share or lib.neckMinShare

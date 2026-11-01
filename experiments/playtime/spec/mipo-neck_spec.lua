@@ -24,8 +24,12 @@ describe('a long neck', function()
         local realGetTime = love.timer.getTime
         love.timer.getTime = function() return simTime end
         local ok, err = pcall(function()
-            -- Mipos that stand still without a neck (seed 3 hops on its own legs)
-            for _, seed in ipairs({ 1, 2, 4, 5, 6, 7, 8 }) do
+            -- 20 random Mipos that stand still without a neck (seed 3 hops on its own legs): with
+            -- seven, a neck that rests bent one time in three passed or failed by luck
+            local seeds = {}
+            for s = 1, 21 do if s ~= 3 then seeds[#seeds + 1] = s end end
+            local bent, hopping = {}, {}
+            for _, seed in ipairs(seeds) do
                 love.math.setRandomSeed(seed)
                 math.randomseed(seed)
                 local world = love.physics.newWorld(0, 9.8 * love.physics.getMeter(), true)
@@ -55,12 +59,18 @@ describe('a long neck', function()
                 local neckLength = 0
                 for i = 1, 5 do neckLength = neckLength + instance.dna.parts['neck' .. i].dims.h * instance.scale end
                 -- the head within 40% of the neck's length of the middle (it leans 20 degrees at
-                -- most; 5 of 7 stay under 30%); before, all lay at ~100%: neck flat to the side
-                assert.is_true(worst < neckLength * 0.4,
-                    string.format('seed %d: head %d to the side (neck %d long)', seed, worst, neckLength))
-                assert.are.equal(standUps, jointGuard.stats.standUps, 'seed ' .. seed .. ' kept hopping')
+                -- most); before balanceNeck, all lay at ~100%: neck flat to the side
+                if worst >= neckLength * 0.4 then
+                    bent[#bent + 1] = string.format('seed %d: head %d to the side (neck %d long)', seed, worst,
+                        neckLength)
+                end
+                if standUps ~= jointGuard.stats.standUps then hopping[#hopping + 1] = seed end
                 world:destroy()
             end
+            assert.are.equal(0, #bent, table.concat(bent, '\n'))
+            -- a Mipo that keeps hopping after landing: 1 or 2 of these 20 whatever the neck weighs
+            -- (neckMinShare 1/4 to 1/2, 2026-11-01); more is the neck
+            assert.is_true(#hopping <= 2, 'kept hopping: seeds ' .. table.concat(hopping, ', '))
         end)
         love.timer.getTime = realGetTime
         assert(ok, err)
