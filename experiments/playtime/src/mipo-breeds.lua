@@ -25,7 +25,7 @@ lib.breeds = {
             limbHairTextures = { '', '', '', 'hair9', 'hair10', 'hair11' },
             torsoHeadShapes = { 'shapes7' },
             randomHandShapes = { 'hand3r' }, -- real hands
-            randomFootShapes = { 'feet3xr' }, -- bare feet (the editor's feet grid: 2)
+            randomFootShapes = { 'feet7r' }, -- the round foot with toes (the editor's feet grid: 5)
         },
         -- the pear the right way up (wide at the bottom), sizes around Nikki's 1.48; hands about
         -- half the size (any Mipo: 1-2)

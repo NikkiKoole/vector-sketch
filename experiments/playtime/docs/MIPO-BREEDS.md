@@ -156,15 +156,15 @@ always the right way up (`bodyFlipChance = 0`) and sized 1.35-1.6 (`bodyScale`; 
 rope-like limbs (`leg1`, `leg5`), limb hair none half the time, else one of the last three
 (`hair9`-`hair11`), and the widest leg stance (`legX = 0`: the hips at the body's lower corners;
 positioners aren't randomized, so a breed sets them), eye white 1 and pupil 2 or 3, nose 7 (the
-snout), 8, 9 or 12, real hands at about half size (`hand3r`, `handScale` 0.5-1) and bare feet
-(`feet3xr`): the hands and feet draw from `randomHandShapes` and `randomFootShapes`, so a breed
-can narrow one (`face`: the face randomizer's options, `allowedEyeShapes` and
-`allowedPupilShapes`, indexes into the catalogs), always a potato head (`creation`: set after
-the roll, which flips potato head every time). It lives in `src/mipo-breeds.lua` (`lib.breeds`,
-the same swap-for-the-draw as the spike) and has a button in the Mipo editor, **random
-rubberleg-pearbod**, above **undo**: every random button there remembers the Mipo from before,
-and undo rebuilds it from that DNA, up to 20 steps back. In a breed's list `''` is "none" (limb
-hair, for now).
+snout), 8, 9 or 12, real hands at about half size (`hand3r`, `handScale` 0.5-1) and the round
+foot with toes (`feet7r`): the hands and feet draw from `randomHandShapes` and
+`randomFootShapes`, so a breed can narrow one (`face`: the face randomizer's options,
+`allowedEyeShapes` and `allowedPupilShapes`, indexes into the catalogs), always a potato head
+(`creation`: set after the roll, which flips potato head every time). It lives in
+`src/mipo-breeds.lua` (`lib.breeds`, the same swap-for-the-draw as the spike) and has a button
+in the Mipo editor, **random rubberleg-pearbod**, above **undo**: every random button there
+remembers the Mipo from before, and undo rebuilds it from that DNA, up to 20 steps back. In a
+breed's list `''` is "none" (limb hair, for now).
 
 ## Steps, if it becomes a plan
 
