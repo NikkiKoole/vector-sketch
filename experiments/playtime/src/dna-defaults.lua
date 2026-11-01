@@ -125,7 +125,7 @@ lib.randomRanges = {
     noseHMul      = { min = 0.5, max = 5 },
     noseY         = { min = 0.4, max = 0.6 },
     teethWMul     = { min = 0.5, max = 3 },
-    teethHMul     = { min = 0.5, max = 2.5 },
+    teethHMul     = { min = 2.5, max = 5 }, -- tall: clipped to the opening, they fill a mouth's curled-up corners
     teethChance   = 0.3,
     teethStickOut = 0.2,
     limbWMul      = { min = 0.2, max = 0.5 },
