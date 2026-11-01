@@ -14,6 +14,7 @@ local D = require('src.dna-defaults')
 local utils = require('src.utils')
 local state = require('src.state')
 local CharacterManager = require('src.character-manager')
+local mouthShapes = require('src.mouth-shapes')
 
 lib.breeds = {
     -- rope-like limbs instead of shaped ones (leg1, leg5); limb hair: none half the time ('' is
@@ -38,6 +39,7 @@ lib.breeds = {
         face = { allowedEyeShapes = { 1 }, allowedPupilShapes = { 2, 3 }, allowedNoseShapes = { 7, 8, 9, 12 },
                  uniformEyeScale = true },
         creation = { isPotatoHead = true }, -- the body is the head
+        teethToMouth = { 1, 1.25 }, -- the set of teeth as wide as the mouth, or a little wider
     },
 }
 
@@ -62,12 +64,33 @@ function lib.randomize(instance, name)
     -- positioners (where the legs, ears and nose sit; mipo-appearance updatePositioners) are
     -- not drawn at random, and the randomizer flips potato head every roll: a breed sets both
     -- after it, in one rebuild
-    if breed.positioners or breed.creation then
+    if breed.teethToMouth then
+        local potato = instance.dna.creation.isPotatoHead
+        if breed.creation and breed.creation.isPotatoHead ~= nil then potato = breed.creation.isPotatoHead end
+        lib.fitTeeth(instance, breed.teethToMouth, potato and 'torso1' or 'head')
+    end
+    if breed.positioners or breed.creation or breed.teethToMouth then
         if breed.positioners then CharacterManager.updatePositioners(instance, breed.positioners) end
         CharacterManager.rebuildFromCreation(instance, breed.creation or {})
         CharacterManager.limitArmReach(instance)
         CharacterManager.rebuildTextures(instance)
     end
+end
+
+-- Teeth as wide as the rolled mouth times a share from `range` ({ min, max }): drawn, a set of
+-- teeth is 100 x its width setting and the mouth its shape's width (mouth-shapes normalized,
+-- 66-247), both times the same scale (mipo-textures placeMouth). Set once, at the roll.
+-- owner: the part with the face (torso1 on a potato head, else head).
+function lib.fitTeeth(instance, range, owner)
+    local face = instance.dna.parts[owner] and instance.dna.parts[owner].appearance.face
+    local shape = face and mouthShapes.normalized[face.mouth.shape]
+    if not shape then return end
+    local minX, maxX = math.huge, -math.huge
+    for i = 1, #shape.points, 2 do
+        minX, maxX = math.min(minX, shape.points[i]), math.max(maxX, shape.points[i])
+    end
+    local share = range[1] + math.random() * (range[2] - range[1])
+    face.teeth.wMul = (maxX - minX) / 100 * share
 end
 
 -- ─── Undo ───

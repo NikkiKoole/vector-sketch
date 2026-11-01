@@ -160,12 +160,14 @@ big eyes set wide apart (`uniformEyeScale`, `eyeWMul` 1.1-1.5, `eyeX` 0.24-0.36)
 snout), 8, 9 or 12, real hands at about half size (`hand3r`, `handScale` 0.5-1) and the round
 foot with toes (`feet7r`): the hands and feet draw from `randomHandShapes` and
 `randomFootShapes`, so a breed can narrow one (`face`: the face randomizer's options,
-`allowedEyeShapes` and `allowedPupilShapes`, indexes into the catalogs), always a potato head
-(`creation`: set after the roll, which flips potato head every time). It lives in
-`src/mipo-breeds.lua` (`lib.breeds`, the same swap-for-the-draw as the spike) and has a button
-in the Mipo editor, **random rubberleg-pearbod**, above **undo**: every random button there
-remembers the Mipo from before, and undo rebuilds it from that DNA, up to 20 steps back. In a
-breed's list `''` is "none" (limb hair, for now).
+`allowedEyeShapes` and `allowedPupilShapes`, indexes into the catalogs), teeth as wide as the
+mouth or a little wider (`teethToMouth` 1-1.25: the teeth width setting worked out from the
+rolled mouth shape's width, once, at the roll), always a potato head (`creation`: set after the
+roll, which flips potato head every time). It lives in `src/mipo-breeds.lua` (`lib.breeds`, the
+same swap-for-the-draw as the spike) and has a button in the Mipo editor, **random
+rubberleg-pearbod**, above **undo**: every random button there remembers the Mipo from before,
+and undo rebuilds it from that DNA, up to 20 steps back. In a breed's list `''` is "none" (limb
+hair, for now).
 
 ## Steps, if it becomes a plan
 
