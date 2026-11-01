@@ -436,7 +436,7 @@ local function drawFaceMouthUI(instance, faceOwner, partName, face, x, y, panelX
         end
         y = y + ROW
 
-        local thMul = ui.sliderWithInput('mipo_teeth_hmul', x, y, 120, 0.5, 6, teeth.hMul)
+        local thMul = ui.sliderWithInput('mipo_teeth_hmul', x, y, 120, 0.5, 3, teeth.hMul)
         ui.alignedLabel(x, y, '  teeth height')
         if thMul and thMul ~= teeth.hMul then
             CharacterManager.updateFaceOfPart(instance, faceOwner, { teethHMul = thMul })
