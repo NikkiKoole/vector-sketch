@@ -38,6 +38,7 @@ three Knut scenes worth keeping moved to `scripts/tech/`. UVUSERT lives on in `t
 | shape8-check | a shape8 outline in the game next to another one, two Mipos per case | trying a trace before it goes in the dict (meta, below) |
 | feet-check | every foot picture on a Mipo of its own, ankles against their stop marked | how each foot stands; *spec* feet-stand checks the same |
 | breeds | a litter of six Mipos of one breed; a panel picks the breed | the MIPO-BREEDS spike: breeds as tables in the script |
+| vanilla | one plain Mipo (the humanoid template, not randomized) on a floor | tweaking a Mipo by hand in the Mipo editor (n: a fresh one) |
 | tech/connected, multi, resources, uvs | one engine piece each | test material; resources and uvs: the UVUSERT scenes (UV-BACKDROP-FRAGILITY) |
 | tech/hoop, tech/workmoreclean | from Knut | *spec* (meshusert-bind, resource-link): the MESHUSERT (skinning) and resource scenes |
 | tech/knutjump | from Knut | WORLD-BUILDING's tile-repeat grass example |
