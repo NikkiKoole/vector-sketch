@@ -18,6 +18,8 @@ local randomize = require('src.mipo-randomize')
 
 function lib.updateSkinOfPart(...) return appearance.updateSkinOfPart(...) end
 function lib.updateBodyhairOfPart(...) return appearance.updateBodyhairOfPart(...) end
+function lib.setFeetBodyhair(...) return appearance.setFeetBodyhair(...) end
+function lib.hasFeetBodyhair(...) return appearance.hasFeetBodyhair(...) end
 function lib.updateHaircutOfPart(...) return appearance.updateHaircutOfPart(...) end
 function lib.updateFaceOfPart(...) return appearance.updateFaceOfPart(...) end
 function lib.updatePositioners(...) return appearance.updatePositioners(...) end

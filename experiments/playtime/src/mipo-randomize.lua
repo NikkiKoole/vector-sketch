@@ -185,6 +185,9 @@ local function randomizeTextures(instance, hairColor, opts)
     for i = 1, count do
         appearance.updateBodyhairOfPart(instance, 'torso' .. i, bhValues)
     end
+    -- hairy feet (if on: setFeetBodyhair) keep the body's
+    appearance.updateBodyhairOfPart(instance, 'lfoot', bhValues)
+    appearance.updateBodyhairOfPart(instance, 'rfoot', bhValues)
 
     -- arm skin, then leg skin; torsos take the leg's for continuity
     local torsos = {}

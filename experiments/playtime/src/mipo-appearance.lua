@@ -70,6 +70,30 @@ end
 -- Update bodyhair appearance on a body part's texture layer.
 -- values: {bgHex, fgHex, pHex, bgURL, fgURL}
 -- optionalPatchName: defaults to 'main'
+-- Hairy feet: body hair on both feet, as on the torso (drawn along the foot's outline,
+-- mipo-textures addBodyhairTexture), or none. Turned on, the feet start with the body's own
+-- body hair (the torso's, else the head's) so it matches; a random roll keeps them in step.
+-- Rebuild the textures after.
+function lib.setFeetBodyhair(instance, on)
+    local source
+    for _, name in ipairs({ 'torso1', 'head' }) do
+        local part = instance.dna.parts[name]
+        source = source or (part and part.appearance and part.appearance.bodyhair)
+    end
+    for _, foot in ipairs({ 'lfoot', 'rfoot' }) do
+        local part = instance.dna.parts[foot]
+        if part then
+            part.appearance = part.appearance or {}
+            part.appearance.bodyhair = on and utils.deepCopy(source or { main = lib.initBlock('borsthaar4') }) or nil
+        end
+    end
+end
+
+function lib.hasFeetBodyhair(instance)
+    local foot = instance.dna.parts.lfoot
+    return foot ~= nil and foot.appearance ~= nil and foot.appearance.bodyhair ~= nil
+end
+
 function lib.updateBodyhairOfPart(instance, partName, values, optionalPatchName)
     local p = instance.dna.parts[partName]
     if p then

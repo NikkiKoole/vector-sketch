@@ -127,6 +127,16 @@ function lib.drawBodyhair(p, y)
         y = widgets.accordionHeader(p, y, key)
         if widgets.isOpen(key) then content() end
     end
+    -- feet have no body hair unless it's turned on (both feet at once)
+    if partName == 'lfoot' or partName == 'rfoot' then
+        local clicked, checked = ui.checkbox(x, y, CharacterManager.hasFeetBodyhair(instance), 'hairy feet')
+        if clicked then
+            CharacterManager.setFeetBodyhair(instance, checked)
+            CharacterManager.rebuildTextures(instance)
+            partData = instance.dna.parts[partName]
+        end
+        y = y + ROW
+    end
     if partData and partData.appearance and partData.appearance['bodyhair'] then
         drawAccordion(partName .. ' bodyhair', function()
             local bh = partData.appearance['bodyhair']
