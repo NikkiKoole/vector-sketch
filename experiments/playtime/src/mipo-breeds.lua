@@ -1,8 +1,9 @@
 -- mipo-breeds.lua
 -- Breeds: a random Mipo of a kind (docs/MIPO-BREEDS.md). A breed narrows what the randomizer
 -- draws from for one Mipo: lists from src/shape-catalogs.lua and ranges from
--- src/dna-defaults.lua are swapped in for the draw and put back after. Anything a breed doesn't
--- name stays as random as ever. scripts/breeds tries more breeds the same way.
+-- src/dna-defaults.lua are swapped in for the draw and put back after; positioners are set
+-- after it. Anything a breed doesn't name stays as random as ever. scripts/breeds tries more
+-- breeds the same way.
 --
 -- Also undo for the Mipo editor's random buttons: the DNA from before each roll, a few steps
 -- back, on state (a hot reload keeps it).
@@ -16,12 +17,14 @@ local CharacterManager = require('src.character-manager')
 
 lib.breeds = {
     -- rope-like limbs instead of shaped ones (leg1, leg5); limb hair: none half the time ('' is
-    -- no hair, three of them), else one of the last three (2026-11-01, Nikki in the vanilla scene)
+    -- no hair, three of them), else one of the last three; the widest leg stance (2026-11-01,
+    -- Nikki in the vanilla scene)
     rubberleg = {
         lists = {
             limbSkinTextures = { 'leg1', 'leg5' },
             limbHairTextures = { '', '', '', 'hair9', 'hair10', 'hair11' },
         },
+        positioners = { legX = 0 },
     },
 }
 
@@ -42,6 +45,13 @@ function lib.randomize(instance, name)
     for key, r in pairs(savedRanges) do D.randomRanges[key] = r end
     for key, list in pairs(savedLists) do C[key] = list end
     if not ok then error(err) end
+    -- positioners (where the legs, ears and nose sit; mipo-appearance updatePositioners) are
+    -- not drawn at random: a breed sets them after
+    if breed.positioners then
+        CharacterManager.updatePositioners(instance, breed.positioners)
+        CharacterManager.rebuildFromCreation(instance, {})
+        CharacterManager.rebuildTextures(instance)
+    end
 end
 
 -- ─── Undo ───
