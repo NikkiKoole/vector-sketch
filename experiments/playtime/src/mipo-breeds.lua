@@ -28,7 +28,8 @@ lib.breeds = {
         -- the pear the right way up (wide at the bottom), sizes around Nikki's 1.48
         ranges = { bodyFlipChance = 0, bodyScale = { min = 1.35, max = 1.6 } },
         positioners = { legX = 0 },
-        face = { allowedEyeShapes = { 1 }, allowedPupilShapes = { 2, 3 } }, -- eye white 1, pupil 2 or 3
+        -- eye white 1, pupil 2 or 3; noses 7 (the snout), 8, 9, 12
+        face = { allowedEyeShapes = { 1 }, allowedPupilShapes = { 2, 3 }, allowedNoseShapes = { 7, 8, 9, 12 } },
         creation = { isPotatoHead = true }, -- the body is the head
     },
 }
@@ -46,7 +47,7 @@ function lib.randomize(instance, name)
         savedLists[key] = C[key]
         C[key] = list
     end
-    -- face: randomizeFace's options (allowedEyeShapes, allowedPupilShapes, uniformEyeScale)
+    -- face: randomizeFace's options (allowedEyeShapes, allowedPupilShapes, allowedNoseShapes, …)
     local ok, err = pcall(CharacterManager.randomizeMipo, instance, nil, breed.face)
     for key, r in pairs(savedRanges) do D.randomRanges[key] = r end
     for key, list in pairs(savedLists) do C[key] = list end

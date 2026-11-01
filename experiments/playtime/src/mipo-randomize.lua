@@ -251,7 +251,8 @@ local function randomizeFace(instance, hairColor, opts)
         browHMul = D.randomInRangeWeighted('browHMul'),
         browBend = D.randomIntInRangeWeighted('browBend'),
         browY = D.randomInRangeWeighted('browY'),
-        noseShape = math.ceil(math.random() * #C.noseShapes),
+        noseShape = (opts and opts.allowedNoseShapes) and pick(opts.allowedNoseShapes)
+            or math.ceil(math.random() * #C.noseShapes),
         noseBgHex = '000000ff',
         noseFgHex = randomHexColor(),
         noseWMul = D.randomInRangeWeighted('noseWMul'),
@@ -338,7 +339,8 @@ function lib.limitArmReach(instance)
 end
 
 -- Everything at random; textureOpts / faceOpts narrow it down (see randomizeMipoConstrained).
--- faceOpts: uniformEyeScale, allowedPupilShapes, allowedEyeShapes (indexes into the catalogs).
+-- faceOpts: uniformEyeScale, allowedPupilShapes, allowedEyeShapes, allowedNoseShapes (indexes into
+-- the catalogs).
 local function randomizeAll(instance, textureOpts, faceOpts)
     if not instance then return end
     local hairColor = randomHexColor() -- haircut, bodyhair, limb hair and brows share it
