@@ -25,6 +25,7 @@ local hairTufts = require('src.hair-tufts')
 local fabuland = require('src.fabuland')
 local shape8Dict = require('src.shape8-dict')
 local shapeCatalogs = require('src.shape-catalogs')
+local dnaDefaults = require('src.dna-defaults')
 --- here a tiny collection of helper function will grow, function i am sure that will be reused in various scripts.
 local function getObjectsByLabel(label)
     local objects = {}
@@ -83,6 +84,7 @@ local baseEnv = {
     fabuland                 = fabuland,
     shape8Dict               = shape8Dict,
     shapeCatalogs            = shapeCatalogs,
+    dnaDefaults              = dnaDefaults,
     tostring                 = tostring,
     tonumber                 = tonumber
     -- Add global utilities like NeedManager, etc.

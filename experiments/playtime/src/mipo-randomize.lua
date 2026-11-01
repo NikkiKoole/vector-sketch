@@ -11,7 +11,10 @@ local mouthShapes = require('src.mouth-shapes')
 local D = require('src.dna-defaults')
 local C = require('src.shape-catalogs')
 
-local randomHexColor = utils.randomHexColor
+-- Every random colour comes from here (character-manager setRandomColor: a breed's palette).
+lib.anyColor = utils.randomHexColor
+lib.randomColor = lib.anyColor
+local function randomHexColor() return lib.randomColor() end
 
 -- One of the list, at random.
 local function pick(list)
@@ -334,7 +337,7 @@ end
 -- Everything at random; textureOpts / faceOpts narrow it down (see randomizeMipoConstrained).
 local function randomizeAll(instance, textureOpts, faceOpts)
     if not instance then return end
-    local hairColor = utils.randomHexColor() -- haircut, bodyhair, limb hair and brows share it
+    local hairColor = randomHexColor() -- haircut, bodyhair, limb hair and brows share it
     randomizeShapes(instance)
     randomizeLimbLengths(instance)
     randomizeEars(instance)
@@ -363,7 +366,7 @@ end
 -- arms/legs randomize all connected-skin/hair for that limb group.
 function lib.randomizePart(instance, partName)
     if not instance or not partName then return end
-    local hairColor = utils.randomHexColor()
+    local hairColor = randomHexColor()
 
     if partName == 'head' then
         local url = pick(C.torsoHeadShapes)

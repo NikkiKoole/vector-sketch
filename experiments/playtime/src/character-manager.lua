@@ -40,6 +40,7 @@ function lib.createCharacterFromExistingDNA(...) return build.createCharacterFro
 function lib.createCharacterFromJustDNA(...) return build.createCharacterFromJustDNA(...) end
 function lib.poseTpose(...) return build.poseTpose(...) end
 function lib.createCharacter(...) return build.createCharacter(...) end
+function lib.removeCharacter(...) return build.removeCharacter(...) end
 function lib.serializeCharacters(...) return build.serializeCharacters(...) end
 function lib.reconstructInstance(...) return build.reconstructInstance(...) end
 
@@ -49,6 +50,9 @@ function lib.randomizeMipo(...) return randomize.randomizeMipo(...) end
 function lib.randomizeMipoConstrained(...) return randomize.randomizeMipoConstrained(...) end
 function lib.randomizePart(...) return randomize.randomizePart(...) end
 function lib.mutateSizes(...) return randomize.mutateSizes(...) end
+-- Where random Mipos get their colours (a hex string each call); nil puts back any colour at
+-- all. A breed's palette goes here (docs/MIPO-BREEDS.md B3; scripts/breeds).
+function lib.setRandomColor(fn) randomize.randomColor = fn or randomize.anyColor end
 
 -- Tuning values, to read (set them on their own module: these are copies or the same table)
 lib.earSpring = mipoDna.earSpring

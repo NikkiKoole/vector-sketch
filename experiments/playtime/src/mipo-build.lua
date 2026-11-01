@@ -569,6 +569,22 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
     return instance
 end
 
+-- A Mipo out of the world: its parts, their joints and snaps, and its registry entry. A finger
+-- holding one of its parts lets go first (as a Mipo going through a door, src/doors.lua).
+function lib.removeCharacter(instance)
+    if not instance then return end
+    require('src.physics.box2d-pointerjoints').resetPointerJoints()
+    state.interaction.draggingObj = nil
+    local snap = require('src.physics.snap')
+    for _, part in pairs(instance.parts or {}) do
+        if part.body and not part.body:isDestroyed() then
+            snap.destroySnapJointAboutBody(part.body)
+            objectManager.destroyBody(part.body)
+        end
+    end
+    mipoRegistry.unregister(instance.id)
+end
+
 function lib.createCharacterFromJustDNA(mydna, x, y, scale)
     return lib.createCharacterFromExistingDNA(newInstance(mydna, scale), x, y, false)
 end
