@@ -182,6 +182,11 @@ local function bookBar(synth, t0, song, b)
     song.ideaOdds = ideaOdds(song, style)
     -- dynamics: every part a volume step or two up or down this bar (music-parts' play adds it)
     M.dynamic = not style.loop and plan.dynamicAt(song, b, song.ideaOdds.dynamics or 0) or 0
+    -- range: a phrase's first downbeat the bass an octave down (music-parts' play), at the idea's odds
+    local rangeOdds, j0 = song.ideaOdds.range or 0, song.barIndex and song.barIndex[b]
+    local kind = song.barSection and song.barSection[b] and song.barSection[b].kind
+    M.bassDrop = not style.loop and rangeOdds > 0 and j0 and j0 % 4 == 0 and (kind == 'A' or kind == 'B')
+        and stream(song.seed, 9800 + b)(100) < rangeOdds
     if style.loop then return (LOOP_BARS[style.loop] or bookLoopBar)(synth, t0, song, b) end
     local section, j = song.barSection[b], song.barIndex[b]
     applyLift(song, section)

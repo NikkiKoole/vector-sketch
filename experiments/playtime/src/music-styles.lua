@@ -837,6 +837,8 @@ D.answers = { { 0, 2, 4, 10 }, { 2, 4, 6, 12 }, { 0, 2, 6, 8, 14 }, { 4, 6, 8, 1
 -- colour: a long tune note rests on a tension or leans on the step above (music-guide's buildPhrase)
 D.commonIdeas = { dynamics = { odds = 70, songs = 90 }, revoice = { odds = 50, songs = 80, comps = true },
                   colour = { odds = 60, songs = 80, comps = true },
+                  -- range: the bass an octave down on a phrase's one, a peak phrase of the tune climbing
+                  range = { odds = 50, songs = 80, comps = true },
                   figures = { odds = 60, songs = 70, comps = true, figures = true } }
 local ideasCache = setmetatable({}, { __mode = 'k' })
 function D.ideasOf(style)

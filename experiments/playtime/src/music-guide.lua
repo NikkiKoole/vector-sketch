@@ -107,6 +107,15 @@ function lib.buildPhrase(song, b)
     local lo, hi = range[1], range[2]
     local at = section.guideLast -- where the last phrase left off; a section starts mid-range, B higher
     if slot == 0 or not at then at = math.floor((lo + hi) / 2) + (section.kind == 'B' and 4 or -2) end
+    -- range (the idea 'range'): a peak phrase, in B or a section's second, climbs: its range up to 5
+    -- semitones higher, it starts higher (the style report measured our songs spanning 3-4 octaves
+    -- against 4-6.6 in the pieces: docs/MUSIC-ANALYSIS.md). Its own stream
+    local rangeOdds = (song.ideaOdds or {}).range or 0
+    if rangeOdds > 0 and (section.kind == 'B' or slot == 1)
+        and stream(song.seed, 7600 + (section.kind == 'B' and 100 or 0) + slot)(100) < rangeOdds then
+        local lift = math.min(5, 91 - hi)
+        hi, at = hi + lift, math.min(hi + lift, at + lift)
+    end
 
     local motif, notes = song.motif, {}
     for half = 0, 1 do -- the call in bars 1-2, the answer (the same motif over the next chords) in 3-4

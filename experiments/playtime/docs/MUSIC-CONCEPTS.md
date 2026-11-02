@@ -104,6 +104,13 @@ Both act at the next bar. Saved setups keep them, and reset puts them back.
 - It is an idea that every song style shares (`D.commonIdeas`, `D.ideasOf` in `src/music-styles.lua`), so spice and its panel row control it. The loops and the score styles keep their own loudness.
 - Measured 2026-11-02, loudness spread over 5 songs per style: 0–9 before, 10–17 after (the real pieces: 9–19). The average level comes out ~1.1–1.7 dB higher (the RMS weighs loud bars more).
 
+## Range: how wide
+
+- **Orchestration by range (the idea `range`):** the band spreads out at the phrase's high points.
+  - **The bass, octave on the one:** on a phrase's first downbeat it drops an octave, as a pianist's left hand does, down to E1 at most (`M.bassDrop` in `bookBar`, applied in `play()`).
+  - **The tune, a climbing peak phrase:** a phrase in B, or a section's second, takes a range up to 5 semitones higher and starts higher (`buildPhrase`, `src/music-guide.lua`, its own stream).
+  - Measured 2026-11-02 (R5, 5 songs per style), lowest bass to highest tune: 3.1–4.2 octaves at never, 3.9–4.7 as designed, 4.2–4.9 at lots. The pieces span 3.8–5.3 (Gershwin 6.6). Rubs the same.
+
 ## Form and arrangement
 
 - **AABA, ABAB:** the song forms (`D.forms`; style forms like `jingleForms`).
@@ -115,6 +122,5 @@ Both act at the next bar. Saved setups keep them, and reset puts them back.
 
 ## Ideas waiting (measured gaps, see `MUSIC-ANALYSIS.md`)
 
-- **A wider register span (orchestration by range):** spread the bass and the tune further apart. Ours span 3–4 octaves, the real pieces 4–6.6.
 - **Faster harmonic rhythm:** bossa's chords last 2 bars; real bossa changes about once a bar.
 - **More secondary dominants and borrowed chords**, from the Chordonomicon "typical progressions".

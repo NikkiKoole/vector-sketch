@@ -97,6 +97,9 @@ local function play(synth, part, patch, t, midi, vol, durMs, step, slide, accent
     end
     if voice then patch = voice end
     if M.clipAt and t + durMs / 1000 > M.clipAt then durMs = math.max(20, (M.clipAt - t) * 1000) end
+    -- range (the idea 'range'): on a phrase's first downbeat the bass drops an octave, as a left hand
+    -- does on the one, down to E1 (M.bassDrop, set per bar in src/music.lua's bookBar)
+    if part == 'bass' and step == 0 and M.bassDrop and midi - 12 >= 28 then midi = midi - 12 end
     -- the bar's dynamics (src/music.lua's bookBar, music-plan's dynamicAt); a soft note stays audible
     if M.dynamic and M.dynamic ~= 0 and vol > 0 then vol = math.max(math.min(vol, 1), vol + M.dynamic) end
     local p, opts = synth.patches and synth.patches[patch], nil
