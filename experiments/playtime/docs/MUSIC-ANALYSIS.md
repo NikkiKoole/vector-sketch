@@ -96,6 +96,12 @@ Why does Gershwin's Prelude II (`gershwin2`) sound so much richer than our own s
 - **A generated song:** `NOTES=song.lua NOTES_ONLY=1 luajit claudetools/render-music.lua /dev/null 400 <style> auto 20 <seed>` records the first song's notes in the same format (0.03 s, no sound). Leave out NOTES_ONLY to get the wav too.
 - **Everything at once:** `python3 -I claudetools/style-report.py [--seeds 5] [--styles bossa,lofi]` runs every style × seeds and every score piece, then prints one table (about 30 s).
 
+- **Checking a change by ear and by number** (2026-11-02; each tool's header has its usage):
+  - `luajit claudetools/music-rubs.lua song.lua [bars]`: half-step rubs in a recorded song (keys against the tune or bass), per bar, or each one in detail. Compare before and after; a maj7 over its root or a V7b9 is meant to bite.
+  - `luajit claudetools/music-harmony.lua <style> [approach:lots,...]`: chord changes per 8 bars and roots outside the key, from the songs' plans (sees half-bar chords, as HookTheory counts).
+  - `IDEAS=... luajit claudetools/music-when.lua <style> <seed> <from> <to>`: what plays between two seconds of a render, with the bars' chords. For "a weird note at 50 s".
+  - `luajit claudetools/music-answer-check.lua <style> [songs]`: answer notes in neither the key nor their chord.
+
 **Checks that it reads right:**
 - On the Prelude it finds what is really there:
   - the line cliché G♯3–A3–A♯3–B3–C4 in bars 13–14, 27–28 and 55–56
