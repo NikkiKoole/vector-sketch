@@ -171,20 +171,29 @@ local function newPhrase(jam, style)
     end
 end
 
--- The root walker: when a step's bars are up (its own length, else rootEvery), the root takes the walk's
--- next step, unless play is calm (then it holds a bar at a time, so a quiet room sits on one chord).
 local function stepBars(jam) return jam.walk.bars and jam.walk.bars[jam.step] or jam.rootEvery end
 -- A walk picked in the panel waits for the next change, then starts from its first step.
 local function nextWalk(jam)
     local want = picked(lib.WALKS, picks().walk)
     return want and want ~= jam.walk and want or nil
 end
+-- The root walker: when a step's bars are up (its own length, else rootEvery), the root takes the walk's
+-- next step. Calm play SLOWS it (a step lasts twice as long) but never stops it: the root moving is the
+-- point, and holding it froze the jam in the editor (where nothing bumps the play level), a picked walk
+-- waiting for a change that never came. Anything picked in the panel is never slowed.
+function lib.lingers(jam, style)
+    if jam.lingered then return false end -- slowed once already: this step moves on
+    local p = picks()
+    local chosen = (p.walk and p.walk ~= 'auto') or (p.pace and p.pace ~= 'auto') or nextWalk(jam)
+    return not chosen and (M.activity or 0) < style.perLayer
+end
 local function walkRoot(jam, style, b)
     jam.rootEvery = tonumber(picks().pace) or jam.rootEvery
     if b == 1 then return end
     jam.left = jam.left - 1
     if jam.left > 0 then return end
-    if (M.activity or 0) < style.perLayer then jam.left = 1 return end
+    if lib.lingers(jam, style) then jam.left, jam.lingered = stepBars(jam), true return end
+    jam.lingered = false
     local switch = nextWalk(jam)
     if switch then jam.walk, jam.step = switch, 1 else jam.step = jam.step % #jam.walk + 1 end
     jam.root = jam.walk[jam.step]
@@ -233,7 +242,7 @@ function lib.bookBar(play, remember, synth, t0, song, b)
         local loops = lib.BASS_LOOPS[jam.group]
         local figure = picked(lib.FIGURES, picks().figure)
         local loop = figure and figure.loop or loops[(jam.at - 1) % #loops + 1]
-        local moves = jam.left == 1 and (M.activity or 0) >= style.perLayer -- the root changes next bar
+        local moves = jam.left == 1 and not lib.lingers(jam, style) -- the root changes next bar
         local switch = moves and nextWalk(jam)
         local nextRoot = switch and switch[1] or moves and jam.walk[jam.step % #jam.walk + 1] or jam.root
         bookBass(play, synth, song, t0, loop, jam.root, nextRoot, b)
