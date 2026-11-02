@@ -339,6 +339,38 @@ local function planApproaches(song)
     end
 end
 
+-- Borrowed chords (the idea 'borrow', modal mixture): in a major-key song a chord swapped for its
+-- version from the parallel minor: vi -> bVI and iii -> bIII (the style's own major quality), IV -> iv
+-- (the sigh), V -> bVII7 before I (the backdoor dominant). Real bossa takes 18% of its chords' roots from
+-- outside the key, ours ~10% with approach chords (Chordonomicon, HookTheory: docs/MUSIC-ANALYSIS.md, R6b).
+-- Marked and rolled here, played or not per bar (barChords). Its own stream
+-- the borrowed chords in the style's own colours: its major tonic's quality for bVI and bIII (sesame's
+-- plain 6ths, not a maj7 that rubbed its clav against the bass), a minor sixth for iv where the style
+-- plays sixths and triads, else a minor ninth; the backdoor bVII7 the V's own quality
+local MINOR_FOR = { maj6 = 'm6', maj = 'min', maj69 = 'm6', gmaj = 'min' }
+local function planBorrows(song, style)
+    if song.minor or style.mode then return end -- a minor or dorian song borrows nothing here
+    local rnd = stream(song.seed, 20)
+    local home = style.home or 'maj7'
+    local major = minorQuality(home) and 'maj7' or home
+    local minorIv = MINOR_FOR[home] or 'm9'
+    for _, prog in ipairs({ song.A, song.B }) do
+        for i, chord in ipairs(prog) do
+            local after = prog[i % #prog + 1]
+            chord.after = after
+            local d, minor = chord.degree % 12, minorQuality(chord.quality)
+            local swap
+            if d == 9 and minor then swap = { 8, major }
+            elseif d == 4 and minor then swap = { 3, major }
+            elseif d == 5 and not minor then swap = { 5, minorIv }
+            elseif d == 7 and not minor and after.degree % 12 == 0 then
+                swap = { 10, chord.quality } -- the V's own dominant colour (sesame's plain 7th, not a 13th)
+            end
+            if swap then chord.borrow, chord.borrowRoll = swap, rnd(100) end
+        end
+    end
+end
+
 -- The ideas (docs/MUSIC-CONCEPTS.md): a style's style.ideas = { name = { odds, songs } }. A song uses
 -- an idea or not (songs = % of the songs that do), rolled here on its own stream; the settings can
 -- say always or never, and the spice slider scales every idea's odds (src/music.lua's ideaOdds)
@@ -651,6 +683,7 @@ local function planSong(setKey)
     planChords(song, style, rnd)
     planWalks(song, style)
     planApproaches(song)
+    planBorrows(song, style)
     planIdeas(song, style)
     song.ideaOdds = ideaOdds(song, style) -- for the plan's own choices (the tune's rhythms)
     planForm(song, style, rnd)
@@ -780,6 +813,7 @@ lib.LOOP_PLANS = LOOP_PLANS
 lib.planChords = planChords
 lib.planWalks = planWalks
 lib.planApproaches = planApproaches
+lib.planBorrows = planBorrows
 lib.planIdeas = planIdeas
 lib.ideaOdds = ideaOdds
 lib.planDynamics = planDynamics

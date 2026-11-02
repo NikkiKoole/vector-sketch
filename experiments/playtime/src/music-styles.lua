@@ -844,6 +844,8 @@ D.commonIdeas = { dynamics = { odds = 70, songs = 90 }, revoice = { odds = 50, s
                   range = { odds = 50, songs = 80, comps = true },
                   -- approach: a held chord's last bar the next chord's dominant or ii-V (planApproaches)
                   approach = { odds = 45, songs = 75, comps = true },
+                  -- borrow: a chord swapped for the parallel minor's (bVI, bIII, iv, bVII7; planBorrows)
+                  borrow = { odds = 35, songs = 70, comps = true },
                   -- rhythms: the style's own tune rhythms (style.motifs) instead of the shared D.motifs
                   rhythms = { odds = 100, songs = 100, comps = true, motifs = true },
                   figures = { odds = 60, songs = 70, comps = true, figures = true } }

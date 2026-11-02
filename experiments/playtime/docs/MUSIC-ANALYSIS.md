@@ -208,7 +208,7 @@ measured are in the sections above. The concepts by name are in `MUSIC-CONCEPTS.
 - [x] R4. A tune with more colour: tensions (9ths, 13ths) on long notes, approach tones, down to ~75% chord tones; motif banks per style (the rhythm differs per style). Built 2026-11-02 (the idea `colour`; `style.motifs` for bossa, guaraldi, vibesnight, citypop, lofi): chord tones ~82%, 75–79% at lots; off-beat share now differs per style. Nikki: "this sounds nicer!"
 - [x] R5. A wider span: the bass drops an octave in places, the tune climbs at its peaks. Built 2026-11-02 as the idea `range`: 3.1–4.2 octaves to 3.9–4.7 (lots 4.2–4.9), rubs the same. Nikki: "nice advancements"
 - [x] R6. Faster harmony and borrowed chords: chords lasting one or two bars (`chordBars { 1, 2 }`), chord banks that include the typical progressions. Built 2026-11-02 as the idea `approach` (dom, ii–V, tritone sub): bossa 6.4 to 7.2 changes per 8 bars (8.2 at lots), roots outside the key 7 to 10%. Nikki: "really like the approach setting, makes it feel so much more bossa!" (not as the default: every idea starts at never, the music as before)
-- [ ] R6b. Borrowed chords: some chords swapped for the parallel minor's bVI, bVII or bIII (real bossa has 18% of its roots outside the key, ours ~10%)
+- [x] R6b. Borrowed chords: some chords swapped for the parallel minor's bVI, bVII or bIII (real bossa has 18% of its roots outside the key, ours ~10%). Built 2026-11-02 as the idea `borrow`: bossa 7% to 12% (17% at lots). Nikki: "sounds good" (sesame included)
 - [ ] R7. Reference material for voicings: Nikki's MuseScore bossa downloads into `~/music-reference/bossa/`, through `style-report.py --reference`
 
 ## Next steps

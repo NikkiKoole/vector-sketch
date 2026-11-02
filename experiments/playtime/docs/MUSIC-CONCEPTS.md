@@ -51,6 +51,22 @@ Both act at the next bar. Saved setups keep them, and reset puts them back.
 
   - Chords with their root outside the key: bossa 7 to 10%, lofi 0 to 3% (real bossa 18%). Rubs the same.
   - The analysis (`score-analysis.py`) reads one chord per bar, so it can't see half-bar ii–Vs: measure harmony from the plan instead.
+- **Borrowed chords, modal mixture (the idea `borrow`):** in a major-key song a chord swapped for its version from the parallel minor:
+  - vi to bVI and iii to bIII, in the style's own major tonic quality (sesame's plain 6ths, bossa's maj9)
+  - IV to iv (a minor 6th where the style plays sixths and triads)
+  - V to bVII7 before I, the backdoor dominant, in the V's own quality
+
+  Minor and dorian songs borrow nothing. An approach chord into a borrowed chord gives way, and so does the chord's walk.
+  - Where: `planBorrows` (`src/music-plan.lua`) marks and rolls; `barChords` swaps when the idea's odds allow.
+  - Measured 2026-11-02 (R6b, 8 songs, from the plan), roots outside the key:
+
+    | style | never | some songs | lots |
+    |---|---|---|---|
+    | bossa | 7% | 12% | 17% (19% with approach on lots; real bossa 18%) |
+    | guaraldi | 0% | 5% | 17% |
+    | citypop | 0% | 10% | 22% |
+
+  - Rubs about the same, except sesame (16 to 30 over 5 songs at lots, not tracked down; Nikki listened: "sounds good") and supermarket's bVImaj7 (its maj7 over the root, the style's own colour).
 - **Lydian colour:** the tonic maj9 voiced with a #11 (`lydianChance`, `qualityOf`).
 - **Key change, the lift:** a section moves up a half step, the "truck driver's" modulation (`lift` in a form, `applyLift`; buymode).
 - **Half-step float:** I → bII maj9 and back (a bossa B bank).
@@ -142,4 +158,3 @@ Both act at the next bar. Saved setups keep them, and reset puts them back.
 
 ## Ideas waiting (measured gaps, see `MUSIC-ANALYSIS.md`)
 
-- **Borrowed chords (modal mixture):** some chords swapped for the parallel minor's bVI, bVII or bIII, so more roots outside the key (real bossa 18%, ours ~10% with approach chords).

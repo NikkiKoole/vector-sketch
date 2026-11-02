@@ -29,8 +29,8 @@ local function styleParts() -- the playing style's parts; with the music off, th
     return seen[now and now.style or music().style]
 end
 -- the playing style's ideas (style.ideas), and every idea any style has, in the panel's order
-local IDEAS = { 'dynamics', 'range', 'approach', 'rhythms', 'revoice', 'figures', 'colour', 'walks', 'flat9', 'answer',
-                'runup', 'flutefeel' }
+local IDEAS = { 'dynamics', 'range', 'approach', 'borrow', 'rhythms', 'revoice', 'figures', 'colour', 'walks', 'flat9',
+                'answer', 'runup', 'flutefeel' }
 local function styleIdeas()
     local now = music().nowPlaying()
     local style = music().styles[now and now.style or music().style]

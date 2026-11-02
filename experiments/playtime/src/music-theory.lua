@@ -218,17 +218,22 @@ local function barChords(song, b)
             walk = nil
         end
         local ideaOdds = song.ideaOdds or {}
+        -- a borrowed chord (music-plan's planBorrows): the chord from the parallel minor in its place
+        local function borrowed(c) return c and c.borrow and c.borrowRoll < (ideaOdds.borrow or 0) end
+        local base = borrowed(chord) and chord.borrow or { chord.degree, chord.quality }
+        if base[1] ~= chord.degree or base[2] ~= chord.quality then walk = nil end -- its walk was the other's
         local approach = chord.approach
+        if approach and borrowed(chord.after) then approach = nil end -- it would lead to the other root
         if approach and chord.approachRoll < (ideaOdds.approach or 0) then
             -- an approach chord (music-plan's planApproaches) takes the chord's last bar: the next
             -- chord's dominant, or its ii-V half a bar each (minor: m7b5, V7b9); the walk gives way
-            pieces = { { chord.quality, chord.steps - 16, chord.degree } }
+            pieces = { { base[2], chord.steps - 16, base[1] } }
             for _, a in ipairs(approach) do pieces[#pieces + 1] = { a[2], a[3], a[1] } end
         elseif walk and chord.walkRoll < (ideaOdds[walk.idea or 'walks'] or 0) then
             pieces = {}
             for k, quality in ipairs(walk) do pieces[k] = { quality, chord.steps / #walk, chord.degree } end
         end
-        for _, piece in ipairs(pieces or { { chord.quality, chord.steps, chord.degree } }) do
+        for _, piece in ipairs(pieces or { { base[2], chord.steps, base[1] } }) do
             local cs, ce = at, at + piece[2]
             at = ce
             local s, e = math.max(cs, b0), math.min(ce, b0 + 16)
