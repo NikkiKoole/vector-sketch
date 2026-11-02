@@ -16,7 +16,10 @@ with a midi-only score that puts the dynamics line into both staves and moves th
 (short, off the grid) get grace = true: played just before their 16th. Only the listed bars are
 written (source bar numbers kept). Other onsets off the 16th grid are rounded and counted.
 --pickup: beats of an opening upbeat, which becomes the end of bar 1. --bass-below: left-hand notes
-from this midi up are keys.
+from this midi up are keys. --lh-lead: bars where the tune is in the left hand (Gershwin's Prelude II,
+bars 31-40): there the left hand's top voice is the lead and the right hand keys. --low-lead: bars
+where the right hand holds a note above its tune (the Prelude's bars 15-16): its lowest voice leads.
+A hand transcription (claudetools/scores/*.txt) becomes a MIDI with claudetools/score-from-text.py.
 Only the notes are taken (the composition); nothing of a recording.
 """
 import argparse, bisect, mido
@@ -35,6 +38,8 @@ ap.add_argument('--rh', type=int, default=1); ap.add_argument('--lh', type=int, 
 ap.add_argument('--source', default='')
 ap.add_argument('--pickup', type=float, default=0, help='beats in the opening pickup (upbeat): it becomes the end of bar 1')
 ap.add_argument('--bass-below', type=int, default=128, help='left-hand notes at or above this midi are keys, not bass')
+ap.add_argument('--lh-lead', default='', help='bars (1-10,20-22) where the tune is in the left hand: its top voice is the lead, the right hand keys')
+ap.add_argument('--low-lead', default='', help="bars where the tune is the right hand's lowest voice (it holds a note above it)")
 a = ap.parse_args()
 
 m = mido.MidiFile(a.midi)
@@ -69,21 +74,34 @@ def grid(ticks):
     if abs(s - round(s)) > 0.01: offgrid += 1
     return int(round(s))
 
+def bar_list(text):
+    out = []
+    for r in filter(None, text.split(',')):
+        lo, hi = (int(x) for x in r.split('-'))
+        out += range(lo, hi + 1)
+    return out
+pad = round((a.meter - a.pickup) * tpb) if a.pickup else 0
+lh_lead, low_lead = set(bar_list(a.lh_lead)), set(bar_list(a.low_lead))
+def tune_in_lh(s): return (s + pad) // bar_ticks + 1 in lh_lead
+def tune_low(s): return (s + pad) // bar_ticks + 1 in low_lead
+
 parts = []
 for (s, e, n) in rh:
+    if tune_low(s): # the tune under a held note: the lowest voice leads
+        lower = any(s2 <= s < e2 and n2 < n for (s2, e2, n2) in rh)
+        parts.append((s, e, n, 'keys' if lower else 'lead')); continue
     higher = any(s2 <= s < e2 and n2 > n for (s2, e2, n2) in rh)
-    parts.append((s, e, n, 'keys' if higher else 'lead'))
+    parts.append((s, e, n, 'keys' if higher or tune_in_lh(s) else 'lead'))
 for (s, e, n) in lh: # bass: no lower left-hand note sounding at its onset (a held bass keeps the tenor keys)
+    if tune_in_lh(s): # the tune is down here: the top voice leads
+        higher = any(s2 <= s < e2 and n2 > n for (s2, e2, n2) in lh)
+        parts.append((s, e, n, 'keys' if higher else 'lead')); continue
     lower = any(s2 <= s < e2 and n2 < n for (s2, e2, n2) in lh)
     parts.append((s, e, n, 'keys' if lower or n >= a.bass_below else 'bass'))
-pad = round((a.meter - a.pickup) * tpb) if a.pickup else 0
 if pad:
     parts = [(s + pad, e + pad, n, part) for (s, e, n, part) in parts]
 
-wanted = []
-for r in a.bars.split(','):
-    lo, hi = (int(x) for x in r.split('-'))
-    wanted += range(lo, hi + 1)
+wanted = bar_list(a.bars)
 bars = {b: [] for b in wanted}
 marks.sort()
 mark_times = [m[0] for m in marks]

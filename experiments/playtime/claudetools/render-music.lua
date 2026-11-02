@@ -5,7 +5,7 @@
 --      TUNE=classic builds the tune the old way (the default is guide, src/music-guide.lua),
 --      CUES=20:citypop,45:satie:bar,70:keep:cellar cues a style (or only layers, with 'keep') at a second,
 --      EFFECTS=0..2 the effects slider (every pedal's amount; 1 = as designed)
-local P = '/Users/nikkikoole/Projects/love/vector-sketch/experiments/playtime/'
+local P = arg[0]:match('^(.*)claudetools/') or './' -- the project folder, from where this script is
 package.path = P .. '?.lua;' .. package.path
 local out, seconds, style, rhythm = arg[1], tonumber(arg[2]) or 30, arg[3] or 'bossa', arg[4] or 'auto'
 local busyFrom, seed = tonumber(arg[5]), tonumber(arg[6]) or 3
@@ -38,6 +38,31 @@ end
 
 if os.getenv('EFFECTS') then synth.setEffectAmount(tonumber(os.getenv('EFFECTS'))) end -- the effects slider
 
+-- NOTES=<file.lua> writes the first song's notes as a score (src/music-scores/'s format), for
+-- claudetools/score-analysis.py: every tonal part, each note on its bar's 16th (swing undone);
+-- lead = l, keys = k, bass = b, the others (chord, guitar, horns, strings, riff) by name
+-- NOTES_ONLY=1: only the notes, no sound (fast; the wav is left out)
+local notesOut, recorded = os.getenv('NOTES'), { bars = {} }
+local notesOnly = notesOut and os.getenv('NOTES_ONLY')
+local clock = 0
+if notesOnly then synth.audioTime = function() return clock end end -- no audio: the music runs on the loop's time
+if notesOut then
+    local M = package.loaded['src.state'].music
+    local CODE = { lead = 'l', keys = 'k', bass = 'b' }
+    music.trace = function(part, t, midi, vol, durMs)
+        local song = M.song
+        if not song or not require('src.music-parts').TONAL[part] then return end
+        recorded.song = recorded.song or song
+        if song ~= recorded.song or not M.barAt then return end -- the first song only
+        local sixteenth = song.beat / 4
+        local step = math.floor((t - M.barAt) / sixteenth + 0.5)
+        local notes = recorded.bars[song.bar] or {}
+        recorded.bars[song.bar] = notes
+        notes[#notes + 1] = { step, midi, math.max(1, math.floor(durMs / 1000 / sixteenth + 0.5)), CODE[part] or part,
+                              vol * 16 }
+    end
+end
+
 local cues = {}
 for at, name, opt in (os.getenv('CUES') or ''):gmatch('(%d+):([%w]+):?([%w]*)') do
     cues[#cues + 1] = { at = tonumber(at), name = name, opt = opt }
@@ -61,11 +86,15 @@ for b = 1, blocks do
             print(('%5.1fs cue %s %s'):format(now, cue.name, cue.opt))
         end
     end
+    clock = now
     music.update(synth, now)
-    C.de_lua_render(buf, N)
-    for i = 0, N * 2 - 1 do samples[#samples + 1] = buf[i] end
+    if not notesOnly then
+        C.de_lua_render(buf, N)
+        for i = 0, N * 2 - 1 do samples[#samples + 1] = buf[i] end
+    end
 end
 
+if not notesOnly then
 local peak = 0
 for _, x in ipairs(samples) do if math.abs(x) > peak then peak = math.abs(x) end end
 local sum, count = 0, 0
@@ -91,3 +120,28 @@ f:write('RIFF' .. u32(36 + #d) .. 'WAVEfmt ' .. u32(16) .. u16(1) .. u16(2) .. u
 f:close()
 local M = package.loaded['src.state'].music
 print(('%s  peak %.3f  rms %.1f dB (sounding)  %s'):format(out, peak, rmsDb, M.song and (M.song.style .. ' key ' .. M.song.key) or ''))
+end
+
+if notesOut and recorded.song then
+    local song = recorded.song
+    local lines = { '-- luacheck: no max line length',
+        ('-- %s-seed%d: recorded by claudetools/render-music.lua (NOTES=), the first song of style %s, %d bars'):format(
+            song.style, seed, song.style, song.bars),
+        ('return { key = %d, meter = %d, velocity = 64, bars = {'):format(song.key % 12,
+            math.floor(song.barLength / song.beat + 0.5)) }
+    local bars = {}
+    for b in pairs(recorded.bars) do bars[#bars + 1] = b end
+    table.sort(bars)
+    for _, b in ipairs(bars) do
+        local cells = {}
+        for _, n in ipairs(recorded.bars[b]) do
+            if n[1] >= 0 then cells[#cells + 1] = ("{%d,%d,%d,'%s',%d}"):format(n[1], n[2], n[3], n[4], n[5]) end
+        end
+        lines[#lines + 1] = ('    [%d] = { %s },'):format(b, table.concat(cells, ', '))
+    end
+    lines[#lines + 1] = '} }'
+    local f = assert(io.open(notesOut, 'w'))
+    f:write(table.concat(lines, '\n'), '\n')
+    f:close()
+    print(('%s  %d bars recorded'):format(notesOut, #bars))
+end

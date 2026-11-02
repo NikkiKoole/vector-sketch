@@ -531,6 +531,16 @@ D.styles = {
     -- score's ritardandos and fermatas aren't played.
     traumerei = { loop = 'score', score = 'traumerei', bpm = { 58, 64 }, swing = 0.5,
         form = { { 'A', 1, 9 }, { 'A', 2, 9 }, { 'B', 10, 17 }, { 'A', 18, 25 } } },
+    -- gershwin2: Gershwin's Prelude II (1926, printed 1927; public domain, he died in 1937), his own
+    -- notes, transcribed by hand from the first edition (IMSLP #16881, claudetools/scores/). A blue
+    -- lullaby in C# minor: the left hand rocks the bass and a chord, the tune on top; in the middle
+    -- (31-44, six sharps) the tune moves down into the left hand under the right hand's chords. On a
+    -- vibes night: the vibes sing the tune (the felt piano once it's down in the left hand), the felt
+    -- piano the chords, the upright the bass. As written, 61 bars; the rubato and the fermatas aren't played.
+    gershwin2 = { loop = 'score', score = 'gershwin2', bpm = { 80, 88 }, swing = 0.5,
+        lead = 'vibes', keys = 'feltKeys', bass = 'musicBass', vibes = false,
+        lowLead = { below = 55, patch = 'pianoLead' },
+        form = { { 'A', 1, 30 }, { 'B', 31, 44 }, { 'A', 45, 61 } } },
     ballad = {
         bpm = 76, swing = 0.5, chordBars = { 1, 2 }, lydianChance = 0.6, pushOdds = 0,
         strumMs = 70, keys = 'rhodes', lead = 'rhodesLead', bass = 'hold', drums = nil, home = 'maj9',

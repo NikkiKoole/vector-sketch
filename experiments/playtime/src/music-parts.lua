@@ -906,7 +906,9 @@ end
 -- An ensemble score names its parts (n[4] = 'fl', 'vc', ...) and style.parts gives each a role
 -- (l / k / b: which voice setting overrides it, and its base volume), a patch, a volume offset (vol)
 -- and the highest note its instrument plays well (top: above it, an octave down). style.vol moves
--- every part (an ensemble of bowed strings sits louder than a felt piano).
+-- every part (an ensemble of bowed strings sits louder than a felt piano). style.lowLead = { below,
+-- patch }: tune notes under that midi play on another patch (a tune that moves down into the left
+-- hand, below where the lead instrument sounds right).
 local DYNAMIC_STEP = 12
 local function bookScoreBar(synth, t0, song, b)
     local style = D.styles[song.style]
@@ -942,6 +944,7 @@ local function bookScoreBar(synth, t0, song, b)
             play(synth, 'keys', patch, t, midi, vol(2), dur, s)
         elseif melody then
             local patch = own.patch or style.lead or 'pianoLead'
+            if style.lowLead and midi < style.lowLead.below then patch = style.lowLead.patch end
             play(synth, 'lead', patch, t, midi, vol(5), dur, s)
             if band and style.vibes ~= false then play(synth, 'lead', 'vibes', t, midi, vol(2), dur, s) end
         end

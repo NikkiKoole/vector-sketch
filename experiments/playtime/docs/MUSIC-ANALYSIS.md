@@ -80,6 +80,52 @@ other   |+++.++++++.++.+++.+   .++        .  .+#.#. .#+        ++.++. |
   - **The bass** fits FM best: a round synth or electric bass, not an upright.
   - **Weak evidence overall:** the scores sit close together (0.3–0.6) and the targets are chords. A full run on single clean notes is the next step for any of these.
 
+## The score pieces next to our styles (2026-11-02)
+
+Why does Gershwin's Prelude II (`gershwin2`) sound so much richer than our own styles? To answer that, the notes themselves get analysed, not a recording.
+
+**The tools:**
+- **One piece:** `python3 -I claudetools/score-analysis.py src/music-scores/<name>.lua [--form A:1-30,B:31-44,A:45-61] [--bars] [--json out.json]` prints an analysis sheet. It shows:
+  - the key per section, with "blue third" when both thirds sound
+  - a chord per bar, as a Roman numeral
+  - which bars bring back earlier ones
+  - a loudness line
+  - per part: notes per beat, range, and steps/leaps/holds
+  - the lines that move by step, and the tune's 3-note cells
+  - Plain Python, nothing to install.
+- **A generated song:** `NOTES=song.lua NOTES_ONLY=1 luajit claudetools/render-music.lua /dev/null 400 <style> auto 20 <seed>` records the first song's notes in the same format (0.03 s, no sound). Leave out NOTES_ONLY to get the wav too.
+- **Everything at once:** `python3 -I claudetools/style-report.py [--seeds 5] [--styles bossa,lofi]` runs every style × seeds and every score piece, then prints one table (about 30 s).
+
+**Checks that it reads right:**
+- On the Prelude it finds what is really there:
+  - the line cliché G♯3–A3–A♯3–B3–C4 in bars 13–14, 27–28 and 55–56
+  - the C♯ blue third
+  - the F♯ middle section
+  - bars 21–24 bringing back 7–10
+- The score styles recorded through the generator give the same numbers as their pieces, so the recording is faithful.
+- It also caught two labelling bugs in gershwin2, both fixed:
+  - music21's grace notes never ended, so bars 11–19 of the tune counted as keys. `score-from-text.py` now writes its own grace notes.
+  - The tune under a held C♯4 (bars 15–16, 29–30, 57–58) counted as keys. `score-from-midi.py --low-lead` fixes that.
+
+**What the table says** (5 seeds per style):
+
+| | our styles | the real pieces |
+|---|---|---|
+| keys re-strike the chord they just played (hold) | 50–80% (bossa 76, herbs 80) | 8–28% (Bach 60 and Gnossienne 88 are built that way) |
+| step lines per 8 bars | 0–0.5 (buymode 3.3, supermarket 1.8, citypop 1.7) | 3–5 |
+| keys moving by step | 7–27% | 29–54% |
+| span from the lowest bass to the highest tune | 3–4 octaves | 4–6.6 (Gershwin 6.6, Bethena 5.3) |
+| loudness spread | 0–8 | 9–19 (a different velocity scale; a rough comparison) |
+| tune notes per beat | about 0.4 | about 1 |
+
+The tunes are not the problem: they move by step as often as the pieces do (40–50%). The thinness is in the middle of the band:
+- the keys strike block chords over and over
+- almost no inner line moves
+- the range is narrow
+- the loudness hardly moves
+
+These numbers are what to aim at when a style is changed, and the report shows whether a change helped.
+
 ## Next steps
 
 - [x] Engine race on the clean guitar pieces (ring-chord-mid, jab-chord-mid), piano, bass ring
@@ -99,3 +145,6 @@ other   |+++.++++++.++.+++.+   .++        .  .+#.#. .#+        ++.++. |
   - **The run:** `bookFluteRun` runs down the chord's notes, 70 ms apart, and holds the last one up to the second stab.
   - **When:** in a phrase's 2nd bar on beat 3, 40% of the time in A and 70% in B; the melody switch turns it off.
   - **How much:** about 5 runs a minute, just under the guitar.
+- [x] Score analysis and the style report (2026-11-02, see "The score pieces next to our styles")
+- [ ] Nikki listens to gershwin2 again (the tune labelling is fixed) and checks the `??` bars (10, 16, 25, 33, 36, 38, 39, 49, 59 in `claudetools/scores/gershwin-prelude2.txt`)
+- [ ] One style made richer by the numbers: inner step lines in the keys, fewer re-struck chords, a wider span, moving loudness; measured with the style report before and after

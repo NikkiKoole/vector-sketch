@@ -1,0 +1,139 @@
+# George Gershwin, Prelude II (1926, first published 1927 by New World Music, plate N.W. 50-11),
+# transcribed 2026-11-02 from the scan of that first edition (IMSLP #16881, HathiTrust, public domain),
+# with Audiveris's reading as a cross-check. Gershwin died 1937: free in the US and the EU.
+# The format: claudetools/score-from-text.py. ?? = unsure, check by ear.
+@title Prelude II
+@composer George Gershwin
+@meter 4
+@tempo 88
+@key 1 4
+@key 31 6
+@key 45 4
+# dynamics: the p, mf, f, pp, p subito in the score; between the ones read, guessed (22, 29)
+@dyn 1 p 52
+@dyn 15 mf 72
+@dyn 22 mf 72
+@dyn 26 f 88
+@dyn 29 mf 72
+@dyn 31 p 60
+@dyn 43 pp 38
+@dyn 45 p 52
+@dyn 54 f 88
+@dyn 56 p 52
+@dyn 60 pp 40
+1 R: r/4
+1 L: C#2+E3/1 G#2+E#3/1 F#3+C#4/1 G#2+E#3/1
+2 R: r/4
+2 L: C#2+E3/1 G#2+E#3/1 F#3+C#4/1 G#2+E#3/1
+3 R: r/4
+3 L: C#2+E3/1 G#2+E#3/1 F#3+C#4/1 G#2+E#3/1
+4 R: r/2 r/0.5 G#4/0.5 B4/0.5 G#4/0.5
+4 L: C#2+E3/1 G#2+E#3/1 F#3+C#4/1 G#2+E#3/1
+5 R: B4/0.5 G#4/1.5 r/0.5 G#4/0.5 B4/0.5 G#4/0.5
+5 L: C#2+E3/1 G#2+E#3/1 F#3+C#4/1 G#2+E#3/1
+6 R: B4/0.5 G#4/1.5 r/0.5 G#4/0.5 B4/0.5 G#4/0.5
+6 L: C#2+E3/1 G#2+E#3/1 F#3+C#4/1 G#2+E#3/1
+7 R: B4/0.5 G#4/0.5 C#5/0.5 G#4/0.5 B4/0.5 G#4/0.5 C#5/0.5 G#4/0.5
+7 L: C#2+E3/1 G#2+E#3/1 F#3+C#4/1 G#2+E#3/1
+8 R: B4/0.5 G#4/1.5 r/0.6667 C#5/0.6667 C#5/0.6667
+8 L: C#2+E3/1 G#2+E#3/1 F#3+C#4/1 G#2+E#3/1
+9 R: C#5/1 F#5/1 A#5/1 F#5/1
+9 L: F#2+A#3/1 D#3+B3/1 B#3+F#4/1 D#3+B3/1
+10 R: C#5/0.5 A#4/0.5 G#4/0.5 G4/0.5 F#4/0.5 D#5/1.5 ?? the rhythm: the scan beams A# G# G as 16ths, which doesn't add up
+10 L: F#2+A#3/1 G2+B3/1 G#2/1 G#3/1 ; r/2 B#3/2
+11 R: g:D#5 C#5/4
+11 L: E3+A#3/1 E#3+A3/1 F#3+G#3/1 E#3+A3/1 ; C#3/4
+12 R: C#5/2 r/0.5 C#5/0.5 E5/0.5 C#5/0.5
+12 L: E3+A#3/1 E#3+A3/1 F#3+G#3/1 E#3+A3/1 ; C#3/4
+13 R: E5/0.5 F#5/1.5 r/0.5 C#5/0.5 E5/0.5 C#5/0.5
+13 L: F#2+G#3/1 C#3+A3/1 E3+A#3/1 F#2+G#3/1
+14 R: r/0.5 C#5/0.5 E5/0.5 C#5/0.5 A4/0.5 G#4/0.5 E4/0.5 C#4/0.5~
+14 L: A3/1 A#3/1 B3/1 B#3/1 ; F#2+C#3/2 G#2+F#3/2
+15 R: r/0.5 C#3/0.5 E3/0.5 C#3/0.5 E3/0.5 F#3/1.5 ; C#4/4~
+15 L: C#2/1.5 E4+G#4/0.5~ E4+G#4/1 F#4+A#4/1
+16 R: r/0.5 C#3/0.5 E3/0.5 C#3/0.5 E3/0.5 F#3/1.5 ; C#4/4
+16 L: D#1/1.5 E4+G#4/0.5~ E4+G#4/1 F#4+A4/1 ??
+17 R: r/4
+17 L: C#2+E3/1 G#2+E#3/1 F#3+C#4/1 G#2+E#3/1
+18 R: r/2 r/0.5 G#4+G#5/0.5 B4+B5/0.5 G#4+G#5/0.5
+18 L: C#2+E3/1 G#2+E#3/1 F#3+C#4/1 G#2+E#3/1
+19 R: B4+B5/0.5 G#4+G#5/1.5 r/0.5 G#4+G#5/0.5 B4+B5/0.5 G#4+G#5/0.5 ; E5/1 D#5/1 C#5/1 D#5/1
+19 L: C#2+E3/1 G#2+E#3/1 F#3+C#4/1 G#2+E#3/1
+20 R: B4+B5/0.5 G#4+G#5/1.5 r/0.5 G#4+G#5/0.5 B4+B5/0.5 G#4+G#5/0.5 ; E5/1 D#5/1 C#5/1 D#5/1
+20 L: C#2+E3/1 G#2+E#3/1 F#3+C#4/1 G#2+E#3/1
+21 R: B4+B5/0.5 G#4+G#5/0.5 C#5+C#6/0.5 G#4+G#5/0.5 B4+B5/0.5 G#4+G#5/0.5 C#5+C#6/0.5 G#4+G#5/0.5 ; E5/1 D#5/1 C#5/1 D#5/1
+21 L: C#2+E3/1 G#2+E#3/1 F#3+C#4/1 G#2+E#3/1
+22 R: B4+B5/0.5 G#4+G#5/1.5 r/0.6667 C#5+C#6/0.6667 C#5+C#6/0.6667 ; E5/1 D#5/1 r/2
+22 L: C#2+E3/1 G#2+E#3/1 F#3+C#4/1 G#2+E#3/1
+23 R: C#5+F#5+C#6/1 F#5+B5+F#6/1 A#5+D#6+A#6/1 F#5+B5+F#6/1
+23 L: F#2+A#3/1 D#3+B3/1 B#3+F#4/1 D#3+B3/1
+24 R: C#5+C#6/0.5 A#4+A#5/0.5 G#4+G#5/0.5 G4+G5/0.5 F#4+F#5/0.5 D#5+D#6/1.5
+24 L: F#2+A#3/1 G2+B3/1 G#2/1 G#3/1 ; r/2 B#3/2
+25 R: C#5+C#6/0.25 D#6/0.25 C#5+C#6/0.25 D#6/0.25 C#5+C#6/3~ ?? grace chord before the barline left out
+25 L: E3+A#3/1 E#3+A3/1 F#3+G#3/1 E#3+A3/1 ; C#3/4
+26 R: C#5+C#6/2 r/0.5 C#5+C#6/0.5 E5+E6/0.5 C#5+C#6/0.5
+26 L: E3+A#3/1 E#3+A3/1 F#3+G#3/1 E#3+A3/1 ; C#3/4
+27 R: E5+E6/0.5 F#5+F#6/1.5 r/0.5 C#5+C#6/0.5 E5+E6/0.5 C#5+C#6/0.5 ; A#5/1 A5/1 G#5/1 A#5/1
+27 L: F#2+G#3/1 C#3+A3/1 E3+A#3/1 F#2+G#3/1
+28 R: r/0.5 C#5+C#6/0.5 E5+E6/0.5 C#5+C#6/0.5 A4+A5/0.5 G#4+G#5/0.5 E4+E5/0.5 C#4/0.5~ ; A5/1 A#5/1 B4/1 B#4/1
+28 L: A3/1 A#3/1 B3/1 B#3/0.5 r/0.5 ; F##2+C#3/2 G#2+F#3/2
+29 R: r/0.5 C#3/0.5 E3/0.5 C#3/0.5 E3/0.5 F#3/1.5 ; C#4/4~
+29 L: C#2/1.5 E4+G#4/0.5~ E4+G#4/1 F#4+A#4/1
+30 R: r/0.5 C#3/0.5 E3/0.5 C#3/0.5 E3/0.5 G#3/1 C#3/0.5 ; C#4/4
+30 L: C#2/1.5 E4+G#4/0.5~ E4+G#4/1 E#4+B4/1
+# bar 31: key of six sharps, a tempo, Largamente con moto: the tune in the left hand
+31 R: A#3+F#4/1 A#3+F#4/1 C#4+F#4/1 C#4+F#4/1
+31 L: F#2+C#3/1 F#3/1 A2/1.5 A#2/0.5
+32 R: B3+E#4/1 B3+E#4/1 B3+E#4/1 B3+E#4/1
+32 L: C#3/0.75 C#3/0.25 D#3/0.75 C#3/0.25 G3/0.5 A#3/1 G#3/0.5
+33 R: C#4+F#4/1 C#4+F#4/1 C#4+F#4/1 C#4+F#4/1 ?? Audiveris read the last as B3+E#4
+33 L: A3/0.5 C#3/0.5 D#3/0.5 F#3/0.5 A#3/0.5 A#3/1 G#3/0.5
+34 R: A#3+E4/1 A#3+E4/1 A#3+E4/1 A#3+E4/1
+34 L: F#3/0.5 A#2/0.5 C#3/0.5 E3/0.5 G#3/0.5 G#3/1 F#3/0.5
+35 R: B3+D#4/1 B3+D#4/1 B3+D#4/1 B3+D#4/1
+35 L: E#3/1 F#3/0.5 F#2/0.5~ F#2/0.5 G#2/0.5 B2/0.5 D#3/0.5
+36 R: B3+D#4/1 B3+D#4/1 B3+E#4/1 B3+E#4/1
+36 L: E#3/0.5 F#3/0.5 D#3/1 D3/0.6667 C#3/0.6667 B2/0.6667 ?? the natural on D
+37 R: A#3+F#4/1 A#3+F#4/1 A#3+F#4/1 A#3+F#4/1
+37 L: C#3/2 C#3/0.5 A#2/0.5 C#3/0.5 D#3/0.5
+38 R: A#3+G#4/1 A#3+G#4/1 A#3+G#4/1 A#3+G4/1 ?? natural or sharp on the last G
+38 L: E3/0.5 E3/0.5 E3/0.5 E3/0.5 g:F#3 E3/0.5 D#3/1.5
+39 R: B#3+F#4/1 B#3+F#4/1 B#3+F#4/1 B#3+F#4/1
+39 L: r/0.5 A3/0.5 A3/0.5 A3/0.5 A3/0.5 A#3/1.5 ?? A or B (the heads sit between the two)
+40 R: B3+E#4/1 B3+E#4/1 B3+E#4/1 B3+F#4/1
+40 L: G3/0.5 G#3/0.5 F#2/1 A#2/0.5 C#3/0.5 C#2/1
+41 R: A#3+C#4/2 B3+D#4/2
+41 L: E#2/0.5 F#2/0.5 G#2/0.5 F#2/0.5~ F#2/0.5 E#2/0.5 F#2/0.5 G#2/0.5
+42 R: A#3+C#4/1 r/1 r/2
+42 L: F#2/1 G#2/1 A#2/1 C#3/1
+43 R: D#4+G#4+B#4/2 D4+G#4+B4/2
+43 L: E#3/0.5 F#3/0.5 G#3/0.5 F#3/0.5~ F#3/0.5 E#3/0.5 F#3/0.5 G3/0.5
+44 R: C#4+F#4+A#4/2 B#3+D#4+G#4/2
+44 L: F#3/4
+# bar 45: back to four sharps, Tempo I: bars 45-58 bring back bars 1-16
+45 = 1
+46 = 4
+47 = 5
+48 = 6
+49 R: B4/0.5 G#4/0.5 g:D#5 C#5/0.5 G#4/0.5 B4/0.5 G#4/0.5 g:D#5 C#5/0.5 G#4/0.5 ?? the grace notes' pitch
+49 L = 7
+50 = 8
+51 = 9
+52 = 10
+53 R: C#5/0.25 D#5/0.25 C#5/0.25 D#5/0.25 C#5/3~
+53 L = 11
+54 R: C#5/2 r/0.5 C#5+C#6/0.5 E5+E6/0.5 C#5+C#6/0.5
+54 L = 12
+55 = 27
+56 R = 14
+56 L = 28
+57 = 15
+58 R = 16
+58 L: F#1/1.5 E4+G#4/0.5~ E4+G#4/1 F#4+A4/1
+# the ending: a C# major arpeggio up through both hands, the right hand an octave up (8va, written here as it sounds)
+59 R: E#3+C#4/1 D#4+G#4/1 r/0.5 D#5+G#5/1 r/0.5
+59 L: C#2/0.5 G#2/0.5 E#3/0.5 G#3/0.5 C#4/0.5 E#4/0.5 G#4/0.5 C#5/0.5 ; C#1/4~ ?? the held low note's octave
+60 R: D#6+G#6/1 r/0.5 D#7+G#7/0.5 D#7+F#7+G#7/2~
+60 L: E#4/0.5 G#4/0.5 C#5/0.5 E#5/0.5~ E#5/2~ ; C#1/4~
+61 R: D#7+G#7/4
+61 L: E#5/4 ; C#4/4 ; C#1/4

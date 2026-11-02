@@ -79,7 +79,7 @@ local lib = {}
 --   style          'set' (lib.set in turn), or one style: 'bossa', 'guaraldi', 'island', 'dusk', 'dumont',
 --                  'supermarket', 'herbs', 'lofi', 'puppetmaker', 'strum', 'sesame', 'citypop', 'buymode',
 --                  'satie', 'ambient', 'jingle', 'vibesnight', 'ballad', and the scores: 'bethena', 'gnossienne',
---                  'gymnopedie', 'bachprelude', 'traumerei', 'carrelage', 'tapisserie'
+--                  'gymnopedie', 'bachprelude', 'traumerei', 'carrelage', 'tapisserie', 'gershwin2'
 --   rhythmSection  'auto' (joins when play gets busy), 'on' or 'off'
 --   melody         the tune on top
 --   tune           how the tune is built: 'guide' (the default: from each chord, guide tones and chord

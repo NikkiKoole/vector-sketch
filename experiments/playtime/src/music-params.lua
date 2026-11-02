@@ -155,7 +155,7 @@ lib.rows = {
     field('style', 'style', 'choice',
           { 'set', 'bossa', 'guaraldi', 'island', 'dusk', 'dumont', 'supermarket', 'herbs', 'lofi', 'puppetmaker',
             'strum', 'rollo', 'jingle', 'vibesnight', 'sesame', 'citypop', 'buymode', 'satie', 'ambient',
-            'bethena', 'gnossienne', 'gymnopedie', 'bachprelude', 'traumerei', 'carrelage', 'tapisserie',
+            'bethena', 'gnossienne', 'gymnopedie', 'bachprelude', 'traumerei', 'carrelage', 'tapisserie', 'gershwin2',
             'ballad' }, nil, true),
     field('rhythmSection', 'band', 'choice', { 'auto', 'on', 'off' }),
     -- the arrangements rooms use (music.layerPresets): a click sets the part checkboxes to one
