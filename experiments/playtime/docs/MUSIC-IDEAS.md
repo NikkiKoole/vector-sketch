@@ -15,7 +15,17 @@ Notes to pick up now and then, with no deadline. The music lives in `src/music.l
 - Measured with a stub synth, 3 seeds × 6 min: rubs a minute (semitone or b9 between two sounding notes) are keys-lead ≤ 1.2, bass-keys ≤ 1, keys-keys ≤ 0.8. For comparison, loficity's are 2.7 / 4.0 / 13.9. Stem levels are balanced on renders against the Rhodes.
 - The upright bass is still off (`upright = false`).
 
-## Next time (left open on 2026-10-30)
+## Next time (left open on 2026-11-02)
+The music panel is one panel for every style now (settings → music: a row per part, a row per drum sound, layers, setups, reset/undo; src/music-params.lua, src/music-setups.lua). Left open:
+- [ ] **Three knobs per part.** Dreamengine's modelled engines all have Plaits' three macros (harmonics, timbre, morph), each with its own meaning (flute: jet / air / embouchure; mallet: material / hardness / ring; bowed: position / pressure / speed). A fold-out per part row with the three sliders under the engine's own names, applied to the playing patch from its next note and saved in setups. The simple waves (SAW, SQUARE, TRI, SINE, NOISE: strings pad, roundBass, jingleLead, hats, snare) have none. A patch shared by two parts turns for both.
+- [ ] **The 303's knobs**: cutoff, resonance, envelope, decay (acid303.h's CUT / RES / ENV / DEC), shown while a part plays tb303; drive too, maybe. Saved in setups.
+- [ ] **A BPM slider**: one tempo for the music, over each style's rolled bpm (styles roll theirs per song from `bpm = { lo, hi }`); as a multiplier, so the swing and the style's feel stay; saved in setups.
+- [ ] **Waits on dreamengine** ([dreamengine-studio#47](https://github.com/NikkiKoole/dreamengine-studio/issues/47)): glides booked ahead (flute legato slides, the 303's slide and accent: today a booked note is always a new voice, glide only moves held notes), a group bus so a whole-mix treatment (the 78 / Caretaker sound: tape, warble, varispeed, filter, EQ, crush, reverb insert, all there on the master) hits only the music, and stereo width (mono like a 78).
+- [ ] **Before shipping a score piece**: the furniture music (carrelage, tapisserie) was unpublished in Satie's lifetime; check when it was first printed (late first publication has its own rules in the US and the EU). The Gnossienne's engraving is CC BY-SA: credit Knute Snortum / Mutopia.
+- [ ] **The 1920s dance band / Caretaker style**: Nikki is finding examples to take apart (MUSIC-ANALYSIS.md); public domain tunes to build it on are in the notebook doc (Charmaine, Diane, Japanese Sandman, After the Ball, ...; check each writer's dates).
+- Bowed strings: tried 2026-11-02 for the furniture music and parked: hard to make sound right with booked notes (no bow movement through a note, no late vibrato, no section). The violin / viola / cello / clarinet patches stay in the instrument lists.
+
+## Earlier (left open on 2026-10-30)
 The short list after a long day of styles; the details live in the entries further down.
 - [ ] **Pedals on more styles**, all subtle (background music): a slow phaser in strum's B, the wah LFO on sesame's clav, tape on lofi's keys. The effect slots make room for any style's pedals (`synth.fxSlots`, see SOUND-SYNTH); keep no more than five pedalled instruments sounding at once.
 - [ ] **Save the effects slider.** It's `state.synth.effectAmount` and goes back to 1 on a restart; store it with the other music settings.
