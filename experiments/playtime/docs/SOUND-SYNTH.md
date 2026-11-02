@@ -8,7 +8,7 @@ Ideas for the music: [MUSIC-IDEAS.md](MUSIC-IDEAS.md). The Mipo voices, Puppetma
 
 ## Setting up on a new machine
 1. Clone dreamengine to `~/Projects/dreamengine`, or anywhere else and set `DREAMENGINE=/path`.
-2. Run `native/desound/build.sh` to make `native/desound/libdesound.dylib`. The dylib is gitignored, so every machine builds its own. Rebuild after pulling dreamengine. It was last built against dreamengine `2572e0e5` (2026-10-29: INSTR_SING with its one-shot mode, sample_formant, INSTR_SCRAPE).
+2. Run `native/desound/build.sh` to make `native/desound/libdesound.dylib`. The dylib is gitignored, so every machine builds its own. Rebuild after pulling dreamengine. It was last built against dreamengine `b06a2a93` (2026-11-02: dreamengine-studio#47's booked slides, accent, group bus and stereo width; see the gotcha below).
 3. Without the dylib the app still runs. Every synth call does nothing, and `[synth] missing ...` is printed once.
 4. On iOS (`./playtime.sh device`, 2026-10-31) there's no dylib: `native/desound/build-ios.sh` makes a static library that `native/ios/device.sh` links into the app, with `-u` for every function in synth.lua's `CDEF` (the linker strips what nothing in C calls). `synth.lua` and the render thread then use `ffi.C`. Phones queue 4 × 1024 frames (~93 ms): the desktop's 3 × 512 ran dry ~26 times a second on an iPhone SE 2.
 
@@ -29,7 +29,7 @@ The main thread calls the dreamengine API, which drops commands into a lock-free
 - `start()`, `stop()`, and `update(dt, camera)` (moves the listener for stereo placement).
 - `hit(patch, midi, vol, durMs, x, y)` plays a one-shot note at a world position.
 - `noteOn(patch, midi, vol, x, y)` returns a handle; then `noteSet(handle, ...)` and `noteOff(handle)`.
-- `audioTime()` and `scheduleAt(patch, t, midi, vol, durMs)` book sample-accurate notes. The music uses these.
+- `audioTime()` and `scheduleAt(patch, t, midi, vol, durMs, opts)` book sample-accurate notes. The music uses these. `opts` (optional): `{ glide = ms }` slides from the patch's note still sounding (legato), `{ accent = 0..1 }`, `{ harmonics/timbre/morph = -1..1 }` this note's macro offsets.
 - Patches are named in `lib.patches`. Each has a slot, an instrument id (`lib.INSTR`), adsr, three macros (harmonics/timbre/morph), and optionally level, reverb, filter, tape, autopan and phaser.
 
 ## Music, in short
@@ -42,6 +42,9 @@ The main thread calls the dreamengine API, which drops commands into a lock-free
 - The settings are at the top of `src/music.lua`: style ('set' or one style), set, rhythmSection, upright, melody, melodyPatch, and more. `music.nowPlaying()` says which style, key and section is playing.
 
 ## Gotchas
+- **Booked slides and accents (dreamengine-studio#47, engine `b06a2a93`, 2026-11-02).** `scheduleAt`'s `opts` go to `schedule_note_at`. A patch with `legatoGlide = ms` (flute, clarinet, violin, viola, cello, tb303) SLIDES into a note that continues a legato line, today the score styles with `style.legato` (`bookScoreBar` passes `slide`); a line with two notes starting together doesn't slide (one slot slides one voice). The engine slides only if the previous note's key is still down at the new note, so a score's real breaths (gaps over a beat) still re-tongue. A patch with `downbeatAccent` (tb303) accents each bar's first note: louder and a harder filter kick. Measured offline (render-music, gymnopedie on the flute, stem): re-attacks inside the phrase 7 -> 3, a single voice at each join (peak 0.151 -> 0.106); the 303 on bossa's bass gets louder from each bar line (runs every 2.01 s).
+  - The #47 functions are in **`CDEF_OPTIONAL`, not `CDEF`**: a library without them still starts and plays plain notes. Not on iOS (native/ios/device.sh `-u`-links CDEF's functions only, and `-u` fails to link against an older dreamengine) or the web (synth-web.lua has no struct bridge). To get them there: move the lines into CDEF once every build machine has dreamengine `b06a2a93`+, and give synth-web.lua a `schedule_note_at`.
+  - Bound, **not used yet**: `instrument_group(slot, lead)` (a slot through the lead's FX bus), `reverb_bus_into(tank, lead)` (a reverb tank through the group), `instrument_fx_filter` (filter() on a slot's bus), `stereo_width` / `instrument_stereo_width`. For the 78 / Caretaker style. The catch: a grouped slot uses the LEAD's bus, so a pedalled patch (lib.fxSlots) loses its own pedals inside a group, and a group's lead takes one of the 7 FX buses for good. dreamengine's `seventyeight` cart is the worked example.
 - **Keep the render thread outside `src/`.** Lurker would hot-swap it into the main thread, where `ffi.load` breaks.
 - **A new FFI function must go in synth.lua's `CDEF`.** It's declared once at module load, so the next hot reload picks it up. Redeclaring an identical function is fine.
 - **Module state goes on `state.synth` / `state.music` / `state.snapSound`.** A hot reload would wipe module-local state. Settings too: a hot reload (lume.hotswap) copies the new functions onto the old module table, but they keep reading the new chunk's own table. So a plain field the settings panel sets on the module is never seen, and a reload resets it. Music's switches (`style`, `enabled`, ...) live on `state.musicSettings` behind the module's metatable for that reason (2026-10-29: picking a style did nothing until the song ended).

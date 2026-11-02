@@ -201,26 +201,31 @@ lib.patches = {
     -- above, dreamengine STATUS #31)
     -- the bowed strings, arco (dreamengine's bowed.c presets: bow position, pressure, speed), each with
     -- its own body (modes: [MODE_BOW_PIZZ] 0 = bowed, [_BODY] 1, [_SIZE] violin .5 / viola .53 / cello .7086)
+    -- legatoGlide (ms): in a legato line (a score style's style.legato) the note SLIDES from the one before
+    -- instead of starting again (synth.scheduleAt's opts.glide, dreamengine-studio#47). Only the voices that
+    -- can slide have it: a piano or a mallet would bend, which they can't.
     violin = { pool = true, wave = 'BOWED', adsr = { 40, 0, 7, 220 }, harmonics = 0.45, timbre = 0.30, morph = 0.70,
-               reverb = 0.35, level = 1.0, modes = { [0] = 0, [1] = 1, [2] = 0.5 } },
+               reverb = 0.35, level = 1.0, modes = { [0] = 0, [1] = 1, [2] = 0.5 }, legatoGlide = 70 },
     viola = { pool = true, wave = 'BOWED', adsr = { 40, 0, 7, 240 }, harmonics = 0.50, timbre = 0.38, morph = 0.60,
-              reverb = 0.35, level = 1.0, modes = { [0] = 0, [1] = 1, [2] = 0.53 } },
+              reverb = 0.35, level = 1.0, modes = { [0] = 0, [1] = 1, [2] = 0.53 }, legatoGlide = 70 },
     cello = { pool = true, wave = 'BOWED', adsr = { 50, 0, 7, 280 }, harmonics = 0.55, timbre = 0.42, morph = 0.55,
-              reverb = 0.3, level = 1.0, modes = { [0] = 0, [1] = 1, [2] = 0.7086 } },
+              reverb = 0.3, level = 1.0, modes = { [0] = 0, [1] = 1, [2] = 0.7086 }, legatoGlide = 80 },
     -- a clarinet: dreamengine's reed engine (reed.c's clarinet preset: a cylindrical bore, soft cane, dark)
     clarinet = { pool = true, wave = 'REED', adsr = { 8, 0, 6, 160 }, harmonics = 0, timbre = 0.30, morph = 0.40,
-                 reverb = 0.3, level = 0.5 },
+                 reverb = 0.3, level = 0.5, legatoGlide = 80 },
     -- a TB-303 (dreamengine's acid303.h, voiced stock, pre-Devil-Fish): a raw saw through the diode-ladder
     -- lowpass (FILTER_DIODE = 10; CUT .45 -> 390 Hz, RES .7 -> Q 10), every note kicking the filter
     -- envelope (ENV .6 x the sweep 1.66 -> ~3000 Hz over DEC .4 -> 230 ms), soft drive .35, and the slow
-    -- analog drift (random-walk LFOs on pitch and cutoff). No slide or accent: those need held notes
-    -- booked ahead (dreamengine-studio#47).
+    -- analog drift (random-walk LFOs on pitch and cutoff). The SLIDE (a legato line glides in 60 ms, the
+    -- stock 303's fixed slide, no new filter sweep) and the ACCENT (downbeatAccent: each bar's first note
+    -- louder with a harder filter kick, acid303.h's accent) come from dreamengine-studio#47.
     tb303 = { fx = true, wave = 'SAW', adsr = { 2, 60, 6, 25 }, reverb = 0.1, level = 0.5,
+              legatoGlide = 60, downbeatAccent = 0.7,
               filter = { mode = 10, cutoff = 390, resonance = 10 }, env = { 0, 230, 2990 },
               drive = 0.35, driveMode = 0,
               lfo = { { 0, 0.13, 0.025, shape = 7 }, { 3, 0.19, 20, shape = 7 } } },
     flute = { fx = true, wave = 'PIPE', adsr = { 1, 0, 6, 140 }, harmonics = 0, timbre = 0.38, morph = 0.7,
-              reverb = 0.4, level = 0.22, lfo = { { 0, 4.4, 0.08 } },
+              reverb = 0.4, level = 0.22, lfo = { { 0, 4.4, 0.08 } }, legatoGlide = 80,
               tape = { wow = 0.3, flutter = 0.12, saturation = 0.3, warble = 0.15 } },
     -- rollo's bass: a picked electric bass (the guitar model down low, dark, stopped after a beat)
     pickBass = { pool = true, wave = 'GUITAR', adsr = { 1, 0, 7, 160 }, harmonics = 0.3, timbre = 0.25, morph = 0.1,
@@ -297,6 +302,29 @@ void sample_formant(int slot, float semitones);
 ]]
 -- At load, so a hot reload can add functions. Redeclaring an identical function is allowed.
 if ffi then pcall(ffi.cdef, CDEF) end
+
+-- dreamengine-studio#47 (engine b06a2a93, 2026-11-02): a booked note that SLIDES from the slot's
+-- note still sounding (legato, no new attack), leans on an ACCENT, or carries its own macro values;
+-- and the group bus, its reverb on the record, and stereo width (bound, not used yet: MUSIC-IDEAS).
+-- OPTIONAL, unlike CDEF: a library built before them still starts (CDEF's check would refuse it), and
+-- scheduleAt falls back to schedule_at, so the notes just attack again. Kept out of CDEF on purpose:
+-- native/ios/device.sh links in every CDEF function with -u, which fails to link against an older
+-- dreamengine; and the web build's synth-web.lua has no struct-passing bridge. So iOS and web play
+-- without slides for now (S.hasNoteAt is false there).
+local CDEF_OPTIONAL = [[
+void schedule_note_at(double t, int midi, int instr, int vol, int dur_ms, const NoteOpts *opts);
+void instrument_accent(int slot, int route, float amount);
+void stereo_width(float amount);
+void instrument_stereo_width(int slot, float amount);
+void instrument_group(int slot, int lead);
+void reverb_bus_into(int tank, int lead);
+void instrument_fx_filter(int slot, int mode, float cutoff_hz, float resonance);
+]]
+-- the struct on its own: a hot reload redeclaring it errors, which must not stop the functions above
+if ffi then
+    pcall(ffi.cdef, 'typedef struct { int glide_ms; float accent, harmonics, timbre, morph; } NoteOpts;')
+    pcall(ffi.cdef, CDEF_OPTIONAL)
+end
 
 -- Lives on `state` so a lurker hot-swap of this file doesn't load the library or start the thread twice.
 state.synth = state.synth or { started = false, failed = nil, C = nil, thread = nil, quit = nil }
@@ -519,6 +547,7 @@ function lib.start()
         return false
     end
     S.C = C
+    S.hasNoteAt = nil -- scheduleAt looks again (a rebuilt library may have the #47 functions now)
     C.de_lua_init()
     C.spatial_speed(0) -- impact speeds are thousands of units/s; no Doppler
     definePatches()
@@ -684,12 +713,28 @@ function lib.audioTime()
 end
 
 -- A note at audio time t exactly (sample-accurate; book it at least a buffer ahead). Not placed in the world.
-function lib.scheduleAt(patchName, t, midi, vol, durMs)
+-- opts (optional, dreamengine-studio#47): { glide = ms } SLIDES from this patch's note still sounding at
+-- t instead of attacking (legato: the previous note must last past t; a phrase stays on one slot because
+-- a patch keeps its slot while it sounds), { accent = 0..1 } leans on it (louder, a harder filter kick,
+-- the engine's own "harder" macro), { harmonics/timbre/morph = -1..1 } shifts this note's macros.
+-- A library without schedule_note_at plays the note plainly.
+function lib.scheduleAt(patchName, t, midi, vol, durMs, opts)
     if not S.started then return end
     local patch = lib.patches[patchName]
     if not patch then return end
     vol = math.max(0, math.min(7, math.floor(vol + 0.5)))
-    S.C.schedule_at(t, midi, slotOf(patchName, patch, t, durMs), vol, math.max(1, math.floor(durMs)))
+    local slot, dur = slotOf(patchName, patch, t, durMs), math.max(1, math.floor(durMs))
+    if opts and S.hasNoteAt == nil then -- the optional #47 functions (CDEF_OPTIONAL): looked up once, on first use,
+        local ok, f = pcall(function() return S.C.schedule_note_at end) -- so the offline renderer gets them too
+        S.hasNoteAt = ffi ~= nil and ok and f ~= nil
+    end
+    if opts and S.hasNoteAt then
+        S.C.schedule_note_at(t, midi, slot, vol, dur, ffi.new('NoteOpts', {
+            glide_ms = opts.glide or 0, accent = opts.accent or 0,
+            harmonics = opts.harmonics or 0, timbre = opts.timbre or 0, morph = opts.morph or 0 }))
+    else
+        S.C.schedule_at(t, midi, slot, vol, dur)
+    end
 end
 
 -- Ride a patch's lowpass live (the music's tone automation); the patch keeps its filter mode.

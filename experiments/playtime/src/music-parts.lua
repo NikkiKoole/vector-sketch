@@ -67,7 +67,10 @@ lib.TONAL = TONAL
 -- kept while the part is off, so the panel knows the style's parts and what 'style' means. The
 -- parts that play several sounds (drums, perc, vinyl) go per sound: soundsOff = { kick = true },
 -- soundVoices = { kick = 'bapKick' }, by the style's own sound name; M.styleSounds[style][part] lists them.
-local function play(synth, part, patch, t, midi, vol, durMs, step)
+-- slide: this note continues a legato line from the one before (bookScoreBar); a patch with a
+-- legatoGlide then SLIDES into it instead of starting again (dreamengine-studio#47). Worked out after
+-- the panel's instrument swap, so the 303 on the bass slides and accents wherever it plays.
+local function play(synth, part, patch, t, midi, vol, durMs, step, slide)
     local settings = state.musicSettings
     if M.song then
         M.styleParts = M.styleParts or {}
@@ -92,7 +95,13 @@ local function play(synth, part, patch, t, midi, vol, durMs, step)
     end
     if voice then patch = voice end
     if M.clipAt and t + durMs / 1000 > M.clipAt then durMs = math.max(20, (M.clipAt - t) * 1000) end
-    synth.scheduleAt(patch, t, midi, vol, durMs)
+    local p, opts = synth.patches and synth.patches[patch], nil
+    if p and slide and p.legatoGlide then opts = { glide = p.legatoGlide } end
+    if p and p.downbeatAccent and step == 0 then
+        opts = opts or {}
+        opts.accent = p.downbeatAccent
+    end
+    synth.scheduleAt(patch, t, midi, vol, durMs, opts)
     if M.trace then M.trace(part, t, midi, vol, durMs) end
     notify(part, patch, midi, vol, durMs, t, step)
 end
@@ -742,7 +751,7 @@ local function bookBass(bar, groove, pushes, sidestepAt)
             len = math.min(len, stop - s)
             if len <= 0 then return end
             play(synth, 'bass', bassPatch, stepTime(song, t0, s) + 0.003 + humanize(0.004), midi, vol,
-                 lengthMs(song, s, len))
+                 lengthMs(song, s, len), s)
         end
         local steps, seen = { useKicks = bassRole == 'play' and section.kind ~= 'outro' }, {}
         if steps.useKicks and groove then
@@ -759,7 +768,7 @@ local function bookBass(bar, groove, pushes, sidestepAt)
             len = math.min(len, stop - s)
             if len <= 0 then return end
             local t = stepTime(song, t0, s) + humanize(0.004)
-            play(synth, 'bass', bassPatch, t, midi, vol, lengthMs(song, s, len) * 0.95)
+            play(synth, 'bass', bassPatch, t, midi, vol, lengthMs(song, s, len) * 0.95, s)
         end
         local function fits(midi, chord) return not rubs(song, midi, chord) end
         local bassLine = bassLines[style.bass] or bassLines.hold
@@ -921,6 +930,13 @@ local function bookScoreBar(synth, t0, song, b)
     remember(t0, pcs)
     local melody = state.musicSettings.melody
     local legato = song.legato and song.legato[b] or {}
+    -- a legato note slides in from the one before only where its line plays one note at a time: two
+    -- starting together would be folded into one by the slide (a slot slides one voice)
+    local together = {}
+    for _, n in ipairs(notes) do
+        local key = n[4] .. ':' .. n[1]
+        together[key] = (together[key] or 0) + 1
+    end
     for i, n in ipairs(notes) do
         local s, midi, own = n[1], n[2] + shift, parts[n[4]] or {}
         local part = roleOf(n[4])
@@ -945,7 +961,7 @@ local function bookScoreBar(synth, t0, song, b)
         elseif melody then
             local patch = own.patch or style.lead or 'pianoLead'
             if style.lowLead and midi < style.lowLead.below then patch = style.lowLead.patch end
-            play(synth, 'lead', patch, t, midi, vol(5), dur, s)
+            play(synth, 'lead', patch, t, midi, vol(5), dur, s, legato[i] ~= nil and together[n[4] .. ':' .. s] == 1)
             if band and style.vibes ~= false then play(synth, 'lead', 'vibes', t, midi, vol(2), dur, s) end
         end
     end
