@@ -50,22 +50,27 @@ What steers it is the play level (`M.activity`, decaying with `D.activityHalfLif
 - **The 303** (the acid style's patterns and booking, `af5b6232`) as one of the layers.
 
 ## The open question: the kit
-Playtime's drums are general patches (`bapKick`, `snare`, `clap`, `shaker`, `tamb`, `djembe`). A drum jam
-wants a drum MACHINE's voices: an 808's long kick and cowbell, a 909's hats. dreamengine has faithful banks
+The jam plays Playtime's own drum patches, played the way its other kits play them (`lib.VOICES`: kick =
+`bapKick`, snare, clap, both hats = `hat`, cymbal = `ride`, rimshot = `rim`, toms = `tom`, cowbell = `wood`,
+tambourine = `tamb`; Brushes its own). The first cut used stand-ins (a shaker for the hats, a djembe for rim
+and toms) and the music panel's drum rows, which list by patch, named the stand-ins: Nikki "the drum
+voices don't align with what I hear" (fixed 2026-11-02, `d26fd89c`). A drum jam still wants a drum
+MACHINE's voices: an 808's long kick and cowbell, a 909's hats. dreamengine has faithful banks
 (`runtime/tr808.h`, `runtime/tr909.h`, and `runtime/morphdrum.h` between them), but they're C headers for
 carts, and each voice is a recipe of several layered notes. Two ways in, decided at J4:
 - **Port the recipes to Lua patches** in synth.lua (each voice = one or a few patches + how to fire them).
   Stays inside the existing patch / slot pool machinery; costs slots (48 are already full, J4 must budget).
 - **Expose the banks through `native/desound/desound.c`** (a C call per hit: `tr808_fire(role, …)`).
   Faithful by construction and no slots spent in Lua, but new C surface on every platform (dylib, iOS, web).
-Until then the jam plays the general patches; that's enough to hear whether the arrangement works.
+Until then the jam plays Playtime's drum patches; enough to hear whether the arrangement works.
 
 ## Steps
-- [ ] **J1. The arrangement engine.** `loop = 'jam'`, in its own file (`src/music-jam.lua`: plan + book).
+- [x] **J1. The arrangement engine.** (2026-11-02; played by Nikki in the app) `loop = 'jam'`, in its own file (`src/music-jam.lua`: plan + book).
   A phrase clock (8 bars), layers moving one step per phrase toward a target set by the play level, a fill
   on each phrase's last bar, a breakdown and a drop every few phrases when the jam is busy. A genre and
-  one of its families per song (the pick above), the family's written fill where it has one; the general
-  patches. Done when: rendered with the play level stepped up and
+  one of its families per song (the pick above), the family's written fill where it has one. The music
+  panel lists every drum sound of the song from its start (so each can be swapped or switched off before
+  its layer comes in) and has the jam's picks (walk / bass figure / pace, J7). Done when: rendered with the play level stepped up and
   down (`render-music.lua`'s busyFrom), the layers can be heard coming in and going, and the drop lands.
 - [ ] **J2. The vocabulary.** Variants rotate within the family already (J1); still to do: moving
   between a genre's families over a long jam (more genres only if wanted: a line in jam-patterns.py), mutations (hat density, ghost snares), flams. A jam picks its group per
