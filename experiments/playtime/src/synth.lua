@@ -218,9 +218,11 @@ lib.patches = {
     -- envelope (ENV .6 x the sweep 1.66 -> ~3000 Hz over DEC .4 -> 230 ms), soft drive .35, and the slow
     -- analog drift (random-walk LFOs on pitch and cutoff). The SLIDE (a legato line glides in 60 ms, the
     -- stock 303's fixed slide, no new filter sweep) and the ACCENT (downbeatAccent: each bar's first note
-    -- louder with a harder filter kick, acid303.h's accent) come from dreamengine-studio#47.
+    -- louder with a harder filter kick, acid303.h's accent) come from dreamengine-studio#47. MONO like the
+    -- real one: a new note cuts the last, and of two notes booked at the same instant (a bass line's
+    -- root + fifth) only the first plays (scheduleAt).
     tb303 = { fx = true, wave = 'SAW', adsr = { 2, 60, 6, 25 }, reverb = 0.1, level = 0.5,
-              legatoGlide = 60, downbeatAccent = 0.7,
+              legatoGlide = 60, downbeatAccent = 0.7, mono = true, accentCutoff = 0.7,
               filter = { mode = 10, cutoff = 390, resonance = 10 }, env = { 0, 230, 2990 },
               drive = 0.35, driveMode = 0,
               lfo = { { 0, 0.13, 0.025, shape = 7 }, { 3, 0.19, 20, shape = 7 } } },
@@ -319,6 +321,7 @@ void instrument_stereo_width(int slot, float amount);
 void instrument_group(int slot, int lead);
 void reverb_bus_into(int tank, int lead);
 void instrument_fx_filter(int slot, int mode, float cutoff_hz, float resonance);
+void instrument_mono(int slot, int on);
 ]]
 -- the struct on its own: a hot reload redeclaring it errors, which must not stop the functions above
 if ffi then
@@ -386,6 +389,13 @@ local function sendPedals(slot, name, only)
     end
 end
 
+-- one of CDEF_OPTIONAL's functions in the loaded library, or nil (a library built before it)
+local function optionalFn(name)
+    if not ffi then return nil end
+    local ok, f = pcall(function() return S.C[name] end)
+    return ok and f or nil
+end
+
 local function definePatch(slot, patch, name)
     local a, d, s, r = unpack(patch.adsr)
     S.C.instrument(slot, lib.INSTR[patch.wave], a, d, s, r)
@@ -403,6 +413,14 @@ local function definePatch(slot, patch, name)
     local filter = patch.filter or { mode = 0, cutoff = 0, resonance = 0 }
     S.C.instrument_filter(slot, filter.mode, filter.cutoff, filter.resonance)
     S.C.instrument_glide(slot, patch.glide or 0)
+    -- mono = true: one voice, a new note cuts the one sounding (dreamengine's instrument_mono, cb82042a);
+    -- set on every define, so a shared slot is polyphonic again for the next patch
+    local mono = optionalFn('instrument_mono')
+    if mono then mono(slot, patch.mono and 1 or 0) end
+    -- accentCutoff (octaves): an accented note opens this patch's filter that much further (ACC_CUTOFF = 5,
+    -- engine default 0); set on every define so a shared slot's next patch is back at 0
+    local accentRoute = optionalFn('instrument_accent')
+    if accentRoute then accentRoute(slot, 5, patch.accentCutoff or 0) end
     for i, lfo in ipairs(patch.lfo or {}) do
         S.C.instrument_lfo(slot, i - 1, lfo[1], lfo[2], lfo[3])
         if lfo.shape or patch.pool or patch.fx then S.C.lfo_shape(slot, i - 1, lfo.shape or 0) end
@@ -723,6 +741,12 @@ function lib.scheduleAt(patchName, t, midi, vol, durMs, opts)
     local patch = lib.patches[patchName]
     if not patch then return end
     vol = math.max(0, math.min(7, math.floor(vol + 0.5)))
+    if patch.mono then -- one voice: of two notes at the same instant (root + fifth) the first one plays.
+        S.monoAt = S.monoAt or {} -- 15 ms: the parts humanize each note's time on its own (a few ms), while
+        local last = S.monoAt[patchName] -- the fastest real line, 16ths, is ~100 ms apart
+        if last and math.abs(t - last) < 0.015 then return end
+        S.monoAt[patchName] = t
+    end
     local slot, dur = slotOf(patchName, patch, t, durMs), math.max(1, math.floor(durMs))
     if opts and S.hasNoteAt == nil then -- the optional #47 functions (CDEF_OPTIONAL): looked up once, on first use,
         local ok, f = pcall(function() return S.C.schedule_note_at end) -- so the offline renderer gets them too

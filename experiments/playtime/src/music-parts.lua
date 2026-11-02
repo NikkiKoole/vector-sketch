@@ -70,7 +70,9 @@ lib.TONAL = TONAL
 -- slide: this note continues a legato line from the one before (bookScoreBar); a patch with a
 -- legatoGlide then SLIDES into it instead of starting again (dreamengine-studio#47). Worked out after
 -- the panel's instrument swap, so the 303 on the bass slides and accents wherever it plays.
-local function play(synth, part, patch, t, midi, vol, durMs, step, slide)
+-- accent (0..1, optional): this note's own accent (a 303 pattern's); without it a downbeatAccent patch
+-- accents each bar's first step.
+local function play(synth, part, patch, t, midi, vol, durMs, step, slide, accent)
     local settings = state.musicSettings
     if M.song then
         M.styleParts = M.styleParts or {}
@@ -99,9 +101,11 @@ local function play(synth, part, patch, t, midi, vol, durMs, step, slide)
     if M.dynamic and M.dynamic ~= 0 and vol > 0 then vol = math.max(math.min(vol, 1), vol + M.dynamic) end
     local p, opts = synth.patches and synth.patches[patch], nil
     if p and slide and p.legatoGlide then opts = { glide = p.legatoGlide } end
-    if p and p.downbeatAccent and step == 0 then
+    local lean = accent
+    if lean == nil and p and p.downbeatAccent and step == 0 then lean = p.downbeatAccent end
+    if lean and lean > 0 then
         opts = opts or {}
-        opts.accent = p.downbeatAccent
+        opts.accent = lean
     end
     synth.scheduleAt(patch, t, midi, vol, durMs, opts)
     if M.trace then M.trace(part, t, midi, vol, durMs) end
@@ -1020,7 +1024,56 @@ local function bookScoreBar(synth, t0, song, b)
     end
 end
 
-local LOOP_BARS = { satie = bookSatieBar, ambient = bookAmbientBar, score = bookScoreBar }
+-- One bar of the acid style: the 303 pattern (planAcid), played the way a TB-303 sequences it. A note
+-- lasts through the TIE steps after it, then its gate falls 60% into its last step (the 303's staccato);
+-- a note the next step SLIDES into is held 30 ms past that step instead, so its key is still down when
+-- the slide comes (legato, synth.lua's tb303: mono, a 60 ms glide). An ACCENT is the note's own. The
+-- cutoff breathes over style.sweepBars; the kick is four on the floor, the clap and shaker the band's.
+local function acidStep(song, b, s) -- the pattern step at bar b, step s (s past 15 / below 0 = the bar next / before)
+    while s > 15 do s, b = s - 16, b + 1 end
+    while s < 0 do s, b = s + 16, b - 1 end
+    local section = song.barSection[b]
+    if not section then return nil end
+    return (section.kind == 'B' and song.acid.B or song.acid.A)[s + 1]
+end
+
+local function bookAcidBar(synth, t0, song, b)
+    local style, section = D.styles[song.style], song.barSection[b]
+    local root = inRange(song.key, 33) -- the 303's home register, A1..G#2
+    local pcs = {}
+    for _, d in ipairs({ 0, 3, 5, 7, 10 }) do pcs[#pcs + 1] = (song.key + d) % 12 end
+    remember(t0, pcs)
+    local phase = ((b - 1) % style.sweepBars) / style.sweepBars
+    local lo, hi = style.cutoff[1], style.cutoff[2]
+    synth.slotFilter('tb303', lo * (hi / lo) ^ (0.5 - 0.5 * math.cos(phase * 2 * math.pi)))
+    local band, groove = bandPlays(), section.kind ~= 'intro' and section.kind ~= 'outro'
+    for s = 0, 15 do
+        local t = stepTime(song, t0, s)
+        if s % 4 == 0 then play(synth, 'drums', 'bapKick', t, 36, 5, 120, s) end
+        if band and groove then
+            if s == 4 or s == 12 then play(synth, 'drums', 'clap', t, 60, 4, 90, s) end
+            if s % 2 == 0 then play(synth, 'drums', 'shaker', t, 80, s % 4 == 2 and 4 or 2, 40, s) end
+        end
+        local step = acidStep(song, b, s)
+        if step and step.on and not step.tie then
+            local len = 1
+            while true do
+                local held = acidStep(song, b, s + len)
+                if not (held and held.on and held.tie) then break end
+                len = len + 1
+            end
+            local last, nextStep = acidStep(song, b, s + len - 1), acidStep(song, b, s + len)
+            local slides = last.slide and nextStep and nextStep.on and not nextStep.tie
+            local dur = slides and lengthMs(song, s, len) + 30
+                or lengthMs(song, s, len - 1) + lengthMs(song, s + len - 1, 1) * 0.6
+            local before = acidStep(song, b, s - 1)
+            local slidIn = before and before.on and before.slide or false
+            play(synth, 'bass', 'tb303', t, root + step.note, 5, dur, s, slidIn, step.accent and 1 or 0)
+        end
+    end
+end
+
+local LOOP_BARS = { satie = bookSatieBar, ambient = bookAmbientBar, score = bookScoreBar, acid = bookAcidBar }
 
 -- strum's guitar: the strings of a chord's barre grip, low to high (nil = damped)
 local function guitarStrings(song, chord)

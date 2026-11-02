@@ -556,6 +556,16 @@ D.styles = {
         lead = 'vibes', keys = 'feltKeys', bass = 'musicBass', vibes = false,
         lowLead = { below = 55, patch = 'pianoLead' },
         form = { { 'A', 1, 30 }, { 'B', 31, 44 }, { 'A', 45, 61 } } },
+    -- acid: a TB-303 over a four-on-the-floor kick, the instrument played the way it was built: one voice,
+    -- sixteen steps, each with its note, ACCENT, SLIDE and TIE (planAcid rolls two patterns per song,
+    -- bookAcidBar plays them). The filter breathes open and shut over sweepBars, an accent opens it
+    -- further (synth.lua's tb303). Needs dreamengine cb82042a+ for the slides, the accents and mono.
+    -- scale: semitones over the root, picked evenly (the root and its octave weighted, minor pentatonic,
+    -- a phrygian b2 now and then); the odds are per step.
+    acid = { loop = 'acid', bpm = { 120, 128 }, swing = 0.5,
+        scale = { 0, 0, 0, 3, 5, 7, 7, 10, 12, 12, 15, 1 },
+        density = 0.72, accentOdds = 0.28, slideOdds = 0.35, tieOdds = 0.12, octaveOdds = 0.18,
+        cutoff = { 260, 1600 }, sweepBars = 16 },
     ballad = {
         bpm = 76, swing = 0.5, chordBars = { 1, 2 }, lydianChance = 0.6, pushOdds = 0,
         strumMs = 70, keys = 'rhodes', lead = 'rhodesLead', bass = 'hold', drums = nil, home = 'maj9',

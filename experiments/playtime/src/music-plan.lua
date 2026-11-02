@@ -219,7 +219,37 @@ local function planScore(song, style)
         end
     end
 end
-local LOOP_PLANS = { satie = planSatie, ambient = planAmbient, score = planScore }
+-- acid: a sixteen-step TB-303 pattern, each step { on, note (semitones over the root), accent, slide,
+-- tie }: slide = this note glides into the next, tie = this step holds the note before (no new note).
+-- B keeps A's first half and rolls the second: the same pattern answering itself, not a new one.
+local function rollAcidPattern(style, rnd, keep)
+    local p = {}
+    for s = 0, 15 do
+        if keep and keep[s + 1] then
+            p[s + 1] = keep[s + 1]
+        else
+            local step = { on = s == 0 or rnd() < style.density }
+            if step.on then
+                step.note = style.scale[rnd(#style.scale) + 1] + (rnd() < style.octaveOdds and 12 or 0)
+                step.accent = s == 0 or rnd() < style.accentOdds
+                step.slide = rnd() < style.slideOdds
+                step.tie = s > 0 and p[s].on and rnd() < style.tieOdds
+            end
+            p[s + 1] = step
+        end
+    end
+    return p
+end
+
+local function planAcid(song, style)
+    local a = rollAcidPattern(style, stream(song.seed, 1))
+    local half = {}
+    for s = 1, 8 do half[s] = a[s] end
+    song.acid = { A = a, B = rollAcidPattern(style, stream(song.seed, 2), half) }
+    addSections(song, { { 'intro', 4 }, { 'A', 8 }, { 'B', 8 }, { 'A', 8 }, { 'outro', 4 } })
+end
+
+local LOOP_PLANS = { satie = planSatie, ambient = planAmbient, score = planScore, acid = planAcid }
 
 -- the key (lofi: the relative minor half the time), the A progression and the B: another loop from
 -- the bank (lofi), A with a ii-V turnaround, or a move of its own
