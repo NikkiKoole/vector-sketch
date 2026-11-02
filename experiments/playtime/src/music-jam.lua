@@ -57,7 +57,8 @@ lib.SWING = { Brushes = 0.62 } -- a genre's own swing (the jam style's otherwise
 
 -- The bass. A loop is steps (16ths) of degrees over the current root: R root, 2 a second, m minor third,
 -- 3 major third, 4 fourth, 5 fifth, 6 major sixth, 7 flat seventh, 8 octave, L the fifth below, A the
--- APPROACH: a half step under the NEXT bar's root (so a change is walked into, not jumped); '-' holds
+-- APPROACH: a half step under the NEXT bar's root (so a change is walked into, not jumped), N the next
+-- bar's root itself, early (the PUSH: the change arrives on the and-of-4, the funk way); '-' holds
 -- the note before, '.' rests. Mostly no major third: on a progression's minor chord (the 6 in 1 5 6 4)
 -- it would clash. A loop needn't be a bar long: one of 18 steps runs on across the bar line and lands
 -- somewhere else each bar (it counts from the song's first bar).
@@ -78,10 +79,9 @@ local DEGREE = { R = 0, ['2'] = 2, m = 3, ['3'] = 4, ['4'] = 5, ['5'] = 7, ['6']
 -- The walks the root takes (semitones over the song's key), and how often it moves, both rolled per
 -- song: 1 4 5 1 (home, away, the pull, home), 1 5 6 4 (the pop loop that never settles), 1 6 4 5
 -- (doo-wop), 2 5 1 (the jazz arrival), 1 4 1 5, 1 bVII 1 4, around the fourths. A walk moves every
--- rootEvery bars, unless it carries its own lengths (bars = bars per step): Nikki's C F D F E held
--- 4 1 2 1 1 (in C: 1 4 2 4 3), a step that lingers and then hurries.
+-- rootEvery bars, unless it carries its own lengths (bars = { bars per step }).
 lib.WALKS = { { 0, 5, 7, 0 }, { 0, 7, 9, 5 }, { 0, 9, 5, 7 }, { 2, 7, 0, 0 }, { 0, 5, 0, 7 }, { 0, 10, 0, 5 },
-              { 0, 5, 10, 3, 8, 1, 6, 0 }, { 0, 5, 2, 5, 4, bars = { 4, 1, 2, 1, 1 } } }
+              { 0, 5, 10, 3, 8, 1, 6, 0 } }
 lib.ROOT_EVERY = { 2, 4, 4, 8 }
 
 -- The plan: a genre (style.groups, one per song) at its own tempo, one of its families, a bass walk, and
@@ -169,7 +169,7 @@ local function bookBass(play, synth, song, t0, loop, root, nextRoot, b)
     for s = 0, 15 do
         local g = (b - 1) * 16 + s -- the step since the song's start: where the loop is
         local c = at(g)
-        local degree = c == 'A' and approach - home or DEGREE[c]
+        local degree = c == 'A' and approach - home or c == 'N' and approach + 1 - home or DEGREE[c]
         if degree then
             local len = 1
             while len < n and at(g + len) == '-' do len = len + 1 end

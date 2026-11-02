@@ -89,8 +89,11 @@ Until then the jam plays the general patches; that's enough to hear whether the 
   tap and the hi-hat foot on 2 and 4, swung 62%, 84-96 bpm; the library has no brush kit); and the bass
   is the upright now (`musicBass`). Levels: Brushes mix -35 dB with bass and tap level; in Disco the
   upright sits ~7 dB under the club kick (its patch level is shared with the score styles). A walk can
-  carry its own lengths too (`bars = { ... }`, one per step): Nikki's C F D F E held 4 1 2 1 1 bars is one
-  of the walks now (in C it renders C C C C F D D F E, round again). Next: the sourced
+  carry its own lengths too (`bars = { ... }`, one per step), and a loop needn't be a bar long. `N` in a
+  loop is the PUSH: the next bar's root itself, early (on the and-of-4), the funk way to transpose.
+  Focus (Nikki, 2026-11-02): the ROOT MOVING is the point, so the loops want 1-3 notes, not riffs;
+  candidates rendered over 1 4 5 1 on Funk drums: the one, the push, octave pop, root-octave-b7,
+  approach. Next: the sourced
   timings (`rhythmbox.h`'s Hammond-patent BASS lanes alternating root and fifth, the SGS M254/M255
   FIFTH and CHORD TRIGGER lanes), and the CHORD stabs those lanes gate (J6 overlaps).
 - [ ] **J6. The organ-era rhythm box** (Nikki: "the truly whimsical ones"). dreamengine has a sourced
