@@ -229,9 +229,32 @@ local function bookBass(play, synth, song, t0, loop, root, nextRoot, b)
     end
 end
 
+-- The panel lists a part's sounds as they PLAY (music-parts' play keeps M.styleSounds), so a calm jam (kick
+-- and bass only) showed one drum row. Tell it every sound this song's patterns can use, from the start,
+-- so each can be swapped or switched off before its layer comes in. Once per song (the family is fixed).
+local function announceSounds(song, jam)
+    if jam.announced then return end
+    jam.announced = true
+    local own = lib.GENRE_VOICES[jam.group] or {}
+    local sounds = {}
+    local function add(grid) for role in pairs(grid) do
+        local v = own[role] or lib.VOICES[role]
+        if v then sounds[v[1]] = true end
+    end end
+    for _, p in ipairs(jam.patterns) do add(p.grid) end
+    if jam.fill then add(jam.fill.grid) end
+    add({ CY = true, SD = true }) -- the drop's crash and the snare run-up play in every family
+    M.styleSounds = M.styleSounds or {}
+    local bySound = M.styleSounds[song.style] or {}
+    M.styleSounds[song.style] = bySound
+    bySound.drums = bySound.drums or {}
+    for patch in pairs(sounds) do bySound.drums[patch] = true end
+end
+
 -- One bar. play and remember are music-parts' (every note goes through play: mutes, the panel, listeners).
 function lib.bookBar(play, remember, synth, t0, song, b)
     local style, jam = D.styles[song.style], song.jam
+    announceSounds(song, jam)
     local inPhrase = (b - 1) % style.phraseBars
     if inPhrase == 0 then newPhrase(jam, style) end
     walkRoot(jam, style, b)
