@@ -80,7 +80,15 @@ Until then the jam plays the general patches; that's enough to hear whether the 
   every 2, 4 or 8 bars along a walk rolled per song (I IV V I, I IV I V, I bVII I IV, around the
   fourths). Calm play holds the root; the drop lands back home; impacts follow it (`remember` on the
   root). The round bass first (`lib.BASS`). Built 2026-11-02 (`music-jam.lua`): Disco's octave loop
-  walks F Bb Eb Ab Db Gb a move every 4 bars, bass and kick within 1.3 dB rms. Next: the sourced
+  walks F Bb Eb Ab Db Gb a move every 4 bars, bass and kick within 1.3 dB rms.
+  Then (Nikki: "more interesting loops, a simpler rhythm with brushes, the upright"): the walks gained the
+  progressions that sound best, 1 5 6 4 (never settles, loops forever), 1 6 4 5 (doo-wop), 2 5 1 (the
+  jazz arrival), next to 1 4 5 1; the loops an APPROACH note (`A`: a half step under the next bar's root,
+  so a change is walked into) and the sixth / second / octave, no major third (it clashes on the 6's
+  minor chord); a hand-written BRUSHES genre (`lib.EXTRA`: a soft kick on 1 and 3, a sweep, the brush's
+  tap and the hi-hat foot on 2 and 4, swung 62%, 84-96 bpm; the library has no brush kit); and the bass
+  is the upright now (`musicBass`). Levels: Brushes mix -35 dB with bass and tap level; in Disco the
+  upright sits ~7 dB under the club kick (its patch level is shared with the score styles). Next: the sourced
   timings (`rhythmbox.h`'s Hammond-patent BASS lanes alternating root and fifth, the SGS M254/M255
   FIFTH and CHORD TRIGGER lanes), and the CHORD stabs those lanes gate (J6 overlaps).
 - [ ] **J6. The organ-era rhythm box** (Nikki: "the truly whimsical ones"). dreamengine has a sourced

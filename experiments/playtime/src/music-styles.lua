@@ -627,9 +627,10 @@ D.styles = {
     -- 8-bar phrases, arranged live by the play level (a layer in or out per phrase, a breakdown and a drop
     -- every breakEvery phrases when it's busy, a fill closing each phrase). groups: the pattern groups
     -- (src/music-jam-patterns.lua), one per song, each at its own tempo (bpms).
-    jam = { loop = 'jam', bpm = 120, swing = 0.5, groups = { 'Electro', 'Hip Hop', 'Breaks', 'Disco', 'Funk' },
+    jam = { loop = 'jam', bpm = 120, swing = 0.5,
+        groups = { 'Electro', 'Hip Hop', 'Breaks', 'Disco', 'Funk', 'Brushes' },
         bpms = { Electro = { 118, 128 }, ['Hip Hop'] = { 86, 94 }, Breaks = { 96, 108 }, Disco = { 116, 124 },
-                 Funk = { 96, 106 } },
+                 Funk = { 96, 106 }, Brushes = { 84, 96 } },
         phraseBars = 8, phrases = 32, minLayers = 2, perLayer = 2, breakEvery = 4, variantEvery = 2 },
     ballad = {
         bpm = 76, swing = 0.5, chordBars = { 1, 2 }, lydianChance = 0.6, pushOdds = 0,

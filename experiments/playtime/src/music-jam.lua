@@ -24,7 +24,7 @@ local lib = {}
 lib.LAYERS = {
     { name = 'kick', roles = { 'BD' } },
     { name = 'bass' },
-    { name = 'hats', roles = { 'CH', 'OH' } },
+    { name = 'hats', roles = { 'CH', 'OH', 'SW' } },
     { name = 'snare', roles = { 'SD', 'CPS' } },
     { name = 'perc', roles = { 'RS', 'CB', 'TB', 'LT', 'MT', 'HT', 'CY' } },
 }
@@ -36,23 +36,47 @@ lib.VOICES = {
     RS = { 'djembe', 79, 3, 60 }, CB = { 'tongueDrum', 81, 3, 120 }, TB = { 'tamb', 84, 2, 60 },
     LT = { 'djembe', 50, 4, 200 }, MT = { 'djembe', 55, 4, 180 }, HT = { 'djembe', 60, 4, 160 },
 }
-
--- The bass. A loop is 16 steps of degrees over the current root: R root, 3 minor third, 5 fifth, 7 flat
--- seventh, 8 octave, L the fifth below; '-' holds the note before, '.' rests. Two per genre (A and B,
--- moving with the drum family's variants). The voice: lib.BASS (the round bass first, Nikki's call).
-lib.BASS = 'roundBass'
-lib.BASS_LOOPS = {
-    Electro = { 'R--.R--.R-.R-.5.', 'R--.R--.8.R.7.5.' },
-    ['Hip Hop'] = { 'R-----.R--..5---', 'R-----.R--..L---' },
-    Breaks = { 'R---..R.5---..3.', 'R---..R.8.7.5...' },
-    Disco = { 'R.8.R.8.R.8.R.8.', 'R.8.R.8.5.8.7.8.' },
-    Funk = { 'R..R..5.7.8..R5.', 'R..R..R.3..5.7..' },
+-- a genre's own voices over those: the brushes are the soft kick, a sweep, a tap and the hi-hat foot
+lib.GENRE_VOICES = {
+    Brushes = { BD = { 'kick', 36, 5, 150 }, SD = { 'snare', 60, 3, 70 }, SW = { 'brush', 70, 4, 900 },
+                CH = { 'hat', 80, 4, 30 } },
 }
-local DEGREE = { R = 0, ['3'] = 3, ['5'] = 7, ['7'] = 10, ['8'] = 12, L = -5 }
+-- genres the drum library hasn't got, written here: the same shape as src/music-jam-patterns.lua.
+-- SW = a brush sweep (long, slow attack), SD = the brush's tap
+lib.EXTRA = {
+    Brushes = {
+        { name = 'BRUSHES', loops = {
+            { name = 'BRUSHES - A', grid = { BD = 'x.......x.......', SD = '....x.......x...',
+                                            SW = 'x.......x.......', CH = '....x.......x...' } },
+            { name = 'BRUSHES - B', grid = { BD = 'x.......x.....x.', SD = '....x.......x.x.',
+                                            SW = 'x...............', CH = '....x.......x...' } },
+        } },
+    },
+}
+lib.SWING = { Brushes = 0.62 } -- a genre's own swing (the jam style's otherwise)
+
+-- The bass. A loop is 16 steps of degrees over the current root: R root, 2 a second, m minor third,
+-- 4 fourth, 5 fifth, 6 major sixth, 7 flat seventh, 8 octave, L the fifth below, A the APPROACH: a
+-- half step under the NEXT bar's root (so a change is walked into, not jumped); '-' holds the note
+-- before, '.' rests. No major third: on a progression's minor chord (the 6 in 1 5 6 4) it would clash.
+-- Two per genre (A and B, moving with the drum family's variants). The voice: lib.BASS, the upright
+-- (synth.lua's musicBass: dreamengine's bowed-string model plucked, a double bass body; Nikki's pick).
+lib.BASS = 'musicBass'
+lib.BASS_LOOPS = {
+    Electro = { 'R--.R--.R-.R-.5.', 'R--.R--.8.R.5.A.' },
+    ['Hip Hop'] = { 'R-----.R--..5-A-', 'R-----.R--..L-A-' },
+    Breaks = { 'R---..R.5---..A.', 'R---..R.8.7.5.A.' },
+    Disco = { 'R.8.R.8.R.8.5.A.', 'R.8.R.8.5.8.6.A.' },
+    Funk = { 'R..R..5.7.8..RA.', 'R..R.L..R..5.6A.' },
+    Brushes = { 'R-..5-..6-..A-..', 'R-..8-..5-..2.A.' },
+}
+local DEGREE = { R = 0, ['2'] = 2, m = 3, ['4'] = 5, ['5'] = 7, ['6'] = 9, ['7'] = 10, ['8'] = 12, L = -5 }
 
 -- The walks the root takes (semitones over the song's key, one move every rootEvery bars), and how often
--- it moves, both rolled per song: I IV V I, I IV I V, I bVII I IV, around the fourths and home.
-lib.WALKS = { { 0, 5, 7, 0 }, { 0, 5, 0, 7 }, { 0, 10, 0, 5 }, { 0, 5, 10, 3, 8, 1, 6, 0 } }
+-- it moves, both rolled per song: 1 4 5 1 (home, away, the pull, home), 1 5 6 4 (the pop loop that never
+-- settles), 1 6 4 5 (doo-wop), 2 5 1 (the jazz arrival), 1 4 1 5, 1 bVII 1 4, around the fourths.
+lib.WALKS = { { 0, 5, 7, 0 }, { 0, 7, 9, 5 }, { 0, 9, 5, 7 }, { 2, 7, 0, 0 }, { 0, 5, 0, 7 }, { 0, 10, 0, 5 },
+              { 0, 5, 10, 3, 8, 1, 6, 0 } }
 lib.ROOT_EVERY = { 2, 4, 4, 8 }
 
 -- The plan: a genre (style.groups, one per song) at its own tempo, one of its families, a bass walk, and
@@ -60,10 +84,12 @@ lib.ROOT_EVERY = { 2, 4, 4, 8 }
 function lib.plan(song, style, addSections)
     local rnd = stream(song.seed, 1)
     local group = style.groups[rnd(#style.groups) + 1]
-    local family = PATTERNS[group][rnd(#PATTERNS[group]) + 1]
+    local families = PATTERNS[group] or lib.EXTRA[group]
+    local family = families[rnd(#families) + 1]
     local bpm = style.bpms[group]
     song.beat = 60 / math.floor(bpm[1] + rnd() * (bpm[2] - bpm[1]) + 0.5)
     song.barLength = 4 * song.beat
+    if lib.SWING[group] then song.swing = lib.SWING[group] end
     local walk = lib.WALKS[rnd(#lib.WALKS) + 1]
     song.jam = { group = group, family = family.name, patterns = family.loops, fill = family.fill, at = 1,
                  layers = style.minLayers, phrase = 0, mode = 'groove', on = {},
@@ -114,23 +140,27 @@ local function walkRoot(jam, style, b)
     jam.root = jam.walk[jam.step]
 end
 
-local function hit(play, synth, t, role, s, accent, quieter)
-    local v = lib.VOICES[role]
+local function hit(play, synth, t, role, s, accent, quieter, genre)
+    local own = lib.GENRE_VOICES[genre]
+    local v = own and own[role] or lib.VOICES[role]
     if not v then return end
     play(synth, 'drums', v[1], t, v[2], math.max(1, v[3] - (quieter or 0)), v[4], s, false, accent)
 end
 
--- One bar of the bass loop over the current root: a note lasts through the '-' after it.
-local function bookBass(play, synth, song, t0, loop, root)
+-- One bar of the bass loop over the current root: a note lasts through the '-' after it. nextRoot =
+-- where the walk goes next bar (the approach note leans into it).
+local function bookBass(play, synth, song, t0, loop, root, nextRoot)
     local home = inRange((song.key + root) % 12, 33) -- A1..G#2
+    local approach = inRange((song.key + nextRoot) % 12, 33) - 1 -- a half step under the next root, right
+                                                                   -- under the note it leads into
     for s = 0, 15 do
         local c = loop:sub(s + 1, s + 1)
-        local degree = DEGREE[c]
+        local degree = c == 'A' and approach - home or DEGREE[c]
         if degree then
             local len = 1
             while s + len < 16 and loop:sub(s + len + 1, s + len + 1) == '-' do len = len + 1 end
             local ms = theory.lengthMs(song, s, len) * 0.9
-            play(synth, 'bass', lib.BASS, stepTime(song, t0, s), home + degree, s == 0 and 6 or 5, ms, s)
+            play(synth, 'bass', lib.BASS, stepTime(song, t0, s), home + degree, s == 0 and 7 or 6, ms, s)
         end
     end
 end
@@ -146,7 +176,9 @@ function lib.bookBar(play, remember, synth, t0, song, b)
     remember(t0, pcs) -- impacts play along in a minor pentatonic on the root
     if jam.on.bass then
         local loops = lib.BASS_LOOPS[jam.group]
-        bookBass(play, synth, song, t0, loops[(jam.at - 1) % #loops + 1], jam.root)
+        local moves = b % jam.rootEvery == 0 and (M.activity or 0) >= style.perLayer
+        local nextRoot = moves and jam.walk[jam.step % #jam.walk + 1] or jam.root
+        bookBass(play, synth, song, t0, loops[(jam.at - 1) % #loops + 1], jam.root, nextRoot)
     end
     local lastBar = inPhrase == style.phraseBars - 1
     local fill = lastBar and (jam.on.snare or jam.mode == 'break')
@@ -156,20 +188,21 @@ function lib.bookBar(play, remember, synth, t0, song, b)
     for s = 0, 15 do
         local t = stepTime(song, t0, s)
         local accent = accents and accents:sub(s + 1, s + 1) == 'x' and 1 or 0
-        if jam.mode == 'drop' and inPhrase == 0 and s == 0 then hit(play, synth, t, 'CY', s, 1) end
+        if jam.mode == 'drop' and inPhrase == 0 and s == 0 then hit(play, synth, t, 'CY', s, 1, 0, jam.group) end
         for _, layer in ipairs(lib.LAYERS) do
             local quietFill = fill and not written and layer.name == 'hats' and s >= 14 -- let go before the one
             if layer.roles and jam.on[layer.name] and not quietFill then
                 for _, role in ipairs(layer.roles) do
                     local c = pattern.grid[role] and pattern.grid[role]:sub(s + 1, s + 1)
                     if c == 'x' or c == 'f' then
-                        hit(play, synth, t, role, s, accent, jam.mode == 'break' and layer.name ~= 'hats' and 1 or 0)
-                        if c == 'f' then hit(play, synth, t + 0.015, role, s, 0, 1) end -- a flam
+                        local quieter = jam.mode == 'break' and layer.name ~= 'hats' and 1 or 0
+                        hit(play, synth, t, role, s, accent, quieter, jam.group)
+                        if c == 'f' then hit(play, synth, t + 0.015, role, s, 0, 1, jam.group) end -- a flam
                     end
                 end
             end
         end
-        if fill and not written and s >= 12 then hit(play, synth, t, 'SD', s, 0, 15 - s) end -- a run-up
+        if fill and not written and s >= 12 then hit(play, synth, t, 'SD', s, 0, 15 - s, jam.group) end -- a run-up
     end
 end
 
