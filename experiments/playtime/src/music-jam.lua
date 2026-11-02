@@ -3,10 +3,11 @@
 -- bookBar looks at the play level (M.activity, the number music.bump() raises) and moves the jam one step:
 -- a layer in or out, a breakdown (the kick leaves, the rest plays on), then the drop (all back at once,
 -- a crash).
--- Each phrase's last bar has a fill. Patterns: src/music-jam-patterns.lua (generated from dreamengine's
--- drum-patterns.json), one grid per role. Registered as loop = 'jam' in music-plan's LOOP_PLANS and
--- music-parts' LOOP_BARS, which pass in what this file needs from them (addSections, play, remember),
--- so it requires neither.
+-- Each phrase's last bar has a fill: the family's own written one where the source has it (the book
+-- groups' Break), else a snare run-up. Patterns: src/music-jam-patterns.lua (generated from dreamengine's
+-- drum-patterns.json): genre -> families, a family = the variants of one groove (+ its fill).
+-- Registered as loop = 'jam' in music-plan's LOOP_PLANS and music-parts' LOOP_BARS, which pass in what
+-- this file needs from them (addSections, play, remember), so it requires neither.
 local state = require('src.state')
 local D = require('src.music-styles')
 local theory = require('src.music-theory')
@@ -32,20 +33,17 @@ lib.VOICES = {
     LT = { 'djembe', 50, 4, 200 }, MT = { 'djembe', 55, 4, 180 }, HT = { 'djembe', 60, 4, 160 },
 }
 
--- The plan: a group (style.groups, one per song) at its own tempo, and a long run of phrases. What
--- happens in them is decided as they come (bookBar), from the play level.
+-- The plan: a genre (style.groups, one per song) at its own tempo, one of its families, and a long run of
+-- phrases. What happens in them is decided as they come (bookBar), from the play level.
 function lib.plan(song, style, addSections)
     local rnd = stream(song.seed, 1)
     local group = style.groups[rnd(#style.groups) + 1]
-    local patterns = {}
-    for _, p in ipairs(PATTERNS[group]) do
-        if not p.name:find('Waltz') then patterns[#patterns + 1] = p end -- a waltz's 3/4 doesn't loop in 4/4
-    end
+    local family = PATTERNS[group][rnd(#PATTERNS[group]) + 1]
     local bpm = style.bpms[group]
     song.beat = 60 / math.floor(bpm[1] + rnd() * (bpm[2] - bpm[1]) + 0.5)
     song.barLength = 4 * song.beat
-    song.jam = { group = group, patterns = patterns, at = rnd(#patterns) + 1, layers = style.minLayers,
-                 phrase = 0, mode = 'groove', on = {} }
+    song.jam = { group = group, family = family.name, patterns = family.loops, fill = family.fill, at = 1,
+                 layers = style.minLayers, phrase = 0, mode = 'groove', on = {} }
     local sections = {}
     for k = 1, style.phrases do sections[k] = { 'A', style.phraseBars } end
     addSections(song, sections)
@@ -94,16 +92,17 @@ function lib.bookBar(play, remember, synth, t0, song, b)
     remember(t0, pcs) -- impacts play along in a minor pentatonic
     local inPhrase = (b - 1) % style.phraseBars
     if inPhrase == 0 then newPhrase(jam, style) end
-    local pattern = jam.patterns[jam.at]
     local lastBar = inPhrase == style.phraseBars - 1
     local fill = lastBar and (jam.on[3] or jam.mode == 'break')
+    local written = fill and jam.fill -- the family's own fill plays the whole bar
+    local pattern = written or jam.patterns[jam.at]
     local accents = pattern.grid.AC
     for s = 0, 15 do
         local t = stepTime(song, t0, s)
         local accent = accents and accents:sub(s + 1, s + 1) == 'x' and 1 or 0
         if jam.mode == 'drop' and inPhrase == 0 and s == 0 then hit(play, synth, t, 'CY', s, 1) end
         for k, layer in ipairs(lib.LAYERS) do
-            local quietFill = fill and k == 2 and s >= 14 -- the hats let go before the one
+            local quietFill = fill and not written and k == 2 and s >= 14 -- the hats let go before the one
             if jam.on[k] and not quietFill then
                 for _, role in ipairs(layer.roles) do
                     local c = pattern.grid[role] and pattern.grid[role]:sub(s + 1, s + 1)
@@ -114,7 +113,7 @@ function lib.bookBar(play, remember, synth, t0, song, b)
                 end
             end
         end
-        if fill and s >= 12 then hit(play, synth, t, 'SD', s, 0, 15 - s) end -- the run up into the next phrase
+        if fill and not written and s >= 12 then hit(play, synth, t, 'SD', s, 0, 15 - s) end -- a run-up
     end
 end
 
