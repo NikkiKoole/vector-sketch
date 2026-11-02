@@ -396,8 +396,9 @@ D.styles = {
     rollo = {
         bpm = { 110, 118 }, swing = 0.5, chordBars = { 1, 1 }, pushOdds = 0, turnaroundOdds = 0, leadChance = 0,
         picking = 'jabs', pickPatch = 'jabGuitar', bassPatch = 'pickBass', flute = 'flute', home = 'gmaj',
-        -- runup: now and then the flute's run goes up instead of down (bookFluteRun)
-        ideas = { runup = { odds = 35, songs = 85 } },
+        -- runup: now and then the flute's run goes up instead of down; flutefeel: every run played by a
+        -- person, the last note lingering (bookFluteRun)
+        ideas = { runup = { odds = 35, songs = 85 }, flutefeel = { odds = 100, songs = 100 } },
         A = {
             { { 0, 'gmaj', 8 }, { 7, 'gmaj', 8 }, { 0, 'gmaj', 8 }, { 7, 'gmaj', 8 } },   -- I V I V
             { { 0, 'gmaj', 8 }, { 7, 'gmaj', 8 }, { 5, 'gmaj', 8 }, { 7, 'gmaj', 8 } },   -- I V IV V
@@ -841,6 +842,10 @@ D.commonIdeas = { dynamics = { odds = 70, songs = 90 }, revoice = { odds = 50, s
                   colour = { odds = 60, songs = 80, comps = true },
                   -- range: the bass an octave down on a phrase's one, a peak phrase of the tune climbing
                   range = { odds = 50, songs = 80, comps = true },
+                  -- approach: a held chord's last bar the next chord's dominant or ii-V (planApproaches)
+                  approach = { odds = 45, songs = 75, comps = true },
+                  -- rhythms: the style's own tune rhythms (style.motifs) instead of the shared D.motifs
+                  rhythms = { odds = 100, songs = 100, comps = true, motifs = true },
                   figures = { odds = 60, songs = 70, comps = true, figures = true } }
 local ideasCache = setmetatable({}, { __mode = 'k' })
 function D.ideasOf(style)
@@ -848,7 +853,8 @@ function D.ideasOf(style)
     if ideasCache[style] then return ideasCache[style] end
     local out = {}
     for name, idea in pairs(D.commonIdeas) do
-        if not (idea.comps and style.picking) and not (idea.figures and not style.figures) then out[name] = idea end
+        local missing = idea.figures and not style.figures or idea.motifs and not style.motifs
+        if not (idea.comps and style.picking) and not missing then out[name] = idea end
     end
     for name, idea in pairs(style.ideas or {}) do out[name] = idea or nil end
     ideasCache[style] = out

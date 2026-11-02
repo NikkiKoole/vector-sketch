@@ -307,16 +307,71 @@ local function planWalks(song, style)
     end
 end
 
+-- Approach chords (the idea 'approach'): a chord held two bars or more gives its last bar to the next
+-- chord's own dominant (a secondary dominant: V7 of what comes), its related ii-V, half a bar each
+-- (before a minor chord the minor ones: m7b5, V7b9), or its tritone substitute (the dominant a half
+-- step above it: its root outside the key, as a borrowed chord's is). Not where the chord already is the next one's
+-- dominant or shares its root. Real bossa changes chord about twice as often as ours did and takes
+-- 18% of its chords from outside the key against our 6% (HookTheory, Chordonomicon's typical II7-V7-I
+-- and VI7-II7-V7-I: docs/MUSIC-ANALYSIS.md, R6). Marked and rolled here, played or not per bar
+-- (barChords). Its own stream
+local function minorQuality(q) return q:sub(1, 1) == 'm' and q:sub(1, 3) ~= 'maj' end
+local function planApproaches(song)
+    local rnd = stream(song.seed, 19)
+    for _, prog in ipairs({ song.A, song.B }) do
+        for i, chord in ipairs(prog) do
+            local after = prog[i % #prog + 1]
+            local d = (chord.degree - after.degree) % 12
+            if chord.steps >= 32 and d ~= 0 and d ~= 7 then
+                local target, minor = after.degree, minorQuality(after.quality)
+                local dominant = minor and 'b9' or 'dom9'
+                local kind = rnd(100)
+                if kind < 34 then     -- dom: the next chord's dominant
+                    chord.approach = { { target + 7, dominant, 16 } }
+                elseif kind < 67 then -- iiV: its related ii-V
+                    chord.approach = { { target + 2, minor and 'm7b5' or 'm9', 8 }, { target + 7, dominant, 8 } }
+                else                  -- sub: the tritone substitute, a dominant a half step above it
+                    chord.approach = { { target + 1, 'dom9', 16 } } -- (Ipanema's Gb7 in F: bII7 into I)
+                end
+                chord.approachRoll = rnd(100)
+            end
+        end
+    end
+end
+
 -- The ideas (docs/MUSIC-CONCEPTS.md): a style's style.ideas = { name = { odds, songs } }. A song uses
 -- an idea or not (songs = % of the songs that do), rolled here on its own stream; the settings can
 -- say always or never, and the spice slider scales every idea's odds (src/music.lua's ideaOdds)
+-- The ideas' odds for a song now, for every idea the style has: its odds, scaled by the spice slider
+-- and the idea's own setting (state.musicSettings.ideas), 0 when the song doesn't use it. The
+-- settings, from none to lots: nil = never (the default: the music as it was before the ideas, Nikki
+-- 2026-11-02: "the same as before all these changes, and then letting us change it a bit"); less
+-- (the style's share of songs, half as often); some (the style's share, as designed); always (every
+-- song); lots (every song, twice as often). src/music.lua's bookBar sets song.ideaOdds every bar
+local IDEA_LEVELS = { less = { scale = 0.5 }, some = { scale = 1 },
+                      always = { songs = 'all', scale = 1 }, lots = { songs = 'all', scale = 2 } }
+local function ideaOdds(song, style)
+    local out, settings = {}, state.musicSettings
+    for name, idea in pairs(D.ideasOf(style)) do
+        local level = IDEA_LEVELS[settings.ideas and settings.ideas[name] or 'never']
+        local uses = level and (level.songs == 'all' or song.ideas and song.ideas[name])
+        out[name] = uses and (idea.odds or 50) * (settings.spice or 1) * level.scale or 0
+    end
+    return out
+end
+
+-- each idea rolls on its own stream, numbered from its name: a new idea doesn't reshuffle the others
+-- (one stream for all, in name order, did: 'approach' moved every song's walks and answers, 2026-11-02)
+local function ideaStream(seed, name)
+    local k = 0
+    for i = 1, #name do k = (k * 31 + name:byte(i)) % 100000 end
+    return stream(seed, 100000 + k)
+end
 local function planIdeas(song, style)
     song.ideas = {}
-    local ideas, names = D.ideasOf(style), {}
-    local rnd = stream(song.seed, 16)
-    for name in pairs(ideas) do names[#names + 1] = name end
-    table.sort(names) -- a fixed order: the same song rolls the same ideas
-    for _, name in ipairs(names) do song.ideas[name] = rnd(100) < (ideas[name].songs or 100) end
+    for name, idea in pairs(D.ideasOf(style)) do
+        song.ideas[name] = ideaStream(song.seed, name)(100) < (idea.songs or 100)
+    end
     -- the song's comp figure (the idea 'figures'): one of the style's, kept all song
     if style.figures then song.figure = style.figures[stream(song.seed, 18)(#style.figures) + 1] end
 end
@@ -463,7 +518,8 @@ end
 -- the tune: the motif rhythm and its cell's anchor pitches, the scale, and a ladder of the key's
 -- pentatonic above the chord (median ~76, lofi's 67..86) with where each section's tune starts
 local function planTune(song, style, rnd)
-    local bank = style.motifs or D.motifs -- the style's own tune rhythms, or the shared ones
+    -- the style's own tune rhythms (the idea 'rhythms', R4), or the shared ones every style had before
+    local bank = style.motifs and ((song.ideaOdds or {}).rhythms or 0) > 0 and style.motifs or D.motifs
     local motif = bank[rnd(#bank) + 1]
     song.motif = { steps = motif[1], groups = motif[2], dir = {} }
     local repeatOdds = style.motifRepeat or 18
@@ -594,7 +650,9 @@ local function planSong(setKey)
     local rnd = stream(seed, 1)
     planChords(song, style, rnd)
     planWalks(song, style)
+    planApproaches(song)
     planIdeas(song, style)
+    song.ideaOdds = ideaOdds(song, style) -- for the plan's own choices (the tune's rhythms)
     planForm(song, style, rnd)
     planDynamics(song)
     planBars(song, style, between, mood)
@@ -721,7 +779,9 @@ lib.planLoop = planLoop
 lib.LOOP_PLANS = LOOP_PLANS
 lib.planChords = planChords
 lib.planWalks = planWalks
+lib.planApproaches = planApproaches
 lib.planIdeas = planIdeas
+lib.ideaOdds = ideaOdds
 lib.planDynamics = planDynamics
 lib.dynamicAt = dynamicAt
 lib.sectionRoles = sectionRoles

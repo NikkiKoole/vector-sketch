@@ -1220,11 +1220,18 @@ local function bookFluteRun(bar, s, chord, up)
         end
     end
     table.sort(notes, function(a, b) if up then return a < b end return a > b end)
-    -- played by a person (Nikki: let the end note linger, more human): the gaps a little different
-    -- each run and easing into the last note, each note a few ms off, the inner ones not all as loud,
-    -- the last one held about two and a half beats, on past the next stab. Its own stream
-    local rnd = stream(song.seed, 9950 + bar.b)
     local last = math.min(#notes, 4)
+    if ((song.ideaOdds or {}).flutefeel or 0) <= 0 then -- as the run was first built (2026-10-30)
+        for k = 1, last do
+            local dur = k == last and lengthMs(song, s, 5) - (k - 1) * 70 or 90
+            play(bar.synth, 'lead', bar.style.flute, t + (k - 1) * 0.07, notes[k], k == 1 and 4 or 3, dur, s)
+        end
+        return
+    end
+    -- flutefeel, played by a person (Nikki: let the end note linger, more human): the gaps a little
+    -- different each run and easing into the last note, each note a few ms off, the inner ones not all
+    -- as loud, the last one held about two and a half beats, on past the next stab. Its own stream
+    local rnd = stream(song.seed, 9950 + bar.b)
     local gap, at = 0.062 + rnd() * 0.02, t
     for k = 1, last do
         local vol = k == 1 and 4 or (k < last and rnd(100) < 35) and 2 or 3

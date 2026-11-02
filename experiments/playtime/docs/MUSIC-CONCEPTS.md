@@ -10,12 +10,14 @@ Add a concept here when it goes into the code or gets tried. Write `tried <date>
 ## Ideas and spice: how much of it a song takes
 
 The tried concepts (the walks, the answer) are **ideas** a style can have (`style.ideas` in `src/music-styles.lua`). Each idea has two numbers:
-- **`songs`:** the share of songs that use it at all, rolled per song (`planIdeas`, `src/music-plan.lua`).
+- **`songs`:** the share of songs that use it at all, rolled per song (`planIdeas`, `src/music-plan.lua`). Each idea rolls on its own stream, numbered from its name, so a new idea doesn't change which songs use the others. Before 2026-11-02 one stream in name order meant adding `approach` reshuffled every song's walks and answers.
 - **`odds`:** how often a song that uses it takes its chances (the chords that walk, the free bars answered).
 
 The music panel has these controls (also on `render-music.lua` as `SPICE=` and `IDEAS=`):
 - **spice:** scales every idea's odds. 0 is plain (bossa as before the walks), 1 as designed, 2 twice as often.
-- **A row per idea, from none to lots:** `never`; `less` (the style's share of songs, half as often); `some songs` (as designed, the default); `always` (every song); `lots` (every song, twice as often).
+- **A row per idea, from none to lots:** `never` (the default); `less` (the style's share of songs, half as often); `some songs` (as designed); `always` (every song); `lots` (every song, twice as often).
+- **Every idea starts at `never`:** the music plays as it did before the ideas, and each one is turned up from there (Nikki, 2026-11-02: "the same as before all these changes, and then letting us change it a bit"). Checked against the version from the morning of 2026-11-02 (`c0ae0d7f`): 19 song styles, 3 songs each, all 57 the same note for note. Reset in the panel goes back to all never.
+- Two ideas only switch today's changes back: `rhythms` (the per-style tune rhythms, R4) and rollo's `flutefeel` (its humanized, lingering flute). Nikki's favourite so far: `approach` ("makes it feel so much more bossa"), not as the default.
 - **this song:** the line that shows which ideas the playing song uses.
 
 Both act at the next bar. Saved setups keep them, and reset puts them back.
@@ -31,6 +33,24 @@ Both act at the next bar. Saved setups keep them, and reset puts them back.
 - **Secondary dominant:** a dominant 7th that points at a chord other than I. Examples: II7 → V (Ipanema), VI7 → ii. Chordonomicon finds these the most typical of bossa, jazz and lounge. Bossa's bank has some (II7, VI7).
 - **Backdoor progression:** iv7 → bVII7 → I. Our bossa already plays it; it's typical of jazz and city pop.
 - **Borrowed chord (modal mixture):** a chord from the parallel minor in a major key, like iv, bVI or bVII (bossa's "I ivm I bVII7"; jingle's `jbVII`, `jbIII` per song via `song.flavor`). Real bossa has 18% of its chords outside the key, ours 0–7%.
+- **Approach chords, reharmonization (the idea `approach`):** a chord held two bars or more gives its last bar to a chord leading into the next one. That's one of:
+  - **dom:** the next chord's own dominant (a secondary dominant, V7 of what comes)
+  - **iiV:** its related ii–V, half a bar each (before a minor chord m7b5 and V7b9)
+  - **sub:** its tritone substitute, the dominant a half step above it (Ipanema's G♭7 into F)
+
+  Not where the chord already is the next one's dominant, or shares its root. The walk gives way to it.
+  - Where: `planApproaches` (`src/music-plan.lua`) marks and rolls the chords; `barChords` plays the approach when the idea's odds allow.
+  - Measured 2026-11-02 (R6, 8 songs per style, from the plan; HookTheory counts the same way), changes per 8 bars:
+
+    | style | never | as designed | lots |
+    |---|---|---|---|
+    | bossa | 6.4 | 7.2 | 8.2 (real bossa ~9.5) |
+    | herbs | 5.3 | 6.0 | 7.8 |
+    | guaraldi | 6.3 | 6.6 | 7.4 |
+    | lofi | 7.8 | 8.6 | 8.8 |
+
+  - Chords with their root outside the key: bossa 7 to 10%, lofi 0 to 3% (real bossa 18%). Rubs the same.
+  - The analysis (`score-analysis.py`) reads one chord per bar, so it can't see half-bar ii–Vs: measure harmony from the plan instead.
 - **Lydian colour:** the tonic maj9 voiced with a #11 (`lydianChance`, `qualityOf`).
 - **Key change, the lift:** a section moves up a half step, the "truck driver's" modulation (`lift` in a form, `applyLift`; buymode).
 - **Half-step float:** I → bII maj9 and back (a bossa B bank).
@@ -122,5 +142,4 @@ Both act at the next bar. Saved setups keep them, and reset puts them back.
 
 ## Ideas waiting (measured gaps, see `MUSIC-ANALYSIS.md`)
 
-- **Faster harmonic rhythm:** bossa's chords last 2 bars; real bossa changes about once a bar.
-- **More secondary dominants and borrowed chords**, from the Chordonomicon "typical progressions".
+- **Borrowed chords (modal mixture):** some chords swapped for the parallel minor's bVI, bVII or bIII, so more roots outside the key (real bossa 18%, ours ~10% with approach chords).

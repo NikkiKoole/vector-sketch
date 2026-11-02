@@ -217,16 +217,23 @@ local function barChords(song, b)
         if walk and walk.diatonic and not walkInKey(song, (song.key + chord.degree + shift) % 12, walk) then
             walk = nil
         end
-        if walk and chord.walkRoll < ((song.ideaOdds or {})[walk.idea or 'walks'] or 0) then
+        local ideaOdds = song.ideaOdds or {}
+        local approach = chord.approach
+        if approach and chord.approachRoll < (ideaOdds.approach or 0) then
+            -- an approach chord (music-plan's planApproaches) takes the chord's last bar: the next
+            -- chord's dominant, or its ii-V half a bar each (minor: m7b5, V7b9); the walk gives way
+            pieces = { { chord.quality, chord.steps - 16, chord.degree } }
+            for _, a in ipairs(approach) do pieces[#pieces + 1] = { a[2], a[3], a[1] } end
+        elseif walk and chord.walkRoll < (ideaOdds[walk.idea or 'walks'] or 0) then
             pieces = {}
-            for k, quality in ipairs(walk) do pieces[k] = { quality, chord.steps / #walk } end
+            for k, quality in ipairs(walk) do pieces[k] = { quality, chord.steps / #walk, chord.degree } end
         end
-        for _, piece in ipairs(pieces or { { chord.quality, chord.steps } }) do
+        for _, piece in ipairs(pieces or { { chord.quality, chord.steps, chord.degree } }) do
             local cs, ce = at, at + piece[2]
             at = ce
             local s, e = math.max(cs, b0), math.min(ce, b0 + 16)
             if e > s then
-                out[#out + 1] = { degree = (chord.degree + shift) % 12, quality = piece[1], s = s - b0, len = e - s }
+                out[#out + 1] = { degree = (piece[3] + shift) % 12, quality = piece[1], s = s - b0, len = e - s }
             end
         end
     end

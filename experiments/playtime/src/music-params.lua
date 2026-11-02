@@ -29,7 +29,8 @@ local function styleParts() -- the playing style's parts; with the music off, th
     return seen[now and now.style or music().style]
 end
 -- the playing style's ideas (style.ideas), and every idea any style has, in the panel's order
-local IDEAS = { 'dynamics', 'range', 'revoice', 'figures', 'colour', 'walks', 'flat9', 'answer', 'runup' }
+local IDEAS = { 'dynamics', 'range', 'approach', 'rhythms', 'revoice', 'figures', 'colour', 'walks', 'flat9', 'answer',
+                'runup', 'flutefeel' }
 local function styleIdeas()
     local now = music().nowPlaying()
     local style = music().styles[now and now.style or music().style]
@@ -38,10 +39,14 @@ end
 local function ideaRow(name)
     return { key = name, kind = 'choice', options = { 'never', 'less', 'some songs', 'always', 'lots' }, stepper = true,
         visible = function() return styleIdeas()[name] ~= nil end,
-        get = function(m) return m.ideas and m.ideas[name] or 'some songs' end,
+        -- nil is never (the music as before the ideas); 'some songs' is stored as 'some'
+        get = function(m)
+            local v = m.ideas and m.ideas[name]
+            return v == 'some' and 'some songs' or v or 'never'
+        end,
         set = function(m, v)
             local ideas = m.ideas or {}
-            ideas[name] = v ~= 'some songs' and v or nil
+            ideas[name] = v == 'some songs' and 'some' or v ~= 'never' and v or nil
             m.ideas = ideas
         end }
 end
@@ -208,10 +213,10 @@ lib.rows = {
         visible = function() return next(styleIdeas()) ~= nil end,
         label = function()
             local song, used = state().music.song, {}
-            for _, name in ipairs(IDEAS) do
-                if song and song.ideas and song.ideas[name] then used[#used + 1] = name end
+            for _, name in ipairs(IDEAS) do -- the ideas sounding now (their odds this bar), not just rolled
+                if song and song.ideaOdds and (song.ideaOdds[name] or 0) > 0 then used[#used + 1] = name end
             end
-            return 'this song: ' .. (#used > 0 and table.concat(used, ', ') or 'plain')
+            return 'this song: ' .. (#used > 0 and table.concat(used, ', ') or 'as before the ideas')
         end },
     -- the arrangements rooms use (music.layerPresets): a click sets the part checkboxes to one
     { key = 'layers', kind = 'buttons', wide = true, options = { 'full', 'quiet', 'cellar', 'rhythm' },
