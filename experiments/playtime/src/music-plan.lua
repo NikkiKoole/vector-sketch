@@ -275,12 +275,22 @@ local function planChords(song, style, rnd)
     end
 end
 
--- a chord held two bars or more can walk one inner voice through style.walks[quality] (bossa's line
--- clichés), the steps split evenly; a walk marked fifthDown only into a chord a fifth below (the
--- next one, round to the progression's start). Here the chord gets its walk and a roll (0..99);
+-- a held chord can walk one inner voice through style.walks[quality] (bossa's line clichés), the steps
+-- split evenly, each at least half a bar; a chord too short for the walk takes its short one
+-- (walk.short, e.g. citypop's one-bar chords). A walk marked fifthDown only into a chord a fifth below
+-- (the next one, round to the progression's start). Here the chord gets its walk and a roll (0..99);
 -- barChords plays the walk when the roll is under its idea's odds (walk.idea, default 'walks'), so
 -- the spice slider and the idea settings act at the next bar. Its own stream: the style's other
 -- draws stay as they were
+local shortWalks = setmetatable({}, { __mode = 'k' })
+local function walkShort(walk) -- the short walk, with the long one's idea and fifthDown
+    if not shortWalks[walk] then
+        local short = { idea = walk.idea, fifthDown = walk.fifthDown }
+        for k, quality in ipairs(walk.short) do short[k] = quality end
+        shortWalks[walk] = short
+    end
+    return shortWalks[walk]
+end
 local function planWalks(song, style)
     if not style.walks then return end
     local rnd = stream(song.seed, 15)
@@ -289,9 +299,9 @@ local function planWalks(song, style)
             local walk = style.walks[chord.quality]
             local after = prog[i % #prog + 1]
             if walk and walk.fifthDown and (chord.degree - after.degree) % 12 ~= 7 then walk = nil end
-            if walk and chord.steps >= 32 and chord.steps % (#walk * 4) == 0 then
-                chord.walk, chord.walkRoll = walk, rnd(100)
-            end
+            local function fits(w) return w and chord.steps >= #w * 8 and chord.steps % (#w * 4) == 0 end
+            if walk and not fits(walk) then walk = walk.short and walkShort(walk) end
+            if fits(walk) then chord.walk, chord.walkRoll = walk, rnd(100) end
         end
     end
 end

@@ -138,6 +138,13 @@ D.styles = {
         bpm = 132, swing = 0.62, chordBars = { 1, 2 }, lydianChance = 0, pushOdds = 35, motifRepeat = 30,
         strumMs = 12, keys = 'piano', lead = 'pianoLead', bass = 'guaraldi', bassLo = 38, drums = 'brushes',
         home = 'maj69',
+        -- the walks (planWalks; a one-bar chord takes the short one) and the answer: the piano answering
+        -- itself an octave under the tune, as Guaraldi does (docs/MUSIC-CONCEPTS.md)
+        walks = { m9 = { 'madd9', 'mmaj9', 'm9', 'm6', short = { 'm9', 'm6' } }, m7 = { 'm7', 'm6' },
+                  dom9 = { 'dom9', 'b9', fifthDown = true, idea = 'flat9' }, maj7 = { 'maj7', 'maj69' } },
+        answer = { patch = 'pianoLead', lo = 58, hi = 70, vol = 3 },
+        ideas = { walks = { odds = 50, songs = 75 }, flat9 = { odds = 50, songs = 50 },
+                  answer = { odds = 55, songs = 70 } },
         -- per song a bounce (the Charleston or the anticipations, always pushing into bars 2 and 4, his
         -- signature) or a ballad (slower, the chord held with a lift, no pushes, brushes without kicks);
         -- the piano's full voicings, never shells
@@ -293,6 +300,13 @@ D.styles = {
         chordBars = { 1, 2 }, lydianChance = 0, pushOdds = 50, minorChance = 55,
         strumMs = 18, keys = 'lofiKeys', lead = 'vibes', leadChance = 60, bass = 'lofi',
         bassPatch = 'roundBass', bassLo = 33, groove = 'lofi', introHats = true, home = 'maj9', homeMinor = 'm9',
+        -- bossa's walks (the minor line cliché suits lofi's minor songs), short ones on one-bar chords;
+        -- the flute answers the vibes, as on Nujabes' records
+        walks = { m9 = { 'madd9', 'mmaj9', 'm9', 'm6', short = { 'm9', 'm6' } },
+                  dom9 = { 'dom9', 'b9', fifthDown = true, idea = 'flat9' }, maj9 = { 'maj69', 'maj9' } },
+        answer = { patch = 'flute', lo = 62, hi = 76, vol = 3 },
+        ideas = { walks = { odds = 50, songs = 75 }, flat9 = { odds = 50, songs = 50 },
+                  answer = { odds = 55, songs = 70 } },
         comps = 'jazzhop', compWeights = { { 0.3, 1.0 }, { 0.1, 0.8 }, { 0.1, 0.6 } }, lightOdds = 0,
         holdChanges = true, forms = 'lofi', B = 'A', range = { 67, 84 }, tone = { 5500, 9000 },
         epLp = { 2400, 4500 }, vinyl = true,
@@ -439,6 +453,14 @@ D.styles = {
         bpm = { 104, 118 }, swing = 0.5, chordBars = { 1 }, pushOdds = 35, turnaroundOdds = 0,
         strumMs = 4, keys = 'rhodes', lead = 'citySynth', bass = 'disco', bassPatch = 'dubBass', bassLo = 33,
         drums = 'session', home = 'maj9', horns = 'citypop', guitar = true, strings = true,
+        -- one-bar chords, so two-step walks: the 9th to the 6th, the dominant's 9 and 13 to the alt crunch
+        -- (#9, b13) into a fifth below; a horn line answers where the tune breathes (not where the horn
+        -- section shouts: bookAnswer leaves those bars to it)
+        walks = { m9 = { 'm9', 'm6' }, maj9 = { 'maj9', 'maj69' }, maj7 = { 'maj7', 'maj69' },
+                  dom9 = { 'dom9', 'alt', fifthDown = true, idea = 'flat9' } },
+        answer = { patch = 'horn', lo = 60, hi = 74, vol = 3 },
+        ideas = { walks = { odds = 50, songs = 75 }, flat9 = { odds = 60, songs = 60 },
+                  answer = { odds = 55, songs = 70 } },
         A = {
             { { 2, 'm9' }, { 7, 'dom9' }, { 0, 'maj9' }, { 9, 'm9' } },                   -- ii V I vi, smooth
             { { 0, 'maj9' }, { 0, 'n9' }, { 5, 'maj7' }, { 5, 'm6' } },                   -- the descent: I I7 IV iv
@@ -596,7 +618,11 @@ do
         steady = true, sameCell = true, shellOdds = 70, pushHabit = 30,
         strumMs = 20, keys = 'feltKeys', lead = 'vibes', bass = 'walk', bassPatch = 'musicBass', bassLo = 34,
         drums = 'brushes', home = 'maj69', range = { 65, 84 }, staccato = 8, lightOdds = 50,
-        A = g.A, B = g.B,
+        A = g.A, B = g.B, walks = g.walks,
+        -- the felt piano answers the vibes, low and soft (the MJQ: John Lewis answering Milt Jackson)
+        answer = { patch = 'feltKeys', lo = 57, hi = 69, vol = 3 },
+        ideas = { walks = { odds = 50, songs = 75 }, flat9 = { odds = 40, songs = 50 },
+                  answer = { odds = 50, songs = 70 } },
         -- the piano holding, holding with a lift, the Charleston laid down soft
         comps = {
             { { 0, 12, 3 }, { 16, 12, 3 } },

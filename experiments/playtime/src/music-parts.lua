@@ -921,6 +921,7 @@ local function bookAnswer(bar, tunePlayed, tuneInSection)
     local answer = style.answer
     if not bar.band or (section.kind ~= 'A' and section.kind ~= 'B') or tunePlayed > 0 then return end
     if not tuneInSection and j % 2 == 0 then return end
+    if song.horns and j % 4 == 2 then return end -- citypop's horns shout here: they are the answer
     local rnd = stream(song.seed, 8000 + bar.b)
     if rnd(100) >= ((song.ideaOdds or {}).answer or 0) then return end
     local rhythm, start = D.answers[rnd(#D.answers) + 1], 2
@@ -931,24 +932,36 @@ local function bookAnswer(bar, tunePlayed, tuneInSection)
         local i = interval % 12
         if i == 3 or i == 4 or i == 10 or i == 11 then guides[(root + i) % 12] = true end
     end
-    local midi = answer.hi - rnd(5)
-    while midi > answer.lo and not guides[midi % 12] do midi = midi - 1 end
+    -- the first note: the guide tone nearest a point near the top, up or down (an octave of range
+    -- always holds one; searching only down, it once stuck at the floor and slid out of the key by
+    -- half steps, Bb A G# over F6/9, heard 2026-11-02)
+    local aim, midi = answer.hi - rnd(5), nil
+    for d = 0, 11 do
+        if not midi and aim - d >= answer.lo and guides[(aim - d) % 12] then midi = aim - d end
+        if not midi and aim + d <= answer.hi and guides[(aim + d) % 12] then midi = aim + d end
+    end
+    midi = midi or aim
+    -- the steps down keep to the key's scale (the chord's avoid notes skipped), and may go a fifth
+    -- under the range rather than leave the key
+    local floor = answer.lo - 7
     local notes = {}
     for k, step in ipairs(rhythm) do
         local s = start + step
         if s > 15 then break end
         local here = chordAtStep(song, bar.b, s)
         if k > 1 then
-            repeat midi = midi - 1
-            until midi <= answer.lo or theory.inKey(song, midi) and not theory.isAvoid(song, midi, here)
+            local m = midi - 1
+            while m > floor and not (theory.inKey(song, m) and not theory.isAvoid(song, m, here)) do m = m - 1 end
+            if m <= floor then break end -- no room left: the line ends here
+            midi = m
         end
         notes[#notes + 1] = { s = s, midi = midi, chord = here }
     end
     local last = notes[#notes]
-    if last then
-        while last.midi > answer.lo and not theory.isChordTone(song, last.midi, last.chord) do
-            last.midi = last.midi - 1
-        end
+    if last then -- the last note on a chord tone: the nearest one at or below it
+        local m = last.midi
+        while m > floor and not theory.isChordTone(song, m, last.chord) do m = m - 1 end
+        if m > floor then last.midi = m end
     end
     for k, note in ipairs(notes) do
         local len = notes[k + 1] and notes[k + 1].s - note.s or 4

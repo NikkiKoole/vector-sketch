@@ -44,6 +44,17 @@ Both act at the next bar. Saved setups keep them, and reset puts them back.
 - **Line cliché, the walks:** one inner voice moves by half steps while a chord is held. Minor: root, maj7, b7, 6 (Cm, Cm(maj7), Cm7, Cm6). Major: 6/9 opening to maj9. Dominant: 9 falling to b9.
   - Where: `walks`, `planWalks` (marks and rolls the chords), `barChords` (plays the walk when its idea's odds allow). Ideas `walks` and `flat9`.
   - Bossa, 2026-11-02: step lines went from 0.8 to 1.9 per 8 bars. Nikki: "sounds better".
+  - A chord too short for its walk takes its short one (`walk.short`), at least half a bar per step.
+  - Guaraldi, vibesnight (sharing guaraldi's walks), citypop and lofi, 2026-11-02 (R2), step lines per 8 bars over 6 songs:
+
+    | style | before | after |
+    |---|---|---|
+    | guaraldi | 0.5 | 1.0 |
+    | citypop | 1.6 | 2.2 |
+    | lofi | 0.1 | 0.8 |
+    | vibesnight | 0.0 | 0.2 (its shells hide most of the walk) |
+
+    Citypop's walks are one bar long, two steps each: m9 to m6, maj9 to 6/9, and the dominant's 9 to the alt crunch (#9, b13).
 - **Altered dominant (b9) only into a fifth below:** a b9 belongs on a dominant resolving down a fifth (V7b9 → I). On the backdoor bVII7 it grated (heard 2026-11-02; `fifthDown` on a walk). It is its own idea, `flat9`, so it can be set to never.
 
 ## Rhythm and comping
@@ -66,6 +77,8 @@ Both act at the next bar. Saved setups keep them, and reset puts them back.
 - **Call and response, the answer:** where the tune is silent, another instrument answers with a short falling line under it. It starts on a guide tone, walks down the scale skipping the avoid notes, and ends on a chord tone.
   - Where: the `answer` part, `bookAnswer` (`src/music-parts.lua`), `style.answer` (its instrument and range), idea `answer`.
   - Bossa, the flute, 2026-11-02: while the band plays, the tune or the answer now fills 18 of 20 bars (it was 14). The real pieces fill 90–100%.
+  - Its first note is the guide tone nearest a point near the top of its range, searched up and down; its steps stay in the key and may run a fifth under the range. Searching only downward, it once stuck at the floor and slid out of the key by half steps (Bb–A–G# over F6/9 in guaraldi, heard 2026-11-02). Checked after the fix: no answer note in 30 songs is outside both the key and the chord.
+  - Other styles (R2, 2026-11-02), each with its own instrument: guaraldi has the piano answering itself an octave under the tune; vibesnight the felt piano answering the vibes (the MJQ); citypop a horn line (it leaves the bars where the horn section shouts to it); lofi the flute (Nujabes).
 - **Fill run:** rollo's flute runs down the chord's notes in a phrase's 2nd bar (`bookFluteRun`).
 
 ## Dynamics: how loud
@@ -91,4 +104,3 @@ Both act at the next bar. Saved setups keep them, and reset puts them back.
 - **A wider register span (orchestration by range):** spread the bass and the tune further apart. Ours span 3–4 octaves, the real pieces 4–6.6.
 - **Faster harmonic rhythm:** bossa's chords last 2 bars; real bossa changes about once a bar.
 - **More secondary dominants and borrowed chords**, from the Chordonomicon "typical progressions".
-- **Walks and answers in other styles:** guaraldi, citypop and lofi first.
