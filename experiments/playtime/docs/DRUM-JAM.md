@@ -73,6 +73,16 @@ Until then the jam plays the general patches; that's enough to hear whether the 
 - [ ] **J3. The 303 as a layer.** The acid style's pattern code shared, not copied: the 303 enters as a
   layer, its filter sweep tied to the phrase (open into the drop).
 - [ ] **J4. The kit.** Decide port vs desound.c (above), then an 808 and a 909 kit, picked per group.
+- [ ] **J7. The auto-accompaniment bass** (Nikki: "bass loops that change root, transposed every n
+  bars"). The organ boxes' one-finger chord, in the jam: a `bass` layer (second in, after the kick)
+  plays a 16-step loop written in DEGREES (`R` root, `3`, `5`, `7`, `8`, `L` the fifth below, `-` hold,
+  `.` rest; two per genre, moving with the drum variants) over a ROOT that walks on its own clock:
+  every 2, 4 or 8 bars along a walk rolled per song (I IV V I, I IV I V, I bVII I IV, around the
+  fourths). Calm play holds the root; the drop lands back home; impacts follow it (`remember` on the
+  root). The round bass first (`lib.BASS`). Built 2026-11-02 (`music-jam.lua`): Disco's octave loop
+  walks F Bb Eb Ab Db Gb a move every 4 bars, bass and kick within 1.3 dB rms. Next: the sourced
+  timings (`rhythmbox.h`'s Hammond-patent BASS lanes alternating root and fifth, the SGS M254/M255
+  FIFTH and CHORD TRIGGER lanes), and the CHORD stabs those lanes gate (J6 overlaps).
 - [ ] **J6. The organ-era rhythm box** (Nikki: "the truly whimsical ones"). dreamengine has a sourced
   library of them: `runtime/rhythmbox.h` (101 preset rhythms read off the Ace Tone FR-2L, Roland TR-77
   and SGS chip manuals and a 1969 Hammond patent; generated from its `docs/design/rhythm-box-patterns.md`),
