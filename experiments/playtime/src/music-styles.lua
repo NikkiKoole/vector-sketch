@@ -105,11 +105,16 @@ D.styles = {
         -- a held chord walks one inner voice (planWalks), as Jobim's do: the minor line cliché (the root
         -- down by half steps to the 6th), the dominant's 9th falling to b9 before it resolves, the 6/9
         -- opening to maj9. The style report measured bossa's keys re-striking one chord 76% of the time
-        -- with no inner line (docs/MUSIC-ANALYSIS.md); walkOdds = the share of the chords that walk.
-        -- fifthDown: only into a chord a fifth below (V7b9 -> I); on the backdoor bVII7 the b9 grates
-        walks = { m9 = { 'madd9', 'mmaj9', 'm9', 'm6' }, dom9 = { 'dom9', 'b9', fifthDown = true },
+        -- with no inner line (docs/MUSIC-ANALYSIS.md). fifthDown: only into a chord a fifth below
+        -- (V7b9 -> I); on the backdoor bVII7 the b9 grates. The dominant's walk is its own idea (flat9)
+        walks = { m9 = { 'madd9', 'mmaj9', 'm9', 'm6' }, dom9 = { 'dom9', 'b9', fifthDown = true, idea = 'flat9' },
                   maj9 = { 'maj69', 'maj9' } },
-        walkOdds = 60,
+        -- the flute answers where the tune breathes (bookAnswer), under it, as on Jobim's records
+        answer = { patch = 'flute', lo = 62, hi = 76, vol = 3 },
+        -- the ideas (docs/MUSIC-CONCEPTS.md): odds = % of the chances taken (the chords that walk, the
+        -- free bars answered), songs = % of the songs that use the idea at all (planIdeas)
+        ideas = { walks = { odds = 60, songs = 85 }, flat9 = { odds = 60, songs = 60 },
+                  answer = { odds = 65, songs = 75 } },
         A = {
             { { 0, 'maj9' }, { 2, 'dom9' }, { 2, 'm9' }, { 7, 'dom9' } },   -- Imaj7 II7 iim7 V7 (Ipanema)
             { { 0, 'maj9' }, { 9, 'm9' }, { 2, 'm9' }, { 7, 'dom9' } },     -- I vi ii V

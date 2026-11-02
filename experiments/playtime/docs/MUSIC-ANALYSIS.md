@@ -2,7 +2,7 @@
 
 status: active
 
-A working notebook. We take a recording apart into its parts, listen to what each part plays (jabs, fills, held notes), and work out how to make each piece with dreamengine. Findings go here so they aren't lost. Style ideas that come out of it go to `MUSIC-IDEAS.md`, and the styles themselves to `src/music-styles.lua`.
+A working notebook. We take a recording apart into its parts, listen to what each part plays (jabs, fills, held notes), and work out how to make each piece with dreamengine. Findings go here so they aren't lost. Style ideas that come out of it go to `MUSIC-IDEAS.md`, and the styles themselves to `src/music-styles.lua`. The musical concepts the generator uses, by name, are in `MUSIC-CONCEPTS.md`.
 
 ## How (the pipeline)
 
@@ -193,4 +193,7 @@ These numbers are what to aim at when a style is changed, and the report shows w
 - [ ] Nikki listens to gershwin2 again (the tune labelling is fixed) and checks the `??` bars (10, 16, 25, 33, 36, 38, 39, 49, 59 in `claudetools/scores/gershwin-prelude2.txt`)
 - [ ] One style made richer by the numbers: inner step lines in the keys, fewer re-struck chords, a wider span, moving loudness; measured with the style report before and after
   - [x] Bossa's walks (2026-11-02): a two-bar chord walks one inner voice: the minor line cliché, V9 to b9 only into a chord a fifth below (on the backdoor bVII7 it grated), 6/9 to maj9 (`walks`, `planWalks`). Over 8 songs, step lines per 8 bars went from 0.8 to 1.9 and keys hold from 76% to 67%. Nikki: "sounds better, no very wrong rubs".
-  - [ ] Next: fewer re-struck chords, a wider span, a busier tune, moving loudness
+  - [ ] To try by ear: bossa without the V9-to-b9 walk (only the minor and major walks), if the b9 still sounds too sharp. It's the idea `flat9` now: set it to never in the music panel.
+  - [x] The ideas made settable (2026-11-02): a spice slider (0 plain to 2) and a row per idea (some songs / always / never), live (`MUSIC-CONCEPTS.md`, "Ideas and spice")
+  - [ ] Bossa's answer (2026-11-02, waiting on Nikki's ear): the flute answers where the tune is silent (`bookAnswer`). While the band plays, the tune or the answer fills 18 of 20 bars (the tune alone 14). Our tunes were silent in ~60% of all bars, the real pieces ~5%; while it plays, our tune is 0.7 notes a beat against 1.0–1.2.
+  - [ ] Next: fewer re-struck chords, a wider span, moving loudness

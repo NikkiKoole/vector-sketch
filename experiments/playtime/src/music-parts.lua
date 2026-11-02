@@ -56,8 +56,8 @@ end
 
 -- The parts with a melody line, whose instrument the panel can swap (drums, perc, vinyl and sample
 -- play several sounds at once: only on or off)
-local TONAL = { lead = true, keys = true, chord = true, guitar = true, horns = true, strings = true, riff = true,
-                bass = true }
+local TONAL = { lead = true, answer = true, keys = true, chord = true, guitar = true, horns = true, strings = true,
+                riff = true, bass = true }
 lib.TONAL = TONAL
 
 -- M.mute: the parts that sit this bar out (the layers, a handoff); M.clipAt: no note rings past it.
@@ -891,13 +891,64 @@ local function bookTune(bar)
         song.phrase, song.phraseBar = build(song, phraseBar), phraseBar
     end
     local patch = state.musicSettings.melodyPatch or style.lead
-    local barInPhrase = j % 4
+    local barInPhrase, played = j % 4, 0
     for _, note in ipairs(song.phrase) do
         if math.floor(note.s / 16) == barInPhrase then
             local t = stepTime(song, t0, note.s % 16) + humanize(0.003)
             if note.grace then play(synth, 'lead', patch, t - 0.05, note.grace, math.max(1, note.vol - 2), 45) end
             play(synth, 'lead', patch, t, note.midi, note.vol, lengthMs(song, note.s % 16, note.len) * 0.9)
+            played = played + 1
         end
+    end
+    return played
+end
+
+-- The answer: where the tune is silent (a phrase's breath bar, a phrase of space; in a section with
+-- no tune, the first A, every other bar), another instrument answers with a short line under the
+-- tune: from the chord's 3rd or 7th down the key's scale (the chord's avoid notes skipped), the last
+-- note on a chord tone. What arrangements put in a tune's gaps; the style report measured our tunes
+-- silent in ~60% of the bars against ~5% in the real pieces (docs/MUSIC-ANALYSIS.md).
+-- style.answer = { patch, lo, hi (its range), vol }; how often: the 'answer' idea's odds (% of the free
+-- bars; style.ideas, the spice slider, song.ideaOdds)
+local function bookAnswer(bar, tunePlayed, tuneInSection)
+    local song, style, section, j = bar.song, bar.style, bar.section, bar.j
+    local answer = style.answer
+    if not bar.band or (section.kind ~= 'A' and section.kind ~= 'B') or tunePlayed > 0 then return end
+    if not tuneInSection and j % 2 == 0 then return end
+    local rnd = stream(song.seed, 8000 + bar.b)
+    if rnd(100) >= ((song.ideaOdds or {}).answer or 0) then return end
+    local rhythm, start = D.answers[rnd(#D.answers) + 1], 2
+    local chord = chordAtStep(song, bar.b, start)
+    local root = (song.key + chord.degree) % 12
+    local guides = {}
+    for _, interval in ipairs(qualityOf(song, chord.quality)) do
+        local i = interval % 12
+        if i == 3 or i == 4 or i == 10 or i == 11 then guides[(root + i) % 12] = true end
+    end
+    local midi = answer.hi - rnd(5)
+    while midi > answer.lo and not guides[midi % 12] do midi = midi - 1 end
+    local notes = {}
+    for k, step in ipairs(rhythm) do
+        local s = start + step
+        if s > 15 then break end
+        local here = chordAtStep(song, bar.b, s)
+        if k > 1 then
+            repeat midi = midi - 1
+            until midi <= answer.lo or theory.inKey(song, midi) and not theory.isAvoid(song, midi, here)
+        end
+        notes[#notes + 1] = { s = s, midi = midi, chord = here }
+    end
+    local last = notes[#notes]
+    if last then
+        while last.midi > answer.lo and not theory.isChordTone(song, last.midi, last.chord) do
+            last.midi = last.midi - 1
+        end
+    end
+    for k, note in ipairs(notes) do
+        local len = notes[k + 1] and notes[k + 1].s - note.s or 4
+        local vol = (answer.vol or 3) - (k == 1 and 0 or 1) + (k == #notes and 1 or 0) -- the first and last lean
+        play(bar.synth, 'answer', answer.patch, stepTime(song, bar.t0, note.s) + humanize(0.006), note.midi, vol,
+             lengthMs(song, note.s, len) * 0.92, note.s)
     end
 end
 
@@ -1287,6 +1338,7 @@ lib.bookHorns = bookHorns
 lib.bookGuitar = bookGuitar
 lib.bookStrings = bookStrings
 lib.bookTune = bookTune
+lib.bookAnswer = bookAnswer
 lib.LOOP_BARS = LOOP_BARS
 lib.bookTravis = bookTravis
 lib.bookJabs = bookJabs

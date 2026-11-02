@@ -28,6 +28,23 @@ local function styleParts() -- the playing style's parts; with the music off, th
     local seen = state().music.styleParts or {}
     return seen[now and now.style or music().style]
 end
+-- the playing style's ideas (style.ideas), and every idea any style has, in the panel's order
+local IDEAS = { 'walks', 'flat9', 'answer' }
+local function styleIdeas()
+    local now = music().nowPlaying()
+    local style = music().styles[now and now.style or music().style]
+    return style and style.ideas or {}
+end
+local function ideaRow(name)
+    return { key = name, kind = 'choice', options = { 'some songs', 'always', 'never' },
+        visible = function() return styleIdeas()[name] ~= nil end,
+        get = function(m) return m.ideas and m.ideas[name] or 'some songs' end,
+        set = function(m, v)
+            local ideas = m.ideas or {}
+            ideas[name] = v ~= 'some songs' and v or nil
+            m.ideas = ideas
+        end }
+end
 local function heard(part)
     for _, entry in ipairs(music().playing()) do
         if entry.part == part then return entry end
@@ -158,6 +175,22 @@ lib.rows = {
             'bethena', 'gnossienne', 'gymnopedie', 'bachprelude', 'traumerei', 'carrelage', 'tapisserie', 'gershwin2',
             'ballad' }, nil, true),
     field('rhythmSection', 'band', 'choice', { 'auto', 'on', 'off' }),
+    -- the style's ideas (docs/MUSIC-CONCEPTS.md: the walks, the answer): spice scales them all, 0 plain
+    -- to 2, 1 as designed; a row per idea the playing style has: in some songs (the style's share),
+    -- every song, or none; and which ones this song uses
+    { key = 'spice', kind = 'number', min = 0, max = 2,
+        visible = function() return next(styleIdeas()) ~= nil end,
+        get = function(m) return m.spice or 1 end,
+        set = function(m, v) m.spice = v end },
+    { key = 'song ideas', kind = 'note',
+        visible = function() return next(styleIdeas()) ~= nil end,
+        label = function()
+            local song, used = state().music.song, {}
+            for _, name in ipairs(IDEAS) do
+                if song and song.ideas and song.ideas[name] then used[#used + 1] = name end
+            end
+            return 'this song: ' .. (#used > 0 and table.concat(used, ', ') or 'plain')
+        end },
     -- the arrangements rooms use (music.layerPresets): a click sets the part checkboxes to one
     { key = 'layers', kind = 'buttons', wide = true, options = { 'full', 'quiet', 'cellar', 'rhythm' },
         run = function(_, m, preset) m.partsOff = music().layerParts(preset) end },
@@ -172,6 +205,12 @@ lib.rows = {
             else setups.undo() end
         end },
 }
+-- the idea rows, right under spice and the song's ideas
+do
+    local at
+    for i, row in ipairs(lib.rows) do if row.key == 'song ideas' then at = i end end
+    for k, name in ipairs(IDEAS) do table.insert(lib.rows, at + k, ideaRow(name)) end
+end
 -- the saved setups, two buttons a row (consecutive actions sit side by side): click = put it back
 local MAX_SETUPS = 16
 for i = 1, MAX_SETUPS do

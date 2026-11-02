@@ -92,11 +92,15 @@ local lib = {}
 --   partsOff       { part = true }: parts switched off, in every style (the panel's part rows)
 --   soundsOff,     { kick = true } / { kick = 'bapKick' }: the drums', perc's and vinyl's sounds one by
 --   soundVoices    one, off or on another sound (by the style's own sound name)
+--   spice          0..2: how much of the style's ideas (walks, answers; docs/MUSIC-CONCEPTS.md) a song
+--                  takes up, 0 = plain, 1 = as designed (nil), 2 = twice as often; read every bar
+--   ideas          { walks = 'always' / 'never' }: an idea in every song or none, instead of the style's
+--                  share of songs (style.ideas[name].songs); nil = the style's
 state.musicSettings = state.musicSettings
     or { enabled = true, style = 'set', rhythmSection = 'auto', melody = true }
 local SETTINGS = { enabled = true, style = true, rhythmSection = true, melody = true,
                    melodyPatch = true, voices = true, partsOff = true, soundsOff = true, soundVoices = true,
-                   tune = true }
+                   tune = true, spice = true, ideas = true }
 do -- the per-part settings that came before voices
     local s = state.musicSettings
     s.voices = s.voices or {}
@@ -153,11 +157,25 @@ function lib.playLevel()
     return M.activity, M.withBand
 end
 
+-- The ideas' odds this bar, for every idea the style has: its odds, scaled by the spice slider, 0 when
+-- the song doesn't use it (planIdeas) or the settings say never; always: in every song
+local function ideaOdds(song, style)
+    local out, settings = {}, state.musicSettings
+    for name, idea in pairs(style.ideas or {}) do
+        local mode = settings.ideas and settings.ideas[name]
+        local uses = mode == 'always' or mode ~= 'never' and song.ideas and song.ideas[name]
+        out[name] = uses and (idea.odds or 50) * (settings.spice or 1) or 0
+    end
+    return out
+end
+lib.ideaOdds = ideaOdds
+
 -- One bar of a song, part by part, in this order (the parts share the bar's random stream and the
 -- performance jitter, so the order is part of the sound).
 local function bookBar(synth, t0, song, b)
     local style = lib.styles[song.style]
     M.barStart = t0
+    song.ideaOdds = ideaOdds(song, style)
     if style.loop then return (LOOP_BARS[style.loop] or bookLoopBar)(synth, t0, song, b) end
     local section, j = song.barSection[b], song.barIndex[b]
     applyLift(song, section)
@@ -194,7 +212,9 @@ local function bookBar(synth, t0, song, b)
     if song.horns and bar.band and inSong and j % 4 == 2 then bookHorns(bar) end
     if style.guitar and bar.band and inSong then bookGuitar(bar, pushes) end
     if style.strings and section.kind == 'B' then bookStrings(bar) end
-    if lib.melody and bar.roles.lead and song.hasLead ~= false then bookTune(bar) end
+    local tuneInSection = lib.melody and bar.roles.lead and song.hasLead ~= false
+    local tunePlayed = tuneInSection and bookTune(bar) or 0
+    if style.answer and lib.melody then parts.bookAnswer(bar, tunePlayed, tuneInSection) end
 end
 
 -- The style was just picked: skip the intro into the first A with the tune and the band in, so the
@@ -414,8 +434,8 @@ end
 -- Which instruments are playing, per part, for the settings panel (and the bridge): a list of
 -- { part, patches = { { name, now } } } in a fixed part order, holding each patch heard in the last
 -- `window` seconds (default 4); now = sounding at this moment.
-lib.parts = { 'lead', 'keys', 'chord', 'guitar', 'horns', 'strings', 'riff', 'bass', 'drums', 'perc', 'sample',
-              'vinyl' }
+lib.parts = { 'lead', 'answer', 'keys', 'chord', 'guitar', 'horns', 'strings', 'riff', 'bass', 'drums', 'perc',
+              'sample', 'vinyl' }
 function lib.playing(window)
     local now = M.audioTime
     if not (lib.enabled and now) then return {} end

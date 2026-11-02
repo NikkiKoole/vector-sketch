@@ -188,11 +188,20 @@ local function barChords(song, b)
     local prog = section.prog or section.kind == 'B' and song.B or song.A
     local b0, at, out = (j * 16) % prog.steps, 0, {}
     for _, chord in ipairs(prog) do
-        local cs, ce = at, at + chord.steps
-        at = ce
-        local s, e = math.max(cs, b0), math.min(ce, b0 + 16)
-        if e > s then
-            out[#out + 1] = { degree = (chord.degree + shift) % 12, quality = chord.quality, s = s - b0, len = e - s }
+        -- a walk (music-plan's planWalks) splits the chord into its steps, if its idea is on this bar:
+        -- song.ideaOdds, from the settings (src/music.lua's bookBar), against the chord's own roll
+        local walk, pieces = chord.walk, nil
+        if walk and chord.walkRoll < ((song.ideaOdds or {})[walk.idea or 'walks'] or 0) then
+            pieces = {}
+            for k, quality in ipairs(walk) do pieces[k] = { quality, chord.steps / #walk } end
+        end
+        for _, piece in ipairs(pieces or { { chord.quality, chord.steps } }) do
+            local cs, ce = at, at + piece[2]
+            at = ce
+            local s, e = math.max(cs, b0), math.min(ce, b0 + 16)
+            if e > s then
+                out[#out + 1] = { degree = (chord.degree + shift) % 12, quality = piece[1], s = s - b0, len = e - s }
+            end
         end
     end
     return out

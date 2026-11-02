@@ -4,7 +4,8 @@
 -- env: MELODY=<patch> swaps the tune's voice, VOICES=bass:tb303,lead:flute any part's, SOLO=<patch,patch> a stem,
 --      TUNE=classic builds the tune the old way (the default is guide, src/music-guide.lua),
 --      CUES=20:citypop,45:satie:bar,70:keep:cellar cues a style (or only layers, with 'keep') at a second,
---      EFFECTS=0..2 the effects slider (every pedal's amount; 1 = as designed)
+--      EFFECTS=0..2 the effects slider (every pedal's amount; 1 = as designed),
+--      SPICE=0..2 the style's ideas (walks, answers; 0 plain, 1 as designed), IDEAS=walks:never,answer:always
 local P = arg[0]:match('^(.*)claudetools/') or './' -- the project folder, from where this script is
 package.path = P .. '?.lua;' .. package.path
 local out, seconds, style, rhythm = arg[1], tonumber(arg[2]) or 30, arg[3] or 'bossa', arg[4] or 'auto'
@@ -37,6 +38,12 @@ if os.getenv('SOLO') then
 end
 
 if os.getenv('EFFECTS') then synth.setEffectAmount(tonumber(os.getenv('EFFECTS'))) end -- the effects slider
+if os.getenv('SPICE') then music.spice = tonumber(os.getenv('SPICE')) end -- the ideas, src/music.lua
+if os.getenv('IDEAS') then
+    local ideas = {}
+    for name, mode in os.getenv('IDEAS'):gmatch('(%w+):(%w+)') do ideas[name] = mode end
+    music.ideas = ideas
+end
 
 -- NOTES=<file.lua> writes the first song's notes as a score (src/music-scores/'s format), for
 -- claudetools/score-analysis.py: every tonal part, each note on its bar's 16th (swing undone);

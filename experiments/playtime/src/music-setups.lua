@@ -18,14 +18,14 @@ local function copy(t)
 end
 
 -- the settings a setup changes (state.musicSettings), all { key = value } tables
-local CHOICES = { 'voices', 'partsOff', 'soundsOff', 'soundVoices' }
+local CHOICES = { 'voices', 'partsOff', 'soundsOff', 'soundVoices', 'ideas' }
 
 -- what plays now, as a setup without a name
 function lib.snapshot()
     local s = state.musicSettings
     local now = require('src.music').nowPlaying()
     local snap = { style = s.style, playing = now and now.style, band = s.rhythmSection,
-                   effects = require('src.synth').effectAmount(), melodyPatch = s.melodyPatch }
+                   effects = require('src.synth').effectAmount(), melodyPatch = s.melodyPatch, spice = s.spice }
     for _, key in ipairs(CHOICES) do snap[key] = copy(s[key]) end
     return snap
 end
@@ -35,6 +35,7 @@ local function restore(snap)
     if snap.style then s.style = snap.style end
     for _, key in ipairs(CHOICES) do s[key] = copy(snap[key]) end
     s.melodyPatch = snap.melodyPatch
+    s.spice = snap.spice
     if snap.band then s.rhythmSection = snap.band end
     if snap.effects then require('src.synth').setEffectAmount(snap.effects) end
 end
@@ -45,7 +46,7 @@ function lib.reset()
     state.musicUndo = lib.snapshot()
     local s = state.musicSettings
     for _, key in ipairs(CHOICES) do s[key] = {} end
-    s.melodyPatch = nil
+    s.melodyPatch, s.spice = nil, nil
 end
 
 function lib.undo()
