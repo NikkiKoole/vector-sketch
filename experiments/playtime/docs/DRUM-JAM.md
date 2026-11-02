@@ -88,7 +88,9 @@ Until then the jam plays the general patches; that's enough to hear whether the 
   minor chord); a hand-written BRUSHES genre (`lib.EXTRA`: a soft kick on 1 and 3, a sweep, the brush's
   tap and the hi-hat foot on 2 and 4, swung 62%, 84-96 bpm; the library has no brush kit); and the bass
   is the upright now (`musicBass`). Levels: Brushes mix -35 dB with bass and tap level; in Disco the
-  upright sits ~7 dB under the club kick (its patch level is shared with the score styles). Next: the sourced
+  upright sits ~7 dB under the club kick (its patch level is shared with the score styles). A walk can
+  carry its own lengths too (`bars = { ... }`, one per step): Nikki's C F D F E held 4 1 2 1 1 bars is one
+  of the walks now (in C it renders C C C C F D D F E, round again). Next: the sourced
   timings (`rhythmbox.h`'s Hammond-patent BASS lanes alternating root and fifth, the SGS M254/M255
   FIFTH and CHORD TRIGGER lanes), and the CHORD stabs those lanes gate (J6 overlaps).
 - [ ] **J6. The organ-era rhythm box** (Nikki: "the truly whimsical ones"). dreamengine has a sourced

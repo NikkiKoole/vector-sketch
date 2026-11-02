@@ -72,11 +72,13 @@ lib.BASS_LOOPS = {
 }
 local DEGREE = { R = 0, ['2'] = 2, m = 3, ['4'] = 5, ['5'] = 7, ['6'] = 9, ['7'] = 10, ['8'] = 12, L = -5 }
 
--- The walks the root takes (semitones over the song's key, one move every rootEvery bars), and how often
--- it moves, both rolled per song: 1 4 5 1 (home, away, the pull, home), 1 5 6 4 (the pop loop that never
--- settles), 1 6 4 5 (doo-wop), 2 5 1 (the jazz arrival), 1 4 1 5, 1 bVII 1 4, around the fourths.
+-- The walks the root takes (semitones over the song's key), and how often it moves, both rolled per
+-- song: 1 4 5 1 (home, away, the pull, home), 1 5 6 4 (the pop loop that never settles), 1 6 4 5
+-- (doo-wop), 2 5 1 (the jazz arrival), 1 4 1 5, 1 bVII 1 4, around the fourths. A walk moves every
+-- rootEvery bars, unless it carries its own lengths (bars = bars per step): Nikki's C F D F E held
+-- 4 1 2 1 1 (in C: 1 4 2 4 3), a step that lingers and then hurries.
 lib.WALKS = { { 0, 5, 7, 0 }, { 0, 7, 9, 5 }, { 0, 9, 5, 7 }, { 2, 7, 0, 0 }, { 0, 5, 0, 7 }, { 0, 10, 0, 5 },
-              { 0, 5, 10, 3, 8, 1, 6, 0 } }
+              { 0, 5, 10, 3, 8, 1, 6, 0 }, { 0, 5, 2, 5, 4, bars = { 4, 1, 2, 1, 1 } } }
 lib.ROOT_EVERY = { 2, 4, 4, 8 }
 
 -- The plan: a genre (style.groups, one per song) at its own tempo, one of its families, a bass walk, and
@@ -95,6 +97,7 @@ function lib.plan(song, style, addSections)
                  layers = style.minLayers, phrase = 0, mode = 'groove', on = {},
                  walk = walk, rootEvery = lib.ROOT_EVERY[rnd(#lib.ROOT_EVERY) + 1],
                  step = 1, root = walk[1] } -- a walk may start away from home (2 5 1)
+    song.jam.left = walk.bars and walk.bars[1] or song.jam.rootEvery -- bars left on this step
     local sections = {}
     for k = 1, style.phrases do sections[k] = { 'A', style.phraseBars } end
     addSections(song, sections)
@@ -113,7 +116,8 @@ local function newPhrase(jam, style)
     if jam.mode == 'break' and want >= 3 then
         jam.mode = 'drop' -- after a breakdown, everything the play level asks for comes back at once
         jam.layers = math.max(jam.layers, want)
-        jam.step, jam.root = 1, jam.walk[1] -- and the drop lands back home
+        jam.step, jam.root = 1, jam.walk[1] -- and the drop lands back home, for a whole step
+        jam.left = (jam.walk.bars and jam.walk.bars[1] or jam.rootEvery) + 1
     elseif jam.mode == 'break' then
         jam.mode, jam.layers = 'groove', want -- calmed down during the breakdown: back without a drop
     elseif jam.layers >= 3 and want >= 3 and jam.phrase % style.breakEvery == 0 then
@@ -130,14 +134,17 @@ local function newPhrase(jam, style)
     end
 end
 
--- The root walker: every rootEvery bars the root takes the walk's next step, unless play is calm (then
--- it holds, so a quiet room sits on one chord). Not on a phrase's first bar after a drop (that's home).
+-- The root walker: when a step's bars are up (its own length, else rootEvery), the root takes the walk's
+-- next step, unless play is calm (then it holds a bar at a time, so a quiet room sits on one chord).
+local function stepBars(jam) return jam.walk.bars and jam.walk.bars[jam.step] or jam.rootEvery end
 local function walkRoot(jam, style, b)
-    if (b - 1) % jam.rootEvery ~= 0 or b == 1 then return end
-    if jam.mode == 'drop' and (b - 1) % style.phraseBars == 0 then return end
-    if (M.activity or 0) < style.perLayer then return end
+    if b == 1 then return end
+    jam.left = jam.left - 1
+    if jam.left > 0 then return end
+    if (M.activity or 0) < style.perLayer then jam.left = 1 return end
     jam.step = jam.step % #jam.walk + 1
     jam.root = jam.walk[jam.step]
+    jam.left = stepBars(jam)
 end
 
 local function hit(play, synth, t, role, s, accent, quieter, genre)
@@ -176,7 +183,7 @@ function lib.bookBar(play, remember, synth, t0, song, b)
     remember(t0, pcs) -- impacts play along in a minor pentatonic on the root
     if jam.on.bass then
         local loops = lib.BASS_LOOPS[jam.group]
-        local moves = b % jam.rootEvery == 0 and (M.activity or 0) >= style.perLayer
+        local moves = jam.left == 1 and (M.activity or 0) >= style.perLayer -- the root changes next bar
         local nextRoot = moves and jam.walk[jam.step % #jam.walk + 1] or jam.root
         bookBass(play, synth, song, t0, loops[(jam.at - 1) % #loops + 1], jam.root, nextRoot)
     end
