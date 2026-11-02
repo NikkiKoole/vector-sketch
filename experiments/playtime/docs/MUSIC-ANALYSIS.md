@@ -170,6 +170,45 @@ These numbers are what to aim at when a style is changed, and the report shows w
   - the Lakh MIDI Dataset (large, messy)
 - What none of them has: our "middle of the band" numbers (re-struck chords, inner lines, span), and a comparison against a generator's own output. That is what is ours.
 
+## What we learned, and the working list (2026-11-02)
+
+What the analysis of real music says about our styles, in one place. The numbers and how they were
+measured are in the sections above. The concepts by name are in `MUSIC-CONCEPTS.md`.
+
+**What we learned:**
+- **The thinness is in the middle of the band.** The tunes move by step as often as real tunes do (40–50%). What's different (our styles vs the 8 score pieces):
+
+  | | ours | real |
+  |---|---|---|
+  | keys re-strike the chord they just played | 50–80% | 8–28% |
+  | inner step lines per 8 bars | 0–0.5 | 3–5 |
+  | keys moving by step | 7–27% | 29–54% |
+  | span, lowest bass to highest tune | 3–4 octaves | 4–6.6 |
+  | loudness spread | 0–8 | 9–19 |
+
+- **The tune is absent more than it is plain.**
+  - It plays in ~38% of the bars, against 90–100%.
+  - While it plays: 0.7 notes a beat, against 1.0–1.2.
+  - Its rhythm is the same in every style for a given seed (`D.motifs` is shared).
+- **The tune sits on chord tones too much** (HookTheory): 80–95% of its notes are in the chord, against 70–79% in real songs. Too few tensions and passing notes.
+- **The harmony moves slowly and stays in the key** (HookTheory, Chordonomicon).
+  - Bossa changes chord 4.8 times per 8 bars, real bossa ~9.5.
+  - Chords from outside the key: ours 0–7%, real bossa 18%, city pop 11%.
+  - Typical progressions:
+    - bossa, jazz, lounge: secondary dominants (II7–V–I, VI7–II7–V7–I) and the backdoor (IV7–iv7–bVII7–I)
+    - game: i–bVI–bVII–IV with V–i
+- **Form** (Chordonomicon): bridges in 7% of bossa songs, 26–28% of pop and game songs. Verses and choruses run ~15–18 chords. A section in another key in 8–17% of songs.
+
+**The working list**, in the order we'd do it (each new idea goes into a style's `ideas`, so spice and the panel can turn it down; measure with the style report before and after):
+- [x] R0. Bossa: the walks (the line cliché) and the flute answer (call and response), settable as ideas with spice (2026-11-02; Nikki on the answer: "sounds pretty good")
+- [ ] R1. Dynamics: phrases that swell and fall, a section that lifts. The biggest untouched gap, and it works for every style at once
+- [ ] R2. Walks and answers in other styles: guaraldi, citypop (the answer on horns or synth), lofi (vibes), vibesnight
+- [ ] R3. Fewer re-struck chords: a repeated stab changes its voicing (an inversion, a moving top note) instead of hitting the same block (bossa's keys are at 67%)
+- [ ] R4. A tune with more colour: tensions (9ths, 13ths) on long notes, approach tones, down to ~75% chord tones; motif banks per style (the rhythm differs per style)
+- [ ] R5. A wider span: the bass drops an octave in places, the tune climbs at its peaks
+- [ ] R6. Faster harmony and borrowed chords: chords lasting one or two bars (`chordBars { 1, 2 }`), chord banks that include the typical progressions
+- [ ] R7. Reference material for voicings: Nikki's MuseScore bossa downloads into `~/music-reference/bossa/`, through `style-report.py --reference`
+
 ## Next steps
 
 - [x] Engine race on the clean guitar pieces (ring-chord-mid, jab-chord-mid), piano, bass ring
@@ -195,5 +234,5 @@ These numbers are what to aim at when a style is changed, and the report shows w
   - [x] Bossa's walks (2026-11-02): a two-bar chord walks one inner voice: the minor line cliché, V9 to b9 only into a chord a fifth below (on the backdoor bVII7 it grated), 6/9 to maj9 (`walks`, `planWalks`). Over 8 songs, step lines per 8 bars went from 0.8 to 1.9 and keys hold from 76% to 67%. Nikki: "sounds better, no very wrong rubs".
   - [ ] To try by ear: bossa without the V9-to-b9 walk (only the minor and major walks), if the b9 still sounds too sharp. It's the idea `flat9` now: set it to never in the music panel.
   - [x] The ideas made settable (2026-11-02): a spice slider (0 plain to 2) and a row per idea (some songs / always / never), live (`MUSIC-CONCEPTS.md`, "Ideas and spice")
-  - [ ] Bossa's answer (2026-11-02, waiting on Nikki's ear): the flute answers where the tune is silent (`bookAnswer`). While the band plays, the tune or the answer fills 18 of 20 bars (the tune alone 14). Our tunes were silent in ~60% of all bars, the real pieces ~5%; while it plays, our tune is 0.7 notes a beat against 1.0–1.2.
-  - [ ] Next: fewer re-struck chords, a wider span, moving loudness
+  - [x] Bossa's answer (2026-11-02; Nikki: "sounds pretty good"): the flute answers where the tune is silent (`bookAnswer`). While the band plays, the tune or the answer fills 18 of 20 bars (the tune alone 14). Our tunes were silent in ~60% of all bars, the real pieces ~5%; while it plays, our tune is 0.7 notes a beat against 1.0–1.2.
+  - The next steps are the working list above (R1–R7)
