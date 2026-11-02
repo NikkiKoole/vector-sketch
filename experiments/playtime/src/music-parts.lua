@@ -95,6 +95,8 @@ local function play(synth, part, patch, t, midi, vol, durMs, step, slide)
     end
     if voice then patch = voice end
     if M.clipAt and t + durMs / 1000 > M.clipAt then durMs = math.max(20, (M.clipAt - t) * 1000) end
+    -- the bar's dynamics (src/music.lua's bookBar, music-plan's dynamicAt); a soft note stays audible
+    if M.dynamic and M.dynamic ~= 0 and vol > 0 then vol = math.max(math.min(vol, 1), vol + M.dynamic) end
     local p, opts = synth.patches and synth.patches[patch], nil
     if p and slide and p.legatoGlide then opts = { glide = p.legatoGlide } end
     if p and p.downbeatAccent and step == 0 then

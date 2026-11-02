@@ -271,11 +271,39 @@ end
 -- say always or never, and the spice slider scales every idea's odds (src/music.lua's ideaOdds)
 local function planIdeas(song, style)
     song.ideas = {}
-    if not style.ideas then return end
-    local rnd, names = stream(song.seed, 16), {}
-    for name in pairs(style.ideas) do names[#names + 1] = name end
+    local ideas, names = D.ideasOf(style), {}
+    local rnd = stream(song.seed, 16)
+    for name in pairs(ideas) do names[#names + 1] = name end
     table.sort(names) -- a fixed order: the same song rolls the same ideas
-    for _, name in ipairs(names) do song.ideas[name] = rnd(100) < (style.ideas[name].songs or 100) end
+    for _, name in ipairs(names) do song.ideas[name] = rnd(100) < (ideas[name].songs or 100) end
+end
+
+-- Dynamics (the idea 'dynamics'): each section's level and a swell, a volume step each, rolled here
+-- and played or not per bar against the idea's odds (dynamicAt). The intro and the first A (the band
+-- alone, no tune yet) sit a step down, B a step up, the outro fades; an A of 4 bars or more can swell
+-- a step through its middle and settle back for its last bar (not B: on top of its lift the song got
+-- louder overall, rms +1.8 dB; this way it stays about level). Its own stream
+local function planDynamics(song)
+    local rnd = stream(song.seed, 17)
+    local aSeen = 0
+    for _, section in ipairs(song.sections) do
+        local kind = section.kind
+        if kind == 'A' then aSeen = aSeen + 1 end
+        section.level = (kind == 'intro' or kind == 'break' or kind == 'outro') and -1
+            or kind == 'A' and not section.roles.lead and aSeen == 1 and -1 or kind == 'B' and 1 or 0
+        section.levelRoll, section.swellRoll = rnd(100), rnd(100)
+    end
+end
+
+-- the volume steps for bar b, given the idea's odds this bar (song.ideaOdds.dynamics)
+local function dynamicAt(song, b, odds)
+    local section, j = song.barSection[b], song.barIndex[b]
+    if not section or not section.levelRoll or odds <= 0 then return 0 end
+    local step = section.levelRoll < odds and section.level or 0
+    if section.kind == 'outro' and step < 0 and j >= section.bars - 2 then step = -2 end -- the fade
+    local swells = section.kind == 'A' and section.bars >= 4
+    if swells and section.swellRoll < odds and j >= section.bars / 4 and j < section.bars - 1 then step = step + 1 end
+    return math.max(-2, math.min(2, step))
 end
 
 -- each part's role per section (bass: 'play', 'last' bar only, 'hold' or 'none')
@@ -524,6 +552,7 @@ local function planSong(setKey)
     planWalks(song, style)
     planIdeas(song, style)
     planForm(song, style, rnd)
+    planDynamics(song)
     planBars(song, style, between, mood)
     rnd = stream(seed, 9)
     planTune(song, style, rnd)
@@ -649,6 +678,8 @@ lib.LOOP_PLANS = LOOP_PLANS
 lib.planChords = planChords
 lib.planWalks = planWalks
 lib.planIdeas = planIdeas
+lib.planDynamics = planDynamics
+lib.dynamicAt = dynamicAt
 lib.sectionRoles = sectionRoles
 lib.planForm = planForm
 lib.pickMood = pickMood

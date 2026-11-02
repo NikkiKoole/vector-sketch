@@ -161,7 +161,7 @@ end
 -- the song doesn't use it (planIdeas) or the settings say never; always: in every song
 local function ideaOdds(song, style)
     local out, settings = {}, state.musicSettings
-    for name, idea in pairs(style.ideas or {}) do
+    for name, idea in pairs(D.ideasOf(style)) do
         local mode = settings.ideas and settings.ideas[name]
         local uses = mode == 'always' or mode ~= 'never' and song.ideas and song.ideas[name]
         out[name] = uses and (idea.odds or 50) * (settings.spice or 1) or 0
@@ -176,6 +176,8 @@ local function bookBar(synth, t0, song, b)
     local style = lib.styles[song.style]
     M.barStart = t0
     song.ideaOdds = ideaOdds(song, style)
+    -- dynamics: every part a volume step or two up or down this bar (music-parts' play adds it)
+    M.dynamic = not style.loop and plan.dynamicAt(song, b, song.ideaOdds.dynamics or 0) or 0
     if style.loop then return (LOOP_BARS[style.loop] or bookLoopBar)(synth, t0, song, b) end
     local section, j = song.barSection[b], song.barIndex[b]
     applyLift(song, section)

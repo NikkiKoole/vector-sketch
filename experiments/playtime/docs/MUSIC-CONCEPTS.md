@@ -68,6 +68,14 @@ Both act at the next bar. Saved setups keep them, and reset puts them back.
   - Bossa, the flute, 2026-11-02: while the band plays, the tune or the answer now fills 18 of 20 bars (it was 14). The real pieces fill 90–100%.
 - **Fill run:** rollo's flute runs down the chord's notes in a phrase's 2nd bar (`bookFluteRun`).
 
+## Dynamics: how loud
+
+- **Terraced dynamics, section levels:** each section has its own level, a volume step apart. The intro and the first A (the band alone, before the tune) sit a step down, B a step up, and the outro fades over its last two bars.
+- **Swell, a phrase arc:** an A section rises a step through its middle and settles back for its last bar. B doesn't swell on top of its lift; that made the songs louder overall.
+- Where: `planDynamics` and `dynamicAt` (`src/music-plan.lua`). The step for each bar is set in `bookBar` (`M.dynamic`) and added to every note in `play()` (`src/music-parts.lua`), drums included. A soft note stays audible.
+- It is an idea that every song style shares (`D.commonIdeas`, `D.ideasOf` in `src/music-styles.lua`), so spice and its panel row control it. The loops and the score styles keep their own loudness.
+- Measured 2026-11-02, loudness spread over 5 songs per style: 0–9 before, 10–17 after (the real pieces: 9–19). The average level comes out ~1.1–1.7 dB higher (the RMS weighs loud bars more).
+
 ## Form and arrangement
 
 - **AABA, ABAB:** the song forms (`D.forms`; style forms like `jingleForms`).
@@ -81,7 +89,6 @@ Both act at the next bar. Saved setups keep them, and reset puts them back.
 
 - **Fewer re-struck chords:** re-voice or rest some stabs. Bossa's keys still re-strike 67% of the time; the real pieces do it 8–28%.
 - **A wider register span (orchestration by range):** spread the bass and the tune further apart. Ours span 3–4 octaves, the real pieces 4–6.6.
-- **Dynamics, swells:** loudness that rises into a section and falls away.
 - **Faster harmonic rhythm:** bossa's chords last 2 bars; real bossa changes about once a bar.
 - **More secondary dominants and borrowed chords**, from the Chordonomicon "typical progressions".
 - **Walks and answers in other styles:** guaraldi, citypop and lofi first.

@@ -201,7 +201,7 @@ measured are in the sections above. The concepts by name are in `MUSIC-CONCEPTS.
 
 **The working list**, in the order we'd do it (each new idea goes into a style's `ideas`, so spice and the panel can turn it down; measure with the style report before and after):
 - [x] R0. Bossa: the walks (the line cliché) and the flute answer (call and response), settable as ideas with spice (2026-11-02; Nikki on the answer: "sounds pretty good")
-- [ ] R1. Dynamics: phrases that swell and fall, a section that lifts. The biggest untouched gap, and it works for every style at once
+- [ ] R1. Dynamics: phrases that swell and fall, a section that lifts. The biggest untouched gap, and it works for every style at once. Built 2026-11-02 (section levels, A swells; the idea `dynamics` in every song style): loudness spread 0–9 to 10–17. Waiting on Nikki's ear
 - [ ] R2. Walks and answers in other styles: guaraldi, citypop (the answer on horns or synth), lofi (vibes), vibesnight
 - [ ] R3. Fewer re-struck chords: a repeated stab changes its voicing (an inversion, a moving top note) instead of hitting the same block (bossa's keys are at 67%)
 - [ ] R4. A tune with more colour: tensions (9ths, 13ths) on long notes, approach tones, down to ~75% chord tones; motif banks per style (the rhythm differs per style)

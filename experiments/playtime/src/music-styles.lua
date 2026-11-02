@@ -746,6 +746,21 @@ D.cityGrooves = {
 
 D.answers = { { 0, 2, 4, 10 }, { 2, 4, 6, 12 }, { 0, 2, 6, 8, 14 }, { 4, 6, 8, 12 }, { 0, 3, 6, 8 } }
 
+-- The ideas every song style shares (docs/MUSIC-CONCEPTS.md), on top of a style's own style.ideas
+-- (a style can say name = false). dynamics: the sections' levels and the swells (music-plan's
+-- planDynamics); the style report measured our loudness barely moving, 0-8 against 9-19 in the pieces
+D.commonIdeas = { dynamics = { odds = 70, songs = 90 } }
+local ideasCache = setmetatable({}, { __mode = 'k' })
+function D.ideasOf(style)
+    if style.loop then return style.ideas or {} end -- the loops and the scores: only their own
+    if ideasCache[style] then return ideasCache[style] end
+    local out = {}
+    for name, idea in pairs(D.commonIdeas) do out[name] = idea end
+    for name, idea in pairs(style.ideas or {}) do out[name] = idea or nil end
+    ideasCache[style] = out
+    return out
+end
+
 -- a style's comp cells: its own, or a shared set from D.comps by name
 function D.compsOf(style)
     return type(style.comps) == 'string' and D.comps[style.comps] or style.comps

@@ -29,11 +29,11 @@ local function styleParts() -- the playing style's parts; with the music off, th
     return seen[now and now.style or music().style]
 end
 -- the playing style's ideas (style.ideas), and every idea any style has, in the panel's order
-local IDEAS = { 'walks', 'flat9', 'answer' }
+local IDEAS = { 'dynamics', 'walks', 'flat9', 'answer' }
 local function styleIdeas()
     local now = music().nowPlaying()
     local style = music().styles[now and now.style or music().style]
-    return style and style.ideas or {}
+    return style and require('src.music-styles').ideasOf(style) or {}
 end
 local function ideaRow(name)
     return { key = name, kind = 'choice', options = { 'some songs', 'always', 'never' },
