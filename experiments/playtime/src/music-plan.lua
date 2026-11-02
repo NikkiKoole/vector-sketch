@@ -182,7 +182,44 @@ local function planLoop(song, style)
     for j = 0, style.bars - 1 do song.barSection[j + 1], song.barIndex[j + 1] = section, j end
     song.bars, song.bar = style.bars, 0
 end
-local LOOP_PLANS = { satie = planSatie, ambient = planAmbient }
+-- a score style: a public domain piece's own notes (src/music-scores/<name>.lua, made by
+-- claudetools/score-from-midi.py), its form a list of { section, first source bar, last }. Played in
+-- the set's key: moved to the nearest transposition of the score's own key.
+local function planScore(song, style)
+    local score = require('src.music-scores.' .. style.score)
+    local list, sourceBars = {}, {}
+    for _, part in ipairs(style.form) do
+        list[#list + 1] = { part[1], part[3] - part[2] + 1 }
+        for bar = part[2], part[3] do sourceBars[#sourceBars + 1] = bar end
+    end
+    addSections(song, list)
+    song.scoreBars, song.hasLead = sourceBars, true
+    song.shift = (song.key - score.key + 6) % 12 - 6
+    -- legato: each tune note lasts until the next one starts, across bar lines; a gap longer than a
+    -- beat stays a rest (the composer wrote it). song.legato[b][i] = note i's length in 16ths.
+    if style.legato then
+        local barSteps, lead = (style.meter or 4) * 4, {}
+        for b, source in ipairs(sourceBars) do
+            for i, n in ipairs(score.bars[source] or {}) do
+                if n[4] == 'l' and not n[6] then
+                    lead[#lead + 1] = { b = b, i = i, at = (b - 1) * barSteps + n[1], len = n[3] }
+                end
+            end
+        end
+        table.sort(lead, function(p, q) return p.at < q.at end)
+        song.legato = {}
+        for k, note in ipairs(lead) do
+            local nextNote, len = lead[k + 1], note.len
+            if nextNote and nextNote.at > note.at then
+                local gap = nextNote.at - (note.at + note.len)
+                if gap > 0 and gap <= 4 then len = nextNote.at - note.at end
+            end
+            song.legato[note.b] = song.legato[note.b] or {}
+            song.legato[note.b][note.i] = len
+        end
+    end
+end
+local LOOP_PLANS = { satie = planSatie, ambient = planAmbient, score = planScore }
 
 -- the key (lofi: the relative minor half the time), the A progression and the B: another loop from
 -- the bank (lofi), A with a ii-V turnaround, or a move of its own

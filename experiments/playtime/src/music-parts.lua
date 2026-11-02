@@ -857,7 +857,63 @@ local function bookTune(bar)
     end
 end
 
-local LOOP_BARS = { satie = bookSatieBar, ambient = bookAmbientBar }
+-- One bar of a score style: the piece's own notes, moved into the song's key. The left hand's lowest
+-- note and the inner voices on the felt piano, the top voice on the tune's patch. Busy play: a sine
+-- under the bass and vibes doubling the tune, as in satie. Grace notes (n[6]) come just before their
+-- 16th (the first bar's grace lands a moment before the bar: booked ahead, so that's fine).
+-- Dynamics: a note's velocity (n[5], from the score's markings) against the piece's usual one moves
+-- every part a volume step per DYNAMIC_STEP, so the swells and the soft passages come through.
+-- style.pedal (16ths): the sustain pedal changes every that many steps, and the keys and the tune
+-- ring until it does (Bach's arpeggios); style.vibes = false: no vibes doubling the tune.
+-- style.legato: the tune's notes run into each other (song.legato, from the plan), the way a flute
+-- plays a phrase; a real slide between notes waits on dreamengine-studio#47 (glides booked ahead).
+-- Settings → music's tune / keys / bass voice (melodyPatch, keysPatch, bassPatch) swap the instruments.
+-- An ensemble score names its parts (n[4] = 'fl', 'vc', ...) and style.parts gives each a role
+-- (l / k / b: which voice setting overrides it, and its base volume), a patch, a volume offset (vol)
+-- and the highest note its instrument plays well (top: above it, an octave down). style.vol moves
+-- every part (an ensemble of bowed strings sits louder than a felt piano).
+local DYNAMIC_STEP = 12
+local function bookScoreBar(synth, t0, song, b)
+    local style = D.styles[song.style]
+    local score = require('src.music-scores.' .. style.score)
+    local notes, shift = score.bars[song.scoreBars[b]] or {}, song.shift
+    local pcs, band = {}, bandPlays()
+    local parts = style.parts or {} -- an ensemble's parts: { fl = { role = 'l', patch = 'flute', top = 81 }, ... }
+    local function roleOf(part) return parts[part] and parts[part].role or part end
+    for _, n in ipairs(notes) do if roleOf(n[4]) ~= 'l' then pcs[#pcs + 1] = (n[2] + shift) % 12 end end
+    remember(t0, pcs)
+    local melody = state.musicSettings.melody
+    local legato = song.legato and song.legato[b] or {}
+    for i, n in ipairs(notes) do
+        local s, midi, own = n[1], n[2] + shift, parts[n[4]] or {}
+        local part = roleOf(n[4])
+        while own.top and midi > own.top do midi = midi - 12 end -- above the instrument's range: an octave down
+        local t = stepTime(song, t0, s) + humanize(part == 'l' and 0.008 or 0.005)
+        local dur = lengthMs(song, s, n[3]) - 20
+        if legato[i] then dur = lengthMs(song, s, legato[i]) + 30 end -- into the next note, no gap
+        if style.pedal and part ~= 'b' then -- the sustain pedal: ring on until the next change
+            local change = (math.floor(s / style.pedal) + 1) * style.pedal
+            dur = math.max(dur, lengthMs(song, s, change - s) - 20)
+        end
+        if n[6] then t, dur = t - 0.07, 90 end -- a grace note: just before its 16th, short
+        local louder = math.floor(((n[5] or score.velocity or 90) - (score.velocity or 90)) / DYNAMIC_STEP + 0.5)
+        local function vol(base) return math.max(1, math.min(7, base + louder + (own.vol or 0) + (style.vol or 0))) end
+        if part == 'b' then
+            local patch = state.musicSettings.bassPatch or own.patch or style.bass or 'piano'
+            play(synth, 'bass', patch, t, midi, vol(3), dur, s)
+            if band and s == 0 then play(synth, 'bass', 'roundBass', t, midi, 1, dur, s) end
+        elseif part == 'k' then
+            local patch = state.musicSettings.keysPatch or own.patch or style.keys or 'piano'
+            play(synth, 'keys', patch, t, midi, vol(2), dur, s)
+        elseif melody then
+            local patch = state.musicSettings.melodyPatch or own.patch or style.lead or 'pianoLead'
+            play(synth, 'lead', patch, t, midi, vol(5), dur, s)
+            if band and style.vibes ~= false then play(synth, 'lead', 'vibes', t, midi, vol(2), dur, s) end
+        end
+    end
+end
+
+local LOOP_BARS = { satie = bookSatieBar, ambient = bookAmbientBar, score = bookScoreBar }
 
 -- strum's guitar: the strings of a chord's barre grip, low to high (nil = damped)
 local function guitarStrings(song, chord)

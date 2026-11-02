@@ -7,12 +7,23 @@ local lib = {}
 local function music() return require('src.music') end
 local function synth() return require('src.synth') end
 
-local function field(key, label, kind, options, advanced)
-    return { key = label, kind = kind, options = options, advanced = advanced,
+local function field(key, label, kind, options, advanced, stepper)
+    return { key = label, kind = kind, options = options, advanced = advanced, stepper = stepper,
         get = function(m) return m[key] end,
         set = function(m, v) m[key] = v end }
 end
 
+-- A part's instrument: 'style' (the style's own) or one of the tonal patches. The tune's voice works in
+-- every style that has a tune; keys and bass in the score styles (src/music-parts.lua bookScoreBar).
+local VOICES = { 'style', 'piano', 'pianoLead', 'feltKeys', 'rhodes', 'rhodesLead', 'lofiKeys', 'clav',
+    'vibes', 'marimba', 'kalimba', 'steelpan', 'tongueDrum', 'guitar', 'jabGuitar', 'jingleGuitar', 'cityGuitar',
+    'pickBass', 'bass', 'musicBass', 'roundBass', 'dubBass', 'jingleBass', 'strings', 'junoPad', 'stab', 'horn',
+    'citySynth', 'flute', 'jingleLead', 'violin', 'viola', 'cello', 'clarinet' }
+local function voiceRow(key, label)
+    return { key = label, kind = 'choice', stepper = true, options = VOICES,
+        get = function(m) return m[key] or 'style' end,
+        set = function(m, v) m[key] = v ~= 'style' and v or nil end }
+end
 lib.rows = {
     { key = 'now', kind = 'note',
         label = function()
@@ -37,8 +48,12 @@ lib.rows = {
     field('style', 'style', 'choice',
           { 'set', 'bossa', 'guaraldi', 'island', 'dusk', 'dumont', 'supermarket', 'herbs', 'lofi', 'puppetmaker',
             'strum', 'rollo', 'jingle', 'vibesnight', 'sesame', 'citypop', 'buymode', 'satie', 'ambient',
-            'ballad' }),
+            'bethena', 'gnossienne', 'gymnopedie', 'bachprelude', 'traumerei', 'carrelage', 'tapisserie',
+            'ballad' }, nil, true),
     field('rhythmSection', 'band', 'choice', { 'auto', 'on', 'off' }),
+    voiceRow('melodyPatch', 'lead'),
+    voiceRow('keysPatch', 'keys'),
+    voiceRow('bassPatch', 'bass'),
     -- the play level (music.bump) as a bar up to twice where the band joins, '|' marks the join
     { key = 'play', kind = 'note',
         label = function()
@@ -62,10 +77,14 @@ local function playingLine(i)
     end
     return entry.part .. '  ' .. table.concat(names, ' ')
 end
+-- The read-outs that grow and shrink with the style (the playing parts, then their pedals) go under
+-- all the controls, so the buttons stay put while you step through the styles. Moving rows around
+-- needs a restart: a hot swap merges the new rows into the old tables and an old row's `visible`
+-- stays on whatever row lands in its place (2026-11-02: the whole panel hid behind 'off').
 for i = 1, #music().parts do
-    table.insert(lib.rows, 1 + i, { key = 'playing' .. i, kind = 'note', -- under 'now'
+    lib.rows[#lib.rows + 1] = { key = 'playing' .. i, kind = 'note',
         label = function() return playingLine(i) or '' end,
-        visible = function() return playingLine(i) ~= nil end })
+        visible = function() return playingLine(i) ~= nil end }
 end
 
 -- the pedals of every instrument with pedals that's playing, a row each ('guitar   drive .22', then
@@ -92,13 +111,13 @@ local function pedalLines()
     return lines
 end
 local MAX_PEDAL_LINES = 12
+for i = 1, MAX_PEDAL_LINES do
+    lib.rows[#lib.rows + 1] = { key = 'pedals' .. i, kind = 'note',
+        label = function() return pedalLines()[i] or '' end,
+        visible = function() return pedalLines()[i] ~= nil end }
+end
 local effectsAt = 1
 for i, row in ipairs(lib.rows) do if row.key == 'volume' then effectsAt = i + 1 end end
-for i = MAX_PEDAL_LINES, 1, -1 do
-    table.insert(lib.rows, effectsAt, { key = 'pedals' .. i, kind = 'note',
-        label = function() return pedalLines()[i] or '' end,
-        visible = function() return pedalLines()[i] ~= nil end })
-end
 -- the effects slider: every pedal's amount, 0 dry, 1 as designed, 2 extreme
 table.insert(lib.rows, effectsAt, { key = 'effects', kind = 'number', min = 0, max = 2,
     get = function() return synth().effectAmount() end,

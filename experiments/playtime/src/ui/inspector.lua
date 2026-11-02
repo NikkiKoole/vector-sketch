@@ -71,14 +71,18 @@ local function drawRow(id, row, target, body, x, y, w, labelWidth)
     elseif row.kind == 'bool' then
         local clicked, checked = ui.checkbox(wx, y + DY, valueOf(row, target) ~= false, '')
         if clicked then return setValue(row, target, checked) end
-    elseif row.kind == 'choice' then
-        local current = valueOf(row, target)
-        if ui.button(wx, y + DY, w - lib.labelWidth, tostring(current)) then
-            local opts = row.options
-            local i = 1
-            for k, o in ipairs(opts) do if o == current then i = k end end
-            return setValue(row, target, opts[i % #opts + 1])
+    elseif row.kind == 'choice' then -- click: the next option; row.stepper: '<' and '>' either side too
+        local current, opts = valueOf(row, target), row.options
+        local i = 1
+        for k, o in ipairs(opts) do if o == current then i = k end end
+        local bx, bw = wx, w - lib.labelWidth
+        if row.stepper then
+            local aw = 22
+            if ui.button(wx, y + DY, aw, '<') then return setValue(row, target, opts[(i - 2) % #opts + 1]) end
+            if ui.button(wx + bw - aw, y + DY, aw, '>') then return setValue(row, target, opts[i % #opts + 1]) end
+            bx, bw = wx + aw + 2, bw - 2 * (aw + 2)
         end
+        if ui.button(bx, y + DY, bw, tostring(current)) then return setValue(row, target, opts[i % #opts + 1]) end
     elseif row.kind == 'action' then -- no label column: the button is the label, full width
         if ui.button(x, y + DY, w - 4, labelOf(row, target)) then return row.run(body, target) end
     elseif row.kind == 'buttons' then -- one small button per option: run(body, target, option)

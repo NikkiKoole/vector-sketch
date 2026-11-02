@@ -20,7 +20,7 @@ lib.reverbDamping = 0.5  -- 0 bright .. 1 dark tail
 -- instrument ids from dreamengine runtime/studio.h (#defines don't come through FFI)
 lib.INSTR = {
     SQUARE = 0, SAW = 1, TRI = 2, NOISE = 3, SINE = 4,
-    PLUCK = 16, MALLET = 17, FM = 18, EPIANO = 20, MEMBRANE = 22, PIPE = 25,
+    PLUCK = 16, MALLET = 17, FM = 18, EPIANO = 20, MEMBRANE = 22, REED = 23, PIPE = 25,
     GUITAR = 26, PIANO = 27, BOWED = 28, BRASS = 29, SAMPLE = 30, MODAL = 31, METAL = 34, WAVESCAN = 36,
     SCRAPE = 39, -- scraped/rattled percussion from separate teeth: harmonics body, timbre rate, morph rattle
     SING = 38, -- one recorded syllable sung at any note by the same speaker (timbre = size, morph = speed)
@@ -199,6 +199,17 @@ lib.patches = {
     -- rollo's flute: dreamengine's pipe.c 'flute' preset (overblow 0, air .38, embouchure .7), a 4.4 Hz
     -- vibrato as measured on the record, and the same cassette. Keep it at A5 or below (PIPE flips mode
     -- above, dreamengine STATUS #31)
+    -- the bowed strings, arco (dreamengine's bowed.c presets: bow position, pressure, speed), each with
+    -- its own body (modes: [MODE_BOW_PIZZ] 0 = bowed, [_BODY] 1, [_SIZE] violin .5 / viola .53 / cello .7086)
+    violin = { pool = true, wave = 'BOWED', adsr = { 40, 0, 7, 220 }, harmonics = 0.45, timbre = 0.30, morph = 0.70,
+               reverb = 0.35, level = 1.0, modes = { [0] = 0, [1] = 1, [2] = 0.5 } },
+    viola = { pool = true, wave = 'BOWED', adsr = { 40, 0, 7, 240 }, harmonics = 0.50, timbre = 0.38, morph = 0.60,
+              reverb = 0.35, level = 1.0, modes = { [0] = 0, [1] = 1, [2] = 0.53 } },
+    cello = { pool = true, wave = 'BOWED', adsr = { 50, 0, 7, 280 }, harmonics = 0.55, timbre = 0.42, morph = 0.55,
+              reverb = 0.3, level = 1.0, modes = { [0] = 0, [1] = 1, [2] = 0.7086 } },
+    -- a clarinet: dreamengine's reed engine (reed.c's clarinet preset: a cylindrical bore, soft cane, dark)
+    clarinet = { pool = true, wave = 'REED', adsr = { 8, 0, 6, 160 }, harmonics = 0, timbre = 0.30, morph = 0.40,
+                 reverb = 0.3, level = 0.5 },
     flute = { fx = true, wave = 'PIPE', adsr = { 1, 0, 6, 140 }, harmonics = 0, timbre = 0.38, morph = 0.7,
               reverb = 0.4, level = 0.22, lfo = { { 0, 4.4, 0.08 } },
               tape = { wow = 0.3, flutter = 0.12, saturation = 0.3, warble = 0.15 } },

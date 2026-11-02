@@ -487,6 +487,50 @@ D.styles = {
     -- ambient: Yoshimura / Music for Airports. Pentatonic figures looping at unequal lengths over a
     -- drone, drifting against each other (D.ambient). No drums, no chords, no tune.
     ambient = { loop = 'ambient', bpm = { 60, 66 }, swing = 0.5 },
+    -- bethena: Scott Joplin's concert waltz (1905), his own notes (public domain; the score from
+    -- Mutopia, src/music-scores/bethena.lua). The intro, the first strain, the segue and the second
+    -- strain (in the score's Bb), the first strain again, the coda. Source bars per section.
+    bethena = { loop = 'score', score = 'bethena', meter = 3, bpm = { 100, 112 }, swing = 0.5,
+        form = { { 'intro', 1, 8 }, { 'A', 9, 24 }, { 'B', 25, 67 }, { 'A', 9, 24 }, { 'outro', 211, 219 } } },
+    -- gnossienne: Satie's Gnossienne No. 1 (1890), his own notes (public domain; the score from Mutopia,
+    -- engraved by Knute Snortum, CC BY-SA 4.0: credit it). Slow, F minor, the left hand rocking the
+    -- bass and a chord, the tune with its grace notes. The whole piece, as written (82 bars of 4/4).
+    gnossienne = { loop = 'score', score = 'gnossienne1', bpm = { 64, 72 }, swing = 0.5,
+        form = { { 'A', 1, 82 } } },
+    -- gymnopedie: Satie's Gymnopédie No. 1 (1888), his own notes (public domain; Mutopia, Evin Robertson).
+    -- Played once through, 47 bars of 3/4; the tune legato (one line, as Satie slurs it).
+    gymnopedie = { loop = 'score', score = 'gymnopedie1', meter = 3, bpm = { 66, 74 }, swing = 0.5, legato = true,
+        form = { { 'A', 1, 47 } } },
+    -- carrelage / tapisserie: Satie's furniture music (Musique d'ameublement, 1917), four bars each,
+    -- meant to repeat without end in the background (transcribed by hand, src/music-scores/). Each part
+    -- its own instrument (style.parts: role, patch, vol, top). Satie wrote them for strings and winds;
+    -- played here on the easy, warm ones (the upright plucked, felt piano, marimba, vibes, the flute):
+    -- the bowed strings (violin/viola/cello patches) were hard to make sound right, 2026-11-02.
+    carrelage = { loop = 'score', score = 'carrelage', vol = -1,
+        meter = 2, bpm = { 76, 84 }, swing = 0.5, vibes = false,
+        form = { { 'A', 1, 4 }, { 'A', 1, 4 }, { 'A', 1, 4 }, { 'A', 1, 4 }, { 'A', 1, 4 }, { 'A', 1, 4 },
+                 { 'A', 1, 4 }, { 'A', 1, 4 } },
+        parts = { fl = { role = 'l', patch = 'flute', top = 81, vol = -3 },
+                  vn1 = { role = 'k', patch = 'vibes', vol = 1 },
+                  vn2 = { role = 'k', patch = 'marimba', vol = 1 }, cl = { role = 'k', patch = 'feltKeys', vol = -1 },
+                  va = { role = 'b', patch = 'feltKeys', vol = -1 }, vc = { role = 'b', patch = 'bass', vol = 1 } } },
+    tapisserie = { loop = 'score', score = 'tapisserie', vol = -1,
+        meter = 3, bpm = { 84, 92 }, swing = 0.5, vibes = false,
+        form = { { 'A', 1, 4 }, { 'A', 1, 4 }, { 'A', 1, 4 }, { 'A', 1, 4 }, { 'A', 1, 4 }, { 'A', 1, 4 },
+                 { 'A', 1, 4 }, { 'A', 1, 4 } },
+        parts = { fl = { role = 'l', patch = 'flute', top = 81, vol = -3 },
+                  tp = { role = 'l', patch = 'vibes', vol = -1 },
+                  cl = { role = 'k', patch = 'marimba', vol = 1 }, vn = { role = 'k', patch = 'feltKeys' },
+                  va = { role = 'b', patch = 'feltKeys', vol = -1 }, vc = { role = 'b', patch = 'bass', vol = 1 } } },
+    -- bachprelude: Bach's Prelude in C, WTC I (1722; public domain, Mutopia, Tobias Erbsland). One
+    -- arpeggio figure, twice a bar: the felt piano throughout, the pedal changing each half bar, no vibes.
+    bachprelude = { loop = 'score', score = 'bachprelude', bpm = { 64, 72 }, swing = 0.5, lead = 'piano',
+        pedal = 8, vibes = false, form = { { 'A', 1, 35 } } },
+    -- traumerei: Schumann's Träumerei, Kinderszenen No. 7 (1838; public domain, Mutopia, Ying-Chun Liu).
+    -- Bar 1 is the pickup; the first eight bars repeat, then the middle and the return. In time: the
+    -- score's ritardandos and fermatas aren't played.
+    traumerei = { loop = 'score', score = 'traumerei', bpm = { 58, 64 }, swing = 0.5,
+        form = { { 'A', 1, 9 }, { 'A', 2, 9 }, { 'B', 10, 17 }, { 'A', 18, 25 } } },
     ballad = {
         bpm = 76, swing = 0.5, chordBars = { 1, 2 }, lydianChance = 0.6, pushOdds = 0,
         strumMs = 70, keys = 'rhodes', lead = 'rhodesLead', bass = 'hold', drums = nil, home = 'maj9',

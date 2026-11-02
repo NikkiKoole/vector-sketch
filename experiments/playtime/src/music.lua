@@ -78,7 +78,8 @@ local lib = {}
 --   enabled
 --   style          'set' (lib.set in turn), or one style: 'bossa', 'guaraldi', 'island', 'dusk', 'dumont',
 --                  'supermarket', 'herbs', 'lofi', 'puppetmaker', 'strum', 'sesame', 'citypop', 'buymode',
---                  'satie', 'ambient', 'jingle', 'vibesnight', 'ballad'
+--                  'satie', 'ambient', 'jingle', 'vibesnight', 'ballad', and the scores: 'bethena', 'gnossienne',
+--                  'gymnopedie', 'bachprelude', 'traumerei', 'carrelage', 'tapisserie'
 --   rhythmSection  'auto' (joins when play gets busy), 'on' or 'off'
 --   upright        the upright in the rhythm section; off: the left hand keeps the bass
 --   melody         the tune on top
@@ -87,10 +88,12 @@ local lib = {}
 --                  music-plan's buildPhrase). Only the styles
 --                  that use bookTune: jingle, satie, strum, rollo, puppetmaker and ambient have their own
 --   melodyPatch    force the tune's voice (rhodesLead, pianoLead, kalimba, ...); nil: the style's
+--   keysPatch,     force the keys' and the bass's voice in the score styles (bethena, bachprelude, ...);
+--   bassPatch      nil: the style's (the felt piano). Settings → music: tune / keys / bass voice
 state.musicSettings = state.musicSettings
     or { enabled = true, style = 'set', rhythmSection = 'auto', upright = false, melody = true }
 local SETTINGS = { enabled = true, style = true, rhythmSection = true, upright = true, melody = true,
-                   melodyPatch = true, tune = true }
+                   melodyPatch = true, keysPatch = true, bassPatch = true, tune = true }
 -- music.trace = fn(part, t, midi, vol, durMs) sees every note (claudetools, specs): on state.music too,
 -- where src/music-parts.lua's play reads it
 local HOOKS = { trace = true }
