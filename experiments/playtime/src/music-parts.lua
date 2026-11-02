@@ -54,9 +54,43 @@ local function notify(part, patch, midi, vol, durMs, t, step)
     end
 end
 
--- M.mute: the parts that sit this bar out (the layers, a handoff); M.clipAt: no note rings past it
+-- The parts with a melody line, whose instrument the panel can swap (drums, perc, vinyl and sample
+-- play several sounds at once: only on or off)
+local TONAL = { lead = true, keys = true, chord = true, guitar = true, horns = true, strings = true, riff = true,
+                bass = true }
+lib.TONAL = TONAL
+
+-- M.mute: the parts that sit this bar out (the layers, a handoff); M.clipAt: no note rings past it.
+-- The panel's part rows (state.musicSettings): partsOff = { part = true } switches a part off in any
+-- style, voices = { part = patch } plays a tonal part on another instrument (lead also takes the old
+-- melodyPatch). M.styleParts[style][part] = the style's own instrument for it, the last one heard,
+-- kept while the part is off, so the panel knows the style's parts and what 'style' means. The
+-- parts that play several sounds (drums, perc, vinyl) go per sound: soundsOff = { kick = true },
+-- soundVoices = { kick = 'bapKick' }, by the style's own sound name; M.styleSounds[style][part] lists them.
 local function play(synth, part, patch, t, midi, vol, durMs, step)
+    local settings = state.musicSettings
+    if M.song then
+        M.styleParts = M.styleParts or {}
+        local parts = M.styleParts[M.song.style] or {}
+        M.styleParts[M.song.style], parts[part] = parts, patch
+        if not TONAL[part] then
+            M.styleSounds = M.styleSounds or {}
+            local bySound = M.styleSounds[M.song.style] or {}
+            M.styleSounds[M.song.style] = bySound
+            bySound[part] = bySound[part] or {}
+            bySound[part][patch] = true
+        end
+    end
+    if settings.partsOff and settings.partsOff[part] then return end
     if M.mute and M.mute[part] then return end
+    local voice
+    if TONAL[part] then
+        voice = settings.voices and settings.voices[part] or part == 'lead' and settings.melodyPatch
+    else
+        if settings.soundsOff and settings.soundsOff[patch] then return end
+        voice = settings.soundVoices and settings.soundVoices[patch]
+    end
+    if voice then patch = voice end
     if M.clipAt and t + durMs / 1000 > M.clipAt then durMs = math.max(20, (M.clipAt - t) * 1000) end
     synth.scheduleAt(patch, t, midi, vol, durMs)
     if M.trace then M.trace(part, t, midi, vol, durMs) end
@@ -687,14 +721,15 @@ local function bookVinyl(bar)
     for _ = 1, ticks do play(synth, 'vinyl', 'crackle', stepTime(song, t0, rnd(16)), 90 + rnd(12), 1, 8) end
 end
 
--- the bass: the left hand, or the upright when the band plays with it; the outro's last bar rests. It
+-- the bass: the style's bass instrument (or the left hand); the outro's last bar rests. It
 -- lets go when the next chord comes in early. lofi's plays on its groove's kicks.
 local function bookBass(bar, groove, pushes, sidestepAt)
     local synth, song, style, t0, b, j = bar.synth, bar.song, bar.style, bar.t0, bar.b, bar.j
     local section, chords, nextChords, band = bar.section, bar.chords, bar.nextChords, bar.band
-    local upright = band and state.musicSettings.upright and bar.roles.drums ~= 'none'
-    local bassPatch = upright and 'musicBass' or style.bassPatch or style.keys
-    local lo = upright and 34 or style.bassLo or 40
+    -- (the 'upright' switch that put this on musicBass while the band was in is gone, 2026-11-02:
+    -- the panel's bass row picks any instrument now)
+    local bassPatch = style.bassPatch or style.keys
+    local lo = style.bassLo or 40
     local bassRole = bar.roles.bass or 'play'
     local nextRoot = nextChords and (song.key + nextChords[1].degree) % 12
     if bassRole == 'none' or (bassRole == 'last' and j < section.bars - 1) then
@@ -867,7 +902,7 @@ end
 -- ring until it does (Bach's arpeggios); style.vibes = false: no vibes doubling the tune.
 -- style.legato: the tune's notes run into each other (song.legato, from the plan), the way a flute
 -- plays a phrase; a real slide between notes waits on dreamengine-studio#47 (glides booked ahead).
--- Settings → music's tune / keys / bass voice (melodyPatch, keysPatch, bassPatch) swap the instruments.
+-- Settings → music's part rows swap any part's instrument (in play, for every style).
 -- An ensemble score names its parts (n[4] = 'fl', 'vc', ...) and style.parts gives each a role
 -- (l / k / b: which voice setting overrides it, and its base volume), a patch, a volume offset (vol)
 -- and the highest note its instrument plays well (top: above it, an octave down). style.vol moves
@@ -899,14 +934,14 @@ local function bookScoreBar(synth, t0, song, b)
         local louder = math.floor(((n[5] or score.velocity or 90) - (score.velocity or 90)) / DYNAMIC_STEP + 0.5)
         local function vol(base) return math.max(1, math.min(7, base + louder + (own.vol or 0) + (style.vol or 0))) end
         if part == 'b' then
-            local patch = state.musicSettings.bassPatch or own.patch or style.bass or 'piano'
+            local patch = own.patch or style.bass or 'piano'
             play(synth, 'bass', patch, t, midi, vol(3), dur, s)
             if band and s == 0 then play(synth, 'bass', 'roundBass', t, midi, 1, dur, s) end
         elseif part == 'k' then
-            local patch = state.musicSettings.keysPatch or own.patch or style.keys or 'piano'
+            local patch = own.patch or style.keys or 'piano'
             play(synth, 'keys', patch, t, midi, vol(2), dur, s)
         elseif melody then
-            local patch = state.musicSettings.melodyPatch or own.patch or style.lead or 'pianoLead'
+            local patch = own.patch or style.lead or 'pianoLead'
             play(synth, 'lead', patch, t, midi, vol(5), dur, s)
             if band and style.vibes ~= false then play(synth, 'lead', 'vibes', t, midi, vol(2), dur, s) end
         end

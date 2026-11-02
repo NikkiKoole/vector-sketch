@@ -28,7 +28,8 @@ end
 
 -- Kinds: text (keepSpaces = true keeps spaces), number (slider + field), numberText
 -- (field only), bool, choice, action, buttons (one per option), note (label only),
--- color (swatch + hex), file (texture browser + name).
+-- color (swatch + hex), file (texture browser + name), part (a checkbox with the label, on(target) /
+-- setOn(target, v), then a '<' choice '>' when the row has options, else note(target) as text).
 -- A row reads/writes `target[key]`, or calls row.get(target) / row.set(target, v)
 -- (Box2D objects). A set may return a replacement target (a rebuilt joint).
 local function valueOf(row, target)
@@ -48,11 +49,29 @@ local function resolve(v, target)
     return v
 end
 
+-- A choice button at bx, width bw: click = the next option; stepper = '<' and '>' either side too.
+-- row.display(target, value) may show a value as other text. Returns the option picked, or nil.
+local function drawChoice(row, target, bx, y, bw)
+    local current, opts = valueOf(row, target), resolve(row.options, target)
+    local i = 1
+    for k, o in ipairs(opts) do if o == current then i = k end end
+    if row.stepper then
+        local aw = 22
+        if ui.button(bx, y + DY, aw, '<') then return opts[(i - 2) % #opts + 1] end
+        if ui.button(bx + bw - aw, y + DY, aw, '>') then return opts[i % #opts + 1] end
+        bx, bw = bx + aw + 2, bw - 2 * (aw + 2)
+    end
+    local text = row.display and row.display(target, current) or tostring(current)
+    if ui.button(bx, y + DY, bw, text) then return opts[i % #opts + 1] end
+end
+
 -- Returns a replacement target when the row's set rebuilt it. labelWidth: the
 -- label column (default lib.labelWidth; a checkbox pair uses its own).
 local function drawRow(id, row, target, body, x, y, w, labelWidth)
     local wx = x + (labelWidth or lib.labelWidth)
-    if row.kind ~= 'action' and row.kind ~= 'note' then ui.alignedLabel(x, y + DY, labelOf(row, target)) end
+    if row.kind ~= 'action' and row.kind ~= 'note' and row.kind ~= 'part' and not row.wide then
+        ui.alignedLabel(x, y + DY, labelOf(row, target))
+    end
     if row.kind == 'text' then
         local t, dirty = ui.textinput(id .. row.key, wx, y + 2, w - lib.labelWidth, FIELD_H, row.default or '',
             valueOf(row, target) or '')
@@ -72,23 +91,25 @@ local function drawRow(id, row, target, body, x, y, w, labelWidth)
         local clicked, checked = ui.checkbox(wx, y + DY, valueOf(row, target) ~= false, '')
         if clicked then return setValue(row, target, checked) end
     elseif row.kind == 'choice' then -- click: the next option; row.stepper: '<' and '>' either side too
-        local current, opts = valueOf(row, target), row.options
-        local i = 1
-        for k, o in ipairs(opts) do if o == current then i = k end end
-        local bx, bw = wx, w - lib.labelWidth
-        if row.stepper then
-            local aw = 22
-            if ui.button(wx, y + DY, aw, '<') then return setValue(row, target, opts[(i - 2) % #opts + 1]) end
-            if ui.button(wx + bw - aw, y + DY, aw, '>') then return setValue(row, target, opts[i % #opts + 1]) end
-            bx, bw = wx + aw + 2, bw - 2 * (aw + 2)
+        local picked = drawChoice(row, target, wx, y, w - lib.labelWidth)
+        if picked ~= nil then return setValue(row, target, picked) end
+    elseif row.kind == 'part' then -- [x] name, then '<' choice '>' (or a note): a wider label column
+        local clicked, checked = ui.checkbox(x, y + DY, row.on(target), labelOf(row, target))
+        if clicked then return row.setOn(target, checked) end
+        local px = x + lib.labelWidth + 24
+        if row.options then
+            local picked = drawChoice(row, target, px, y, w - lib.labelWidth - 24)
+            if picked ~= nil then return setValue(row, target, picked) end
+        elseif row.note then
+            ui.alignedLabel(px, y + DY, row.note(target))
         end
-        if ui.button(bx, y + DY, bw, tostring(current)) then return setValue(row, target, opts[i % #opts + 1]) end
     elseif row.kind == 'action' then -- no label column: the button is the label, full width
         if ui.button(x, y + DY, w - 4, labelOf(row, target)) then return row.run(body, target) end
-    elseif row.kind == 'buttons' then -- one small button per option: run(body, target, option)
-        local bw = (w - lib.labelWidth) / #row.options
+    elseif row.kind == 'buttons' then -- one small button per option: run(body, target, option); wide: no label
+        local bx = row.wide and x or wx
+        local bw = (row.wide and w - 4 or w - lib.labelWidth) / #row.options
         for i, option in ipairs(row.options) do
-            if ui.button(wx + (i - 1) * bw, y + DY, bw - 4, option) then return row.run(body, target, option) end
+            if ui.button(bx + (i - 1) * bw, y + DY, bw - 4, option) then return row.run(body, target, option) end
         end
     elseif row.kind == 'note' then
         ui.alignedLabel(x, y + DY, labelOf(row, target), { 1, 1, 1, 0.6 })

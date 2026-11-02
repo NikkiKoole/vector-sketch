@@ -32,8 +32,8 @@
 -- one starts in a related key.
 --
 -- The arrangement follows the play: calm, the keys play alone and the left hand takes the bass;
--- busy (impacts call music.bump), the drums join where the form lets them (the upright too when
--- lib.upright is on). rhythmSection forces that on or off. lib.chordNotes lets sound effects play
+-- busy (impacts call music.bump), the drums join where the form lets them. rhythmSection forces
+-- that on or off. lib.chordNotes lets sound effects play
 -- in the current chord. Notes are booked ahead on the synth's audio clock, a bar at a time.
 -- Driven by src/sound.lua every frame (paused or not); rooms change it with lib.cue and lib.layers
 -- (src/room-music.lua).
@@ -81,19 +81,33 @@ local lib = {}
 --                  'satie', 'ambient', 'jingle', 'vibesnight', 'ballad', and the scores: 'bethena', 'gnossienne',
 --                  'gymnopedie', 'bachprelude', 'traumerei', 'carrelage', 'tapisserie'
 --   rhythmSection  'auto' (joins when play gets busy), 'on' or 'off'
---   upright        the upright in the rhythm section; off: the left hand keeps the bass
 --   melody         the tune on top
 --   tune           how the tune is built: 'guide' (the default: from each chord, guide tones and chord
 --                  scales, src/music-guide.lua) or 'classic' (the key's pentatonic, fitted to the chords,
 --                  music-plan's buildPhrase). Only the styles
 --                  that use bookTune: jingle, satie, strum, rollo, puppetmaker and ambient have their own
 --   melodyPatch    force the tune's voice (rhodesLead, pianoLead, kalimba, ...); nil: the style's
---   keysPatch,     force the keys' and the bass's voice in the score styles (bethena, bachprelude, ...);
---   bassPatch      nil: the style's (the felt piano). Settings → music: tune / keys / bass voice
+--                  (claudetools/render-music.lua's MELODY; the panel uses voices.lead)
+--   voices         { part = patch }: a tonal part on another instrument, in every style (music-parts' play)
+--   partsOff       { part = true }: parts switched off, in every style (the panel's part rows)
+--   soundsOff,     { kick = true } / { kick = 'bapKick' }: the drums', perc's and vinyl's sounds one by
+--   soundVoices    one, off or on another sound (by the style's own sound name)
 state.musicSettings = state.musicSettings
-    or { enabled = true, style = 'set', rhythmSection = 'auto', upright = false, melody = true }
-local SETTINGS = { enabled = true, style = true, rhythmSection = true, upright = true, melody = true,
-                   melodyPatch = true, keysPatch = true, bassPatch = true, tune = true }
+    or { enabled = true, style = 'set', rhythmSection = 'auto', melody = true }
+local SETTINGS = { enabled = true, style = true, rhythmSection = true, melody = true,
+                   melodyPatch = true, voices = true, partsOff = true, soundsOff = true, soundVoices = true,
+                   tune = true }
+do -- the per-part settings that came before voices
+    local s = state.musicSettings
+    s.voices = s.voices or {}
+    for old, part in pairs({ melodyPatch = 'lead', keysPatch = 'keys', bassPatch = 'bass' }) do
+        if s[old] then s.voices[part], s[old] = s.voices[part] or s[old], nil end
+    end
+    if s.melody == false then -- the melody switch is lead's checkbox in the part rows now
+        s.partsOff = s.partsOff or {}
+        s.partsOff.lead, s.melody = true, true
+    end
+end
 -- music.trace = fn(part, t, midi, vol, durMs) sees every note (claudetools, specs): on state.music too,
 -- where src/music-parts.lua's play reads it
 local HOOKS = { trace = true }
@@ -229,6 +243,12 @@ local LAYERS = {
                sample = true },
     rhythm = { lead = true, keys = true, chord = true, strings = true },
 }
+-- the parts a preset switches off, for the panel's layer buttons (a copy)
+function lib.layerParts(preset)
+    local off = {}
+    for part in pairs(LAYERS[preset] or {}) do off[part] = true end
+    return off
+end
 local function layerOf(preset)
     if type(preset) == 'string' then
         if not LAYERS[preset] then return nil end
