@@ -29,12 +29,16 @@ lib.LAYERS = {
     { name = 'perc', roles = { 'RS', 'CB', 'TB', 'LT', 'MT', 'HT', 'CY' } },
 }
 
--- role -> { patch, midi, vol, length ms }: the general patches until the jam has a kit of its own (J4)
+-- role -> { patch, midi, vol, length ms }: Playtime's own drum patches, played the way its other kits play
+-- them (music-parts' drumKits: the hat at 60, the ride at 81, the rim at 79), so the music panel's drum
+-- rows read as the drums they are (the closed and the open hat are both 'hat', the open one longer). The
+-- first cut used stand-ins (a shaker for the hats, a djembe for rim and toms) and the rows didn't match
+-- what played. A drum machine's own voices are still J4.
 lib.VOICES = {
     BD = { 'bapKick', 36, 5, 160 }, SD = { 'snare', 60, 4, 120 }, CPS = { 'clap', 60, 4, 100 },
-    CH = { 'shaker', 82, 3, 35 }, OH = { 'tamb', 80, 3, 160 }, CY = { 'tamb', 76, 3, 600 },
-    RS = { 'djembe', 79, 3, 60 }, CB = { 'tongueDrum', 81, 3, 120 }, TB = { 'tamb', 84, 2, 60 },
-    LT = { 'djembe', 50, 4, 200 }, MT = { 'djembe', 55, 4, 180 }, HT = { 'djembe', 60, 4, 160 },
+    CH = { 'hat', 60, 3, 28 }, OH = { 'hat', 60, 3, 140 }, CY = { 'ride', 81, 4, 600 },
+    RS = { 'rim', 79, 4, 40 }, CB = { 'wood', 76, 3, 120 }, TB = { 'tamb', 84, 2, 60 },
+    LT = { 'tom', 45, 4, 220 }, MT = { 'tom', 50, 4, 200 }, HT = { 'tom', 55, 4, 180 },
 }
 -- a genre's own voices over those: the brushes are the soft kick, a sweep, a tap and the hi-hat foot
 lib.GENRE_VOICES = {
