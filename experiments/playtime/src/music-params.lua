@@ -152,6 +152,24 @@ local MAX_PEDAL_LINES = 12
 -- is built, the play level. Moving rows around needs a restart: a hot swap merges the
 -- new rows into the old tables, and an old row's `visible` stays on whatever row lands in its place
 -- (2026-11-02: the whole panel hid behind 'off').
+-- The drum jam's picks (src/music-jam.lua, docs/DRUM-JAM.md): the bass's walk, its figure, how often the
+-- root moves. 'auto' = what the song rolled. Live (the walk from its next change), shown only while the jam
+-- plays, kept in state.musicSettings.jam (a setup saves it: src/music-setups.lua's CHOICES).
+local function jamRow(key, label, options)
+    return { key = label, kind = 'choice', options = options, stepper = true,
+        visible = function()
+            local now = music().nowPlaying()
+            return (now and now.style or music().style) == 'jam'
+        end,
+        get = function() return (state().musicSettings.jam or {})[key] or 'auto' end,
+        set = function(_, v)
+            local s = state().musicSettings
+            s.jam = s.jam or {}
+            s.jam[key] = v
+        end }
+end
+local jam = require('src.music-jam')
+
 lib.rows = {
     { key = 'now', kind = 'note',
         label = function()
@@ -175,6 +193,9 @@ lib.rows = {
             'bethena', 'gnossienne', 'gymnopedie', 'bachprelude', 'traumerei', 'carrelage', 'tapisserie', 'gershwin2',
             'ballad', 'acid', 'jam' }, nil, true),
     field('rhythmSection', 'band', 'choice', { 'auto', 'on', 'off' }),
+    jamRow('walk', 'jam walk', jam.walkNames()),
+    jamRow('figure', 'jam bass', jam.figureNames()),
+    jamRow('pace', 'jam pace', jam.PACES),
     -- the style's ideas (docs/MUSIC-CONCEPTS.md: the walks, the answer): spice scales them all, 0 plain
     -- to 2, 1 as designed; a row per idea the playing style has, from none to lots: never, less (half as
     -- often), some songs (the style's share, as designed), always (every song), lots (every song, twice

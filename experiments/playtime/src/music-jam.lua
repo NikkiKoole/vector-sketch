@@ -68,6 +68,14 @@ lib.BASS = 'musicBass'
 -- Few notes on purpose (Nikki: the ROOT MOVING is the point, a busy riff buries it): A = root-octave-b7,
 -- the classic funk cell and Nikki's favourite (2026-11-02), in every genre; B = a figure that suits it:
 -- the push (N, the next root early) for the funky ones, the octave pop for Disco, the approach for Brushes.
+-- The figures by name, for the music panel's 'jam bass' row (a pick plays instead of the genre's two).
+lib.FIGURES = {
+    { name = 'root-octave-b7', loop = 'R..8..7.........' },
+    { name = 'the push', loop = 'R.............N.' },
+    { name = 'the one', loop = 'R...............' },
+    { name = 'octave pop', loop = 'R.....8.R.....8.' },
+    { name = 'approach', loop = 'R-----........A.' },
+}
 lib.BASS_LOOPS = {
     Electro = { 'R..8..7.........', 'R.............N.' },
     ['Hip Hop'] = { 'R..8..7.........', 'R.............N.' },
@@ -83,9 +91,29 @@ local DEGREE = { R = 0, ['2'] = 2, m = 3, ['3'] = 4, ['4'] = 5, ['5'] = 7, ['6']
 -- song: 1 4 5 1 (home, away, the pull, home), 1 5 6 4 (the pop loop that never settles), 1 6 4 5
 -- (doo-wop), 2 5 1 (the jazz arrival), 1 4 1 5, 1 bVII 1 4, around the fourths. A walk moves every
 -- rootEvery bars, unless it carries its own lengths (bars = { bars per step }).
-lib.WALKS = { { 0, 5, 7, 0 }, { 0, 7, 9, 5 }, { 0, 9, 5, 7 }, { 2, 7, 0, 0 }, { 0, 5, 0, 7 }, { 0, 10, 0, 5 },
-              { 0, 5, 10, 3, 8, 1, 6, 0 } }
-lib.ROOT_EVERY = { 2, 4, 4, 8 }
+-- Named for the music panel's 'jam walk' row. Paces: 2 or 4 bars (8 was too slow to hear the walk).
+lib.WALKS = {
+    { name = '1 4 5 1', 0, 5, 7, 0 }, { name = '1 5 6 4', 0, 7, 9, 5 }, { name = '1 6 4 5 doo-wop', 0, 9, 5, 7 },
+    { name = '2 5 1', 2, 7, 0, 0 }, { name = '1 4 1 5', 0, 5, 0, 7 }, { name = '1 b7 1 4', 0, 10, 0, 5 },
+    { name = 'round the fourths', 0, 5, 10, 3, 8, 1, 6, 0 },
+}
+lib.ROOT_EVERY = { 2, 4 }
+
+-- The music panel's picks (state.musicSettings.jam = { walk, figure, pace }, src/music-params.lua; saved
+-- in setups): a name, or nil / 'auto' = what the song rolled. Read every bar, so a pick is live.
+local function picks() return state.musicSettings and state.musicSettings.jam or {} end
+local function picked(list, name)
+    if not name or name == 'auto' then return nil end
+    for _, item in ipairs(list) do if item.name == name then return item end end
+end
+local function names(list)
+    local out = { 'auto' }
+    for _, item in ipairs(list) do out[#out + 1] = item.name end
+    return out
+end
+function lib.walkNames() return names(lib.WALKS) end
+function lib.figureNames() return names(lib.FIGURES) end
+lib.PACES = { 'auto', '2', '4' }
 
 -- The plan: a genre (style.groups, one per song) at its own tempo, one of its families, a bass walk, and
 -- a long run of phrases. What happens in them is decided as they come (bookBar), from the play level.
@@ -99,9 +127,12 @@ function lib.plan(song, style, addSections)
     song.barLength = 4 * song.beat
     if lib.SWING[group] then song.swing = lib.SWING[group] end
     local walk = lib.WALKS[rnd(#lib.WALKS) + 1]
+    local every = lib.ROOT_EVERY[rnd(#lib.ROOT_EVERY) + 1]
+    walk = picked(lib.WALKS, picks().walk) or walk -- rolled first either way, so a pick moves no other roll
+    every = tonumber(picks().pace) or every
     song.jam = { group = group, family = family.name, patterns = family.loops, fill = family.fill, at = 1,
                  layers = style.minLayers, phrase = 0, mode = 'groove', on = {},
-                 walk = walk, rootEvery = lib.ROOT_EVERY[rnd(#lib.ROOT_EVERY) + 1],
+                 walk = walk, rootEvery = every,
                  step = 1, root = walk[1] } -- a walk may start away from home (2 5 1)
     song.jam.left = walk.bars and walk.bars[1] or song.jam.rootEvery -- bars left on this step
     local sections = {}
@@ -143,12 +174,19 @@ end
 -- The root walker: when a step's bars are up (its own length, else rootEvery), the root takes the walk's
 -- next step, unless play is calm (then it holds a bar at a time, so a quiet room sits on one chord).
 local function stepBars(jam) return jam.walk.bars and jam.walk.bars[jam.step] or jam.rootEvery end
+-- A walk picked in the panel waits for the next change, then starts from its first step.
+local function nextWalk(jam)
+    local want = picked(lib.WALKS, picks().walk)
+    return want and want ~= jam.walk and want or nil
+end
 local function walkRoot(jam, style, b)
+    jam.rootEvery = tonumber(picks().pace) or jam.rootEvery
     if b == 1 then return end
     jam.left = jam.left - 1
     if jam.left > 0 then return end
     if (M.activity or 0) < style.perLayer then jam.left = 1 return end
-    jam.step = jam.step % #jam.walk + 1
+    local switch = nextWalk(jam)
+    if switch then jam.walk, jam.step = switch, 1 else jam.step = jam.step % #jam.walk + 1 end
     jam.root = jam.walk[jam.step]
     jam.left = stepBars(jam)
 end
@@ -193,9 +231,12 @@ function lib.bookBar(play, remember, synth, t0, song, b)
     remember(t0, pcs) -- impacts play along in a minor pentatonic on the root
     if jam.on.bass then
         local loops = lib.BASS_LOOPS[jam.group]
+        local figure = picked(lib.FIGURES, picks().figure)
+        local loop = figure and figure.loop or loops[(jam.at - 1) % #loops + 1]
         local moves = jam.left == 1 and (M.activity or 0) >= style.perLayer -- the root changes next bar
-        local nextRoot = moves and jam.walk[jam.step % #jam.walk + 1] or jam.root
-        bookBass(play, synth, song, t0, loops[(jam.at - 1) % #loops + 1], jam.root, nextRoot, b)
+        local switch = moves and nextWalk(jam)
+        local nextRoot = switch and switch[1] or moves and jam.walk[jam.step % #jam.walk + 1] or jam.root
+        bookBass(play, synth, song, t0, loop, jam.root, nextRoot, b)
     end
     local lastBar = inPhrase == style.phraseBars - 1
     local fill = lastBar and (jam.on.snare or jam.mode == 'break')

@@ -93,7 +93,10 @@ Until then the jam plays the general patches; that's enough to hear whether the 
   loop is the PUSH: the next bar's root itself, early (on the and-of-4), the funk way to transpose.
   Focus (Nikki, 2026-11-02): the ROOT MOVING is the point, so the loops want 1-3 notes, not riffs;
   candidates rendered over 1 4 5 1 on Funk drums: the one, the push, octave pop, root-octave-b7,
-  approach. Next: the sourced
+  approach. Root-octave-b7 (Nikki's favourite) is every genre's main figure. The paces are 2 or 4 bars (8
+  was too slow to hear the walk). PICKING (settings -> music, while the jam plays): 'jam walk', 'jam bass'
+  (the figure) and 'jam pace', each 'auto' = rolled per song; live (a walk from its next change, starting at
+  its first step), saved in setups (state.musicSettings.jam). Next: the sourced
   timings (`rhythmbox.h`'s Hammond-patent BASS lanes alternating root and fifth, the SGS M254/M255
   FIFTH and CHORD TRIGGER lanes), and the CHORD stabs those lanes gate (J6 overlaps).
 - [ ] **J6. The organ-era rhythm box** (Nikki: "the truly whimsical ones"). dreamengine has a sourced
