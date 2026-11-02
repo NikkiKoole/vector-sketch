@@ -19,7 +19,7 @@ end
 local VOICES = { 'style', 'piano', 'pianoLead', 'feltKeys', 'rhodes', 'rhodesLead', 'lofiKeys', 'clav',
     'vibes', 'marimba', 'kalimba', 'steelpan', 'tongueDrum', 'guitar', 'jabGuitar', 'jingleGuitar', 'cityGuitar',
     'pickBass', 'bass', 'musicBass', 'roundBass', 'dubBass', 'jingleBass', 'strings', 'junoPad', 'stab', 'horn',
-    'citySynth', 'flute', 'jingleLead', 'violin', 'viola', 'cello', 'clarinet' }
+    'citySynth', 'flute', 'jingleLead', 'tb303', 'violin', 'viola', 'cello', 'clarinet' }
 -- One row per part the playing style uses (src/music-parts.lua's play remembers them, also while a
 -- part is off): [x] on/off, the part's name with a dot while it sounds, and for the tonal parts
 -- '< instrument >' ('(rhodes)' = the style's own); drums, perc and vinyl get a row per sound under them.

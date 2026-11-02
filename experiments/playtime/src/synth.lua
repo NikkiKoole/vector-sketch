@@ -210,6 +210,15 @@ lib.patches = {
     -- a clarinet: dreamengine's reed engine (reed.c's clarinet preset: a cylindrical bore, soft cane, dark)
     clarinet = { pool = true, wave = 'REED', adsr = { 8, 0, 6, 160 }, harmonics = 0, timbre = 0.30, morph = 0.40,
                  reverb = 0.3, level = 0.5 },
+    -- a TB-303 (dreamengine's acid303.h, voiced stock, pre-Devil-Fish): a raw saw through the diode-ladder
+    -- lowpass (FILTER_DIODE = 10; CUT .45 -> 390 Hz, RES .7 -> Q 10), every note kicking the filter
+    -- envelope (ENV .6 x the sweep 1.66 -> ~3000 Hz over DEC .4 -> 230 ms), soft drive .35, and the slow
+    -- analog drift (random-walk LFOs on pitch and cutoff). No slide or accent: those need held notes
+    -- booked ahead (dreamengine-studio#47).
+    tb303 = { fx = true, wave = 'SAW', adsr = { 2, 60, 6, 25 }, reverb = 0.1, level = 0.5,
+              filter = { mode = 10, cutoff = 390, resonance = 10 }, env = { 0, 230, 2990 },
+              drive = 0.35, driveMode = 0,
+              lfo = { { 0, 0.13, 0.025, shape = 7 }, { 3, 0.19, 20, shape = 7 } } },
     flute = { fx = true, wave = 'PIPE', adsr = { 1, 0, 6, 140 }, harmonics = 0, timbre = 0.38, morph = 0.7,
               reverb = 0.4, level = 0.22, lfo = { { 0, 4.4, 0.08 } },
               tape = { wow = 0.3, flutter = 0.12, saturation = 0.3, warble = 0.15 } },
@@ -267,6 +276,8 @@ void instrument_lfo(int slot, int which, int dest, float rate_hz, float depth);
 void instrument_chorus(int slot, float rate, float depth, float mix);
 void instrument_flanger(int slot, float rate, float depth, float feedback, float mix);
 void instrument_drive(int slot, float x);
+void instrument_env(int slot, int which, int dest, int attack_ms, int decay_ms, float amount);
+void lfo_shape(int slot, int which, int shape);
 void instrument_drive_mode(int slot, int mode);
 double audio_time(void);
 void schedule_at(double t, int midi, int instr, int vol, int dur_ms);
@@ -364,7 +375,14 @@ local function definePatch(slot, patch, name)
     local filter = patch.filter or { mode = 0, cutoff = 0, resonance = 0 }
     S.C.instrument_filter(slot, filter.mode, filter.cutoff, filter.resonance)
     S.C.instrument_glide(slot, patch.glide or 0)
-    for i, lfo in ipairs(patch.lfo or {}) do S.C.instrument_lfo(slot, i - 1, lfo[1], lfo[2], lfo[3]) end
+    for i, lfo in ipairs(patch.lfo or {}) do
+        S.C.instrument_lfo(slot, i - 1, lfo[1], lfo[2], lfo[3])
+        if lfo.shape or patch.pool or patch.fx then S.C.lfo_shape(slot, i - 1, lfo.shape or 0) end
+    end
+    -- env = { attack ms, decay ms, amount }: a filter envelope kicked by every note (ENV_CUTOFF);
+    -- a shared slot gets it switched off when its patch has none
+    if patch.env then S.C.instrument_env(slot, 0, 0, patch.env[1], patch.env[2], patch.env[3])
+    elseif patch.pool or patch.fx then S.C.instrument_env(slot, 0, 0, 0, 0, 0) end
     if patch.pool then return end -- inserts take an FX bus for good: never on a pool slot
     if patch.fx then -- an effect slot: switch off the last patch's pedals on its bus, then put on these
         S.C.instrument_chorus(slot, 1.5, 0, 0)

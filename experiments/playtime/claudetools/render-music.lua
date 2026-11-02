@@ -1,7 +1,7 @@
 -- Renders the real src/music.lua + src/synth.lua offline to a WAV.
 -- usage: luajit render.lua <out.wav> <seconds> <style: set|bossa|guaraldi|ballad> <rhythm: auto|on|off>
 --        [busyFrom seconds] [seed]
--- env: MELODY=<patch> swaps the tune's voice, SOLO=<patch,patch> renders a stem,
+-- env: MELODY=<patch> swaps the tune's voice, VOICES=bass:tb303,lead:flute any part's, SOLO=<patch,patch> a stem,
 --      TUNE=classic builds the tune the old way (the default is guide, src/music-guide.lua),
 --      CUES=20:citypop,45:satie:bar,70:keep:cellar cues a style (or only layers, with 'keep') at a second,
 --      EFFECTS=0..2 the effects slider (every pedal's amount; 1 = as designed)
@@ -23,6 +23,12 @@ local music = require('src.music')
 music.style, music.rhythmSection = style, rhythm
 if os.getenv('TUNE') then music.tune = os.getenv('TUNE') end
 if os.getenv('MELODY') then music.melody, music.melodyPatch = true, os.getenv('MELODY') end
+-- VOICES=bass:tb303,lead:flute plays parts on other instruments, as the panel's part rows do
+if os.getenv('VOICES') then
+    local voices = {}
+    for part, patch in os.getenv('VOICES'):gmatch('(%w+):(%w+)') do voices[part] = patch end
+    music.voices = voices
+end
 -- SOLO=piano,ride renders only those patches (a stem); the rms printed is over the windows where it sounds
 if os.getenv('SOLO') then
     local keep, scheduleAt = {}, synth.scheduleAt
