@@ -1093,7 +1093,8 @@ local function bookAcidBar(synth, t0, song, b)
     end
 end
 
-local LOOP_BARS = { satie = bookSatieBar, ambient = bookAmbientBar, score = bookScoreBar, acid = bookAcidBar }
+local LOOP_BARS = { satie = bookSatieBar, ambient = bookAmbientBar, score = bookScoreBar, acid = bookAcidBar,
+    jam = function(synth, t0, song, b) return require('src.music-jam').bookBar(play, remember, synth, t0, song, b) end }
 
 -- strum's guitar: the strings of a chord's barre grip, low to high (nil = damped)
 local function guitarStrings(song, chord)

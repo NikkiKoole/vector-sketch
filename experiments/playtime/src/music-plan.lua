@@ -249,7 +249,8 @@ local function planAcid(song, style)
     addSections(song, { { 'intro', 4 }, { 'A', 8 }, { 'B', 8 }, { 'A', 8 }, { 'outro', 4 } })
 end
 
-local LOOP_PLANS = { satie = planSatie, ambient = planAmbient, score = planScore, acid = planAcid }
+local LOOP_PLANS = { satie = planSatie, ambient = planAmbient, score = planScore, acid = planAcid,
+    jam = function(song, style) return require('src.music-jam').plan(song, style, addSections) end } -- docs/DRUM-JAM.md
 
 -- the key (lofi: the relative minor half the time), the A progression and the B: another loop from
 -- the bank (lofi), A with a ii-V turnaround, or a move of its own

@@ -588,6 +588,13 @@ D.styles = {
         scale = { 0, 0, 0, 3, 5, 7, 7, 10, 12, 12, 15, 1 },
         density = 0.72, accentOdds = 0.28, slideOdds = 0.35, tieOdds = 0.12, octaveOdds = 0.18,
         cutoff = { 260, 1600 }, sweepBars = 16 },
+    -- jam: the drum jam (docs/DRUM-JAM.md, src/music-jam.lua). No song form: a drum machine's groove in
+    -- 8-bar phrases, arranged live by the play level (a layer in or out per phrase, a breakdown and a drop
+    -- every breakEvery phrases when it's busy, a fill closing each phrase). groups: the pattern groups
+    -- (src/music-jam-patterns.lua), one per song, each at its own tempo (bpms).
+    jam = { loop = 'jam', bpm = 120, swing = 0.5, groups = { 'Electro', 'BoomBAP', 'CR78' },
+        bpms = { Electro = { 118, 128 }, BoomBAP = { 86, 94 }, CR78 = { 100, 112 } },
+        phraseBars = 8, phrases = 32, minLayers = 2, perLayer = 2, breakEvery = 4, variantEvery = 2 },
     ballad = {
         bpm = 76, swing = 0.5, chordBars = { 1, 2 }, lydianChance = 0.6, pushOdds = 0,
         strumMs = 70, keys = 'rhodes', lead = 'rhodesLead', bass = 'hold', drums = nil, home = 'maj9',
