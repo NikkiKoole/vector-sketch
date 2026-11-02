@@ -126,6 +126,50 @@ The tunes are not the problem: they move by step as often as the pieces do (40�
 
 These numbers are what to aim at when a style is changed, and the report shows whether a change helped.
 
+**Reference material, for learning only (2026-11-02):** copyrighted songs can be analysed for numbers, but they stay outside the repo in `~/music-reference/`. Only general patterns come into the docs and styles, never a song's notes, riff or voicings.
+- `hooktheory/Hooktheory.json.gz`: the Sheet Sage release of HookTheory's TheoryTabs (github.com/chrisdonahue/sheetsage-data, CC BY-NC-SA 3.0, sha256 917b7cd5…). It has 26,175 song sections (15,213 songs, 6,079 artists), each with melody, chords (root + intervals + inversion), key and meter, in beats. It has no voicings, bass or inner parts. Close to our styles: Getz/Gilberto, Jobim, Sergio Mendes, Gilberto Gil, Tatsuro Yamashita, Mariya Takeuchi, Casiopea, Nujabes, Guaraldi, Ellington. NC: fine for learning numbers; don't ship anything derived note for note.
+- `bossa/`: MuseScore arrangements Nikki downloads (MusicXML preferred: it keeps the parts and chord symbols).
+- **Reading it:**
+  - `python3 -I claudetools/hooktheory-report.py ~/music-reference/hooktheory/Hooktheory.json.gz [--compare <style-report out dir>] [--progressions]` gives per family (bossa, citypop, jazz, lofi, game, kids, all) how the chords move and what the tunes do, and our styles' same numbers below them.
+  - `~/.venvs/scores/bin/python -I claudetools/score-from-xml.py in.mxl out.lua` turns a MusicXML download into a score. `style-report.py --reference ~/music-reference` converts and analyses a whole folder, as `ref:` rows.
+  - Every analysis now ends with a quality line (key fit, notes off the grid, missing parts), and a doubtful file gets a `?` in the report.
+
+**First HookTheory findings** (2026-11-02; small families: bossa is 9 songs, citypop 11; chords as the TheoryTab users heard them):
+- **The tune is sparse:** real tunes play about 1 note a beat in every family; ours play 0.2–0.5.
+- **The tune sits on chord tones:** real tunes have 70–79% of their notes in the chord under them, ours 80–95%. Ours have fewer passing notes and tensions.
+- **Chords change less often:** bossa changes chord about 9.5 times per 8 bars, our bossa 4.8 (ours can change at most once a bar, so 8).
+- **Borrowed chords are rarer:** bossa has 18% of its chords outside the key, citypop 11%, ours 0–7% (jingle, buymode and vibesnight are 16–21%).
+- **Typical progressions:**
+  - bossa: minor iv–v–bVI–bVII loops, and iii–VI–ii–V
+  - citypop: iv7–bVII7–v7–i7, and I–vi–ii–V with 7ths everywhere
+  - lofi (Nujabes): ii7–V7–I7–VI7
+
+- `chordonomicon/chordonomicon_v2.csv`: Chordonomicon (huggingface.co/datasets/ailsntua/Chordonomicon, CC BY-NC 4.0; the search listing said MIT, the card says NC). It has 680k songs' chords in order, by section, with Spotify genre tags, but no tune, chord lengths or key. Its chords come from guitar-tab sites, so they are simpler than played. `python3 -I claudetools/chordonomicon-report.py ~/music-reference/chordonomicon/chordonomicon_v2.csv [--compare <style-report out>] [--progressions] [--json out]` takes about 2 minutes. It gives per family (bossa 927 songs, citypop via yacht rock 1,885, lofi 151, jazz 1,775, lounge 1,776, soul 2,839, game 325, against pop) the chords per song, colour, borrowed chords, root motion, form (sections, bridges, verse/chorus length, key changes), the most used progressions, and the *typical* ones (in more of the family's songs than of pop's).
+- **Tables computed from this data may go into the game** (Nikki, 2026-11-02): a progression table or transition probabilities computed over many songs, e.g. "grey of grey of grey resulting in white, not black: good enough for our logic". A single song's notes or progression still never go in.
+
+**First Chordonomicon findings:**
+- **Typical progressions:**
+  - bossa: II7–V7–I (the major II, a secondary dominant), vi7–II7–V7–I7, ii7–V7–i7–IV7
+  - jazz: I7–VI7–II7–V7 (a chain of dominants), the backdoor IV7–iv7–bVII7–bIII7
+  - lounge: II7–ii7–V7–I7, I7–VI7–ii7–V7
+  - game: minor-key i–bVI–bVII–IV loops with V–i
+- **Form:**
+  - bridges in 7% (bossa) to 26–28% (soul, game, pop) of songs
+  - verse/chorus about 15–18 chords long
+  - a section in another key in 8% (bossa, pop) to 17% (citypop/yacht rock) of songs
+- **Our bossa already plays the backdoor** iv7–bVII9–Imaj7, a real bossa and city pop move. What it lacks is the secondary dominants (II7, VI7) that real bossa and jazz lean on.
+- `score-analysis.py` now prefers the file's own key when it fits nearly as well. Rich chords had pulled our bossa in F to D minor.
+
+**Related work** (the same idea, done before; worth borrowing from before building more):
+- **Feature extractors:** jSymbolic (Java, hundreds of features from MIDI), music21's `features` module (part of jSymbolic, in Python), and musif (Python on music21, 2023, with a benchmark of all three).
+- **Datasets:**
+  - Chordonomicon: 666k songs' chords with genre tags, listed as MIT, scraped from user sites
+  - the iRealPro jazz corpus (Shanahan, Broze) and the Jazz Harmony Treebank
+  - the Weimar Jazz Database (expert jazz solo transcriptions)
+  - POP909 (pop piano arrangements)
+  - the Lakh MIDI Dataset (large, messy)
+- What none of them has: our "middle of the band" numbers (re-struck chords, inner lines, span), and a comparison against a generator's own output. That is what is ours.
+
 ## Next steps
 
 - [x] Engine race on the clean guitar pieces (ring-chord-mid, jab-chord-mid), piano, bass ring

@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 r"""Every music style next to the real pieces, in the numbers of claudetools/score-analysis.py.
 
-    python3 -I claudetools/style-report.py [--seeds 5] [--styles bossa,satie] [--out dir]
+    python3 -I claudetools/style-report.py [--seeds 5] [--styles bossa,satie] [--out dir] [--reference DIR]
 
 Per style: a song per seed recorded without sound (render-music.lua, NOTES_ONLY), each analysed, the
 numbers averaged. The score pieces (src/music-scores/) are analysed as they are, as the yardstick.
+--reference: also every score in DIR and its folders (~/music-reference/bossa: learning material, outside
+the repo), as 'ref:' rows; MusicXML (.mxl/.musicxml) there is converted first with score-from-xml.py (the
+~/.venvs/scores venv). A '?' after a name: the quality check has doubts (the analysis sheet says which).
 What the columns mean:
   chords      different chords in the song          chg/8   chord changes per 8 bars
   step%       how often each part moves by 1-2 semitones to its next note (tune, keys, bass)
@@ -21,6 +24,7 @@ ROOT = os.path.dirname(HERE)
 ap = argparse.ArgumentParser()
 ap.add_argument('--seeds', type=int, default=5); ap.add_argument('--styles', default='')
 ap.add_argument('--out', default=''); ap.add_argument('--seconds', type=int, default=400)
+ap.add_argument('--reference', default='')
 a = ap.parse_args()
 out = a.out or tempfile.mkdtemp(prefix='style-report-')
 os.makedirs(out, exist_ok=True)
@@ -54,6 +58,18 @@ rows = []
 for f in sorted(glob.glob(os.path.join(ROOT, 'src', 'music-scores', '*.lua'))):
     d = analyse(f, os.path.join(out, os.path.basename(f)[:-4] + '.json'))
     if d: rows.append(('piece: ' + d['name'], 1, numbers(d)))
+if a.reference:
+    ref = os.path.expanduser(a.reference)
+    venv = os.path.expanduser('~/.venvs/scores/bin/python')
+    for f in sorted(glob.glob(os.path.join(ref, '**', '*'), recursive=True)):
+        base, ext = os.path.splitext(f)
+        if ext.lower() in ('.mxl', '.musicxml') and not os.path.exists(base + '.lua'):
+            r = subprocess.run([venv, '-I', os.path.join(HERE, 'score-from-xml.py'), f, base + '.lua'],
+                               capture_output=True, text=True, timeout=300)
+            if r.returncode: print('  could not convert', f, r.stderr.strip().splitlines()[-1:])
+    for f in sorted(glob.glob(os.path.join(ref, '**', '*.lua'), recursive=True)):
+        d = analyse(f, os.path.join(out, 'ref-' + os.path.basename(f)[:-4] + '.json'))
+        if d: rows.append(('ref: ' + d['name'] + (' ?' if d['quality']['doubts'] else ''), 1, numbers(d)))
 for style in styles:
     got = []
     for seed in range(1, a.seeds + 1):

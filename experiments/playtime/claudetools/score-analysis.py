@@ -72,7 +72,9 @@ def corr(x, y):
     den = (sum((p - mx) ** 2 for p in x) * sum((q - my) ** 2 for q in y)) ** 0.5
     return num / den if den else 0
 def best_key(w):
-    return max(((corr(w, prof[-t:] + prof[:-t]), t, mode) for t in range(12)
+    # the file's own key (a score's, or the song's for a recorded style) wins when it fits nearly as well:
+    # rich chords (6ths, 9ths) otherwise pull the finder to a neighbour (F6/9 reads as D minor)
+    return max(((corr(w, prof[-t:] + prof[:-t]) + (0.1 if t == tonic else 0), t, mode) for t in range(12)
                 for mode, prof in (('major', MAJ), ('minor', MIN))))[1:]
 def third_of(w, t):
     """the key's third: 'minor', 'major', or 'blue' when both sound a lot (the blues' third)"""
@@ -338,6 +340,56 @@ if a.bars:
         print(f"{b:>3}  {(chord[b]['name'] if chord[b] else '-'):<12} {key_name(bar_key[b]):<14} "
               f"{(h[0] + ' ' + str(h[1]) if h else ''):<29} {c['tune']:>4}  {c['keys']:>4}  {c['bass']:>4}  {vel[order.index(b)]:>4}")
 
+# --- harmony and tune numbers shared with claudetools/hooktheory-report.py --------------------------
+QUALITY_PCS = dict(CHORDS)
+RICH = {'7', 'maj7', 'm7', '6', 'm6', 'm7b5', 'dim7', '9', 'm9', '7(m/M)'}   # four notes or more
+SCALE = {'major': {0, 2, 4, 5, 7, 9, 11}, 'minor': {0, 2, 3, 5, 7, 8, 10}, 'blue': {0, 2, 3, 4, 5, 7, 9, 10, 11}}
+def root_motion(d):
+    d %= 12
+    return 'fifth' if d in (5, 7) else 'step' if d in (1, 2, 10, 11) else 'third' if d in (3, 4, 8, 9) else 'tritone'
+def shared_numbers():
+    held = [b for b in order if chord[b]]
+    moves = Counter(root_motion(chord[q]['root'] - chord[p]['root']) for p, q in zip(held, held[1:])
+                    if chord[p]['name'] != chord[q]['name'])
+    tune_notes = [(b, n) for b in order for n in bars[b] if role(n['part']) == 'tune' and not n['grace']]
+    # the bar's chord from the other parts only, or the tune would vote for its own notes
+    under = {b: chord_of([n for n in bars[b] if role(n['part']) != 'tune']) for b in order}
+    def in_chord(b, n):
+        c = under[b]
+        return c and (n['midi'] - c['root']) % 12 in QUALITY_PCS[c['quality']]
+    share = lambda xs: round(sum(xs) / len(xs), 2) if xs else None
+    romans = []   # the bars' chords in Roman numerals, a chord held over bars once (as the reports count them)
+    for b in held:
+        c = chord[b]   # the reports' spelling: lower case = minor, 7 = four notes or more
+        r = ROMAN[(c['root'] - bar_key[b][0]) % 12]
+        r = (r.lower() if 3 in QUALITY_PCS[c['quality']] and 4 not in QUALITY_PCS[c['quality']] else r) + \
+            ('7' if c['quality'] in RICH else '')
+        if not romans or romans[-1] != r: romans.append(r)
+    return {'romans': romans,'rich_chords': share([chord[b]['quality'] in RICH for b in held]),
+            'out_of_key': share([(chord[b]['root'] - bar_key[b][0]) % 12 not in SCALE[bar_key[b][1]] for b in held]),
+            'inversions': share([chord[b]['bass'] != chord[b]['root'] for b in held]),
+            'root_motion': {k: round(v / (sum(moves.values()) or 1), 2) for k, v in moves.items()},
+            'tune_offbeat': share([n['step'] % 4 != 0 for _, n in tune_notes]),
+            'tune_chord_tones': share([bool(in_chord(b, n)) for b, n in tune_notes]),
+            'tune_range': (max(n['midi'] for _, n in tune_notes) - min(n['midi'] for _, n in tune_notes)) if tune_notes else None}
+
+# --- is the file any good? (for reference material: hobby MIDIs and community scores vary) ---------
+def quality():
+    keyfit = statistics.mean(corr(pc_weights([b]), (MAJ if bar_key[b][1] != 'minor' else MIN)[-bar_key[b][0]:] +
+                                  (MAJ if bar_key[b][1] != 'minor' else MIN)[:-bar_key[b][0]]) for b in order if bars[b])
+    offgrid = re.search(r'^-- offgrid: (\d+) of (\d+)', text, re.M)
+    roles = Counter(role(n['part']) for b in order for n in bars[b])
+    doubts = []
+    if keyfit < 0.45: doubts.append(f'the notes fit no key well ({keyfit:.2f})')
+    if offgrid and int(offgrid[2]) and int(offgrid[1]) / int(offgrid[2]) > 0.15:
+        doubts.append(f'{offgrid[1]} of {offgrid[2]} onsets off the 16th grid (a live take, or a messy file)')
+    for part in ('tune', 'keys', 'bass'):
+        if roles[part] < 2 * len(order) // 4: doubts.append(f'little or no {part}')
+    if len(order) < 8: doubts.append(f'only {len(order)} bars')
+    return {'key_fit': round(keyfit, 2), 'doubts': doubts}
+q = quality()
+print('\nquality: key fit %.2f; %s' % (q['key_fit'], '; '.join(q['doubts']) or 'no doubts'))
+
 if a.json:
     total = {p: sum(m.values()) or 1 for p, m in motion.items()}
     summary = {'name': name, 'bars': len(order), 'meter': meter,
@@ -351,6 +403,7 @@ if a.json:
                'lines_per_8_bars': round(8 * len(lines) / len(order), 2),
                'chromatic_lines': sum(l['chromatic'] for l in lines),
                'bars_brought_back': round(sum(1 for h in same_as.values() if h) / len(order), 2),
+               'shared': shared_numbers(), 'quality': q,
                'sections': {f'{lab} {lo}-{hi}': section_stats(lo, hi) for lab, lo, hi in sections}}
     json.dump(summary, open(a.json, 'w'), indent=1)
     print('\nsummary ->', a.json)
