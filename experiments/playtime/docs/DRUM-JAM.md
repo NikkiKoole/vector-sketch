@@ -79,8 +79,9 @@ Until then the jam plays Playtime's drum patches; enough to hear whether the arr
   layer, its filter sweep tied to the phrase (open into the drop).
 - [ ] **J4. The kit.** Decide port vs desound.c (above), then an 808 and a 909 kit, picked per group.
 - [ ] **J7. The auto-accompaniment bass** (Nikki: "bass loops that change root, transposed every n
-  bars"). The organ boxes' one-finger chord, in the jam: a `bass` layer (second in, after the kick)
-  plays a 16-step loop written in DEGREES (`R` root, `3`, `5`, `7`, `8`, `L` the fifth below, `-` hold,
+  bars"; the idea from Aaron Batzdorff's one-note synth bass trick (TikTok and YouTube @aaronbatzdorff): a Keystep
+  Pro transposing a one-note sequence on a Model D, also dreamengine's `onenote.c` cart). The organ
+  boxes' one-finger chord, in the jam: a `bass` layer (second in, after the kick) plays a 16-step loop written in DEGREES (`R` root, `3`, `5`, `7`, `8`, `L` the fifth below, `-` hold,
   `.` rest; two per genre, moving with the drum variants) over a ROOT that walks on its own clock:
   every 2, 4 or 8 bars along a walk rolled per song (I IV V I, I IV I V, I bVII I IV, around the
   fourths). Calm play slows the walk (a step lasts twice as long; it used to hold the root, which froze the jam in
