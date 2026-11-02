@@ -29,14 +29,14 @@ local function styleParts() -- the playing style's parts; with the music off, th
     return seen[now and now.style or music().style]
 end
 -- the playing style's ideas (style.ideas), and every idea any style has, in the panel's order
-local IDEAS = { 'dynamics', 'revoice', 'walks', 'flat9', 'answer' }
+local IDEAS = { 'dynamics', 'revoice', 'figures', 'walks', 'flat9', 'answer' }
 local function styleIdeas()
     local now = music().nowPlaying()
     local style = music().styles[now and now.style or music().style]
     return style and require('src.music-styles').ideasOf(style) or {}
 end
 local function ideaRow(name)
-    return { key = name, kind = 'choice', options = { 'some songs', 'always', 'never' },
+    return { key = name, kind = 'choice', options = { 'never', 'less', 'some songs', 'always', 'lots' }, stepper = true,
         visible = function() return styleIdeas()[name] ~= nil end,
         get = function(m) return m.ideas and m.ideas[name] or 'some songs' end,
         set = function(m, v)
@@ -176,8 +176,9 @@ lib.rows = {
             'ballad', 'acid', 'jam' }, nil, true),
     field('rhythmSection', 'band', 'choice', { 'auto', 'on', 'off' }),
     -- the style's ideas (docs/MUSIC-CONCEPTS.md: the walks, the answer): spice scales them all, 0 plain
-    -- to 2, 1 as designed; a row per idea the playing style has: in some songs (the style's share),
-    -- every song, or none; and which ones this song uses
+    -- to 2, 1 as designed; a row per idea the playing style has, from none to lots: never, less (half as
+    -- often), some songs (the style's share, as designed), always (every song), lots (every song, twice
+    -- as often); and which ones this song uses
     { key = 'spice', kind = 'number', min = 0, max = 2,
         visible = function() return next(styleIdeas()) ~= nil end,
         get = function(m) return m.spice or 1 end,

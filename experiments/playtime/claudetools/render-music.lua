@@ -5,7 +5,8 @@
 --      TUNE=classic builds the tune the old way (the default is guide, src/music-guide.lua),
 --      CUES=20:citypop,45:satie:bar,70:keep:cellar cues a style (or only layers, with 'keep') at a second,
 --      EFFECTS=0..2 the effects slider (every pedal's amount; 1 = as designed),
---      SPICE=0..2 the style's ideas (walks, answers; 0 plain, 1 as designed), IDEAS=walks:never,answer:always
+--      SPICE=0..2 the style's ideas (walks, answers; 0 plain, 1 as designed), IDEAS=walks:never,figures:lots
+--      (never / less / always / lots)
 local P = arg[0]:match('^(.*)claudetools/') or './' -- the project folder, from where this script is
 package.path = P .. '?.lua;' .. package.path
 local out, seconds, style, rhythm = arg[1], tonumber(arg[2]) or 30, arg[3] or 'bossa', arg[4] or 'auto'

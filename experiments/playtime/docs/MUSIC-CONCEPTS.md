@@ -15,7 +15,7 @@ The tried concepts (the walks, the answer) are **ideas** a style can have (`styl
 
 The music panel has these controls (also on `render-music.lua` as `SPICE=` and `IDEAS=`):
 - **spice:** scales every idea's odds. 0 is plain (bossa as before the walks), 1 as designed, 2 twice as often.
-- **A row per idea:** `some songs` (the style's share), `always` or `never`.
+- **A row per idea, from none to lots:** `never`; `less` (the style's share of songs, half as often); `some songs` (as designed, the default); `always` (every song); `lots` (every song, twice as often).
 - **this song:** the line that shows which ideas the playing song uses.
 
 Both act at the next bar. Saved setups keep them, and reset puts them back.
@@ -62,6 +62,10 @@ Both act at the next bar. Saved setups keep them, and reset puts them back.
 
 ## Rhythm and comping
 
+- **Comp figures, broken chords (the idea `figures`):** a long stab (6 sixteenths or more) played as the song's figure instead of a block. `arp` breaks the chord upward, a note per 8th, each ringing under a pedal. `split` plays the bottom note on the stab and the rest an 8th later (the left hand, then the right; close to stride without doubling the bass). A song keeps one figure.
+  - Where: `style.figures`, `bookFigure` (`src/music-parts.lua`), `song.figure` (`planIdeas`).
+  - Which styles: lofi and vibesnight (arp, split), herbs (arp), guaraldi and citypop (split). Bossa, sesame and supermarket comp in short stabs and keep them.
+  - Measured 2026-11-02 (R3b, 5 songs per style), keys re-striking: lofi 62 to 33%, vibesnight 44 to 28%, herbs 68 to 51%, guaraldi 45 to 35%, citypop 61 to 52%. Rubs the same.
 - **Comp cells, clave comping:** the keys' rhythm per bar from a style's cells (bossa: the clave and its cousins; `comps`).
 - **Steady groove:** a style decides once per song what the others roll per bar (the cell, the push habit, shells or full chords), so a song holds its groove (`steady`, `planSteady`).
 - **Push, anticipation:** the next chord arrives early, on the and-of-4 (`pushOdds`, `keysHits`).
@@ -103,7 +107,6 @@ Both act at the next bar. Saved setups keep them, and reset puts them back.
 
 ## Ideas waiting (measured gaps, see `MUSIC-ANALYSIS.md`)
 
-- **Comp figures (texture):** broken chords, arpeggios and stride (a bass note, then the chord) instead of block stabs. This is the rest of the re-strike gap.
 - **A wider register span (orchestration by range):** spread the bass and the tune further apart. Ours span 3–4 octaves, the real pieces 4–6.6.
 - **Faster harmonic rhythm:** bossa's chords last 2 bars; real bossa changes about once a bar.
 - **More secondary dominants and borrowed chords**, from the Chordonomicon "typical progressions".

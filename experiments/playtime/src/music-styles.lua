@@ -143,6 +143,7 @@ D.styles = {
         walks = { m9 = { 'madd9', 'mmaj9', 'm9', 'm6', short = { 'm9', 'm6' } }, m7 = { 'm7', 'm6' },
                   dom9 = { 'dom9', 'b9', fifthDown = true, idea = 'flat9' }, maj7 = { 'maj7', 'maj69' } },
         answer = { patch = 'pianoLead', lo = 58, hi = 70, vol = 3 },
+        figures = { 'split' }, -- the left hand's note, the right hand's chord an 8th later
         ideas = { walks = { odds = 50, songs = 75 }, flat9 = { odds = 50, songs = 50 },
                   answer = { odds = 55, songs = 70 } },
         -- per song a bounce (the Charleston or the anticipations, always pushing into bars 2 and 4, his
@@ -272,6 +273,7 @@ D.styles = {
         bpm = 88, swing = 0.6, chordBars = { 1, 2 }, lydianChance = 0, pushOdds = 0, motifRepeat = 40,
         mode = 'dorian', strumMs = 3, keys = 'rhodes', lead = 'pianoLead', bass = 'boom', bassPatch = 'dubBass',
         bassLo = 33, drums = 'boombap', home = 'm7',
+        figures = { 'arp' }, -- the long chords broken up, like a sampled Rhodes lick (bookFigure)
         -- plain minor sevenths, like the sample: dark and simple, no ninths
         A = {
             { { 0, 'm7' }, { 5, 'm7' } },                                    -- i7 iv7, the dark soul loop
@@ -307,6 +309,7 @@ D.styles = {
         answer = { patch = 'flute', lo = 62, hi = 76, vol = 3 },
         ideas = { walks = { odds = 50, songs = 75 }, flat9 = { odds = 50, songs = 50 },
                   answer = { odds = 55, songs = 70 } },
+        figures = { 'arp', 'split' }, -- the Rhodes broken up over its held chords (bookFigure)
         comps = 'jazzhop', compWeights = { { 0.3, 1.0 }, { 0.1, 0.8 }, { 0.1, 0.6 } }, lightOdds = 0,
         holdChanges = true, forms = 'lofi', B = 'A', range = { 67, 84 }, tone = { 5500, 9000 },
         epLp = { 2400, 4500 }, vinyl = true,
@@ -459,6 +462,7 @@ D.styles = {
         walks = { m9 = { 'm9', 'm6' }, maj9 = { 'maj9', 'maj69' }, maj7 = { 'maj7', 'maj69' },
                   dom9 = { 'dom9', 'alt', fifthDown = true, idea = 'flat9' } },
         answer = { patch = 'horn', lo = 60, hi = 74, vol = 3 },
+        figures = { 'split' }, -- the Rhodes' low note, then the chord
         ideas = { walks = { odds = 50, songs = 75 }, flat9 = { odds = 60, songs = 60 },
                   answer = { odds = 55, songs = 70 } },
         A = {
@@ -629,6 +633,7 @@ do
         A = g.A, B = g.B, walks = g.walks,
         -- the felt piano answers the vibes, low and soft (the MJQ: John Lewis answering Milt Jackson)
         answer = { patch = 'feltKeys', lo = 57, hi = 69, vol = 3 },
+        figures = { 'arp', 'split' }, -- the felt piano rolling its held chords up, or bass note then chord
         ideas = { walks = { odds = 50, songs = 75 }, flat9 = { odds = 40, songs = 50 },
                   answer = { odds = 50, songs = 70 } },
         -- the piano holding, holding with a lift, the Charleston laid down soft
@@ -795,14 +800,16 @@ D.answers = { { 0, 2, 4, 10 }, { 2, 4, 6, 12 }, { 0, 2, 6, 8, 14 }, { 4, 6, 8, 1
 -- planDynamics); the style report measured our loudness barely moving, 0-8 against 9-19 in the pieces
 -- revoice: a chord struck again comes re-voiced, its top note moving (bookKeys), in the styles that comp
 -- through bookKeys (not the picking ones: strum, rollo, jingle play their own guitar)
-D.commonIdeas = { dynamics = { odds = 70, songs = 90 }, revoice = { odds = 50, songs = 80, comps = true } }
+-- figures: a long stab played as the song's comp figure (bookFigure), in the styles that have style.figures
+D.commonIdeas = { dynamics = { odds = 70, songs = 90 }, revoice = { odds = 50, songs = 80, comps = true },
+                  figures = { odds = 60, songs = 70, comps = true, figures = true } }
 local ideasCache = setmetatable({}, { __mode = 'k' })
 function D.ideasOf(style)
     if style.loop then return style.ideas or {} end -- the loops and the scores: only their own
     if ideasCache[style] then return ideasCache[style] end
     local out = {}
     for name, idea in pairs(D.commonIdeas) do
-        if not (idea.comps and style.picking) then out[name] = idea end
+        if not (idea.comps and style.picking) and not (idea.figures and not style.figures) then out[name] = idea end
     end
     for name, idea in pairs(style.ideas or {}) do out[name] = idea or nil end
     ideasCache[style] = out

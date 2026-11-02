@@ -317,6 +317,8 @@ local function planIdeas(song, style)
     for name in pairs(ideas) do names[#names + 1] = name end
     table.sort(names) -- a fixed order: the same song rolls the same ideas
     for _, name in ipairs(names) do song.ideas[name] = rnd(100) < (ideas[name].songs or 100) end
+    -- the song's comp figure (the idea 'figures'): one of the style's, kept all song
+    if style.figures then song.figure = style.figures[stream(song.seed, 18)(#style.figures) + 1] end
 end
 
 -- Dynamics (the idea 'dynamics'): each section's level and a swell, a volume step each, rolled here

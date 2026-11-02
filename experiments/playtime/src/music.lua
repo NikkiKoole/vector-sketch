@@ -94,8 +94,8 @@ local lib = {}
 --   soundVoices    one, off or on another sound (by the style's own sound name)
 --   spice          0..2: how much of the style's ideas (walks, answers; docs/MUSIC-CONCEPTS.md) a song
 --                  takes up, 0 = plain, 1 = as designed (nil), 2 = twice as often; read every bar
---   ideas          { walks = 'always' / 'never' }: an idea in every song or none, instead of the style's
---                  share of songs (style.ideas[name].songs); nil = the style's
+--   ideas          { walks = 'never' / 'less' / 'always' / 'lots' }: each idea from none to lots (ideaOdds);
+--                  nil = the style's (its share of songs, style.ideas[name].songs, at its odds)
 state.musicSettings = state.musicSettings
     or { enabled = true, style = 'set', rhythmSection = 'auto', melody = true }
 local SETTINGS = { enabled = true, style = true, rhythmSection = true, melody = true,
@@ -157,14 +157,18 @@ function lib.playLevel()
     return M.activity, M.withBand
 end
 
--- The ideas' odds this bar, for every idea the style has: its odds, scaled by the spice slider, 0 when
--- the song doesn't use it (planIdeas) or the settings say never; always: in every song
+-- The ideas' odds this bar, for every idea the style has: its odds, scaled by the spice slider and the
+-- idea's own setting, 0 when the song doesn't use it (planIdeas). The settings, from none to lots:
+-- never; less (the style's share of songs, half as often); nil = the style's; always (every song);
+-- lots (every song, twice as often)
+local IDEA_LEVELS = { never = { songs = 'none', scale = 0 }, less = { scale = 0.5 },
+                      always = { songs = 'all', scale = 1 }, lots = { songs = 'all', scale = 2 } }
 local function ideaOdds(song, style)
     local out, settings = {}, state.musicSettings
     for name, idea in pairs(D.ideasOf(style)) do
-        local mode = settings.ideas and settings.ideas[name]
-        local uses = mode == 'always' or mode ~= 'never' and song.ideas and song.ideas[name]
-        out[name] = uses and (idea.odds or 50) * (settings.spice or 1) or 0
+        local level = IDEA_LEVELS[settings.ideas and settings.ideas[name] or ''] or {}
+        local uses = level.songs == 'all' or level.songs ~= 'none' and song.ideas and song.ideas[name]
+        out[name] = uses and (idea.odds or 50) * (settings.spice or 1) * (level.scale or 1) or 0
     end
     return out
 end

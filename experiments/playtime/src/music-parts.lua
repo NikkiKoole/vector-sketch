@@ -700,12 +700,42 @@ local function keysHits(bar)
 end
 
 -- the keys play their hits, rolled by the style's strum; the dub echo repeats a stab while its chord lasts
+-- A comp figure in place of a long stab (the idea 'figures', the song's song.figure): 'arp' breaks the
+-- chord upward, a note per figureEvery 16ths (an 8th by default), each ringing to the stab's end as
+-- under a pedal; 'split' plays the bottom note on the stab and the rest an 8th later (the left hand,
+-- then the right). The style report measured our keys re-striking one chord where the pieces' keys
+-- play arpeggios, oom-pah and a bass note against a chord (docs/MUSIC-ANALYSIS.md, R3b)
+local function bookFigure(bar, h, voicing, figure)
+    local synth, song, style, t0 = bar.synth, bar.song, bar.style, bar.t0
+    local every, stop = style.figureEvery or 2, h.s + h.len
+    local first = h.light and 2 or 1
+    local function note(k, s, vol)
+        local t = stepTime(song, t0, s) + humanize(0.005)
+        play(synth, 'keys', style.keys, t, voicing[k], math.min(7, vol), lengthMs(song, s, stop - s) * 0.95, s)
+    end
+    if figure == 'split' then
+        note(first, h.s, h.vol)
+        local s = math.min(h.s + every, stop - 1)
+        for k = first + 1, #voicing do
+            local t = stepTime(song, t0, s) + (k - first - 1) * (style.strumMs or 8) / 1000 + humanize(0.004)
+            play(synth, 'keys', style.keys, t, voicing[k], math.min(7, k == #voicing and h.vol + 1 or h.vol),
+                 lengthMs(song, s, stop - s) * 0.9, s)
+        end
+    else -- arp: up a note at a time; a voicing longer than the stab puts its last notes together
+        for k = first, #voicing do
+            local s = math.min(h.s + (k - first) * every, stop - 1)
+            note(k, s, k == #voicing and h.vol + 1 or h.vol)
+        end
+    end
+end
+
 -- the comp: each stab voiced nearest the last (voiceChord). The same chord struck again is re-voiced
 -- now and then, its top note moving (the idea 'revoice'; the style report measured our keys
 -- re-striking one chord 50-80% of the time against 8-28% in the pieces: docs/MUSIC-ANALYSIS.md)
 local function bookKeys(bar, hits)
     local synth, song, style, t0 = bar.synth, bar.song, bar.style, bar.t0
     local revoiceRnd, revoiceOdds = stream(song.seed, 9000 + bar.b), (song.ideaOdds or {}).revoice or 0
+    local figureRnd, figureOdds = stream(song.seed, 9500 + bar.b), (song.ideaOdds or {}).figures or 0
     for _, h in ipairs(hits) do
         local chord = h.sidestep or h.chord
         local root = (song.key + chord.degree) % 12
@@ -716,17 +746,25 @@ local function bookKeys(bar, hits)
         if not h.sidestep then M.voicing, M.voicingOf = voicing, name end
         local t = stepTime(song, t0, h.s) + humanize(0.005)
         local strum = (style.strumMs or 8) / 1000
-        for k = h.light and 2 or 1, #voicing do
-            local note = voicing[k] + (h.sidestep and 1 or 0)
-            local vol = (k == #voicing) and h.vol + 1 or h.vol
-            local dur = lengthMs(song, h.s, h.len) * (h.ring and 1 or 0.9)
-            play(synth, 'keys', style.keys, t + (k - 1) * strum, note, math.min(7, vol), dur)
-            if style.echo and style.echo.keys and not h.sidestep then
-                for e = 1, 2 do
-                    local s, chordEnd = h.s + 3 * e, h.chord.s + h.chord.len
-                    if s >= chordEnd or vol - 2 * e < 1 then break end
-                    local echoDur = math.min(dur, lengthMs(song, s, chordEnd - s) * 0.9) -- not into the next chord
-                    play(synth, 'keys', style.keys, stepTime(song, t0, s) + (k - 1) * strum, note, vol - 2 * e, echoDur)
+        local figure = song.figure and not h.sidestep and h.len >= (style.figureMin or 6)
+            and figureRnd(100) < figureOdds and song.figure
+        if figure then
+            bookFigure(bar, h, voicing, figure)
+        else
+            for k = h.light and 2 or 1, #voicing do
+                local note = voicing[k] + (h.sidestep and 1 or 0)
+                local vol = (k == #voicing) and h.vol + 1 or h.vol
+                local dur = lengthMs(song, h.s, h.len) * (h.ring and 1 or 0.9)
+                play(synth, 'keys', style.keys, t + (k - 1) * strum, note, math.min(7, vol), dur)
+                if style.echo and style.echo.keys and not h.sidestep then
+                    for e = 1, 2 do
+                        local s, chordEnd = h.s + 3 * e, h.chord.s + h.chord.len
+                        if s >= chordEnd or vol - 2 * e < 1 then break end
+                        -- not into the next chord
+                        local echoDur = math.min(dur, lengthMs(song, s, chordEnd - s) * 0.9)
+                        play(synth, 'keys', style.keys, stepTime(song, t0, s) + (k - 1) * strum, note, vol - 2 * e,
+                             echoDur)
+                    end
                 end
             end
         end
