@@ -463,7 +463,8 @@ end
 -- the tune: the motif rhythm and its cell's anchor pitches, the scale, and a ladder of the key's
 -- pentatonic above the chord (median ~76, lofi's 67..86) with where each section's tune starts
 local function planTune(song, style, rnd)
-    local motif = D.motifs[rnd(#D.motifs) + 1]
+    local bank = style.motifs or D.motifs -- the style's own tune rhythms, or the shared ones
+    local motif = bank[rnd(#bank) + 1]
     song.motif = { steps = motif[1], groups = motif[2], dir = {} }
     local repeatOdds = style.motifRepeat or 18
     local run, d = 0, rnd(100) < 55 and 1 or -1

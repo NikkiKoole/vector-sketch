@@ -78,6 +78,13 @@ Both act at the next bar. Saved setups keep them, and reset puts them back.
 - **Motif and development:** a short rhythm-and-contour cell stated in bars 1–2 and moved over the next chords (`D.motifs`, `planTune`, `buildPhrase`).
 - **Phrase as statement, breath, answer:** a 4-bar phrase; bar 3 breathes, bar 4 answers (`buildPhrase`).
 - **Chord-tone melody (guide-tone lines):** strong and long notes on chord tones, the notes between walking the chord's scale, a new chord arrived at by step (`src/music-guide.lua`, the default tune).
+- **Tensions on long notes, appoggiatura (the idea `colour`):** a long tune note may rest on a tension instead of its chord tone. That is the 9th, 11th or 13th in the key that the keys don't play and that rubs nothing (over a major chord the 13th, over a minor one the 11th). Or it leans on the whole step above first and resolves to the chord tone an 8th later.
+  - Where: `tensionsOf` and the colour pass in `buildPhrase` (`src/music-guide.lua`), its own stream.
+  - Measured 2026-11-02 (R4, 6 songs per style), the tune's notes in the chord under them: 84–88% before, ~82% as designed, 75–79% at `lots` (real songs 70–79%). It adds no rubs.
+- **Tune rhythms per style:** a style's own motif bank (`style.motifs`; the shared `D.motifs` otherwise). Bossa: long notes and anticipations. Guaraldi and vibesnight: swung 8ths. Citypop: 16th syncopation. Lofi: laid back, few notes.
+  - Every style had the same rhythm: 56% of the tune's notes off the beat. Now bossa 67%, citypop 70%, guaraldi 44%, lofi 60%.
+  - Tune notes per beat: citypop 0.44 to 0.59, guaraldi 0.43 to 0.50.
+  - Rubs go up with the extra notes, about the same per note.
 - **Passing tone:** a third with room is filled by the scale step between.
 - **Grace note, a flick:** a quick neighbour just before a long note.
 - **Pentatonic ladder:** the tune picks from the key's pentatonic in its range (`song.ladder`).

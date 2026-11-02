@@ -111,6 +111,15 @@ D.styles = {
                   maj9 = { 'maj69', 'maj9' } },
         -- the flute answers where the tune breathes (bookAnswer), under it, as on Jobim's records
         answer = { patch = 'flute', lo = 62, hi = 76, vol = 3 },
+        -- the tune's rhythms (two bars, { steps in 16ths, groups }): long notes and anticipations, a note
+        -- landing on the and before the beat; the shared D.motifs gave every style the same rhythm
+        motifs = {
+            { { 0, 6, 8, 14, 22 }, { 0, 0, 0, 1, 1 } },                -- a long first note, then pushed
+            { { 2, 4, 6, 10, 14, 16 }, { 0, 0, 0, 0, 1, 1 } },
+            { { 0, 3, 6, 10, 14, 22, 24 }, { 0, 0, 0, 0, 1, 2, 2 } },
+            { { 6, 8, 10, 14, 22, 26 }, { 0, 0, 0, 0, 1, 1 } },        -- in on the and of 2
+            { { 0, 2, 4, 6, 14, 18 }, { 0, 0, 0, 0, 1, 1 } },          -- the one-note samba's run
+        },
         -- the ideas (docs/MUSIC-CONCEPTS.md): odds = % of the chances taken (the chords that walk, the
         -- free bars answered), songs = % of the songs that use the idea at all (planIdeas)
         ideas = { walks = { odds = 60, songs = 85 }, flat9 = { odds = 60, songs = 60 },
@@ -143,6 +152,14 @@ D.styles = {
         walks = { m9 = { 'madd9', 'mmaj9', 'm9', 'm6', short = { 'm9', 'm6' } }, m7 = { 'm7', 'm6' },
                   dom9 = { 'dom9', 'b9', fifthDown = true, idea = 'flat9' }, maj7 = { 'maj7', 'maj69' } },
         answer = { patch = 'pianoLead', lo = 58, hi = 70, vol = 3 },
+        -- the tune's rhythms: swung 8ths (even steps), runs and a tag
+        motifs = {
+            { { 0, 2, 4, 6, 8, 12 }, { 0, 0, 0, 0, 0, 1 } },
+            { { 2, 4, 6, 10, 12, 16, 18 }, { 0, 0, 0, 0, 1, 1, 2 } },
+            { { 0, 4, 6, 8, 14, 16 }, { 0, 0, 0, 0, 1, 1 } },
+            { { 6, 8, 10, 12, 16, 22 }, { 0, 0, 0, 0, 1, 2 } },        -- a pickup into the bar
+            { { 0, 2, 6, 8, 12, 14, 20 }, { 0, 0, 1, 1, 1, 1, 2 } },
+        },
         figures = { 'split' }, -- the left hand's note, the right hand's chord an 8th later
         ideas = { walks = { odds = 50, songs = 75 }, flat9 = { odds = 50, songs = 50 },
                   answer = { odds = 55, songs = 70 } },
@@ -309,6 +326,13 @@ D.styles = {
         answer = { patch = 'flute', lo = 62, hi = 76, vol = 3 },
         ideas = { walks = { odds = 50, songs = 75 }, flat9 = { odds = 50, songs = 50 },
                   answer = { odds = 55, songs = 70 } },
+        -- the tune's rhythms: laid back, few long notes, coming in late
+        motifs = {
+            { { 0, 6, 10, 16 }, { 0, 0, 1, 1 } },
+            { { 4, 8, 10, 14, 20 }, { 0, 0, 0, 1, 1 } },
+            { { 2, 6, 12, 18, 22 }, { 0, 0, 1, 1, 1 } },
+            { { 6, 10, 12, 16, 26 }, { 0, 0, 0, 1, 2 } },
+        },
         figures = { 'arp', 'split' }, -- the Rhodes broken up over its held chords (bookFigure)
         comps = 'jazzhop', compWeights = { { 0.3, 1.0 }, { 0.1, 0.8 }, { 0.1, 0.6 } }, lightOdds = 0,
         holdChanges = true, forms = 'lofi', B = 'A', range = { 67, 84 }, tone = { 5500, 9000 },
@@ -462,6 +486,13 @@ D.styles = {
         walks = { m9 = { 'm9', 'm6' }, maj9 = { 'maj9', 'maj69' }, maj7 = { 'maj7', 'maj69' },
                   dom9 = { 'dom9', 'alt', fifthDown = true, idea = 'flat9' } },
         answer = { patch = 'horn', lo = 60, hi = 74, vol = 3 },
+        -- the tune's rhythms: 16th syncopation, notes on the e and the a
+        motifs = {
+            { { 0, 3, 6, 8, 11, 14, 16 }, { 0, 0, 0, 0, 1, 1, 1 } },
+            { { 2, 5, 8, 10, 13, 16, 22 }, { 0, 0, 0, 0, 1, 1, 2 } },
+            { { 0, 2, 3, 6, 10, 12, 15, 18 }, { 0, 0, 0, 0, 1, 1, 1, 2 } },
+            { { 4, 6, 7, 10, 14, 20, 23 }, { 0, 0, 0, 0, 1, 2, 2 } },
+        },
         figures = { 'split' }, -- the Rhodes' low note, then the chord
         ideas = { walks = { odds = 50, songs = 75 }, flat9 = { odds = 60, songs = 60 },
                   answer = { odds = 55, songs = 70 } },
@@ -596,9 +627,10 @@ D.styles = {
     -- 8-bar phrases, arranged live by the play level (a layer in or out per phrase, a breakdown and a drop
     -- every breakEvery phrases when it's busy, a fill closing each phrase). groups: the pattern groups
     -- (src/music-jam-patterns.lua), one per song, each at its own tempo (bpms).
-    jam = { loop = 'jam', bpm = 120, swing = 0.5, groups = { 'Electro', 'Hip Hop', 'Breaks', 'Disco', 'Funk' },
+    jam = { loop = 'jam', bpm = 120, swing = 0.5,
+        groups = { 'Electro', 'Hip Hop', 'Breaks', 'Disco', 'Funk', 'Brushes' },
         bpms = { Electro = { 118, 128 }, ['Hip Hop'] = { 86, 94 }, Breaks = { 96, 108 }, Disco = { 116, 124 },
-                 Funk = { 96, 106 } },
+                 Funk = { 96, 106 }, Brushes = { 84, 96 } },
         phraseBars = 8, phrases = 32, minLayers = 2, perLayer = 2, breakEvery = 4, variantEvery = 2 },
     ballad = {
         bpm = 76, swing = 0.5, chordBars = { 1, 2 }, lydianChance = 0.6, pushOdds = 0,
@@ -630,7 +662,7 @@ do
         steady = true, sameCell = true, shellOdds = 70, pushHabit = 30,
         strumMs = 20, keys = 'feltKeys', lead = 'vibes', bass = 'walk', bassPatch = 'musicBass', bassLo = 34,
         drums = 'brushes', home = 'maj69', range = { 65, 84 }, staccato = 8, lightOdds = 50,
-        A = g.A, B = g.B, walks = g.walks,
+        A = g.A, B = g.B, walks = g.walks, motifs = g.motifs,
         -- the felt piano answers the vibes, low and soft (the MJQ: John Lewis answering Milt Jackson)
         answer = { patch = 'feltKeys', lo = 57, hi = 69, vol = 3 },
         figures = { 'arp', 'split' }, -- the felt piano rolling its held chords up, or bass note then chord
@@ -801,7 +833,9 @@ D.answers = { { 0, 2, 4, 10 }, { 2, 4, 6, 12 }, { 0, 2, 6, 8, 14 }, { 4, 6, 8, 1
 -- revoice: a chord struck again comes re-voiced, its top note moving (bookKeys), in the styles that comp
 -- through bookKeys (not the picking ones: strum, rollo, jingle play their own guitar)
 -- figures: a long stab played as the song's comp figure (bookFigure), in the styles that have style.figures
+-- colour: a long tune note rests on a tension or leans on the step above (music-guide's buildPhrase)
 D.commonIdeas = { dynamics = { odds = 70, songs = 90 }, revoice = { odds = 50, songs = 80, comps = true },
+                  colour = { odds = 60, songs = 80, comps = true },
                   figures = { odds = 60, songs = 70, comps = true, figures = true } }
 local ideasCache = setmetatable({}, { __mode = 'k' })
 function D.ideasOf(style)

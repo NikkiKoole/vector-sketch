@@ -82,6 +82,20 @@ local function sameChord(a, b)
     return a.degree == b.degree and a.quality == b.quality
 end
 
+-- the chord's tensions a long note can rest on: the 9th, the 11th, the 13th, in the key, that the keys
+-- don't play and that rub nothing they play (over a major chord the 13th, over a minor one the 11th;
+-- the 11th over a major third and the 13th over a minor seventh drop out)
+local TENSIONS = { 2, 5, 9 }
+local function tensionsOf(song, chord, sets)
+    local root, out = (song.key + chord.degree) % 12, {}
+    for _, interval in ipairs(TENSIONS) do
+        local pc = (root + interval) % 12
+        local clear = not sets.tones[pc] and not sets.tones[(pc + 1) % 12] and not sets.tones[(pc + 11) % 12]
+        if clear and song.scale[(pc - song.key) % 12] then out[pc] = true end
+    end
+    return out
+end
+
 -- The 4-bar phrase starting at bar b
 function lib.buildPhrase(song, b)
     local section, j = song.barSection[b], song.barIndex[b]
@@ -130,6 +144,29 @@ function lib.buildPhrase(song, b)
             else note.midi = below end -- rub the chord it sounds over
             note.vol = 3
         end
+    end
+    -- colour (the idea 'colour', song.ideaOdds): a long note may rest on a tension instead of its chord
+    -- tone, or lean on the whole step above first and resolve to it an 8th later (an appoggiatura). Our
+    -- tunes sat on chord tones 80-95% of the time against 70-79% in real songs (HookTheory,
+    -- docs/MUSIC-ANALYSIS.md). Its own stream: without it the tune is note for note the same
+    local colourOdds = (song.ideaOdds or {}).colour or 0
+    if colourOdds > 0 then
+        local crnd = stream(song.seed, 7500 + (section.kind == 'B' and 100 or 0) + slot)
+        local out = {}
+        for _, note in ipairs(notes) do
+            if note.len >= 4 and crnd(100) < colourOdds then
+                local tensions = tensionsOf(song, note.chord, note.sets)
+                local above = note.midi + 2
+                if crnd(100) < 50 and next(tensions) then
+                    note.midi = nearest(tensions, note.midi, lo, hi)
+                elseif above <= hi and song.scale[(above - song.key) % 12] and not note.sets.tones[above % 12] then
+                    out[#out + 1] = { s = note.s, midi = above, vol = note.vol, len = 2 }
+                    note.s, note.len, note.vol = note.s + 2, note.len - 2, math.max(3, note.vol - 1)
+                end
+            end
+            out[#out + 1] = note
+        end
+        notes = out
     end
     for _, note in ipairs(notes) do note.chord, note.sets = nil, nil end
     section.guideLast = #notes > 0 and notes[#notes].midi or section.guideLast
