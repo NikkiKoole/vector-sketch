@@ -64,10 +64,11 @@ function lib.plan(song, style, addSections)
     local bpm = style.bpms[group]
     song.beat = 60 / math.floor(bpm[1] + rnd() * (bpm[2] - bpm[1]) + 0.5)
     song.barLength = 4 * song.beat
+    local walk = lib.WALKS[rnd(#lib.WALKS) + 1]
     song.jam = { group = group, family = family.name, patterns = family.loops, fill = family.fill, at = 1,
                  layers = style.minLayers, phrase = 0, mode = 'groove', on = {},
-                 walk = lib.WALKS[rnd(#lib.WALKS) + 1], rootEvery = lib.ROOT_EVERY[rnd(#lib.ROOT_EVERY) + 1],
-                 step = 1, root = 0 }
+                 walk = walk, rootEvery = lib.ROOT_EVERY[rnd(#lib.ROOT_EVERY) + 1],
+                 step = 1, root = walk[1] } -- a walk may start away from home (2 5 1)
     local sections = {}
     for k = 1, style.phrases do sections[k] = { 'A', style.phraseBars } end
     addSections(song, sections)
