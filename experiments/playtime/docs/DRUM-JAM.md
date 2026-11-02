@@ -78,7 +78,8 @@ Until then the jam plays the general patches; that's enough to hear whether the 
   plays a 16-step loop written in DEGREES (`R` root, `3`, `5`, `7`, `8`, `L` the fifth below, `-` hold,
   `.` rest; two per genre, moving with the drum variants) over a ROOT that walks on its own clock:
   every 2, 4 or 8 bars along a walk rolled per song (I IV V I, I IV I V, I bVII I IV, around the
-  fourths). Calm play holds the root; the drop lands back home; impacts follow it (`remember` on the
+  fourths). Calm play slows the walk (a step lasts twice as long; it used to hold the root, which froze the jam in
+  the editor, where nothing bumps the play level), a panel pick is never slowed; the drop lands back home; impacts follow it (`remember` on the
   root). The round bass first (`lib.BASS`). Built 2026-11-02 (`music-jam.lua`): Disco's octave loop
   walks F Bb Eb Ab Db Gb a move every 4 bars, bass and kick within 1.3 dB rms.
   Then (Nikki: "more interesting loops, a simpler rhythm with brushes, the upright"): the walks gained the
