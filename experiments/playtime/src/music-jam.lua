@@ -65,13 +65,16 @@ lib.SWING = { Brushes = 0.62 } -- a genre's own swing (the jam style's otherwise
 -- Two per genre (A and B, moving with the drum family's variants). The voice: lib.BASS, the upright
 -- (synth.lua's musicBass: dreamengine's bowed-string model plucked, a double bass body; Nikki's pick).
 lib.BASS = 'musicBass'
+-- Few notes on purpose (Nikki: the ROOT MOVING is the point, a busy riff buries it): A = root-octave-b7,
+-- the classic funk cell and Nikki's favourite (2026-11-02), in every genre; B = a figure that suits it:
+-- the push (N, the next root early) for the funky ones, the octave pop for Disco, the approach for Brushes.
 lib.BASS_LOOPS = {
-    Electro = { 'R--.R--.R-.R-.5.', 'R--.R--.8.R.5.A.' },
-    ['Hip Hop'] = { 'R-----.R--..5-A-', 'R-----.R--..L-A-' },
-    Breaks = { 'R---..R.5---..A.', 'R---..R.8.7.5.A.' },
-    Disco = { 'R.8.R.8.R.8.5.A.', 'R.8.R.8.5.8.6.A.' },
-    Funk = { 'R..R..5.7.8..RA.', 'R..R.L..R..5.6A.' },
-    Brushes = { 'R-..5-..6-..A-..', 'R-..8-..5-..2.A.' },
+    Electro = { 'R..8..7.........', 'R.............N.' },
+    ['Hip Hop'] = { 'R..8..7.........', 'R.............N.' },
+    Breaks = { 'R..8..7.........', 'R.............N.' },
+    Disco = { 'R..8..7.........', 'R.....8.R.....8.' },
+    Funk = { 'R..8..7.........', 'R.............N.' },
+    Brushes = { 'R..8..7.........', 'R-----........A.' },
 }
 local DEGREE = { R = 0, ['2'] = 2, m = 3, ['3'] = 4, ['4'] = 5, ['5'] = 7, ['6'] = 9, ['7'] = 10, ['8'] = 12,
                  L = -5 }
