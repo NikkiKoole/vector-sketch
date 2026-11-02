@@ -94,7 +94,7 @@ Both act at the next bar. Saved setups keep them, and reset puts them back.
   - Bossa, the flute, 2026-11-02: while the band plays, the tune or the answer now fills 18 of 20 bars (it was 14). The real pieces fill 90–100%.
   - Its first note is the guide tone nearest a point near the top of its range, searched up and down; its steps stay in the key and may run a fifth under the range. Searching only downward, it once stuck at the floor and slid out of the key by half steps (Bb–A–G# over F6/9 in guaraldi, heard 2026-11-02). Checked after the fix: no answer note in 30 songs is outside both the key and the chord.
   - Other styles (R2, 2026-11-02), each with its own instrument: guaraldi has the piano answering itself an octave under the tune; vibesnight the felt piano answering the vibes (the MJQ); citypop a horn line (it leaves the bars where the horn section shouts to it); lofi the flute (Nujabes).
-- **Fill run:** rollo's flute runs down the chord's notes in a phrase's 2nd bar (`bookFluteRun`).
+- **Fill run:** rollo's flute runs down the chord's notes in a phrase's 2nd bar (`bookFluteRun`). The idea `runup` (rollo's own, 2026-11-02): now and then the run goes up instead, from its lowest note at E4 or above to the top one, held. Played by a person (Nikki, 2026-11-02): the gaps 62–82 ms and easing into the last note, each note a few ms off, the inner ones now and then softer, the last one held ~2.5 beats, on past the next stab. Nikki: "sounds nice!"
 
 ## Dynamics: how loud
 

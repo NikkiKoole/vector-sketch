@@ -396,6 +396,8 @@ D.styles = {
     rollo = {
         bpm = { 110, 118 }, swing = 0.5, chordBars = { 1, 1 }, pushOdds = 0, turnaroundOdds = 0, leadChance = 0,
         picking = 'jabs', pickPatch = 'jabGuitar', bassPatch = 'pickBass', flute = 'flute', home = 'gmaj',
+        -- runup: now and then the flute's run goes up instead of down (bookFluteRun)
+        ideas = { runup = { odds = 35, songs = 85 } },
         A = {
             { { 0, 'gmaj', 8 }, { 7, 'gmaj', 8 }, { 0, 'gmaj', 8 }, { 7, 'gmaj', 8 } },   -- I V I V
             { { 0, 'gmaj', 8 }, { 7, 'gmaj', 8 }, { 5, 'gmaj', 8 }, { 7, 'gmaj', 8 } },   -- I V IV V

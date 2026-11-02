@@ -1209,8 +1209,9 @@ local function jab(synth, patch, t, triad, durMs, step)
     for k, midi in ipairs(triad) do play(synth, 'keys', patch, t + (k - 1) * 0.006, midi, 3, durMs, step) end
 end
 -- the flute's run: the chord's notes running down from its highest at or under A5, quick, the last
--- one held up to the second stab (the record's flute, docs/MUSIC-ANALYSIS.md)
-local function bookFluteRun(bar, s, chord)
+-- one held up to the second stab (the record's flute, docs/MUSIC-ANALYSIS.md). up: the other way, from
+-- its lowest at or over E4 up, the top one held (the idea 'runup', rollo's own)
+local function bookFluteRun(bar, s, chord, up)
     local song, t = bar.song, stepTime(bar.song, bar.t0, s)
     local notes = {}
     for _, midi in ipairs(jabTriad(song, chord)) do
@@ -1218,11 +1219,18 @@ local function bookFluteRun(bar, s, chord)
             if n <= 81 and n >= 64 then notes[#notes + 1] = n end
         end
     end
-    table.sort(notes, function(a, b) return a > b end)
+    table.sort(notes, function(a, b) if up then return a < b end return a > b end)
+    -- played by a person (Nikki: let the end note linger, more human): the gaps a little different
+    -- each run and easing into the last note, each note a few ms off, the inner ones not all as loud,
+    -- the last one held about two and a half beats, on past the next stab. Its own stream
+    local rnd = stream(song.seed, 9950 + bar.b)
     local last = math.min(#notes, 4)
+    local gap, at = 0.062 + rnd() * 0.02, t
     for k = 1, last do
-        local dur = k == last and lengthMs(song, s, 5) - (k - 1) * 70 or 90
-        play(bar.synth, 'lead', bar.style.flute, t + (k - 1) * 0.07, notes[k], k == 1 and 4 or 3, dur, s)
+        local vol = k == 1 and 4 or (k < last and rnd(100) < 35) and 2 or 3
+        local dur = k == last and lengthMs(song, s, 10) - (k - 1) * gap * 1000 or gap * 1000 + 25
+        play(bar.synth, 'lead', bar.style.flute, at + humanize(0.006), notes[k], vol, dur, s)
+        at = at + gap * (k == last - 1 and 1.25 or 1) -- the last gap a touch longer
     end
 end
 local function bookJabs(bar)
@@ -1235,7 +1243,8 @@ local function bookJabs(bar)
     -- the flute now and then, in a phrase's second bar after the bass's beat 3 (the melody switch is its)
     local runOdds = section.kind == 'B' and 70 or section.kind == 'A' and 40 or 0
     if state.musicSettings.melody ~= false and j % 4 == 1 and bar.rnd(100) < runOdds then
-        bookFluteRun(bar, 9, chordAtStep(song, bar.b, 9))
+        local up = stream(song.seed, 9900 + bar.b)(100) < ((song.ideaOdds or {}).runup or 0)
+        bookFluteRun(bar, 9, chordAtStep(song, bar.b, 9), up)
     end
     for _, s in ipairs({ 0, 8 }) do
         local chord = chordAtStep(song, bar.b, s)

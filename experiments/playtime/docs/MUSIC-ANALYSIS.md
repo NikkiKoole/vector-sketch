@@ -223,7 +223,7 @@ measured are in the sections above. The concepts by name are in `MUSIC-CONCEPTS.
   - `jabGuitar`: the guitar, choked, with the tape on
   - `pickBass`: a picked electric bass, as Nikki heard it
   - `parts.bookJabs`
-- [ ] Nikki listens to rollo in the game; tune from there
+- [x] Nikki listens to rollo in the game; tune from there (2026-11-02: "liking this rollo stuff"; the flute's run now and then goes up, the idea `runup`, and lingers on its last note, humanized)
 - [x] The flute's downward run in rollo (2026-10-30):
   - **The patch:** `flute`, built on PIPE with dreamengine's pipe.c flute preset, a 4.4 Hz vibrato and the tape. It stays at A5 or below.
   - **The run:** `bookFluteRun` runs down the chord's notes, 70 ms apart, and holds the last one up to the second stab.
