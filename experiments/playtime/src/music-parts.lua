@@ -700,13 +700,20 @@ local function keysHits(bar)
 end
 
 -- the keys play their hits, rolled by the style's strum; the dub echo repeats a stab while its chord lasts
+-- the comp: each stab voiced nearest the last (voiceChord). The same chord struck again is re-voiced
+-- now and then, its top note moving (the idea 'revoice'; the style report measured our keys
+-- re-striking one chord 50-80% of the time against 8-28% in the pieces: docs/MUSIC-ANALYSIS.md)
 local function bookKeys(bar, hits)
     local synth, song, style, t0 = bar.synth, bar.song, bar.style, bar.t0
+    local revoiceRnd, revoiceOdds = stream(song.seed, 9000 + bar.b), (song.ideaOdds or {}).revoice or 0
     for _, h in ipairs(hits) do
         local chord = h.sidestep or h.chord
         local root = (song.key + chord.degree) % 12
-        local voicing = voiceChord(root, voicedQuality(song, chord), keysLo(song), 76, M.voicing)
-        if not h.sidestep then M.voicing = voicing end
+        local name = root .. chord.quality
+        local again = not h.sidestep and M.voicingOf == name and M.voicing ~= nil
+        local moveTop = again and revoiceOdds > 0 and revoiceRnd(100) < revoiceOdds
+        local voicing = voiceChord(root, voicedQuality(song, chord), keysLo(song), 76, M.voicing, moveTop)
+        if not h.sidestep then M.voicing, M.voicingOf = voicing, name end
         local t = stepTime(song, t0, h.s) + humanize(0.005)
         local strum = (style.strumMs or 8) / 1000
         for k = h.light and 2 or 1, #voicing do

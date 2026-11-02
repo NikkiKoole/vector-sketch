@@ -40,6 +40,9 @@ Both act at the next bar. Saved setups keep them, and reset puts them back.
 - **Voice leading, least movement:** each chord is voiced as close as possible to the one before (rotations and drop-2 voicings in every octave; `voiceChord`, after lofi.c's `lead_to4`).
 - **Shell voicing:** only the 3rd, the 7th and one colour, as a bossa guitarist or a comping pianist plays it (`shellOf`, `song.comping = 'shell'`).
 - **Guide tones:** the 3rd and 7th. They say which chord it is, and they move by step from one chord to the next (`src/music-guide.lua`).
+- **Top-line comping, re-voicing (the idea `revoice`):** the same chord struck again comes in another voicing, its top note moving, instead of the same block. Shared by every style that comps through `bookKeys` (not strum, rollo, jingle).
+  - Where: `voiceChord`'s `moveTop` (`src/music-theory.lua`), `bookKeys`.
+  - Measured 2026-11-02 (R3, 5 songs per style): keys re-striking down 3–9 points (bossa 68 to 61%, herbs 80 to 71%, guaraldi 52 to 48%), rubs the same. An inversion keeps most of its notes, so only the top line moves. The rest of the gap is texture: the pieces' keys play arpeggios, oom-pah and alternating bass and chord, not stabs.
 - **Avoid note:** a scale note a half step above a chord tone; it rubs on a long note (`isAvoid`, `rubs`).
 - **Line cliché, the walks:** one inner voice moves by half steps while a chord is held. Minor: root, maj7, b7, 6 (Cm, Cm(maj7), Cm7, Cm6). Major: 6/9 opening to maj9. Dominant: 9 falling to b9.
   - Where: `walks`, `planWalks` (marks and rolls the chords), `barChords` (plays the walk when its idea's odds allow). Ideas `walks` and `flat9`.
@@ -100,7 +103,7 @@ Both act at the next bar. Saved setups keep them, and reset puts them back.
 
 ## Ideas waiting (measured gaps, see `MUSIC-ANALYSIS.md`)
 
-- **Fewer re-struck chords:** re-voice or rest some stabs. Bossa's keys still re-strike 67% of the time; the real pieces do it 8–28%.
+- **Comp figures (texture):** broken chords, arpeggios and stride (a bass note, then the chord) instead of block stabs. This is the rest of the re-strike gap.
 - **A wider register span (orchestration by range):** spread the bass and the tune further apart. Ours span 3–4 octaves, the real pieces 4–6.6.
 - **Faster harmonic rhythm:** bossa's chords last 2 bars; real bossa changes about once a bar.
 - **More secondary dominants and borrowed chords**, from the Chordonomicon "typical progressions".

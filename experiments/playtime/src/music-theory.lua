@@ -25,7 +25,9 @@ end
 -- lofi.c's lead_to4: every rotation and drop-2 of the chord in every octave, bottom note in
 -- lo..lo+12, top at most hi, no semitone or minor ninth between any two notes, no low clusters; the
 -- one that moves least from the previous voicing (top-voice leaps over 4 cost extra), pulled toward 62.
-local function voiceChord(rootPc, intervals, lo, hi, previous)
+-- moveTop: the same chord struck again, re-voiced: not the previous voicing, and the top note moving
+-- if it can (top-line comping, the idea 'revoice': music-parts' bookKeys)
+local function voiceChord(rootPc, intervals, lo, hi, previous, moveTop)
     if intervals.stack then -- a fixed shape: the octave nearest the previous voicing's middle
         local best, bestCost = nil, math.huge
         for octave = 2, 7 do
@@ -82,6 +84,11 @@ local function voiceChord(rootPc, intervals, lo, hi, previous)
                             for j = 1, n do cost = cost + math.abs(v[j] - previous[math.min(j, #previous)]) end
                             local topLeap = math.abs(v[n] - previous[#previous])
                             if topLeap > 4 then cost = cost + 2 * (topLeap - 4) end
+                            if moveTop then
+                                local same = #previous == n
+                                for j = 1, n do same = same and v[j] == previous[j] end
+                                if same then cost = cost + 1000 elseif topLeap == 0 then cost = cost + 3 end
+                            end
                         end
                         if cost < bestCost then bestCost, best = cost, v end
                     end

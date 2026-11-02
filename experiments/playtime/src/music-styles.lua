@@ -785,13 +785,17 @@ D.answers = { { 0, 2, 4, 10 }, { 2, 4, 6, 12 }, { 0, 2, 6, 8, 14 }, { 4, 6, 8, 1
 -- The ideas every song style shares (docs/MUSIC-CONCEPTS.md), on top of a style's own style.ideas
 -- (a style can say name = false). dynamics: the sections' levels and the swells (music-plan's
 -- planDynamics); the style report measured our loudness barely moving, 0-8 against 9-19 in the pieces
-D.commonIdeas = { dynamics = { odds = 70, songs = 90 } }
+-- revoice: a chord struck again comes re-voiced, its top note moving (bookKeys), in the styles that comp
+-- through bookKeys (not the picking ones: strum, rollo, jingle play their own guitar)
+D.commonIdeas = { dynamics = { odds = 70, songs = 90 }, revoice = { odds = 50, songs = 80, comps = true } }
 local ideasCache = setmetatable({}, { __mode = 'k' })
 function D.ideasOf(style)
     if style.loop then return style.ideas or {} end -- the loops and the scores: only their own
     if ideasCache[style] then return ideasCache[style] end
     local out = {}
-    for name, idea in pairs(D.commonIdeas) do out[name] = idea end
+    for name, idea in pairs(D.commonIdeas) do
+        if not (idea.comps and style.picking) then out[name] = idea end
+    end
     for name, idea in pairs(style.ideas or {}) do out[name] = idea or nil end
     ideasCache[style] = out
     return out

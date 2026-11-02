@@ -203,7 +203,8 @@ measured are in the sections above. The concepts by name are in `MUSIC-CONCEPTS.
 - [x] R0. Bossa: the walks (the line cliché) and the flute answer (call and response), settable as ideas with spice (2026-11-02; Nikki on the answer: "sounds pretty good")
 - [x] R1. Dynamics: phrases that swell and fall, a section that lifts. Built 2026-11-02 (section levels, A swells; the idea `dynamics` in every song style): loudness spread 0–9 to 10–17. Nikki: "sounds good"
 - [x] R2. Walks and answers in other styles: guaraldi, citypop (the answer on a horn), lofi (the flute), vibesnight (the felt piano). Built 2026-11-02 (`MUSIC-CONCEPTS.md`: the walks, the answer): step lines up in all four, rubs about the same. Nikki heard the answer slide out of the key in guaraldi (fixed: the answer's first note was searched only downward). Nikki: "nice"
-- [ ] R3. Fewer re-struck chords: a repeated stab changes its voicing (an inversion, a moving top note) instead of hitting the same block (bossa's keys are at 67%)
+- [x] R3. Fewer re-struck chords: a repeated stab changes its voicing (an inversion, a moving top note) instead of hitting the same block (bossa's keys are at 67%). Built 2026-11-02 as the idea `revoice`: down 3–9 points per style. Nikki: "I like the slightly different voicings"
+- [ ] R3b. Comp figures: broken chords, arpeggios and stride in place of some block stabs, per style (lofi's Rhodes arpeggio, a stride for guaraldi and sesame). The pieces' low re-strike numbers come from their texture, not from re-voicing
 - [ ] R4. A tune with more colour: tensions (9ths, 13ths) on long notes, approach tones, down to ~75% chord tones; motif banks per style (the rhythm differs per style)
 - [ ] R5. A wider span: the bass drops an octave in places, the tune climbs at its peaks
 - [ ] R6. Faster harmony and borrowed chords: chords lasting one or two bars (`chordBars { 1, 2 }`), chord banks that include the typical progressions
