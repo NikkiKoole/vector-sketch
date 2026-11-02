@@ -48,6 +48,7 @@ Both act at the next bar. Saved setups keep them, and reset puts them back.
   - Where: `walks`, `planWalks` (marks and rolls the chords), `barChords` (plays the walk when its idea's odds allow). Ideas `walks` and `flat9`.
   - Bossa, 2026-11-02: step lines went from 0.8 to 1.9 per 8 bars. Nikki: "sounds better".
   - A chord too short for its walk takes its short one (`walk.short`), at least half a bar per step.
+  - A short walk (and citypop's, marked `diatonic`) brings in only notes from the key. Citypop's Dm9 to Dm6 on the vi of F put a B natural into the keys, the horns and the tune (heard 2026-11-02; `walkInKey` in `src/music-theory.lua`). The long line cliché keeps its chromatic steps: it arrives at its 6th by half steps.
   - Guaraldi, vibesnight (sharing guaraldi's walks), citypop and lofi, 2026-11-02 (R2), step lines per 8 bars over 6 songs:
 
     | style | before | after |

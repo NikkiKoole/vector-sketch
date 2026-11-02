@@ -286,7 +286,7 @@ end
 local shortWalks = setmetatable({}, { __mode = 'k' })
 local function walkShort(walk) -- the short walk, with the long one's idea and fifthDown
     if not shortWalks[walk] then
-        local short = { idea = walk.idea, fifthDown = walk.fifthDown }
+        local short = { idea = walk.idea, fifthDown = walk.fifthDown, diatonic = true } -- no chromatic line to lead in
         for k, quality in ipairs(walk.short) do short[k] = quality end
         shortWalks[walk] = short
     end

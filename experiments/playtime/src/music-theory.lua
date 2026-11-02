@@ -184,6 +184,22 @@ local function chordPcs(song, chord)
 end
 
 -- the chords inside bar b: { degree, quality, s = start step, len = steps }
+-- a walk marked diatonic brings in only the key's notes: each step's notes the first step doesn't have
+-- must be in the scale (citypop's Dm9 to Dm6 on the vi of F put a B natural in, heard 2026-11-02; the
+-- long line cliché arrives at its 6th by half steps and keeps it)
+local function walkInKey(song, rootPc, walk)
+    if not song.scale then return true end
+    local first = {}
+    for _, interval in ipairs(qualityOf(song, walk[1])) do first[(rootPc + interval) % 12] = true end
+    for k = 2, #walk do
+        for _, interval in ipairs(qualityOf(song, walk[k])) do
+            local pc = (rootPc + interval) % 12
+            if not first[pc] and not song.scale[(pc - song.key) % 12] then return false end
+        end
+    end
+    return true
+end
+
 local function barChords(song, b)
     if b < 1 or b > song.bars then b = math.max(1, math.min(song.bars, b)) end
     local section, j = song.barSection[b], song.barIndex[b]
@@ -198,6 +214,9 @@ local function barChords(song, b)
         -- a walk (music-plan's planWalks) splits the chord into its steps, if its idea is on this bar:
         -- song.ideaOdds, from the settings (src/music.lua's bookBar), against the chord's own roll
         local walk, pieces = chord.walk, nil
+        if walk and walk.diatonic and not walkInKey(song, (song.key + chord.degree + shift) % 12, walk) then
+            walk = nil
+        end
         if walk and chord.walkRoll < ((song.ideaOdds or {})[walk.idea or 'walks'] or 0) then
             pieces = {}
             for k, quality in ipairs(walk) do pieces[k] = { quality, chord.steps / #walk } end

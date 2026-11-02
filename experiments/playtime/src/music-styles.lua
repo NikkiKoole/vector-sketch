@@ -483,8 +483,9 @@ D.styles = {
         -- one-bar chords, so two-step walks: the 9th to the 6th, the dominant's 9 and 13 to the alt crunch
         -- (#9, b13) into a fifth below; a horn line answers where the tune breathes (not where the horn
         -- section shouts: bookAnswer leaves those bars to it)
-        walks = { m9 = { 'm9', 'm6' }, maj9 = { 'maj9', 'maj69' }, maj7 = { 'maj7', 'maj69' },
-                  dom9 = { 'dom9', 'alt', fifthDown = true, idea = 'flat9' } },
+        walks = { m9 = { 'm9', 'm6', diatonic = true }, maj9 = { 'maj9', 'maj69', diatonic = true },
+                  maj7 = { 'maj7', 'maj69', diatonic = true },
+                  dom9 = { 'dom9', 'alt', fifthDown = true, idea = 'flat9' } }, -- diatonic: barChords' walkInKey
         answer = { patch = 'horn', lo = 60, hi = 74, vol = 3 },
         -- the tune's rhythms: 16th syncopation, notes on the e and the a
         motifs = {
