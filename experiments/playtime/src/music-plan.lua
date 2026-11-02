@@ -245,6 +245,29 @@ local function planChords(song, style, rnd)
     end
 end
 
+-- a chord held two bars or more walks one inner voice through style.walks[quality] (bossa's line
+-- clichés), the steps split evenly; a walk marked fifthDown only into a chord a fifth below (the
+-- next one, round to the progression's start). Its own stream: the style's other draws stay as they were
+local function planWalks(song, style)
+    if not style.walks then return end
+    local rnd = stream(song.seed, 15)
+    for _, prog in ipairs({ song.A, song.B }) do
+        local walked = { steps = 0 }
+        for i, chord in ipairs(prog) do
+            local walk = style.walks[chord.quality]
+            local after = prog[i % #prog + 1]
+            if walk and walk.fifthDown and (chord.degree - after.degree) % 12 ~= 7 then walk = nil end
+            if walk and chord.steps >= 32 and chord.steps % (#walk * 4) == 0 and rnd(100) < (style.walkOdds or 50) then
+                for _, quality in ipairs(walk) do progAdd(walked, chord.degree, quality, chord.steps / #walk / 4) end
+            else
+                progAdd(walked, chord.degree, chord.quality, chord.steps / 4)
+            end
+        end
+        for k in pairs(prog) do prog[k] = nil end
+        for k, v in pairs(walked) do prog[k] = v end
+    end
+end
+
 -- each part's role per section (bass: 'play', 'last' bar only, 'hold' or 'none')
 local function sectionRoles(style, kind, aCount, rnd)
     if kind == 'intro' then
@@ -488,6 +511,7 @@ local function planSong(setKey)
     end
     local rnd = stream(seed, 1)
     planChords(song, style, rnd)
+    planWalks(song, style)
     planForm(song, style, rnd)
     planBars(song, style, between, mood)
     rnd = stream(seed, 9)

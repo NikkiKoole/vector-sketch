@@ -192,3 +192,5 @@ These numbers are what to aim at when a style is changed, and the report shows w
 - [x] Score analysis and the style report (2026-11-02, see "The score pieces next to our styles")
 - [ ] Nikki listens to gershwin2 again (the tune labelling is fixed) and checks the `??` bars (10, 16, 25, 33, 36, 38, 39, 49, 59 in `claudetools/scores/gershwin-prelude2.txt`)
 - [ ] One style made richer by the numbers: inner step lines in the keys, fewer re-struck chords, a wider span, moving loudness; measured with the style report before and after
+  - [x] Bossa's walks (2026-11-02): a two-bar chord walks one inner voice: the minor line cliché, V9 to b9 only into a chord a fifth below (on the backdoor bVII7 it grated), 6/9 to maj9 (`walks`, `planWalks`). Over 8 songs, step lines per 8 bars went from 0.8 to 1.9 and keys hold from 76% to 67%. Nikki: "sounds better, no very wrong rubs".
+  - [ ] Next: fewer re-struck chords, a wider span, a busier tune, moving loudness

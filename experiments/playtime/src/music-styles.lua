@@ -28,6 +28,8 @@ D.qualities = { maj9 = { 4, 7, 11, 14 }, m9 = { 3, 7, 10, 14 }, dom9 = { 4, 10, 
                   -- lofi's jazz on top of the rest: the dominant colours and the minor key's ii
                   n9 = { 4, 10, 14 }, b9 = { 4, 7, 10, 13 }, s9 = { 4, 7, 10, 15 },
                   m7b5 = { 3, 6, 10, 14 }, m6 = { 3, 7, 9, 14 },
+                  -- the minor line cliché's first two steps (bossa's walks): the root, then the major 7th
+                  madd9 = { 3, 7, 12, 14 }, mmaj9 = { 3, 7, 11, 14 },
                   alt = { 4, 10, 15, 20 }, -- citypop's 7alt: 3 b7 #9 b13, the Just the Two of Us crunch
                   dim7 = { 0, 3, 6, 9 },   -- buymode's passing diminished
                   -- strum's guitar chords (their grips are D.grips)
@@ -100,6 +102,14 @@ D.styles = {
         bpm = { 108, 124 }, swing = 0.5, chordBars = { 2 }, lydianChance = 0.6, pushOdds = 15, sidestepOdds = 25,
         steady = true, -- per song, not per bar: the comp, the push, the side-step, shells or 9ths (planSteady)
         strumMs = 8, keys = 'rhodes', lead = 'rhodesLead', bass = 'bossa', drums = 'bossa', home = 'maj9',
+        -- a held chord walks one inner voice (planWalks), as Jobim's do: the minor line cliché (the root
+        -- down by half steps to the 6th), the dominant's 9th falling to b9 before it resolves, the 6/9
+        -- opening to maj9. The style report measured bossa's keys re-striking one chord 76% of the time
+        -- with no inner line (docs/MUSIC-ANALYSIS.md); walkOdds = the share of the chords that walk.
+        -- fifthDown: only into a chord a fifth below (V7b9 -> I); on the backdoor bVII7 the b9 grates
+        walks = { m9 = { 'madd9', 'mmaj9', 'm9', 'm6' }, dom9 = { 'dom9', 'b9', fifthDown = true },
+                  maj9 = { 'maj69', 'maj9' } },
+        walkOdds = 60,
         A = {
             { { 0, 'maj9' }, { 2, 'dom9' }, { 2, 'm9' }, { 7, 'dom9' } },   -- Imaj7 II7 iim7 V7 (Ipanema)
             { { 0, 'maj9' }, { 9, 'm9' }, { 2, 'm9' }, { 7, 'dom9' } },     -- I vi ii V
