@@ -55,10 +55,12 @@ lib.EXTRA = {
 }
 lib.SWING = { Brushes = 0.62 } -- a genre's own swing (the jam style's otherwise)
 
--- The bass. A loop is 16 steps of degrees over the current root: R root, 2 a second, m minor third,
--- 4 fourth, 5 fifth, 6 major sixth, 7 flat seventh, 8 octave, L the fifth below, A the APPROACH: a
--- half step under the NEXT bar's root (so a change is walked into, not jumped); '-' holds the note
--- before, '.' rests. No major third: on a progression's minor chord (the 6 in 1 5 6 4) it would clash.
+-- The bass. A loop is steps (16ths) of degrees over the current root: R root, 2 a second, m minor third,
+-- 3 major third, 4 fourth, 5 fifth, 6 major sixth, 7 flat seventh, 8 octave, L the fifth below, A the
+-- APPROACH: a half step under the NEXT bar's root (so a change is walked into, not jumped); '-' holds
+-- the note before, '.' rests. Mostly no major third: on a progression's minor chord (the 6 in 1 5 6 4)
+-- it would clash. A loop needn't be a bar long: one of 18 steps runs on across the bar line and lands
+-- somewhere else each bar (it counts from the song's first bar).
 -- Two per genre (A and B, moving with the drum family's variants). The voice: lib.BASS, the upright
 -- (synth.lua's musicBass: dreamengine's bowed-string model plucked, a double bass body; Nikki's pick).
 lib.BASS = 'musicBass'
@@ -70,7 +72,8 @@ lib.BASS_LOOPS = {
     Funk = { 'R..R..5.7.8..RA.', 'R..R.L..R..5.6A.' },
     Brushes = { 'R-..5-..6-..A-..', 'R-..8-..5-..2.A.' },
 }
-local DEGREE = { R = 0, ['2'] = 2, m = 3, ['4'] = 5, ['5'] = 7, ['6'] = 9, ['7'] = 10, ['8'] = 12, L = -5 }
+local DEGREE = { R = 0, ['2'] = 2, m = 3, ['3'] = 4, ['4'] = 5, ['5'] = 7, ['6'] = 9, ['7'] = 10, ['8'] = 12,
+                 L = -5 }
 
 -- The walks the root takes (semitones over the song's key), and how often it moves, both rolled per
 -- song: 1 4 5 1 (home, away, the pull, home), 1 5 6 4 (the pop loop that never settles), 1 6 4 5
@@ -154,18 +157,22 @@ local function hit(play, synth, t, role, s, accent, quieter, genre)
     play(synth, 'drums', v[1], t, v[2], math.max(1, v[3] - (quieter or 0)), v[4], s, false, accent)
 end
 
--- One bar of the bass loop over the current root: a note lasts through the '-' after it. nextRoot =
--- where the walk goes next bar (the approach note leans into it).
-local function bookBass(play, synth, song, t0, loop, root, nextRoot)
+-- One bar of the bass loop over the current root: a note lasts through the '-' after it (across the bar
+-- line too: the next bar's booking skips the held steps). nextRoot = where the walk goes next bar (the
+-- approach note leans into it). b = the bar, so a loop that isn't a bar long keeps its place.
+local function bookBass(play, synth, song, t0, loop, root, nextRoot, b)
     local home = inRange((song.key + root) % 12, 33) -- A1..G#2
     local approach = inRange((song.key + nextRoot) % 12, 33) - 1 -- a half step under the next root, right
                                                                    -- under the note it leads into
+    local n = #loop
+    local function at(g) local k = g % n + 1 return loop:sub(k, k) end
     for s = 0, 15 do
-        local c = loop:sub(s + 1, s + 1)
+        local g = (b - 1) * 16 + s -- the step since the song's start: where the loop is
+        local c = at(g)
         local degree = c == 'A' and approach - home or DEGREE[c]
         if degree then
             local len = 1
-            while s + len < 16 and loop:sub(s + len + 1, s + len + 1) == '-' do len = len + 1 end
+            while len < n and at(g + len) == '-' do len = len + 1 end
             local ms = theory.lengthMs(song, s, len) * 0.9
             play(synth, 'bass', lib.BASS, stepTime(song, t0, s), home + degree, s == 0 and 7 or 6, ms, s)
         end
@@ -185,7 +192,7 @@ function lib.bookBar(play, remember, synth, t0, song, b)
         local loops = lib.BASS_LOOPS[jam.group]
         local moves = jam.left == 1 and (M.activity or 0) >= style.perLayer -- the root changes next bar
         local nextRoot = moves and jam.walk[jam.step % #jam.walk + 1] or jam.root
-        bookBass(play, synth, song, t0, loops[(jam.at - 1) % #loops + 1], jam.root, nextRoot)
+        bookBass(play, synth, song, t0, loops[(jam.at - 1) % #loops + 1], jam.root, nextRoot, b)
     end
     local lastBar = inPhrase == style.phraseBars - 1
     local fill = lastBar and (jam.on.snare or jam.mode == 'break')
