@@ -216,6 +216,13 @@ lib.rows = {
             return require('src.state').synth.volume or fallback
         end,
         set = function(_, v) synth().setVolume(v) end },
+    -- the music: every booked note (the parts, stingers, the jam's crash answer) and the Mipo band's samples
+    { key = 'music volume', kind = 'number', min = 0, max = 1,
+        get = function()
+            local fallback = synth().musicVolume
+            return require('src.state').synth.musicVolume or fallback or 1
+        end,
+        set = function(_, v) synth().setMusicVolume(v) end },
     -- the world's sounds: impacts (also when they borrow a band instrument), snap clicks, Mipo voices
     { key = 'fx volume', kind = 'number', min = 0, max = 1,
         get = function()

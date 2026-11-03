@@ -326,7 +326,7 @@ void unschedule(int slot, double t1, double t2);
 ]]
 -- the struct on its own: a hot reload redeclaring it errors, which must not stop the functions above
 if ffi then
-    pcall(ffi.cdef, 'typedef struct { int glide_ms; float accent, harmonics, timbre, morph; } NoteOpts;')
+    pcall(ffi.cdef, 'typedef struct { int glide_ms; float accent, harmonics, timbre, morph, gain; } NoteOpts;')
     pcall(ffi.cdef, CDEF_OPTIONAL)
 end
 
@@ -762,10 +762,23 @@ end
 -- a patch keeps its slot while it sounds), { accent = 0..1 } leans on it (louder, a harder filter kick,
 -- the engine's own "harder" macro), { harmonics/timbre/morph = -1..1 } shifts this note's macros.
 -- A library without schedule_note_at plays the note plainly.
+-- Music notes play at the MUSIC volume (lib.musicVolume) as each note's own gain (dreamengine 898a7aa4's
+-- NoteOpts.gain), never as a slot level: an impact may borrow this patch's slot (see lib.hit).
+-- Without schedule_note_at, or with a NoteOpts declared before gain existed (LuaJIT keeps the first
+-- typedef across a hot reload, so a running game has the old one until restart), the 0..7 vol is
+-- scaled instead: coarser, but never an error.
+local function noteOptsHasGain()
+    if S.noteGain == nil then S.noteGain = ffi ~= nil and pcall(ffi.offsetof, 'NoteOpts', 'gain') and
+                                               ffi.offsetof('NoteOpts', 'gain') ~= nil or false end
+    return S.noteGain
+end
 function lib.scheduleAt(patchName, t, midi, vol, durMs, opts)
     if not S.started then return end
     local patch = lib.patches[patchName]
     if not patch then return end
+    local music = lib.musicVolume or 1
+    if music <= 0 then return end
+    local gain = music < 0.999 and music or nil
     vol = math.max(0, math.min(7, math.floor(vol + 0.5)))
     if patch.mono then -- one voice: of two notes at the same instant (root + fifth) the first one plays.
         S.monoAt = S.monoAt or {} -- 15 ms: the parts humanize each note's time on its own (a few ms), while
@@ -774,14 +787,21 @@ function lib.scheduleAt(patchName, t, midi, vol, durMs, opts)
         S.monoAt[patchName] = t
     end
     local slot, dur = slotOf(patchName, patch, t, durMs), math.max(1, math.floor(durMs))
-    if opts and S.hasNoteAt == nil then -- the optional #47 functions (CDEF_OPTIONAL): looked up once, on first use,
-        local ok, f = pcall(function() return S.C.schedule_note_at end) -- so the offline renderer gets them too
+    if (opts or gain) and S.hasNoteAt == nil then -- the optional #47 functions (CDEF_OPTIONAL): looked up once,
+        local ok, f = pcall(function() return S.C.schedule_note_at end) -- on first use, so the offline renderer gets them too
         S.hasNoteAt = ffi ~= nil and ok and f ~= nil
     end
-    if opts and S.hasNoteAt then
-        S.C.schedule_note_at(t, midi, slot, vol, dur, ffi.new('NoteOpts', {
-            glide_ms = opts.glide or 0, accent = opts.accent or 0,
-            harmonics = opts.harmonics or 0, timbre = opts.timbre or 0, morph = opts.morph or 0 }))
+    local exactGain = gain and S.hasNoteAt and noteOptsHasGain()
+    if gain and not exactGain then -- no per-note gain here: scale the whole-step vol
+        vol = math.floor(vol * gain + 0.5)
+        if vol <= 0 then return end
+    end
+    if (opts or exactGain) and S.hasNoteAt then
+        opts = opts or {}
+        local fields = { glide_ms = opts.glide or 0, accent = opts.accent or 0,
+                         harmonics = opts.harmonics or 0, timbre = opts.timbre or 0, morph = opts.morph or 0 }
+        if exactGain then fields.gain = gain end
+        S.C.schedule_note_at(t, midi, slot, vol, dur, ffi.new('NoteOpts', fields))
     else
         S.C.schedule_at(t, midi, slot, vol, dur)
     end
@@ -907,10 +927,18 @@ function lib.setFxVolume(v)
     S.fxVolume = v
 end
 
+-- MUSIC volume (settings panel): every scheduleAt note (the parts, stingers, the jam's crash answer) and
+-- the Mipo band's samples (src/mipo-band.lua reads it). Applied per note, never per slot (see scheduleAt).
+function lib.setMusicVolume(v)
+    lib.musicVolume = v
+    S.musicVolume = v
+end
+
 -- A hot reload (lurker) of this file re-applies the patches, so saving a tweak is audible right away.
 -- The volumes set in settings live on state, so they survive that.
 lib.volume = S.volume or lib.volume
 lib.fxVolume = S.fxVolume or 1
+lib.musicVolume = S.musicVolume or 1
 if S.started then definePatches() end
 
 return lib

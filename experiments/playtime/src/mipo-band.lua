@@ -84,7 +84,7 @@ local function playNote(note)
         if source then
             local clone = source:clone()
             clone:setPitch(pitch)
-            clone:setVolume(lib.volume * mipoVoice.masterVolume)
+            clone:setVolume(lib.volume * mipoVoice.masterVolume * (state.synth and state.synth.musicVolume or 1))
             clone:play()
         end
     elseif note.kind == 'breathe' then
