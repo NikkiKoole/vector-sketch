@@ -120,12 +120,27 @@ Until then the jam plays Playtime's drum patches; enough to hear whether the arr
   - [ ] J8b. The play level thins a riff: calm = its skeleton (root, octave, b7), busy = all of it and the
     variations, so a riff grows with play the way the drum layers do (and calm keeps J7's point: the root
     moving is heard).
-  - [ ] J8c. Riffs that follow the walk's chords (dorian / mixolydian: 3 <-> m per step of the walk, the
-    6 in 1 5 6 4 minor), only after the pentatonic ones are liked.
+  - [x] J8c. Riffs follow the walk's chords (J9): moved to J9.
   - [ ] J8d. A bass lab: a scene with a grid (16 steps x the scale's rows), the four bars below (edit A,
     then only the steps a variation changes), a walk picker, save to a riff file the jam lists. Only if
     writing riffs as strings gets tedious.
-  The dreamengine session works on the same thing (2026-11-03); keep one format between the two.
+  The dreamengine session works on the same thing (2026-11-03, `tools/carts/rootwalk.c`, GitHub #48);
+  Playtime owns the format, rootwalk.c follows it. Tell it when letters or riffs change.
+- [ ] **J9. Chord progressions** (Nikki 2026-11-03: "two parts, riffs/phrases and chord progressions").
+  - [x] J9a. Changes decided ONE BAR EARLY (2026-11-03): the next phrase on a phrase's last bar, the next
+    root on a step's last bar (or the bar before a drop, home). Before, the bass aimed at the next root
+    and the bar line decided again, and the play level could move in between, so an ending could lean
+    into a root that never came. `spec/music-jam_spec.lua` checks it over 20 seeds, play level jumping.
+  - [x] J9b. The walks are progressions: `kinds` per step (M major, m minor, 7 dominant): 1 5 6 4 = MMmM,
+    2 5 1 = m7M, round the fourths all dominant. Impacts play the chord's pentatonic now.
+  - [x] J9c. Pentatonic riffs FOLLOW THE CHORD: written in the minor pentatonic, each note plays in its
+    place on the chord's own (major: R m 4 5 7 -> R 2 3 5 6; dominant: R 2 3 5 b7). `follow = false`, or a
+    scale of its own (blues, dorian), keeps a riff's notes. The jam's figures (root-octave-b7 ...) don't
+    follow. To listen: `JAM='figure=riff: climb;walk=1 5 6 4;pace=2'`.
+  - [ ] J9d. A chord part: stabs or a pad playing the progression (the organ's one-finger chord), its own
+    layer.
+  - [ ] J9e. The panel's 'jam walk' row as 'jam progression', and more progressions (minor-key ones:
+    1m b7 b6 b7, 1m 4m 5m).
 - [ ] **J6. The organ-era rhythm box** (Nikki: "the truly whimsical ones"). dreamengine has a sourced
   library of them: `runtime/rhythmbox.h` (101 preset rhythms read off the Ace Tone FR-2L, Roland TR-77
   and SGS chip manuals and a 1969 Hammond patent; generated from its `docs/design/rhythm-box-patterns.md`),

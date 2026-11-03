@@ -45,4 +45,20 @@ describe('music-riffs', function()
             end
         end
     end)
+
+    it('follows the chord: the minor pentatonic in place on the chord\'s own', function()
+        local r = { phrase = 'R' }
+        local function notes(kind)
+            local d = riffs.degrees(r, kind)
+            return { d.R, d.m, d['4'], d['5'], d['7'], d['8'], d.L }
+        end
+        assert.are.same({ 0, 3, 5, 7, 10, 12, -5 }, notes('m'))
+        assert.are.same({ 0, 2, 4, 7, 9, 12, -5 }, notes('M'))
+        assert.are.same({ 0, 2, 4, 7, 10, 12, -5 }, notes('7'))
+    end)
+
+    it('keeps its own notes when it has its own scale or says follow = false', function()
+        assert.are.equal(3, riffs.degrees({ phrase = 'R', scale = 'blues' }, 'M').m)
+        assert.are.equal(3, riffs.degrees({ phrase = 'R', follow = false }, 'M').m)
+    end)
 end)

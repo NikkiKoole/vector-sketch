@@ -15,6 +15,10 @@
 --           jam has no chords, only a root that walks, and the minor pentatonic is the scale that sits on
 --           any of its roots). Notes outside it are fine on the off-16ths and as A / N (passing notes);
 --           lib.check finds the rest.
+--   follow  (pentatonic riffs, true unless false) the riff FOLLOWS THE CHORD under it (J9): written in the
+--           minor pentatonic, it plays each note in the same place on the chord's own pentatonic (over
+--           a major chord R m 4 5 7 becomes R 2 3 5 6, over a dominant R 2 3 5 b7). Written once, it fits
+--           1 5 6 4's minor 6 and its major 1 and 4 alike. Other scales keep their own sound.
 local lib = {}
 
 -- semitones over the root
@@ -42,6 +46,30 @@ lib.RIFFS = {
     { name = 'low and high', phrase = 'R...L...R..m4...',
       vars = { B = '        R..m5.N.' }, form = 'AAAB' },
 }
+
+-- a chord kind's pentatonic (the walks' `kinds` in src/music-jam.lua): m minor, M major, 7 dominant
+lib.CHORD_SCALES = {
+    m = { 0, 3, 5, 7, 10 },
+    M = { 0, 2, 4, 7, 9 },
+    ['7'] = { 0, 2, 4, 7, 10 },
+}
+
+-- letter -> semitones for this riff over a chord of `kind`: the jam's DEGREE, with the minor pentatonic's
+-- notes moved to their place on the chord's pentatonic when the riff follows the chord.
+function lib.degrees(riff, kind)
+    local follows = (riff.scale or lib.DEFAULT_SCALE) == 'pentatonic' and riff.follow ~= false
+    local shape = follows and lib.CHORD_SCALES[kind]
+    if not shape then return lib.DEGREE end
+    local out = {}
+    for c, d in pairs(lib.DEGREE) do out[c] = d end
+    local minor = lib.CHORD_SCALES.m
+    for c, d in pairs(lib.DEGREE) do
+        for k = 2, #minor do
+            if d == minor[k] then out[c] = shape[k] end
+        end
+    end
+    return out
+end
 
 function lib.scaleOf(riff) return lib.SCALES[riff.scale or lib.DEFAULT_SCALE] end
 

@@ -8,7 +8,7 @@
 -- drum-patterns.json): genre -> families, a family = the variants of one groove (+ its fill).
 -- The BASS is the organ's auto-accompaniment idea (J7): a short loop written in degrees (root, fifth,
 -- octave...) over a ROOT that walks on its own clock, every rootEvery bars, along a small walk (I IV V I,
--- around the fourths...). Calm play holds the root; the drop lands back home.
+-- around the fourths...). Calm play slows the walk; the drop lands back home; changes are decided a bar early.
 -- Registered as loop = 'jam' in music-plan's LOOP_PLANS and music-parts' LOOP_BARS, which pass in what
 -- this file needs from them (addSections, play, remember), so it requires neither.
 local state = require('src.state')
@@ -97,12 +97,17 @@ local DEGREE = riffs.DEGREE -- b = the b5, for blues riffs (src/music-riffs.lua)
 -- song: 1 4 5 1 (home, away, the pull, home), 1 5 6 4 (the pop loop that never settles), 1 6 4 5
 -- (doo-wop), 2 5 1 (the jazz arrival), 1 4 1 5, 1 bVII 1 4, around the fourths. A walk moves every
 -- rootEvery bars, unless it carries its own lengths (bars = { bars per step }).
+-- A walk is a chord PROGRESSION (J9): `kinds` gives each step's chord, M major, m minor, 7 dominant
+-- (src/music-riffs.lua's CHORD_SCALES: a riff that follows the chord plays its pentatonic there).
 -- Named for the music panel's 'jam walk' row. Paces: 2 or 4 bars (8 was too slow to hear the walk).
 lib.WALKS = {
-    { name = '1 4 5 1', 0, 5, 7, 0 }, { name = '1 5 6 4', 0, 7, 9, 5 }, { name = '1 6 4 5 doo-wop', 0, 9, 5, 7 },
-    { name = '2 5 1', 2, 7, 0, 0 }, { name = '1 4 1 5', 0, 5, 0, 7 }, { name = '1 b7 1 4', 0, 10, 0, 5 },
-    { name = 'round the fourths', 0, 5, 10, 3, 8, 1, 6, 0 },
+    { name = '1 4 5 1', kinds = 'MM7M', 0, 5, 7, 0 }, { name = '1 5 6 4', kinds = 'MMmM', 0, 7, 9, 5 },
+    { name = '1 6 4 5 doo-wop', kinds = 'MmM7', 0, 9, 5, 7 }, { name = '2 5 1', kinds = 'm7MM', 2, 7, 0, 0 },
+    { name = '1 4 1 5', kinds = 'MMM7', 0, 5, 0, 7 }, { name = '1 b7 1 4', kinds = 'MMMM', 0, 10, 0, 5 },
+    { name = 'round the fourths', kinds = '77777777', 0, 5, 10, 3, 8, 1, 6, 0 },
 }
+-- the chord on the walk's current step
+function lib.kind(walk, step) return walk.kinds and walk.kinds:sub(step, step) or 'm' end
 lib.ROOT_EVERY = { 2, 4 }
 
 -- The music panel's picks (state.musicSettings.jam = { walk, figure, pace }, src/music-params.lua; saved
@@ -152,24 +157,32 @@ local function target(style)
     return math.max(style.minLayers, math.min(#lib.LAYERS, n))
 end
 
--- A phrase starts: one step of the live arrangement.
-local function newPhrase(jam, style)
-    jam.phrase = jam.phrase + 1
+-- Everything that changes on a bar line is DECIDED ONE BAR EARLY (the last bar of a phrase, the last bar
+-- on a root) and applied when the bar comes: the bass's ending (A, N, a riff's last letter) then leans into
+-- the root that really arrives. Deciding twice (once to aim the bass, again on the bar line) went wrong
+-- when the play level moved in between, and a drop's jump home came unannounced. (dreamengine's
+-- rootwalk.c cart does the same.)
+
+-- The next phrase: one step of the live arrangement.
+local function planPhrase(jam, style)
+    local p = { phrase = jam.phrase + 1, layers = jam.layers }
     local want = target(style)
     if jam.mode == 'break' and want >= 3 then
-        jam.mode = 'drop' -- after a breakdown, everything the play level asks for comes back at once
-        jam.layers = math.max(jam.layers, want)
-        jam.step, jam.root = 1, jam.walk[1] -- and the drop lands back home, for a whole step
-        jam.left = (jam.walk.bars and jam.walk.bars[1] or jam.rootEvery) + 1
+        p.mode = 'drop' -- after a breakdown, everything the play level asks for comes back at once
+        p.layers = math.max(jam.layers, want)
     elseif jam.mode == 'break' then
-        jam.mode, jam.layers = 'groove', want -- calmed down during the breakdown: back without a drop
-    elseif jam.layers >= 3 and want >= 3 and jam.phrase % style.breakEvery == 0 then
-        jam.mode = 'break'
+        p.mode, p.layers = 'groove', want -- calmed down during the breakdown: back without a drop
+    elseif jam.layers >= 3 and want >= 3 and p.phrase % style.breakEvery == 0 then
+        p.mode = 'break'
     else
-        jam.mode = 'groove' -- one layer at a time toward what the play level asks for
-        if want > jam.layers then jam.layers = jam.layers + 1
-        elseif want < jam.layers then jam.layers = jam.layers - 1 end
+        p.mode = 'groove' -- one layer at a time toward what the play level asks for
+        if want > jam.layers then p.layers = jam.layers + 1
+        elseif want < jam.layers then p.layers = jam.layers - 1 end
     end
+    return p
+end
+local function applyPhrase(jam, style, p)
+    jam.phrase, jam.mode, jam.layers = p.phrase, p.mode, p.layers
     if jam.phrase % style.variantEvery == 0 then jam.at = jam.at % #jam.patterns + 1 end
     for k, layer in ipairs(lib.LAYERS) do jam.on[layer.name] = k <= jam.layers end
     if jam.mode == 'break' then -- the breakdown: the floor drops out (no kick), the rest keeps going
@@ -183,27 +196,52 @@ local function nextWalk(jam)
     local want = picked(lib.WALKS, picks().walk)
     return want and want ~= jam.walk and want or nil
 end
--- The root walker: when a step's bars are up (its own length, else rootEvery), the root takes the walk's
--- next step. Calm play SLOWS it (a step lasts twice as long) but never stops it: the root moving is the
--- point, and holding it froze the jam in the editor (where nothing bumps the play level), a picked walk
--- waiting for a change that never came. Anything picked in the panel is never slowed.
+-- Calm play SLOWS the walk (a step lasts twice as long) but never stops it: the root moving is the point,
+-- and holding it froze the jam in the editor (where nothing bumps the play level), a picked walk waiting
+-- for a change that never came. Anything picked in the panel is never slowed.
 function lib.lingers(jam, style)
     if jam.lingered then return false end -- slowed once already: this step moves on
     local p = picks()
     local chosen = (p.walk and p.walk ~= 'auto') or (p.pace and p.pace ~= 'auto') or nextWalk(jam)
     return not chosen and (M.activity or 0) < style.perLayer
 end
-local function walkRoot(jam, style, b)
-    jam.rootEvery = tonumber(picks().pace) or jam.rootEvery
-    if b == 1 then return end
-    jam.left = jam.left - 1
-    if jam.left > 0 then return end
-    if lib.lingers(jam, style) then jam.left, jam.lingered = stepBars(jam), true return end
-    jam.lingered = false
+-- The next root, decided on the last bar of a step (or the bar before a drop, which lands back home on
+-- the walk's first step, a picked walk's if one waits): { walk, step } or { linger = true }.
+local function planRoot(jam, style, drop)
+    if drop then return { walk = nextWalk(jam) or jam.walk, step = 1 } end
+    if lib.lingers(jam, style) then return { linger = true } end
     local switch = nextWalk(jam)
-    if switch then jam.walk, jam.step = switch, 1 else jam.step = jam.step % #jam.walk + 1 end
+    if switch then return { walk = switch, step = 1 } end
+    return { walk = jam.walk, step = jam.step % #jam.walk + 1 }
+end
+local function applyRoot(jam, nxt)
+    if nxt.linger then jam.left, jam.lingered = stepBars(jam), true return end
+    jam.lingered = false
+    jam.walk, jam.step = nxt.walk, nxt.step
     jam.root = jam.walk[jam.step]
     jam.left = stepBars(jam)
+end
+-- The bar line: apply what was decided last bar, then decide what the next bar line brings.
+local function advance(jam, style, b)
+    jam.rootEvery = tonumber(picks().pace) or jam.rootEvery
+    if b == 1 then
+        applyPhrase(jam, style, planPhrase(jam, style))
+    else
+        if jam.nextPhrase then applyPhrase(jam, style, jam.nextPhrase) end
+        if jam.nextRoot then applyRoot(jam, jam.nextRoot) else jam.left = jam.left - 1 end
+    end
+    jam.nextPhrase, jam.nextRoot = nil, nil
+    if (b - 1) % style.phraseBars == style.phraseBars - 1 then jam.nextPhrase = planPhrase(jam, style) end
+    local drop = jam.nextPhrase and jam.nextPhrase.mode == 'drop'
+    if drop or jam.left <= 1 then jam.nextRoot = planRoot(jam, style, drop) end
+end
+-- Where the next bar's root goes (the approach note leans into it), and the bars left on this root as a
+-- riff's form counts them (1 = the bar before the change; a step slowed by calm play goes on longer).
+function lib.ahead(jam)
+    local nxt = jam.nextRoot
+    if not nxt then return jam.root, jam.left end
+    if nxt.linger then return jam.root, jam.left + stepBars(jam) end
+    return nxt.walk[nxt.step], 1
 end
 
 local function hit(play, synth, t, role, s, accent, quieter, genre)
@@ -217,7 +255,9 @@ end
 -- line too: the next bar's booking skips the held steps). nextRoot = where the walk goes next bar (the
 -- approach note leans into it). b = the bar, so a loop that isn't a bar long keeps its place. oneBar: the
 -- loop is this bar only (a riff's bar), so a hold stops at the bar line instead of wrapping.
-local function bookBass(play, synth, song, t0, loop, root, nextRoot, b, oneBar)
+-- degree: letter -> semitones (a riff's, following the chord), else the jam's DEGREE.
+local function bookBass(play, synth, song, t0, loop, root, nextRoot, b, oneBar, degree)
+    degree = degree or DEGREE
     local home = inRange((song.key + root) % 12, 33) -- A1..G#2
     local approach = inRange((song.key + nextRoot) % 12, 33) - 1 -- a half step under the next root, right
                                                                    -- under the note it leads into
@@ -226,12 +266,12 @@ local function bookBass(play, synth, song, t0, loop, root, nextRoot, b, oneBar)
     for s = 0, 15 do
         local g = (b - 1) * 16 + s -- the step since the song's start: where the loop is
         local c = at(g)
-        local degree = c == 'A' and approach - home or c == 'N' and approach + 1 - home or DEGREE[c]
-        if degree then
+        local d = c == 'A' and approach - home or c == 'N' and approach + 1 - home or degree[c]
+        if d then
             local len = 1
             while len < n and (not oneBar or s + len < 16) and at(g + len) == '-' do len = len + 1 end
             local ms = theory.lengthMs(song, s, len) * 0.9
-            play(synth, 'bass', lib.BASS, stepTime(song, t0, s), home + degree, s == 0 and 7 or 6, ms, s)
+            play(synth, 'bass', lib.BASS, stepTime(song, t0, s), home + d, s == 0 and 7 or 6, ms, s)
         end
     end
 end
@@ -263,20 +303,19 @@ function lib.bookBar(play, remember, synth, t0, song, b)
     local style, jam = D.styles[song.style], song.jam
     announceSounds(song, jam)
     local inPhrase = (b - 1) % style.phraseBars
-    if inPhrase == 0 then newPhrase(jam, style) end
-    walkRoot(jam, style, b)
+    advance(jam, style, b)
+    local kind = lib.kind(jam.walk, jam.step)
     local pcs = {}
-    for _, d in ipairs({ 0, 3, 5, 7, 10 }) do pcs[#pcs + 1] = (song.key + jam.root + d) % 12 end
-    remember(t0, pcs) -- impacts play along in a minor pentatonic on the root
+    for _, d in ipairs(riffs.CHORD_SCALES[kind]) do pcs[#pcs + 1] = (song.key + jam.root + d) % 12 end
+    remember(t0, pcs) -- impacts play along in the chord's pentatonic on the root
     if jam.on.bass then
         local loops = lib.BASS_LOOPS[jam.group]
         local figure = picked(lib.FIGURES, picks().figure)
         local riff = figure and figure.riff
-        local loop = riff and riffs.bar(riff, jam.left) or figure and figure.loop or loops[(jam.at - 1) % #loops + 1]
-        local moves = jam.left == 1 and not lib.lingers(jam, style) -- the root changes next bar
-        local switch = moves and nextWalk(jam)
-        local nextRoot = switch and switch[1] or moves and jam.walk[jam.step % #jam.walk + 1] or jam.root
-        bookBass(play, synth, song, t0, loop, jam.root, nextRoot, b, riff and true)
+        local nextRoot, barsLeft = lib.ahead(jam)
+        local loop = riff and riffs.bar(riff, barsLeft) or figure and figure.loop or loops[(jam.at - 1) % #loops + 1]
+        bookBass(play, synth, song, t0, loop, jam.root, nextRoot, b, riff and true,
+                 riff and riffs.degrees(riff, kind))
     end
     local lastBar = inPhrase == style.phraseBars - 1
     local fill = lastBar and (jam.on.snare or jam.mode == 'break')
