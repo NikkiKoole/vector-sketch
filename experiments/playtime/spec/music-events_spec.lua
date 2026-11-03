@@ -45,6 +45,26 @@ describe('music-events', function()
         assert.are.equal(0, #state.music.moments)
     end)
 
+    it('lends the band\'s instruments: what a part played lately, the latest first (MW7)', function()
+        state.music.audioTime = 100
+        state.music.heard = { bass = { musicBass = { { from = 90, to = 91 } }, tb303 = { { from = 98, to = 99.5 } } },
+                              keys = { rhodes = { { from = 50, to = 60 } } } }
+        assert.are.same({ 'tb303' }, events.bandInstruments('bass', 4))
+        assert.are.same({ 'tb303', 'musicBass' }, events.bandInstruments('bass', 20))
+        assert.are.same({}, events.bandInstruments('keys', 4)) -- the keys stopped a while ago
+        assert.are.same({}, events.bandInstruments('lead', 4))
+        state.music.heard = nil
+    end)
+
+    it('borrows for the ball and boxes by default, not for Mipo bumps', function()
+        assert.is_true(events.borrows('ball'))
+        assert.is_true(events.borrows('box'))
+        assert.is_false(events.borrows('plonk'))
+        state.musicSettings.world = { band = { ball = 'own', plonk = 'band' } }
+        assert.is_false(events.borrows('ball'))
+        assert.is_true(events.borrows('plonk'))
+    end)
+
     describe('the jam', function()
         local style = D.styles.jam
         local function song()

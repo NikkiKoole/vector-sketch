@@ -65,7 +65,14 @@ Two functions and a settings panel, in `src/music-events.lua` (new), registered 
   bass louder, or the tune); far from the camera, quieter. Ties into the Mipo band.
 - [ ] **MW6. The world's state as music.** Not events but how things are: how many Mipos are awake,
   day or night, under water (a low-pass), up high. A room or zone names which.
+- [x] **MW7. Impacts borrow the band's instruments** (Nikki 2026-11-03: the green ball's sound "defined
+  by what song with what instruments is playing"). `music.bandInstruments(part, within)`: the patches a
+  part has played in the last few seconds (after the panel's swaps). The ball plays the song's BASS (the
+  303 in acid, citypop's picked bass, the upright in the jam), boxes its hand drums / toms / wood (not
+  kick, hats, cymbals, snare, claps; each box keeps one), Mipo bumps its KEYS (off by default: the most
+  in the way). Still in the chord (chordNotes), the same pitch range; nothing heard lately = the
+  impact's own sound. Rows 'ball sounds', 'box sounds', 'Mipo bump sounds' (band / own). Checked live:
+  in rollo the ball borrowed pickBass.
 
-Ideas to keep, not steps yet: the world's own instruments (a toy you hit plays a note of the chord,
-already half there with `chordNotes`); a Mipo that hums the tune when idle; the music slowing when a
+Ideas to keep, not steps yet: a Mipo that hums the tune when idle; the music slowing when a
 Mipo falls asleep.

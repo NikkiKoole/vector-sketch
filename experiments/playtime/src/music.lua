@@ -500,5 +500,7 @@ end
 -- (music.on(name, 'beat' | 'bar' | 'chord' | 'phrase' | 'drop' | 'kick', fn(data, at, now), ahead)).
 lib.event = events.event
 lib.on = events.on
+lib.bandInstruments = events.bandInstruments -- what a part has played lately (MW7: impacts borrow it)
+lib.borrows = events.borrows
 
 return lib

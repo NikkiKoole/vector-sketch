@@ -33,16 +33,17 @@ lib.impactSounds = {
     plonk = { files = { 'rubber-plonk1', 'rubber-plonk2', 'rubber-plonk3',
                         'korg-minipops/tom1', 'korg-minipops/tom2', 'korg-minipops/wood1' },
               soft = 400, hard = 4000, pitch = { 2, 1 }, volume = { 0.2, 0.8 },
-              synth = { 'tom', 'wood' } },
+              synth = { 'tom', 'wood' }, band = 'keys' },
     -- a ball bouncing off anything: the upright bass, two octaves down; rubber plonks without the synth
     ball  = { files = { 'rubber-plonk1', 'rubber-plonk2', 'rubber-plonk3' },
               soft = 300, hard = 3000, pitch = { 2, 1 }, volume = { 0.2, 0.8 },
-              synth = { 'bass' }, transpose = -24, durMs = 150 },
+              synth = { 'bass' }, transpose = -24, durMs = 150, band = 'bass' },
     -- a box (label 'box') hitting anything: a drum skin. Each box keeps one drum (picked from
     -- its id); small boxes play an octave up, big ones an octave down.
     box   = { files = { 'korg-minipops/tom1', 'korg-minipops/tom2' },
               soft = 300, hard = 3000, pitch = { 2, 1 }, volume = { 0.2, 0.8 },
-              synth = { 'conga', 'djembe', 'tabla' }, perBody = true, smallSize = 140, bigSize = 240 },
+              synth = { 'conga', 'djembe', 'tabla' }, perBody = true, smallSize = 140, bigSize = 240,
+              band = 'drums' },
     kiss  = { files = { 'winegum-kiss1', 'winegum-kiss2', 'winegum-kiss3', 'winegum-kiss4', 'winegum-kiss5' },
               soft = 150, hard = 1500, pitch = { 2, 0.25 }, volume = { 0.2, 1 } },
 }
@@ -361,6 +362,23 @@ local mapInto = mathutils.remap
 -- `source` is the body making the sound (for perBody sounds).
 lib.stats = { impacts = 0 } -- impact sounds played (spec/mipo-crowd-sound_spec.lua counts them)
 
+-- The band's patches a kind of impact can borrow: the bass's latest, the keys' latest, or the drum
+-- sounds that suit a box (hand drums, toms, wood; not the kick, hats, cymbals, snare or claps).
+local BOX_DRUMS = { kick = false, hat = false, ride = false, crash = false, cymbal = false, snare = false,
+                    clap = false, brush = false, vinyl = false }
+local function bandPatches(part)
+    local list = music.bandInstruments and music.bandInstruments(part, 4) or {}
+    if part ~= 'drums' then return list[1] and { list[1] } or {} end
+    local out = {}
+    for _, patch in ipairs(list) do
+        local fits = true
+        for word in pairs(BOX_DRUMS) do if patch:lower():find(word) then fits = false end end
+        if fits then out[#out + 1] = patch end
+    end
+    table.sort(out) -- a box keeps its drum (by id) while the band's drums stay the same
+    return out
+end
+
 local function playImpact(kind, body1, body2, speed, source)
     local sound = lib.impactSounds[kind]
     if not sound or speed < sound.soft or not (love and love.audio) then return end
@@ -382,8 +400,16 @@ local function playImpact(kind, body1, body2, speed, source)
         local patch = sound.synth[love.math.random(#sound.synth)]
         local transpose = sound.transpose or 0
         local thing = sound.perBody and source and utils.thingOf(source)
+        -- MW7 (docs/WORLD-AND-MUSIC.md): borrow the band's instrument for this kind of impact, what that
+        -- part has played lately (the ball the song's bass, boxes its hand drums and toms, Mipos its keys)
+        local own = sound.synth
+        local borrowed = sound.band and music.borrows and music.borrows(kind) and bandPatches(sound.band)
+        if borrowed and #borrowed > 0 then
+            own = borrowed
+            patch = own[1]
+        end
         if thing then
-            patch = sound.synth[hashString(thing.id or '') % #sound.synth + 1]
+            patch = own[hashString(thing.id or '') % #own + 1]
             local size = math.sqrt((thing.width or 0) * (thing.height or 0))
             if size < sound.smallSize then transpose = transpose + 12 end
             if size > sound.bigSize then transpose = transpose - 12 end

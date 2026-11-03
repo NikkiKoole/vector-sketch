@@ -77,6 +77,30 @@ function lib.barBooked(t0, song, style)
     end
 end
 
+-- The band's instruments for the world (MW7): the patches a part has played in the last `within`
+-- seconds (state.music.heard, after the panel's instrument swaps), the latest first; {} when it hasn't.
+-- Impacts borrow them (src/mipo-voice.lua: the ball plays the song's bass, boxes its percussion).
+function lib.bandInstruments(part, within)
+    local m = M()
+    local now, out = m.audioTime or 0, {}
+    for patch, runs in pairs(m.heard and m.heard[part] or {}) do
+        local last = runs[#runs]
+        if last and last.to >= now - (within or 4) and last.from <= now + 1 then
+            out[#out + 1] = { patch = patch, to = last.to }
+        end
+    end
+    table.sort(out, function(a, b) if a.to ~= b.to then return a.to > b.to end return a.patch < b.patch end)
+    for i, o in ipairs(out) do out[i] = o.patch end
+    return out
+end
+-- which impacts borrow the band: state.musicSettings.world.band = { ball = 'band' | 'own', ... }
+lib.BAND_DEFAULTS = { ball = 'band', box = 'band', plonk = 'own' }
+function lib.borrows(kind)
+    local w = state.musicSettings and state.musicSettings.world
+    local v = w and w.band and w.band[kind] or lib.BAND_DEFAULTS[kind]
+    return v == 'band'
+end
+
 -- Every note the music books (an onNote listener): a kick drum is a moment.
 local function heard(part, patch, _, _, _, t)
     if part == 'drums' and type(patch) == 'string' and patch:lower():find('kick') then lib.moment('kick', t) end

@@ -175,6 +175,19 @@ local function jamRow(key, label, options)
         end }
 end
 local jam = require('src.music-jam')
+local function bandRow(kind, label)
+    return { key = label, kind = 'choice', options = { 'band', 'own' }, stepper = true,
+        get = function()
+            local w = state().musicSettings.world
+            return w and w.band and w.band[kind] or require('src.music-events').BAND_DEFAULTS[kind]
+        end,
+        set = function(_, v)
+            local s = state().musicSettings
+            s.world = s.world or {}
+            s.world.band = s.world.band or {}
+            s.world.band[kind] = v
+        end }
+end
 
 lib.rows = {
     { key = 'now', kind = 'note',
@@ -208,6 +221,9 @@ lib.rows = {
     jamRow('gap', 'jam gap', jam.MOVE_PICKS),
     jamRow('spot', 'jam spotlight', jam.SPOT_PICKS),
     jamRow('variations', 'jam variations', jam.MOVE_PICKS),
+    -- MW7 (src/music-events.lua): an impact sound borrows the band's instrument ('band') or keeps its own
+    -- ('own'): the ball the song's bass, boxes its hand drums and toms, Mipo bumps its keys
+    bandRow('ball', 'ball sounds'), bandRow('box', 'box sounds'), bandRow('plonk', 'Mipo bump sounds'),
     { key = 'jam impacts', kind = 'choice', options = require('src.music-events').IMPACT_PICKS, stepper = true,
         visible = function()
             local now = music().nowPlaying()
