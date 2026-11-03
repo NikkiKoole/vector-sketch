@@ -7,6 +7,7 @@
 --      EFFECTS=0..2 the effects slider (every pedal's amount; 1 = as designed),
 --      SPICE=0..2 the style's ideas (walks, answers; 0 plain, 1 as designed), IDEAS=walks:never,figures:lots
 --      (never / less / always / lots)
+--      JAM='figure=riff: pocket;walk=1 4 5 1;pace=4' the drum jam's panel picks (style jam)
 local P = arg[0]:match('^(.*)claudetools/') or './' -- the project folder, from where this script is
 package.path = P .. '?.lua;' .. package.path
 local out, seconds, style, rhythm = arg[1], tonumber(arg[2]) or 30, arg[3] or 'bossa', arg[4] or 'auto'
@@ -23,6 +24,11 @@ package.loaded['src.state'] = { synth = { started = true, C = C } }
 local synth = require('src.synth')
 local music = require('src.music')
 music.style, music.rhythmSection = style, rhythm
+if os.getenv('JAM') then -- after src.music, which fills in state.musicSettings
+    local jam = {}
+    for k, v in os.getenv('JAM'):gmatch('([^=;]+)=([^;]+)') do jam[k] = v end
+    package.loaded['src.state'].musicSettings.jam = jam
+end
 if os.getenv('TUNE') then music.tune = os.getenv('TUNE') end
 if os.getenv('MELODY') then music.melody, music.melodyPatch = true, os.getenv('MELODY') end
 -- VOICES=bass:tb303,lead:flute plays parts on other instruments, as the panel's part rows do

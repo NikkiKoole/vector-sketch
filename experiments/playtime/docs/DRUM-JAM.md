@@ -78,7 +78,7 @@ Until then the jam plays Playtime's drum patches; enough to hear whether the arr
 - [ ] **J3. The 303 as a layer.** The acid style's pattern code shared, not copied: the 303 enters as a
   layer, its filter sweep tied to the phrase (open into the drop).
 - [ ] **J4. The kit.** Decide port vs desound.c (above), then an 808 and a 909 kit, picked per group.
-- [ ] **J7. The auto-accompaniment bass** (Nikki: "bass loops that change root, transposed every n
+- [x] **J7. The auto-accompaniment bass** (2026-11-03: the walk is done; riffs go on in J8) (Nikki: "bass loops that change root, transposed every n
   bars"; the idea from Aaron Batzdorff's one-note synth bass trick (TikTok and YouTube @aaronbatzdorff): a Keystep
   Pro transposing a one-note sequence on a Model D, also dreamengine's `onenote.c` cart). The organ
   boxes' one-finger chord, in the jam: a `bass` layer (second in, after the kick) plays a 16-step loop written in DEGREES (`R` root, `3`, `5`, `7`, `8`, `L` the fifth below, `-` hold,
@@ -106,6 +106,26 @@ Until then the jam plays Playtime's drum patches; enough to hear whether the arr
   its first step), saved in setups (state.musicSettings.jam). Next: the sourced
   timings (`rhythmbox.h`'s Hammond-patent BASS lanes alternating root and fifth, the SGS M254/M255
   FIFTH and CHORD TRIGGER lanes), and the CHORD stabs those lanes gate (J6 overlaps).
+- [ ] **J8. Bass riffs.** (Nikki 2026-11-03: "more bass riffs... real bass riffs are small phrases,
+  adjusted a little per phrase to make longer pieces of a few bars"). `src/music-riffs.lua`: a riff is a
+  PHRASE (16 steps in the jam's degrees), VARIATIONS (16-step overlays: a space keeps the phrase's step)
+  and a FORM (`AAAB`, `ABAC`) lined up with the END of the root's step, so the last bar leads into the
+  change (a 2-bar step plays the tail, `AB`). A SCALE per riff, an option: pentatonic (minor) by default,
+  the one that sits on any root of a chordless walk; blues (+ b5), dorian, mixolydian are defined.
+  Off-16ths and A / N may leave the scale (passing notes); `riffs.check` finds the rest.
+  - [x] J8a. The format + four pentatonic riffs (pocket, climb, call and answer, low and high), in the
+    panel's 'jam bass' row as `riff: <name>` (2026-11-03). Render one:
+    `JAM='figure=riff: climb;walk=1 4 5 1;pace=4' luajit claudetools/render-music.lua out.wav 40 jam`
+    (the same `JAM=` for `music-when.lua`). To listen.
+  - [ ] J8b. The play level thins a riff: calm = its skeleton (root, octave, b7), busy = all of it and the
+    variations, so a riff grows with play the way the drum layers do (and calm keeps J7's point: the root
+    moving is heard).
+  - [ ] J8c. Riffs that follow the walk's chords (dorian / mixolydian: 3 <-> m per step of the walk, the
+    6 in 1 5 6 4 minor), only after the pentatonic ones are liked.
+  - [ ] J8d. A bass lab: a scene with a grid (16 steps x the scale's rows), the four bars below (edit A,
+    then only the steps a variation changes), a walk picker, save to a riff file the jam lists. Only if
+    writing riffs as strings gets tedious.
+  The dreamengine session works on the same thing (2026-11-03); keep one format between the two.
 - [ ] **J6. The organ-era rhythm box** (Nikki: "the truly whimsical ones"). dreamengine has a sourced
   library of them: `runtime/rhythmbox.h` (101 preset rhythms read off the Ace Tone FR-2L, Roland TR-77
   and SGS chip manuals and a 1969 Hammond patent; generated from its `docs/design/rhythm-box-patterns.md`),

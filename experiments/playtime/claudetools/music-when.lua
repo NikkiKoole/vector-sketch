@@ -4,7 +4,7 @@
 -- usage: luajit claudetools/music-when.lua <style> <seed> <from s> <to s>
 -- env:   IDEAS=approach:lots,answer:never (as render-music.lua), BAND=on|auto|off (default on),
 --        BUSY=<seconds> render-music's busyFrom (the play level bumped there; e.g. 20 as the style
---        report runs), PARTS=keys,lead,answer,bass (the parts shown; default those and the rest tonal)
+--        report runs), JAM='figure=riff: pocket;walk=1 4 5 1' the drum jam's picks, PARTS=keys,lead,answer,bass (the parts shown; default those and the rest tonal)
 package.path = './?.lua;' .. package.path
 local style, seed, from, to = arg[1], tonumber(arg[2]), tonumber(arg[3]), tonumber(arg[4])
 math.randomseed(seed)
@@ -18,6 +18,11 @@ local synth = require('src.synth')
 local music = require('src.music')
 local theory = require('src.music-theory')
 music.style, music.rhythmSection = style, os.getenv('BAND') or 'on'
+if os.getenv('JAM') then -- the drum jam's picks, as render-music.lua: JAM='figure=riff: pocket;pace=4'
+    local jam = {}
+    for k, v in os.getenv('JAM'):gmatch('([^=;]+)=([^;]+)') do jam[k] = v end
+    package.loaded['src.state'].musicSettings.jam = jam
+end
 local ideas = {}
 for name, mode in (os.getenv('IDEAS') or ''):gmatch('(%w+):(%w+)') do ideas[name] = mode end
 music.ideas = ideas
@@ -39,7 +44,9 @@ music.trace = function(part, t, midi, _, durMs)
     if not shown[b] and song.barSection then
         shown[b] = true
         local chords = {}
-        for _, c in ipairs(theory.barChords(song, b)) do
+        local jam = song.jam -- the drum jam has no chords, only a root that walks
+        if jam then chords[1] = ('root %s'):format(NAMES[(song.key + jam.root) % 12 + 1]) end
+        for _, c in ipairs(jam and {} or theory.barChords(song, b)) do
             chords[#chords + 1] = ('%s%s@%d'):format(NAMES[(song.key + c.degree) % 12 + 1], c.quality, c.s)
         end
         print(('-- bar %d (%s %d) at %.2fs: %s'):format(b, song.barSection[b].kind, song.barIndex[b], M.barAt or 0,

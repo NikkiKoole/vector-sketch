@@ -15,6 +15,7 @@ local state = require('src.state')
 local D = require('src.music-styles')
 local theory = require('src.music-theory')
 local PATTERNS = require('src.music-jam-patterns')
+local riffs = require('src.music-riffs')
 local stream, stepTime, inRange = theory.stream, theory.stepTime, theory.inRange
 local M = state.music
 
@@ -80,6 +81,8 @@ lib.FIGURES = {
     { name = 'octave pop', loop = 'R.....8.R.....8.' },
     { name = 'approach', loop = 'R-----........A.' },
 }
+-- and the riffs (J8, src/music-riffs.lua: a phrase, its variations, a form lined up with the root's step)
+for _, riff in ipairs(riffs.RIFFS) do lib.FIGURES[#lib.FIGURES + 1] = { name = 'riff: ' .. riff.name, riff = riff } end
 lib.BASS_LOOPS = {
     Electro = { 'R..8..7.........', 'R.............N.' },
     ['Hip Hop'] = { 'R..8..7.........', 'R.............N.' },
@@ -88,8 +91,7 @@ lib.BASS_LOOPS = {
     Funk = { 'R..8..7.........', 'R.............N.' },
     Brushes = { 'R..8..7.........', 'R-----........A.' },
 }
-local DEGREE = { R = 0, ['2'] = 2, m = 3, ['3'] = 4, ['4'] = 5, ['5'] = 7, ['6'] = 9, ['7'] = 10, ['8'] = 12,
-                 L = -5 }
+local DEGREE = riffs.DEGREE -- b = the b5, for blues riffs (src/music-riffs.lua)
 
 -- The walks the root takes (semitones over the song's key), and how often it moves, both rolled per
 -- song: 1 4 5 1 (home, away, the pull, home), 1 5 6 4 (the pop loop that never settles), 1 6 4 5
@@ -213,8 +215,9 @@ end
 
 -- One bar of the bass loop over the current root: a note lasts through the '-' after it (across the bar
 -- line too: the next bar's booking skips the held steps). nextRoot = where the walk goes next bar (the
--- approach note leans into it). b = the bar, so a loop that isn't a bar long keeps its place.
-local function bookBass(play, synth, song, t0, loop, root, nextRoot, b)
+-- approach note leans into it). b = the bar, so a loop that isn't a bar long keeps its place. oneBar: the
+-- loop is this bar only (a riff's bar), so a hold stops at the bar line instead of wrapping.
+local function bookBass(play, synth, song, t0, loop, root, nextRoot, b, oneBar)
     local home = inRange((song.key + root) % 12, 33) -- A1..G#2
     local approach = inRange((song.key + nextRoot) % 12, 33) - 1 -- a half step under the next root, right
                                                                    -- under the note it leads into
@@ -226,7 +229,7 @@ local function bookBass(play, synth, song, t0, loop, root, nextRoot, b)
         local degree = c == 'A' and approach - home or c == 'N' and approach + 1 - home or DEGREE[c]
         if degree then
             local len = 1
-            while len < n and at(g + len) == '-' do len = len + 1 end
+            while len < n and (not oneBar or s + len < 16) and at(g + len) == '-' do len = len + 1 end
             local ms = theory.lengthMs(song, s, len) * 0.9
             play(synth, 'bass', lib.BASS, stepTime(song, t0, s), home + degree, s == 0 and 7 or 6, ms, s)
         end
@@ -268,11 +271,12 @@ function lib.bookBar(play, remember, synth, t0, song, b)
     if jam.on.bass then
         local loops = lib.BASS_LOOPS[jam.group]
         local figure = picked(lib.FIGURES, picks().figure)
-        local loop = figure and figure.loop or loops[(jam.at - 1) % #loops + 1]
+        local riff = figure and figure.riff
+        local loop = riff and riffs.bar(riff, jam.left) or figure and figure.loop or loops[(jam.at - 1) % #loops + 1]
         local moves = jam.left == 1 and not lib.lingers(jam, style) -- the root changes next bar
         local switch = moves and nextWalk(jam)
         local nextRoot = switch and switch[1] or moves and jam.walk[jam.step % #jam.walk + 1] or jam.root
-        bookBass(play, synth, song, t0, loop, jam.root, nextRoot, b)
+        bookBass(play, synth, song, t0, loop, jam.root, nextRoot, b, riff and true)
     end
     local lastBar = inPhrase == style.phraseBars - 1
     local fill = lastBar and (jam.on.snare or jam.mode == 'break')
