@@ -165,7 +165,7 @@ describe('resource link', function()
             for _, v in pairs(registry.sfixtures) do
                 local ud = v:getUserData()
                 if ud.subtype == 'resource' then
-                    assert.are.equal('knut-is-dead/gevaarland.jpg', ud.extra.imageURL)
+                    assert.are.equal('backdrops/gevaarland.jpg', ud.extra.imageURL)
                 end
             end
             state.backdrops = {}

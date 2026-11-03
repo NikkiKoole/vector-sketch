@@ -488,7 +488,7 @@
     "rotation":0
   },
   "backdrops":[{
-      "url":"knut-is-dead/stapel-met.jpg",
+      "url":"backdrops/stapel-met.jpg",
       "foreground":false,
       "border":true,
       "y":-352,

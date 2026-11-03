@@ -84,9 +84,16 @@ lib.MOVES = {
     ['patch4'] = 'mipo/patch/patch-04', ['line1'] = 'world/line-01',
 }
 
+-- whole paths that moved (backdrops, relative to the project; docs/ASSETS-AND-BUILDS.md AB8)
+lib.PATHS = {
+    ['knut-is-dead/gevaarland.jpg'] = 'backdrops/gevaarland.jpg',
+    ['knut-is-dead/stapel-met.jpg'] = 'backdrops/stapel-met.jpg',
+}
+
 -- an old name ('feet6r.png', 'feet6r-mask.png', 'textures/feet6r.png') -> its new one; anything else as is
 function lib.resolve(url)
     if type(url) ~= 'string' then return url end
+    if lib.PATHS[url] then return lib.PATHS[url] end
     local prefix, base, suffix = url:match('^(textures/)(.-)(%-mask%.png)$')
     if not prefix then prefix, base, suffix = url:match('^(textures/)(.-)(%.png)$') end
     if not prefix then

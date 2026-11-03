@@ -181,9 +181,14 @@ snapshot for the moves, MEASURING.md) and both builds working.
     a part, it offers the next free number).
 - [ ] **AB7. Rooms and spikes apart.** `scripts/rooms/` and `scripts/spikes/` (scene-catalog already
   walks folders); the builds take rooms from `rooms/`.
-- [ ] **AB8. The source art out of the game folder.** `oldtextures/`, `backdrops/`, `krita/`, Knut's
+- [x] **AB8. The source art out of the game folder.** `oldtextures/`, `backdrops/`, `krita/`, Knut's
   pictures not used by a scene into `~/Projects/mipo-art/`; the 3 scenes using `knut-is-dead/` keep
   theirs (or go to `spikes/` with them).
+  Done 2026-11-03: `oldtextures/` and the unused 14 of `knut-is-dead/` and 10 of `textures/knut/` to
+  `~/Projects/mipo-art/archive/`, `krita/` and the old `backdrops/` to `mipo-art/source/`; the two
+  backdrops scenes use (gevaarland, stapel-met: stapelaar, tech/hoop, tech/workmoreclean) in
+  `backdrops/`, their old paths in `src/texture-names.lua` PATHS (old saves migrate on load). ~17 MB
+  out of the game folder; every scene draws the same pixels before and after.
 
 Later, not steps yet: the tool making the mask from the outline when they're the same shape; a
 texture atlas per Mipo part set (MIPO-DRAWING.md says it saves nothing on the phone today); Playtime
