@@ -133,6 +133,18 @@ snapshot for the moves, MEASURING.md) and both builds working.
   old name up in it so old scenes and the save folder's copies still load; then the scenes rewritten
   on their next save. `claudetools/` gets a check that lists every texture a scene or the code names
   and every file nothing names.
+
+  **The names** (Nikki 2026-11-03: English everywhere; `x` "was just some variant, no real meaning"):
+  - `mipo/<part>/<part>-<nn>.png` + `<part>-<nn>-mask.png`, numbered 01, 02… per part; world art in
+    `world/`, patterns in `pat/`. A second take on the same part is just the next number.
+  - Parts: `foot` (feet), `ear` (earx), `nose`, `body` (shapes, shapeA, shapeX: the torso/head
+    shapes, `torsoHeadShapes`), `torso` (romp), `chesthair` (borsthaar), `neck`, `leg`, `hand`, `hair`,
+    `brow`, `eye`, `pupil`, `teeth`, `upperlip`, `lowerlip`, `patch`.
+  - The `r` (turned upright) goes: the upright one is the part. The unturned originals and the `x`
+    variants nothing names go to the art archive (AB8), as do the leftovers (`hair5_`, `romp3__`,
+    `type3_`, `null`, …) once the check says nothing names them.
+  - The move list is the only place old names live; `tools/scan2tex` saves under the new names (pick
+    a part, it offers the next free number).
 - [ ] **AB7. Rooms and spikes apart.** `scripts/rooms/` and `scripts/spikes/` (scene-catalog already
   walks folders); the builds take rooms from `rooms/`.
 - [ ] **AB8. The source art out of the game folder.** `oldtextures/`, `backdrops/`, `krita/`, Knut's
