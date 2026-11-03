@@ -180,7 +180,8 @@ Until then the jam plays Playtime's drum patches; enough to hear whether the arr
     barely there) and the TURNAROUND (a phrase's second-to-last bar on the other variant, into the fill)
     once play is busy (2 layers' worth); the hats doubled to 16ths at 3 (not Brushes). Still J2: a
     related family after a fill.
-  - [ ] J10e. The game drives it (J5): a big impact = a crash or a quick fill on the next beat.
+  - [ ] J10e. The game drives it (J5): a big impact = a crash or a quick fill on the next beat. Built as
+    WORLD-AND-MUSIC.md's MW1 (the hooks for all of it live there).
 - [ ] **J6. The organ-era rhythm box** (Nikki: "the truly whimsical ones"). dreamengine has a sourced
   library of them: `runtime/rhythmbox.h` (101 preset rhythms read off the Ace Tone FR-2L, Roland TR-77
   and SGS chip manuals and a 1969 Hammond patent; generated from its `docs/design/rhythm-box-patterns.md`),
