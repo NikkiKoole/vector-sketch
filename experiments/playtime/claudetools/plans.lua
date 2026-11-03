@@ -74,11 +74,12 @@ local function daysSinceCommit(path)
     return math.floor((os.time() - ts) / 86400)
 end
 
--- Commits since the doc last changed that name one of its open steps.
+-- Commits after the doc last changed that name one of its open steps (not the commit that changed it:
+-- one that updates the doc while naming a step, a progress note, has dealt with it).
 local function untickedMentions(doc)
-    local since = run('git log -1 --format=%cI -- "' .. doc.path .. '" 2>/dev/null'):match('%S+')
-    if not since then return {} end
-    local log = run('git log --since="' .. since .. '" --format="%h %s" -- . 2>/dev/null')
+    local last = run('git log -1 --format=%H -- "' .. doc.path .. '" 2>/dev/null'):match('%x+')
+    if not last then return {} end
+    local log = run('git log ' .. last .. '..HEAD --format="%h %s" -- . 2>/dev/null')
     local found = {}
     for line in log:gmatch('[^\n]+') do
         -- a range ('V1-V6', 'W2–W5', 'BUG1-18') names a group of steps, not one that got done

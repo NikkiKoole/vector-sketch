@@ -52,6 +52,9 @@ and what's there already. Pick a few, draw them, drop them in `textures/`, tick 
 
 - [ ] **A8. Underground.** Earth and soil textures, roots, pebbles, a burrow rim (the rim's
   outline is A1). `BURROW.md`, `DEPTH-LAYERS.md`.
+  Rocks too: the burrow's 70 falling rocks (abfd9647, 2026-11-03) wear Mipo body outlines with an
+  OMP skin until rocks are drawn (outline + mask, `tools/scan2tex`: type `world/rock`). The earth
+  itself is a shader for now (topsoil, clay, grain, roots), so drawn soil is optional.
 
 ## Later, when something asks for it
 
