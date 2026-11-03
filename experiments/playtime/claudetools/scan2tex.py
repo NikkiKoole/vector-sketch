@@ -16,7 +16,7 @@ CLOSE = 9             # px: gaps in a line up to this are closed before the mask
 INSET = 2             # px: how far inside the line's outer edge the mask stops (0 = right at it)
 INSET = int(os.environ.get('INSET', INSET))
 SMOOTH = 2.5          # the mask's edge smoothing (a blur radius, then cut)
-OPEN_BELOW = 0.15     # under this share of the shape enclosed (not line), a part is open: no mask
+OPEN_BELOW = 0.07     # under this share of the shape enclosed (not line), a part is open: no mask
 SPECK = 60            # px: ink islands smaller than this are dust
 PAD = 8               # px of transparent margin around a part
 
