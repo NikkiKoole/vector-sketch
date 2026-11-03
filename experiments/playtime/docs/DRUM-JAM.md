@@ -157,6 +157,24 @@ Until then the jam plays Playtime's drum patches; enough to hear whether the arr
     the play level (for listening; the breakdown and the drop still come round).
   - [ ] J9e. The panel's 'jam walk' row as 'jam progression', and more progressions (minor-key ones:
     1m b7 b6 b7, 1m 4m 5m).
+- [ ] **J10. The drums play the song** (Nikki 2026-11-03: "solo, fill, maybe pattern switch"; the list:
+  lean into changes, more fills, spotlights, pattern moves with play, the game driving it). Each move a
+  music-panel row, auto / always / never.
+  - [x] J10a. LEANING IN: the bar before a chord change (known a bar early, J9a) the drums go with the
+    bass: an open hat on the and-of-4, a kick pickup on the last 16th, or a one-beat snare fill, rolled
+    per change from the drums that are playing; 6 in 10 changes on auto ('jam lean-in'). Not on a
+    phrase's last bar (the fill has it).
+  - [x] J10b. FILLS: the snare run-up grows with the play level (a beat, half a bar at 3 layers' worth);
+    Funk and Breaks roll down the toms on the last beat a third of the time; the bar before a drop is
+    the BUILD (snare 16ths over the whole bar, louder toward the one) and ends in THE GAP: every part
+    silent on beat 4, then the crash ('jam gap'; always = at every phrase end, for listening).
+    `spec/music-jam_spec.lua` checks the gap.
+  - [ ] J10c. Spotlights: the drum break (all but the drums out for 2-4 bars, the breakdown's opposite),
+    the bass feature (the riff's variations for a phrase, the chords out), trading 2s between bass and
+    drums.
+  - [ ] J10d. Pattern moves with play (J2's list): hats 8ths -> 16ths, ghost snares, the B variant as a
+    turnaround in a phrase's last 2 bars, a related family after a fill.
+  - [ ] J10e. The game drives it (J5): a big impact = a crash or a quick fill on the next beat.
 - [ ] **J6. The organ-era rhythm box** (Nikki: "the truly whimsical ones"). dreamengine has a sourced
   library of them: `runtime/rhythmbox.h` (101 preset rhythms read off the Ace Tone FR-2L, Roland TR-77
   and SGS chip manuals and a 1969 Hammond patent; generated from its `docs/design/rhythm-box-patterns.md`),

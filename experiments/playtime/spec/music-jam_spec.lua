@@ -56,4 +56,24 @@ describe('music-jam', function()
         local bars = run(7, 64, { walk = '2 5 1', pace = '2' })
         assert.are.equal(2, bars[1].root) -- picked before the song: it starts there
     end)
+
+    it('goes silent on beat 4 before a drop (the gap), every part', function()
+        state.music.activity = 0
+        state.musicSettings.jam = { layers = 'all' }
+        local style = D.styles.jam
+        local song = { seed = 4, key = 5, style = 'jam', swing = style.swing }
+        jam.plan(song, style, function() end)
+        local gaps = 0
+        for b = 1, 200 do
+            local late = 0
+            local function play(_, _, _, _, _, _, _, s) if (s or 0) >= 12 then late = late + 1 end end
+            jam.bookBar(play, function() end, nil, 0, song, b)
+            local before = song.jam.nextPhrase and song.jam.nextPhrase.mode == 'drop'
+            if before then
+                gaps = gaps + 1
+                assert.are.equal(0, late, 'bar ' .. b)
+            end
+        end
+        assert.is_true(gaps > 0)
+    end)
 end)

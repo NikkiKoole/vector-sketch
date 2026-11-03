@@ -158,6 +158,14 @@ lib.PACES = { 'auto', '2', '4' }
 -- 'all': every layer plays from the next bar, whatever the play level (for listening; Nikki 2026-11-03).
 -- The breakdown and the drop still come round.
 lib.LAYER_PICKS = { 'auto', 'all' }
+-- the drums' moves (J10), each 'auto' / 'always' / 'never' in the panel: 'lean' = the drums lean into a
+-- chord change, 'gap' = a beat of silence before the drop
+lib.MOVE_PICKS = { 'auto', 'always', 'never' }
+local function move(name)
+    local v = picks()[name]
+    if v == 'always' or v == 'never' then return v end
+    return 'auto'
+end
 local function allLayers() return picks().layers == 'all' end
 
 -- The plan: a genre (style.groups, one per song) at its own tempo, one of its families, a bass walk, and
@@ -283,17 +291,18 @@ function lib.ahead(jam)
     return nxt.walk[nxt.step], 1
 end
 
-local function bookKeys(play, synth, song, t0, jam, kind)
+local function bookKeys(play, synth, song, t0, jam, kind, cut)
+    cut = cut or 16
     local figure = picked(lib.CHORD_FIGURES, picks().chords)
         or picked(lib.CHORD_FIGURES, lib.CHORDS_BY_GENRE[jam.group]) or lib.CHORD_FIGURES[1]
     local root = (song.key + jam.root) % 12
     jam.voicing = theory.voiceChord(root, lib.KEYS_CHORDS[kind], figure.lo, figure.hi, jam.voicing)
     if not jam.voicing then return end
     local steps = figure.steps
-    for s = 0, 15 do
+    for s = 0, cut - 1 do
         if steps:sub(s + 1, s + 1) == 'x' then
             local len = 1
-            while s + len < 16 and steps:sub(s + len + 1, s + len + 1) == '-' do len = len + 1 end
+            while s + len < cut and steps:sub(s + len + 1, s + len + 1) == '-' do len = len + 1 end
             local ms = theory.lengthMs(song, s, len) * 0.95
             for k, midi in ipairs(jam.voicing) do
                 play(synth, 'keys', figure.patch, stepTime(song, t0, s) + (k - 1) * figure.roll, midi,
@@ -315,20 +324,23 @@ end
 -- approach note leans into it). b = the bar, so a loop that isn't a bar long keeps its place. oneBar: the
 -- loop is this bar only (a riff's bar), so a hold stops at the bar line instead of wrapping.
 -- degree: letter -> semitones (a riff's, following the chord), else the jam's DEGREE.
-local function bookBass(play, synth, song, t0, loop, root, nextRoot, b, oneBar, degree)
-    degree = degree or DEGREE
+-- cut: nothing from that step on (the gap before a drop), a held note let go there.
+local function bookBass(play, synth, song, t0, loop, root, nextRoot, b, oneBar, degree, cut)
+    degree, cut = degree or DEGREE, cut or 16
     local home = inRange((song.key + root) % 12, 33) -- A1..G#2
     local approach = inRange((song.key + nextRoot) % 12, 33) - 1 -- a half step under the next root, right
                                                                    -- under the note it leads into
     local n = #loop
     local function at(g) local k = g % n + 1 return loop:sub(k, k) end
-    for s = 0, 15 do
+    for s = 0, cut - 1 do
         local g = (b - 1) * 16 + s -- the step since the song's start: where the loop is
         local c = at(g)
         local d = c == 'A' and approach - home or c == 'N' and approach + 1 - home or degree[c]
         if d then
             local len = 1
-            while len < n and (not oneBar or s + len < 16) and at(g + len) == '-' do len = len + 1 end
+            while len < n and (not oneBar or s + len < 16) and s + len < cut and at(g + len) == '-' do
+                len = len + 1
+            end
             local ms = theory.lengthMs(song, s, len) * 0.9
             play(synth, 'bass', lib.BASS, stepTime(song, t0, s), home + d, s == 0 and 7 or 6, ms, s)
         end
@@ -349,13 +361,20 @@ local function announceSounds(song, jam)
     end end
     for _, p in ipairs(jam.patterns) do add(p.grid) end
     if jam.fill then add(jam.fill.grid) end
-    add({ CY = true, SD = true }) -- the drop's crash and the snare run-up play in every family
+    add({ CY = true, SD = true, OH = true, BD = true }) -- the drop's crash, the run-up, the lean-ins: every family
+    if lib.hasToms(jam) then add({ HT = true, MT = true, LT = true }) end -- the tom roll
     M.styleSounds = M.styleSounds or {}
     local bySound = M.styleSounds[song.style] or {}
     M.styleSounds[song.style] = bySound
     bySound.drums = bySound.drums or {}
     for patch in pairs(sounds) do bySound.drums[patch] = true end
 end
+
+lib.LEANS = { { name = 'hat', layer = 'hats' }, { name = 'kick', layer = 'kick' },
+              { name = 'snare', layer = 'snare' } }
+lib.TOM_ROLL = { 'HT', 'HT', 'MT', 'LT' } -- the last beat, high to low
+lib.TOM_GROUPS = { Funk = true, Breaks = true } -- the genres a tom roll suits (few patterns have toms)
+function lib.hasToms(jam) return lib.TOM_GROUPS[jam.group] or false end
 
 -- One bar. play and remember are music-parts' (every note goes through play: mutes, the panel, listeners).
 function lib.bookBar(play, remember, synth, t0, song, b)
@@ -367,6 +386,13 @@ function lib.bookBar(play, remember, synth, t0, song, b)
     local pcs = {}
     for _, d in ipairs(riffs.CHORD_SCALES[kind]) do pcs[#pcs + 1] = (song.key + jam.root + d) % 12 end
     remember(t0, pcs) -- impacts play along in the chord's pentatonic on the root
+    local lastBar = inPhrase == style.phraseBars - 1
+    local roll = stream(song.seed + b * 7919, 10)
+    -- THE GAP (J10): before a drop the whole band stops on beat 4, a beat of silence, then the crash
+    local gapMove = move('gap')
+    local gap = lastBar and gapMove ~= 'never'
+        and (gapMove == 'always' or (jam.nextPhrase and jam.nextPhrase.mode == 'drop'))
+    local cut = gap and 12 or 16
     if jam.on.bass then
         local loops = lib.BASS_LOOPS[jam.group]
         local figure = picked(lib.FIGURES, picks().figure)
@@ -374,23 +400,41 @@ function lib.bookBar(play, remember, synth, t0, song, b)
         local nextRoot, barsLeft = lib.ahead(jam)
         local loop = riff and riffs.bar(riff, barsLeft) or figure and figure.loop or loops[(jam.at - 1) % #loops + 1]
         bookBass(play, synth, song, t0, loop, jam.root, nextRoot, b, riff and true,
-                 riff and riffs.degrees(riff, kind) or FIGURE_DEGREES[kind])
+                 riff and riffs.degrees(riff, kind) or FIGURE_DEGREES[kind], cut)
     end
     -- the chords come in as a layer with the play level; picked in the panel they play from the next bar
     -- (Nikki: "it took super long before I heard the funk stabs": a calm room never asked for layer 3)
     local chordsPicked = picks().chords and picks().chords ~= 'auto'
-    if jam.on.keys or chordsPicked then bookKeys(play, synth, song, t0, jam, kind) end
-    local lastBar = inPhrase == style.phraseBars - 1
+    if jam.on.keys or chordsPicked then bookKeys(play, synth, song, t0, jam, kind, cut) end
     local fill = lastBar and (jam.on.snare or jam.mode == 'break')
     local written = fill and jam.fill -- the family's own fill plays the whole bar
     local pattern = written or jam.patterns[jam.at]
     local accents = pattern.grid.AC
-    for s = 0, 15 do
+    -- FILLS (J10): the run-up grows with the play level (a beat, half a bar, the whole bar); the bar before
+    -- a drop is the BUILD (snare 16ths over the whole bar, getting louder); families with toms roll down
+    -- them on the last beat now and then
+    local activity = M.activity or 0
+    local runFrom = (gap and jam.mode == 'break') and 0
+        or activity >= 3 * style.perLayer and 8 or 12
+    local toms = fill and not written and not gap and lib.hasToms(jam) and roll(3) == 0
+    -- LEANING IN (J10): on the bar before a chord change (not a phrase's last bar, the fill has that) the
+    -- drums go with the bass: an open hat on the and-of-4, a kick pickup on its last 16th, or a one-beat
+    -- snare fill, rolled per change
+    local leanMove, lean = move('lean'), nil
+    local nxt = jam.nextRoot
+    local changing = nxt and not nxt.linger and nxt.walk[nxt.step] ~= jam.root
+    if not lastBar and changing and leanMove ~= 'never' and (leanMove == 'always' or roll(10) < 6) then
+        local can = {} -- only a drum that's playing can lean in
+        for _, l in ipairs(lib.LEANS) do if jam.on[l.layer] then can[#can + 1] = l.name end end
+        lean = #can > 0 and can[roll(#can) + 1] or nil
+    end
+    for s = 0, cut - 1 do
         local t = stepTime(song, t0, s)
         local accent = accents and accents:sub(s + 1, s + 1) == 'x' and 1 or 0
         if jam.mode == 'drop' and inPhrase == 0 and s == 0 then hit(play, synth, t, 'CY', s, 1, 0, jam.group) end
         for _, layer in ipairs(lib.LAYERS) do
-            local quietFill = fill and not written and layer.name == 'hats' and s >= 14 -- let go before the one
+            -- the hats let go before the one (under a run-up, or for the lean-in's open hat)
+            local quietFill = (fill and not written or lean == 'hat') and layer.name == 'hats' and s >= 14
             if layer.roles and jam.on[layer.name] and not quietFill then
                 for _, role in ipairs(layer.roles) do
                     local c = pattern.grid[role] and pattern.grid[role]:sub(s + 1, s + 1)
@@ -402,7 +446,18 @@ function lib.bookBar(play, remember, synth, t0, song, b)
                 end
             end
         end
-        if fill and not written and s >= 12 then hit(play, synth, t, 'SD', s, 0, 15 - s, jam.group) end -- a run-up
+        if fill and not written and s >= runFrom then
+            if toms and s >= 12 then
+                hit(play, synth, t, lib.TOM_ROLL[s - 11], s, 0, 0, jam.group)
+            else -- a snare run-up, louder toward the one
+                hit(play, synth, t, 'SD', s, 0, math.floor((15 - s) * 3 / (16 - runFrom) + 0.5), jam.group)
+            end
+        end
+        if lean == 'hat' and s == 14 and jam.on.hats then hit(play, synth, t, 'OH', s, 1, 0, jam.group) end
+        if lean == 'kick' and s == 15 and jam.on.kick then hit(play, synth, t, 'BD', s, 0, 1, jam.group) end
+        if lean == 'snare' and s >= 12 and jam.on.snare then
+            hit(play, synth, t, 'SD', s, 0, 15 - s >= 2 and 2 or 1, jam.group)
+        end
     end
 end
 
