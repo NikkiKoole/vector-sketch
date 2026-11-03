@@ -9,6 +9,7 @@
 --   close ones show next to it and on the sheet (≈), and saving one of those asks first
 --   the sheet's settings, with the - / + buttons: size, mask inset, how far into the line, open below
 --   ctrl-s save the named parts into textures/ (an existing file: ctrl-s again to overwrite)
+-- love tools/scan2tex --no-save [<file>]: try it out, saving only says what it would write (and opens <file>)
 -- What you set per sheet is remembered (the save folder's sheets.json), so a sheet can be opened again.
 
 local ROOT = love.filesystem.getSource():gsub('/tools/scan2tex/?$', '')
@@ -36,6 +37,7 @@ local confirmAt = nil   -- ctrl-s twice to overwrite, or to save look-alikes
 local editing = false   -- typing the selected part's name
 local thumbs = {}       -- texture name -> image (the look-alikes, loaded from textures/ when shown)
 local maskShader
+local noSave = false -- --no-save: try it out without writing into textures/
 local save -- defined under saving (the test mode calls it from love.update, above it)
 
 -- per-sheet memory ----------------------------------------------------------------------------------
@@ -210,6 +212,13 @@ function save()
         return
     end
     confirmAt = nil
+    if noSave then
+        local names = {}
+        for _, t in ipairs(todo) do names[#names + 1] = t.pick.name .. (t.p.maskImg and ' (+ mask)' or '') end
+        message = 'saving is off (--no-save). It would write into textures/: ' .. table.concat(names, ', ')
+        remember()
+        return
+    end
     local saved, stale = {}, {}
     for _, t in ipairs(todo) do
         write(t.path, turned('work/' .. t.p.id .. '.png', t.pick.rot or 0))
@@ -342,6 +351,10 @@ function love.draw()
     -- the message
     love.graphics.setColor(busy and { 1, 0.8, 0.3 } or { 0.85, 0.85, 0.85 })
     love.graphics.printf(message, 10, H - 100, W - 20)
+    if noSave then
+        love.graphics.setColor(1, 0.4, 0.3)
+        love.graphics.print('saving is off (--no-save)', W - 200, H - 24)
+    end
 end
 
 -- input ----------------------------------------------------------------------------------------------
@@ -405,6 +418,11 @@ function love.load()
     ]])
     love.filesystem.createDirectory('work')
     for i, a in ipairs(arg or {}) do
+        if a == '--no-save' then
+            noSave = true
+            local file = arg[i + 1]
+            if file and not file:match('^%-%-') then love.filedropped({ getFilename = function() return file end }) end
+        end
         if (a == '--test' or a == '--test-save') and arg[i + 1] then
             testing = { save = a == '--test-save' }
             love.filedropped({ getFilename = function() return arg[i + 1] end })
