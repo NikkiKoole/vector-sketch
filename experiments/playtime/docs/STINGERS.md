@@ -50,7 +50,7 @@ Keep the options open and get the feel by playing, alone and with the kids. Like
 
 **Making a part rest.** Each bar's notes are booked on the synth up to a bar ahead (`schedule_at`, 0.3 s before the bar), and booked notes can't be taken back. The stinger itself still lands on the next beat; only the rest is the problem. The ways round it:
 - **Duck** the part's slot (`instrument_level`, instant, from update at the stinger's beat) and play the stinger on a twin of the patch, on its own slot. Works today. The ducked notes still sound quietly and use voices.
-- **Unschedule** in the engine: `unschedule(slot, t1, t2)` drops a slot's booked notes in a window. dreamengine-4d: easy, about 30 lines (the `delayed[]` array in runtime/sound.h, a new SR_ event kind, the four-place API add, a schedule-check assertion), then bound in desound.c. Notes already sounding keep ringing, so pair it with a choke. Exact to the sample, and it frees the voices. Not built: waiting on Nikki.
+- **Unschedule** in the engine: `unschedule(slot, t1, t2)` drops a slot's booked notes in a window. dreamengine-4d: easy, about 30 lines (the `delayed[]` array in runtime/sound.h, a new SR_ event kind, the four-place API add, a schedule-check assertion), then bound in desound.c. Notes already sounding keep ringing, so pair it with a choke. Exact to the sample, and it frees the voices. **Nikki chose this one (2026-11-03).** dreamengine-4d builds the engine call; Playtime then rebuilds libdesound and adds `synth.unschedule(patch, t1, t2)` as an optional function.
 - Booking a beat at a time instead of a bar would also work, but it changes how every part books. Not worth it.
 
 ## The world's events (sent since 2026-11-03)
