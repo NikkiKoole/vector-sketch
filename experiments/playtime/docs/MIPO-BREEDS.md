@@ -147,7 +147,7 @@ added without code.
 
 ## The spike (2026-11-01)
 
-`scripts/breeds` puts a litter of six Mipos of one breed on a floor; a panel (play mode) or
+`scripts/spikes/breeds` puts a litter of six Mipos of one breed on a floor; a panel (play mode) or
 keys 1-8 pick the breed, r draws a new litter. The breeds are a table at the top of the script
 (ranges, lists, palette, creation): edit it and the scene reloads, then r. It narrows the
 randomizer from outside for the draw (swaps `D.randomRanges` entries and `shape-catalogs`

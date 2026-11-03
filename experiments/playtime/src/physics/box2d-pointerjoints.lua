@@ -87,7 +87,7 @@ lib.maxMipoDragSpeed = false
 -- While a dragged Mipo touches another Mipo, the drag pulls with at most this many of its
 -- weights (it may pull with state.world.dragStrength, 40, in the air: throws stay snappy).
 -- Pressed into a Mipo backed against a wall, 40 forced limbs through each other (21 crossed
--- in 10 tries, 0 at 8; in a pile they stayed knotted, scripts/hands-mess, 2026-11-01).
+-- in 10 tries, 0 at 8; in a pile they stayed knotted, scripts/tests/hands-mess, 2026-11-01).
 -- PARKED (false = off), 2026-11-01: liked, but pulling a Mipo out of a group was weak too. To
 -- tweak when it's picked up: soften only while the pull points into the Mipo it touches, not
 -- away from it (spec/mipo-drag-press_spec.lua is pending until then; 8 to try).

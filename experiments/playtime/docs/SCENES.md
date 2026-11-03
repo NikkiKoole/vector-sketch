@@ -13,7 +13,7 @@ what it was for. "Runs" here means no errors, not "good".
 
 **Leave alone:** scenes loaded by name by a spec or tool (marked *spec*), and `meta` (the
 shape8 outline sheet, below). `draw-cache_spec` and
-`claudetools/snapshots` also draw every scene in `scripts/` and `scripts/tech` as test material:
+`claudetools/snapshots` also draw every scene in `scripts/` (rooms/, spikes/, tests/, tech/) as test material:
 removing one costs a little coverage, nothing breaks.
 
 **Archived 2026-10-31** (Nikki agreed to the drop list): 20 scenes moved to `archive/scenes/`
@@ -22,6 +22,11 @@ three Knut scenes worth keeping moved to `scripts/tech/`. UVUSERT lives on in `t
 `tech/uvs`, MESHUSERT in `tech/hoop` and `tech/workmoreclean`.
 
 ## Keep
+
+Scenes live in `scripts/rooms/` (what the game is made of), `scripts/spikes/` (tries, parked or not),
+`scripts/tests/` (scenes for checking a thing) and `scripts/tech/` (one engine piece each), since
+2026-11-03 (docs/ASSETS-AND-BUILDS.md AB7). They're called by name alone; a new scene saved from the
+editor goes into `spikes/`, move it when it becomes a room.
 
 | scene | what | why |
 |---|---|---|
@@ -62,7 +67,7 @@ The "drop" rows were archived (above). Left to decide:
 
 ## meta — the shape outlines
 
-`scripts/meta.playtime.json` is the sheet the Mipo part pictures were traced on. The
+`scripts/tests/meta.playtime.json` is the sheet the Mipo part pictures were traced on. The
 save/load specs load it with every other scene in `scripts/`. **Don't archive or delete
 it.** No spec names it, so an archive pass that only keeps scenes a spec names would take
 it, and the traces with it.
@@ -107,7 +112,7 @@ have the png's size now, the outline stretched along. shapes1 and shapeA4's pict
 
 ### Seeing an outline in the game
 
-`scripts/shape8-check` puts two Mipos side by side per case: the dict's outline on the
+`scripts/tests/shape8-check` puts two Mipos side by side per case: the dict's outline on the
 left, another one for the same picture on the right (a dict entry with `picture` set
 borrows the original's png), the collision outline in red. Left/right steps through the
 cases. Add a case to try a new trace before pasting it.

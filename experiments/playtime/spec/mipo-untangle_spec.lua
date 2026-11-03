@@ -101,7 +101,7 @@ describe('Mipo untangle', function()
         end)
     end)
 
-    -- scripts/feet-pile: a Mipo standing on two others' feet, its hands caught in both. It hopped
+    -- scripts/tests/feet-pile: a Mipo standing on two others' feet, its hands caught in both. It hopped
     -- away from one into the other and back, contacts off, every ~2.5 s for good (2026-11-01).
     it('a Mipo wedged between two others stops untangling after a few tries', function()
         withClock(function(clock)

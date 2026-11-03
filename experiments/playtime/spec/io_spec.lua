@@ -280,13 +280,10 @@ describe("save/load round-trip", function()
         setScale = function(self, s) camState.scale = s end,
     }
 
-    -- Find all scene files
+    -- Find all scene files (scripts/rooms/, spikes/, tests/, tech/: src/scene-catalog.lua)
     local sceneFiles = {}
-    local items = love.filesystem.getDirectoryItems("scripts")
-    for _, item in ipairs(items) do
-        if item:match("%.playtime%.json$") then
-            table.insert(sceneFiles, "scripts/" .. item)
-        end
+    for _, scene in ipairs(require('src.scene-catalog').list()) do
+        if scene.path then table.insert(sceneFiles, scene.path) end
     end
 
     -- Helper: index bodies/joints by ID for comparison
@@ -668,13 +665,10 @@ describe("double round-trip (all scene files)", function()
         return diffs
     end
 
-    -- Find all scene files
+    -- Find all scene files (scripts/rooms/, spikes/, tests/, tech/: src/scene-catalog.lua)
     local sceneFiles = {}
-    local items = love.filesystem.getDirectoryItems("scripts")
-    for _, item in ipairs(items) do
-        if item:match("%.playtime%.json$") then
-            table.insert(sceneFiles, "scripts/" .. item)
-        end
+    for _, scene in ipairs(require('src.scene-catalog').list()) do
+        if scene.path then table.insert(sceneFiles, scene.path) end
     end
 
     for _, sceneFile in ipairs(sceneFiles) do

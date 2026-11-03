@@ -30,7 +30,7 @@ All dead files deleted:
 - ~~`profilingReportOLD2-5.txt`~~
 - ~~`scripts/straightOLD.playtime.lua`~~
 - ~~`scripts/bettertOLD.playtime.json`~~
-- ~~`playtime-files/meta.playtime.json`~~ moved to `scripts/meta.playtime.json`; directory removed
+- ~~`playtime-files/meta.playtime.json`~~ moved to `scripts/tests/meta.playtime.json`; directory removed
 
 **Total deleted**: ~17,500 lines across 9 files.
 

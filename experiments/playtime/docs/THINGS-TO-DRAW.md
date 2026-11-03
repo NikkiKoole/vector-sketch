@@ -46,7 +46,7 @@ and what's there already. Pick a few, draw them, drop them in `textures/`, tick 
   (rubberleg-pearbod). The editor work then matches a drawing instead of rolling dice, and the
   kids can point at the one they like (and name it).
 - [ ] **A7. New body shapes**, only if the breed sheets want them. They go on the shape8 outline
-  sheet (`scripts/meta.playtime.json`, `src/shape8-dict.lua`), so a clean closed outline.
+  sheet (`scripts/tests/meta.playtime.json`, `src/shape8-dict.lua`), so a clean closed outline.
 
 ## Only if the underground hunch holds
 

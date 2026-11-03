@@ -1,4 +1,4 @@
--- Hair locks: long hair that swings (a spike, scripts/hair.playtime.lua; parked, docs/HAIR-LOCKS.md).
+-- Hair locks: long hair that swings (a spike, scripts/spikes/hair.playtime.lua; parked, docs/HAIR-LOCKS.md).
 -- A lock is a chain of points rooted on the head's outline, moved by a small verlet step of its
 -- own (not Box2D: hair can't snag, weigh a Mipo down or upset the solver), and drawn as a ribbon
 -- along the chain with a hair picture (src/render/ribbon.lua). Each step: the root follows the

@@ -1,4 +1,4 @@
--- scripts/meta.playtime.json is the sheet the shape8 outlines were traced on.
+-- scripts/tests/meta.playtime.json is the sheet the shape8 outlines were traced on.
 -- src/shape8-dict.lua is the copy the game uses. Same picture names, and the
 -- outlines agree exactly. docs/SCENES.md.
 -- Pure: busted spec/shape8-dict_spec.lua

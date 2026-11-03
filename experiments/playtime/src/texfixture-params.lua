@@ -45,7 +45,7 @@ local function imageSize(fixture)
     if ok then return img:getDimensions() end
 end
 
--- A meta8 sensor (scripts/meta.playtime.json) as a line for src/shape8-dict.lua: the
+-- A meta8 sensor (scripts/tests/meta.playtime.json) as a line for src/shape8-dict.lua: the
 -- picture on the same body, its rectangle, the 8 points rounded, and the ankle when the
 -- body has an anchor labelled ankle. docs/SCENES.md.
 local function shape8Entry(fixture)

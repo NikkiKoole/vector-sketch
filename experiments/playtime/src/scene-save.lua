@@ -246,7 +246,7 @@ function lib.gatherSaveData(world, camera)
     return saveData
 end
 
--- Writes the world to scripts/<filename>.playtime.json in the project when the game runs from it on the
+-- Writes the world to the scene's file in scripts/ (a new name: scripts/spikes/) when the game runs from it on the
 -- desktop (src/repo-files.lua, docs/ASSETS-AND-BUILDS.md AB3), else <filename>.playtime.json in the save
 -- directory: numbers rounded to 4 decimals (sub-pixel at any reasonable scale), influences packed
 -- (docs/FILESIZE-ANALYSIS.md). Opens the folder it went into.
@@ -259,7 +259,8 @@ function lib.save(world, camera, filename)
     end
     local jsonData = json.encode(saveData, { indent = true })
 
-    local path = (repoFiles.root() and 'scripts/' or '') .. filename .. FEXT.SCENE_JSON
+    -- its own file when the scene has one (scripts/rooms/, spikes/, ...), a new name in scripts/spikes/
+    local path = repoFiles.root() and require('src.scene-catalog').savePathOf(filename) or (filename .. FEXT.SCENE_JSON)
     local success, where = repoFiles.write(path, jsonData)
     if success then
         logger:info("World successfully saved to " .. where)

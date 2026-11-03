@@ -29,12 +29,21 @@ CODE_DIRS = ['src', 'vendor', 'library']
 SKIP = ('.DS_Store', 'README.md')
 
 
+SCENE_FOLDERS = ['rooms', 'spikes', 'tests', 'tech']  # scripts/<folder>/<name> (src/scene-catalog.lua pathOf)
+
+
+def scene_path(name, ext='.playtime.json'):
+    for p in ['scripts/%s%s' % (name, ext)] + ['scripts/%s/%s%s' % (f, name.split('/')[-1], ext) for f in SCENE_FOLDERS]:
+        if os.path.exists(p): return p
+    return None
+
+
 def rooms(start):
     seen, todo = [], [start]
     while todo:
         room = todo.pop()
-        path = 'scripts/%s.playtime.json' % room
-        if room in seen or not os.path.exists(path):
+        path = scene_path(room)
+        if room in seen or not path:
             continue
         seen.append(room)
         for body in json.load(open(path)).get('bodies', []):
@@ -112,15 +121,15 @@ def main():
     args = [a for a in sys.argv[1:] if not a.startswith('--')]
     report = '--report' in sys.argv
     scene = args[0] if args else 'dollhouse'
-    if not os.path.exists('scripts/%s.playtime.json' % scene):
-        sys.exit('no scene scripts/%s.playtime.json' % scene)
+    if not scene_path(scene):
+        sys.exit('no scene %s in scripts/ (or its folders)' % scene)
     shipped_rooms = rooms(scene)
     code = [p for p in CODE if os.path.exists(p)]
     for d in CODE_DIRS:
         code += files_under(d) if os.path.isdir(d) else []
     room_files = []
     for r in shipped_rooms:
-        room_files += sorted(glob.glob('scripts/%s.playtime.*' % r))
+        room_files += sorted(glob.glob(scene_path(r)[:-len('.playtime.json')] + '.playtime.*'))
 
     strings = set()
     for p in code:

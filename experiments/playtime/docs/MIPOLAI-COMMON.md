@@ -145,7 +145,7 @@ Strategy backdrop: `STUDIO-STRATEGY.md`. First consumer: `APP-1-BATHHOUSE-PLAN.m
 ### Tuning-slider debug panel
 
 - **State:** one good live example, not extracted.
-- **Lives in:** `scripts/mudready.playtime.lua:672` (`s.drawUI`) — density /
+- **Lives in:** `scripts/spikes/mudready.playtime.lua:672` (`s.drawUI`) — density /
   drag / ang.damp / water level / shower pos sliders backed by `local`
   tuning constants. Hot-reloaded.
 - **Gap:** every scene re-writes the same `ui.sliderWithInput` boilerplate.

@@ -26,7 +26,7 @@ it's drawn. It's the same idea as parallax: some things are only there to look a
 - **The top of a back block is a one-way floor.** A Mipo walks in front of the window block,
   but can be set on its top or its roof: one thin solid edge, which you pass up through from
   below and stand on from above. The old `platforms` scene does one-way platforms already
-  (`scripts/platforms.playtime.lua`, `preSolve`).
+  (`scripts/spikes/platforms.playtime.lua`, `preSolve`).
 - **A door on a back block is a real door.** A Mipo stands in front of it; with the `DOOR`
   behaviour (`src/doors.lua`, W1), dropping one there takes it inside, into another room. That's
   Scarry's cut-open house and the worlds-and-doors idea in one.

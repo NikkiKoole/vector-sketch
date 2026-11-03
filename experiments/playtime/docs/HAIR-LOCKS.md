@@ -4,7 +4,7 @@ status: parked — the route is the tufts (real bodies, ear pictures, haircuts):
 
 A spike: locks of hair as chains of points rooted on the head, moved by a small verlet step of
 their own (not Box2D) and drawn as ribbons with the hair pictures. `src/hair-locks.lua`, the scene
-`hair` (a copy of spine-test) and `scripts/hair.playtime.lua` with a panel of sliders in play mode
+`hair` (a copy of spine-test) and `scripts/spikes/hair.playtime.lua` with a panel of sliders in play mode
 (count, length, stiffness, droop, curl, wild, damping, width, spread, picture, front locks, bangs).
 
 What it does: back locks drape over the head (an oval its size) and hang behind the Mipo; the
@@ -35,7 +35,7 @@ when off (one call per haircut a frame).
 needs more work).
 
 The third try: a few tufts on top of the head as real Box2D bodies, short chains soft-welded like
-the ears (`src/hair-tufts.lua`, `scripts/tufts.playtime.lua`: run it on a scene with Mipos, panel
+the ears (`src/hair-tufts.lua`, `scripts/spikes/tufts.playtime.lua`: run it on a scene with Mipos, panel
 in play mode). They collide with nothing (category 16, masked against all), are light (a share of
 the head's density) and are drawn as ribbons through the chain, over the faces for now.
 "still not a great success but the most promising": the motion is the ears' motion, which works.

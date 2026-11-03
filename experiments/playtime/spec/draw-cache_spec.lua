@@ -50,7 +50,7 @@ describe('drawing with caches (L1) and culling (L0)', function()
         require('src.mipo-registry').reset()
         state.backdrops = {}
         math.randomseed(3); love.math.setRandomSeed(3)
-        sceneIO.load(love.filesystem.read('scripts/crowd.playtime.json'), world, camera.getInstance())
+        sceneIO.load(love.filesystem.read('scripts/tests/crowd.playtime.json'), world, camera.getInstance())
         local x1, y1, x2, y2 = math.huge, math.huge, -math.huge, -math.huge
         for _, body in ipairs(world:getBodies()) do
             local x, y = body:getPosition()
@@ -204,9 +204,10 @@ describe('drawing with caches (L1) and culling (L0)', function()
     end)
 
     it('every picture that can be baked is on a registered sfixture, in every scene', function()
-        for _, dir in ipairs({ 'scripts', 'scripts/tech' }) do
-            for _, name in ipairs(love.filesystem.getDirectoryItems(dir)) do
-                if name:match('%.playtime%.json$') then
+        for _, scene in ipairs(require('src.scene-catalog').list()) do
+            local dir, name = (scene.path or ''):match('^(.*)/([^/]+)$')
+            do
+                if scene.path then
                     local w = love.physics.newWorld(0, 0, true)
                     state.physicsWorld = w
                     registry.reset()

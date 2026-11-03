@@ -16,11 +16,11 @@ the amount never changes unless something pours it.
 
 ## What Playtime already had
 
-- `scripts/water.playtime.lua`: buoyancy by the **real submerged area**, `polygonClip` of
+- `scripts/spikes/water.playtime.lua`: buoyancy by the **real submerged area**, `polygonClip` of
   each body against a water sensor, pushed at the centre of the clipped part. Weak spots: the
   force is `area x 2` (depends on pixel units), globals, damping set and never put back,
   polygons only (no circles), the water a fixed shape.
-- `scripts/mudready.playtime.lua` (the Bathhouse spike): **mass-relative** buoyancy
+- `scripts/spikes/mudready.playtime.lua` (the Bathhouse spike): **mass-relative** buoyancy
   (`mass x g x submerged fraction x FLUID_DENSITY`, so 1 hangs still and more floats up; stable
   at any size), drag and angular damping that grow with depth, **splashes** (a crown of
   drops going in, a sideways spray coming out), a wave line of two sines. Weak spots: the
@@ -70,7 +70,7 @@ pools. Static bodies would be stamped into the grid as rock.
     corner, and a cup on its side or upside down ends up empty. Paused, nothing spills, so rotating
     a cup in the editor keeps its water. For now the spilled water just disappears; W2 makes it a stream.
   - Inspector: fill, color, surface, in front, z offset. In the tool rail under attach → looks.
-  - Test scene: `scripts/kitchen.playtime.json` + `.lua` (`./playtime.sh play kitchen`). It has a
+  - Test scene: `scripts/rooms/kitchen.playtime.json` + `.lua` (`./playtime.sh play kitchen`). It has a
     table with two cups, a bath on the floor, and one Mipo (copied from dollhouse).
   - Specs: `spec/liquid_spec.lua`. The pure part covers area, clip, level upright and tilted, and
     the cavity. The scene part loads the kitchen, lets the cups settle, tilts one, and draws.

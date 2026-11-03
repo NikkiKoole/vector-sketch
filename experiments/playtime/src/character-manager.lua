@@ -53,7 +53,7 @@ function lib.randomizeMipoConstrained(...) return randomize.randomizeMipoConstra
 function lib.randomizePart(...) return randomize.randomizePart(...) end
 function lib.mutateSizes(...) return randomize.mutateSizes(...) end
 -- Where random Mipos get their colours (a hex string each call); nil puts back any colour at
--- all. A breed's palette goes here (docs/MIPO-BREEDS.md B3; scripts/breeds).
+-- all. A breed's palette goes here (docs/MIPO-BREEDS.md B3; scripts/spikes/breeds).
 function lib.setRandomColor(fn) randomize.randomColor = fn or randomize.anyColor end
 
 -- Tuning values, to read (set them on their own module: these are copies or the same table)

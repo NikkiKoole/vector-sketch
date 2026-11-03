@@ -2,7 +2,7 @@
 -- A Mipo dragged hard into another that can't get away (backed against a wall) doesn't get its
 -- limbs pushed through it: while it touches another Mipo the drag pulls softly
 -- (box2d-pointerjoints touchingDragStrength). At full strength (40 of its weights) 21 limbs
--- crossed in 10 tries; in a pile such knots stayed (scripts/hands-mess, 2026-11-01).
+-- crossed in 10 tries; in a pile such knots stayed (scripts/tests/hands-mess, 2026-11-01).
 -- Parked (2026-11-01): pending while touchingDragStrength is off.
 -- Run with: love . --specs spec/mipo-drag-press_spec.lua
 

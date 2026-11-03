@@ -4,7 +4,7 @@
 -- Run from experiments/playtime:
 --   lua claudetools/shape8-from-meta.lua
 --
--- Compares scripts/meta.playtime.json to the dict and to the shape catalogs.
+-- Compares scripts/tests/meta.playtime.json to the dict and to the shape catalogs.
 -- The two agree exactly (synced 2026-11-01). A picture on the sheet that is not
 -- in the dict yet is printed as a line to paste into src/shape8-dict.lua (the
 -- editor's 'copy dict entry' on a meta8 sensor gives the same line).
@@ -27,7 +27,7 @@ local function moduleRoot()
 end
 
 M.root = moduleRoot()
-M.scenePath = M.root .. '/scripts/meta.playtime.json'
+M.scenePath = M.root .. '/scripts/tests/meta.playtime.json'
 
 function M.loadScene(path)
     local f, openErr = io.open(path, 'r')

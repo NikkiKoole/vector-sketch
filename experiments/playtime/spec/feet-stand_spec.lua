@@ -3,7 +3,7 @@
 -- its own, dropped onto a floor three times: after each landing both feet come to rest flat.
 -- A foot hangs from its picture's ankle point (src/shape8-dict.lua), near the heel end of a
 -- straight sole: a wide stance (spec/standing_spec), and nothing to tip onto.
--- The same Mipos stand in scripts/feet-check, to look at (d drops them).
+-- The same Mipos stand in scripts/tests/feet-check, to look at (d drops them).
 -- Run with: love . --specs spec/feet-stand_spec.lua
 
 if not love then return end

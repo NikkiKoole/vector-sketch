@@ -333,7 +333,7 @@ function love.draw()
     if editing and state.editorPreferences.showGrid then
         editorRenderer.drawGrid(state.world.darkMode and { 1, 1, 1, .1 } or { 0, 0, 1, .1 })
     end
-    script.call('drawBelow') -- a scene script's ground, under the bodies (scripts/burrow.playtime.lua)
+    script.call('drawBelow') -- a scene script's ground, under the bodies (scripts/spikes/burrow.playtime.lua)
 
     prof.push('drawworld')
     box2dDraw.drawWorld(state.physicsWorld, state.world.debugDrawMode)

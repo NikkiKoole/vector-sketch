@@ -110,7 +110,7 @@ local function addSkinTexture(body, partData, skinData, scale)
     ud.extra.OMP = true
     ud.extra.dirty = true
     ud.extra.main = utils.deepCopy(skinData.main)
-    -- an entry can borrow another file's picture (scripts/shape8-check: before and after side by side)
+    -- an entry can borrow another file's picture (scripts/tests/shape8-check: before and after side by side)
     local shape = shape8Dict[partData.shape8URL]
     local picture = shape and shape.picture or partData.shape8URL
     ud.extra.main.bgURL = picture

@@ -154,7 +154,7 @@ describe('liquid surface (sloshing)', function()
     end)
 end)
 
--- The kitchen test scene (scripts/kitchen.playtime.json): cups on the table, a bath.
+-- The kitchen test scene (scripts/rooms/kitchen.playtime.json): cups on the table, a bath.
 if not love or not love.physics then return end
 
 describe('liquid in the kitchen scene', function()

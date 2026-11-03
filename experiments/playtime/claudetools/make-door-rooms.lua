@@ -54,7 +54,7 @@ local function save(name, camX, camY)
     local cam = camera.getInstance()
     cam:setTranslation(camX, camY)
     local data = sceneIO.gatherSaveData(state.physicsWorld, cam)
-    local path = love.filesystem.getWorkingDirectory() .. '/scripts/' .. name .. '.playtime.json'
+    local path = love.filesystem.getWorkingDirectory() .. '/scripts/rooms/' .. name .. '.playtime.json'
     local f = assert(io.open(path, 'w'))
     f:write(json.encode(data, { indent = true }))
     f:close()

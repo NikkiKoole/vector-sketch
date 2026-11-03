@@ -3,14 +3,14 @@
 -- file name: the drawing's size, its 8 outline points, and for ears the root (where the
 -- drawing meets the head).
 --
--- Traced on scripts/meta.playtime.json: each picture is a rectangle with an 8-point
+-- Traced on scripts/tests/meta.playtime.json: each picture is a rectangle with an 8-point
 -- sensor labelled meta8. This file is the copy the game reads; the scene is the sheet.
 -- Copied by hand (there is no writer that regenerates it). How to add a picture, and
 -- where the sheet and this file have diverged: docs/SCENES.md. Ear roots were measured
 -- from the mask and are not on the sheet. Foot pictures (and the hand, worn as a foot too)
 -- have an `ankle`: where the shin holds the foot, marked on the sheet with an anchor
 -- labelled ankle. An entry may name another file's `picture`
--- (scripts/shape8-check shows a fix next to the original that way).
+-- (scripts/tests/shape8-check shows a fix next to the original that way).
 --
 -- Read by mipo-build, character-topology, mipo-textures, spine-skin and blob.
 local shape8Dict = {

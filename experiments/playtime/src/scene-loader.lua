@@ -71,9 +71,10 @@ end
 
 function lib.loadScriptAndScene(id)
     state.scene.id = id -- the room you're in (src/doors.lua)
-    state.editorPreferences.saveName = id -- saving it again writes this scene (scripts/<id>, src/repo-files.lua)
-    local jsonPath = '/scripts/' .. id .. FEXT.SCENE_JSON
-    local luaPath = '/scripts/' .. id .. FEXT.SCENE_LUA
+    state.editorPreferences.saveName = id -- saving it again writes this scene (its file, src/repo-files.lua)
+    local catalog = require('src.scene-catalog') -- the scene's folder (scripts/rooms/, spikes/, ...)
+    local jsonPath = '/' .. (catalog.pathOf(id) or ('scripts/' .. id .. FEXT.SCENE_JSON))
+    local luaPath = '/' .. (catalog.pathOf(id, FEXT.SCENE_LUA) or ('scripts/' .. id .. FEXT.SCENE_LUA))
     local jsoninfo = love.filesystem.getInfo(jsonPath)
     local luainfo = love.filesystem.getInfo(luaPath)
     if not jsoninfo then

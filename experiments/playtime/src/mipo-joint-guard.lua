@@ -64,7 +64,7 @@ lib.untangleRetry = 0.5     -- ...but if the time ran out while still hooked, th
 lib.untangleHop = { 250, 650 } -- the hop out: sideways (away from the other), up (world units/s)
 -- A Mipo that has to untangle again and again stops trying: wedged between two others, standing
 -- on their feet with its hands caught, it hopped away from one into the other, fell back with
--- contacts off and re-hooked, every ~2.5 s for good (scripts/feet-pile, 2026-11-01). After
+-- contacts off and re-hooked, every ~2.5 s for good (scripts/tests/feet-pile, 2026-11-01). After
 -- untangleMaxTries in untangleQuiet seconds it stays put and collides; picking it up starts over.
 lib.untangleLetsGo = true -- an untangle starts with the two letting go of each other's hands
 lib.untangleMaxTries = 4

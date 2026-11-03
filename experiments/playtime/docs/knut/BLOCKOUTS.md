@@ -38,7 +38,7 @@ design doc.
 
 ---
 
-## 2. Stone Balancing — `scripts/stapelaar.playtime.json` + `.playtime.lua`
+## 2. Stone Balancing — `scripts/tests/stapelaar.playtime.json` + `.playtime.lua`
 
 **Status:** First gameplay sketch working.
 

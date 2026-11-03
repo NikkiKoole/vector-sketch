@@ -1,5 +1,5 @@
 -- spec/mipo-spine_spec.lua
--- The spine test room (scripts/spine-test.playtime.json, a fixed copy: scripts/spine is the
+-- The spine test room (scripts/tests/spine-test.playtime.json, a fixed copy: scripts/spikes/spine is the
 -- room to play in): P4re5, a Mipo with a tall torso, on a floor between two walls
 -- (docs/MIPO-SPINE.md).
 -- Run with: love . --specs spec/mipo-spine_spec.lua

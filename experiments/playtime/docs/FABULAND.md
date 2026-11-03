@@ -36,7 +36,7 @@ Everything lives in `src/fabuland.lua`, and **one entry in `PARTS` is a whole pa
 From the entry follow: the body (objectManager, saves with the scene), its label
 `fab:<part>:<set>` (how the look is found after a load), the snap points, the look (`fabuland.draw`,
 called in `main.lua` behind the Mipos, only while `state.fabuland.on`) and a button in the
-`fabuland` scene's panel (`scripts/fabuland.playtime.lua`). Spec: `spec/fabuland_spec.lua` builds every part in `PARTS`, so a new entry is
+`fabuland` scene's panel (`scripts/spikes/fabuland.playtime.lua`). Spec: `spec/fabuland_spec.lua` builds every part in `PARTS`, so a new entry is
 tested by being there.
 
 **A new detail** (a chimney pot, a clock, a balcony door) is a function in `DETAILS`:

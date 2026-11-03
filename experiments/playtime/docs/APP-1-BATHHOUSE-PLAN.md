@@ -127,7 +127,7 @@ Total budget: 4–6 dev weeks per manifesto → **~3–4 calendar months at ~12�
 
 **Why this over canvas-alpha erosion:** the cleaning verb *is* physics, not a visual overlay. Scrubbing breaks the nearest joint(s) → mud balls fall away → the reveal emerges naturally as the cluster clears. Plays to playtime's actual strength (Box2D + character DNA). The mud aesthetic emerges automatically from overlapping circles, no authored "mud canvas" needed.
 
-**What was built (script: `scripts/mudready.playtime.lua`):**
+**What was built (script: `scripts/spikes/mudready.playtime.lua`):**
 - Mud clusters on every Mipo body part (16 anchors: torso, head, ears, arms, hands, legs, feet). Each cluster is **auto-sized** from the body part's collision fixture bounding box — big parts get more/bigger balls, small parts fewer/smaller ones.
 - Ball count per anchor: 4–16, computed as `floor(r * 0.18)`, capped to stay reasonable.
 - Distance joints (frequency 4, damping 0.6) + angular restoring spring (`ANGLE_SPRING = 700`) keeps balls spread even when Mipo moves — prevents collapse into a pile.

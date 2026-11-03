@@ -56,7 +56,8 @@ describe('every scene', function()
 
     -- the keys a scene script answers to
     local function keysOf(id)
-        local contents = love.filesystem.read('scripts/' .. id .. '.playtime.lua') or ''
+        local path = catalog.pathOf(id, '.playtime.lua')
+        local contents = path and love.filesystem.read(path) or ''
         local keys, seen = {}, {}
         for key in contents:gmatch("key%s*==%s*['\"]([^'\"]+)['\"]") do
             if not seen[key] then seen[key] = true; keys[#keys + 1] = key end
@@ -73,7 +74,7 @@ describe('every scene', function()
             local ok, err = pcall(function()
                 if scene.scriptOnly then
                     sceneLoader.loadSceneData('{"version":"1.0","bodies":[],"joints":[]}', 'empty')
-                    sceneLoader.loadAndRunScript('/scripts/' .. scene.id .. '.playtime.lua')
+                    sceneLoader.loadAndRunScript('/' .. scene.luaPath)
                 else
                     sceneLoader.loadScriptAndScene(scene.id)
                 end

@@ -13,18 +13,35 @@ describe('scene catalog', function()
         for _, scene in ipairs(catalog.list()) do byId[scene.id] = scene end
     end)
 
-    it('finds scenes, one folder down too', function()
+    it('finds scenes in their folders, called by name alone', function()
         assert.is_truthy(byId.dollhouse)
-        assert.is_truthy(byId['tech/snap2'])
-        assert.are.equal('tech', byId['tech/snap2'].group)
+        assert.are.equal('scripts/rooms/dollhouse.playtime.json', byId.dollhouse.path)
+        assert.is_truthy(byId.snap2)
+        assert.are.equal('tech', byId.snap2.group)
+        assert.are.equal('scripts/rooms/dollhouse.playtime.json', catalog.pathOf('dollhouse'))
+        assert.are.equal('scripts/tech/snap2.playtime.json', catalog.pathOf('tech/snap2'))
+        assert.are.equal('scripts/spikes/tufts.playtime.lua', catalog.pathOf('tufts', '.playtime.lua'))
+        assert.is_nil(catalog.pathOf('no-such-scene'))
+    end)
+
+    it('no two scenes share a name (a name is how doors, --scene and the specs call one)', function()
+        for id, scene in pairs(byId) do
+            assert.is_nil(scene.clash, id .. ' is in ' .. tostring(scene.clash))
+        end
+    end)
+
+    it('saves a scene over its own file, a new name into spikes/', function()
+        assert.are.equal('scripts/rooms/dollhouse.playtime.json', catalog.savePathOf('dollhouse'))
+        assert.are.equal('scripts/spikes/tufts.playtime.json', catalog.savePathOf('tufts'))
+        assert.are.equal('scripts/spikes/something-new.playtime.json', catalog.savePathOf('something-new'))
     end)
 
     it("takes a scene's line from its script's first comment, without the name", function()
         assert.are.equal('a spike for an underground Mipo home you dig yourself.', byId.burrow.note)
     end)
 
-    it('groups by what the line says: rooms, spikes, tests', function()
-        assert.are.equal('rooms', byId.dollhouse.group) -- 'the doll-play test room' is a room
+    it('groups by folder: rooms, spikes, tests, tech', function()
+        assert.are.equal('rooms', byId.dollhouse.group)
         assert.are.equal('spikes', byId.burrow.group)
         assert.are.equal('tests', byId.snap.group)
     end)

@@ -118,7 +118,7 @@ Both should report **0 warnings / 0 errors**; keep it that way.
 - `src/` — core modules (src/, src/ui/, src/physics/)
 - `claudetools/` — dev tools (e.g. find-forward-refs.lua)
 - `vendor/` — third-party libs (claude-bridge, lurker, dkjson, ProFi, jprof, etc.)
-- `scripts/` — scene scripts (.playtime.lua) + scene data (.playtime.json)
+- `scripts/` — scenes (.playtime.json + .playtime.lua script) in `rooms/`, `spikes/`, `tests/`, `tech/`; called by name alone (`dollhouse`), `src/scene-catalog.lua` `pathOf` finds the file, so names are unique
 - `textures/` — Mipo parts in `mipo/<part>/<part>-<nn>.png` (+ `-mask.png`; OMP: outline + mask + pattern), `world/`, `pat/`; old names -> new in `src/texture-names.lua` (scenes migrate on load), `claudetools/texture-check.py` lists names pointing at nothing and files nothing names
 
 ### Key modules
@@ -261,4 +261,4 @@ Reference docs worth knowing when touching an area:
 - `INSPIRATIONS.md` — the pictures, toys and apps behind Mipo's look and play (Childcraft, Fabuland, Hancock's Underworld, …)
 - `TOOLING-SETUP.md` — luacheck, busted, profiling
 - `MEASURING.md` — profiling, and `claudetools/snapshot.sh` (before/after snapshots of scenes, Mipos, the Mipo editor) for refactors
-- `SCENES.md` — which scenes to keep. `scripts/meta.playtime.json` is the shape8 outline sheet behind `src/shape8-dict.lua`; don't archive it
+- `SCENES.md` — which scenes to keep. `scripts/tests/meta.playtime.json` is the shape8 outline sheet behind `src/shape8-dict.lua`; don't archive it

@@ -21,7 +21,6 @@ trap 'rm -rf "$BUILD_DIR" "$LOVE_FILE" "$BUILD_DIR.desound.wasm" "$BUILD_DIR.fil
 
 LOVEJS="${LOVEJS:-$(command -v love.js || ls "$HOME"/.nvm/versions/node/*/bin/love.js 2>/dev/null | head -1)}"
 [ -x "$LOVEJS" ] || { echo "love.js not found (npm i -g love.js, or set LOVEJS)" >&2; exit 1; }
-[ -f "$PLAYTIME_DIR/scripts/${SCENE}.playtime.json" ] || { echo "no scene scripts/${SCENE}.playtime.json" >&2; exit 1; }
 
 echo "=== Web build of '$SCENE' ==="
 

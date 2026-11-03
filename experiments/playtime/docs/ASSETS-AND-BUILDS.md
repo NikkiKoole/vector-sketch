@@ -179,8 +179,14 @@ snapshot for the moves, MEASURING.md) and both builds working.
     `type3_`, `null`, …) once the check says nothing names them.
   - The move list is the only place old names live; `tools/scan2tex` saves under the new names (pick
     a part, it offers the next free number).
-- [ ] **AB7. Rooms and spikes apart.** `scripts/rooms/` and `scripts/spikes/` (scene-catalog already
+- [x] **AB7. Rooms and spikes apart.** `scripts/rooms/` and `scripts/spikes/` (scene-catalog already
   walks folders); the builds take rooms from `rooms/`.
+  Done 2026-11-03: `scripts/rooms/` (7), `spikes/` (12, with the old maybes: water, elasto, planets,
+  platforms, mudready), `tests/` (11), `tech/` (9). A scene is still called by its name alone
+  (`dollhouse`: doors' `to`, `--scene`, `./playtime.sh play`, the specs, old saves); `scene-catalog`
+  `pathOf` finds its file, `savePathOf` saves it over its own file (a new name into `spikes/`), and
+  spec/scene-catalog_spec checks no two share a name. The builds still take the rooms the doors lead
+  to, wherever they are. Every scene draws the same pixels before and after.
 - [x] **AB8. The source art out of the game folder.** `oldtextures/`, `backdrops/`, `krita/`, Knut's
   pictures not used by a scene into `~/Projects/mipo-art/`; the 3 scenes using `knut-is-dead/` keep
   theirs (or go to `spikes/` with them).

@@ -16,7 +16,7 @@ Take the palette and the layering, not the drawing.
 
 ## Where it is now
 
-The spike (2026-10-30, d045b154): `scripts/burrow.playtime.lua`, `./playtime.sh play burrow`.
+The spike (2026-10-30, d045b154): `scripts/spikes/burrow.playtime.lua`, `./playtime.sh play burrow`.
 Nikki: "feels nice", "pretty good already".
 
 - A grid of densities (0 air .. 1 earth), drawn and collided with interpolated marching squares

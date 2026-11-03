@@ -154,8 +154,8 @@ accelerate / brake / chain-lift / flip, carts follow by arc length (`Track:getPo
 - **Walking.** Mipos can be dragged, thrown and ridden, but nothing makes one walk somewhere on its
   own. Steering (#12) gives the target, not the gait.
 - **Water.** `liquid` (grid water, buggy) and `buoyancy` (one force on contact) are dead ends.
-  But Playtime's own scene scripts have it: `scripts/water.playtime.lua` (buoyancy by submerged area,
-  `polygonClip` of the body against a water sensor) and `scripts/mudready.playtime.lua` (the Bathhouse
+  But Playtime's own scene scripts have it: `scripts/spikes/water.playtime.lua` (buoyancy by submerged area,
+  `polygonClip` of the body against a water sensor) and `scripts/spikes/mudready.playtime.lua` (the Bathhouse
   spike: a flat water line, mass-relative buoyancy with drag, splash particles, a wave surface).
 - **Room persistence** (W2) and **carrying what's connected** (W3): no experiment did this; the
   plan in `WORLDS-AND-DOORS.md` stands.

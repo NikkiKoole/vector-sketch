@@ -9,7 +9,7 @@
 --     snapping edge, counted from the part's left/top edge: two parts whose edges sit on the grid
 --     have points on the same spots, and they weld there, square
 --   * the look: fill, a darker outline, and its details (windows, doors, shingles, studs)
---   * a button in the fabuland scene's panel (scripts/fabuland.playtime.lua)
+--   * a button in the fabuland scene's panel (scripts/spikes/fabuland.playtime.lua)
 -- A spike, parked (docs/FABULAND.md): drawing only runs while a scene sets state.fabuland.on
 -- (the fabuland scene does), so elsewhere it costs nothing.
 -- To add a part: add an entry to PARTS (and a detail drawer to DETAILS if it needs a new one).

@@ -1,5 +1,5 @@
 -- Hair tufts: a few short tufts on top of the head as real Box2D bodies, a spike
--- (scripts/tufts.playtime.lua). Like the ears: each tuft is a short chain of small bodies, the
+-- (scripts/spikes/tufts.playtime.lua). Like the ears: each tuft is a short chain of small bodies, the
 -- first soft-welded to the head, each next one soft-welded to the one before (a weld with a
 -- frequency is a spring that keeps the rest angle), so a tuft stands, sways and bounces with
 -- the head. They collide with nothing (category 16, masked against all): no contacts, so they

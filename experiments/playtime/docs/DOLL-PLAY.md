@@ -20,7 +20,7 @@ scene, tick it. One at a time. The Mipo's voice items (V1–V6) live in
 
 ## Foundation (do first, about a week)
 
-- [x] **F1. Play scene** `scripts/dollhouse.playtime.json` + `.lua` (2026-10-27): ribbon
+- [x] **F1. Play scene** `scripts/rooms/dollhouse.playtime.json` + `.lua` (2026-10-27): ribbon
   floor/walls and 2 Mipos, built in the editor. The default for `./playtime.sh start`.
   No props yet. The Mipos start high and drop to the floor.
 - [x] **F2. Play mode** (2026-10-29, `src/play-mode.lua`): **tab** goes in and out (escape also leaves),

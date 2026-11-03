@@ -20,7 +20,7 @@ Live-codebase verification narrowed the gap considerably. The agent's biggest wo
 
 **✓ Already done in code:**
 - `appearance.face` IS initialized on torso1 + head at `src/character-manager.lua:708` and `:743` via `utils.deepCopy(D.face)`.
-- A live test scene exists: `scripts/miposhader.playtime.json` renders **10 face decals** on the visible Mipo (verified via the claude-bridge).
+- A live test scene exists: `scripts/rooms/miposhader.playtime.json` renders **10 face decals** on the visible Mipo (verified via the claude-bridge).
 - Face rendering pipeline is wired in `src/physics/box2d-draw-textured.lua` (note: lives under `src/physics/`, not `src/` root).
 - 96 face textures in `textures/` (eyes, pupils, brows, noses, teeth, upper/lower lips with masks).
 - DNA structure complete: `src/dna-defaults.lua` defines nested face appearance + positioners. Mouth uses 16-point normalized bezier shapes with 15 phoneme variants in `src/mouth-shapes.lua`.
@@ -80,7 +80,7 @@ Brows fully animated — position and shape both tween smoothly. All state lives
 - `src/physics/box2d-draw-textured.lua` — face rendering pipeline (decals, brow curves, mouth stencil, look-at-mouse hook reads `extra.lookAtMouse`)
 - `src/mouth-shapes.lua` — 15 bezier phoneme shapes
 - `src/game-loop.lua` — where the face tick should live
-- `scripts/miposhader.playtime.json` — existing test scene with active faces (no new scene needed)
+- `scripts/rooms/miposhader.playtime.json` — existing test scene with active faces (no new scene needed)
 
 **Puppetmaker2 (reference for controller logic only):**
 - `experiments/puppetmaker2/main.lua:177–206` — tween vars (the thing to port)

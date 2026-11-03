@@ -2,7 +2,7 @@
 -- Breeds: a random Mipo of a kind (docs/MIPO-BREEDS.md). A breed narrows what the randomizer
 -- draws from for one Mipo: lists from src/shape-catalogs.lua and ranges from
 -- src/dna-defaults.lua are swapped in for the draw and put back after; positioners are set
--- after it. Anything a breed doesn't name stays as random as ever. scripts/breeds tries more
+-- after it. Anything a breed doesn't name stays as random as ever. scripts/spikes/breeds tries more
 -- breeds the same way.
 --
 -- Also undo for the Mipo editor's random buttons: the DNA from before each roll, a few steps

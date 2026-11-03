@@ -24,7 +24,7 @@ local function shipList(scene)
     local list, rooms = {}, {}
     for line in pipe:lines() do
         list[line] = true
-        local room = line:match('^scripts/(.+)%.playtime%.json$')
+        local room = line:match('^scripts/.-([^/]+)%.playtime%.json$')
         if room then rooms[#rooms + 1] = room end
     end
     pipe:close()
@@ -78,7 +78,7 @@ local function playRoom(room)
     mipoRegistry.reset()
     state.backdrops = {}
     math.randomseed(1); love.math.setRandomSeed(1)
-    sceneIO.load(love.filesystem.read('scripts/' .. room .. '.playtime.json'), world, camera.getInstance())
+    sceneIO.load(love.filesystem.read(require('src.scene-catalog').pathOf(room)), world, camera.getInstance())
     drawOnce(world)
     -- knock everything down hard, for the impact sounds
     for _, body in ipairs(world:getBodies()) do
@@ -137,5 +137,18 @@ describe('the ship list', function()
                 table.concat(missing, '\n  '))
         end
         assert.is_true(total > 50, 'only ' .. total .. ' files opened: the recording missed them')
+    end)
+
+    it('has every voice sample (a voice set loads its whole folder, which a run without audio never does)', function()
+        local list = shipList('dollhouse')
+        if not list then pending('no python3 with the ship list') return end
+        local missing = {}
+        for _, set in ipairs(love.filesystem.getDirectoryItems('assets/voices')) do
+            for _, file in ipairs(love.filesystem.getDirectoryItems('assets/voices/' .. set)) do
+                local path = 'assets/voices/' .. set .. '/' .. file
+                if file:match('%.ogg$') and not list[path] then missing[#missing + 1] = path end
+            end
+        end
+        assert.are.equal(0, #missing, 'left out: ' .. table.concat(missing, ', '))
     end)
 end)

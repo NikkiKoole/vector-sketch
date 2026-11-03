@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # An 8-point outline for src/shape8-dict.lua measured from a texture (its line and mask), for a picture
-# not yet traced on scripts/meta.playtime.json, in shape8-dict's order (clockwise from the top): the top
+# not yet traced on scripts/tests/meta.playtime.json, in shape8-dict's order (clockwise from the top): the top
 # and bottom of the middle column, the left and right edge a little below the middle (10%, where the
 # traced ones put them), and the four corners as far out as the drawing reaches towards the picture's
 # corners (from the middle). Box2D takes it as a convex shape, so a dent (body-18's) is bridged.
