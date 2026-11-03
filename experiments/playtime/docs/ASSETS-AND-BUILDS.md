@@ -103,6 +103,10 @@ snapshot for the moves, MEASURING.md) and both builds working.
   the table edge in view): 13 parts, clean, masks on the closed shapes, the table edge dropped. It
   showed one fault, now fixed: a part cut as a box took a neighbour's ink with it (the d and the B side
   by side); each part keeps only its own ink now. Phone photos are good enough to skip the scanner.
+  The mask's inset follows each part's LINE: about 60% of half its thickness (measured), INSET px at
+  least, the soft fringe counted as line (the photo's upper lip had colour at its line's edge). Shapes
+  that ALMOST close are Nikki's call per part ("it depends"): FILL='name-05:close,name-01:open', auto /
+  close (the line's hull: the opening drawn shut) / open (no mask) / mask; in the LÖVE tool a click.
 - [ ] **AB2. Keep the scans.** `~/Projects/mipo-art/scans/`, laid out like `textures/`, backed up
   (a cloud folder or a disk). New drawings from now on; old papers rescanned when a part is touched.
 - [ ] **AB3. Prefabs, setups and saved scenes into the repo.** The game reads `library/` and music

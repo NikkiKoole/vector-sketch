@@ -15,6 +15,11 @@ MIN_AREA = 400        # px of ink: smaller is a speck
 CLOSE = 9             # px: gaps in a line up to this are closed before the mask is filled
 INSET = 2             # px: how far inside the line's outer edge the mask stops (0 = right at it)
 INSET = int(os.environ.get('INSET', INSET))
+INTO = float(os.environ.get('INTO', 0.6))
+# FILL per part, your call where a drawing almost closes (Nikki: "it depends"): FILL='photo5534-05:close,
+# scan12-16:open'; auto (the default) / close (filled as if its opening were drawn shut: the line's hull) /
+# open (no mask) / mask (a mask even when it's thin)
+FILL = dict(kv.split(':') for kv in os.environ.get('FILL', '').split(',') if ':' in kv)  # how far into the line the mask stops, as a share of half its width
 SMOOTH = 2.5          # the mask's edge smoothing (a blur radius, then cut)
 OPEN_BELOW = 0.07     # under this share of the shape enclosed (not line), a part is open: no mask
 SPECK = 60            # px: ink islands smaller than this are dust
@@ -92,6 +97,31 @@ def largest(img):
     regs = regions(img)
     return only(img, [max(regs, key=len)]) if regs else img
 
+def half_width(line):  # about half the stroke's thickness: how many 1-px shrinks until most of it is gone
+    total = sum(1 for v in line.get_flattened_data() if v)
+    if not total: return 0
+    img, n = line, 0
+    while n < 40:
+        img = img.filter(ImageFilter.MinFilter(3)); n += 1
+        if sum(1 for v in img.get_flattened_data() if v) < total * 0.2: break
+    return n
+
+def hull(line):  # the convex hull of the line's pixels, filled
+    w, h = line.size; px = line.load()
+    pts = sorted({(x, y) for y in range(0, h, 2) for x in range(0, w, 2) if px[x, y]})
+    if len(pts) < 3: return line
+    def cross(o, a, b): return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+    lower, upper = [], []
+    for p in pts:
+        while len(lower) >= 2 and cross(lower[-2], lower[-1], p) <= 0: lower.pop()
+        lower.append(p)
+    for p in reversed(pts):
+        while len(upper) >= 2 and cross(upper[-2], upper[-1], p) <= 0: upper.pop()
+        upper.append(p)
+    out = Image.new('L', line.size, 0)
+    ImageDraw.Draw(out).polygon(lower[:-1] + upper[:-1], fill=255)
+    return out
+
 def pieces(img):  # every region at least 3% of the biggest (and over a speck): crumbs go
     regs = regions(img)
     if not regs: return img
@@ -126,8 +156,16 @@ for (x0, y0, x1, y1, n, own) in sorted(parts, key=lambda p: (p[1] // 60, p[0])):
     ImageDraw.floodfill(closed, (0, 0), 128)                      # what the outside reaches -> 128
     shape = closed.point(lambda v: 0 if v == 128 else 255)         # not outside: the shape, grown CLOSE/2
     shape = shape.filter(ImageFilter.MinFilter(CLOSE))             # back to the line's outer edge
+    fill = FILL.get('%s-%02d' % (name, k), 'auto')
+    if fill == 'close':  # the opening drawn shut: the line's outer hull is the shape
+        shape = hull(line)
+    # the line's soft fringe (a photo's blur, faint grain) counts as line too, so the mask stays inside it
+    shape = ImageChops.subtract(shape, ImageChops.subtract(a.point(lambda v: 255 if v > 15 else 0), line))
     shape = shape.filter(ImageFilter.GaussianBlur(SMOOTH)).point(lambda v: 255 if v >= 128 else 0)
-    mask = shape.filter(ImageFilter.MinFilter(INSET * 2 + 1)) if INSET > 0 else shape
+    # in by about half the line's thickness (measured per part: a fat crayon line and a thin marker one
+    # differ), INSET px at least (Nikki: the photo's upper lip had colour at its line's edge)
+    inset = max(INSET, int(round(half_width(line) * INTO)))
+    mask = shape.filter(ImageFilter.MinFilter(inset * 2 + 1)) if inset > 0 else shape
     mask = pieces(mask)                                            # every real piece; crumbs go
     mask = mask.filter(ImageFilter.GaussianBlur(0.8))              # a soft, even edge
     # an OPEN part (a line, a stroke, a filled dot like a pupil) has no inside to fill: no mask file, as
@@ -135,10 +173,11 @@ for (x0, y0, x1, y1, n, own) in sorted(parts, key=lambda p: (p[1] // 60, p[0])):
     inside = ImageChops.subtract(shape, line.filter(ImageFilter.MaxFilter(3)))
     inside_px = sum(1 for v in inside.get_flattened_data() if v)
     shape_px = sum(1 for v in shape.get_flattened_data() if v)
-    has_inside = shape_px > 0 and inside_px / shape_px >= OPEN_BELOW
+    has_inside = (fill in ('close', 'mask')) or (fill != 'open' and shape_px > 0 and inside_px / shape_px >= OPEN_BELOW)
     outline.save(os.path.join(outdir, '%s-%02d.png' % (name, k)))
     if has_inside:
         mask.convert('RGB').save(os.path.join(outdir, '%s-%02d-mask.png' % (name, k)))
-    print('%s-%02d %dx%d  %s (inside %d%%)' % (name, k, a.width, a.height,
-          'mask' if has_inside else 'no mask: open', 100 * inside_px // max(1, shape_px)))
+    print('%s-%02d %dx%d  %s (inside %d%%)%s' % (name, k, a.width, a.height,
+          'mask' if has_inside else 'no mask: open', 100 * inside_px // max(1, shape_px),
+          '' if fill == 'auto' else '  [FILL ' + fill + ']'))
 print('paper %d, ink %d; %d parts' % (paper, ink, k))
