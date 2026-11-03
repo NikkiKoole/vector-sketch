@@ -58,6 +58,7 @@ lib.unstickMaxTime = 2.0  -- seconds a part stays a ghost at most
 lib.untangle = true
 lib.untangleAfter = 2.0     -- seconds knotted (and let go) before it untangles
 lib.untangleMaxTime = 4.0   -- seconds of passing through at most
+lib.untangleMinTime = 0.05  -- ...and at least (contacts are only there after a step)
 lib.untangleRest = 3.0      -- seconds before the same pair untangles again
 lib.untangleRetry = 0.5     -- ...but if the time ran out while still hooked, this soon
 lib.untangleHop = { 250, 650 } -- the hop out: sideways (away from the other), up (world units/s)
@@ -620,7 +621,34 @@ local function gaveUp(id, now)
     return rec.n >= lib.untangleMaxTries
 end
 
+-- Is a limb of a through b, or of b through a, right now? (hooksOf on just these two, no cache)
+local function hookedNow(a, b)
+    local all = mipoRegistry.getAll()
+    for _, owner in ipairs({ all[a], all[b] }) do
+        for _, hook in ipairs(hooksOf(owner, {})) do
+            local id1, id2 = hook.a.id, hook.b.id
+            if (id1 == a and id2 == b) or (id1 == b and id2 == a) then return true end
+        end
+    end
+    return false
+end
+
+-- Every step, for the pairs passing through each other: the moment they're free (no hook, no
+-- overlap), they collide again. Released by the sliced hook cache (a hook counts for ~0.43 s)
+-- every untangleCheckEvery, they flew apart free but still ghosts for up to ~0.7 s and fell
+-- back into the same knot (2026-11-03).
+local function releaseFreedPairs(now)
+    for key, t in pairs(tangles) do
+        if t.untilT and not t.soft and now >= t.untilT - lib.untangleMaxTime + lib.untangleMinTime
+            and not overlapping(t.a, t.b) and not hookedNow(t.a, t.b) then
+            t.untilT, t.since, t.restUntil = nil, nil, now + lib.untangleRest
+            hookSeen[key] = nil
+        end
+    end
+end
+
 local function untangleMipos(now)
+    releaseFreedPairs(now)
     lookForHooks()
     if now - lastTangleCheck < lib.untangleCheckEvery then return end
     lastTangleCheck = now

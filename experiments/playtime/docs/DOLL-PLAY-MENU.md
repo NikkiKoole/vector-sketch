@@ -61,6 +61,18 @@ there. Ticked items are kept here as the record of what's built (with dates and 
     sideways drift (grippy feet, the room's wall). The test knot is a real one saved from
     the dollhouse (9 hooks): `spec/fixtures/tangled-mipos.playtime.json`,
     `spec/mipo-untangle_spec.lua`. Logged `[untangle] a and b`.
+    The pair collides again the first step it's free (2026-11-03): released by the sliced hook
+    cache every 0.25 s, it flew apart free but still a ghost for up to ~0.7 s and fell back
+    into the same knot (the saved knot's pass-through 1.07 -> 0.45 s).
+  - [ ] **Arms that never collide with other Mipos** — parked, tried 2026-11-03 (talked through,
+    not built): upper + lower arms and hands in their own Box2D category, masked against
+    every Mipo part (floors, walls, toys still collide; hand-holding is by distance, so it
+    keeps working), and the hook finder skipping arm crossings. The saved knots' hooks: in
+    hands-mess nearly all are arms/hands (12 through a hand), feet-pile about half, but the
+    real drag knot (`tangled-mipos`) is mostly legs, head and ears through a torso, so the
+    untangle would still be needed. Costs: no pushing or propping on another Mipo with an
+    arm, a Mipo lying on someone's arm sinks through it. Arms through everything was ruled
+    out (they'd sink into the floor lying down).
 
 - [x] **Design rule: hands never reach the floor** (2026-10-27): arm (upper + forearm + hand reach)
   <= torso (shoulder->hip) + leg (hip->knee->ankle), measured on the built joints
