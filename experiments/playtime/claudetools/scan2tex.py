@@ -1,10 +1,13 @@
 # Test of AB1 (docs/ASSETS-AND-BUILDS.md): a scanned sheet of drawings -> Playtime textures.
 #   outline: white RGB, alpha = how dark the ink is (keeps the crayon grain), hidden pixels white
 #   mask:    opaque grey, white inside the shape (the outline filled), black outside
-# A prototype (2026-11-03); the plan is a LÖVE tool like experiments/alpha-padder.
-# usage: python3 -I claudetools/scan2tex.py <scan.png> <outdir> [name]
-import sys, os
-# INSET=n in the environment overrides the mask's inset (px)
+# The engine of tools/scan2tex (the LÖVE window); runs on its own too.
+# usage: python3 -I claudetools/scan2tex.py <scan.png | photo.heic> <outdir> [name]
+# env: SCALE, INSET, INTO, OPEN_BELOW, FILL, SIMILAR (below); CACHE = a folder for what doesn't change
+#   between runs (a HEIC's conversion, the game textures' silhouettes), so a re-run is quick
+import sys, os, hashlib, pickle
+import numpy as np
+from scipy import ndimage
 from PIL import Image, ImageFilter, ImageOps, ImageChops, ImageDraw
 
 src, outdir = sys.argv[1], sys.argv[2]
@@ -15,11 +18,13 @@ MIN_AREA = 400        # px of ink: smaller is a speck
 CLOSE = 9             # px: gaps in a line up to this are closed before the mask is filled
 INSET = 2             # px: how far inside the line's outer edge the mask stops (0 = right at it)
 INSET = int(os.environ.get('INSET', INSET))
-INTO = float(os.environ.get('INTO', 0.6))
+INTO = float(os.environ.get('INTO', 0.6))  # how far into the line the mask stops, as a share of half its width
 # FILL per part, your call where a drawing almost closes (Nikki: "it depends"): FILL='photo5534-05:close,
 # scan12-16:open'; auto (the default) / close (filled as if its opening were drawn shut: the line's hull) /
 # open (no mask) / mask (a mask even when it's thin)
-FILL = dict(kv.split(':') for kv in os.environ.get('FILL', '').split(',') if ':' in kv)  # how far into the line the mask stops, as a share of half its width
+FILL = dict(kv.split(':') for kv in os.environ.get('FILL', '').split(',') if ':' in kv)
+CACHE = os.environ.get('CACHE') or os.path.join(os.path.expanduser('~'), '.cache', 'scan2tex')
+os.makedirs(CACHE, exist_ok=True)
 SMOOTH = 2.5          # the mask's edge smoothing (a blur radius, then cut)
 OPEN_BELOW = float(os.environ.get('OPEN_BELOW', 0.07))  # under this share enclosed (not line): open, no mask
 SPECK = 60            # px: ink islands smaller than this are dust
@@ -28,9 +33,11 @@ PAD = 8               # px of transparent margin around a part
 # A phone photo works too (Nikki, 2026-11-03: "a bad relationship with my scanner"): HEIC goes through
 # macOS's sips first; uneven light (a hand's shadow, dark corners) is divided out below.
 if src.lower().endswith(('.heic', '.heif')):
-    import subprocess, tempfile
-    png = os.path.join(tempfile.mkdtemp(), 'photo.png')
-    subprocess.run(['sips', '-s', 'format', 'png', src, '--out', png], check=True, capture_output=True)
+    import subprocess
+    key = hashlib.sha1(('%s %s' % (os.path.abspath(src), os.path.getmtime(src))).encode()).hexdigest()[:16]
+    png = os.path.join(CACHE, key + '.png')  # converted once per photo
+    if not os.path.exists(png):
+        subprocess.run(['sips', '-s', 'format', 'png', src, '--out', png], check=True, capture_output=True)
     src = png
 g = ImageOps.grayscale(ImageOps.exif_transpose(Image.open(src)))
 g = g.resize((int(g.width * SCALE), int(g.height * SCALE)), Image.LANCZOS)
@@ -39,7 +46,6 @@ g = g.resize((int(g.width * SCALE), int(g.height * SCALE)), Image.LANCZOS)
 # this changes it very little.
 small = g.resize((max(1, g.width // 8), max(1, g.height // 8)), Image.BILINEAR)
 paper_light = small.filter(ImageFilter.MaxFilter(9)).filter(ImageFilter.GaussianBlur(12)).resize(g.size, Image.BILINEAR)
-import numpy as np
 g = Image.fromarray(np.clip(np.asarray(g, np.float32) / np.maximum(np.asarray(paper_light, np.float32), 1) * 255,
                             0, 255).astype(np.uint8))  # pixel / the paper there (paper -> 255)
 g = g.filter(ImageFilter.MedianFilter(3))  # the photo's grain
@@ -55,55 +61,41 @@ paper, ink = pct(0.60), pct(0.005)
 lo, hi = ink + (paper - ink) * 0.10, paper - (paper - ink) * 0.15
 alpha = g.point(lambda v: 255 if v <= lo else 0 if v >= hi else int(255 * (hi - v) / (hi - lo)))
 
-# parts: ink grown by MERGE px, then connected regions
+# parts: ink grown by MERGE px, then connected regions (4-connected)
 grown = alpha.point(lambda a: 255 if a > 40 else 0).filter(ImageFilter.MaxFilter(MERGE * 2 + 1))
-w, h = grown.size; px = grown.load(); seen = bytearray(w * h); parts = []
-for y in range(h):
-    for x in range(w):
-        if px[x, y] and not seen[y * w + x]:
-            stack, x0, y0, x1, y1, n = [(x, y)], x, y, x, y, 0
-            seen[y * w + x] = 1
-            own = []
-            while stack:
-                cx, cy = stack.pop(); n += 1; own.append(cy * w + cx)
-                x0, y0, x1, y1 = min(x0, cx), min(y0, cy), max(x1, cx), max(y1, cy)
-                for nx, ny in ((cx + 1, cy), (cx - 1, cy), (cx, cy + 1), (cx, cy - 1)):
-                    if 0 <= nx < w and 0 <= ny < h and px[nx, ny] and not seen[ny * w + nx]:
-                        seen[ny * w + nx] = 1; stack.append((nx, ny))
-            parts.append((x0, y0, x1, y1, n, own))
+w, h = grown.size
+labels, count = ndimage.label(np.asarray(grown) > 0)
+parts = []
+for i, sl in enumerate(ndimage.find_objects(labels)):
+    if sl is None: continue
+    ys, xs = sl
+    parts.append((xs.start, ys.start, xs.stop - 1, ys.stop - 1, i + 1))
 
-def regions(img):  # connected regions of the white pixels: lists of indices
-    w, h = img.size; px = img.load(); seen = bytearray(w * h); out = []
-    for y in range(h):
-        for x in range(w):
-            if px[x, y] and not seen[y * w + x]:
-                stack, reg = [(x, y)], []
-                seen[y * w + x] = 1
-                while stack:
-                    cx, cy = stack.pop(); reg.append(cy * w + cx)
-                    for nx, ny in ((cx + 1, cy), (cx - 1, cy), (cx, cy + 1), (cx, cy - 1)):
-                        if 0 <= nx < w and 0 <= ny < h and px[nx, ny] and not seen[ny * w + nx]:
-                            seen[ny * w + nx] = 1; stack.append((nx, ny))
-                out.append(reg)
-    return out
+def nonzero(img): return int(np.count_nonzero(np.asarray(img)))
 
-def only(img, keep):
-    out = Image.new('L', img.size, 0); data = bytearray(img.size[0] * img.size[1])
-    for reg in keep:
-        for i in reg: data[i] = 255
-    out.frombytes(bytes(data)); return out
+def regions(img):  # connected regions of the white pixels (4-connected): a label array and their sizes
+    lab, n = ndimage.label(np.asarray(img) > 0)
+    return lab, np.bincount(lab.ravel())[1:] if n else np.array([], int)
 
-def largest(img):
-    regs = regions(img)
-    return only(img, [max(regs, key=len)]) if regs else img
+def keep_where(lab, keep):  # the regions whose index (1-based) is in keep, as an image
+    return Image.fromarray(np.where(np.isin(lab, keep), 255, 0).astype(np.uint8))
+
+def pieces(img):  # every region at least 3% of the biggest (and over a speck): crumbs go
+    lab, sizes = regions(img)
+    if not len(sizes): return img
+    return keep_where(lab, np.nonzero(sizes >= max(SPECK * 3, sizes.max() * 0.03))[0] + 1)
+
+def keep_big(img, minimum):
+    lab, sizes = regions(img)
+    return keep_where(lab, np.nonzero(sizes >= minimum)[0] + 1)
 
 def half_width(line):  # about half the stroke's thickness: how many 1-px shrinks until most of it is gone
-    total = sum(1 for v in line.get_flattened_data() if v)
+    total = nonzero(line)
     if not total: return 0
     img, n = line, 0
     while n < 40:
         img = img.filter(ImageFilter.MinFilter(3)); n += 1
-        if sum(1 for v in img.get_flattened_data() if v) < total * 0.2: break
+        if nonzero(img) < total * 0.2: break
     return n
 
 def hull(line):  # the convex hull of the line's pixels, filled
@@ -122,29 +114,18 @@ def hull(line):  # the convex hull of the line's pixels, filled
     ImageDraw.Draw(out).polygon(lower[:-1] + upper[:-1], fill=255)
     return out
 
-def pieces(img):  # every region at least 3% of the biggest (and over a speck): crumbs go
-    regs = regions(img)
-    if not regs: return img
-    big = max(len(r) for r in regs)
-    return only(img, [r for r in regs if len(r) >= max(SPECK * 3, big * 0.03)])
-
-def keep_big(img, minimum):
-    return only(img, [r for r in regions(img) if len(r) >= minimum])
-
 os.makedirs(outdir, exist_ok=True)
 # for tools/scan2tex: the sheet as the parts see it (light flattened), and a list of the parts (parts.json)
 g.save(os.path.join(outdir, '_sheet.png'))
 listing = []
 k = 0
-for (x0, y0, x1, y1, n, own) in sorted(parts, key=lambda p: (p[1] // 60, p[0])):
+for (x0, y0, x1, y1, own) in sorted(parts, key=lambda p: (p[1] // 60, p[0])):
     if x0 <= 2 or y0 <= 2 or x1 >= w - 3 or y1 >= h - 3: continue  # the scanner's paper edge, not a drawing
     box = (max(0, x0 - PAD), max(0, y0 - PAD), min(w, x1 + PAD + 1), min(h, y1 + PAD + 1))
     # only this part's own ink: a neighbour reaching into the box stays out (the d and the B, side by side)
-    region = bytearray(w * h)
-    for i in own: region[i] = 255
-    mine = Image.frombytes('L', (w, h), bytes(region)).crop(box)
+    mine = Image.fromarray(np.where(labels[box[1]:box[3], box[0]:box[2]] == own, 255, 0).astype(np.uint8))
     a = ImageChops.multiply(alpha.crop(box), mine)
-    if sum(1 for v in a.get_flattened_data() if v > 128) < MIN_AREA: continue
+    if int(np.count_nonzero(np.asarray(a) > 128)) < MIN_AREA: continue
     k += 1
     # specks first: islands of anything visible (grown 1 px, so the crayon grain next to the line counts as
     # the line) smaller than SPECK px go, faint dust included
@@ -174,8 +155,7 @@ for (x0, y0, x1, y1, n, own) in sorted(parts, key=lambda p: (p[1] // 60, p[0])):
     # an OPEN part (a line, a stroke, a filled dot like a pupil) has no inside to fill: no mask file, as
     # the game's brows, hair, pupils and lines have none (the bake draws them outline only)
     inside = ImageChops.subtract(shape, line.filter(ImageFilter.MaxFilter(3)))
-    inside_px = sum(1 for v in inside.get_flattened_data() if v)
-    shape_px = sum(1 for v in shape.get_flattened_data() if v)
+    inside_px, shape_px = nonzero(inside), nonzero(shape)
     has_inside = (fill in ('close', 'mask')) or (fill != 'open' and shape_px > 0 and inside_px / shape_px >= OPEN_BELOW)
     outline.save(os.path.join(outdir, '%s-%02d.png' % (name, k)))
     if has_inside:
@@ -190,7 +170,7 @@ for (x0, y0, x1, y1, n, own) in sorted(parts, key=lambda p: (p[1] // 60, p[0])):
 # mask (or the line, for an open part), cropped, fit into SIG x SIG, compared by overlap (IoU), turned
 # and mirrored (the game's 'r' parts are mirrored). A re-import of the same drawing scores ~0.95+; two
 # ovals can score high too, so the tool asks, it doesn't refuse.
-import numpy as np, glob
+import glob
 SIG = 40
 SIMILAR = float(os.environ.get('SIMILAR', 0.85))
 def signature(img):
@@ -215,17 +195,30 @@ def silhouette_of(line_img, mask_img):  # the shape: the mask, else the line (gr
     if mask_img is not None: return signature(mask_img)
     return signature(line_img.filter(ImageFilter.MaxFilter(5)))
 textures = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'textures')
-known = []
+# the game's textures' silhouettes, kept in CACHE by file and its change time (and the mask's)
+index_path = os.path.join(CACHE, 'textures-%d.pickle' % SIG)
+try:
+    with open(index_path, 'rb') as fh: index = pickle.load(fh)
+except Exception:
+    index = {}
+known, fresh = [], {}
 for f in glob.glob(os.path.join(textures, '*.png')) + glob.glob(os.path.join(textures, '*', '*.png')):
     if f.endswith('-mask.png') or '/scantest/' in f: continue
     rel = os.path.relpath(f, textures)[:-4]
     m = f[:-4] + '-mask.png'
-    try:
-        line_img = Image.open(f).getchannel('A') if Image.open(f).mode in ('RGBA', 'LA') else Image.open(f).convert('L')
-        sig = silhouette_of(line_img, Image.open(m).convert('L') if os.path.exists(m) else None)
-    except Exception:
-        continue
+    stamp = (os.path.getmtime(f), os.path.getmtime(m) if os.path.exists(m) else 0)
+    if rel in index and index[rel][0] == stamp:
+        sig = index[rel][1]
+    else:
+        try:
+            im = Image.open(f).convert('RGBA') if Image.open(f).mode == 'P' else Image.open(f)
+            line_img = im.getchannel('A') if im.mode in ('RGBA', 'LA') else im.convert('L')
+            sig = silhouette_of(line_img, Image.open(m).convert('L') if os.path.exists(m) else None)
+        except Exception:
+            sig = None
+    fresh[rel] = (stamp, sig)
     if sig is not None: known.append((rel, sig))
+with open(index_path, 'wb') as fh: pickle.dump(fresh, fh)
 mine = []
 for entry in listing:
     m = os.path.join(outdir, entry['id'] + '-mask.png')

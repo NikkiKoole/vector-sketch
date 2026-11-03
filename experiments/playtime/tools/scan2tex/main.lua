@@ -7,7 +7,7 @@
 --     r turn 90°   x skip it (not saved)   delete: forget its name
 --   LOOKS LIKE: each part is compared with every texture in the game and the sheet's other parts; the
 --   close ones show next to it and on the sheet (≈), and saving one of those asks first
---   the sheet's settings, with the - / + buttons: size, mask inset, how far into the line, open below
+--   the sheet's settings, sliders: size, mask inset, how far into the line, open below (applied when you let go)
 --   ctrl-s save the named parts into textures/ (an existing file: ctrl-s again to overwrite)
 -- love tools/scan2tex --no-save [<file>]: try it out, saving only says what it would write (and opens <file>)
 -- What you set per sheet is remembered (the save folder's sheets.json), so a sheet can be opened again.
@@ -33,6 +33,9 @@ local sheet = nil       -- { src, base, img, w, h, parts = { {id, box, w, h, mas
 local picks = {}        -- per part id: { name, fill, rot, skip } (saved per sheet)
 local selected = nil    -- index into sheet.parts
 local busy, message = false, 'drop a photo or a scan of drawings on this window'
+local again = false     -- a change came in while the script ran: run once more after it
+local dragging = nil    -- the slider being dragged
+local before = nil      -- what the last run gave, to say what a change did
 local confirmAt = nil   -- ctrl-s twice to overwrite, or to save look-alikes
 local editing = false   -- typing the selected part's name
 local thumbs = {}       -- texture name -> image (the look-alikes, loaded from textures/ when shown)
@@ -45,8 +48,9 @@ local function loadMemory()
     local text = love.filesystem.read('sheets.json')
     return text and json.decode(text) or {}
 end
+local testing = nil -- --test / --test-save (below): runs that leave the memory alone
 local function remember()
-    if not sheet then return end
+    if not sheet or testing then return end
     local all = loadMemory()
     local s = { picks = picks, settings = {} }
     for _, set in ipairs(SETTINGS) do s.settings[set.key] = set.value end
@@ -63,13 +67,15 @@ love.thread.getChannel('scan2tex'):push(status == 0 or status == true)
 local function shellQuote(s) return "'" .. s:gsub("'", "'\\''") .. "'" end
 
 local function run()
-    if not sheet or busy then return end
+    if not sheet then return end
+    if busy then again = true return end
     busy, message = true, 'working on ' .. sheet.base .. ' ...'
     local fill = {}
     for id, p in pairs(picks) do if p.fill and p.fill ~= 'auto' then fill[#fill + 1] = id .. ':' .. p.fill end end
     local env = { 'FILL=' .. shellQuote(table.concat(fill, ',')) }
     for _, set in ipairs(SETTINGS) do env[#env + 1] = set.env .. '=' .. set.value end
     os.execute('rm -rf ' .. shellQuote(WORK) .. ' && mkdir -p ' .. shellQuote(WORK))
+    env[#env + 1] = 'CACHE=' .. shellQuote(love.filesystem.getSaveDirectory() .. '/cache')
     local cmd = ('cd %s && %s %s -I %s %s %s %s > %s 2>&1'):format(shellQuote(ROOT), table.concat(env, ' '),
         PYTHON, shellQuote(SCRIPT), shellQuote(sheet.src), shellQuote(WORK), shellQuote(sheet.base),
         shellQuote(WORK .. '.log'))
@@ -109,13 +115,27 @@ local function loaded()
         picks[p.id] = picks[p.id] or { fill = 'auto', rot = 0 }
     end
     if selected and selected > #sheet.parts then selected = nil end
-    message = ('%d parts. Click one, type its name, ctrl-s saves the named ones into textures/'):format(#sheet.parts)
+    local masks = 0
+    for _, p in ipairs(sheet.parts) do if p.mask then masks = masks + 1 end end
+    local sel = selected and sheet.parts[selected]
+    if before then -- what the change did
+        local said = {}
+        if before.masks ~= masks then said[#said + 1] = ('parts with a mask: %d -> %d'):format(before.masks, masks) end
+        if before.count ~= #sheet.parts then said[#said + 1] = ('parts: %d -> %d'):format(before.count, #sheet.parts) end
+        if sel and before.sel and before.sel.id == sel.id and (before.sel.w ~= sel.w or before.sel.h ~= sel.h) then
+            said[#said + 1] = ('%s: %dx%d -> %dx%d px'):format(sel.id, before.sel.w, before.sel.h, sel.w, sel.h)
+        end
+        message = #said > 0 and ('changed: ' .. table.concat(said, ';  ')) or 'done: the change made no difference you can count (look at the masks)'
+    else
+        message = ('%d parts. Click one, enter to name it, ctrl-s saves the named ones into textures/'):format(#sheet.parts)
+    end
+    before = { masks = masks, count = #sheet.parts, sel = sel and { id = sel.id, w = sel.w, h = sel.h } }
 end
 
 function love.filedropped(file)
     local src = file:getFilename()
     local base = src:match('([^/]+)$'):gsub('%.[^.]+$', ''):gsub('[^%w_-]', ''):lower()
-    sheet, selected, picks = { src = src, base = base, parts = {} }, nil, {}
+    sheet, selected, picks, before = { src = src, base = base, parts = {} }, nil, {}, nil
     local memory = loadMemory()[src]
     if memory then
         picks = memory.picks or {}
@@ -133,6 +153,7 @@ function love.update()
     if done ~= nil then
         busy = false
         loaded()
+        if again then again = false; run() end
         if testing and sheet then
             for i, p in ipairs(sheet.parts) do if p.similar and #p.similar > 0 then selected = i break end end
             testing.shotIn = 3
@@ -251,7 +272,7 @@ local function drawPart(p, x, y, maxW, maxH, rot)
     if not p.line then return end
     local w, h = p.line:getDimensions()
     local rw, rh = (rot % 2 == 0) and w or h, (rot % 2 == 0) and h or w
-    local k = math.min(maxW / rw, maxH / rh, 4)
+    local k = math.min(maxW / rw, maxH / rh, 1.5) -- true size (up to 1.5x), so a size change shows
     local cx, cy = x + maxW / 2, y + maxH / 2
     if p.maskImg then
         love.graphics.setShader(maskShader)
@@ -264,7 +285,7 @@ local function drawPart(p, x, y, maxW, maxH, rot)
 end
 
 function love.draw()
-    layout.buttons = {}
+    layout.buttons, layout.sliders = {}, {}
     local W, H = love.graphics.getDimensions()
     love.graphics.clear(0.13, 0.13, 0.15)
     local left = math.floor(W * 0.47)
@@ -300,6 +321,12 @@ function love.draw()
     if sheet and selected and sheet.parts[selected] then
         local p, pick = sheet.parts[selected], picks[sheet.parts[selected].id]
         drawPart(p, px + 10, 20, likeX - px - 30, 360, pick.rot or 0)
+        if busy then
+            love.graphics.setColor(0, 0, 0, 0.45)
+            love.graphics.rectangle('fill', px, 10, likeX - px - 10, 380, 6)
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.printf('working...', px, 190, likeX - px - 10, 'center')
+        end
         love.graphics.setColor(1, 1, 1)
         local y = 400
         love.graphics.print(('%s   %d x %d px   enclosed %d%%   %s'):format(p.id, p.w, p.h, math.floor(p.inside * 100),
@@ -334,17 +361,18 @@ function love.draw()
             end
         end
     end
-    -- the sheet's settings
+    -- the sheet's settings: sliders (drag; applied when you let go)
     local y = 520
-    love.graphics.setColor(1, 1, 1)
     for _, set in ipairs(SETTINGS) do
+        local tx, tw = px + 230, 260
+        layout.sliders[#layout.sliders + 1] = { set = set, x = tx, y = y, w = tw, h = 24 }
+        love.graphics.setColor(1, 1, 1)
         love.graphics.print(('%s: %s'):format(set.label, tostring(set.value)), px, y + 5)
-        button(px + 280, y, 30, 24, '-', function()
-            set.value = math.max(set.min, math.floor((set.value - set.step) * 100 + 0.5) / 100); run(); remember()
-        end)
-        button(px + 315, y, 30, 24, '+', function()
-            set.value = math.min(set.max, math.floor((set.value + set.step) * 100 + 0.5) / 100); run(); remember()
-        end)
+        love.graphics.setColor(0.3, 0.3, 0.36)
+        love.graphics.rectangle('fill', tx, y + 10, tw, 4, 2)
+        local t = (set.value - set.min) / (set.max - set.min)
+        love.graphics.setColor(dragging and dragging.slider.set == set and { 1, 0.6, 0.2 } or { 0.85, 0.85, 0.9 })
+        love.graphics.circle('fill', tx + t * tw, y + 12, 8)
         y = y + 30
     end
     button(px, y + 10, 220, 30, 'save named parts  (ctrl-s)', save)
@@ -358,8 +386,34 @@ function love.draw()
 end
 
 -- input ----------------------------------------------------------------------------------------------
+local function slide(x)
+    local sl = dragging and dragging.slider
+    if not sl then return end
+    local set = sl.set
+    local t = math.max(0, math.min(1, (x - sl.x) / sl.w))
+    local v = set.min + t * (set.max - set.min)
+    v = math.floor(v / set.step + 0.5) * set.step
+    set.value = math.floor(v * 100 + 0.5) / 100
+end
+
+function love.mousemoved(x) if dragging then slide(x) end end
+
+function love.mousereleased()
+    if not dragging then return end
+    local changed = dragging.from ~= dragging.slider.set.value
+    dragging = nil
+    if changed then run(); remember() end
+end
+
 function love.mousepressed(x, y, b)
     if b ~= 1 then return end
+    for _, sl in ipairs(layout.sliders or {}) do
+        if x >= sl.x - 10 and x <= sl.x + sl.w + 10 and y >= sl.y - 4 and y <= sl.y + sl.h + 4 then
+            dragging = { slider = sl, from = sl.set.value }
+            slide(x)
+            return
+        end
+    end
     for _, btn in ipairs(layout.buttons or {}) do
         if x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then btn.fn() return end
     end
