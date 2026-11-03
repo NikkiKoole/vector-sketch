@@ -51,7 +51,7 @@ local shape8Dict = {
     -- body-18 (was romp1, added 2026-11-03): measured from its picture (claudetools/texture-outline.py), not
     -- traced on the meta sheet yet (measured = true: the sheet check lets it be)
     ['mipo/body/body-18.png'] = { dimensions = { 258, 512 }, measured = true,
-        vertices = { 0, -248, 111, -128, 118, 51, 49, 215, 0, 243, -98, 215, -112, 51, -119, -128 } },
+        vertices = { 0, -248, 96, -191, 118, 51, 86, 171, 0, 243, -103, 205, -112, 51, -97, -193 } },
     ['mipo/foot/foot-01.png'] = { dimensions = { 261, 475 }, ankle = { 46, -126 },
         vertices = { 46, -189, 116, -184, 116, 48, 116, 180, 45, 234, -15, 176, -70, 53, -87, -193 } },
     ['mipo/foot/foot-04.png'] = { dimensions = { 293, 612 }, ankle = { -28, -183 },
