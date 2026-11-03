@@ -141,7 +141,11 @@ Until then the jam plays Playtime's drum patches; enough to hear whether the arr
     each bar's one and held, voiced close to the last (theory.voiceChord, E3..D5), its own layer after the
     bass (`keys`: kick, bass, keys, hats, snare, perc); it plays through the breakdown. Chords per kind:
     M = 1 3 5 9 (no major 7th: the figures play a b7), m = m7, 7 = dom7. About 3 dB under the bass.
-    Next if it's liked: stabs (disco/funk off-beats, a reggae skank) and a strum, per genre.
+    Then the ways to play it (`lib.CHORD_FIGURES`, 16 steps of x / - / ., each on its own instrument):
+    pad (Rhodes), disco stabs (the off-beat 8ths, `stab`), funk stabs (`clav`, syncopated), skank (2 and
+    4, `jabGuitar`, high), strum (3+3+2, `guitar`, rolled). Picked in the panel's 'jam chords' row;
+    'auto' = the genre's (Disco: disco stabs; Funk, Breaks: funk stabs; the rest the pad). Each about
+    3 dB under the bass (rendered SOLO).
   - [ ] J9e. The panel's 'jam walk' row as 'jam progression', and more progressions (minor-key ones:
     1m b7 b6 b7, 1m 4m 5m).
 - [ ] **J6. The organ-era rhythm box** (Nikki: "the truly whimsical ones"). dreamengine has a sourced

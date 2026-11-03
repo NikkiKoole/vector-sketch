@@ -94,12 +94,22 @@ lib.BASS_LOOPS = {
 }
 local DEGREE = riffs.DEGREE -- b = the b5, for blues riffs (src/music-riffs.lua)
 
--- The chord part (J9d): a soft Rhodes pad, the chord struck on each bar's one and held through it, voiced
--- close to the last one (theory.voiceChord). The chords per kind keep out of the bass's way: the major
--- one has the 9th, not the major 7th (the figures play a b7 over every chord), the minor and the
--- dominant their b7.
-lib.KEYS = 'rhodes'
+-- The chord part (J9d): the progression played as chords, voiced close to the last one
+-- (theory.voiceChord). The chords per kind keep out of the bass's way: the major one has the 9th, not the
+-- major 7th (the figures play a b7 over every chord), the minor and the dominant their b7.
 lib.KEYS_CHORDS = { M = { 0, 4, 7, 14 }, m = { 0, 3, 7, 10 }, ['7'] = { 0, 4, 7, 10 } }
+-- How the chords are played: 16 steps, 'x' a hit, '-' holding it, '.' silence; each figure on its own
+-- instrument (the panel's keys row can swap it), voiced in lo..hi, rolled by `roll` seconds a note.
+-- Picked in the panel's 'jam chords' row; 'auto' = the genre's (CHORDS_BY_GENRE).
+lib.CHORD_FIGURES = {
+    { name = 'pad', steps = 'x---------------', patch = 'rhodes', vol = 2, lo = 52, hi = 74, roll = 0.012 },
+    { name = 'disco stabs', steps = '..x-..x-..x-..x-', patch = 'stab', vol = 2, lo = 55, hi = 76, roll = 0 },
+    { name = 'funk stabs', steps = '....x..x.x....x.', patch = 'clav', vol = 3, lo = 55, hi = 76, roll = 0.004 },
+    { name = 'skank', steps = '....x-......x-..', patch = 'jabGuitar', vol = 1, lo = 60, hi = 79, roll = 0.008 },
+    { name = 'strum', steps = 'x--x--x-x--x--x-', patch = 'guitar', vol = 1, lo = 52, hi = 76, roll = 0.022 },
+}
+lib.CHORDS_BY_GENRE = { Disco = 'disco stabs', Funk = 'funk stabs', Breaks = 'funk stabs', Electro = 'pad',
+                        ['Hip Hop'] = 'pad', Brushes = 'pad' }
 
 -- The walks the root takes (semitones over the song's key), and how often it moves, both rolled per
 -- song: 1 4 5 1 (home, away, the pull, home), 1 5 6 4 (the pop loop that never settles), 1 6 4 5
@@ -132,6 +142,7 @@ local function names(list)
 end
 function lib.walkNames() return names(lib.WALKS) end
 function lib.figureNames() return names(lib.FIGURES) end
+function lib.chordNames() return names(lib.CHORD_FIGURES) end
 lib.PACES = { 'auto', '2', '4' }
 
 -- The plan: a genre (style.groups, one per song) at its own tempo, one of its families, a bass walk, and
@@ -253,12 +264,22 @@ function lib.ahead(jam)
 end
 
 local function bookKeys(play, synth, song, t0, jam, kind)
+    local figure = picked(lib.CHORD_FIGURES, picks().chords)
+        or picked(lib.CHORD_FIGURES, lib.CHORDS_BY_GENRE[jam.group]) or lib.CHORD_FIGURES[1]
     local root = (song.key + jam.root) % 12
-    jam.voicing = theory.voiceChord(root, lib.KEYS_CHORDS[kind], 52, 74, jam.voicing)
+    jam.voicing = theory.voiceChord(root, lib.KEYS_CHORDS[kind], figure.lo, figure.hi, jam.voicing)
     if not jam.voicing then return end
-    local ms = song.barLength * 1000 * 0.97
-    for k, midi in ipairs(jam.voicing) do -- rolled a little, a hand on the keys
-        play(synth, 'keys', lib.KEYS, stepTime(song, t0, 0) + (k - 1) * 0.012, midi, 2, ms, 0)
+    local steps = figure.steps
+    for s = 0, 15 do
+        if steps:sub(s + 1, s + 1) == 'x' then
+            local len = 1
+            while s + len < 16 and steps:sub(s + len + 1, s + len + 1) == '-' do len = len + 1 end
+            local ms = theory.lengthMs(song, s, len) * 0.95
+            for k, midi in ipairs(jam.voicing) do
+                play(synth, 'keys', figure.patch, stepTime(song, t0, s) + (k - 1) * figure.roll, midi,
+                     figure.vol, ms, s)
+            end
+        end
     end
 end
 
