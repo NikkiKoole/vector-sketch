@@ -165,18 +165,35 @@ local function clampToBounds(cam, s, w, h)
     cam:setTranslation(clampAxis(cx, b[1], b[3], hw), clampAxis(cy, b[2], b[4], hh))
 end
 
+-- A fast screen speed (px/s) shrinks the dead zone: it's for small moves, not for a fall.
+local function zoneAtSpeed(screenSpeed)
+    return 1 / (1 + (screenSpeed / 300) ^ 2)
+end
+
+-- Looks where the target is going: a thrown or falling Mipo sits back from the middle, on the
+-- side it comes from (falling fast: high on the screen). The camera's catching up trails a
+-- moving target by v / speed, so the aim goes that much further on too; then at a steady speed
+-- the target is the whole lead ahead of the middle. The aim is eased, so a throw doesn't jerk.
 local function follow(dt, cam, s, w, h)
     local body = lib.target()
-    if not body then return end
+    if not body then F.lead = nil; return end
     local scale = cam.scale
     local tx, ty = body:getPosition()
     local vx, vy = body:getLinearVelocity()
+    local speed = math.max(s.speed, 0.1)
     local maxX, maxY = w * s.maxLead / scale, h * s.maxLead / scale
-    tx = tx + mathutils.clamp(vx * s.lookAhead, -maxX, maxX)
-    ty = ty + mathutils.clamp(vy * s.lookAhead, -maxY, maxY)
+    local aimX = mathutils.clamp(vx * s.lookAhead, -maxX, maxX) + vx / speed
+    local aimY = mathutils.clamp(vy * s.lookAhead, -maxY, maxY) + vy / speed
+    local lead = F.lead or { aimX, aimY }
+    local kl = 1 - math.exp(-dt * 4)
+    lead[1] = lead[1] + (aimX - lead[1]) * kl
+    lead[2] = lead[2] + (aimY - lead[2]) * kl
+    F.lead = lead
     local cx, cy = cam:getTranslation()
-    local k = 1 - math.exp(-dt * s.speed)
-    cam:setTranslation(approach(cx, tx, w * s.deadZone / scale, k), approach(cy, ty, h * s.deadZone / scale, k))
+    local k = 1 - math.exp(-dt * speed)
+    local zoneX = w * s.deadZone / scale * zoneAtSpeed(math.abs(vx) * scale)
+    local zoneY = h * s.deadZone / scale * zoneAtSpeed(math.abs(vy) * scale)
+    cam:setTranslation(approach(cx, tx + lead[1], zoneX, k), approach(cy, ty + lead[2], zoneY, k))
 end
 
 -- A scripted zoom (lib.zoomTo), eased; it wins over the zoom limits.

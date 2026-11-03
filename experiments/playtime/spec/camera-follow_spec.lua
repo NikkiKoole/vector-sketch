@@ -48,6 +48,23 @@ describe('camera follow', function()
         assert.is_true(cameraFollow.isPinned(body))
     end)
 
+    it('looks where a falling body is going: falling fast, it is high on the screen', function()
+        local _, h = love.graphics.getDimensions()
+        body:setPosition(0, 0)
+        local vy = 3000
+        for _ = 1, 180 do
+            body:setLinearVelocity(0, vy)
+            local x, y = body:getPosition()
+            body:setPosition(x, y + vy / 60)
+            cameraFollow.update(1 / 60)
+        end
+        local _, by = body:getPosition()
+        local _, sy = cam:getScreenCoordinates(0, by)
+        local lead = h * cameraFollow.settings().maxLead
+        assert.is_true(sy < h / 2 - lead * 0.8, 'screen y ' .. sy .. ' of ' .. h)
+        assert.is_true(sy > 0, 'screen y ' .. sy)
+    end)
+
     it('stays put while paused', function()
         state.world.paused = true
         assert.are.equal(0, (run(2)))
