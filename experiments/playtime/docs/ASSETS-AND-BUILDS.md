@@ -74,6 +74,14 @@ snapshot for the moves, MEASURING.md) and both builds working.
   clean line, the bleed a few pixels wide, saved under the scan's name. Try it on one fresh scan of
   an existing part, side by side with the GIMP version in the game. Only then the rest of the tool
   (masks, batches, naming).
+  Prototype (2026-11-03, no scanner at hand, so on the old scans in `vector-sketch/scans/`, 300 dpi
+  grayscale sheets of many parts): `claudetools/scan2tex.py` cuts a sheet into its parts, ink -> a white
+  line with the crayon grain in its alpha, white under the transparency (no halo), the MASK filled from
+  the outline (gaps closed first), opaque grey as the bake shader reads it (`.r`); the scanner's paper
+  edge dropped. `scan2tex-preview.py` draws them as the game does. Scan 12 (ovals, eyes, lines, lips):
+  31 parts, all apart, masks right; Scan 14 (feet, sprouts): good, but its dust leaves specks. Still
+  to do: the specks, naming the parts, the size per part, open shapes (a line: no mask), then a real
+  look in the game and the LÖVE version.
 - [ ] **AB2. Keep the scans.** `~/Projects/mipo-art/scans/`, laid out like `textures/`, backed up
   (a cloud folder or a disk). New drawings from now on; old papers rescanned when a part is touched.
 - [ ] **AB3. Prefabs, setups and saved scenes into the repo.** The game reads `library/` and music
