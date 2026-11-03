@@ -151,7 +151,8 @@ Until then the jam plays Playtime's drum patches; enough to hear whether the arr
   - [x] J9f. The wave (2026-11-03, playtime-9c's style, Peter Martin's maj9 / 9sus cycle; Nikki said yes):
     walks 'the wave' and 'the wave B' (9sus first), roots up a fourth through all twelve; kinds J = maj9
     (bass: major pentatonic; pad 1 3 7 9) and s = 9sus (bass 1 2 4 5 b7; pad 1 4 b7 9), the same chars in
-    rootwalk.c. The plain figures' b7 rubs on the maj9; the riffs follow it.
+    rootwalk.c. The plain figures' 7 plays the major 7th over the maj9 (it rubbed a half step under the pad's;
+    2026-11-03), the b7 everywhere else; the riffs follow it.
   - [x] 'jam layers' in the music panel (2026-11-03): auto, or all = every layer from the next bar, whatever
     the play level (for listening; the breakdown and the drop still come round).
   - [ ] J9e. The panel's 'jam walk' row as 'jam progression', and more progressions (minor-key ones:

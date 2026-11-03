@@ -93,6 +93,10 @@ lib.BASS_LOOPS = {
     Brushes = { 'R..8..7.........', 'R-----........A.' },
 }
 local DEGREE = riffs.DEGREE -- b = the b5, for blues riffs (src/music-riffs.lua)
+-- The plain figures don't follow the chord, except their 7 over a maj9 (the wave): the major 7th, the
+-- chord's own, not a b7 a half step under it (Nikki 2026-11-03). Over major chords the b7 stays: the
+-- figure's funk, and the pad's major chord has no 7th to rub on.
+local FIGURE_DEGREES = { J = setmetatable({ ['7'] = 11 }, { __index = DEGREE }) }
 
 -- The chord part (J9d): the progression played as chords, voiced close to the last one
 -- (theory.voiceChord). The chords per kind keep out of the bass's way: the major one has the 9th, not the
@@ -370,7 +374,7 @@ function lib.bookBar(play, remember, synth, t0, song, b)
         local nextRoot, barsLeft = lib.ahead(jam)
         local loop = riff and riffs.bar(riff, barsLeft) or figure and figure.loop or loops[(jam.at - 1) % #loops + 1]
         bookBass(play, synth, song, t0, loop, jam.root, nextRoot, b, riff and true,
-                 riff and riffs.degrees(riff, kind))
+                 riff and riffs.degrees(riff, kind) or FIGURE_DEGREES[kind])
     end
     -- the chords come in as a layer with the play level; picked in the panel they play from the next bar
     -- (Nikki: "it took super long before I heard the funk stabs": a calm room never asked for layer 3)
