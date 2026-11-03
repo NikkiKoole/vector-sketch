@@ -15,6 +15,16 @@ Notes to pick up now and then, with no deadline. The music lives in `src/music.l
 - Measured with a stub synth, 3 seeds × 6 min: rubs a minute (semitone or b9 between two sounding notes) are keys-lead ≤ 1.2, bass-keys ≤ 1, keys-keys ≤ 0.8. For comparison, loficity's are 2.7 / 4.0 / 13.9. Stem levels are balanced on renders against the Rhodes.
 - The upright bass is still off (`upright = false`).
 
+## Setups Nikki likes as background music
+
+Saved in settings → music → setups; they live in the save folder (`~/Library/Application Support/LOVE/
+playtime/music-setups.json`), so they're copied here too.
+- **wave 1** (2026-11-03): "I like this setup for a bg music". Style `wave` (playtime-9c's maj9 / 9sus
+  cycle), the band on, spice 2, effects 0; keys on the `rhodes`, the bass part SWITCHED OFF but its
+  instrument set to `tb303` (so the green ball plays a 303 in the chord, MW7); ideas `answer` and
+  `flat9` always. As saved: `{ style = 'wave', band = 'on', spice = 2, effects = 0, voices = { bass =
+  'tb303', keys = 'rhodes' }, partsOff = { bass = true }, ideas = { answer = 'always', flat9 = 'always' } }`.
+
 ## Next time (left open on 2026-11-02)
 The music panel is one panel for every style now (settings → music: a row per part, a row per drum sound, layers, setups, reset/undo; src/music-params.lua, src/music-setups.lua). Left open:
 - [ ] **Three knobs per part.** Dreamengine's modelled engines all have Plaits' three macros (harmonics, timbre, morph), each with its own meaning (flute: jet / air / embouchure; mallet: material / hardness / ring; bowed: position / pressure / speed). A fold-out per part row with the three sliders under the engine's own names, applied to the playing patch from its next note and saved in setups. The simple waves (SAW, SQUARE, TRI, SINE, NOISE: strings pad, roundBass, jingleLead, hats, snare) have none. A patch shared by two parts turns for both.
