@@ -16,6 +16,7 @@ CLOSE = 9             # px: gaps in a line up to this are closed before the mask
 INSET = 2             # px: how far inside the line's outer edge the mask stops (0 = right at it)
 INSET = int(os.environ.get('INSET', INSET))
 SMOOTH = 2.5          # the mask's edge smoothing (a blur radius, then cut)
+OPEN_BELOW = 0.15     # under this share of the shape enclosed (not line), a part is open: no mask
 SPECK = 60            # px: ink islands smaller than this are dust
 PAD = 8               # px of transparent margin around a part
 
@@ -106,8 +107,15 @@ for (x0, y0, x1, y1, n) in sorted(parts, key=lambda p: (p[1] // 60, p[0])):
     mask = mask.filter(ImageFilter.GaussianBlur(0.8))              # a soft, even edge
     # specks in the line: ink islands smaller than a speck go
     a = ImageChops.multiply(a, keep_big(a.point(lambda v: 255 if v > 40 else 0), SPECK))
-    open_shape = sum(1 for v in mask.get_flattened_data() if v > 128) < sum(1 for v in a.get_flattened_data() if v > 60) * 0.5
+    # an OPEN part (a line, a stroke, a filled dot like a pupil) has no inside to fill: no mask file, as
+    # the game's brows, hair, pupils and lines have none (the bake draws them outline only)
+    inside = ImageChops.subtract(shape, line.filter(ImageFilter.MaxFilter(3)))
+    inside_px = sum(1 for v in inside.get_flattened_data() if v)
+    shape_px = sum(1 for v in shape.get_flattened_data() if v)
+    has_inside = shape_px > 0 and inside_px / shape_px >= OPEN_BELOW
     outline.save(os.path.join(outdir, '%s-%02d.png' % (name, k)))
-    mask.convert('RGB').save(os.path.join(outdir, '%s-%02d-mask.png' % (name, k)))
-    print('%s-%02d %dx%d%s' % (name, k, a.width, a.height, '  (open: no inside to fill)' if open_shape else ''))
+    if has_inside:
+        mask.convert('RGB').save(os.path.join(outdir, '%s-%02d-mask.png' % (name, k)))
+    print('%s-%02d %dx%d  %s (inside %d%%)' % (name, k, a.width, a.height,
+          'mask' if has_inside else 'no mask: open', 100 * inside_px // max(1, shape_px)))
 print('paper %d, ink %d; %d parts' % (paper, ink, k))

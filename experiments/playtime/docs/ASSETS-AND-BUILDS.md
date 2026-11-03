@@ -88,6 +88,9 @@ snapshot for the moves, MEASURING.md) and both builds working.
   miss", so INSET is a setting. The scene `scan-test` bakes the parts as the game does, above the
   game's own GIMP parts (which have colour past the line too); `textures/scantest/` is made from the
   scans (in git, `vector-sketch/scans/`), not committed.
+  OPEN parts (lines, single strokes, filled dots) get no mask file, as the game's brows, hair, pupils
+  and lines have none (the bake draws them outline only): a part is open when under 15% of its shape
+  is enclosed space, not line (lines 0-6%, the fern 12%, lips and sprouts 17-33%, ovals and feet 30-78%).
 - [ ] **AB2. Keep the scans.** `~/Projects/mipo-art/scans/`, laid out like `textures/`, backed up
   (a cloud folder or a disk). New drawings from now on; old papers rescanned when a part is touched.
 - [ ] **AB3. Prefabs, setups and saved scenes into the repo.** The game reads `library/` and music
