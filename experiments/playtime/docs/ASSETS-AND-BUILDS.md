@@ -82,6 +82,12 @@ snapshot for the moves, MEASURING.md) and both builds working.
   31 parts, all apart, masks right; Scan 14 (feet, sprouts): good, but its dust leaves specks. Still
   to do: the specks, naming the parts, the size per part, open shapes (a line: no mask), then a real
   look in the game and the LÖVE version.
+  The MASK, after Nikki's look: the whole shape, line included, its edge smoothed (no rough pixels)
+  and pulled in INSET px (2) from the line's outer edge: under the line, never past it. First tries
+  went past it (filled to the grown line) and then fell short (only to the line's middle). "Hit and
+  miss", so INSET is a setting. The scene `scan-test` bakes the parts as the game does, above the
+  game's own GIMP parts (which have colour past the line too); `textures/scantest/` is made from the
+  scans (in git, `vector-sketch/scans/`), not committed.
 - [ ] **AB2. Keep the scans.** `~/Projects/mipo-art/scans/`, laid out like `textures/`, backed up
   (a cloud folder or a disk). New drawings from now on; old papers rescanned when a part is touched.
 - [ ] **AB3. Prefabs, setups and saved scenes into the repo.** The game reads `library/` and music

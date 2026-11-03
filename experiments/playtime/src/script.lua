@@ -86,7 +86,9 @@ local baseEnv = {
     shapeCatalogs            = shapeCatalogs,
     dnaDefaults              = dnaDefaults,
     tostring                 = tostring,
-    tonumber                 = tonumber
+    tonumber                 = tonumber,
+    pcall                    = pcall,
+    ompBake                  = require('src.render.omp-bake'), -- the outline + mask + pattern bake (scan-test)
     -- Add global utilities like NeedManager, etc.
     --broadcastEvent = function(eventName, data)
     -- Implementation for event broadcasting

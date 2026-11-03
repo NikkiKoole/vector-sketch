@@ -8,3 +8,4 @@ native/desound/desound.wasm
 native/ios/love/
 native/ios/build/
 native/ios/flap.love
+textures/scantest/
