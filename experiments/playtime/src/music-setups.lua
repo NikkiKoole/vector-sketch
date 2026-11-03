@@ -18,7 +18,8 @@ local function copy(t)
 end
 
 -- the settings a setup changes (state.musicSettings), all { key = value } tables
-local CHOICES = { 'voices', 'partsOff', 'soundsOff', 'soundVoices', 'ideas', 'jam' } -- jam: the drum jam's picks
+local CHOICES = { 'voices', 'partsOff', 'soundsOff', 'soundVoices', 'ideas', 'jam', 'world' } -- jam: the drum
+-- jam's picks; world: how the music answers the world (src/music-events.lua)
 
 -- what plays now, as a setup without a name
 function lib.snapshot()

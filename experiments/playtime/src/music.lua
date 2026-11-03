@@ -50,6 +50,7 @@ local VERSION = plan.VERSION
 local nextKey = plan.nextKey
 local planSong = plan.planSong
 local parts = require('src.music-parts')
+local events = require('src.music-events') -- music.event / music.on (docs/WORLD-AND-MUSIC.md)
 local bandPlays = parts.bandPlays
 local bookLoopBar = parts.bookLoopBar
 local lofiGroove = parts.lofiGroove
@@ -336,6 +337,7 @@ local function bookNext(synth, t0)
             song.bar = song.bar + 1
             M.mute, M.clipAt = muteFor(TAIL_OFF), t0 + song.barLength
             bookBar(synth, t0, song, song.bar)
+            events.barBooked(t0, song, lib.styles[song.style])
             return song.barLength
         end
     end
@@ -367,6 +369,7 @@ local function bookNext(synth, t0)
     end
     song.bar = song.bar + 1
     bookBar(synth, t0, song, song.bar)
+    events.barBooked(t0, song, lib.styles[song.style])
     return song.barLength
 end
 
@@ -489,6 +492,13 @@ function lib.update(synth, now)
     while M.barAt < t + lib.lookahead do
         M.barAt = M.barAt + bookNext(synth, M.barAt)
     end
+    events.update(synth, t, M.song, M.song and lib.styles[M.song.style], parts.play)
 end
+
+-- The world and the music (src/music-events.lua, docs/WORLD-AND-MUSIC.md): the world tells the music
+-- something happened (music.event('impact', { strength = 0..1 })), the world hears the music's moments
+-- (music.on(name, 'beat' | 'bar' | 'chord' | 'phrase' | 'drop' | 'kick', fn(data, at, now), ahead)).
+lib.event = events.event
+lib.on = events.on
 
 return lib

@@ -390,6 +390,7 @@ local function playImpact(kind, body1, body2, speed, source)
         end
         synth.hit(patch, notes[index] + transpose, vol, sound.durMs or 400, (x1 + x2) / 2, (y1 + y2) / 2)
         music.bump(mapInto(speed, sound.soft, sound.hard, 0.5, 2)) -- busy play brings the band in, hard hits more
+        if music.event then music.event('impact', { strength = mapInto(speed, sound.soft, sound.hard, 0, 1) }) end
         return
     end
     if not impactSources[kind] then

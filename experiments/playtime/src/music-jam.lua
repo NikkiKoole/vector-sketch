@@ -16,6 +16,7 @@ local D = require('src.music-styles')
 local theory = require('src.music-theory')
 local PATTERNS = require('src.music-jam-patterns')
 local riffs = require('src.music-riffs')
+local events = require('src.music-events')
 local stream, stepTime, inRange = theory.stream, theory.stepTime, theory.inRange
 local M = state.music
 
@@ -390,6 +391,28 @@ local function announceSounds(song, jam)
     for patch in pairs(sounds) do bySound.drums[patch] = true end
 end
 
+lib.hit = hit
+
+-- The world's events (MW1, docs/WORLD-AND-MUSIC.md): a hard Mipo impact gets a crash on the next beat;
+-- a very hard one a one-beat snare fill there and the crash on the beat after ('jam impacts' in the
+-- panel: crash and fill / crash / off). At most one answer a bar, so a pile-up isn't a cymbal storm.
+lib.IMPACT_HARD, lib.IMPACT_VERY_HARD = 0.6, 0.9
+events.answer('jam', function(name, opts, ctx)
+    if name ~= 'impact' then return end
+    local pick = events.setting('impact', 'crash and fill')
+    local jam, strength = ctx.song.jam, opts.strength or 0
+    if pick == 'off' or not jam or strength < lib.IMPACT_HARD then return end
+    local m = state.music
+    if m.answeredAt and ctx.beatAt < m.answeredAt + 4 * ctx.beat - 1e-6 then return end
+    local crashAt = ctx.beatAt
+    if strength >= lib.IMPACT_VERY_HARD and pick == 'crash and fill' then
+        for k = 0, 3 do hit(ctx.play, ctx.synth, ctx.beatAt + k * ctx.beat / 4, 'SD', 1, 0, 3 - k, jam.group) end
+        crashAt = ctx.beatAt + ctx.beat
+    end
+    hit(ctx.play, ctx.synth, crashAt, 'CY', 1, 1, 0, jam.group)
+    m.answeredAt = crashAt
+end)
+
 lib.LEANS = { { name = 'hat', layer = 'hats' }, { name = 'kick', layer = 'kick' },
               { name = 'snare', layer = 'snare' } }
 lib.TOM_ROLL = { 'HT', 'HT', 'MT', 'LT' } -- the last beat, high to low
@@ -407,6 +430,21 @@ function lib.bookBar(play, remember, synth, t0, song, b)
     local inPhrase = (b - 1) % style.phraseBars
     advance(jam, style, b)
     local kind = lib.kind(jam.walk, jam.step)
+    -- the music's moments for the world (MW2, src/music-events.lua): a phrase starts; and what the next
+    -- bar line brings, known a bar early: the next chord, the drop
+    local function chordData(root, k)
+        local pcs = {}
+        for _, d in ipairs(riffs.CHORD_SCALES[k]) do pcs[#pcs + 1] = (song.key + root + d) % 12 end
+        return { root = (song.key + root) % 12, kind = k, pcs = pcs }
+    end
+    if b == 1 then events.moment('chord', t0, chordData(jam.root, kind)) end
+    if inPhrase == 0 then events.moment('phrase', t0, { phrase = jam.phrase, mode = jam.mode }) end
+    local barEnd = t0 + song.barLength
+    local nxt = jam.nextRoot
+    if nxt and not nxt.linger and nxt.walk[nxt.step] ~= jam.root then
+        events.moment('chord', barEnd, chordData(nxt.walk[nxt.step], lib.kind(nxt.walk, nxt.step)))
+    end
+    if jam.nextPhrase and jam.nextPhrase.mode == 'drop' then events.moment('drop', barEnd) end
     local pcs = {}
     for _, d in ipairs(riffs.CHORD_SCALES[kind]) do pcs[#pcs + 1] = (song.key + jam.root + d) % 12 end
     remember(t0, pcs) -- impacts play along in the chord's pentatonic on the root
@@ -472,8 +510,7 @@ function lib.bookBar(play, remember, synth, t0, song, b)
     -- LEANING IN (J10): on the bar before a chord change (not a phrase's last bar, the fill has that) the
     -- drums go with the bass: an open hat on the and-of-4, a kick pickup on its last 16th, or a one-beat
     -- snare fill, rolled per change
-    local leanMove, lean = move('lean'), nil
-    local nxt = jam.nextRoot
+    local leanMove, lean = move('lean'), nil -- nxt: the next root, from the moments above
     local changing = nxt and not nxt.linger and nxt.walk[nxt.step] ~= jam.root
     if not lastBar and changing and leanMove ~= 'never' and (leanMove == 'always' or roll(10) < 6) then
         local can = {} -- only a drum that's playing can lean in

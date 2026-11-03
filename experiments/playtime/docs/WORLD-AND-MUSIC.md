@@ -44,12 +44,19 @@ Two functions and a settings panel, in `src/music-events.lua` (new), registered 
 
 ## Steps
 
-- [ ] **MW1. `music.event` and the impact.** (DRUM-JAM J10e.) The event function, quantized to the
-  next beat (from `nowPlaying().stepTime`), and the first answer: a hard Mipo impact (`mipo-voice.lua`,
-  above a strength) gives a crash on the next beat in the jam, at most one a bar; a very hard one a
-  one-beat fill. A setting row. A spec: an event at any time lands on a beat.
-- [ ] **MW2. `music.on`: beat, bar, chord, drop.** The music's moments as listeners, told on the audio
-  clock (as mipo-band does with notes), the jam's chord changes and drops a bar ahead.
+- [x] **MW1. `music.event` and the impact.** (DRUM-JAM J10e; 2026-11-03.) `src/music-events.lua`:
+  `music.event(name, opts)` queues it, the next frame the style playing answers (`events.answer(key,
+  fn)`, ctx.beatAt = the next beat at least 60 ms ahead, so it can still be booked). Mipo impacts send
+  `'impact'` with strength 0..1 (`mipo-voice.lua`, next to its bump). The jam: 0.6+ a crash on the next
+  beat, 0.9+ a one-beat snare fill there and the crash after, at most one a bar; 'jam impacts' in the
+  panel (crash and fill / crash / off), saved in setups (`world`). Composed styles don't answer yet
+  (MW4). `spec/music-events_spec.lua`.
+- [x] **MW2. `music.on`: beat, bar, chord, drop.** (2026-11-03.) `music.on(name, what, fn(data, at, now),
+  ahead)`: 'bar', 'beat' (every style, from music.lua's booking), 'chord' (data.pcs; composed styles
+  where the booked chord changes, the jam with root and kind a bar early), 'phrase' and 'drop' (the jam,
+  the drop a bar early), 'kick' (any drum patch named kick). Fired on the audio clock; `ahead` up to the
+  booking lookahead (0.3 s), a bar for the jam's chord and drop. Checked live: guaraldi told its beats,
+  bars and a chord change. Nothing listens yet: MW3.
 - [ ] **MW3. Mipos move to the music.** On the kick a nod or a small bounce (mipo-actions' breathe),
   on the drop a jump, idle Mipos only. The setting row: off / on. (DRUM-JAM J5's dance.)
 - [ ] **MW4. Stingers for moments.** A Mipo found, a door opened, a toy snapped in place: a short phrase
