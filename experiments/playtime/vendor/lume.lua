@@ -695,7 +695,11 @@ function lume.hotswap(modname)
     if oldmt and newmt then update(oldmt, newmt) end
     for k, v in pairs(new) do
       -- (playtime) a table field the old module didn't have is copied, not recursed into (was: "table index is nil")
-      if type(v) == "table" and type(old[k]) == "table" then update(old[k], v) else old[k] = v end
+      -- (playtime) a filled list is taken whole: merged by position, a row inserted in the middle of a
+      -- panel's rows patched each old row with the next one's fields and kept its stale ones (blank
+      -- labels, a slider under another row's label in the music panel, 2026-11-03). Hash tables and
+      -- empty lists (runtime contents) still merge
+      if type(v) == "table" and type(old[k]) == "table" and v[1] == nil then update(old[k], v) else old[k] = v end
     end
   end
   local err = nil
