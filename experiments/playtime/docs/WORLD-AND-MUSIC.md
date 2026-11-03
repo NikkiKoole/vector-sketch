@@ -70,8 +70,9 @@ Two functions and a settings panel, in `src/music-events.lua` (new), registered 
   part has played in the last few seconds (after the panel's swaps). The ball plays the song's BASS (the
   303 in acid, citypop's picked bass, the upright in the jam), boxes its hand drums / toms / wood (not
   kick, hats, cymbals, snare, claps; each box keeps one), Mipo bumps its KEYS (off by default: the most
-  in the way). Still in the chord (chordNotes), the same pitch range; nothing heard lately = the
-  impact's own sound. Rows 'ball sounds', 'box sounds', 'Mipo bump sounds' (band / own). Checked live:
+  in the way). Still in the chord (chordNotes), the same pitch range. Which instrument: the one picked
+  for the part in the panel, even with the part switched off (Nikki); else what it played lately; else
+  the song's own for it; none of those = the impact's own sound. Rows 'ball sounds', 'box sounds', 'Mipo bump sounds' (band / own). Checked live:
   in rollo the ball borrowed pickBass.
 
 Ideas to keep, not steps yet: a Mipo that hums the tune when idle; the music slowing when a

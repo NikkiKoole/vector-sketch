@@ -56,6 +56,20 @@ describe('music-events', function()
         state.music.heard = nil
     end)
 
+    it('lends the picked instrument even with the part off, else the song\'s own', function()
+        state.music.audioTime, state.music.heard = 100, {}
+        state.music.song = { style = 'acid' }
+        state.music.styleParts = { acid = { bass = 'tb303' } }
+        state.music.styleSounds = { acid = { drums = { kick = true, tom = true } } }
+        assert.are.same({ 'tb303' }, events.bandInstruments('bass', 4)) -- off, nothing heard: the song's own
+        state.musicSettings.voices = { bass = 'pickBass' }
+        assert.are.same({ 'pickBass' }, events.bandInstruments('bass', 4)) -- the pick wins
+        state.musicSettings.soundVoices = { tom = 'conga' }
+        assert.are.same({ 'conga', 'kick' }, events.bandInstruments('drums', 4))
+        state.musicSettings.voices, state.musicSettings.soundVoices = nil, nil
+        state.music.song, state.music.styleParts, state.music.styleSounds = nil, nil, nil
+    end)
+
     it('borrows for the ball and boxes by default, not for Mipo bumps', function()
         assert.is_true(events.borrows('ball'))
         assert.is_true(events.borrows('box'))

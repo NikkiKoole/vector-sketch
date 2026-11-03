@@ -498,9 +498,10 @@ end
 -- The world and the music (src/music-events.lua, docs/WORLD-AND-MUSIC.md): the world tells the music
 -- something happened (music.event('impact', { strength = 0..1 })), the world hears the music's moments
 -- (music.on(name, 'beat' | 'bar' | 'chord' | 'phrase' | 'drop' | 'kick', fn(data, at, now), ahead)).
-lib.event = events.event
-lib.on = events.on
-lib.bandInstruments = events.bandInstruments -- what a part has played lately (MW7: impacts borrow it)
-lib.borrows = events.borrows
+-- through `events` each call, so a hot swap of music-events reaches them
+function lib.event(...) return events.event(...) end
+function lib.on(...) return events.on(...) end
+function lib.bandInstruments(...) return events.bandInstruments(...) end -- an impact's borrowed instrument (MW7)
+function lib.borrows(...) return events.borrows(...) end
 
 return lib

@@ -77,11 +77,19 @@ function lib.barBooked(t0, song, style)
     end
 end
 
--- The band's instruments for the world (MW7): the patches a part has played in the last `within`
--- seconds (state.music.heard, after the panel's instrument swaps), the latest first; {} when it hasn't.
--- Impacts borrow them (src/mipo-voice.lua: the ball plays the song's bass, boxes its percussion).
+-- The band's instruments for the world (MW7), the latest first, in this order:
+--   1. the instrument picked for the part in the music panel (state.musicSettings.voices), even with the
+--      part switched off (Nikki: "I picked another bass sound but disabled the bass: I still want it for
+--      the ball");
+--   2. what the part has played in the last `within` seconds (state.music.heard);
+--   3. the song's own instrument for it (state.music.styleParts / styleSounds, kept while a part is off).
+-- {} when there's none of those. Impacts borrow them (src/mipo-voice.lua: the ball plays the song's bass,
+-- boxes its percussion). For drums: every sound, with the panel's sound swaps (soundVoices).
 function lib.bandInstruments(part, within)
     local m = M()
+    local settings = state.musicSettings or {}
+    local pick = settings.voices and settings.voices[part]
+    if pick then return { pick } end
     local now, out = m.audioTime or 0, {}
     for patch, runs in pairs(m.heard and m.heard[part] or {}) do
         local last = runs[#runs]
@@ -91,6 +99,16 @@ function lib.bandInstruments(part, within)
     end
     table.sort(out, function(a, b) if a.to ~= b.to then return a.to > b.to end return a.patch < b.patch end)
     for i, o in ipairs(out) do out[i] = o.patch end
+    if #out > 0 then return out end
+    local style = m.song and m.song.style
+    if not style then return out end
+    local own = m.styleParts and m.styleParts[style] and m.styleParts[style][part]
+    if own then return { own } end
+    local sounds = m.styleSounds and m.styleSounds[style] and m.styleSounds[style][part]
+    for patch in pairs(sounds or {}) do
+        out[#out + 1] = settings.soundVoices and settings.soundVoices[patch] or patch
+    end
+    table.sort(out)
     return out
 end
 -- which impacts borrow the band: state.musicSettings.world.band = { ball = 'band' | 'own', ... }
