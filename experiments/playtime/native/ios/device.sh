@@ -212,13 +212,14 @@ fi
 # (src/ribbon-native.lua) and whatever a LOVE_DIR program declares. Nothing in the app calls
 # its functions, Lua finds them by name (ffi.C), so the linker would strip them: -u keeps each
 # one a `local CDEF = [[ ... ]]` block declares, in src/ and in LOVE_DIR, and the de_lua_* ones
-# the synth's thread uses. Without dreamengine the game is silent.
+# the synth's thread uses (and audioReport's pool getter). Without dreamengine the game is silent.
 SYNTH_FLAGS=""
 if "$PLAYTIME_DIR/native/desound/build-ios.sh" "$IOS_DIR/build/libdesound-ios.a" >/dev/null 2>&1; then
     SYNTH_FLAGS="-force_load $IOS_DIR/build/libdesound-ios.a"
     CDEF_FILES="$(grep -rl '^local CDEF = \[\[' "$PLAYTIME_DIR/src" ${LOVE_DIR:+"$LOVE_DIR"} --include='*.lua')"
     for f in $(sed -n '/^local CDEF = \[\[/,/^\]\]/p' $CDEF_FILES \
-        | grep -oE '[a-z_0-9]+\(' | tr -d '(' | sort -u) de_lua_init de_lua_render_s16; do
+        | grep -oE '[a-z_0-9]+\(' | tr -d '(' | sort -u) de_lua_init de_lua_render_s16 \
+        de_lua_pool_overflow; do
         SYNTH_FLAGS="$SYNTH_FLAGS -Wl,-u,_$f"
     done
     # and the synth's CDEF_OPTIONAL ones (slides, accents, unschedule, ...), each only if this
