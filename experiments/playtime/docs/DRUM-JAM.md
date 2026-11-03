@@ -101,7 +101,7 @@ Until then the jam plays Playtime's drum patches; enough to hear whether the arr
   Focus (Nikki, 2026-11-02): the ROOT MOVING is the point, so the loops want 1-3 notes, not riffs;
   candidates rendered over 1 4 5 1 on Funk drums: the one, the push, octave pop, root-octave-b7,
   approach. Root-octave-b7 (Nikki's favourite) is every genre's main figure. The paces are 2 or 4 bars (8
-  was too slow to hear the walk). PICKING (settings -> music, while the jam plays): 'jam walk', 'jam bass'
+  was too slow to hear the walk). PICKING (settings -> music, while the jam plays): 'jam progression' (was 'jam walk'), 'jam bass'
   (the figure) and 'jam pace', each 'auto' = rolled per song; live (a walk from its next change, starting at
   its first step), saved in setups (state.musicSettings.jam). Next: the sourced
   timings (`rhythmbox.h`'s Hammond-patent BASS lanes alternating root and fifth, the SGS M254/M255
@@ -153,10 +153,12 @@ Until then the jam plays Playtime's drum patches; enough to hear whether the arr
     (bass: major pentatonic; pad 1 3 7 9) and s = 9sus (bass 1 2 4 5 b7; pad 1 4 b7 9), the same chars in
     rootwalk.c. The plain figures' 7 plays the major 7th over the maj9 (it rubbed a half step under the pad's;
     2026-11-03), the b7 everywhere else; the riffs follow it.
-  - [x] 'jam layers' in the music panel (2026-11-03): auto, or all = every layer from the next bar, whatever
+  - [x] 'jam layers' (now 'jam build') in the music panel (2026-11-03): auto, or all = every layer from the next bar, whatever
     the play level (for listening; the breakdown and the drop still come round).
-  - [ ] J9e. The panel's 'jam walk' row as 'jam progression', and more progressions (minor-key ones:
-    1m b7 b6 b7, 1m 4m 5m).
+  - [x] J9e. The panel's 'jam walk' row as 'jam progression' (2026-11-03), with the tidy: 'jam layers' is
+    'jam build' (it read as the room layer presets), and the jam's rows, 'jam impacts' too, sit together
+    under a 'drum jam:' header, shown while the jam plays. Saved keys unchanged (walk, layers, ...).
+  - [ ] J9g. More progressions, minor-key ones: 1m b7 b6 b7, 1m 4m 5m.
 - [ ] **J10. The drums play the song** (Nikki 2026-11-03: "solo, fill, maybe pattern switch"; the list:
   lean into changes, more fills, spotlights, pattern moves with play, the game driving it). Each move a
   music-panel row, auto / always / never.

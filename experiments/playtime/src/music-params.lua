@@ -161,12 +161,15 @@ local MAX_PEDAL_LINES = 12
 -- chords are played, how often the root moves. 'auto' = what the song rolled. Live (the walk from its
 -- next change), shown only while the jam plays, kept in state.musicSettings.jam (a setup saves it:
 -- src/music-setups.lua's CHOICES).
+-- The rows' labels aren't the saved keys: 'jam build' is saved as layers (it was 'jam layers', renamed so
+-- it doesn't read as the room layer presets below), 'jam progression' as walk (was 'jam walk', J9e).
+local function jamPlaying()
+    local now = music().nowPlaying()
+    return (now and now.style or music().style) == 'jam'
+end
 local function jamRow(key, label, options)
     return { key = label, kind = 'choice', options = options, stepper = true,
-        visible = function()
-            local now = music().nowPlaying()
-            return (now and now.style or music().style) == 'jam'
-        end,
+        visible = jamPlaying,
         get = function() return (state().musicSettings.jam or {})[key] or 'auto' end,
         set = function(_, v)
             local s = state().musicSettings
@@ -236,15 +239,25 @@ lib.rows = {
             'bethena', 'gnossienne', 'gymnopedie', 'bachprelude', 'traumerei', 'carrelage', 'tapisserie', 'gershwin2',
             'ballad', 'acid', 'jam' }, nil, true),
     field('rhythmSection', 'band', 'choice', { 'auto', 'on', 'off' }),
-    jamRow('walk', 'jam walk', jam.walkNames()),
+    -- the drum jam's rows together, under a header, only while it plays
+    { key = 'drum jam', kind = 'note', label = 'drum jam:', visible = jamPlaying },
+    jamRow('walk', 'jam progression', jam.walkNames()),
     jamRow('figure', 'jam bass', jam.figureNames()),
     jamRow('chords', 'jam chords', jam.chordNames()),
     jamRow('pace', 'jam pace', jam.PACES),
-    jamRow('layers', 'jam layers', jam.LAYER_PICKS),
+    jamRow('layers', 'jam build', jam.LAYER_PICKS),
     jamRow('lean', 'jam lean-in', jam.MOVE_PICKS),
     jamRow('gap', 'jam gap', jam.MOVE_PICKS),
     jamRow('spot', 'jam spotlight', jam.SPOT_PICKS),
     jamRow('variations', 'jam variations', jam.MOVE_PICKS),
+    { key = 'jam impacts', kind = 'choice', options = require('src.music-events').IMPACT_PICKS, stepper = true,
+        visible = jamPlaying,
+        get = function() return (state().musicSettings.world or {}).impact or 'crash and fill' end,
+        set = function(_, v)
+            local s = state().musicSettings
+            s.world = s.world or {}
+            s.world.impact = v
+        end },
     -- MW7 (src/music-events.lua): an impact sound borrows the band's instrument ('band') or keeps its own
     -- ('own'): the ball the song's bass, boxes its hand drums and toms, Mipo bumps its keys
     bandRow('ball', 'ball sounds'), bandRow('box', 'box sounds'), bandRow('plonk', 'Mipo bump sounds'),
@@ -262,17 +275,6 @@ lib.rows = {
             table.sort(names, function(a, b) return log[a].count > log[b].count end)
             for i, name in ipairs(names) do names[i] = name .. ' ' .. log[name].count end
             return 'events: ' .. (#names > 0 and table.concat(names, ' ') or 'none yet')
-        end },
-    { key = 'jam impacts', kind = 'choice', options = require('src.music-events').IMPACT_PICKS, stepper = true,
-        visible = function()
-            local now = music().nowPlaying()
-            return (now and now.style or music().style) == 'jam'
-        end,
-        get = function() return (state().musicSettings.world or {}).impact or 'crash and fill' end,
-        set = function(_, v)
-            local s = state().musicSettings
-            s.world = s.world or {}
-            s.world.impact = v
         end },
     -- the style's ideas (docs/MUSIC-CONCEPTS.md: the walks, the answer): spice scales them all, 0 plain
     -- to 2, 1 as designed; a row per idea the playing style has, from none to lots: never, less (half as

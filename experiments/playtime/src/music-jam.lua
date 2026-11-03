@@ -124,7 +124,7 @@ lib.CHORDS_BY_GENRE = { Disco = 'disco stabs', Funk = 'funk stabs', Breaks = 'fu
 -- A walk is a chord PROGRESSION (J9): `kinds` gives each step's chord, M major, m minor, 7 dominant,
 -- J maj9, s 9sus
 -- (src/music-riffs.lua's CHORD_SCALES: a riff that follows the chord plays its pentatonic there).
--- Named for the music panel's 'jam walk' row. Paces: 2 or 4 bars (8 was too slow to hear the walk).
+-- Named for the music panel's 'jam progression' row. Paces: 2 or 4 bars (8 was too slow to hear the walk).
 lib.WALKS = {
     { name = '1 4 5 1', kinds = 'MM7M', 0, 5, 7, 0 }, { name = '1 5 6 4', kinds = 'MMmM', 0, 7, 9, 5 },
     { name = '1 6 4 5 doo-wop', kinds = 'MmM7', 0, 9, 5, 7 }, { name = '2 5 1', kinds = 'm7MM', 2, 7, 0, 0 },
