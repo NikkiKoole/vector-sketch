@@ -697,6 +697,15 @@ function lib.update(dt, camera)
         collectDropouts(dt)
     end
     S.C.de_lua_tick(dt)
+    if S.fxHeld and #S.fxHeld > 0 then -- release the hits played as held notes (lib.hit, below full FX volume)
+        local now = lib.audioTime() or 0
+        for i = #S.fxHeld, 1, -1 do
+            if now >= S.fxHeld[i].off then
+                S.C.note_off(S.fxHeld[i].handle)
+                table.remove(S.fxHeld, i)
+            end
+        end
+    end
     if camera then
         local cx, cy = camera:getTranslation()
         local halfWidth = camera:getContainerDimensions() / camera:getScale() / 2
@@ -713,12 +722,28 @@ end
 
 -- One-shot note on a named patch. vol 0..7. With x, y it is placed in the world
 -- (panned and quieter away from the listener).
+-- Hits are the WORLD's sounds (impacts, snap clicks), so they play at the FX volume (lib.fxVolume).
+-- That can't live on the slot: an impact may borrow a band patch (mipo-voice MW7), whose slot the music
+-- plays on at the same moment. So below full FX volume a hit is a held note at its own FRACTIONAL volume
+-- (started at the nearest whole step, so the engine's quick slew to the exact value never softens the
+-- attack), released by lib.update when its time is up. At full FX volume it is the plain hit, as before.
 function lib.hit(patchName, midi, vol, durMs, x, y)
     if not S.started then return end
     local patch = lib.patches[patchName]
     if not patch then return end
-    vol = math.max(0, math.min(7, math.floor(vol + 0.5)))
+    local fx = lib.fxVolume or 1
+    if fx <= 0 then return end
     local slot = slotOf(patchName, patch, lib.audioTime() or 0, durMs)
+    if fx < 0.999 then
+        local exact = math.max(0, math.min(7, vol)) * fx
+        local handle = S.C.note_on(midi, slot, math.floor(exact + 0.5))
+        S.C.note_vol(handle, exact)
+        if x then S.C.note_pos(handle, x, y) end
+        S.fxHeld = S.fxHeld or {}
+        S.fxHeld[#S.fxHeld + 1] = { handle = handle, off = (lib.audioTime() or 0) + durMs / 1000 }
+        return
+    end
+    vol = math.max(0, math.min(7, math.floor(vol + 0.5)))
     if x then
         S.C.hit_at(midi, slot, vol, durMs, x, y)
     else
@@ -875,9 +900,17 @@ function lib.setVolume(v)
     end
 end
 
+-- FX volume (settings panel): the world's sounds, i.e. impacts and snap clicks through lib.hit, and the
+-- Mipo voices (src/mipo-voice.lua reads it). Applied per hit, never per slot (see lib.hit).
+function lib.setFxVolume(v)
+    lib.fxVolume = v
+    S.fxVolume = v
+end
+
 -- A hot reload (lurker) of this file re-applies the patches, so saving a tweak is audible right away.
--- The volume set in settings lives on state, so it survives that.
+-- The volumes set in settings live on state, so they survive that.
 lib.volume = S.volume or lib.volume
+lib.fxVolume = S.fxVolume or 1
 if S.started then definePatches() end
 
 return lib

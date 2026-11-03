@@ -17,6 +17,9 @@ local lib = {}
 
 lib.enabled = true
 lib.masterVolume = 0.5 -- scales every Mipo sound (voices, plonks, kisses)
+-- the settings panel's FX volume (src/synth.lua setFxVolume), read live from state so a hot reload keeps it.
+-- The synth hits (impacts) get it inside synth.hit, so only the LÖVE sources here multiply by it.
+local function fxVolume() local s = require('src.state').synth return s and s.fxVolume or 1 end
 lib.volume = 0.8       -- voices, before masterVolume
 lib.cooldown = 0.15      -- seconds between squeaks of the same Mipo
 lib.impactCooldown = 0.5 -- seconds between impact 'oof's of the same Mipo
@@ -186,7 +189,7 @@ local function play(setName, key, pitch, tone)
     if not source then return nil end
     local clone = source:clone()
     clone:setPitch(pitch)
-    clone:setVolume(lib.volume * lib.masterVolume)
+    clone:setVolume(lib.volume * lib.masterVolume * fxVolume())
     if tone and tone < 1 then
         -- needs OpenAL's EFX; without it the voice just stays clear
         pcall(clone.setFilter, clone, { type = 'lowpass', volume = 1, highgain = tone })
@@ -253,7 +256,7 @@ function lib.dice(instance)
     if not lib.enabled or not (love and love.audio) then return end
     quijada = quijada or love.audio.newSource('assets/sounds/mp7-quijada.ogg', 'static')
     local clone = quijada:clone()
-    clone:setVolume(lib.volume * lib.masterVolume)
+    clone:setVolume(lib.volume * lib.masterVolume * fxVolume())
     clone:play()
     lib.edited(instance)
 end
@@ -432,7 +435,7 @@ local function playImpact(kind, body1, body2, speed, source)
     if #sources == 0 then return end
     local clone = sources[love.math.random(#sources)]:clone()
     clone:setPitch(mapInto(speed, sound.soft, sound.hard, sound.pitch[1], sound.pitch[2]))
-    clone:setVolume(mapInto(speed, sound.soft, sound.hard, sound.volume[1], sound.volume[2]) * lib.masterVolume)
+    clone:setVolume(mapInto(speed, sound.soft, sound.hard, sound.volume[1], sound.volume[2]) * lib.masterVolume * fxVolume())
     clone:play()
 end
 

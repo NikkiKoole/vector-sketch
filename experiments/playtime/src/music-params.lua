@@ -216,6 +216,13 @@ lib.rows = {
             return require('src.state').synth.volume or fallback
         end,
         set = function(_, v) synth().setVolume(v) end },
+    -- the world's sounds: impacts (also when they borrow a band instrument), snap clicks, Mipo voices
+    { key = 'fx volume', kind = 'number', min = 0, max = 1,
+        get = function()
+            local fallback = synth().fxVolume
+            return require('src.state').synth.fxVolume or fallback or 1
+        end,
+        set = function(_, v) synth().setFxVolume(v) end },
     field('style', 'style', 'choice',
           { 'set', 'bossa', 'guaraldi', 'island', 'dusk', 'dumont', 'supermarket', 'herbs', 'lofi', 'puppetmaker',
             'strum', 'rollo', 'jingle', 'vibesnight', 'wave', 'sesame', 'citypop', 'buymode', 'satie', 'ambient',
