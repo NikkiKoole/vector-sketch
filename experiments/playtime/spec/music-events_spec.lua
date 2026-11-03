@@ -123,6 +123,50 @@ describe('music-events', function()
             assert.is_true(math.abs(hits[5].t - s.beat * 3) < 1e-6)
         end)
 
+        -- STINGERS S4: the other moments, answered in drums
+        local function answerMoment(s, name, beatAt, on)
+            local hits = {}
+            local function play(_, part, patch, t) hits[#hits + 1] = { part = part, patch = patch, t = t } end
+            state.music.barStart = 0
+            s.jam.on = on or { hats = true, kick = true, snare = true }
+            events.event(name)
+            events.update(nil, beatAt - 0.06 - 0.01, s, style, play)
+            return hits
+        end
+
+        it('the moments: nothing while stingers are off, but the try button plays a fill', function()
+            local s = song()
+            assert.are.equal(0, #answerMoment(s, 'door', s.beat))
+            local hits = answerMoment(s, 'stinger', s.beat * 2)
+            assert.are.equal(5, #hits) -- four snare 16ths, landing on a kick
+            assert.are.equal('snare', hits[1].patch)
+            assert.is_true(math.abs(hits[1].t - s.beat * 2) < 1e-6)
+            assert.are.equal('bapKick', hits[5].patch)
+            assert.is_true(math.abs(hits[5].t - s.beat * 3) < 1e-6)
+        end)
+
+        it('a small moment nods (an open hat, a kick with the hats out), a door fills, one a bar', function()
+            local s = song()
+            state.musicSettings.world = { stingerSize = 'small', stingerMoments = 'rare' }
+            local nod = answerMoment(s, 'snap', s.beat)
+            assert.are.equal(1, #nod)
+            assert.are.equal('hat', nod[1].patch)
+            assert.are.equal(0, #answerMoment(s, 'door', s.beat * 3)) -- the same bar's worth: no
+            assert.are.equal(5, #answerMoment(s, 'door', s.beat * 6))
+            local kick = answerMoment(s, 'snap', s.beat * 11, { kick = true })
+            assert.are.equal('bapKick', kick[1].patch)
+            assert.are.equal(0, #answerMoment(s, 'throw', s.beat * 16)) -- not a 'rare' moment
+        end)
+
+        it("'big' moves each up a step: a nod becomes the fill, a door's fill gets the crash", function()
+            local s = song()
+            state.musicSettings.world = { stingerSize = 'big', stingerMoments = 'rare' }
+            assert.are.equal(5, #answerMoment(s, 'snap', s.beat))
+            local hits = answerMoment(s, 'door', s.beat * 6)
+            assert.are.equal(6, #hits)
+            assert.are.equal('ride', hits[6].patch)
+        end)
+
         it('tells the next chord a bar early, and it is the chord that comes', function()
             local s = song()
             local told = {}

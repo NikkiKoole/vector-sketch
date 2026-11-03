@@ -82,3 +82,11 @@ Keep the options open and get the feel by playing, alone and with the kids. Like
 - [ ] **S2. Hear it offline.** render-music/music-when with events at given seconds (e.g. `EVENTS=20:found,31:found`), to check the timing and the notes in wave and bossa.
 - [ ] **S3. Variations and fatigue.** Mostly in S1 (the shuffled bag, softer when thick, one a bar). Left: shapes of its own per moment (a door's different from a snap's), which is question 3's motif.
 - [ ] **S4. The other moments**, and the jam answering them the same way (playtime-71's answerer).
+  - [x] S4a. The jam answers in drums (2026-11-03; dreamengine-8e's grading, Nikki said yes): the chord-tone
+    stinger would say what the impact plonks already say. Same switches ('stingers', 'stinger moments'): a
+    small moment NODS on the next beat (an accented open hat, a kick while the hats are out), a door or a
+    room (and the try button) gets a one-beat snare FILL landing on a kick; 'big' moves each up a step (the
+    fill gets the crash). One answer a bar, impacts included. `src/music-jam.lua` (answerMoment),
+    `spec/music-events_spec.lua`. Kept out: THE GAP as an answer (a beat of silence; often, it reads as a
+    dropout), maybe later for one moment that really matters. rootwalk mirrors it as an accent input.
+  - [ ] S4b. The other moments: 'found' has no sender yet.

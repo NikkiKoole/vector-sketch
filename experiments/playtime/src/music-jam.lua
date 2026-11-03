@@ -397,11 +397,41 @@ lib.hit = hit
 -- a very hard one a one-beat snare fill there and the crash on the beat after ('jam impacts' in the
 -- panel: crash and fill / crash / off). At most one answer a bar, so a pile-up isn't a cymbal storm.
 lib.IMPACT_HARD, lib.IMPACT_VERY_HARD = 0.6, 0.9
+--
+-- The other moments (STINGERS S4) the jam answers in drums, not with the composed styles' chord-tone
+-- stingers: the impact plonks already play the chord, and drums can't clash with a change. The same
+-- switches as those stingers (music-stingers' wants: 'stingers' off / small / big, 'stinger moments'),
+-- graded: a NOD on the next beat for a small moment (an accented open hat, a kick while the hats are
+-- out), a one-beat snare FILL landing on a kick for a door or a room (and the try button); 'big' moves
+-- each up a step (a nod becomes the fill, the fill gets the crash). The gap (a beat of silence) is kept
+-- out: often, it would sound like a dropout. One answer a bar, impacts included.
+lib.FILL_MOMENTS = { door = true, room = true, stinger = true }
+
+local function answerMoment(name, ctx, jam)
+    if not require('src.music-stingers').wants(name) then return end
+    local m = state.music
+    if m.answeredAt and ctx.beatAt < m.answeredAt + 4 * ctx.beat - 1e-6 then return end
+    local big = events.setting('stingerSize', 'off') == 'big'
+    local tier = (lib.FILL_MOMENTS[name] and 2 or 1) + (big and 1 or 0)
+    local at, beat = ctx.beatAt, ctx.beat
+    if tier == 1 then
+        if jam.on.hats then hit(ctx.play, ctx.synth, at, 'OH', 0, 1, 0, jam.group)
+        else hit(ctx.play, ctx.synth, at, 'BD', 0, 1, 0, jam.group) end
+    else
+        for k = 0, 3 do hit(ctx.play, ctx.synth, at + k * beat / 4, 'SD', 1, 0, 3 - k, jam.group) end
+        hit(ctx.play, ctx.synth, at + beat, 'BD', 0, 1, 0, jam.group)
+        if tier >= 3 then hit(ctx.play, ctx.synth, at + beat, 'CY', 0, 1, 0, jam.group) end
+    end
+    m.answeredAt = at
+end
+
 events.answer('jam', function(name, opts, ctx)
-    if name ~= 'impact' then return end
+    local jam = ctx.song.jam
+    if not jam then return end
+    if name ~= 'impact' then return answerMoment(name, ctx, jam) end
     local pick = events.setting('impact', 'crash and fill')
-    local jam, strength = ctx.song.jam, opts.strength or 0
-    if pick == 'off' or not jam or strength < lib.IMPACT_HARD then return end
+    local strength = opts.strength or 0
+    if pick == 'off' or strength < lib.IMPACT_HARD then return end
     local m = state.music
     if m.answeredAt and ctx.beatAt < m.answeredAt + 4 * ctx.beat - 1e-6 then return end
     local crashAt = ctx.beatAt

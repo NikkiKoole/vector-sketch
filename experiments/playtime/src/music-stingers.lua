@@ -156,7 +156,7 @@ local function answer(name, _, ctx)
     while #s.recent > 8 do table.remove(s.recent, 1) end
 end
 
--- every style but the jam (it answers its own: src/music-jam.lua)
+-- every style but the jam (it answers the same moments in drums, with these switches: src/music-jam.lua)
 function lib.register()
     for styleName, style in pairs(D.styles) do
         if style.loop ~= 'jam' then events.answer(styleName, answer) end
