@@ -273,7 +273,7 @@ describe("character-topology", function()
                 topo = topology.resolve(creation)
             end)
 
-            it("ears attach to torso2 (highest)", function()
+            it("ears attach to torso2 (at the default height, the upper band's bottom edge)", function()
                 assert.are.equal('torso2', findEntry(topo, 'lear').parent)
                 assert.are.equal('torso2', findEntry(topo, 'rear').parent)
             end)
@@ -282,10 +282,46 @@ describe("character-topology", function()
                 assert.are.equal('torso2', findEntry(topo, 'nose1').parent)
             end)
 
-            it("arms attach to torso2 (highest)", function()
+            it("arms attach to torso2 (the upper middle of two)", function()
                 assert.are.equal('torso2', findEntry(topo, 'luarm').parent)
                 assert.are.equal('torso2', findEntry(topo, 'ruarm').parent)
             end)
+        end)
+
+        -- A potato's ears: the ear height (0 top .. 1 bottom) goes down the whole body, band by band.
+        describe("potato ears along the whole body", function()
+            local creation = { torsoSegments = 3, neckSegments = 0, noseSegments = 0, isPotatoHead = true }
+            for _, case in ipairs({ { 0, 'torso3', 0 }, { 0.2, 'torso3', 0.6 }, { 0.5, 'torso2', 0.5 },
+                    { 0.9, 'torso1', 0.7 }, { 1, 'torso1', 1 } }) do
+                it("height " .. case[1] .. ": " .. case[2], function()
+                    local topo = topology.resolve(creation, { ear = { y = case[1] } })
+                    for _, name in ipairs({ 'lear', 'rear' }) do
+                        local entry = findEntry(topo, name)
+                        assert.are.equal(case[2], entry.parent)
+                        assert.is_true(math.abs(entry.parentAttach.t - case[3]) < 1e-9)
+                    end
+                end)
+            end
+            it("one band: the ear height as it was", function()
+                local topo = topology.resolve({ torsoSegments = 1, isPotatoHead = true }, { ear = { y = 0.3 } })
+                assert.are.equal('torso1', findEntry(topo, 'lear').parent)
+                assert.is_nil(findEntry(topo, 'lear').parentAttach.t)
+            end)
+        end)
+
+        -- A potato's arms come out of its sides: from the middle segment, not the top one
+        -- (on the top one they sat far too high).
+        describe("potato arms on the middle torso segment", function()
+            for count, expected in pairs({ [1] = 'torso1', [3] = 'torso2', [4] = 'torso3', [5] = 'torso3' }) do
+                it(count .. " segments: " .. expected, function()
+                    local topo = topology.resolve({ torsoSegments = count, neckSegments = 0,
+                        noseSegments = 0, isPotatoHead = true })
+                    assert.are.equal(expected, findEntry(topo, 'luarm').parent)
+                    assert.are.equal(expected, findEntry(topo, 'ruarm').parent)
+                    -- the ears at the default height (0.5), the middle of the body, by the arms
+                    assert.are.equal(expected, findEntry(topo, 'lear').parent)
+                end)
+            end
         end)
 
         -- ─── Non-potato arms use standard vertex indices ───

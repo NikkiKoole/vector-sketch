@@ -173,7 +173,7 @@ local function addConnectedTexture(body, partName, _partData, connData, instance
         end
     end
     if partName:find('uarm') then
-        local top = 'torso' .. torsoSegments
+        local top = topology.armTorso(instance.dna.creation)
 
         if partName == 'luarm' then
             jointLabels = { top .. "->luarm", "luarm->llarm", "llarm->lhand" }

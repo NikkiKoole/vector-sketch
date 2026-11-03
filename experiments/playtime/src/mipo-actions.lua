@@ -375,12 +375,12 @@ lib.knotMaxAlpha = 12   -- rad/s^2 cap for the whole-arm pull: lifts the hand wi
 
 local armParent = { luarm = 'torso1', ruarm = 'torso1', llarm = 'luarm', rlarm = 'ruarm' }
 
--- The part an arm segment hangs from: upper arms from the top torso segment.
+-- The part an arm segment hangs from: upper arms from a torso segment (topology.armTorso).
 local function armParentOf(instance, name)
     local parent = armParent[name]
     if parent == 'torso1' then
         local creation = instance.dna and instance.dna.creation
-        return 'torso' .. ((creation and creation.torsoSegments) or 1)
+        return creation and require('src.character-topology').armTorso(creation) or 'torso1'
     end
     return parent
 end

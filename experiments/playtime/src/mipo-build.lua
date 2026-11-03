@@ -457,7 +457,7 @@ local function prepareDNA(instance)
     instance.dna.faceMagnitude = instance.dna.faceMagnitude or D.faceMagnitude
     instance.dna.positioners = instance.dna.positioners or {}
     D.ensureDefaults(instance.dna.positioners, D.positioners)
-    local topo = topology.resolve(instance.dna.creation)
+    local topo = topology.resolve(instance.dna.creation, instance.dna.positioners)
     instance.topology = topo
     instance.entryMap = topology.buildEntryMap(topo)
     instance.childrenMap = topology.buildChildrenMap(topo)

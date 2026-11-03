@@ -234,7 +234,7 @@ parentStrategies.outline = function(partName, instance, entry)
     local parentPart = instance.dna.parts[entry.parent]
     local pa = entry.parentAttach
     local scale = instance.scale
-    local t = instance.dna.positioners[pa.positioner][pa.posField]
+    local t = pa.t or instance.dna.positioners[pa.positioner][pa.posField]
 
     if not isShape8(parentPart) then
         local w, h = parentPart.dims.w, parentPart.dims.h
@@ -356,13 +356,36 @@ end
 --- Build the full ordered topology list for a given creation configuration.
 --- Output ordering: torsos → necks → head → noses → limbs (legs, arms, ears).
 --- Parent always appears before child in the list.
-function lib.resolve(creation)
+-- The torso segment the arms hang from: the top one (shoulders, vertices 8 and 2), but on a
+-- potato head, whose arms come out of its sides (vertices 7 and 3), the middle one (of an even
+-- count the upper middle): on the top one they sat far too high (2026-11-03).
+function lib.armTorso(creation)
+    local count = creation.torsoSegments or 1
+    if creation.isPotatoHead then return 'torso' .. (math.floor(count / 2) + 1) end
+    return 'torso' .. count
+end
+
+-- The torso segment a potato's ears hang on, and how far down its side (pa.t of the outline
+-- walk): the ear slider (0 top .. 1 bottom) goes down the whole body, band by band. On the top
+-- band alone, a 3-band potato's ears at 0.5 sat a sixth of the way down (2026-11-03).
+function lib.earTorso(creation, earY)
+    local count = creation.torsoSegments or 1
+    local along = mathutils.clamp(earY or 0.5, 0, 1) * count
+    -- on a band edge, the upper band (like the arms)
+    local fromTop = math.max(0, math.min(count - 1, math.ceil(along) - 1))
+    return 'torso' .. (count - fromTop), along - fromTop
+end
+
+--- `positioners` (optional, the instance's dna.positioners): a potato's ears pick their torso
+--- segment from the ear height.
+function lib.resolve(creation, positioners)
     local torsoSegments = creation.torsoSegments or 1
     local neckSegments = creation.neckSegments or 0
     local noseSegments = creation.noseSegments or 0
     local isPotato = creation.isPotatoHead
 
     local highestTorso = 'torso' .. torsoSegments
+    local armTorso = lib.armTorso(creation)
 
     local result = {}
 
@@ -455,7 +478,14 @@ function lib.resolve(creation)
     end
 
     -- 5. Limbs (matching original ordering: legs, arms, ears)
-    local earParent = isPotato and highestTorso or 'head'
+    local earParent, earT = 'head', nil
+    if isPotato then
+        if torsoSegments > 1 then
+            earParent, earT = lib.earTorso(creation, positioners and positioners.ear and positioners.ear.y)
+        else
+            earParent = highestTorso
+        end
+    end
 
     local limbs = {
         -- Legs
@@ -480,11 +510,11 @@ function lib.resolve(creation)
           parentAttach = { strategy = 'parentBottom' },
           ownAttach = { strategy = 'bottom', shape8 = 1, ankle = true }, angleOffset = -math.pi / 2 },
         -- Arms
-        { name = 'luarm', parent = highestTorso,
+        { name = 'luarm', parent = armTorso,
           parentAttach = { strategy = 'vertex', vertex = isPotato and 7 or 8,
                            fallbackXSign = -1, fallbackYSign = -1 },
           ownAttach = { strategy = 'bottom' }, angleOffset = 0 },
-        { name = 'ruarm', parent = highestTorso,
+        { name = 'ruarm', parent = armTorso,
           parentAttach = { strategy = 'vertex', vertex = isPotato and 3 or 2,
                            fallbackXSign = 1, fallbackYSign = -1 },
           ownAttach = { strategy = 'bottom' }, angleOffset = 0 },
@@ -502,11 +532,11 @@ function lib.resolve(creation)
           ownAttach = { strategy = 'bottom', shape8 = 1 }, angleOffset = 0 },
         -- Ears
         { name = 'lear', parent = earParent,
-          parentAttach = { strategy = 'outline', vertices = { 8, 7, 6 },
+          parentAttach = { strategy = 'outline', vertices = { 8, 7, 6 }, t = earT,
                            positioner = 'ear', posField = 'y', xSign = -1 },
           ownAttach = { strategy = 'root', shape8 = 5 }, angleOffset = 'stanceAngle' },
         { name = 'rear', parent = earParent,
-          parentAttach = { strategy = 'outline', vertices = { 2, 3, 4 },
+          parentAttach = { strategy = 'outline', vertices = { 2, 3, 4 }, t = earT,
                            positioner = 'ear', posField = 'y', xSign = 1 },
           ownAttach = { strategy = 'root', shape8 = 5 }, angleOffset = 'stanceAngle' },
     }
