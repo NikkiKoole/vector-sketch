@@ -145,8 +145,7 @@ function love.filedropped(file)
 end
 
 -- love tools/scan2tex --test <file>: load it, select the first look-alike, screenshot (the save folder's
--- test.png) and quit; for checking the window without clicking
-local testing = nil
+-- test.png) and quit; for checking the window without clicking (`testing`, declared above remember)
 
 function love.update()
     local done = love.thread.getChannel('scan2tex'):pop()
