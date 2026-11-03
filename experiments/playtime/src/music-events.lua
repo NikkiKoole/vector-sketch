@@ -43,6 +43,11 @@ function lib.answer(key, fn) answerers[key] = fn end
 
 function lib.event(name, opts)
     local m = M()
+    -- the tally: how often each moment happens while playing (docs/STINGERS.md), on state so a reload keeps it
+    m.eventLog = m.eventLog or {}
+    local log = m.eventLog[name] or { count = 0 }
+    log.count, log.last = log.count + 1, love and love.timer and love.timer.getTime() or 0
+    m.eventLog[name] = log
     if #m.events < 16 then m.events[#m.events + 1] = { name = name, opts = opts or {} } end
 end
 

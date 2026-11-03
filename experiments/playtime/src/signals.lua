@@ -18,6 +18,12 @@ local snap = require('src.physics.snap')
 
 local lib = {}
 
+-- tell the music a moment happened (docs/STINGERS.md); only when it's loaded, so no require loop
+local function tellMusic(name, opts)
+    local music = package.loaded['src.music']
+    if music and music.event then music.event(name, opts) end
+end
+
 lib.gateSpeed = 600      -- how fast a gate moves (world units/s, at any meter: it's how the gate looks)
 lib.gateForce = 1e7      -- motor force: enough to hold up a skateboard with a Mipo (at 100 px per
                          -- metre; src/physics-units.lua makes it the same push at any meter)
@@ -106,6 +112,7 @@ local receivers = {
 -- Send a signal: every receiver behavior with that signal name acts on it.
 function lib.emit(signal)
     if not signal or not state.physicsWorld then return 0 end
+    tellMusic('signal', { signal = signal })
     local count = 0
     for _, body in ipairs(state.physicsWorld:getBodies()) do
         for _, b in ipairs(behaviors.all(body)) do

@@ -18,6 +18,7 @@ lib.drag = 1.2        -- more per second at dragSpeed
 lib.dragSpeed = 1000  -- px/s at 100 px/m
 lib.throw = 2         -- on letting go at throwSpeed or faster
 lib.throwSpeed = 2000
+lib.throwEvent = 0.35 -- a let-go this hard (of throwSpeed) is a 'throw' event, softer a 'drop'
 
 -- On `state` so a hot reload doesn't count every held body as thrown
 state.playLevel = state.playLevel or { held = {} }
@@ -32,13 +33,18 @@ function lib.update(dt)
     local held = {}
     for _, body in ipairs(pointerJoints.getInteractedWithPointer()) do
         local speed = speedOf(body)
+        if not S.held[body] and music.event then music.event('grab') end -- the world's moments (docs/STINGERS.md)
         held[body] = speed
         music.bump(dt * (lib.hold + lib.drag * mathutils.clamp(speed / lib.dragSpeed, 0, 1)))
     end
     for body, speed in pairs(S.held) do
         if not held[body] then
             -- the speed as it left the hand (the last frame it was held): a throw
-            music.bump(lib.throw * mathutils.clamp(speed / lib.throwSpeed, 0, 1))
+            local strength = mathutils.clamp(speed / lib.throwSpeed, 0, 1)
+            music.bump(lib.throw * strength)
+            if music.event then
+                music.event(strength >= lib.throwEvent and 'throw' or 'drop', { strength = strength })
+            end
         end
     end
     S.held = held

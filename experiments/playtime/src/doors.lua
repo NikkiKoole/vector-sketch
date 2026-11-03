@@ -17,6 +17,12 @@
 -- visit, not on a return.
 local lib = {}
 
+-- tell the music a moment happened (docs/STINGERS.md); only when it's loaded, so no require loop
+local function tellMusic(name, opts)
+    local music = package.loaded['src.music']
+    if music and music.event then music.event(name, opts) end
+end
+
 local state = require('src.state')
 local utils = require('src.utils')
 local json = require('vendor.dkjson')
@@ -157,6 +163,7 @@ function lib.onPressed(bodies, x, y)
         if inside(x, y, lib.box(d.body)) and d.door.to and d.door.to ~= '' then
             -- go next frame, outside the input callback
             R.pending = { to = d.door.to, arrive = d.door.arrive, wait = lib.swing.opening }
+            tellMusic('door', { how = 'tap', to = d.door.to })
             R.swing[bodyId(d.body)] = 0
             return true
         end
@@ -176,6 +183,7 @@ function lib.onReleased(bodies)
                 table.insert(R.sends, { mipoId = instance.id, door = bodyId(doorBody), to = door.to,
                     arrive = door.arrive, wait = lib.swing.opening })
                 R.swing[bodyId(doorBody)] = R.swing[bodyId(doorBody)] or 0
+                tellMusic('door', { how = 'mipo', to = door.to })
             end
         end
     end
@@ -317,6 +325,7 @@ local function goThrough(pending)
     end
     enterRoom(pending.to, pending.arrive)
     R.fade = 1
+    tellMusic('room', { from = from, to = pending.to })
 end
 
 -- A dropped Mipo goes through by itself: out of this room, onto the next room's arrivals.

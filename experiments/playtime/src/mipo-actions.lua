@@ -17,6 +17,12 @@ local camera = require('src.camera')
 
 local lib = {}
 
+-- tell the music a moment happened (docs/STINGERS.md); only when it's loaded, so no require loop
+local function tellMusic(name, opts)
+    local music = package.loaded['src.music']
+    if music and music.event then music.event(name, opts) end
+end
+
 -- Speeds, gains and the breath impulse below are as tuned at 100 px per metre;
 -- src/physics-units.lua turns them into the world's meter where they are used.
 
@@ -86,6 +92,7 @@ function lib.jump(instance)
         end
     end
     instance._jumpAt = love.timer.getTime() + 0.1
+    tellMusic('jump')
     return true
 end
 
@@ -245,6 +252,7 @@ function lib.onHardImpact(instance, speed)
     local duration = mathutils.lerp(lib.dazeMin, lib.dazeMax, t)
     local now = love.timer.getTime()
     if not instance._dazedUntil then
+        if not lib.isRagdoll(instance) then tellMusic('daze', { strength = t }) end
         -- only undo a ragdoll the daze made itself, never one switched on by hand
         if lib.isRagdoll(instance) then return end
         lib.setRagdoll(instance, true)
@@ -258,6 +266,7 @@ function lib.onHardImpact(instance, speed)
 end
 
 local function wakeUp(instance)
+    if instance._dazedUntil then tellMusic('wake') end
     instance._dazedUntil = nil
     instance._dazeStart = nil
     lib.setRagdoll(instance, false)

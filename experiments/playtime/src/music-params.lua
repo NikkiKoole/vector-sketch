@@ -224,6 +224,15 @@ lib.rows = {
     -- MW7 (src/music-events.lua): an impact sound borrows the band's instrument ('band') or keeps its own
     -- ('own'): the ball the song's bass, boxes its hand drums and toms, Mipo bumps its keys
     bandRow('ball', 'ball sounds'), bandRow('box', 'box sounds'), bandRow('plonk', 'Mipo bump sounds'),
+    -- the world's moments so far (music.event; docs/STINGERS.md): how often each happens while playing
+    { key = 'events', kind = 'note',
+        label = function()
+            local log, names = (state().music or {}).eventLog or {}, {}
+            for name in pairs(log) do names[#names + 1] = name end
+            table.sort(names, function(a, b) return log[a].count > log[b].count end)
+            for i, name in ipairs(names) do names[i] = name .. ' ' .. log[name].count end
+            return 'events: ' .. (#names > 0 and table.concat(names, ' ') or 'none yet')
+        end },
     { key = 'jam impacts', kind = 'choice', options = require('src.music-events').IMPACT_PICKS, stepper = true,
         visible = function()
             local now = music().nowPlaying()

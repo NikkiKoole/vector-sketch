@@ -44,6 +44,31 @@ What Playtime already has for it:
 4. **How long?** 3-5 notes over one beat, or a whole bar. Short keeps it out of the way (feedback_background_music).
 5. **Does the music make room?** The tune rests that bar, or plays on underneath.
 
+## Nikki so far (2026-11-03)
+
+Keep the options open and get the feel by playing, alone and with the kids. Liked: the ball borrowing the song's bass (MW7), so the band's own instruments are the favourite for now. A guess: when a stinger plays on a part's instrument, that part of the song rests for a moment.
+
+**Making a part rest.** Each bar's notes are booked on the synth up to a bar ahead (`schedule_at`, 0.3 s before the bar), and booked notes can't be taken back. The stinger itself still lands on the next beat; only the rest is the problem. The ways round it:
+- **Duck** the part's slot (`instrument_level`, instant, from update at the stinger's beat) and play the stinger on a twin of the patch, on its own slot. Works today. The ducked notes still sound quietly and use voices.
+- **Unschedule** in the engine: `unschedule(slot, t1, t2)` drops a slot's booked notes in a window. dreamengine-4d: easy, about 30 lines (the `delayed[]` array in runtime/sound.h, a new SR_ event kind, the four-place API add, a schedule-check assertion), then bound in desound.c. Notes already sounding keep ringing, so pair it with a choke. Exact to the sample, and it frees the voices. Not built: waiting on Nikki.
+- Booking a beat at a time instead of a bar would also work, but it changes how every part books. Not worth it.
+
+## The world's events (sent since 2026-11-03)
+
+`music.event(name, opts)` from the game. Nothing answers them yet except the jam's impacts. The panel's music section shows a tally (`events: grab 12 snap 3 ...`, `state.music.eventLog`), to see how often each happens while playing:
+
+| event | where | opts |
+|---|---|---|
+| impact | mipo-voice (MW1) | strength |
+| grab | play-level: the pointer takes something | |
+| throw / drop | play-level: letting go, hard or soft (`throwEvent` 0.35 of throwSpeed) | strength |
+| snap | snap-sound: a snap joint formed | |
+| door | doors: tapped, or a Mipo dropped on it | how = tap / mipo, to |
+| room | doors: arrived through a door | from, to |
+| signal | signals.emit: a button, plate or socket | signal |
+| daze / wake | mipo-actions: a hard hit knocks a Mipo limp, it gets up | strength (daze) |
+| jump | mipo-actions.jump | |
+
 ## Steps (when it's decided)
 
 - [ ] **S1. One stinger, one event.** 'found' or 'snap' sent from the game. A composed-style answerer (`events.answer` for every non-loop style), a 3-note figure from `chordNotes` on `ctx.beatAt`, at most one a bar. A panel row: off / small / big.
