@@ -51,6 +51,7 @@ local nextKey = plan.nextKey
 local planSong = plan.planSong
 local parts = require('src.music-parts')
 local events = require('src.music-events') -- music.event / music.on (docs/WORLD-AND-MUSIC.md)
+require('src.music-stingers') -- the composed styles answer moments with a stinger (docs/STINGERS.md)
 local bandPlays = parts.bandPlays
 local bookLoopBar = parts.bookLoopBar
 local lofiGroove = parts.lofiGroove

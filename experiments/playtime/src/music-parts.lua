@@ -57,7 +57,7 @@ end
 -- The parts with a melody line, whose instrument the panel can swap (drums, perc, vinyl and sample
 -- play several sounds at once: only on or off)
 local TONAL = { lead = true, answer = true, keys = true, chord = true, guitar = true, horns = true, strings = true,
-                riff = true, bass = true }
+                riff = true, bass = true, stinger = true }
 lib.TONAL = TONAL
 
 -- M.mute: the parts that sit this bar out (the layers, a handoff); M.clipAt: no note rings past it.
@@ -88,6 +88,9 @@ local function play(synth, part, patch, t, midi, vol, durMs, step, slide, accent
     end
     if settings.partsOff and settings.partsOff[part] then return end
     if M.mute and M.mute[part] then return end
+    -- a part resting under a stinger (src/music-stingers.lua): notes booked into its window are skipped
+    local rest = M.rest and M.rest[part]
+    if rest and t >= rest.from and t < rest.to then return end
     local voice
     if TONAL[part] then
         voice = settings.voices and settings.voices[part] or part == 'lead' and settings.melodyPatch

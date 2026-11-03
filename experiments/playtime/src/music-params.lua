@@ -175,6 +175,16 @@ local function jamRow(key, label, options)
         end }
 end
 local jam = require('src.music-jam')
+-- a world setting picked from one of music-stingers' option lists
+local function worldRow(key, label, options, default)
+    return { key = label, kind = 'choice', options = require('src.music-stingers')[options], stepper = true,
+        get = function() return (state().musicSettings.world or {})[key] or default end,
+        set = function(_, v)
+            local s = state().musicSettings
+            s.world = s.world or {}
+            s.world[key] = v
+        end }
+end
 local function bandRow(kind, label)
     return { key = label, kind = 'choice', options = { 'band', 'own' }, stepper = true,
         get = function()
@@ -224,6 +234,12 @@ lib.rows = {
     -- MW7 (src/music-events.lua): an impact sound borrows the band's instrument ('band') or keeps its own
     -- ('own'): the ball the song's bass, boxes its hand drums and toms, Mipo bumps its keys
     bandRow('ball', 'ball sounds'), bandRow('box', 'box sounds'), bandRow('plonk', 'Mipo bump sounds'),
+    -- stingers (src/music-stingers.lua, docs/STINGERS.md): a short phrase on the next beat for a moment
+    worldRow('stingerSize', 'stingers', 'SIZES', 'off'), worldRow('stingerVoice', 'stinger voice', 'VOICES', 'band'),
+    worldRow('stingerRest', 'part rests', 'RESTS', 'yes'),
+    worldRow('stingerMoments', 'stinger moments', 'MOMENT_PICKS', 'button'),
+    { key = 'try stinger', kind = 'action',
+        run = function() music().event('stinger') end },
     -- the world's moments so far (music.event; docs/STINGERS.md): how often each happens while playing
     { key = 'events', kind = 'note',
         label = function()

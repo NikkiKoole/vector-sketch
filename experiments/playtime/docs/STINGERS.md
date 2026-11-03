@@ -1,6 +1,6 @@
 # Stingers: the music answering a moment
 
-status: idea
+status: active
 
 A stinger is a short musical phrase played over the music when something happens: a Mipo found, a door opened, a toy snapped in place. This is MW4 in WORLD-AND-MUSIC.md. Research first (Nikki 2026-11-03: "sounds interesting, also something we need to research a bit beforehand"), nothing built yet.
 
@@ -73,7 +73,12 @@ Keep the options open and get the feel by playing, alone and with the kids. Like
 
 ## Steps (when it's decided)
 
-- [ ] **S1. One stinger, one event.** 'found' or 'snap' sent from the game. A composed-style answerer (`events.answer` for every non-loop style), a 3-note figure from `chordNotes` on `ctx.beatAt`, at most one a bar. A panel row: off / small / big.
+- [x] **S1. A stinger, its switches and a try button** (2026-11-03). `src/music-stingers.lua` answers events in every style but the jam: a few chord tones on the next beat, at most one a bar.
+  - Variation like iMUSE's: the chord changes it, and shapes and rhythms come from a shuffled bag (6 x 3 small, 6 x 3 big). It gets softer when stingers come thick.
+  - The panel rows: stingers off / small / big; stinger voice band / vibes / kalimba; part rests yes / no; stinger moments button / rare / all; the 'try stinger' button (it plays even when off).
+  - The part rests: synth.unschedule takes its booked notes back, and the `M.rest` window makes later bars skip it.
+  - Checked live in wave: try at 9.08 s, the stinger on pianoLead at 9.41 / 9.57 / 10.04 (the next beat, then 16ths), C# D# F in Dbmaj9, and the lead silent in its window. `spec/music-stingers_spec.lua`.
+  - Not yet: notes already ringing aren't choked.
 - [ ] **S2. Hear it offline.** render-music/music-when with events at given seconds (e.g. `EVENTS=20:found,31:found`), to check the timing and the notes in wave and bossa.
 - [ ] **S3. Variations and fatigue.** Several shapes per moment, picked without repeats; quieter on a repeat within a few seconds.
 - [ ] **S4. The other moments**, and the jam answering them the same way (playtime-71's answerer).
