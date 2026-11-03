@@ -14,7 +14,7 @@ local json = require "vendor.dkjson"
 
 local bridge = {}
 
-bridge.port = 8001
+bridge.port = tonumber(os.getenv("PLAYTIME_BRIDGE_PORT") or "") or 8001 -- a second instance: PLAYTIME_BRIDGE_PORT=8002
 bridge.host = "*"
 bridge.whitelist = { "127.0.0.1" }
 bridge.server = nil
