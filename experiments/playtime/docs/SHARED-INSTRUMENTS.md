@@ -47,6 +47,27 @@ Playtime warns when its dylib lacks one. No level, no reverb send, no FX buses i
     dreamengine's; a good local one gets promoted into dreamengine's file and the copy goes.
     Nothing has to start in dreamengine.
   Still open with it: presets spanning slots (the 303, the kits), and export-only vs read at runtime.
+  dreamengine-8e's answers (2026-11-03), also not decided:
+  - The cart rule holds: "one cart = one honest core" means one job, not one library. groovebook is
+    the precedent (runtime/drumpat.h is the library, groovebook its reader whose job is auditioning
+    it), patchbench another; a "presetbook" cart would be the same move. A voice-lab browser in
+    Playtime later doesn't conflict.
+  - A third route instead of export vs runtime, the drumpat one: presets.json is the source, a
+    generator writes runtime/presets.h (C data compiled into carts, no JSON at runtime; iOS, web,
+    AUv3), Playtime's generator writes Lua from the same file. `preset(slot, "epiano/suitcase")` is a
+    table lookup. Their pick over runtime JSON (runtime/json.h is experimental, file loading is the
+    fragile part on iOS and web).
+  - Multi-slot: split SOUND from BEHAVIOUR. Data can hold a kit ("kit/808": 14 slot recipes at
+    offsets 0..13). The 303's slide, accent and filter tracking are code (acid303.h), as are tr808's
+    trigger maths and drumkit roles: they stay code, and a preset only names the voice it was voiced
+    for. Playtime gets a 303 by porting behaviour, not by reading JSON. Decide early, or the format
+    grows a scripting language.
+  - Promotion, two conditions: the same schema byte for byte (constants by name), and a promoted
+    preset sounds the same in both: a `requires` field (API symbols used) and a promotion check that
+    renders it in a dreamengine probe (not silent, not clipping).
+  - dreamengine's 147-name catalog (docs/guides/instrument-presets.md, prose) should be generated from
+    presets.json once it exists, or they drift: the drift that started this.
+  Nikki: not deciding now; pick this up fresh.
 - [ ] **I2. The first slice, ~10 presets**: the ones Playtime already copies, so they stop drifting:
   epiano/suitcase, the upright pizz (rootwalk uses it too), vibes, kalimba, the 303, 3-4 drum skins.
   Written by hand at first; for more, a probe cart per preset that dumps the slot's real state (DE_TRACE).
