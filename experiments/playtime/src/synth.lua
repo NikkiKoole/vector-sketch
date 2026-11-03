@@ -312,7 +312,9 @@ if ffi then pcall(ffi.cdef, CDEF) end
 -- scheduleAt falls back to schedule_at, so the notes just attack again. Kept out of CDEF on purpose:
 -- native/ios/device.sh links in every CDEF function with -u, which fails to link against an older
 -- dreamengine; and the web build's synth-web.lua has no struct-passing bridge. So iOS and web play
--- without slides for now (S.hasNoteAt is false there).
+-- without slides for now (S.hasNoteAt is false there). Since 2026-11-03 both get them when the engine has them:
+-- device.sh and build-web.sh also take the CDEF_OPTIONAL functions runtime/sound.h defines, and the web
+-- passes NoteOpts flat (schedule_note_at_flat, built into a struct by webtest/desound-processor.js).
 local CDEF_OPTIONAL = [[
 void schedule_note_at(double t, int midi, int instr, int vol, int dur_ms, const NoteOpts *opts);
 void instrument_accent(int slot, int route, float amount);
@@ -390,9 +392,10 @@ local function sendPedals(slot, name, only)
     end
 end
 
--- one of CDEF_OPTIONAL's functions in the loaded library, or nil (a library built before it)
+-- one of CDEF_OPTIONAL's functions in the loaded library, or nil (a library built before it). On the
+-- web every call is written down for the page (src/synth-web.lua); the page skips one the wasm lacks
 local function optionalFn(name)
-    if not ffi then return nil end
+    if not ffi then return IS_WEB and S.C and S.C[name] or nil end
     local ok, f = pcall(function() return S.C[name] end)
     return ok and f or nil
 end
@@ -768,6 +771,7 @@ end
 -- typedef across a hot reload, so a running game has the old one until restart), the 0..7 vol is
 -- scaled instead: coarser, but never an error.
 local function noteOptsHasGain()
+    if IS_WEB then return true end -- the page writes the struct itself, gain included
     if S.noteGain == nil then S.noteGain = ffi ~= nil and pcall(ffi.offsetof, 'NoteOpts', 'gain') and
                                                ffi.offsetof('NoteOpts', 'gain') ~= nil or false end
     return S.noteGain
@@ -788,8 +792,8 @@ function lib.scheduleAt(patchName, t, midi, vol, durMs, opts)
     end
     local slot, dur = slotOf(patchName, patch, t, durMs), math.max(1, math.floor(durMs))
     if (opts or gain) and S.hasNoteAt == nil then -- the optional #47 functions (CDEF_OPTIONAL): looked up once,
-        local ok, f = pcall(function() return S.C.schedule_note_at end) -- on first use, so the offline renderer gets them too
-        S.hasNoteAt = ffi ~= nil and ok and f ~= nil
+        local ok, f = pcall(function() return S.C.schedule_note_at end) -- on first use: the offline renderer too
+        S.hasNoteAt = (ffi ~= nil or IS_WEB) and ok and f ~= nil
     end
     local exactGain = gain and S.hasNoteAt and noteOptsHasGain()
     if gain and not exactGain then -- no per-note gain here: scale the whole-step vol
@@ -801,7 +805,12 @@ function lib.scheduleAt(patchName, t, midi, vol, durMs, opts)
         local fields = { glide_ms = opts.glide or 0, accent = opts.accent or 0,
                          harmonics = opts.harmonics or 0, timbre = opts.timbre or 0, morph = opts.morph or 0 }
         if exactGain then fields.gain = gain end
-        S.C.schedule_note_at(t, midi, slot, vol, dur, ffi.new('NoteOpts', fields))
+        if IS_WEB then -- no struct over the page's text bridge: the fields flat, the page builds the NoteOpts
+            S.C.schedule_note_at_flat(t, midi, slot, vol, dur, fields.glide_ms, fields.accent, fields.harmonics,
+                                      fields.timbre, fields.morph, fields.gain or 0)
+        else
+            S.C.schedule_note_at(t, midi, slot, vol, dur, ffi.new('NoteOpts', fields))
+        end
     else
         S.C.schedule_at(t, midi, slot, vol, dur)
     end

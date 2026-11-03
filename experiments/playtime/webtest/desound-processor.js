@@ -63,6 +63,7 @@ class Desound extends AudioWorkletProcessor {
             const parts = call.split(' ');
             const name = parts[0];
             const args = parts.slice(1).map(Number);
+            if (name === 'schedule_note_at_flat') { this.noteAt(args); continue; }
             const fn = this.ex[name];
             if (!fn) continue;
             if (name === 'note_on') {
@@ -77,10 +78,28 @@ class Desound extends AudioWorkletProcessor {
             } else if (name === 'schedule_at') {
                 args[0] += this.offset;
                 fn(...args);
+            } else if (name === 'unschedule') { // slot, t1, t2 (t2 <= t1: from t1 on) on Lua's clock
+                args[1] += this.offset;
+                if (args[2] > 0) args[2] += this.offset;
+                fn(...args);
             } else {
                 fn(...args);
             }
         }
+    }
+
+    // A booked note with extras (slide, accent, macros, its own gain): src/synth.lua sends the NoteOpts
+    // fields flat; here they go into a struct in the wasm's memory ({ int glide_ms; float accent,
+    // harmonics, timbre, morph, gain; }, 24 bytes). The engine copies them at the call, so one struct
+    // does for every note. A wasm without schedule_note_at plays it plainly.
+    noteAt(args) {
+        const [t, midi, slot, vol, dur, glide, accent, harmonics, timbre, morph, gain] = args;
+        if (!this.ex.schedule_note_at) { if (this.ex.schedule_at) this.ex.schedule_at(t + this.offset, midi, slot, vol, dur); return; }
+        if (!this.opts) this.opts = this.ex.malloc(24);
+        const view = new DataView(this.ex.memory.buffer); // fresh: memory growth replaces the buffer
+        view.setInt32(this.opts, glide, true);
+        [accent, harmonics, timbre, morph, gain].forEach((v, i) => view.setFloat32(this.opts + 4 + 4 * i, v, true));
+        this.ex.schedule_note_at(t + this.offset, midi, slot, vol, dur, this.opts);
     }
 
     // One frame's calls per 128 samples: the engine's request queue (512) drains as it renders,

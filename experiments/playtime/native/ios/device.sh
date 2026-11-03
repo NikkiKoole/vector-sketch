@@ -230,6 +230,13 @@ if "$PLAYTIME_DIR/native/desound/build-ios.sh" "$IOS_DIR/build/libdesound-ios.a"
         | grep -oE '[a-z_0-9]+\(' | tr -d '(' | sort -u) de_lua_init de_lua_render_s16; do
         SYNTH_FLAGS="$SYNTH_FLAGS -Wl,-u,_$f"
     done
+    # and the synth's CDEF_OPTIONAL ones (slides, accents, unschedule, ...), each only if this
+    # dreamengine defines it: -u of a missing symbol fails the link
+    SOUND_H="${DREAMENGINE:-$HOME/Projects/dreamengine}/runtime/sound.h"
+    for f in $(sed -n '/^local CDEF_OPTIONAL = \[\[/,/^\]\]/p' "$PLAYTIME_DIR/src/synth.lua" \
+        | grep -oE '[a-z_0-9]+\(' | tr -d '(' | sort -u); do
+        grep -qE "^[a-z].* $f\(" "$SOUND_H" 2>/dev/null && SYNTH_FLAGS="$SYNTH_FLAGS -Wl,-u,_$f"
+    done
     echo "▸ synth: linked in"
 else
     echo "  ⚠ no synth: native/desound/build-ios.sh failed (needs dreamengine, DREAMENGINE=…)"
