@@ -364,7 +364,7 @@ function lib.randomizeMipo(instance, textureOpts, faceOpts)
     randomizeAll(instance, textureOpts, faceOpts)
 end
 
--- Coherent but varied (Bathhouse Mipos): limb skin locked to leg1, round-ish eyes, calm pupils.
+-- Coherent but varied (Bathhouse Mipos): limb skin locked to leg-01, round-ish eyes, calm pupils.
 -- More constraints go here as the Mipo DNA language grows.
 function lib.randomizeMipoConstrained(instance)
     randomizeAll(instance, { limbSkin = C.limbSkinTextures[1] },

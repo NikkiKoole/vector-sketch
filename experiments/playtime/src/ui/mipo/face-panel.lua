@@ -6,6 +6,7 @@ local mouthShapes = require('src.mouth-shapes')
 local C = require('src.shape-catalogs')
 local topology = require('src.character-topology')
 local widgets = require('src.ui.mipo.widgets')
+local textureNames = require('src.texture-names')
 local ui = widgets.ui
 local drawThumbnailGrid, handlePaletteButton = widgets.drawThumbnailGrid, widgets.handlePaletteButton
 local drawPatternControls = widgets.drawPatternControls
@@ -31,10 +32,10 @@ local function drawFaceEyesUI(instance, faceOwner, partName, face, x, y, panelX,
     -- Eye shape thumbnail grid
     ui.label(x, y, 'eye shape')
     y = y + ROW
-    local currentEyeURL = eye.shape > 0 and ('eye' .. eye.shape .. '.png') or ''
+    local currentEyeURL = eye.shape > 0 and textureNames.part('eye', eye.shape) .. '.png' or ''
     local gridHeight = drawThumbnailGrid(eyeShapes, currentEyeURL, panelX, y, cellSize, function(url)
         if url then
-            local shapeNum = tonumber(url:match('eye(%d+)%.png'))
+            local shapeNum = textureNames.number('eye', url)
             if shapeNum then
                 CharacterManager.updateFaceOfPart(instance, faceOwner, { eyeShape = shapeNum })
                 CharacterManager.rebuildTextures(instance)
@@ -49,10 +50,10 @@ local function drawFaceEyesUI(instance, faceOwner, partName, face, x, y, panelX,
     -- Pupil shape thumbnail grid
     ui.label(x, y, 'pupil shape')
     y = y + ROW
-    local currentPupilURL = 'pupil' .. pupil.shape .. '.png'
+    local currentPupilURL = textureNames.part('pupil', pupil.shape) .. '.png'
     gridHeight = drawThumbnailGrid(pupilShapes, currentPupilURL, panelX, y, cellSize, function(url)
         if url then
-            local shapeNum = tonumber(url:match('pupil(%d+)%.png'))
+            local shapeNum = textureNames.number('pupil', url)
             if shapeNum then
                 CharacterManager.updateFaceOfPart(instance, faceOwner, { pupilShape = shapeNum })
                 CharacterManager.rebuildTextures(instance)
@@ -166,10 +167,10 @@ local function drawFaceBrowsUI(instance, faceOwner, partName, face, x, y, panelX
     -- Brow shape thumbnail grid
     ui.label(x, y, 'brow shape')
     y = y + ROW
-    local currentBrowURL = 'brow' .. brow.shape .. '.png'
+    local currentBrowURL = textureNames.part('brow', brow.shape) .. '.png'
     local gridHeight = drawThumbnailGrid(browShapes, currentBrowURL, panelX, y, cellSize, function(url)
         if url then
-            local shapeNum = tonumber(url:match('brow(%d+)%.png'))
+            local shapeNum = textureNames.number('brow', url)
             if shapeNum then
                 CharacterManager.updateFaceOfPart(instance, faceOwner, { browShape = shapeNum })
                 CharacterManager.rebuildTextures(instance)
@@ -234,10 +235,10 @@ local function drawFaceNoseUI(instance, faceOwner, partName, face, x, y, panelX,
 
     ui.label(x, y, 'nose (overlay)')
     y = y + ROW
-    local currentNoseURL = nose.shape > 0 and ('nose' .. nose.shape .. '.png') or ''
+    local currentNoseURL = nose.shape > 0 and textureNames.part('nose', nose.shape) .. '.png' or ''
     local gridHeight = drawThumbnailGrid(noseShapes, currentNoseURL, panelX, y, cellSize, function(url)
         if url then
-            local shapeNum = tonumber(url:match('nose(%d+)%.png'))
+            local shapeNum = textureNames.number('nose', url)
             if shapeNum then
                 CharacterManager.updateFaceOfPart(instance, faceOwner, { noseShape = shapeNum })
                 CharacterManager.rebuildTextures(instance)
@@ -317,10 +318,10 @@ local function drawFaceMouthUI(instance, faceOwner, partName, face, x, y, panelX
     -- Upper lip texture grid
     ui.label(x, y, 'upper lip')
     y = y + ROW
-    local currentUpperURL = 'upperlip' .. mouth.upperLipShape .. '.png'
+    local currentUpperURL = textureNames.part('upperlip', mouth.upperLipShape) .. '.png'
     local gridHeight = drawThumbnailGrid(upperLipShapes, currentUpperURL, panelX, y, cellSize, function(url)
         if url then
-            local num = tonumber(url:match('upperlip(%d+)%.png'))
+            local num = textureNames.number('upperlip', url)
             if num then
                 CharacterManager.updateFaceOfPart(instance, faceOwner, { mouthUpperLipShape = num })
                 CharacterManager.rebuildTextures(instance)
@@ -332,10 +333,10 @@ local function drawFaceMouthUI(instance, faceOwner, partName, face, x, y, panelX
     -- Lower lip texture grid
     ui.label(x, y, 'lower lip')
     y = y + ROW
-    local currentLowerURL = 'lowerlip' .. mouth.lowerLipShape .. '.png'
+    local currentLowerURL = textureNames.part('lowerlip', mouth.lowerLipShape) .. '.png'
     gridHeight = drawThumbnailGrid(lowerLipShapes, currentLowerURL, panelX, y, cellSize, function(url)
         if url then
-            local num = tonumber(url:match('lowerlip(%d+)%.png'))
+            local num = textureNames.number('lowerlip', url)
             if num then
                 CharacterManager.updateFaceOfPart(instance, faceOwner, { mouthLowerLipShape = num })
                 CharacterManager.rebuildTextures(instance)
@@ -412,10 +413,10 @@ local function drawFaceMouthUI(instance, faceOwner, partName, face, x, y, panelX
     ui.label(x, y, 'teeth')
     y = y + ROW
 
-    local currentTeethURL = teeth.shape and teeth.shape > 0 and ('teeth' .. teeth.shape .. '.png') or ''
+    local currentTeethURL = teeth.shape and teeth.shape > 0 and textureNames.part('teeth', teeth.shape) .. '.png' or ''
     local teethGridHeight = drawThumbnailGrid(teethShapes, currentTeethURL, panelX, y, cellSize, function(url)
         if url then
-            local num = tonumber(url:match('teeth(%d+)%.png'))
+            local num = textureNames.number('teeth', url)
             if num then
                 CharacterManager.updateFaceOfPart(instance, faceOwner, { teethShape = num })
                 CharacterManager.rebuildTextures(instance)

@@ -120,13 +120,13 @@ describe('draw loops skip and go on', function()
             return extra
         end
         local cleared = ompFixture(0, '')
-        local pictured = ompFixture(300, 'shapeA1.png')
+        local pictured = ompFixture(300, 'mipo/body/body-01.png')
         local cleared2 = ompFixture(600, '')
         -- two on one body, in both orders: a cleared one mustn't end that body's fixture loop
         local both1 = objectManager.addThing('rectangle', { x = 900, y = 0, width = 40, height = 40 }).body
-        local first1, second1 = ompFixture(nil, '', both1), ompFixture(nil, 'shapeA1.png', both1)
+        local first1, second1 = ompFixture(nil, '', both1), ompFixture(nil, 'mipo/body/body-01.png', both1)
         local both2 = objectManager.addThing('rectangle', { x = 1200, y = 0, width = 40, height = 40 }).body
-        local first2, second2 = ompFixture(nil, 'shapeA1.png', both2), ompFixture(nil, '', both2)
+        local first2, second2 = ompFixture(nil, 'mipo/body/body-01.png', both2), ompFixture(nil, '', both2)
 
         local canvas = love.graphics.newCanvas(10, 10)
         love.graphics.setCanvas(canvas)
@@ -157,7 +157,7 @@ describe('draw loops skip and go on', function()
         local texfixture = fixtures.createSFixture(textured.body, 0, 0, 'texfixture', { width = 40, height = 40 })
         local texExtra = texfixture:getUserData().extra
         texExtra.main = texExtra.main or {}
-        texExtra.main.bgURL = 'shapeA1.png'
+        texExtra.main.bgURL = 'mipo/body/body-01.png'
 
         local draws = 0
         local draw = love.graphics.draw

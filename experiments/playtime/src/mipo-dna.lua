@@ -57,44 +57,44 @@ local dna = {
                 appearance = {
                     ['skin'] = {
                         zOffset = 350, -- physics nose: in front of body/legs, behind arms (402) and hands (500)
-                        main = initBlock('shapeA2'),
+                        main = initBlock('mipo/body/body-02'),
                     },
                 },
                 dims = { w = 40, h = 40, w2 = 4, sx = 1, sy = 1 },
                 shape = ST.SHAPE8,
-                shape8URL = 'shapeA2.png',
+                shape8URL = 'mipo/body/body-02.png',
                 j = { type = JT.REVOLUTE, limits = { low = -math.pi / 32, up = math.pi / 32 } }
             },
             ['torso-segment-template'] = {
                 appearance = {
                     -- this will do the neck texturing (connecting torso and head)
                     ['connected-skin'] = {
-                        main = add(initBlock('leg5'), {}),
+                        main = add(initBlock('mipo/leg/leg-05'), {}),
                         endNode = 'head',
                         zOffset = 100,
                     },
                     ['connected-hair'] = {
-                        main = add(createDefaultTextureDNABlock('hair10', true), { dir = 1 }),
+                        main = add(createDefaultTextureDNABlock('mipo/hair/hair-10', true), { dir = 1 }),
                         endNode = 'head',
                         zOffset = 101,
                     },
                     ['skin'] = {
                         zOffset = 192, -- TORSO_SKIN_Z
                         main = initBlock(),
-                        patch1 = add(initBlock('patch2'), { tx = -0.33, ty = 0 }),
-                        patch2 = add(initBlock('patch1'), { tx = 0.33, ty = 0 }),
-                        patch3 = add(initBlock('patch1'), { tx = 0, ty = 0.83, sx = 2 })
+                        patch1 = add(initBlock('mipo/patch/patch-02'), { tx = -0.33, ty = 0 }),
+                        patch2 = add(initBlock('mipo/patch/patch-01'), { tx = 0.33, ty = 0 }),
+                        patch3 = add(initBlock('mipo/patch/patch-01'), { tx = 0, ty = 0.83, sx = 2 })
                     },
-                    ['bodyhair'] = { main = add(initBlock('borsthaar4'), {}) },
+                    ['bodyhair'] = { main = add(initBlock('mipo/chesthair/chesthair-04'), {}) },
                     ['haircut'] = {
                         startIndex = 6,
                         endIndex = 3,
-                        main = initBlock('hair7'),
+                        main = initBlock('mipo/hair/hair-07'),
                     },
                     ['face'] = utils.deepCopy(D.face),
                 },
                 dims = { w = 280, w2 = 5, h = 300, sx = 1, sy = 1 },
-                shape8URL = 'shapeA1.png',
+                shape8URL = 'mipo/body/body-01.png',
                 shape = ST.SHAPE8,
                 behaviors = { { name = 'KEEP_ANGLE', angle = 0 } },
                 j = { type = JT.REVOLUTE, limits = { low = -math.pi / 8, up = math.pi / 8 } }
@@ -116,33 +116,33 @@ local dna = {
                     ['skin'] = {
                         zOffset = 200,
                         main = initBlock(),
-                        patch1 = add(initBlock('patch1'), { tx = -0.33, ty = 0 }),
-                        patch2 = add(initBlock('patch1'), { tx = 0.33, ty = 0 }),
-                        patch3 = add(initBlock('patch1'), { tx = 0, ty = 0.83, sx = 2 })
+                        patch1 = add(initBlock('mipo/patch/patch-01'), { tx = -0.33, ty = 0 }),
+                        patch2 = add(initBlock('mipo/patch/patch-01'), { tx = 0.33, ty = 0 }),
+                        patch3 = add(initBlock('mipo/patch/patch-01'), { tx = 0, ty = 0.83, sx = 2 })
                     },
-                    ['bodyhair'] = { main = initBlock('borsthaar4') },
+                    ['bodyhair'] = { main = initBlock('mipo/chesthair/chesthair-04') },
                     ['haircut'] = {
                         startIndex = 6,
                         endIndex = 3,
-                        main = add(initBlock('hair6'), { fgURL = '' }),
+                        main = add(initBlock('mipo/hair/hair-06'), { fgURL = '' }),
                     },
                     ['face'] = utils.deepCopy(D.face),
                 },
                 dims = { w = 100, w2 = 4, h = 180, sx = 1, sy = 1 },
                 shape = ST.SHAPE8,
-                shape8URL = 'shapeA2.png',
+                shape8URL = 'mipo/body/body-02.png',
                 behaviors = { { name = 'KEEP_ANGLE', angle = 0 } },
                 j = { type = JT.REVOLUTE, limits = { low = -math.pi / 4, up = math.pi / 4 } }
             },
             ['luleg'] = {
                 appearance = {
                     ['connected-skin'] = {
-                        main = add(initBlock('leg5'), { dir = -1 }),
+                        main = add(initBlock('mipo/leg/leg-05'), { dir = -1 }),
                         endNode = 'lfoot',
                         zOffset = 300,
                     },
                     ['connected-hair'] = {
-                        main = add(createDefaultTextureDNABlock('hair10', true), { dir = -1 }),
+                        main = add(createDefaultTextureDNABlock('mipo/hair/hair-10', true), { dir = -1 }),
                         endNode = 'lfoot',
                         zOffset = 301,
                     }
@@ -155,12 +155,12 @@ local dna = {
             ['ruleg'] = {
                 appearance = {
                     ['connected-skin'] = {
-                        main = add(initBlock('leg5'), { dir = 1 }),
+                        main = add(initBlock('mipo/leg/leg-05'), { dir = 1 }),
                         endNode = 'rfoot',
                         zOffset = 300,
                     },
                     ['connected-hair'] = {
-                        main = add(createDefaultTextureDNABlock('hair10', true), { dir = 1 }),
+                        main = add(createDefaultTextureDNABlock('mipo/hair/hair-10', true), { dir = 1 }),
                         endNode = 'rfoot',
                         zOffset = 301,
                     }
@@ -180,11 +180,11 @@ local dna = {
                 appearance = {
                     ['connected-skin'] = {
                         zOffset = 402,
-                        main = add(initBlock('leg5'), { dir = -1 }),
+                        main = add(initBlock('mipo/leg/leg-05'), { dir = -1 }),
                         endNode = 'lhand'
                     },
                     ['connected-hair'] = {
-                        main = add(createDefaultTextureDNABlock('hair10', true), { dir = -1 }),
+                        main = add(createDefaultTextureDNABlock('mipo/hair/hair-10', true), { dir = -1 }),
                         endNode = 'lhand',
                         zOffset = 403,
                     }
@@ -197,11 +197,11 @@ local dna = {
                 appearance = {
                     ['connected-skin'] = {
                         zOffset = 402,
-                        main = add(initBlock('leg5'), { dir = 1 }),
+                        main = add(initBlock('mipo/leg/leg-05'), { dir = 1 }),
                         endNode = 'rhand'
                     },
                     ['connected-hair'] = {
-                        main = add(createDefaultTextureDNABlock('hair10', true), { dir = 1 }),
+                        main = add(createDefaultTextureDNABlock('mipo/hair/hair-10', true), { dir = 1 }),
                         endNode = 'rhand',
                         zOffset = 403,
                     }
@@ -224,7 +224,7 @@ local dna = {
                 },
                 dims = { w = 80, h = 150, sx = 1, sy = 1 },
                 shape = ST.SHAPE8,
-                shape8URL = 'feet6r.png',
+                shape8URL = 'mipo/foot/foot-04.png',
                 j = { type = JT.REVOLUTE, limits = { low = -math.pi / 8, up = math.pi / 8 } }
             },
             ['rfoot'] = {
@@ -236,7 +236,7 @@ local dna = {
                 },
                 dims = { w = 80, h = 150, sx = -1, sy = 1 },
                 shape = ST.SHAPE8,
-                shape8URL = 'feet6r.png',
+                shape8URL = 'mipo/foot/foot-04.png',
                 j = { type = JT.REVOLUTE, limits = { low = -math.pi / 8, up = math.pi / 8 } }
             },
             -- TODO THIS IS SO WEIRD, BUT WHEN I DONT USE A SHAPE8 for THE FOOT THE ANGLE IS FLIPPED?!
@@ -253,7 +253,7 @@ local dna = {
                 },
                 dims = { w = 40, h = 40, sx = 1, sy = 1 },
                 shape = ST.SHAPE8,
-                shape8URL = 'hand3r.png',
+                shape8URL = 'mipo/hand/hand-01.png',
                 j = { type = JT.REVOLUTE, limits = { low = -math.pi / 8, up = math.pi / 8 } }
             },
             ['rhand'] = {
@@ -265,7 +265,7 @@ local dna = {
                 },
                 dims = { w = 40, h = 40, sx = -1, sy = 1 },
                 shape = ST.SHAPE8,
-                shape8URL = 'hand3r.png',
+                shape8URL = 'mipo/hand/hand-01.png',
                 j = { type = JT.REVOLUTE, limits = { low = -math.pi / 8, up = math.pi / 8 } }
             },
             -- TODo same kind of weirdness for the hands!
@@ -278,14 +278,14 @@ local dna = {
                     ['skin'] = {
                         zOffset = 190,
                         main = add(initBlock(), {}),
-                        --patch1 = add(initBlock('patch2'), { tx = 0.3, ty = 0.3 }),
-                        --patch2 = add(initBlock('patch1'), { tx = -0.3, ty = 0.3 })
+                        --patch1 = add(initBlock('mipo/patch/patch-02'), { tx = 0.3, ty = 0.3 }),
+                        --patch2 = add(initBlock('mipo/patch/patch-01'), { tx = -0.3, ty = 0.3 })
                     }
                 },
                 dims = { w = 100, h = 300, sx = .5, sy = 1 },
 
                 shape = ST.SHAPE8,
-                shape8URL = 'earx1r.png',
+                shape8URL = 'mipo/ear/ear-01.png',
                 j = earJoint(),
                 stanceAngle = -math.pi / 2 + math.pi / 5
             },
@@ -294,14 +294,14 @@ local dna = {
                     ['skin'] = {
                         zOffset = 190,
                         main = add(initBlock(), {}),
-                        --patch1 = add(initBlock('patch2'), { tx = 0.3, ty = 0.3 }),
-                        --patch2 = add(initBlock('patch1'), { tx = -0.3, ty = 0.3 })
+                        --patch1 = add(initBlock('mipo/patch/patch-02'), { tx = 0.3, ty = 0.3 }),
+                        --patch2 = add(initBlock('mipo/patch/patch-01'), { tx = -0.3, ty = 0.3 })
                     }
                 },
                 dims = { w = 100, h = 300, sx = -.5, sy = 1 },
 
                 shape = ST.SHAPE8,
-                shape8URL = 'earx1r.png',
+                shape8URL = 'mipo/ear/ear-01.png',
                 j = earJoint(),
                 stanceAngle = math.pi / 2 - math.pi / 5
             }

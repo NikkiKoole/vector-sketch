@@ -77,7 +77,7 @@ describe('lip edges', function()
                         local ud = f:getUserData()
                         if ud and ud.label == 'upperlip' then
                             lips = lips + 1
-                            assert.are_not.equal('upperlip4.png', ud.extra.main.bgURL)
+                            assert.are_not.equal('mipo/upperlip/upperlip-04.png', ud.extra.main.bgURL)
                         end
                     end
                 end

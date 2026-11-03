@@ -4,6 +4,7 @@ local registry = require('src.registry')
 local ribbon = require('src.render.ribbon')
 local state = require('src.state')
 local color = require('src.color')
+local textureNames = require('src.texture-names')
 
 local function safeLoadImage(path)
     local info = love.filesystem.getInfo(path)
@@ -20,8 +21,8 @@ if not tex1 then
 end
 tex1:setWrap('mirroredrepeat', 'mirroredrepeat')
 
-local line = safeLoadImage('textures/shapes6.png')
-local maskTex = safeLoadImage('textures/shapes6-mask.png')
+local line = safeLoadImage('textures/mipo/body/body-10.png')
+local maskTex = safeLoadImage('textures/mipo/body/body-10-mask.png')
 local imageCache = {}
 -- Paths that aren't there, so they're looked up once, not every frame (a bodyhair's fgURL names a
 -- mask that doesn't exist: 40 filesystem lookups a frame with 20 Mipos). A picture added while the
@@ -43,12 +44,17 @@ lib.texturesCreated = 0
 local function getLoveImage(path, settings)
     if missingImages[path] then return nil, nil, nil end
     if not imageCache[path] then
-        local info = love.filesystem.getInfo(path)
+        local file = path
+        local info = love.filesystem.getInfo(file)
+        if not info then -- an old texture name that slipped past the scene migration (src/texture-names.lua)
+            file = textureNames.resolve(path)
+            info = file ~= path and love.filesystem.getInfo(file)
+        end
         if not info or info.type ~= 'file' then
             missingImages[path] = true
             return nil, nil, nil
         end
-        local img = love.graphics.newImage(path)
+        local img = love.graphics.newImage(file)
         if img then
             local imgw, imgh = img:getDimensions()
             imageCache[path] = { img = img, imgw = imgw, imgh = imgh }

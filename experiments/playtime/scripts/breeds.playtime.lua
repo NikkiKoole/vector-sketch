@@ -13,12 +13,12 @@ local GROUND_Y = 900
 local ZOOM = 0.42
 
 -- Shapes, grouped by eye (scratch sheets of the masks, 2026-11-01).
-local ROUND_BODY = { 'shapeA3', 'shapes3', 'shapes6', 'shapes8', 'shapes10', 'shapes12', 'shapes13' }
-local SQUARE_BODY = { 'shapeA4', 'shapes1', 'shapes4', 'shapes5', 'shapes9', 'shapes11' }
-local TALL_BODY = { 'shapeA1', 'shapeA2', 'shapes2', 'shapes5', 'shapes6', 'shapes10' }
-local POINTY_BODY = { 'shapeA1', 'shapes7', 'shapes11', 'shapes13' }
-local ROUND_EARS = { 'earx1r', 'earx2r', 'earx8r', 'earx9r', 'earx10r', 'earx11r', 'earx12r', 'earx16r' }
-local POINTY_EARS = { 'earx3r', 'earx4r', 'earx5r', 'earx6r', 'earx7r', 'earx13r', 'earx14r', 'earx15r' }
+local ROUND_BODY = { 'mipo/body/body-03', 'mipo/body/body-07', 'mipo/body/body-10', 'mipo/body/body-12', 'mipo/body/body-14', 'mipo/body/body-16', 'mipo/body/body-17' }
+local SQUARE_BODY = { 'mipo/body/body-04', 'mipo/body/body-05', 'mipo/body/body-08', 'mipo/body/body-09', 'mipo/body/body-13', 'mipo/body/body-15' }
+local TALL_BODY = { 'mipo/body/body-01', 'mipo/body/body-02', 'mipo/body/body-06', 'mipo/body/body-09', 'mipo/body/body-10', 'mipo/body/body-14' }
+local POINTY_BODY = { 'mipo/body/body-01', 'mipo/body/body-11', 'mipo/body/body-15', 'mipo/body/body-17' }
+local ROUND_EARS = { 'mipo/ear/ear-01', 'mipo/ear/ear-02', 'mipo/ear/ear-08', 'mipo/ear/ear-09', 'mipo/ear/ear-10', 'mipo/ear/ear-11', 'mipo/ear/ear-12', 'mipo/ear/ear-16' }
+local POINTY_EARS = { 'mipo/ear/ear-03', 'mipo/ear/ear-04', 'mipo/ear/ear-05', 'mipo/ear/ear-06', 'mipo/ear/ear-07', 'mipo/ear/ear-13', 'mipo/ear/ear-14', 'mipo/ear/ear-15' }
 
 -- hue in degrees, saturation and lightness 0..1; hues = several bands to draw from
 local BREEDS = {

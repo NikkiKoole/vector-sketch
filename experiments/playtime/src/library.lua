@@ -19,6 +19,7 @@ local signals = require('src.signals')
 local resourceLink = require('src.resource-link')
 local utils = require('src.utils')
 local CharacterManager = require('src.character-manager')
+local textureNames = require('src.texture-names')
 
 lib.DIR = 'library'
 
@@ -190,6 +191,7 @@ function lib.load(name)
     if not contents then return nil end
     local prefab = json.decode(contents)
     if type(prefab) ~= 'table' or type(prefab.bodies) ~= 'table' then return nil end
+    textureNames.migrate(prefab) -- old texture names (src/texture-names.lua)
     prefab.joints = prefab.joints or {}
     return prefab
 end

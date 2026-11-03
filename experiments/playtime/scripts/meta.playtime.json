@@ -54,7 +54,7 @@
               "main":{
                 "fgHex":"",
                 "bgHex":"",
-                "bgURL":"earx16r.png",
+                "bgURL":"mipo/ear/ear-16.png",
                 "fgURL":""
               },
               "vertexCount":4,
@@ -124,7 +124,7 @@
               "main":{
                 "bgHex":"",
                 "fgHex":"",
-                "bgURL":"earx15r.png",
+                "bgURL":"mipo/ear/ear-15.png",
                 "fgURL":""
               },
               "vertexCount":4,
@@ -194,7 +194,7 @@
               "main":{
                 "fgHex":"",
                 "bgHex":"",
-                "bgURL":"earx14r.png",
+                "bgURL":"mipo/ear/ear-14.png",
                 "fgURL":""
               },
               "vertexCount":4,
@@ -264,7 +264,7 @@
               "main":{
                 "bgHex":"",
                 "fgHex":"",
-                "bgURL":"earx13r.png",
+                "bgURL":"mipo/ear/ear-13.png",
                 "fgURL":""
               },
               "vertexCount":4,
@@ -334,7 +334,7 @@
               "main":{
                 "fgHex":"",
                 "bgHex":"",
-                "bgURL":"earx12r.png",
+                "bgURL":"mipo/ear/ear-12.png",
                 "fgURL":""
               },
               "vertexCount":4,
@@ -404,7 +404,7 @@
               "main":{
                 "bgHex":"",
                 "fgHex":"",
-                "bgURL":"earx11r.png",
+                "bgURL":"mipo/ear/ear-11.png",
                 "fgURL":""
               },
               "vertexCount":4,
@@ -474,7 +474,7 @@
               "main":{
                 "fgHex":"",
                 "bgHex":"",
-                "bgURL":"earx10r.png",
+                "bgURL":"mipo/ear/ear-10.png",
                 "fgURL":""
               },
               "vertexCount":4,
@@ -544,7 +544,7 @@
               "main":{
                 "bgHex":"",
                 "fgHex":"",
-                "bgURL":"earx9r.png",
+                "bgURL":"mipo/ear/ear-09.png",
                 "fgURL":""
               },
               "vertexCount":4,
@@ -614,7 +614,7 @@
               "main":{
                 "fgHex":"",
                 "bgHex":"",
-                "bgURL":"earx4r.png",
+                "bgURL":"mipo/ear/ear-04.png",
                 "fgURL":""
               },
               "vertexCount":4,
@@ -684,7 +684,7 @@
               "main":{
                 "fgHex":"",
                 "bgHex":"",
-                "bgURL":"earx2r.png",
+                "bgURL":"mipo/ear/ear-02.png",
                 "fgURL":""
               },
               "vertexCount":4,
@@ -773,7 +773,7 @@
               "main":{
                 "fgHex":"",
                 "bgHex":"",
-                "bgURL":"feet3xr.png",
+                "bgURL":"mipo/foot/foot-02.png",
                 "fgURL":""
               },
               "vertexCount":4,
@@ -862,7 +862,7 @@
               "main":{
                 "fgHex":"",
                 "bgHex":"",
-                "bgURL":"feet7xr.png",
+                "bgURL":"mipo/foot/foot-06.png",
                 "fgURL":""
               },
               "vertexCount":4,
@@ -942,7 +942,7 @@
               "main":{
                 "fgHex":"",
                 "bgHex":"",
-                "bgURL":"feet8r.png",
+                "bgURL":"mipo/foot/foot-07.png",
                 "fgURL":""
               },
               "vertexCount":4,
@@ -1022,7 +1022,7 @@
               "main":{
                 "fgHex":"",
                 "bgHex":"",
-                "bgURL":"feet5xr.png",
+                "bgURL":"mipo/foot/foot-03.png",
                 "fgURL":""
               },
               "vertexCount":4,
@@ -1102,7 +1102,7 @@
               "main":{
                 "fgHex":"",
                 "bgHex":"",
-                "bgURL":"feet2r.png",
+                "bgURL":"mipo/foot/foot-01.png",
                 "fgURL":""
               },
               "vertexCount":4,
@@ -1172,7 +1172,7 @@
               "main":{
                 "fgHex":"",
                 "bgHex":"",
-                "bgURL":"shapes13.png",
+                "bgURL":"mipo/body/body-17.png",
                 "fgURL":""
               },
               "vertexCount":8,
@@ -1242,7 +1242,7 @@
               "main":{
                 "fgHex":"",
                 "bgHex":"",
-                "bgURL":"shapes12.png",
+                "bgURL":"mipo/body/body-16.png",
                 "fgURL":""
               },
               "vertexCount":8,
@@ -1312,7 +1312,7 @@
               "main":{
                 "fgHex":"",
                 "bgHex":"",
-                "bgURL":"shapes11.png",
+                "bgURL":"mipo/body/body-15.png",
                 "fgURL":""
               },
               "vertexCount":8,
@@ -1382,7 +1382,7 @@
               "main":{
                 "fgHex":"",
                 "bgHex":"",
-                "bgURL":"shapes10.png",
+                "bgURL":"mipo/body/body-14.png",
                 "fgURL":""
               },
               "vertexCount":8,
@@ -1452,7 +1452,7 @@
               "main":{
                 "fgHex":"",
                 "bgHex":"",
-                "bgURL":"shapes9.png",
+                "bgURL":"mipo/body/body-13.png",
                 "fgURL":""
               },
               "vertexCount":8,
@@ -1522,7 +1522,7 @@
               "main":{
                 "fgHex":"",
                 "bgHex":"",
-                "bgURL":"shapes8.png",
+                "bgURL":"mipo/body/body-12.png",
                 "fgURL":""
               },
               "vertexCount":8,
@@ -1592,7 +1592,7 @@
               "main":{
                 "fgHex":"",
                 "bgHex":"",
-                "bgURL":"shapes1.png",
+                "bgURL":"mipo/body/body-05.png",
                 "fgURL":""
               },
               "vertexCount":8,
@@ -1662,7 +1662,7 @@
               "main":{
                 "fgHex":"",
                 "bgHex":"",
-                "bgURL":"shapeA4.png",
+                "bgURL":"mipo/body/body-04.png",
                 "fgURL":""
               },
               "vertexCount":8,
@@ -1732,7 +1732,7 @@
               "main":{
                 "fgHex":"",
                 "bgHex":"",
-                "bgURL":"shapeA1.png",
+                "bgURL":"mipo/body/body-01.png",
                 "fgURL":""
               },
               "vertexCount":4,
@@ -1802,7 +1802,7 @@
               "main":{
                 "fgHex":"",
                 "bgHex":"",
-                "bgURL":"shapeA2.png",
+                "bgURL":"mipo/body/body-02.png",
                 "fgURL":""
               },
               "vertexCount":4,
@@ -1872,7 +1872,7 @@
               "main":{
                 "fgHex":"",
                 "bgHex":"",
-                "bgURL":"shapeA3.png",
+                "bgURL":"mipo/body/body-03.png",
                 "fgURL":""
               },
               "vertexCount":4,
@@ -1942,7 +1942,7 @@
               "main":{
                 "fgHex":"",
                 "bgHex":"",
-                "bgURL":"shapes2.png",
+                "bgURL":"mipo/body/body-06.png",
                 "fgURL":""
               },
               "vertexCount":8,
@@ -2012,7 +2012,7 @@
               "main":{
                 "fgHex":"",
                 "bgHex":"",
-                "bgURL":"shapes3.png",
+                "bgURL":"mipo/body/body-07.png",
                 "fgURL":""
               },
               "vertexCount":8,
@@ -2082,7 +2082,7 @@
               "main":{
                 "fgHex":"",
                 "bgHex":"",
-                "bgURL":"shapes4.png",
+                "bgURL":"mipo/body/body-08.png",
                 "fgURL":""
               },
               "vertexCount":8,
@@ -2152,7 +2152,7 @@
               "main":{
                 "fgHex":"",
                 "bgHex":"",
-                "bgURL":"shapes5.png",
+                "bgURL":"mipo/body/body-09.png",
                 "fgURL":""
               },
               "vertexCount":8,
@@ -2222,7 +2222,7 @@
               "main":{
                 "fgHex":"",
                 "bgHex":"",
-                "bgURL":"shapes6.png",
+                "bgURL":"mipo/body/body-10.png",
                 "fgURL":""
               },
               "vertexCount":8,
@@ -2292,7 +2292,7 @@
               "main":{
                 "fgHex":"",
                 "bgHex":"",
-                "bgURL":"shapes7.png",
+                "bgURL":"mipo/body/body-11.png",
                 "fgURL":""
               },
               "vertexCount":8,
@@ -2372,7 +2372,7 @@
               "main":{
                 "fgHex":"",
                 "bgHex":"",
-                "bgURL":"feet6r.png",
+                "bgURL":"mipo/foot/foot-04.png",
                 "fgURL":""
               },
               "vertexCount":4,
@@ -2452,7 +2452,7 @@
               "main":{
                 "fgHex":"",
                 "bgHex":"",
-                "bgURL":"feet7r.png",
+                "bgURL":"mipo/foot/foot-05.png",
                 "fgURL":""
               },
               "vertexCount":4,
@@ -2541,7 +2541,7 @@
               "main":{
                 "fgHex":"",
                 "bgHex":"",
-                "bgURL":"hand3r.png",
+                "bgURL":"mipo/hand/hand-01.png",
                 "fgURL":""
               },
               "vertexCount":4,
@@ -2611,7 +2611,7 @@
               "main":{
                 "fgHex":"",
                 "bgHex":"",
-                "bgURL":"earx1r.png",
+                "bgURL":"mipo/ear/ear-01.png",
                 "fgURL":""
               },
               "vertexCount":4,
@@ -2681,7 +2681,7 @@
               "main":{
                 "fgHex":"",
                 "bgHex":"",
-                "bgURL":"earx3r.png",
+                "bgURL":"mipo/ear/ear-03.png",
                 "fgURL":""
               },
               "vertexCount":4,
@@ -2751,7 +2751,7 @@
               "main":{
                 "fgHex":"",
                 "bgHex":"",
-                "bgURL":"earx5r.png",
+                "bgURL":"mipo/ear/ear-05.png",
                 "fgURL":""
               },
               "vertexCount":4,
@@ -2821,7 +2821,7 @@
               "main":{
                 "fgHex":"",
                 "bgHex":"",
-                "bgURL":"earx6r.png",
+                "bgURL":"mipo/ear/ear-06.png",
                 "fgURL":""
               },
               "vertexCount":4,
@@ -2891,7 +2891,7 @@
               "main":{
                 "fgHex":"",
                 "bgHex":"",
-                "bgURL":"earx7r.png",
+                "bgURL":"mipo/ear/ear-07.png",
                 "fgURL":""
               },
               "vertexCount":4,
@@ -2961,7 +2961,7 @@
               "main":{
                 "fgHex":"",
                 "bgHex":"",
-                "bgURL":"earx8r.png",
+                "bgURL":"mipo/ear/ear-08.png",
                 "fgURL":""
               },
               "vertexCount":4,

@@ -529,7 +529,7 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
             if not nose1.appearance then nose1.appearance = {} end
             if not nose1.appearance['connected-skin'] then
                 nose1.appearance['connected-skin'] = {
-                    main = initBlock('leg5'),
+                    main = initBlock('mipo/leg/leg-05'),
                     zOffset = 350, -- trunk: in front of body/legs, behind arms and hands
                 }
             end
@@ -670,8 +670,9 @@ function lib.reconstructInstance(charData, partBodies)
                     end
                 end
                 if fud and fud.label == 'upperlip' and fud.extra and fud.extra.main
-                    and fud.extra.main.bgURL == 'upperlip4.png' then -- the duck beak is out
-                    fud.extra.main.bgURL, fud.extra.main.fgURL = 'upperlip1.png', 'upperlip1-mask.png'
+                    and fud.extra.main.bgURL == 'mipo/upperlip/upperlip-04.png' then -- the duck beak is out
+                    fud.extra.main.bgURL = 'mipo/upperlip/upperlip-01.png'
+                    fud.extra.main.fgURL = 'mipo/upperlip/upperlip-01-mask.png'
                     fud.extra.dirty = true
                 end
                 if fud and fud.extra and fud.extra.zOffset == 490 then

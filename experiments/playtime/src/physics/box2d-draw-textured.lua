@@ -766,7 +766,7 @@ local function drawTraceVertices(d)
             end
             img = getLoveImage('textures/' .. bg)
             if not img then
-                img = getLoveImage('textures/' .. 'hair7.png')
+                img = getLoveImage('textures/' .. 'mipo/hair/hair-07.png')
             end
         end
 

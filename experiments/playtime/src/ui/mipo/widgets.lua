@@ -49,7 +49,7 @@ local handShapes = C.handShapes
 local patternTextures = C.patternTextures
 
 local patchShapes = {
-    'patch1', 'patch2', 'patch3', 'patch4'
+    'mipo/patch/patch-01', 'mipo/patch/patch-02', 'mipo/patch/patch-03', 'mipo/patch/patch-04'
 }
 
 local function getShapesForPart(partName)

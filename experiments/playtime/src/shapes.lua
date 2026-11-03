@@ -260,7 +260,7 @@ end
 
 -- The shapes are centred on the polygon's centroid, unless keepOrigin: a shape8 outline is
 -- already around its picture's centre (where the picture and the joints are), and centring it
--- slid a lopsided part's collision off its drawing (hand3r's thumb: 20px, docs/SCENES.md).
+-- slid a lopsided part's collision off its drawing (hand-01's thumb: 20px, docs/SCENES.md).
 local function makeShapeListFromPolygon(polygon, keepOrigin)
     local shapesList = {}
     local allowComplex = true -- TODO: parameterize this

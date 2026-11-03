@@ -67,9 +67,11 @@ save/load specs load it with every other scene in `scripts/`. **Don't archive or
 it.** No spec names it, so an archive pass that only keeps scenes a spec names would take
 it, and the traces with it.
 
-41 pictures: a hand (`hand3r`), seven feet (`feet2r`, `feet3xr`, `feet5xr`, `feet6r`,
-`feet7r`, `feet7xr`, `feet8r`), sixteen ears (`earx1r` through `earx16r`), and the body and
-head shapes (`shapeA1` through `shapeA4`, `shapes1` through `shapes13`). Each body is one
+41 pictures: a hand (`mipo/hand/hand-01`), seven feet (`mipo/foot/foot-01` through `-07`), sixteen
+ears (`mipo/ear/ear-01` through `-16`), and the body and head shapes (`mipo/body/body-01` through
+`-17`; `body-18` is in the dict measured from its picture, `measured = true`, not on the sheet yet).
+Their old names (`hand3r`, `feet6r`, `earx3r`, `shapes9`, ...) are in `src/texture-names.lua`
+(renamed 2026-11-03, docs/ASSETS-AND-BUILDS.md AB6). Each body is one
 static rectangle (dynamic until 2026-11-01: pressing play dropped the whole sheet). The
 picture sits on a texfixture (`bgURL`). The outline is an 8-point sensor labelled `meta8`:
 its `extra.vertices`, point 1 first, origin at the centre of the rectangle, y down.
@@ -112,7 +114,9 @@ cases. Add a case to try a new trace before pasting it.
 
 ### Adding or changing a picture
 
-1. Add `textures/<name>.png` and `textures/<name>-mask.png`.
+1. Add `textures/mipo/<part>/<part>-<nn>.png` and its `-mask.png` (`tools/scan2tex` saves them so).
+   Not traced yet: `python3 -I claudetools/texture-outline.py mipo/<part>/<part>-<nn>` measures an
+   entry from the picture; mark it `measured = true` until it's on the sheet.
 2. On the meta scene, add a rectangle of the picture's size (or its shape, scaled), put the
    picture on it, and add a texfixture sensor with corners 8, labelled `meta8`. Points in
    order: 1 at the top, then clockwise (2 upper right, 5 at the bottom, 8 upper left). The
@@ -121,7 +125,7 @@ cases. Add a case to try a new trace before pasting it.
 3. Select the `meta8` sensor and press **copy dict entry** (position section). It puts the
    line for `src/shape8-dict.lua` on the clipboard. Paste it (replacing the old line when
    you retraced). For an ear, add `root` yourself.
-4. A new picture: add the name, without `.png`, to the right list in
+4. A new picture: add the name (`mipo/body/body-19`), without `.png`, to the right list in
    `src/shape-catalogs.lua`: `torsoHeadShapes`, `earShapes`, `feetShapes` or `handShapes`.
    The feet pictures are listed as hands too. Without a list entry the editor and the
    randomizer never offer it.

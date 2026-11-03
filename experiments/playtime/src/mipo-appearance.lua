@@ -84,7 +84,8 @@ function lib.setFeetBodyhair(instance, on)
         local part = instance.dna.parts[foot]
         if part then
             part.appearance = part.appearance or {}
-            part.appearance.bodyhair = on and utils.deepCopy(source or { main = lib.initBlock('borsthaar4') }) or nil
+            local chest = source or { main = lib.initBlock('mipo/chesthair/chesthair-04') }
+            part.appearance.bodyhair = on and utils.deepCopy(chest) or nil
         end
     end
 end

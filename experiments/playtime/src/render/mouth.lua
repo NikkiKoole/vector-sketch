@@ -309,8 +309,8 @@ end
 
     -- Teeth: positioned image, optionally stencil-clipped to mouth interior
 -- The gum's stroke: a brow picture (thick hand-drawn chalk), tinted. gumSolid: across its width,
--- where the stroke is (brow5: from 30% to its rough edge at 89%, measured 2026-11-01).
-lib.gumPicture = 'brow5.png'
+-- where the stroke is (brow-05: from 30% to its rough edge at 89%, measured 2026-11-01).
+lib.gumPicture = 'mipo/brow/brow-05.png'
 lib.gumSolid = { 0.3, 0.89 }
 
 local function drawTeeth(d)

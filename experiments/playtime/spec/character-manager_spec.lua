@@ -565,14 +565,14 @@ describe("character-manager", function()
             end
             for i = 1, instance.dna.creation.torsoSegments or 1 do
                 CharacterManager.updateConnectedAppearance(instance, 'torso' .. i, 'connected-skin',
-                    { bgURL = 'leg3.png', fgURL = 'leg3-mask.png', wmul = 2.5 })
+                    { bgURL = 'mipo/leg/leg-03.png', fgURL = 'mipo/leg/leg-03-mask.png', wmul = 2.5 })
             end
             CharacterManager.rebuildTextures(instance)
             local top = instance.parts['torso' .. (instance.dna.creation.torsoSegments or 1)]
             local found
             for _, f in ipairs(top.body:getFixtures()) do
                 local ud = f:getUserData()
-                if ud and subtypes.is(ud, subtypes.CONNECTED_TEXTURE) and ud.extra.main.bgURL == 'leg3.png' then
+                if ud and subtypes.is(ud, subtypes.CONNECTED_TEXTURE) and ud.extra.main.bgURL == 'mipo/leg/leg-03.png' then
                     found = ud
                 end
             end

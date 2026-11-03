@@ -17,11 +17,11 @@ local GROUND_Y = 900
 -- right Mipo shows them as they were. hand3r, earx3r, feet3xr and shapeA3 kept the dict's
 -- outline (the sheet has it now too). Add a case to compare another outline.
 local CASES = {
-    { url = 'shapes9.png', parts = 'torso', title = 'shapes9: now 520x648, before 520x468 (squashed)',
+    { url = 'mipo/body/body-13.png', parts = 'torso', title = 'shapes9: now 520x648, before 520x468 (squashed)',
       fixLabel = 'before',
       fix = { dimensions = { 520, 468 },
           vertices = { 0, -236, 233, -191, 198, 24, 174, 206, -18, 216, -226, 205, -233, 19, -234, -198 } } },
-    { url = 'earx13r.png', parts = 'ears', title = 'earx13r: now 225x366, before 225x336 (squashed)',
+    { url = 'mipo/ear/ear-13.png', parts = 'ears', title = 'earx13r: now 225x366, before 225x336 (squashed)',
       fixLabel = 'before',
       fix = { dimensions = { 225, 336 }, root = { 31, 129 },
           vertices = { -33, -100, 12, -33, 29, 16, 43, 73, -9, 86, -54, 72, -57, 15, -62, -33 } } },

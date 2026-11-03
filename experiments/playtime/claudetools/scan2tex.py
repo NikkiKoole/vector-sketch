@@ -208,7 +208,7 @@ try:
 except Exception:
     index = {}
 known, fresh = [], {}
-for f in glob.glob(os.path.join(textures, '*.png')) + glob.glob(os.path.join(textures, '*', '*.png')):
+for f in glob.glob(os.path.join(textures, '**', '*.png'), recursive=True):  # mipo/<part>/, world/, ...
     if f.endswith('-mask.png') or '/scantest/' in f: continue
     rel = os.path.relpath(f, textures)[:-4]
     m = f[:-4] + '-mask.png'

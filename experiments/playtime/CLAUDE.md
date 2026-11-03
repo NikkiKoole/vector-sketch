@@ -118,7 +118,7 @@ Both should report **0 warnings / 0 errors**; keep it that way.
 - `claudetools/` — dev tools (e.g. find-forward-refs.lua)
 - `vendor/` — third-party libs (claude-bridge, lurker, dkjson, ProFi, jprof, etc.)
 - `scripts/` — scene scripts (.playtime.lua) + scene data (.playtime.json)
-- `textures/` — character textures (~290 files, OMP system: outline + mask + pattern)
+- `textures/` — Mipo parts in `mipo/<part>/<part>-<nn>.png` (+ `-mask.png`; OMP: outline + mask + pattern), `world/`, `pat/`; old names -> new in `src/texture-names.lua` (scenes migrate on load), `claudetools/texture-check.py` lists names pointing at nothing and files nothing names
 
 ### Key modules
 

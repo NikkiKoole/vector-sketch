@@ -11,6 +11,7 @@ local subtypes = require('src.subtypes')
 local NT = require('src.node-types')
 local mouthShapes = require('src.mouth-shapes')
 local D = require('src.dna-defaults')
+local textureNames = require('src.texture-names')
 local topology = require('src.character-topology')
 local TORSO_HAIR_ABOVE_SKIN = mipoDna.TORSO_HAIR_ABOVE_SKIN
 local getCenterAndDimensions = mathutils.getCenterAndDimensions
@@ -350,7 +351,7 @@ local function placeEyes(body, face, box)
     local eye, pupil, eyeR = face.eye, face.pupil, face.positioners.eye.r
     local eyeW, eyeH = box.headW * 0.25 * box.fm * eye.wMul, box.headH * 0.25 * box.fm * eye.hMul
     -- eye shape 0: no white, only the pupil (cartoon dot eyes); it still moves within the eye's size
-    local eyeName = eye.shape > 0 and ('eye' .. eye.shape) or nil
+    local eyeName = eye.shape > 0 and textureNames.part('eye', eye.shape) or nil
     for _, side in ipairs({ { x = box.leftEyeX, label = 'l', mirror = true, rot = -eyeR },
                             { x = box.rightEyeX, label = 'r', mirror = false, rot = eyeR } }) do
         if eyeName then
@@ -366,7 +367,7 @@ local function placeEyes(body, face, box)
             zOffset = FACE_Z.pupil, isEye = true, eyeW = eyeW, eyeH = eyeH,
             eyeMaskURL = eyeName and (eyeName .. '-mask.png'),
             eyeMirror = side.mirror, eyeRot = side.rot, lookAtMouse = eye.lookAtMouse,
-        }, 'pupil' .. pupil.shape, pupil.bgHex, pupil.fgHex))
+        }, textureNames.part('pupil', pupil.shape), pupil.bgHex, pupil.fgHex))
     end
 end
 
@@ -378,7 +379,7 @@ local function placeBrows(body, face, box)
             ox = side.x, oy = lerp(box.topY, box.botY, face.positioners.brow.y),
             w = box.headW * 0.2 * brow.wMul * box.fm, h = box.headH * 0.1 * brow.hMul * box.fm,
             zOffset = FACE_Z.brow, browCurve = true, browBend = brow.bend, browMirror = side.mirror,
-            bgURL = 'brow' .. brow.shape .. '.png', bgHex = brow.bgHex,
+            bgURL = textureNames.part('brow', brow.shape) .. '.png', bgHex = brow.bgHex,
         })
     end
 end
@@ -390,7 +391,7 @@ local function placeNose(body, face, box)
         ox = (box.leftX + box.rightX) / 2, oy = lerp(box.topY, box.botY, face.positioners.nose.y),
         w = box.headW * 0.15 * nose.wMul * box.fm, h = box.headH * 0.15 * nose.hMul * box.fm,
         zOffset = FACE_Z.nose,
-    }, 'nose' .. nose.shape, nose.bgHex, nose.fgHex))
+    }, textureNames.part('nose', nose.shape), nose.bgHex, nose.fgHex))
 end
 
 -- Lower lip (draws first, stencils the inside), upper lip, and teeth clipped to the mouth.
@@ -414,18 +415,20 @@ local function placeMouth(body, face, box)
     local lower = mouthPart('lower', FACE_Z.lowerLip)
     lower.lipScale = mouth.lowerLipScale or mouth.lipScale or 0.2
     lower.backdropHex = mouth.backdropHex
-    lower.main = omp('lowerlip' .. mouth.lowerLipShape .. '.png', 'lowerlip' .. mouth.lowerLipShape .. '-mask.png',
+    local lowerName = textureNames.part('lowerlip', mouth.lowerLipShape)
+    lower.main = omp(lowerName .. '.png', lowerName .. '-mask.png',
         '000000ff', mouth.lipHex)
     addDecal(body, 'lowerlip', lower)
     local upper = mouthPart('upper', FACE_Z.upperLip)
     upper.lipScale = mouth.upperLipScale or mouth.lipScale or 0.15
-    upper.main = omp('upperlip' .. mouth.upperLipShape .. '.png', 'upperlip' .. mouth.upperLipShape .. '-mask.png',
+    local upperName = textureNames.part('upperlip', mouth.upperLipShape)
+    upper.main = omp(upperName .. '.png', upperName .. '-mask.png',
         '000000ff', mouth.lipHex)
     addDecal(body, 'upperlip', upper)
 
     local teeth = face.teeth
     if teeth.shape <= 0 then return end
-    local teethName = 'teeth' .. teeth.shape
+    local teethName = textureNames.part('teeth', teeth.shape)
     local teethW = scaleX * 100 * (teeth.wMul or 1)
     local size = imageSize('textures/' .. teethName .. '.png')
     local aspect = size and (size[2] / size[1]) or 0.5 -- 2:1 when the picture is missing

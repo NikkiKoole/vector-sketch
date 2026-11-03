@@ -390,7 +390,7 @@ function lib.drawConnectedSkin(p, y)
 end
 
 -- === CONNECTED-HAIR ACCORDION (arms, legs) ===
--- connected-hair is 2-layer by default; hair7/hair8 have masks (OMP with pattern).
+-- connected-hair is 2-layer by default; hair-07/hair-08 have masks (OMP with pattern).
 function lib.drawConnectedHair(p, y)
     local instance, partName, x, panelX, ROW = p.instance, p.partName, p.x, p.panelX, p.ROW
     local partData = p.partData

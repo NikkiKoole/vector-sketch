@@ -14,6 +14,7 @@ local state = require('src.state')
 local utils = require('src.utils')
 local ribbon = require('src.render.ribbon')
 local color = require('src.color')
+local textureNames = require('src.texture-names')
 
 lib.defaults = {
     count = 12,      -- locks
@@ -26,7 +27,7 @@ lib.defaults = {
     damping = 0.96,  -- of the velocity each step (1 = never settles)
     width = 0.2,     -- ribbon half-width as a share of the picture's width
     spread = 1.9,    -- radians of the head's outline the roots cover, around the top
-    texture = 7,     -- hairN.png (and hairN-mask.png when there is one)
+    texture = 7,     -- mipo/hair/hair-NN.png (and its -mask when there is one)
     frontLocks = 2,  -- the outermost long locks drawn in front, framing the face
     bangs = 5,       -- short locks over the forehead
     bangPoints = 3,
@@ -217,8 +218,8 @@ function lib.draw(layer)
         local hair = instance.hairLocks
         if hair and not hair.body:isDestroyed() then
             local o = hair.opts
-            local line = image('textures/hair' .. o.texture .. '.png')
-            local mask = image('textures/hair' .. o.texture .. '-mask.png')
+            local line = image('textures/' .. textureNames.part('hair', o.texture) .. '.png')
+            local mask = image('textures/' .. textureNames.part('hair', o.texture) .. '-mask.png')
             local cut = instance.dna and instance.dna.parts and instance.dna.parts.head
                 and instance.dna.parts.head.appearance and instance.dna.parts.head.appearance.haircut
             local main = cut and cut.main or {}

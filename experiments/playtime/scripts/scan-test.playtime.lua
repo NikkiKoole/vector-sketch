@@ -15,8 +15,8 @@ local s = {}
 
 local bake = ompBake
 
-local GAME = { 'shapes1', 'shapes2', 'shapes6', 'shapes9', 'feet2r', 'feet6r', 'feet7r', 'earx3r', 'earx10r',
-               'nose3', 'eye3', 'pupil3' }
+local GAME = { 'mipo/body/body-05', 'mipo/body/body-06', 'mipo/body/body-10', 'mipo/body/body-13', 'mipo/foot/foot-01', 'mipo/foot/foot-04', 'mipo/foot/foot-05', 'mipo/ear/ear-03', 'mipo/ear/ear-10',
+               'mipo/nose/nose-03', 'mipo/eye/eye-03', 'mipo/pupil/pupil-03' }
 local BODIES = { { 0.91, 0.59, 0.43 }, { 0.55, 0.75, 0.42 }, { 0.98, 0.85, 0.35 }, { 0.42, 0.58, 0.85 },
                  { 0.95, 0.95, 0.93 } }
 local BACKS = { { 0.78, 0.86, 0.78 }, { 0.16, 0.16, 0.2 }, { 1, 1, 1 } }

@@ -811,7 +811,7 @@
               "dirty": true,
               "OMP": true,
               "main": {
-                "fgURL": "hand3r-mask.png",
+                "fgURL": "mipo/hand/hand-01-mask.png",
                 "bgHex": "000000ff",
                 "pURL": "type6.png",
                 "fgHex": "CF2746FF",
@@ -846,7 +846,7 @@
                 },
                 "fx": -1,
                 "pHex": "7E0674FF",
-                "bgURL": "hand3r.png"
+                "bgURL": "mipo/hand/hand-01.png"
               },
               "zGroupOffset": 17,
               "vertices": [
@@ -1076,7 +1076,7 @@
               "dirty": true,
               "OMP": true,
               "main": {
-                "fgURL": "hand3r-mask.png",
+                "fgURL": "mipo/hand/hand-01-mask.png",
                 "bgHex": "000000ff",
                 "pURL": "type6.png",
                 "fgHex": "CF2746FF",
@@ -1111,7 +1111,7 @@
                 },
                 "dir": -1,
                 "pHex": "7E0674FF",
-                "bgURL": "hand3r.png"
+                "bgURL": "mipo/hand/hand-01.png"
               },
               "zGroupOffset": 17,
               "vertices": [
@@ -1356,8 +1356,8 @@
               "main": {
                 "wmul": 0.3958,
                 "pHex": "DBB890FF",
-                "bgURL": "leg1.png",
-                "fgURL": "leg1-mask.png",
+                "bgURL": "mipo/leg/leg-01.png",
+                "fgURL": "mipo/leg/leg-01-mask.png",
                 "bgHex": "020202ff",
                 "pURL": "type2t.png",
                 "fgHex": "3E1F15FF",
@@ -1436,7 +1436,7 @@
               "main": {
                 "wmul": 0.3,
                 "pHex": "ffff00ff",
-                "bgURL": "hair3.png",
+                "bgURL": "mipo/hair/hair-03.png",
                 "fgURL": "",
                 "bgHex": "7F3C46FF",
                 "pURL": "type2t.png",
@@ -1592,8 +1592,8 @@
               "main": {
                 "wmul": 0.3958,
                 "pHex": "DBB890FF",
-                "bgURL": "leg1.png",
-                "fgURL": "leg1-mask.png",
+                "bgURL": "mipo/leg/leg-01.png",
+                "fgURL": "mipo/leg/leg-01-mask.png",
                 "bgHex": "020202ff",
                 "pURL": "type2t.png",
                 "fgHex": "3E1F15FF",
@@ -1672,7 +1672,7 @@
               "main": {
                 "wmul": 0.3,
                 "pHex": "ffff00ff",
-                "bgURL": "hair3.png",
+                "bgURL": "mipo/hair/hair-03.png",
                 "fgURL": "",
                 "bgHex": "7F3C46FF",
                 "pURL": "type2t.png",
@@ -1825,7 +1825,7 @@
               "main": {
                 "wmul": 0.3,
                 "pHex": "ffff00ff",
-                "bgURL": "hair10.png",
+                "bgURL": "mipo/hair/hair-10.png",
                 "fgURL": "",
                 "bgHex": "7F3C46FF",
                 "pURL": "type2t.png",
@@ -1911,7 +1911,7 @@
                 0
               ],
               "main": {
-                "fgURL": "borsthaar6-mask.png",
+                "fgURL": "mipo/chesthair/chesthair-06-mask.png",
                 "bgHex": "7F3C46FF",
                 "pURL": "type5.png",
                 "fgHex": "25C960FF",
@@ -1945,7 +1945,7 @@
                   "bgR": 0.498
                 },
                 "pHex": "B15E36FF",
-                "bgURL": "borsthaar6.png"
+                "bgURL": "mipo/chesthair/chesthair-06.png"
               },
               "OMP": false
             },
@@ -1970,7 +1970,7 @@
             "subtype": "texfixture",
             "extra": {
               "main": {
-                "fgURL": "shapes6-mask.png",
+                "fgURL": "mipo/body/body-10-mask.png",
                 "bgHex": "000000ff",
                 "pURL": "type0.png",
                 "fgHex": "79F421FF",
@@ -2005,7 +2005,7 @@
                 },
                 "fy": -1,
                 "pHex": "95C783FF",
-                "bgURL": "shapes6.png"
+                "bgURL": "mipo/body/body-10.png"
               },
               "patch1": {
                 "ty": 0,
@@ -2110,7 +2110,7 @@
                 }
               ],
               "main": {
-                "fgURL": "leg1-mask.png",
+                "fgURL": "mipo/leg/leg-01-mask.png",
                 "bgHex": "020202ff",
                 "pURL": "type8.png",
                 "fgHex": "5627D2FF",
@@ -2145,7 +2145,7 @@
                 },
                 "wmul": 0.3,
                 "pHex": "F8CDD8FF",
-                "bgURL": "leg1.png"
+                "bgURL": "mipo/leg/leg-01.png"
               },
               "attachTo": "torso1",
               "zOffset": 100,
@@ -2291,7 +2291,7 @@
                   "bgR": 0.498
                 },
                 "pHex": "0D3825FF",
-                "bgURL": "hair5.png"
+                "bgURL": "mipo/hair/hair-05.png"
               },
               "width": 88.7407,
               "dirty": true,
@@ -2321,7 +2321,7 @@
             "subtype": "texfixture",
             "extra": {
               "main": {
-                "fgURL": "shapes6-mask.png",
+                "fgURL": "mipo/body/body-10-mask.png",
                 "bgHex": "000000ff",
                 "pURL": "type0.png",
                 "fgHex": "79F421FF",
@@ -2356,7 +2356,7 @@
                 },
                 "fy": -1,
                 "pHex": "95C783FF",
-                "bgURL": "shapes6.png"
+                "bgURL": "mipo/body/body-10.png"
               },
               "patch1": {
                 "ty": 0,
@@ -2535,7 +2535,7 @@
                 0
               ],
               "main": {
-                "fgURL": "borsthaar6-mask.png",
+                "fgURL": "mipo/chesthair/chesthair-06-mask.png",
                 "bgHex": "7F3C46FF",
                 "pURL": "type5.png",
                 "fgHex": "25C960FF",
@@ -2569,7 +2569,7 @@
                   "bgR": 0.498
                 },
                 "pHex": "B15E36FF",
-                "bgURL": "borsthaar6.png"
+                "bgURL": "mipo/chesthair/chesthair-06.png"
               },
               "OMP": false
             },
@@ -2629,7 +2629,7 @@
               "fgHex": "",
               "dirty": true,
               "main": {
-                "fgURL": "upperlip4-mask.png",
+                "fgURL": "mipo/upperlip/upperlip-04-mask.png",
                 "bgHex": "000000ff",
                 "pURL": "",
                 "fgHex": "cc5555ff",
@@ -2663,7 +2663,7 @@
                   "bgR": 0
                 },
                 "pHex": "ffffff00",
-                "bgURL": "upperlip4.png"
+                "bgURL": "mipo/upperlip/upperlip-04.png"
               },
               "OMP": true,
               "zGroupOffset": 17
@@ -2724,7 +2724,7 @@
               "OMP": true,
               "fgHex": "",
               "main": {
-                "fgURL": "lowerlip3-mask.png",
+                "fgURL": "mipo/lowerlip/lowerlip-03-mask.png",
                 "bgHex": "000000ff",
                 "pURL": "",
                 "fgHex": "cc5555ff",
@@ -2758,7 +2758,7 @@
                   "bgR": 0
                 },
                 "pHex": "ffffff00",
-                "bgURL": "lowerlip3.png"
+                "bgURL": "mipo/lowerlip/lowerlip-03.png"
               },
               "dirty": true,
               "backdropHex": "00000099",
@@ -2785,7 +2785,7 @@
             "subtype": "decal",
             "extra": {
               "main": {
-                "fgURL": "nose11-mask.png",
+                "fgURL": "mipo/nose/nose-11-mask.png",
                 "bgHex": "000000ff",
                 "pURL": "",
                 "fgHex": "08020EFF",
@@ -2819,7 +2819,7 @@
                   "bgR": 0
                 },
                 "pHex": "ffffff00",
-                "bgURL": "nose11.png"
+                "bgURL": "mipo/nose/nose-11.png"
               },
               "zOffset": 254,
               "ox": 0,
@@ -2861,7 +2861,7 @@
               "ox": 19.4288,
               "oy": -30.8161,
               "rot": 0,
-              "bgURL": "brow1.png",
+              "bgURL": "mipo/brow/brow-01.png",
               "fgURL": "",
               "bgHex": "7F3C46FF",
               "fgHex": "",
@@ -2896,7 +2896,7 @@
               "ox": -19.4288,
               "oy": -30.8161,
               "rot": 0,
-              "bgURL": "brow1.png",
+              "bgURL": "mipo/brow/brow-01.png",
               "fgURL": "",
               "bgHex": "7F3C46FF",
               "fgHex": "",
@@ -2931,7 +2931,7 @@
               "mirror": false,
               "w": 12.6219,
               "zOffset": 251,
-              "bgURL": "pupil7.png",
+              "bgURL": "mipo/pupil/pupil-07.png",
               "eyeMirror": false,
               "ox": 19.4288,
               "oy": -1.2662,
@@ -2940,7 +2940,7 @@
               "fgURL": "",
               "bgHex": "000000ff",
               "eyeRot": 0,
-              "eyeMaskURL": "eye3-mask.png",
+              "eyeMaskURL": "mipo/eye/eye-03-mask.png",
               "lookAtMouse": true,
               "zGroupOffset": 17,
               "fgHex": "",
@@ -2972,7 +2972,7 @@
               "mirror": true,
               "w": 12.6219,
               "zOffset": 251,
-              "bgURL": "pupil7.png",
+              "bgURL": "mipo/pupil/pupil-07.png",
               "eyeMirror": true,
               "ox": -19.4288,
               "oy": -1.2662,
@@ -2981,7 +2981,7 @@
               "fgURL": "",
               "bgHex": "000000ff",
               "eyeRot": 0,
-              "eyeMaskURL": "eye3-mask.png",
+              "eyeMaskURL": "mipo/eye/eye-03-mask.png",
               "lookAtMouse": true,
               "zGroupOffset": 17,
               "fgHex": "",
@@ -3008,7 +3008,7 @@
             "subtype": "decal",
             "extra": {
               "main": {
-                "fgURL": "eye3-mask.png",
+                "fgURL": "mipo/eye/eye-03-mask.png",
                 "bgHex": "000000ff",
                 "pURL": "",
                 "fgHex": "ffffffff",
@@ -3042,7 +3042,7 @@
                   "bgR": 0
                 },
                 "pHex": "ffffff00",
-                "bgURL": "eye3.png"
+                "bgURL": "mipo/eye/eye-03.png"
               },
               "zOffset": 250,
               "isEye": true,
@@ -3081,7 +3081,7 @@
             "subtype": "decal",
             "extra": {
               "main": {
-                "fgURL": "eye3-mask.png",
+                "fgURL": "mipo/eye/eye-03-mask.png",
                 "bgHex": "000000ff",
                 "pURL": "",
                 "fgHex": "ffffffff",
@@ -3115,7 +3115,7 @@
                   "bgR": 0
                 },
                 "pHex": "ffffff00",
-                "bgURL": "eye3.png"
+                "bgURL": "mipo/eye/eye-03.png"
               },
               "zOffset": 250,
               "isEye": true,
@@ -3253,8 +3253,8 @@
               "main": {
                 "wmul": 0.2446,
                 "pHex": "F8CDD8FF",
-                "bgURL": "leg1.png",
-                "fgURL": "leg1-mask.png",
+                "bgURL": "mipo/leg/leg-01.png",
+                "fgURL": "mipo/leg/leg-01-mask.png",
                 "bgHex": "020202ff",
                 "pURL": "type8.png",
                 "fgHex": "5627D2FF",
@@ -3333,7 +3333,7 @@
               "main": {
                 "wmul": 0.3,
                 "pHex": "ffff00ff",
-                "bgURL": "hair10.png",
+                "bgURL": "mipo/hair/hair-10.png",
                 "fgURL": "",
                 "bgHex": "7F3C46FF",
                 "pURL": "type2t.png",
@@ -3496,8 +3496,8 @@
               "main": {
                 "wmul": 0.2446,
                 "pHex": "F8CDD8FF",
-                "bgURL": "leg1.png",
-                "fgURL": "leg1-mask.png",
+                "bgURL": "mipo/leg/leg-01.png",
+                "fgURL": "mipo/leg/leg-01-mask.png",
                 "bgHex": "020202ff",
                 "pURL": "type8.png",
                 "fgHex": "5627D2FF",
@@ -3576,7 +3576,7 @@
               "main": {
                 "wmul": 0.3,
                 "pHex": "ffff00ff",
-                "bgURL": "hair10.png",
+                "bgURL": "mipo/hair/hair-10.png",
                 "fgURL": "",
                 "bgHex": "7F3C46FF",
                 "pURL": "type2t.png",
@@ -3883,7 +3883,7 @@
               "dirty": true,
               "OMP": true,
               "main": {
-                "fgURL": "feet8r-mask.png",
+                "fgURL": "mipo/foot/foot-07-mask.png",
                 "bgHex": "000000ff",
                 "pURL": "type6.png",
                 "fgHex": "EE2744FF",
@@ -3918,7 +3918,7 @@
                 },
                 "dir": -1,
                 "pHex": "D4FC05FF",
-                "bgURL": "feet8r.png"
+                "bgURL": "mipo/foot/foot-07.png"
               },
               "zGroupOffset": 17,
               "vertices": [
@@ -4034,8 +4034,8 @@
               "main": {
                 "dir": 1,
                 "pHex": "D4FC05FF",
-                "bgURL": "feet8r.png",
-                "fgURL": "feet8r-mask.png",
+                "bgURL": "mipo/foot/foot-07.png",
+                "fgURL": "mipo/foot/foot-07-mask.png",
                 "bgHex": "000000ff",
                 "pURL": "type6.png",
                 "fgHex": "EE2744FF",
@@ -4182,7 +4182,7 @@
               "dirty": true,
               "OMP": true,
               "main": {
-                "fgURL": "earx12r-mask.png",
+                "fgURL": "mipo/ear/ear-12-mask.png",
                 "bgHex": "000000ff",
                 "pURL": "type1.png",
                 "fgHex": "8D7A26FF",
@@ -4217,7 +4217,7 @@
                 },
                 "fx": -1,
                 "pHex": "85DD55FF",
-                "bgURL": "earx12r.png"
+                "bgURL": "mipo/ear/ear-12.png"
               },
               "zGroupOffset": 17,
               "vertices": [
@@ -4331,7 +4331,7 @@
               "dirty": true,
               "OMP": true,
               "main": {
-                "fgURL": "earx12r-mask.png",
+                "fgURL": "mipo/ear/ear-12-mask.png",
                 "bgHex": "000000ff",
                 "pURL": "type1.png",
                 "fgHex": "8D7A26FF",
@@ -4365,7 +4365,7 @@
                   "bgR": 0
                 },
                 "pHex": "85DD55FF",
-                "bgURL": "earx12r.png"
+                "bgURL": "mipo/ear/ear-12.png"
               },
               "zGroupOffset": 17,
               "vertices": [
@@ -4478,7 +4478,7 @@
                 "up": 0.3927
               }
             },
-            "shape8URL": "hand3r.png"
+            "shape8URL": "mipo/hand/hand-01.png"
           },
           "rhand": {
             "dims": {
@@ -4508,7 +4508,7 @@
                 "up": 0.3927
               }
             },
-            "shape8URL": "hand3r.png"
+            "shape8URL": "mipo/hand/hand-01.png"
           },
           "lfoot": {
             "dims": {
@@ -4539,7 +4539,7 @@
                 "up": 0.3927
               }
             },
-            "shape8URL": "feet8r.png"
+            "shape8URL": "mipo/foot/foot-07.png"
           },
           "rfoot": {
             "dims": {
@@ -4570,7 +4570,7 @@
                 "up": 0.3927
               }
             },
-            "shape8URL": "feet8r.png"
+            "shape8URL": "mipo/foot/foot-07.png"
           },
           "llleg": {
             "j": {
@@ -4634,21 +4634,21 @@
                   "fgHex": "",
                   "dir": -1,
                   "pHex": "ffff00ff",
-                  "bgURL": "hair3.png"
+                  "bgURL": "mipo/hair/hair-03.png"
                 },
                 "zOffset": 403,
                 "endNode": "lhand"
               },
               "connected-skin": {
                 "main": {
-                  "fgURL": "leg1-mask.png",
+                  "fgURL": "mipo/leg/leg-01-mask.png",
                   "bgHex": "020202ff",
                   "pURL": "type2t.png",
                   "wmul": 0.3958,
                   "dir": -1,
                   "fgHex": "3E1F15FF",
                   "pHex": "DBB890FF",
-                  "bgURL": "leg1.png"
+                  "bgURL": "mipo/leg/leg-01.png"
                 },
                 "zOffset": 402,
                 "endNode": "lhand"
@@ -4678,21 +4678,21 @@
                   "fgHex": "",
                   "dir": 1,
                   "pHex": "ffff00ff",
-                  "bgURL": "hair3.png"
+                  "bgURL": "mipo/hair/hair-03.png"
                 },
                 "zOffset": 403,
                 "endNode": "rhand"
               },
               "connected-skin": {
                 "main": {
-                  "fgURL": "leg1-mask.png",
+                  "fgURL": "mipo/leg/leg-01-mask.png",
                   "bgHex": "020202ff",
                   "pURL": "type2t.png",
                   "wmul": 0.3958,
                   "dir": 1,
                   "fgHex": "3E1F15FF",
                   "pHex": "DBB890FF",
-                  "bgURL": "leg1.png"
+                  "bgURL": "mipo/leg/leg-01.png"
                 },
                 "zOffset": 402,
                 "endNode": "rhand"
@@ -4755,7 +4755,7 @@
             "appearance": {
               "skin": {
                 "main": {
-                  "fgURL": "shapeA2-mask.png",
+                  "fgURL": "mipo/body/body-02-mask.png",
                   "cached": {
                     "fgR": 0.7961,
                     "fgG": 0.698,
@@ -4789,7 +4789,7 @@
                   "fgHex": "CBB297FF",
                   "bgHex": "020202ff",
                   "pHex": "C014A9FF",
-                  "bgURL": "shapeA2.png"
+                  "bgURL": "mipo/body/body-02.png"
                 },
                 "zOffset": 490
               }
@@ -4801,7 +4801,7 @@
                 "up": 0.0982
               }
             },
-            "shape8URL": "shapeA2.png"
+            "shape8URL": "mipo/body/body-02.png"
           },
           "torso1": {
             "dims": {
@@ -4815,12 +4815,12 @@
             "appearance": {
               "connected-skin": {
                 "main": {
-                  "fgURL": "leg1-mask.png",
+                  "fgURL": "mipo/leg/leg-01-mask.png",
                   "bgHex": "020202ff",
                   "pURL": "type8.png",
                   "fgHex": "5627D2FF",
                   "pHex": "F8CDD8FF",
-                  "bgURL": "leg1.png"
+                  "bgURL": "mipo/leg/leg-01.png"
                 },
                 "zOffset": 100,
                 "endNode": "head"
@@ -4964,12 +4964,12 @@
               },
               "bodyhair": {
                 "main": {
-                  "fgURL": "borsthaar6-mask.png",
+                  "fgURL": "mipo/chesthair/chesthair-06-mask.png",
                   "bgHex": "7F3C46FF",
                   "pURL": "type5.png",
                   "fgHex": "25C960FF",
                   "pHex": "B15E36FF",
-                  "bgURL": "borsthaar6.png"
+                  "bgURL": "mipo/chesthair/chesthair-06.png"
                 }
               },
               "connected-hair": {
@@ -4980,7 +4980,7 @@
                   "fgHex": "",
                   "dir": 1,
                   "pHex": "ffff00ff",
-                  "bgURL": "hair10.png"
+                  "bgURL": "mipo/hair/hair-10.png"
                 },
                 "zOffset": 101,
                 "endNode": "head"
@@ -4993,7 +4993,7 @@
                   "pURL": "type2t.png",
                   "fgHex": "EB06ADFF",
                   "pHex": "BE8D1EFF",
-                  "bgURL": "hair5.png"
+                  "bgURL": "mipo/hair/hair-05.png"
                 },
                 "width": 295.8024,
                 "startIndex": 6
@@ -5012,7 +5012,7 @@
                 "name": "KEEP_ANGLE"
               }
             ],
-            "shape8URL": "shapes6.png"
+            "shape8URL": "mipo/body/body-10.png"
           },
           "torso-segment-template": {
             "dims": {
@@ -5026,7 +5026,7 @@
             "appearance": {
               "connected-skin": {
                 "main": {
-                  "fgURL": "leg5-mask.png",
+                  "fgURL": "mipo/leg/leg-05-mask.png",
                   "cached": {
                     "fgR": 0.3373,
                     "fgG": 0.7373,
@@ -5060,7 +5060,7 @@
                   "fgHex": "56BC6DFF",
                   "bgHex": "020202ff",
                   "pHex": "911D0EFF",
-                  "bgURL": "leg5.png"
+                  "bgURL": "mipo/leg/leg-05.png"
                 },
                 "zOffset": 100,
                 "endNode": "head"
@@ -5070,8 +5070,8 @@
                 "patch1": {
                   "ty": 0,
                   "pHex": "CC732EFF",
-                  "bgURL": "patch2.png",
-                  "fgURL": "patch2-mask.png",
+                  "bgURL": "mipo/patch/patch-02.png",
+                  "fgURL": "mipo/patch/patch-02-mask.png",
                   "cached": {
                     "fgR": 0.4706,
                     "fgG": 0.6784,
@@ -5109,8 +5109,8 @@
                 "patch2": {
                   "ty": 0,
                   "pHex": "24D495FF",
-                  "bgURL": "patch1.png",
-                  "fgURL": "patch1-mask.png",
+                  "bgURL": "mipo/patch/patch-01.png",
+                  "fgURL": "mipo/patch/patch-01-mask.png",
                   "cached": {
                     "fgR": 0.6588,
                     "fgG": 0.2118,
@@ -5149,8 +5149,8 @@
                   "ty": 0.83,
                   "sx": 2,
                   "pHex": "D4A0D3FF",
-                  "bgURL": "patch1.png",
-                  "fgURL": "patch1-mask.png",
+                  "bgURL": "mipo/patch/patch-01.png",
+                  "fgURL": "mipo/patch/patch-01-mask.png",
                   "cached": {
                     "fgR": 0.0235,
                     "fgG": 0.8392,
@@ -5291,7 +5291,7 @@
               },
               "bodyhair": {
                 "main": {
-                  "fgURL": "borsthaar4-mask.png",
+                  "fgURL": "mipo/chesthair/chesthair-04-mask.png",
                   "cached": {
                     "fgR": 0.1804,
                     "fgG": 0.2549,
@@ -5325,7 +5325,7 @@
                   "fgHex": "2E41EBFF",
                   "bgHex": "020202ff",
                   "pHex": "51145AFF",
-                  "bgURL": "borsthaar4.png"
+                  "bgURL": "mipo/chesthair/chesthair-04.png"
                 }
               },
               "connected-hair": {
@@ -5365,14 +5365,14 @@
                   "dir": 1,
                   "bgHex": "020202ff",
                   "pHex": "ffff00ff",
-                  "bgURL": "hair10.png"
+                  "bgURL": "mipo/hair/hair-10.png"
                 },
                 "zOffset": 101,
                 "endNode": "head"
               },
               "haircut": {
                 "main": {
-                  "fgURL": "hair7-mask.png",
+                  "fgURL": "mipo/hair/hair-07-mask.png",
                   "cached": {
                     "fgR": 0.9216,
                     "fgG": 0.0235,
@@ -5406,13 +5406,13 @@
                   "fgHex": "EB06ADFF",
                   "bgHex": "020202ff",
                   "pHex": "BE8D1EFF",
-                  "bgURL": "hair7.png"
+                  "bgURL": "mipo/hair/hair-07.png"
                 },
                 "endIndex": 3,
                 "startIndex": 6
               }
             },
-            "shape8URL": "shapeA1.png",
+            "shape8URL": "mipo/body/body-01.png",
             "behaviors": [
               {
                 "name": "KEEP_ANGLE",
@@ -5443,21 +5443,21 @@
                   "fgHex": "",
                   "dir": -1,
                   "pHex": "ffff00ff",
-                  "bgURL": "hair10.png"
+                  "bgURL": "mipo/hair/hair-10.png"
                 },
                 "zOffset": 301,
                 "endNode": "lfoot"
               },
               "connected-skin": {
                 "main": {
-                  "fgURL": "leg1-mask.png",
+                  "fgURL": "mipo/leg/leg-01-mask.png",
                   "bgHex": "020202ff",
                   "pURL": "type8.png",
                   "wmul": 0.2446,
                   "dir": -1,
                   "fgHex": "5627D2FF",
                   "pHex": "F8CDD8FF",
-                  "bgURL": "leg1.png"
+                  "bgURL": "mipo/leg/leg-01.png"
                 },
                 "zOffset": 300,
                 "endNode": "lfoot"
@@ -5556,12 +5556,12 @@
               },
               "bodyhair": {
                 "main": {
-                  "fgURL": "borsthaar6-mask.png",
+                  "fgURL": "mipo/chesthair/chesthair-06-mask.png",
                   "bgHex": "7F3C46FF",
                   "pURL": "type5.png",
                   "fgHex": "25C960FF",
                   "pHex": "B15E36FF",
-                  "bgURL": "borsthaar6.png"
+                  "bgURL": "mipo/chesthair/chesthair-06.png"
                 }
               },
               "skin": {
@@ -5701,13 +5701,13 @@
                   "pURL": "type2t.png",
                   "fgHex": "BF1A2DFF",
                   "pHex": "0D3825FF",
-                  "bgURL": "hair5.png"
+                  "bgURL": "mipo/hair/hair-05.png"
                 },
                 "width": 295.8024,
                 "startIndex": 6
               }
             },
-            "shape8URL": "shapes6.png",
+            "shape8URL": "mipo/body/body-10.png",
             "behaviors": [
               {
                 "name": "KEEP_ANGLE",
@@ -5751,7 +5751,7 @@
                 "zOffset": 190
               }
             },
-            "shape8URL": "earx12r.png"
+            "shape8URL": "mipo/ear/ear-12.png"
           },
           "ruleg": {
             "dims": {
@@ -5769,21 +5769,21 @@
                   "fgHex": "",
                   "dir": 1,
                   "pHex": "ffff00ff",
-                  "bgURL": "hair10.png"
+                  "bgURL": "mipo/hair/hair-10.png"
                 },
                 "zOffset": 301,
                 "endNode": "rfoot"
               },
               "connected-skin": {
                 "main": {
-                  "fgURL": "leg1-mask.png",
+                  "fgURL": "mipo/leg/leg-01-mask.png",
                   "bgHex": "020202ff",
                   "pURL": "type8.png",
                   "wmul": 0.2446,
                   "dir": 1,
                   "fgHex": "5627D2FF",
                   "pHex": "F8CDD8FF",
-                  "bgURL": "leg1.png"
+                  "bgURL": "mipo/leg/leg-01.png"
                 },
                 "zOffset": 300,
                 "endNode": "rfoot"
@@ -5833,7 +5833,7 @@
                 "zOffset": 190
               }
             },
-            "shape8URL": "earx12r.png"
+            "shape8URL": "mipo/ear/ear-12.png"
           },
           "neck-segment-template": {
             "j": {

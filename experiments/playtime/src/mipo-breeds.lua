@@ -17,16 +17,16 @@ local CharacterManager = require('src.character-manager')
 local mouthShapes = require('src.mouth-shapes')
 
 lib.breeds = {
-    -- rope-like limbs instead of shaped ones (leg1, leg5); limb hair: none half the time ('' is
+    -- rope-like limbs instead of shaped ones (leg-01, leg-05); limb hair: none half the time ('' is
     -- no hair, three of them), else one of the last three; the widest leg stance; a pear body
     -- that is the head too (2026-11-01, Nikki in the vanilla scene)
     ['rubberleg-pearbod'] = {
         lists = {
-            limbSkinTextures = { 'leg1', 'leg5' },
-            limbHairTextures = { '', '', '', 'hair9', 'hair10', 'hair11' },
-            torsoHeadShapes = { 'shapes7' },
-            randomHandShapes = { 'hand3r' }, -- real hands
-            randomFootShapes = { 'feet7r' }, -- the round foot with toes (the editor's feet grid: 5)
+            limbSkinTextures = { 'mipo/leg/leg-01', 'mipo/leg/leg-05' },
+            limbHairTextures = { '', '', '', 'mipo/hair/hair-09', 'mipo/hair/hair-10', 'mipo/hair/hair-11' },
+            torsoHeadShapes = { 'mipo/body/body-11' },
+            randomHandShapes = { 'mipo/hand/hand-01' }, -- real hands
+            randomFootShapes = { 'mipo/foot/foot-05' }, -- the round foot with toes (the editor's feet grid: 5)
         },
         -- the pear the right way up (wide at the bottom), sizes around Nikki's 1.48; hands about
         -- half the size (any Mipo: 1-2)

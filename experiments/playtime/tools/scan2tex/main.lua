@@ -3,12 +3,14 @@
 -- The image work is claudetools/scan2tex.py; this window shows it and saves what you pick.
 --   drop a photo or scan (HEIC, JPG, PNG) on the window: it's cut into its parts
 --   click a part (or tab / shift-tab), then:
---     enter: type its name (a-z, 0-9, - and _), enter again when done   f fill: auto / close / open / mask
+--     enter: type what part it is (foot, ear, body, ... or world/leaf), enter again when done: it's saved
+--       as textures/mipo/<part>/<part>-<nn>.png (world/<what>/<what>-<nn>.png), the next free number
+--       (docs/ASSETS-AND-BUILDS.md AB6; saved again, the same file)   f fill: auto / close / open / mask
 --     r turn 90°   x skip it (not saved)   delete: forget its name
 --   LOOKS LIKE: each part is compared with every texture in the game and the sheet's other parts; the
 --   close ones show next to it and on the sheet (≈), and saving one of those asks first
 --   the sheet's settings, sliders: size, mask inset, how far into the line, open below (applied when you let go)
---   ctrl-s save the named parts into textures/ (an existing file: ctrl-s again to overwrite)
+--   ctrl-s save the named parts into textures/ (one saved before: ctrl-s again to overwrite it)
 -- love tools/scan2tex --no-save [<file>]: try it out, saving only says what it would write (and opens <file>)
 -- What you set per sheet is remembered (the save folder's sheets.json), so a sheet can be opened again.
 
@@ -209,15 +211,39 @@ local function write(path, bytes)
     f:close()
 end
 
+-- the highest number in textures/<folder>/<kind>-<nn>.png (0 when there's none)
+local function highest(folder, kind)
+    local top = 0
+    local list = io.popen(('ls %s 2>/dev/null'):format(shellQuote(ROOT .. '/textures/' .. folder)))
+    for file in list:lines() do
+        local n = tonumber(file:match('^' .. kind:gsub('%-', '%%-') .. '%-(%d+)%.png$'))
+        if n and n > top then top = n end
+    end
+    list:close()
+    return top
+end
+
+-- where a named part is saved: 'foot' -> mipo/foot/foot-08 (the next free), 'world/leaf' -> world/leaf/leaf-01;
+-- one saved before keeps its file. next: per folder, the numbers handed out in this save
+local function target(pick, next)
+    if pick.saved and pick.saved.name == pick.name then return pick.saved.file end
+    local area, kind = pick.name:match('^(world)/([%w_-]+)$')
+    if not area then area, kind = 'mipo', pick.name:gsub('/', '') end
+    local folder = area .. '/' .. kind
+    next[folder] = (next[folder] or highest(folder, kind)) + 1
+    return ('%s/%s-%02d'):format(folder, kind, next[folder])
+end
+
 function save()
     if not sheet or busy then return end
-    local todo, clash, alike = {}, {}, {}
+    local todo, clash, alike, next = {}, {}, {}, {}
     for _, p in ipairs(sheet.parts) do
         local pick = picks[p.id]
         if pick.name and pick.name ~= '' and not pick.skip then
-            local path = ROOT .. '/textures/' .. pick.name .. '.png'
-            todo[#todo + 1] = { p = p, pick = pick, path = path }
-            if exists(path) then clash[#clash + 1] = pick.name end
+            local file = target(pick, next)
+            local path = ROOT .. '/textures/' .. file .. '.png'
+            todo[#todo + 1] = { p = p, pick = pick, path = path, file = file }
+            if exists(path) then clash[#clash + 1] = file end
             if p.similar and #p.similar > 0 then
                 alike[#alike + 1] = ('%s ≈ %s %d%%'):format(pick.name, p.similar[1].name, math.floor(p.similar[1].score * 100 + 0.5))
             end
@@ -236,21 +262,23 @@ function save()
     confirmAt = nil
     if noSave then
         local names = {}
-        for _, t in ipairs(todo) do names[#names + 1] = t.pick.name .. (t.p.maskImg and ' (+ mask)' or '') end
+        for _, t in ipairs(todo) do names[#names + 1] = t.file .. (t.p.maskImg and ' (+ mask)' or '') end
         message = 'saving is off (--no-save). It would write into textures/: ' .. table.concat(names, ', ')
         remember()
         return
     end
     local saved, stale = {}, {}
     for _, t in ipairs(todo) do
+        os.execute(('mkdir -p %s'):format(shellQuote(t.path:match('^(.*)/'))))
         write(t.path, turned('work/' .. t.p.id .. '.png', t.pick.rot or 0))
         local maskPath = t.path:gsub('%.png$', '-mask.png')
         if t.p.maskImg then
             write(maskPath, turned('work/' .. t.p.id .. '-mask.png', t.pick.rot or 0))
         elseif exists(maskPath) then
-            stale[#stale + 1] = t.pick.name .. '-mask.png'
+            stale[#stale + 1] = t.file .. '-mask.png'
         end
-        saved[#saved + 1] = t.pick.name
+        t.pick.saved = { name = t.pick.name, file = t.file }
+        saved[#saved + 1] = t.file
     end
     message = 'saved into textures/: ' .. table.concat(saved, ', ')
     if #stale > 0 then message = message .. '\n(no mask now, an old one is still there: ' .. table.concat(stale, ', ') .. ')' end
@@ -432,7 +460,7 @@ end
 function love.textinput(t)
     if not (editing and sheet and selected) then return end
     local pick = picks[sheet.parts[selected].id]
-    pick.name = (pick.name or '') .. t:lower():gsub('[^%w_-]', '')
+    pick.name = (pick.name or '') .. t:lower():gsub('[^%w_/-]', '')
 end
 
 function love.keypressed(key)

@@ -291,10 +291,10 @@ describe('the spine room', function()
             assert.are.equal('torso1', editor.shapePartFor(instance, 'torso3'))
             assert.are.equal('torso1', editor.shapePartFor(instance, 'torso1'))
             assert.are.equal('luarm', editor.shapePartFor(instance, 'luarm'))
-            CM.updatePart('torso1', { shape8URL = 'shapeA3.png', sx = 1.2, sy = 1.2 }, instance)
+            CM.updatePart('torso1', { shape8URL = 'mipo/body/body-03.png', sx = 1.2, sy = 1.2 }, instance)
             for i = 1, 3 do
                 local part = instance.dna.parts['torso' .. i]
-                assert.are.equal('shapeA3.png', part.shape8URL)
+                assert.are.equal('mipo/body/body-03.png', part.shape8URL)
                 assert.are.equal(1.2, part.dims.sx)
             end
             local top, bottom = math.huge, -math.huge
@@ -306,7 +306,7 @@ describe('the spine room', function()
                     end
                 end
             end
-            local whole = require('src.shape8-dict')['shapeA3.png'].dimensions[2] * 1.2 * instance.scale
+            local whole = require('src.shape8-dict')['mipo/body/body-03.png'].dimensions[2] * 1.2 * instance.scale
             assert.is_true(math.abs((bottom - top) - whole) < whole * 0.15,
                 string.format('bands span %d, the new torso is %d', bottom - top, whole))
             -- without a spine each segment keeps its own shape

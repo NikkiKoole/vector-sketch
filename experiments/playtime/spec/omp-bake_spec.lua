@@ -17,7 +17,7 @@ describe('omp-bake getLoveImage', function()
     end)
 
     it('still loads pictures that are there', function()
-        local img, w, h = ompBake.getLoveImage('textures/shapes6.png')
+        local img, w, h = ompBake.getLoveImage('textures/mipo/body/body-10.png')
         assert.is_not_nil(img)
         assert.is_true(w > 0 and h > 0)
     end)

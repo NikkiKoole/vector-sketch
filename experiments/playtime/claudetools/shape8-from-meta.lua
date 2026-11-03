@@ -155,7 +155,7 @@ function M.problems(rows, dict, catalogs)
                     local dw = shape.dimensions and (shape.dimensions[1] .. 'x' .. shape.dimensions[2]) or 'missing'
                     add(problems, url .. ' size differs (sheet ' .. sw .. ', dict ' .. dw .. ')')
                 end
-                -- the pngs were scaled down, so only the shape has to match (shapes9 and earx13r
+                -- the pngs were scaled down, so only the shape has to match (body-14 and ear-13
                 -- had two digits swapped and were squashed)
                 local pw, ph = M.pngSize(M.root .. '/textures/' .. url)
                 local dims = shape.dimensions
@@ -163,7 +163,7 @@ function M.problems(rows, dict, catalogs)
                     add(problems, url .. ' is ' .. dims[1] .. 'x' .. dims[2] .. ' in the dict, but the png is ' ..
                         pw .. 'x' .. ph .. ': another shape, so the picture is squashed')
                 end
-                if url:match('^earx%d+r%.png$') then
+                if url:match('^mipo/ear/ear%-%d+%.png$') then
                     if type(shape.root) ~= 'table' or #shape.root ~= 2 then
                         add(problems, url .. ' needs a root (where the drawing meets the head); the sheet has none')
                     end
@@ -192,8 +192,8 @@ function M.problems(rows, dict, catalogs)
             end
         end
     end
-    for url in pairs(dict) do
-        if not seen[url] then
+    for url, shape in pairs(dict) do
+        if not seen[url] and not shape.measured then -- measured: from the picture, not traced on the sheet yet
             add(problems, url .. ' is in the dict but not on the meta sheet')
         end
     end

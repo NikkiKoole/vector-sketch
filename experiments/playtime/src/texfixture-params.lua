@@ -69,7 +69,7 @@ local function shape8Entry(fixture)
     local entry = string.format("    ['%s'] = { dimensions = { %d, %d },%s\n        vertices = { %s } },",
         url or '?.png', math.floor(thing.width + 0.5), math.floor(thing.height + 0.5), ankle or '',
         table.concat(coords, ', '))
-    if url and url:match('^ear') then
+    if url and url:match('^mipo/ear/') then
         entry = entry .. '\n    -- ear: add root = { x, y } where the drawing meets the head'
     end
     return entry

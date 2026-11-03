@@ -13,6 +13,7 @@ local utils = require('src.utils')
 local units = require('src.physics-units')
 local ribbon = require('src.render.ribbon')
 local color = require('src.color')
+local textureNames = require('src.texture-names')
 
 lib.defaults = {
     count = 3,          -- tufts
@@ -25,7 +26,7 @@ lib.defaults = {
     dampingRatio = 0.25, -- the ears' 0.25: higher settles sooner
     density = 0.2,      -- of the head's: light
     drawWidth = 0.25,   -- ribbon half-width as a share of the picture's width
-    texture = 7,        -- hairN.png (and hairN-mask.png when there is one), when not `ear`
+    texture = 7,        -- mipo/hair/hair-NN.png (and its -mask when there is one), when not `ear`
     ear = 1,            -- 1: draw with the Mipo's own ear picture, 0: with hairN
     style = 1,          -- lib.haircuts[style]; 0: `count` tufts spread evenly (spread, lean)
 }
@@ -181,8 +182,8 @@ function lib.draw()
         local t = instance.hairTufts
         if t and not t.head:isDestroyed() then
             local o = t.opts
-            local line = image('textures/hair' .. o.texture .. '.png')
-            local mask = image('textures/hair' .. o.texture .. '-mask.png')
+            local line = image('textures/' .. textureNames.part('hair', o.texture) .. '.png')
+            local mask = image('textures/' .. textureNames.part('hair', o.texture) .. '-mask.png')
             local cut = instance.dna and instance.dna.parts and instance.dna.parts.head
                 and instance.dna.parts.head.appearance and instance.dna.parts.head.appearance.haircut
             local main = cut and cut.main or {}

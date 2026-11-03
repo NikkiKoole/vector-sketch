@@ -129,10 +129,19 @@ snapshot for the moves, MEASURING.md) and both builds working.
 - [ ] **AB5. Ship what's used.** First an exclude list in both build scripts (Knut, the unnamed
   textures, the unused sounds), the .love size before and after; later a list per room of what its
   scenes use, if rooms grow apart.
-- [ ] **AB6. Textures in folders by use.** A move list (old path -> new), the loader looks a missing
+- [x] **AB6. Textures in folders by use.** A move list (old path -> new), the loader looks a missing
   old name up in it so old scenes and the save folder's copies still load; then the scenes rewritten
   on their next save. `claudetools/` gets a check that lists every texture a scene or the code names
   and every file nothing names.
+  Done 2026-11-03: 126 pictures (+ masks) into `textures/mipo/<part>/`, `src/texture-names.lua` (the
+  move list, `part(kind, n)` for the face parts built from a number, `migrate` in scene-load's
+  prepareLoaded and the library's load, `resolve` as getLoveImage's fallback); the repo's scenes,
+  specs and code rewritten at once; the save folder left as it is (it migrates when read). 53 pictures
+  nothing named (76 files) to `~/Projects/mipo-art/archive/textures-2026-11-03/`. romp1 is body-18 in
+  the body list (romp2, romp3 archived: shapes2/shapes10 look alike). Checked: every scene in
+  scripts/ and all 210 in the save folder and library draw the same pixels before and after, the
+  Mipo and editor snapshots the same with the names mapped back; `claudetools/texture-check.py`.
+  `tools/scan2tex` saves under the scheme (type the part, it takes the next free number).
 
   **The names** (Nikki 2026-11-03: English everywhere; `x` "was just some variant, no real meaning"):
   - `mipo/<part>/<part>-<nn>.png` + `<part>-<nn>-mask.png`, numbered 01, 02… per part; world art in

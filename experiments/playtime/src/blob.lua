@@ -64,8 +64,8 @@ local function setting(extra, key)
 end
 
 -- A random OMP look on one of the head/body shapes.
-local LOOK_SHAPES = { 'shapeA1', 'shapeA2', 'shapeA3', 'shapeA4',
-    'shapes1', 'shapes2', 'shapes3', 'shapes4', 'shapes5' }
+local LOOK_SHAPES = { 'mipo/body/body-01', 'mipo/body/body-02', 'mipo/body/body-03', 'mipo/body/body-04',
+    'mipo/body/body-05', 'mipo/body/body-06', 'mipo/body/body-07', 'mipo/body/body-08', 'mipo/body/body-09' }
 local LOOK_PATTERNS = { 'type0.png', 'type1.png', 'type2t.png', 'type3_.png', 'type6.png' }
 function lib.randomLook()
     local function hex() return string.format('%02X%02X%02XFF', love.math.random(40, 240),

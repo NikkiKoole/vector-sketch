@@ -24,6 +24,7 @@ local mipoRegistry = require('src.mipo-registry')
 local roomMusic = require('src.room-music')
 local influences = require('src.influences')
 local migrations = require('src.save-migrations')
+local textureNames = require('src.texture-names')
 
 local lib = {}
 
@@ -294,8 +295,10 @@ function lib.buildWorld(data, world, cam, opts)
 end
 
 -- Decoded file data into the shape buildWorld expects: bone metadata back on each influence (files
--- without bones pass through), and old Steiner points moved to their body. Also for library imports.
+-- without bones pass through), old Steiner points moved to their body, and old texture names to their
+-- new ones (src/texture-names.lua). Also for library imports.
 function lib.prepareLoaded(jsonData)
+    textureNames.migrate(jsonData)
     for _, body in ipairs(jsonData.bodies or {}) do
         for _, fix in ipairs(body.fixtures or {}) do
             influences.fromFile(fix.userData and fix.userData.extra)

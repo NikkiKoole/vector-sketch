@@ -1259,10 +1259,10 @@
               "bodyhair":{
                 "main":{
                   "fgHex":"B6E111FF",
-                  "bgURL":"borsthaar3.png",
+                  "bgURL":"mipo/chesthair/chesthair-03.png",
                   "pHex":"A664EDFF",
                   "pURL":"type8.png",
-                  "fgURL":"borsthaar3-mask.png",
+                  "fgURL":"mipo/chesthair/chesthair-03-mask.png",
                   "bgHex":"DBABA2FF"
                 },
                 "growfactor":1.0222
@@ -1280,7 +1280,7 @@
                 }
               }
             },
-            "shape8URL":"feet7r.png"
+            "shape8URL":"mipo/foot/foot-05.png"
           },
           "neck-segment-template":{
             "shape":"capsule",
@@ -1358,11 +1358,11 @@
                 "zOffset":300,
                 "main":{
                   "fgHex":"30F10BFF",
-                  "bgURL":"leg5.png",
+                  "bgURL":"mipo/leg/leg-05.png",
                   "pHex":"AFBEC1FF",
                   "dir":-1,
                   "pURL":"type4.png",
-                  "fgURL":"leg5-mask.png",
+                  "fgURL":"mipo/leg/leg-05-mask.png",
                   "bgHex":"020202ff",
                   "wmul":0.4395
                 },
@@ -1372,7 +1372,7 @@
                 "zOffset":301,
                 "main":{
                   "fgHex":"",
-                  "bgURL":"hair11.png",
+                  "bgURL":"mipo/hair/hair-11.png",
                   "pHex":"ffff00ff",
                   "pURL":"type2t.png",
                   "fgURL":"",
@@ -1409,7 +1409,7 @@
               "haircut":{
                 "main":{
                   "fgHex":"EB06ADFF",
-                  "bgURL":"hair3.png",
+                  "bgURL":"mipo/hair/hair-03.png",
                   "pHex":"BE8D1EFF",
                   "pURL":"type2t.png",
                   "fgURL":"",
@@ -1423,7 +1423,7 @@
                 "zOffset":101,
                 "main":{
                   "fgHex":"",
-                  "bgURL":"hair11.png",
+                  "bgURL":"mipo/hair/hair-11.png",
                   "pHex":"ffff00ff",
                   "dir":1,
                   "fgURL":"",
@@ -1502,10 +1502,10 @@
                 "zOffset":100,
                 "main":{
                   "fgHex":"30F10BFF",
-                  "bgURL":"leg5.png",
+                  "bgURL":"mipo/leg/leg-05.png",
                   "pHex":"AFBEC1FF",
                   "pURL":"type4.png",
-                  "fgURL":"leg5-mask.png",
+                  "fgURL":"mipo/leg/leg-05-mask.png",
                   "bgHex":"020202ff"
                 },
                 "endNode":"head"
@@ -1513,10 +1513,10 @@
               "bodyhair":{
                 "main":{
                   "fgHex":"B6E111FF",
-                  "bgURL":"borsthaar7.png",
+                  "bgURL":"mipo/chesthair/chesthair-07.png",
                   "pHex":"A664EDFF",
                   "pURL":"type8.png",
-                  "fgURL":"borsthaar7-mask.png",
+                  "fgURL":"mipo/chesthair/chesthair-07-mask.png",
                   "bgHex":"DBABA2FF"
                 }
               },
@@ -1585,7 +1585,7 @@
                 "angle":0,
                 "name":"KEEP_ANGLE"
               }],
-            "shape8URL":"shapes7.png"
+            "shape8URL":"mipo/body/body-11.png"
           },
           "luarm":{
             "shape":"capsule",
@@ -1594,11 +1594,11 @@
                 "zOffset":402,
                 "main":{
                   "fgHex":"CC6727FF",
-                  "bgURL":"leg1.png",
+                  "bgURL":"mipo/leg/leg-01.png",
                   "pHex":"28E222FF",
                   "dir":-1,
                   "pURL":"type6.png",
-                  "fgURL":"leg1-mask.png",
+                  "fgURL":"mipo/leg/leg-01-mask.png",
                   "bgHex":"020202ff",
                   "wmul":0.2883
                 },
@@ -1608,7 +1608,7 @@
                 "zOffset":403,
                 "main":{
                   "fgHex":"",
-                  "bgURL":"hair10.png",
+                  "bgURL":"mipo/hair/hair-10.png",
                   "pHex":"ffff00ff",
                   "pURL":"type2t.png",
                   "fgURL":"",
@@ -1638,11 +1638,11 @@
                 "zOffset":402,
                 "main":{
                   "fgHex":"CC6727FF",
-                  "bgURL":"leg1.png",
+                  "bgURL":"mipo/leg/leg-01.png",
                   "pHex":"28E222FF",
                   "dir":1,
                   "pURL":"type6.png",
-                  "fgURL":"leg1-mask.png",
+                  "fgURL":"mipo/leg/leg-01-mask.png",
                   "bgHex":"020202ff",
                   "wmul":0.2883
                 },
@@ -1652,7 +1652,7 @@
                 "zOffset":403,
                 "main":{
                   "fgHex":"",
-                  "bgURL":"hair10.png",
+                  "bgURL":"mipo/hair/hair-10.png",
                   "pHex":"ffff00ff",
                   "pURL":"type2t.png",
                   "fgURL":"",
@@ -1726,11 +1726,11 @@
                 }
               }
             },
-            "shape8URL":"earx16r.png"
+            "shape8URL":"mipo/ear/ear-16.png"
           },
           "head":{
             "shape":"shape8",
-            "shape8URL":"shapes7.png",
+            "shape8URL":"mipo/body/body-11.png",
             "dims":{
               "w2":4,
               "sx":1.5156,
@@ -1808,7 +1808,7 @@
               "haircut":{
                 "main":{
                   "fgHex":"BF1A2DFF",
-                  "bgURL":"hair3.png",
+                  "bgURL":"mipo/hair/hair-03.png",
                   "pHex":"0D3825FF",
                   "pURL":"type2t.png",
                   "fgURL":"",
@@ -1821,10 +1821,10 @@
               "bodyhair":{
                 "main":{
                   "fgHex":"B6E111FF",
-                  "bgURL":"borsthaar7.png",
+                  "bgURL":"mipo/chesthair/chesthair-07.png",
                   "pHex":"A664EDFF",
                   "pURL":"type8.png",
-                  "fgURL":"borsthaar7-mask.png",
+                  "fgURL":"mipo/chesthair/chesthair-07-mask.png",
                   "bgHex":"DBABA2FF"
                 }
               },
@@ -1961,7 +1961,7 @@
                 }
               }
             },
-            "shape8URL":"earx16r.png"
+            "shape8URL":"mipo/ear/ear-16.png"
           },
           "lhand":{
             "shape":"shape8",
@@ -1992,11 +1992,11 @@
                 }
               }
             },
-            "shape8URL":"hand3r.png"
+            "shape8URL":"mipo/hand/hand-01.png"
           },
           "torso-segment-template":{
             "shape":"shape8",
-            "shape8URL":"shapeA1.png",
+            "shape8URL":"mipo/body/body-01.png",
             "dims":{
               "w2":5,
               "sx":1,
@@ -2075,7 +2075,7 @@
                 "zOffset":101,
                 "main":{
                   "fgHex":"",
-                  "bgURL":"hair10.png",
+                  "bgURL":"mipo/hair/hair-10.png",
                   "pHex":"ffff00ff",
                   "pURL":"type2t.png",
                   "dir":1,
@@ -2106,10 +2106,10 @@
                 "endIndex":3,
                 "main":{
                   "fgHex":"EB06ADFF",
-                  "bgURL":"hair7.png",
+                  "bgURL":"mipo/hair/hair-07.png",
                   "pHex":"BE8D1EFF",
                   "pURL":"type2t.png",
-                  "fgURL":"hair7-mask.png",
+                  "fgURL":"mipo/hair/hair-07-mask.png",
                   "bgHex":"020202ff",
                   "cached":{
                     "pR":0.7451,
@@ -2134,10 +2134,10 @@
                 "zOffset":100,
                 "main":{
                   "fgHex":"56BC6DFF",
-                  "bgURL":"leg5.png",
+                  "bgURL":"mipo/leg/leg-05.png",
                   "pHex":"911D0EFF",
                   "pURL":"type2t.png",
-                  "fgURL":"leg5-mask.png",
+                  "fgURL":"mipo/leg/leg-05-mask.png",
                   "bgHex":"020202ff",
                   "cached":{
                     "pR":0.5686,
@@ -2162,10 +2162,10 @@
               "bodyhair":{
                 "main":{
                   "fgHex":"2E41EBFF",
-                  "bgURL":"borsthaar4.png",
+                  "bgURL":"mipo/chesthair/chesthair-04.png",
                   "pHex":"51145AFF",
                   "pURL":"type2t.png",
-                  "fgURL":"borsthaar4-mask.png",
+                  "fgURL":"mipo/chesthair/chesthair-04-mask.png",
                   "bgHex":"020202ff",
                   "cached":{
                     "pR":0.3176,
@@ -2217,7 +2217,7 @@
                   "fgHex":"78AD93FF",
                   "tx":-0.33,
                   "pHex":"CC732EFF",
-                  "fgURL":"patch2-mask.png",
+                  "fgURL":"mipo/patch/patch-02-mask.png",
                   "cached":{
                     "pR":0.8,
                     "bgR":0.0078,
@@ -2235,7 +2235,7 @@
                     "pB":0.1804,
                     "fgRGB":[0.4706,0.6784,0.5765]
                   },
-                  "bgURL":"patch2.png",
+                  "bgURL":"mipo/patch/patch-02.png",
                   "pURL":"type2t.png",
                   "bgHex":"020202ff",
                   "ty":0
@@ -2244,7 +2244,7 @@
                   "fgHex":"A83698FF",
                   "tx":0.33,
                   "pHex":"24D495FF",
-                  "fgURL":"patch1-mask.png",
+                  "fgURL":"mipo/patch/patch-01-mask.png",
                   "cached":{
                     "pR":0.1412,
                     "bgR":0.0078,
@@ -2262,7 +2262,7 @@
                     "pB":0.5843,
                     "fgRGB":[0.6588,0.2118,0.5961]
                   },
-                  "bgURL":"patch1.png",
+                  "bgURL":"mipo/patch/patch-01.png",
                   "pURL":"type2t.png",
                   "bgHex":"020202ff",
                   "ty":0
@@ -2271,7 +2271,7 @@
                   "fgHex":"06D60CFF",
                   "tx":0,
                   "pHex":"D4A0D3FF",
-                  "fgURL":"patch1-mask.png",
+                  "fgURL":"mipo/patch/patch-01-mask.png",
                   "cached":{
                     "pR":0.8314,
                     "bgR":0.0078,
@@ -2289,7 +2289,7 @@
                     "pB":0.8275,
                     "fgRGB":[0.0235,0.8392,0.0471]
                   },
-                  "bgURL":"patch1.png",
+                  "bgURL":"mipo/patch/patch-01.png",
                   "sx":2,
                   "pURL":"type2t.png",
                   "bgHex":"020202ff",
@@ -2328,10 +2328,10 @@
               "bodyhair":{
                 "main":{
                   "fgHex":"B6E111FF",
-                  "bgURL":"borsthaar3.png",
+                  "bgURL":"mipo/chesthair/chesthair-03.png",
                   "pHex":"A664EDFF",
                   "pURL":"type8.png",
-                  "fgURL":"borsthaar3-mask.png",
+                  "fgURL":"mipo/chesthair/chesthair-03-mask.png",
                   "bgHex":"DBABA2FF"
                 },
                 "growfactor":1.0222
@@ -2349,7 +2349,7 @@
                 }
               }
             },
-            "shape8URL":"feet7r.png"
+            "shape8URL":"mipo/foot/foot-05.png"
           },
           "ruleg":{
             "shape":"capsule",
@@ -2370,11 +2370,11 @@
                 "zOffset":300,
                 "main":{
                   "fgHex":"30F10BFF",
-                  "bgURL":"leg5.png",
+                  "bgURL":"mipo/leg/leg-05.png",
                   "pHex":"AFBEC1FF",
                   "dir":1,
                   "pURL":"type4.png",
-                  "fgURL":"leg5-mask.png",
+                  "fgURL":"mipo/leg/leg-05-mask.png",
                   "bgHex":"020202ff",
                   "wmul":0.4395
                 },
@@ -2384,7 +2384,7 @@
                 "zOffset":301,
                 "main":{
                   "fgHex":"",
-                  "bgURL":"hair11.png",
+                  "bgURL":"mipo/hair/hair-11.png",
                   "pHex":"ffff00ff",
                   "pURL":"type2t.png",
                   "fgURL":"",
@@ -2422,10 +2422,10 @@
                 "zOffset":350,
                 "main":{
                   "fgHex":"CBB297FF",
-                  "bgURL":"shapeA2.png",
+                  "bgURL":"mipo/body/body-02.png",
                   "pHex":"C014A9FF",
                   "pURL":"type2t.png",
-                  "fgURL":"shapeA2-mask.png",
+                  "fgURL":"mipo/body/body-02-mask.png",
                   "bgHex":"020202ff",
                   "cached":{
                     "pR":0.7529,
@@ -2447,7 +2447,7 @@
                 }
               }
             },
-            "shape8URL":"shapeA2.png"
+            "shape8URL":"mipo/body/body-02.png"
           },
           "rhand":{
             "shape":"shape8",
@@ -2477,7 +2477,7 @@
                 }
               }
             },
-            "shape8URL":"hand3r.png"
+            "shape8URL":"mipo/hand/hand-01.png"
           },
           "nose-segment-template":{
             "shape":"capsule",
@@ -2554,7 +2554,7 @@
                 }
               }
             },
-            "shape8URL":"feet7r.png"
+            "shape8URL":"mipo/foot/foot-05.png"
           },
           "neck-segment-template":{
             "shape":"capsule",
@@ -2632,11 +2632,11 @@
                 "zOffset":300,
                 "main":{
                   "fgHex":"6AFCC1FF",
-                  "bgURL":"leg5.png",
+                  "bgURL":"mipo/leg/leg-05.png",
                   "pHex":"2EEE97FF",
                   "dir":-1,
                   "pURL":"type8.png",
-                  "fgURL":"leg5-mask.png",
+                  "fgURL":"mipo/leg/leg-05-mask.png",
                   "bgHex":"020202ff",
                   "wmul":0.3506
                 },
@@ -2646,7 +2646,7 @@
                 "zOffset":301,
                 "main":{
                   "fgHex":"",
-                  "bgURL":"hair11.png",
+                  "bgURL":"mipo/hair/hair-11.png",
                   "pHex":"ffff00ff",
                   "pURL":"type2t.png",
                   "fgURL":"",
@@ -2683,10 +2683,10 @@
               "haircut":{
                 "main":{
                   "fgHex":"EB06ADFF",
-                  "bgURL":"hair8.png",
+                  "bgURL":"mipo/hair/hair-08.png",
                   "pHex":"BE8D1EFF",
                   "pURL":"type2t.png",
-                  "fgURL":"hair8-mask.png",
+                  "fgURL":"mipo/hair/hair-08-mask.png",
                   "bgHex":"A4E742FF"
                 },
                 "startIndex":6,
@@ -2697,7 +2697,7 @@
                 "zOffset":101,
                 "main":{
                   "fgHex":"",
-                  "bgURL":"hair11.png",
+                  "bgURL":"mipo/hair/hair-11.png",
                   "pHex":"ffff00ff",
                   "dir":1,
                   "fgURL":"",
@@ -2776,10 +2776,10 @@
                 "zOffset":100,
                 "main":{
                   "fgHex":"6AFCC1FF",
-                  "bgURL":"leg5.png",
+                  "bgURL":"mipo/leg/leg-05.png",
                   "pHex":"2EEE97FF",
                   "pURL":"type8.png",
-                  "fgURL":"leg5-mask.png",
+                  "fgURL":"mipo/leg/leg-05-mask.png",
                   "bgHex":"020202ff"
                 },
                 "endNode":"head"
@@ -2787,10 +2787,10 @@
               "bodyhair":{
                 "main":{
                   "fgHex":"2176D9FF",
-                  "bgURL":"borsthaar7.png",
+                  "bgURL":"mipo/chesthair/chesthair-07.png",
                   "pHex":"0A2F80FF",
                   "pURL":"type8.png",
-                  "fgURL":"borsthaar7-mask.png",
+                  "fgURL":"mipo/chesthair/chesthair-07-mask.png",
                   "bgHex":"A4E742FF"
                 }
               },
@@ -2859,7 +2859,7 @@
                 "angle":0,
                 "name":"KEEP_ANGLE"
               }],
-            "shape8URL":"shapes7.png"
+            "shape8URL":"mipo/body/body-11.png"
           },
           "luarm":{
             "shape":"capsule",
@@ -2868,11 +2868,11 @@
                 "zOffset":402,
                 "main":{
                   "fgHex":"DFABA9FF",
-                  "bgURL":"leg1.png",
+                  "bgURL":"mipo/leg/leg-01.png",
                   "pHex":"AC3EAEFF",
                   "dir":-1,
                   "pURL":"type3_.png",
-                  "fgURL":"leg1-mask.png",
+                  "fgURL":"mipo/leg/leg-01-mask.png",
                   "bgHex":"020202ff",
                   "wmul":0.2857
                 },
@@ -2882,7 +2882,7 @@
                 "zOffset":403,
                 "main":{
                   "fgHex":"",
-                  "bgURL":"hair9.png",
+                  "bgURL":"mipo/hair/hair-09.png",
                   "pHex":"ffff00ff",
                   "pURL":"type2t.png",
                   "fgURL":"",
@@ -2912,11 +2912,11 @@
                 "zOffset":402,
                 "main":{
                   "fgHex":"DFABA9FF",
-                  "bgURL":"leg1.png",
+                  "bgURL":"mipo/leg/leg-01.png",
                   "pHex":"AC3EAEFF",
                   "dir":1,
                   "pURL":"type3_.png",
-                  "fgURL":"leg1-mask.png",
+                  "fgURL":"mipo/leg/leg-01-mask.png",
                   "bgHex":"020202ff",
                   "wmul":0.2857
                 },
@@ -2926,7 +2926,7 @@
                 "zOffset":403,
                 "main":{
                   "fgHex":"",
-                  "bgURL":"hair9.png",
+                  "bgURL":"mipo/hair/hair-09.png",
                   "pHex":"ffff00ff",
                   "pURL":"type2t.png",
                   "fgURL":"",
@@ -3000,11 +3000,11 @@
                 }
               }
             },
-            "shape8URL":"earx2r.png"
+            "shape8URL":"mipo/ear/ear-02.png"
           },
           "head":{
             "shape":"shape8",
-            "shape8URL":"shapes7.png",
+            "shape8URL":"mipo/body/body-11.png",
             "dims":{
               "w2":4,
               "sx":1.7312,
@@ -3082,10 +3082,10 @@
               "haircut":{
                 "main":{
                   "fgHex":"BF1A2DFF",
-                  "bgURL":"hair8.png",
+                  "bgURL":"mipo/hair/hair-08.png",
                   "pHex":"0D3825FF",
                   "pURL":"type2t.png",
-                  "fgURL":"hair8-mask.png",
+                  "fgURL":"mipo/hair/hair-08-mask.png",
                   "bgHex":"A4E742FF"
                 },
                 "startIndex":6,
@@ -3095,10 +3095,10 @@
               "bodyhair":{
                 "main":{
                   "fgHex":"2176D9FF",
-                  "bgURL":"borsthaar7.png",
+                  "bgURL":"mipo/chesthair/chesthair-07.png",
                   "pHex":"0A2F80FF",
                   "pURL":"type8.png",
-                  "fgURL":"borsthaar7-mask.png",
+                  "fgURL":"mipo/chesthair/chesthair-07-mask.png",
                   "bgHex":"A4E742FF"
                 }
               },
@@ -3235,7 +3235,7 @@
                 }
               }
             },
-            "shape8URL":"earx2r.png"
+            "shape8URL":"mipo/ear/ear-02.png"
           },
           "lhand":{
             "shape":"shape8",
@@ -3266,11 +3266,11 @@
                 }
               }
             },
-            "shape8URL":"hand3r.png"
+            "shape8URL":"mipo/hand/hand-01.png"
           },
           "torso-segment-template":{
             "shape":"shape8",
-            "shape8URL":"shapeA1.png",
+            "shape8URL":"mipo/body/body-01.png",
             "dims":{
               "w2":5,
               "sx":1,
@@ -3349,7 +3349,7 @@
                 "zOffset":101,
                 "main":{
                   "fgHex":"",
-                  "bgURL":"hair10.png",
+                  "bgURL":"mipo/hair/hair-10.png",
                   "pHex":"ffff00ff",
                   "pURL":"type2t.png",
                   "dir":1,
@@ -3380,10 +3380,10 @@
                 "endIndex":3,
                 "main":{
                   "fgHex":"EB06ADFF",
-                  "bgURL":"hair7.png",
+                  "bgURL":"mipo/hair/hair-07.png",
                   "pHex":"BE8D1EFF",
                   "pURL":"type2t.png",
-                  "fgURL":"hair7-mask.png",
+                  "fgURL":"mipo/hair/hair-07-mask.png",
                   "bgHex":"020202ff",
                   "cached":{
                     "pR":0.7451,
@@ -3408,10 +3408,10 @@
                 "zOffset":100,
                 "main":{
                   "fgHex":"56BC6DFF",
-                  "bgURL":"leg5.png",
+                  "bgURL":"mipo/leg/leg-05.png",
                   "pHex":"911D0EFF",
                   "pURL":"type2t.png",
-                  "fgURL":"leg5-mask.png",
+                  "fgURL":"mipo/leg/leg-05-mask.png",
                   "bgHex":"020202ff",
                   "cached":{
                     "pR":0.5686,
@@ -3436,10 +3436,10 @@
               "bodyhair":{
                 "main":{
                   "fgHex":"2E41EBFF",
-                  "bgURL":"borsthaar4.png",
+                  "bgURL":"mipo/chesthair/chesthair-04.png",
                   "pHex":"51145AFF",
                   "pURL":"type2t.png",
-                  "fgURL":"borsthaar4-mask.png",
+                  "fgURL":"mipo/chesthair/chesthair-04-mask.png",
                   "bgHex":"020202ff",
                   "cached":{
                     "pR":0.3176,
@@ -3491,7 +3491,7 @@
                   "fgHex":"78AD93FF",
                   "tx":-0.33,
                   "pHex":"CC732EFF",
-                  "fgURL":"patch2-mask.png",
+                  "fgURL":"mipo/patch/patch-02-mask.png",
                   "cached":{
                     "pR":0.8,
                     "bgR":0.0078,
@@ -3509,7 +3509,7 @@
                     "pB":0.1804,
                     "fgRGB":[0.4706,0.6784,0.5765]
                   },
-                  "bgURL":"patch2.png",
+                  "bgURL":"mipo/patch/patch-02.png",
                   "pURL":"type2t.png",
                   "bgHex":"020202ff",
                   "ty":0
@@ -3518,7 +3518,7 @@
                   "fgHex":"A83698FF",
                   "tx":0.33,
                   "pHex":"24D495FF",
-                  "fgURL":"patch1-mask.png",
+                  "fgURL":"mipo/patch/patch-01-mask.png",
                   "cached":{
                     "pR":0.1412,
                     "bgR":0.0078,
@@ -3536,7 +3536,7 @@
                     "pB":0.5843,
                     "fgRGB":[0.6588,0.2118,0.5961]
                   },
-                  "bgURL":"patch1.png",
+                  "bgURL":"mipo/patch/patch-01.png",
                   "pURL":"type2t.png",
                   "bgHex":"020202ff",
                   "ty":0
@@ -3545,7 +3545,7 @@
                   "fgHex":"06D60CFF",
                   "tx":0,
                   "pHex":"D4A0D3FF",
-                  "fgURL":"patch1-mask.png",
+                  "fgURL":"mipo/patch/patch-01-mask.png",
                   "cached":{
                     "pR":0.8314,
                     "bgR":0.0078,
@@ -3563,7 +3563,7 @@
                     "pB":0.8275,
                     "fgRGB":[0.0235,0.8392,0.0471]
                   },
-                  "bgURL":"patch1.png",
+                  "bgURL":"mipo/patch/patch-01.png",
                   "sx":2,
                   "pURL":"type2t.png",
                   "bgHex":"020202ff",
@@ -3612,7 +3612,7 @@
                 }
               }
             },
-            "shape8URL":"feet7r.png"
+            "shape8URL":"mipo/foot/foot-05.png"
           },
           "ruleg":{
             "shape":"capsule",
@@ -3633,11 +3633,11 @@
                 "zOffset":300,
                 "main":{
                   "fgHex":"6AFCC1FF",
-                  "bgURL":"leg5.png",
+                  "bgURL":"mipo/leg/leg-05.png",
                   "pHex":"2EEE97FF",
                   "dir":1,
                   "pURL":"type8.png",
-                  "fgURL":"leg5-mask.png",
+                  "fgURL":"mipo/leg/leg-05-mask.png",
                   "bgHex":"020202ff",
                   "wmul":0.3506
                 },
@@ -3647,7 +3647,7 @@
                 "zOffset":301,
                 "main":{
                   "fgHex":"",
-                  "bgURL":"hair11.png",
+                  "bgURL":"mipo/hair/hair-11.png",
                   "pHex":"ffff00ff",
                   "pURL":"type2t.png",
                   "fgURL":"",
@@ -3685,10 +3685,10 @@
                 "zOffset":350,
                 "main":{
                   "fgHex":"CBB297FF",
-                  "bgURL":"shapeA2.png",
+                  "bgURL":"mipo/body/body-02.png",
                   "pHex":"C014A9FF",
                   "pURL":"type2t.png",
-                  "fgURL":"shapeA2-mask.png",
+                  "fgURL":"mipo/body/body-02-mask.png",
                   "bgHex":"020202ff",
                   "cached":{
                     "pR":0.7529,
@@ -3710,7 +3710,7 @@
                 }
               }
             },
-            "shape8URL":"shapeA2.png"
+            "shape8URL":"mipo/body/body-02.png"
           },
           "rhand":{
             "shape":"shape8",
@@ -3740,7 +3740,7 @@
                 }
               }
             },
-            "shape8URL":"hand3r.png"
+            "shape8URL":"mipo/hand/hand-01.png"
           },
           "nose-segment-template":{
             "shape":"capsule",
@@ -3817,7 +3817,7 @@
                 }
               }
             },
-            "shape8URL":"feet7r.png"
+            "shape8URL":"mipo/foot/foot-05.png"
           },
           "neck-segment-template":{
             "shape":"capsule",
@@ -3895,11 +3895,11 @@
                 "zOffset":300,
                 "main":{
                   "fgHex":"6C9A70FF",
-                  "bgURL":"leg1.png",
+                  "bgURL":"mipo/leg/leg-01.png",
                   "pHex":"B47E5AFF",
                   "dir":-1,
                   "pURL":"type8.png",
-                  "fgURL":"leg1-mask.png",
+                  "fgURL":"mipo/leg/leg-01-mask.png",
                   "bgHex":"020202ff",
                   "wmul":0.3357
                 },
@@ -3946,7 +3946,7 @@
               "haircut":{
                 "main":{
                   "fgHex":"EB06ADFF",
-                  "bgURL":"hair2.png",
+                  "bgURL":"mipo/hair/hair-02.png",
                   "pHex":"BE8D1EFF",
                   "pURL":"type2t.png",
                   "fgURL":"",
@@ -4039,10 +4039,10 @@
                 "zOffset":100,
                 "main":{
                   "fgHex":"6C9A70FF",
-                  "bgURL":"leg1.png",
+                  "bgURL":"mipo/leg/leg-01.png",
                   "pHex":"B47E5AFF",
                   "pURL":"type8.png",
-                  "fgURL":"leg1-mask.png",
+                  "fgURL":"mipo/leg/leg-01-mask.png",
                   "bgHex":"020202ff"
                 },
                 "endNode":"head"
@@ -4050,10 +4050,10 @@
               "bodyhair":{
                 "main":{
                   "fgHex":"A67F21FF",
-                  "bgURL":"borsthaar3.png",
+                  "bgURL":"mipo/chesthair/chesthair-03.png",
                   "pHex":"64EABAFF",
                   "pURL":"type2t.png",
-                  "fgURL":"borsthaar3-mask.png",
+                  "fgURL":"mipo/chesthair/chesthair-03-mask.png",
                   "bgHex":"25CFD5FF"
                 }
               },
@@ -4122,7 +4122,7 @@
                 "angle":0,
                 "name":"KEEP_ANGLE"
               }],
-            "shape8URL":"shapes7.png"
+            "shape8URL":"mipo/body/body-11.png"
           },
           "luarm":{
             "shape":"capsule",
@@ -4131,11 +4131,11 @@
                 "zOffset":402,
                 "main":{
                   "fgHex":"A9D4CCFF",
-                  "bgURL":"leg5.png",
+                  "bgURL":"mipo/leg/leg-05.png",
                   "pHex":"6771F5FF",
                   "dir":-1,
                   "pURL":"type3_.png",
-                  "fgURL":"leg5-mask.png",
+                  "fgURL":"mipo/leg/leg-05-mask.png",
                   "bgHex":"020202ff",
                   "wmul":0.3667
                 },
@@ -4145,7 +4145,7 @@
                 "zOffset":403,
                 "main":{
                   "fgHex":"",
-                  "bgURL":"hair11.png",
+                  "bgURL":"mipo/hair/hair-11.png",
                   "pHex":"ffff00ff",
                   "pURL":"type2t.png",
                   "fgURL":"",
@@ -4175,11 +4175,11 @@
                 "zOffset":402,
                 "main":{
                   "fgHex":"A9D4CCFF",
-                  "bgURL":"leg5.png",
+                  "bgURL":"mipo/leg/leg-05.png",
                   "pHex":"6771F5FF",
                   "dir":1,
                   "pURL":"type3_.png",
-                  "fgURL":"leg5-mask.png",
+                  "fgURL":"mipo/leg/leg-05-mask.png",
                   "bgHex":"020202ff",
                   "wmul":0.3667
                 },
@@ -4189,7 +4189,7 @@
                 "zOffset":403,
                 "main":{
                   "fgHex":"",
-                  "bgURL":"hair11.png",
+                  "bgURL":"mipo/hair/hair-11.png",
                   "pHex":"ffff00ff",
                   "pURL":"type2t.png",
                   "fgURL":"",
@@ -4263,11 +4263,11 @@
                 }
               }
             },
-            "shape8URL":"earx13r.png"
+            "shape8URL":"mipo/ear/ear-13.png"
           },
           "head":{
             "shape":"shape8",
-            "shape8URL":"shapes7.png",
+            "shape8URL":"mipo/body/body-11.png",
             "dims":{
               "w2":4,
               "sx":1.8501,
@@ -4345,7 +4345,7 @@
               "haircut":{
                 "main":{
                   "fgHex":"BF1A2DFF",
-                  "bgURL":"hair2.png",
+                  "bgURL":"mipo/hair/hair-02.png",
                   "pHex":"0D3825FF",
                   "pURL":"type2t.png",
                   "fgURL":"",
@@ -4358,10 +4358,10 @@
               "bodyhair":{
                 "main":{
                   "fgHex":"A67F21FF",
-                  "bgURL":"borsthaar3.png",
+                  "bgURL":"mipo/chesthair/chesthair-03.png",
                   "pHex":"64EABAFF",
                   "pURL":"type2t.png",
-                  "fgURL":"borsthaar3-mask.png",
+                  "fgURL":"mipo/chesthair/chesthair-03-mask.png",
                   "bgHex":"25CFD5FF"
                 }
               },
@@ -4498,7 +4498,7 @@
                 }
               }
             },
-            "shape8URL":"earx13r.png"
+            "shape8URL":"mipo/ear/ear-13.png"
           },
           "lhand":{
             "shape":"shape8",
@@ -4529,11 +4529,11 @@
                 }
               }
             },
-            "shape8URL":"hand3r.png"
+            "shape8URL":"mipo/hand/hand-01.png"
           },
           "torso-segment-template":{
             "shape":"shape8",
-            "shape8URL":"shapeA1.png",
+            "shape8URL":"mipo/body/body-01.png",
             "dims":{
               "w2":5,
               "sx":1,
@@ -4612,7 +4612,7 @@
                 "zOffset":101,
                 "main":{
                   "fgHex":"",
-                  "bgURL":"hair10.png",
+                  "bgURL":"mipo/hair/hair-10.png",
                   "pHex":"ffff00ff",
                   "pURL":"type2t.png",
                   "dir":1,
@@ -4643,10 +4643,10 @@
                 "endIndex":3,
                 "main":{
                   "fgHex":"EB06ADFF",
-                  "bgURL":"hair7.png",
+                  "bgURL":"mipo/hair/hair-07.png",
                   "pHex":"BE8D1EFF",
                   "pURL":"type2t.png",
-                  "fgURL":"hair7-mask.png",
+                  "fgURL":"mipo/hair/hair-07-mask.png",
                   "bgHex":"020202ff",
                   "cached":{
                     "pR":0.7451,
@@ -4671,10 +4671,10 @@
                 "zOffset":100,
                 "main":{
                   "fgHex":"56BC6DFF",
-                  "bgURL":"leg5.png",
+                  "bgURL":"mipo/leg/leg-05.png",
                   "pHex":"911D0EFF",
                   "pURL":"type2t.png",
-                  "fgURL":"leg5-mask.png",
+                  "fgURL":"mipo/leg/leg-05-mask.png",
                   "bgHex":"020202ff",
                   "cached":{
                     "pR":0.5686,
@@ -4699,10 +4699,10 @@
               "bodyhair":{
                 "main":{
                   "fgHex":"2E41EBFF",
-                  "bgURL":"borsthaar4.png",
+                  "bgURL":"mipo/chesthair/chesthair-04.png",
                   "pHex":"51145AFF",
                   "pURL":"type2t.png",
-                  "fgURL":"borsthaar4-mask.png",
+                  "fgURL":"mipo/chesthair/chesthair-04-mask.png",
                   "bgHex":"020202ff",
                   "cached":{
                     "pR":0.3176,
@@ -4754,7 +4754,7 @@
                   "fgHex":"78AD93FF",
                   "tx":-0.33,
                   "pHex":"CC732EFF",
-                  "fgURL":"patch2-mask.png",
+                  "fgURL":"mipo/patch/patch-02-mask.png",
                   "cached":{
                     "pR":0.8,
                     "bgR":0.0078,
@@ -4772,7 +4772,7 @@
                     "pB":0.1804,
                     "fgRGB":[0.4706,0.6784,0.5765]
                   },
-                  "bgURL":"patch2.png",
+                  "bgURL":"mipo/patch/patch-02.png",
                   "pURL":"type2t.png",
                   "bgHex":"020202ff",
                   "ty":0
@@ -4781,7 +4781,7 @@
                   "fgHex":"A83698FF",
                   "tx":0.33,
                   "pHex":"24D495FF",
-                  "fgURL":"patch1-mask.png",
+                  "fgURL":"mipo/patch/patch-01-mask.png",
                   "cached":{
                     "pR":0.1412,
                     "bgR":0.0078,
@@ -4799,7 +4799,7 @@
                     "pB":0.5843,
                     "fgRGB":[0.6588,0.2118,0.5961]
                   },
-                  "bgURL":"patch1.png",
+                  "bgURL":"mipo/patch/patch-01.png",
                   "pURL":"type2t.png",
                   "bgHex":"020202ff",
                   "ty":0
@@ -4808,7 +4808,7 @@
                   "fgHex":"06D60CFF",
                   "tx":0,
                   "pHex":"D4A0D3FF",
-                  "fgURL":"patch1-mask.png",
+                  "fgURL":"mipo/patch/patch-01-mask.png",
                   "cached":{
                     "pR":0.8314,
                     "bgR":0.0078,
@@ -4826,7 +4826,7 @@
                     "pB":0.8275,
                     "fgRGB":[0.0235,0.8392,0.0471]
                   },
-                  "bgURL":"patch1.png",
+                  "bgURL":"mipo/patch/patch-01.png",
                   "sx":2,
                   "pURL":"type2t.png",
                   "bgHex":"020202ff",
@@ -4875,7 +4875,7 @@
                 }
               }
             },
-            "shape8URL":"feet7r.png"
+            "shape8URL":"mipo/foot/foot-05.png"
           },
           "ruleg":{
             "shape":"capsule",
@@ -4896,11 +4896,11 @@
                 "zOffset":300,
                 "main":{
                   "fgHex":"6C9A70FF",
-                  "bgURL":"leg1.png",
+                  "bgURL":"mipo/leg/leg-01.png",
                   "pHex":"B47E5AFF",
                   "dir":1,
                   "pURL":"type8.png",
-                  "fgURL":"leg1-mask.png",
+                  "fgURL":"mipo/leg/leg-01-mask.png",
                   "bgHex":"020202ff",
                   "wmul":0.3357
                 },
@@ -4948,10 +4948,10 @@
                 "zOffset":350,
                 "main":{
                   "fgHex":"CBB297FF",
-                  "bgURL":"shapeA2.png",
+                  "bgURL":"mipo/body/body-02.png",
                   "pHex":"C014A9FF",
                   "pURL":"type2t.png",
-                  "fgURL":"shapeA2-mask.png",
+                  "fgURL":"mipo/body/body-02-mask.png",
                   "bgHex":"020202ff",
                   "cached":{
                     "pR":0.7529,
@@ -4973,7 +4973,7 @@
                 }
               }
             },
-            "shape8URL":"shapeA2.png"
+            "shape8URL":"mipo/body/body-02.png"
           },
           "rhand":{
             "shape":"shape8",
@@ -5003,7 +5003,7 @@
                 }
               }
             },
-            "shape8URL":"hand3r.png"
+            "shape8URL":"mipo/hand/hand-01.png"
           },
           "nose-segment-template":{
             "shape":"capsule",
@@ -5080,7 +5080,7 @@
                 }
               }
             },
-            "shape8URL":"feet7r.png"
+            "shape8URL":"mipo/foot/foot-05.png"
           },
           "neck-segment-template":{
             "shape":"capsule",
@@ -5158,11 +5158,11 @@
                 "zOffset":300,
                 "main":{
                   "fgHex":"C1D4CBFF",
-                  "bgURL":"leg5.png",
+                  "bgURL":"mipo/leg/leg-05.png",
                   "pHex":"81954DFF",
                   "dir":-1,
                   "pURL":"type0.png",
-                  "fgURL":"leg5-mask.png",
+                  "fgURL":"mipo/leg/leg-05-mask.png",
                   "bgHex":"020202ff",
                   "wmul":0.3957
                 },
@@ -5172,7 +5172,7 @@
                 "zOffset":301,
                 "main":{
                   "fgHex":"",
-                  "bgURL":"hair10.png",
+                  "bgURL":"mipo/hair/hair-10.png",
                   "pHex":"ffff00ff",
                   "pURL":"type2t.png",
                   "fgURL":"",
@@ -5209,7 +5209,7 @@
               "haircut":{
                 "main":{
                   "fgHex":"EB06ADFF",
-                  "bgURL":"hair11.png",
+                  "bgURL":"mipo/hair/hair-11.png",
                   "pHex":"BE8D1EFF",
                   "pURL":"type2t.png",
                   "fgURL":"",
@@ -5223,7 +5223,7 @@
                 "zOffset":101,
                 "main":{
                   "fgHex":"",
-                  "bgURL":"hair10.png",
+                  "bgURL":"mipo/hair/hair-10.png",
                   "pHex":"ffff00ff",
                   "dir":1,
                   "fgURL":"",
@@ -5302,10 +5302,10 @@
                 "zOffset":100,
                 "main":{
                   "fgHex":"C1D4CBFF",
-                  "bgURL":"leg5.png",
+                  "bgURL":"mipo/leg/leg-05.png",
                   "pHex":"81954DFF",
                   "pURL":"type0.png",
-                  "fgURL":"leg5-mask.png",
+                  "fgURL":"mipo/leg/leg-05-mask.png",
                   "bgHex":"020202ff"
                 },
                 "endNode":"head"
@@ -5313,10 +5313,10 @@
               "bodyhair":{
                 "main":{
                   "fgHex":"9AEAD5FF",
-                  "bgURL":"borsthaar1.png",
+                  "bgURL":"mipo/chesthair/chesthair-01.png",
                   "pHex":"9E1AB5FF",
                   "pURL":"type2t.png",
-                  "fgURL":"borsthaar1-mask.png",
+                  "fgURL":"mipo/chesthair/chesthair-01-mask.png",
                   "bgHex":"9EA24BFF"
                 }
               },
@@ -5385,7 +5385,7 @@
                 "angle":0,
                 "name":"KEEP_ANGLE"
               }],
-            "shape8URL":"shapes7.png"
+            "shape8URL":"mipo/body/body-11.png"
           },
           "luarm":{
             "shape":"capsule",
@@ -5394,11 +5394,11 @@
                 "zOffset":402,
                 "main":{
                   "fgHex":"6169BAFF",
-                  "bgURL":"leg1.png",
+                  "bgURL":"mipo/leg/leg-01.png",
                   "pHex":"04DF44FF",
                   "dir":-1,
                   "pURL":"type4.png",
-                  "fgURL":"leg1-mask.png",
+                  "fgURL":"mipo/leg/leg-01-mask.png",
                   "bgHex":"020202ff",
                   "wmul":0.3173
                 },
@@ -5408,7 +5408,7 @@
                 "zOffset":403,
                 "main":{
                   "fgHex":"",
-                  "bgURL":"hair10.png",
+                  "bgURL":"mipo/hair/hair-10.png",
                   "pHex":"ffff00ff",
                   "pURL":"type2t.png",
                   "fgURL":"",
@@ -5438,11 +5438,11 @@
                 "zOffset":402,
                 "main":{
                   "fgHex":"6169BAFF",
-                  "bgURL":"leg1.png",
+                  "bgURL":"mipo/leg/leg-01.png",
                   "pHex":"04DF44FF",
                   "dir":1,
                   "pURL":"type4.png",
-                  "fgURL":"leg1-mask.png",
+                  "fgURL":"mipo/leg/leg-01-mask.png",
                   "bgHex":"020202ff",
                   "wmul":0.3173
                 },
@@ -5452,7 +5452,7 @@
                 "zOffset":403,
                 "main":{
                   "fgHex":"",
-                  "bgURL":"hair10.png",
+                  "bgURL":"mipo/hair/hair-10.png",
                   "pHex":"ffff00ff",
                   "pURL":"type2t.png",
                   "fgURL":"",
@@ -5526,11 +5526,11 @@
                 }
               }
             },
-            "shape8URL":"earx10r.png"
+            "shape8URL":"mipo/ear/ear-10.png"
           },
           "head":{
             "shape":"shape8",
-            "shape8URL":"shapes7.png",
+            "shape8URL":"mipo/body/body-11.png",
             "dims":{
               "w2":4,
               "sx":1.5315,
@@ -5608,7 +5608,7 @@
               "haircut":{
                 "main":{
                   "fgHex":"BF1A2DFF",
-                  "bgURL":"hair11.png",
+                  "bgURL":"mipo/hair/hair-11.png",
                   "pHex":"0D3825FF",
                   "pURL":"type2t.png",
                   "fgURL":"",
@@ -5621,10 +5621,10 @@
               "bodyhair":{
                 "main":{
                   "fgHex":"9AEAD5FF",
-                  "bgURL":"borsthaar1.png",
+                  "bgURL":"mipo/chesthair/chesthair-01.png",
                   "pHex":"9E1AB5FF",
                   "pURL":"type2t.png",
-                  "fgURL":"borsthaar1-mask.png",
+                  "fgURL":"mipo/chesthair/chesthair-01-mask.png",
                   "bgHex":"9EA24BFF"
                 }
               },
@@ -5761,7 +5761,7 @@
                 }
               }
             },
-            "shape8URL":"earx10r.png"
+            "shape8URL":"mipo/ear/ear-10.png"
           },
           "lhand":{
             "shape":"shape8",
@@ -5794,11 +5794,11 @@
                 }
               }
             },
-            "shape8URL":"hand3r.png"
+            "shape8URL":"mipo/hand/hand-01.png"
           },
           "torso-segment-template":{
             "shape":"shape8",
-            "shape8URL":"shapeA1.png",
+            "shape8URL":"mipo/body/body-01.png",
             "dims":{
               "w2":5,
               "sx":1,
@@ -5877,7 +5877,7 @@
                 "zOffset":101,
                 "main":{
                   "fgHex":"",
-                  "bgURL":"hair10.png",
+                  "bgURL":"mipo/hair/hair-10.png",
                   "pHex":"ffff00ff",
                   "pURL":"type2t.png",
                   "dir":1,
@@ -5908,10 +5908,10 @@
                 "endIndex":3,
                 "main":{
                   "fgHex":"EB06ADFF",
-                  "bgURL":"hair7.png",
+                  "bgURL":"mipo/hair/hair-07.png",
                   "pHex":"BE8D1EFF",
                   "pURL":"type2t.png",
-                  "fgURL":"hair7-mask.png",
+                  "fgURL":"mipo/hair/hair-07-mask.png",
                   "bgHex":"020202ff",
                   "cached":{
                     "pR":0.7451,
@@ -5936,10 +5936,10 @@
                 "zOffset":100,
                 "main":{
                   "fgHex":"56BC6DFF",
-                  "bgURL":"leg5.png",
+                  "bgURL":"mipo/leg/leg-05.png",
                   "pHex":"911D0EFF",
                   "pURL":"type2t.png",
-                  "fgURL":"leg5-mask.png",
+                  "fgURL":"mipo/leg/leg-05-mask.png",
                   "bgHex":"020202ff",
                   "cached":{
                     "pR":0.5686,
@@ -5964,10 +5964,10 @@
               "bodyhair":{
                 "main":{
                   "fgHex":"2E41EBFF",
-                  "bgURL":"borsthaar4.png",
+                  "bgURL":"mipo/chesthair/chesthair-04.png",
                   "pHex":"51145AFF",
                   "pURL":"type2t.png",
-                  "fgURL":"borsthaar4-mask.png",
+                  "fgURL":"mipo/chesthair/chesthair-04-mask.png",
                   "bgHex":"020202ff",
                   "cached":{
                     "pR":0.3176,
@@ -6019,7 +6019,7 @@
                   "fgHex":"78AD93FF",
                   "tx":-0.33,
                   "pHex":"CC732EFF",
-                  "fgURL":"patch2-mask.png",
+                  "fgURL":"mipo/patch/patch-02-mask.png",
                   "cached":{
                     "pR":0.8,
                     "bgR":0.0078,
@@ -6037,7 +6037,7 @@
                     "pB":0.1804,
                     "fgRGB":[0.4706,0.6784,0.5765]
                   },
-                  "bgURL":"patch2.png",
+                  "bgURL":"mipo/patch/patch-02.png",
                   "pURL":"type2t.png",
                   "bgHex":"020202ff",
                   "ty":0
@@ -6046,7 +6046,7 @@
                   "fgHex":"A83698FF",
                   "tx":0.33,
                   "pHex":"24D495FF",
-                  "fgURL":"patch1-mask.png",
+                  "fgURL":"mipo/patch/patch-01-mask.png",
                   "cached":{
                     "pR":0.1412,
                     "bgR":0.0078,
@@ -6064,7 +6064,7 @@
                     "pB":0.5843,
                     "fgRGB":[0.6588,0.2118,0.5961]
                   },
-                  "bgURL":"patch1.png",
+                  "bgURL":"mipo/patch/patch-01.png",
                   "pURL":"type2t.png",
                   "bgHex":"020202ff",
                   "ty":0
@@ -6073,7 +6073,7 @@
                   "fgHex":"06D60CFF",
                   "tx":0,
                   "pHex":"D4A0D3FF",
-                  "fgURL":"patch1-mask.png",
+                  "fgURL":"mipo/patch/patch-01-mask.png",
                   "cached":{
                     "pR":0.8314,
                     "bgR":0.0078,
@@ -6091,7 +6091,7 @@
                     "pB":0.8275,
                     "fgRGB":[0.0235,0.8392,0.0471]
                   },
-                  "bgURL":"patch1.png",
+                  "bgURL":"mipo/patch/patch-01.png",
                   "sx":2,
                   "pURL":"type2t.png",
                   "bgHex":"020202ff",
@@ -6140,7 +6140,7 @@
                 }
               }
             },
-            "shape8URL":"feet7r.png"
+            "shape8URL":"mipo/foot/foot-05.png"
           },
           "ruleg":{
             "shape":"capsule",
@@ -6161,11 +6161,11 @@
                 "zOffset":300,
                 "main":{
                   "fgHex":"C1D4CBFF",
-                  "bgURL":"leg5.png",
+                  "bgURL":"mipo/leg/leg-05.png",
                   "pHex":"81954DFF",
                   "dir":1,
                   "pURL":"type0.png",
-                  "fgURL":"leg5-mask.png",
+                  "fgURL":"mipo/leg/leg-05-mask.png",
                   "bgHex":"020202ff",
                   "wmul":0.3957
                 },
@@ -6175,7 +6175,7 @@
                 "zOffset":301,
                 "main":{
                   "fgHex":"",
-                  "bgURL":"hair10.png",
+                  "bgURL":"mipo/hair/hair-10.png",
                   "pHex":"ffff00ff",
                   "pURL":"type2t.png",
                   "fgURL":"",
@@ -6213,10 +6213,10 @@
                 "zOffset":350,
                 "main":{
                   "fgHex":"CBB297FF",
-                  "bgURL":"shapeA2.png",
+                  "bgURL":"mipo/body/body-02.png",
                   "pHex":"C014A9FF",
                   "pURL":"type2t.png",
-                  "fgURL":"shapeA2-mask.png",
+                  "fgURL":"mipo/body/body-02-mask.png",
                   "bgHex":"020202ff",
                   "cached":{
                     "pR":0.7529,
@@ -6238,7 +6238,7 @@
                 }
               }
             },
-            "shape8URL":"shapeA2.png"
+            "shape8URL":"mipo/body/body-02.png"
           },
           "rhand":{
             "shape":"shape8",
@@ -6270,7 +6270,7 @@
                 }
               }
             },
-            "shape8URL":"hand3r.png"
+            "shape8URL":"mipo/hand/hand-01.png"
           },
           "nose-segment-template":{
             "shape":"capsule",
@@ -6337,10 +6337,10 @@
               "bodyhair":{
                 "main":{
                   "fgHex":"BFD2BFFF",
-                  "bgURL":"borsthaar2.png",
+                  "bgURL":"mipo/chesthair/chesthair-02.png",
                   "pHex":"2B5E85FF",
                   "pURL":"type8.png",
-                  "fgURL":"borsthaar2-mask.png",
+                  "fgURL":"mipo/chesthair/chesthair-02-mask.png",
                   "bgHex":"0F0B39FF"
                 },
                 "growfactor":1.3778
@@ -6358,7 +6358,7 @@
                 }
               }
             },
-            "shape8URL":"feet7r.png"
+            "shape8URL":"mipo/foot/foot-05.png"
           },
           "neck-segment-template":{
             "shape":"capsule",
@@ -6436,11 +6436,11 @@
                 "zOffset":300,
                 "main":{
                   "fgHex":"842BE6FF",
-                  "bgURL":"leg1.png",
+                  "bgURL":"mipo/leg/leg-01.png",
                   "pHex":"082B96FF",
                   "dir":-1,
                   "pURL":"type4.png",
-                  "fgURL":"leg1-mask.png",
+                  "fgURL":"mipo/leg/leg-01-mask.png",
                   "bgHex":"020202ff",
                   "wmul":0.4741
                 },
@@ -6450,7 +6450,7 @@
                 "zOffset":301,
                 "main":{
                   "fgHex":"",
-                  "bgURL":"hair9.png",
+                  "bgURL":"mipo/hair/hair-09.png",
                   "pHex":"ffff00ff",
                   "pURL":"type2t.png",
                   "fgURL":"",
@@ -6487,7 +6487,7 @@
               "haircut":{
                 "main":{
                   "fgHex":"EB06ADFF",
-                  "bgURL":"hair3.png",
+                  "bgURL":"mipo/hair/hair-03.png",
                   "pHex":"BE8D1EFF",
                   "pURL":"type2t.png",
                   "fgURL":"",
@@ -6501,7 +6501,7 @@
                 "zOffset":101,
                 "main":{
                   "fgHex":"",
-                  "bgURL":"hair9.png",
+                  "bgURL":"mipo/hair/hair-09.png",
                   "pHex":"ffff00ff",
                   "dir":1,
                   "fgURL":"",
@@ -6580,10 +6580,10 @@
                 "zOffset":100,
                 "main":{
                   "fgHex":"842BE6FF",
-                  "bgURL":"leg1.png",
+                  "bgURL":"mipo/leg/leg-01.png",
                   "pHex":"082B96FF",
                   "pURL":"type4.png",
-                  "fgURL":"leg1-mask.png",
+                  "fgURL":"mipo/leg/leg-01-mask.png",
                   "bgHex":"020202ff"
                 },
                 "endNode":"head"
@@ -6591,10 +6591,10 @@
               "bodyhair":{
                 "main":{
                   "fgHex":"BFD2BFFF",
-                  "bgURL":"borsthaar3.png",
+                  "bgURL":"mipo/chesthair/chesthair-03.png",
                   "pHex":"2B5E85FF",
                   "pURL":"type8.png",
-                  "fgURL":"borsthaar3-mask.png",
+                  "fgURL":"mipo/chesthair/chesthair-03-mask.png",
                   "bgHex":"0F0B39FF"
                 }
               },
@@ -6663,7 +6663,7 @@
                 "angle":0,
                 "name":"KEEP_ANGLE"
               }],
-            "shape8URL":"shapes7.png"
+            "shape8URL":"mipo/body/body-11.png"
           },
           "luarm":{
             "shape":"capsule",
@@ -6672,11 +6672,11 @@
                 "zOffset":402,
                 "main":{
                   "fgHex":"295BE9FF",
-                  "bgURL":"leg1.png",
+                  "bgURL":"mipo/leg/leg-01.png",
                   "pHex":"3E9E2FFF",
                   "dir":-1,
                   "pURL":"type6.png",
-                  "fgURL":"leg1-mask.png",
+                  "fgURL":"mipo/leg/leg-01-mask.png",
                   "bgHex":"020202ff",
                   "wmul":0.3774
                 },
@@ -6686,7 +6686,7 @@
                 "zOffset":403,
                 "main":{
                   "fgHex":"",
-                  "bgURL":"hair10.png",
+                  "bgURL":"mipo/hair/hair-10.png",
                   "pHex":"ffff00ff",
                   "pURL":"type2t.png",
                   "fgURL":"",
@@ -6716,11 +6716,11 @@
                 "zOffset":402,
                 "main":{
                   "fgHex":"295BE9FF",
-                  "bgURL":"leg1.png",
+                  "bgURL":"mipo/leg/leg-01.png",
                   "pHex":"3E9E2FFF",
                   "dir":1,
                   "pURL":"type6.png",
-                  "fgURL":"leg1-mask.png",
+                  "fgURL":"mipo/leg/leg-01-mask.png",
                   "bgHex":"020202ff",
                   "wmul":0.3774
                 },
@@ -6730,7 +6730,7 @@
                 "zOffset":403,
                 "main":{
                   "fgHex":"",
-                  "bgURL":"hair10.png",
+                  "bgURL":"mipo/hair/hair-10.png",
                   "pHex":"ffff00ff",
                   "pURL":"type2t.png",
                   "fgURL":"",
@@ -6804,11 +6804,11 @@
                 }
               }
             },
-            "shape8URL":"earx3r.png"
+            "shape8URL":"mipo/ear/ear-03.png"
           },
           "head":{
             "shape":"shape8",
-            "shape8URL":"shapes7.png",
+            "shape8URL":"mipo/body/body-11.png",
             "dims":{
               "w2":4,
               "sx":1.6108,
@@ -6886,7 +6886,7 @@
               "haircut":{
                 "main":{
                   "fgHex":"BF1A2DFF",
-                  "bgURL":"hair3.png",
+                  "bgURL":"mipo/hair/hair-03.png",
                   "pHex":"0D3825FF",
                   "pURL":"type2t.png",
                   "fgURL":"",
@@ -6899,10 +6899,10 @@
               "bodyhair":{
                 "main":{
                   "fgHex":"BFD2BFFF",
-                  "bgURL":"borsthaar3.png",
+                  "bgURL":"mipo/chesthair/chesthair-03.png",
                   "pHex":"2B5E85FF",
                   "pURL":"type8.png",
-                  "fgURL":"borsthaar3-mask.png",
+                  "fgURL":"mipo/chesthair/chesthair-03-mask.png",
                   "bgHex":"0F0B39FF"
                 }
               },
@@ -7039,7 +7039,7 @@
                 }
               }
             },
-            "shape8URL":"earx3r.png"
+            "shape8URL":"mipo/ear/ear-03.png"
           },
           "lhand":{
             "shape":"shape8",
@@ -7070,11 +7070,11 @@
                 }
               }
             },
-            "shape8URL":"hand3r.png"
+            "shape8URL":"mipo/hand/hand-01.png"
           },
           "torso-segment-template":{
             "shape":"shape8",
-            "shape8URL":"shapeA1.png",
+            "shape8URL":"mipo/body/body-01.png",
             "dims":{
               "w2":5,
               "sx":1,
@@ -7153,7 +7153,7 @@
                 "zOffset":101,
                 "main":{
                   "fgHex":"",
-                  "bgURL":"hair10.png",
+                  "bgURL":"mipo/hair/hair-10.png",
                   "pHex":"ffff00ff",
                   "pURL":"type2t.png",
                   "dir":1,
@@ -7184,10 +7184,10 @@
                 "endIndex":3,
                 "main":{
                   "fgHex":"EB06ADFF",
-                  "bgURL":"hair7.png",
+                  "bgURL":"mipo/hair/hair-07.png",
                   "pHex":"BE8D1EFF",
                   "pURL":"type2t.png",
-                  "fgURL":"hair7-mask.png",
+                  "fgURL":"mipo/hair/hair-07-mask.png",
                   "bgHex":"020202ff",
                   "cached":{
                     "pR":0.7451,
@@ -7212,10 +7212,10 @@
                 "zOffset":100,
                 "main":{
                   "fgHex":"56BC6DFF",
-                  "bgURL":"leg5.png",
+                  "bgURL":"mipo/leg/leg-05.png",
                   "pHex":"911D0EFF",
                   "pURL":"type2t.png",
-                  "fgURL":"leg5-mask.png",
+                  "fgURL":"mipo/leg/leg-05-mask.png",
                   "bgHex":"020202ff",
                   "cached":{
                     "pR":0.5686,
@@ -7240,10 +7240,10 @@
               "bodyhair":{
                 "main":{
                   "fgHex":"2E41EBFF",
-                  "bgURL":"borsthaar4.png",
+                  "bgURL":"mipo/chesthair/chesthair-04.png",
                   "pHex":"51145AFF",
                   "pURL":"type2t.png",
-                  "fgURL":"borsthaar4-mask.png",
+                  "fgURL":"mipo/chesthair/chesthair-04-mask.png",
                   "bgHex":"020202ff",
                   "cached":{
                     "pR":0.3176,
@@ -7295,7 +7295,7 @@
                   "fgHex":"78AD93FF",
                   "tx":-0.33,
                   "pHex":"CC732EFF",
-                  "fgURL":"patch2-mask.png",
+                  "fgURL":"mipo/patch/patch-02-mask.png",
                   "cached":{
                     "pR":0.8,
                     "bgR":0.0078,
@@ -7313,7 +7313,7 @@
                     "pB":0.1804,
                     "fgRGB":[0.4706,0.6784,0.5765]
                   },
-                  "bgURL":"patch2.png",
+                  "bgURL":"mipo/patch/patch-02.png",
                   "pURL":"type2t.png",
                   "bgHex":"020202ff",
                   "ty":0
@@ -7322,7 +7322,7 @@
                   "fgHex":"A83698FF",
                   "tx":0.33,
                   "pHex":"24D495FF",
-                  "fgURL":"patch1-mask.png",
+                  "fgURL":"mipo/patch/patch-01-mask.png",
                   "cached":{
                     "pR":0.1412,
                     "bgR":0.0078,
@@ -7340,7 +7340,7 @@
                     "pB":0.5843,
                     "fgRGB":[0.6588,0.2118,0.5961]
                   },
-                  "bgURL":"patch1.png",
+                  "bgURL":"mipo/patch/patch-01.png",
                   "pURL":"type2t.png",
                   "bgHex":"020202ff",
                   "ty":0
@@ -7349,7 +7349,7 @@
                   "fgHex":"06D60CFF",
                   "tx":0,
                   "pHex":"D4A0D3FF",
-                  "fgURL":"patch1-mask.png",
+                  "fgURL":"mipo/patch/patch-01-mask.png",
                   "cached":{
                     "pR":0.8314,
                     "bgR":0.0078,
@@ -7367,7 +7367,7 @@
                     "pB":0.8275,
                     "fgRGB":[0.0235,0.8392,0.0471]
                   },
-                  "bgURL":"patch1.png",
+                  "bgURL":"mipo/patch/patch-01.png",
                   "sx":2,
                   "pURL":"type2t.png",
                   "bgHex":"020202ff",
@@ -7406,10 +7406,10 @@
               "bodyhair":{
                 "main":{
                   "fgHex":"BFD2BFFF",
-                  "bgURL":"borsthaar2.png",
+                  "bgURL":"mipo/chesthair/chesthair-02.png",
                   "pHex":"2B5E85FF",
                   "pURL":"type8.png",
-                  "fgURL":"borsthaar2-mask.png",
+                  "fgURL":"mipo/chesthair/chesthair-02-mask.png",
                   "bgHex":"0F0B39FF"
                 },
                 "growfactor":1.3778
@@ -7427,7 +7427,7 @@
                 }
               }
             },
-            "shape8URL":"feet7r.png"
+            "shape8URL":"mipo/foot/foot-05.png"
           },
           "ruleg":{
             "shape":"capsule",
@@ -7448,11 +7448,11 @@
                 "zOffset":300,
                 "main":{
                   "fgHex":"842BE6FF",
-                  "bgURL":"leg1.png",
+                  "bgURL":"mipo/leg/leg-01.png",
                   "pHex":"082B96FF",
                   "dir":1,
                   "pURL":"type4.png",
-                  "fgURL":"leg1-mask.png",
+                  "fgURL":"mipo/leg/leg-01-mask.png",
                   "bgHex":"020202ff",
                   "wmul":0.4741
                 },
@@ -7462,7 +7462,7 @@
                 "zOffset":301,
                 "main":{
                   "fgHex":"",
-                  "bgURL":"hair9.png",
+                  "bgURL":"mipo/hair/hair-09.png",
                   "pHex":"ffff00ff",
                   "pURL":"type2t.png",
                   "fgURL":"",
@@ -7500,10 +7500,10 @@
                 "zOffset":350,
                 "main":{
                   "fgHex":"CBB297FF",
-                  "bgURL":"shapeA2.png",
+                  "bgURL":"mipo/body/body-02.png",
                   "pHex":"C014A9FF",
                   "pURL":"type2t.png",
-                  "fgURL":"shapeA2-mask.png",
+                  "fgURL":"mipo/body/body-02-mask.png",
                   "bgHex":"020202ff",
                   "cached":{
                     "pR":0.7529,
@@ -7525,7 +7525,7 @@
                 }
               }
             },
-            "shape8URL":"shapeA2.png"
+            "shape8URL":"mipo/body/body-02.png"
           },
           "rhand":{
             "shape":"shape8",
@@ -7555,7 +7555,7 @@
                 }
               }
             },
-            "shape8URL":"hand3r.png"
+            "shape8URL":"mipo/hand/hand-01.png"
           },
           "nose-segment-template":{
             "shape":"capsule",
@@ -7755,10 +7755,10 @@
               "zGroupOffset":3,
               "main":{
                 "fgHex":"574D46FF",
-                "bgURL":"earx16r.png",
+                "bgURL":"mipo/ear/ear-16.png",
                 "pHex":"F7B4F4FF",
                 "pURL":"type1.png",
-                "fgURL":"earx16r-mask.png",
+                "fgURL":"mipo/ear/ear-16-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":0.9686,
@@ -7829,9 +7829,9 @@
               "zGroupOffset":3,
               "main":{
                 "fgHex":"574D46FF",
-                "bgURL":"earx16r.png",
+                "bgURL":"mipo/ear/ear-16.png",
                 "pHex":"F7B4F4FF",
-                "fgURL":"earx16r-mask.png",
+                "fgURL":"mipo/ear/ear-16-mask.png",
                 "pURL":"type1.png",
                 "fx":-1,
                 "bgHex":"000000ff",
@@ -7904,9 +7904,9 @@
               "zGroupOffset":3,
               "main":{
                 "fgHex":"C974AFFF",
-                "bgURL":"hand3r.png",
+                "bgURL":"mipo/hand/hand-01.png",
                 "pHex":"AE7203FF",
-                "fgURL":"hand3r-mask.png",
+                "fgURL":"mipo/hand/hand-01-mask.png",
                 "pURL":"type7.png",
                 "fx":-1,
                 "bgHex":"000000ff",
@@ -7989,11 +7989,11 @@
               "zGroupOffset":3,
               "main":{
                 "fgHex":"C974AFFF",
-                "bgURL":"hand3r.png",
+                "bgURL":"mipo/hand/hand-01.png",
                 "pHex":"AE7203FF",
                 "dir":-1,
                 "pURL":"type7.png",
-                "fgURL":"hand3r-mask.png",
+                "fgURL":"mipo/hand/hand-01-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":0.6824,
@@ -8177,7 +8177,7 @@
                   "bgG":0.6706,
                   "fgRGB":[1,1,1]
                 },
-                "bgURL":"hair10.png",
+                "bgURL":"mipo/hair/hair-10.png",
                 "wmul":0.3,
                 "bgHex":"DBABA2FF",
                 "pURL":"type2t.png"
@@ -8213,7 +8213,7 @@
                 "fgHex":"CC6727FF",
                 "pHex":"28E222FF",
                 "dir":1,
-                "fgURL":"leg1-mask.png",
+                "fgURL":"mipo/leg/leg-01-mask.png",
                 "cached":{
                   "pR":0.1569,
                   "pG":0.8863,
@@ -8231,7 +8231,7 @@
                   "bgG":0.0078,
                   "fgRGB":[0.8,0.4039,0.1529]
                 },
-                "bgURL":"leg1.png",
+                "bgURL":"mipo/leg/leg-01.png",
                 "wmul":0.2883,
                 "bgHex":"020202ff",
                 "pURL":"type6.png"
@@ -8319,7 +8319,7 @@
                   "bgG":0.6706,
                   "fgRGB":[1,1,1]
                 },
-                "bgURL":"hair10.png",
+                "bgURL":"mipo/hair/hair-10.png",
                 "wmul":0.3,
                 "bgHex":"DBABA2FF",
                 "pURL":"type2t.png"
@@ -8355,7 +8355,7 @@
                 "fgHex":"CC6727FF",
                 "pHex":"28E222FF",
                 "dir":-1,
-                "fgURL":"leg1-mask.png",
+                "fgURL":"mipo/leg/leg-01-mask.png",
                 "cached":{
                   "pR":0.1569,
                   "pG":0.8863,
@@ -8373,7 +8373,7 @@
                   "bgG":0.0078,
                   "fgRGB":[0.8,0.4039,0.1529]
                 },
-                "bgURL":"leg1.png",
+                "bgURL":"mipo/leg/leg-01.png",
                 "wmul":0.2883,
                 "bgHex":"020202ff",
                 "pURL":"type6.png"
@@ -8428,7 +8428,7 @@
                 "fgHex":"EB3050FF",
                 "pHex":"be193b",
                 "dir":1,
-                "fgURL":"feet7r-mask.png",
+                "fgURL":"mipo/foot/foot-05-mask.png",
                 "cached":{
                   "pR":0.7451,
                   "pG":0.098,
@@ -8446,7 +8446,7 @@
                   "bgG":0,
                   "fgRGB":[0.9216,0.1882,0.3137]
                 },
-                "bgURL":"feet7r.png",
+                "bgURL":"mipo/foot/foot-05.png",
                 "pURL":"type0.png",
                 "fx":-1,
                 "bgHex":"000000ff"
@@ -8469,10 +8469,10 @@
               "zOffset":409,
               "main":{
                 "fgHex":"B6E111FF",
-                "bgURL":"borsthaar3.png",
+                "bgURL":"mipo/chesthair/chesthair-03.png",
                 "pHex":"A664EDFF",
                 "pURL":"type8.png",
-                "fgURL":"borsthaar3-mask.png",
+                "fgURL":"mipo/chesthair/chesthair-03-mask.png",
                 "bgHex":"DBABA2FF",
                 "cached":{
                   "pR":0.651,
@@ -8544,11 +8544,11 @@
               "zGroupOffset":3,
               "main":{
                 "fgHex":"EB3050FF",
-                "bgURL":"feet7r.png",
+                "bgURL":"mipo/foot/foot-05.png",
                 "pHex":"be193b",
                 "dir":-1,
                 "pURL":"type0.png",
-                "fgURL":"feet7r-mask.png",
+                "fgURL":"mipo/foot/foot-05-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":0.7451,
@@ -8586,10 +8586,10 @@
               "zOffset":409,
               "main":{
                 "fgHex":"B6E111FF",
-                "bgURL":"borsthaar3.png",
+                "bgURL":"mipo/chesthair/chesthair-03.png",
                 "pHex":"A664EDFF",
                 "pURL":"type8.png",
-                "fgURL":"borsthaar3-mask.png",
+                "fgURL":"mipo/chesthair/chesthair-03-mask.png",
                 "bgHex":"DBABA2FF",
                 "cached":{
                   "pR":0.651,
@@ -8782,7 +8782,7 @@
                   "bgG":0.6706,
                   "fgRGB":[1,1,1]
                 },
-                "bgURL":"hair11.png",
+                "bgURL":"mipo/hair/hair-11.png",
                 "wmul":0.3,
                 "bgHex":"DBABA2FF",
                 "pURL":"type2t.png"
@@ -8818,7 +8818,7 @@
                 "fgHex":"30F10BFF",
                 "pHex":"AFBEC1FF",
                 "dir":1,
-                "fgURL":"leg5-mask.png",
+                "fgURL":"mipo/leg/leg-05-mask.png",
                 "cached":{
                   "pR":0.6863,
                   "pG":0.7451,
@@ -8836,7 +8836,7 @@
                   "bgG":0.0078,
                   "fgRGB":[0.1882,0.9451,0.0431]
                 },
-                "bgURL":"leg5.png",
+                "bgURL":"mipo/leg/leg-05.png",
                 "wmul":0.4395,
                 "bgHex":"020202ff",
                 "pURL":"type4.png"
@@ -8930,7 +8930,7 @@
                   "bgG":0.6706,
                   "fgRGB":[1,1,1]
                 },
-                "bgURL":"hair11.png",
+                "bgURL":"mipo/hair/hair-11.png",
                 "wmul":0.3,
                 "bgHex":"DBABA2FF",
                 "pURL":"type2t.png"
@@ -8966,7 +8966,7 @@
                 "fgHex":"30F10BFF",
                 "pHex":"AFBEC1FF",
                 "dir":-1,
-                "fgURL":"leg5-mask.png",
+                "fgURL":"mipo/leg/leg-05-mask.png",
                 "cached":{
                   "pR":0.6863,
                   "pG":0.7451,
@@ -8984,7 +8984,7 @@
                   "bgG":0.0078,
                   "fgRGB":[0.1882,0.9451,0.0431]
                 },
-                "bgURL":"leg5.png",
+                "bgURL":"mipo/leg/leg-05.png",
                 "wmul":0.4395,
                 "bgHex":"020202ff",
                 "pURL":"type4.png"
@@ -9063,10 +9063,10 @@
               "zOffset":192,
               "main":{
                 "fgHex":"F21C2BFF",
-                "bgURL":"shapes7.png",
+                "bgURL":"mipo/body/body-11.png",
                 "pHex":"E35A0AFF",
                 "pURL":"type1.png",
-                "fgURL":"shapes7-mask.png",
+                "fgURL":"mipo/body/body-11-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":0.8902,
@@ -9131,10 +9131,10 @@
               "zOffset":197,
               "main":{
                 "fgHex":"B6E111FF",
-                "bgURL":"borsthaar7.png",
+                "bgURL":"mipo/chesthair/chesthair-07.png",
                 "pHex":"A664EDFF",
                 "pURL":"type8.png",
-                "fgURL":"borsthaar7-mask.png",
+                "fgURL":"mipo/chesthair/chesthair-07-mask.png",
                 "bgHex":"DBABA2FF",
                 "cached":{
                   "pR":0.651,
@@ -9182,10 +9182,10 @@
               "rot":0,
               "main":{
                 "fgHex":"cc5555ff",
-                "bgURL":"upperlip1.png",
+                "bgURL":"mipo/upperlip/upperlip-01.png",
                 "pHex":"ffffff00",
                 "pURL":"",
-                "fgURL":"upperlip1-mask.png",
+                "fgURL":"mipo/upperlip/upperlip-01-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":1,
@@ -9235,10 +9235,10 @@
               "curvePoints":[-64.9278,85.1962,-43.9891,58.6783,7.4852,65.3078,53.7248,58.6783,72.0462,93.1516,55.4697,105.0847,1.3781,97.1293,-45.734,105.0847],
               "main":{
                 "fgHex":"cc5555ff",
-                "bgURL":"lowerlip4.png",
+                "bgURL":"mipo/lowerlip/lowerlip-04.png",
                 "pHex":"ffffff00",
                 "pURL":"",
-                "fgURL":"lowerlip4-mask.png",
+                "fgURL":"mipo/lowerlip/lowerlip-04-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":1,
@@ -9286,10 +9286,10 @@
               "fgHex":"",
               "main":{
                 "fgHex":"5C2622FF",
-                "bgURL":"nose7.png",
+                "bgURL":"mipo/nose/nose-07.png",
                 "pHex":"ffffff00",
                 "pURL":"",
-                "fgURL":"nose7-mask.png",
+                "fgURL":"mipo/nose/nose-07-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":1,
@@ -9340,7 +9340,7 @@
               "fgURL":"",
               "w":94.7563,
               "zOffset":252,
-              "bgURL":"brow2.png",
+              "bgURL":"mipo/brow/brow-02.png",
               "browMirror":true,
               "h":72.7593,
               "ox":89.7123,
@@ -9365,7 +9365,7 @@
               "fgURL":"",
               "w":94.7563,
               "zOffset":252,
-              "bgURL":"brow2.png",
+              "bgURL":"mipo/brow/brow-02.png",
               "browMirror":false,
               "h":72.7593,
               "ox":-80.8491,
@@ -9389,13 +9389,13 @@
               "oy":-40.2191,
               "zGroupOffset":3,
               "eyeH":112.777,
-              "eyeMaskURL":"eye1-mask.png",
+              "eyeMaskURL":"mipo/eye/eye-01-mask.png",
               "rot":0,
               "mirror":false,
               "isEye":true,
               "w":36.3921,
               "h":51.8774,
-              "bgURL":"pupil2.png",
+              "bgURL":"mipo/pupil/pupil-02.png",
               "eyeRot":0,
               "zOffset":251,
               "OMP":false,
@@ -9426,10 +9426,10 @@
               "ox":89.7123,
               "main":{
                 "fgHex":"ffffffff",
-                "bgURL":"eye1.png",
+                "bgURL":"mipo/eye/eye-01.png",
                 "pHex":"ffffff00",
                 "pURL":"",
-                "fgURL":"eye1-mask.png",
+                "fgURL":"mipo/eye/eye-01-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":1,
@@ -9471,13 +9471,13 @@
               "oy":-40.2191,
               "zGroupOffset":3,
               "eyeH":112.777,
-              "eyeMaskURL":"eye1-mask.png",
+              "eyeMaskURL":"mipo/eye/eye-01-mask.png",
               "rot":0,
               "mirror":true,
               "isEye":true,
               "w":36.3921,
               "h":51.8774,
-              "bgURL":"pupil2.png",
+              "bgURL":"mipo/pupil/pupil-02.png",
               "eyeRot":0,
               "zOffset":251,
               "OMP":false,
@@ -9508,10 +9508,10 @@
               "ox":-80.8491,
               "main":{
                 "fgHex":"ffffffff",
-                "bgURL":"eye1.png",
+                "bgURL":"mipo/eye/eye-01.png",
                 "pHex":"ffffff00",
                 "pURL":"",
-                "fgURL":"eye1-mask.png",
+                "fgURL":"mipo/eye/eye-01-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":1,
@@ -9552,7 +9552,7 @@
               "width":73.5516,
               "main":{
                 "fgHex":"EB06ADFF",
-                "bgURL":"hair3.png",
+                "bgURL":"mipo/hair/hair-03.png",
                 "pHex":"BE8D1EFF",
                 "pURL":"type2t.png",
                 "fgURL":"",
@@ -9637,10 +9637,10 @@
               "zGroupOffset":4,
               "main":{
                 "fgHex":"E03FB3FF",
-                "bgURL":"earx3r.png",
+                "bgURL":"mipo/ear/ear-03.png",
                 "pHex":"D402EEFF",
                 "pURL":"type1.png",
-                "fgURL":"earx3r-mask.png",
+                "fgURL":"mipo/ear/ear-03-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":0.8314,
@@ -9721,9 +9721,9 @@
               "zGroupOffset":4,
               "main":{
                 "fgHex":"E03FB3FF",
-                "bgURL":"earx3r.png",
+                "bgURL":"mipo/ear/ear-03.png",
                 "pHex":"D402EEFF",
-                "fgURL":"earx3r-mask.png",
+                "fgURL":"mipo/ear/ear-03-mask.png",
                 "pURL":"type1.png",
                 "fx":-1,
                 "bgHex":"000000ff",
@@ -9806,9 +9806,9 @@
               "zGroupOffset":4,
               "main":{
                 "fgHex":"6C7479FF",
-                "bgURL":"hand3r.png",
+                "bgURL":"mipo/hand/hand-01.png",
                 "pHex":"2D779CFF",
-                "fgURL":"hand3r-mask.png",
+                "fgURL":"mipo/hand/hand-01-mask.png",
                 "pURL":"type1.png",
                 "fx":-1,
                 "bgHex":"000000ff",
@@ -9891,11 +9891,11 @@
               "zGroupOffset":4,
               "main":{
                 "fgHex":"6C7479FF",
-                "bgURL":"hand3r.png",
+                "bgURL":"mipo/hand/hand-01.png",
                 "pHex":"2D779CFF",
                 "dir":-1,
                 "pURL":"type1.png",
-                "fgURL":"hand3r-mask.png",
+                "fgURL":"mipo/hand/hand-01-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":0.1765,
@@ -10079,7 +10079,7 @@
                   "bgG":0.0431,
                   "fgRGB":[1,1,1]
                 },
-                "bgURL":"hair10.png",
+                "bgURL":"mipo/hair/hair-10.png",
                 "wmul":0.3,
                 "bgHex":"0F0B39FF",
                 "pURL":"type2t.png"
@@ -10115,7 +10115,7 @@
                 "fgHex":"295BE9FF",
                 "pHex":"3E9E2FFF",
                 "dir":1,
-                "fgURL":"leg1-mask.png",
+                "fgURL":"mipo/leg/leg-01-mask.png",
                 "cached":{
                   "pR":0.2431,
                   "pG":0.6196,
@@ -10133,7 +10133,7 @@
                   "bgG":0.0078,
                   "fgRGB":[0.1608,0.3569,0.9137]
                 },
-                "bgURL":"leg1.png",
+                "bgURL":"mipo/leg/leg-01.png",
                 "wmul":0.3774,
                 "bgHex":"020202ff",
                 "pURL":"type6.png"
@@ -10221,7 +10221,7 @@
                   "bgG":0.0431,
                   "fgRGB":[1,1,1]
                 },
-                "bgURL":"hair10.png",
+                "bgURL":"mipo/hair/hair-10.png",
                 "wmul":0.3,
                 "bgHex":"0F0B39FF",
                 "pURL":"type2t.png"
@@ -10257,7 +10257,7 @@
                 "fgHex":"295BE9FF",
                 "pHex":"3E9E2FFF",
                 "dir":-1,
-                "fgURL":"leg1-mask.png",
+                "fgURL":"mipo/leg/leg-01-mask.png",
                 "cached":{
                   "pR":0.2431,
                   "pG":0.6196,
@@ -10275,7 +10275,7 @@
                   "bgG":0.0078,
                   "fgRGB":[0.1608,0.3569,0.9137]
                 },
-                "bgURL":"leg1.png",
+                "bgURL":"mipo/leg/leg-01.png",
                 "wmul":0.3774,
                 "bgHex":"020202ff",
                 "pURL":"type6.png"
@@ -10330,7 +10330,7 @@
                 "fgHex":"45783c",
                 "pHex":"86a542",
                 "dir":1,
-                "fgURL":"feet7r-mask.png",
+                "fgURL":"mipo/foot/foot-05-mask.png",
                 "cached":{
                   "pR":0.5255,
                   "pG":0.6471,
@@ -10348,7 +10348,7 @@
                   "bgG":0,
                   "fgRGB":[0.2706,0.4706,0.2353]
                 },
-                "bgURL":"feet7r.png",
+                "bgURL":"mipo/foot/foot-05.png",
                 "pURL":"type1.png",
                 "fx":-1,
                 "bgHex":"000000ff"
@@ -10371,10 +10371,10 @@
               "zOffset":409,
               "main":{
                 "fgHex":"BFD2BFFF",
-                "bgURL":"borsthaar2.png",
+                "bgURL":"mipo/chesthair/chesthair-02.png",
                 "pHex":"2B5E85FF",
                 "pURL":"type8.png",
-                "fgURL":"borsthaar2-mask.png",
+                "fgURL":"mipo/chesthair/chesthair-02-mask.png",
                 "bgHex":"0F0B39FF",
                 "cached":{
                   "pR":0.1686,
@@ -10446,11 +10446,11 @@
               "zGroupOffset":4,
               "main":{
                 "fgHex":"45783c",
-                "bgURL":"feet7r.png",
+                "bgURL":"mipo/foot/foot-05.png",
                 "pHex":"86a542",
                 "dir":-1,
                 "pURL":"type1.png",
-                "fgURL":"feet7r-mask.png",
+                "fgURL":"mipo/foot/foot-05-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":0.5255,
@@ -10488,10 +10488,10 @@
               "zOffset":409,
               "main":{
                 "fgHex":"BFD2BFFF",
-                "bgURL":"borsthaar2.png",
+                "bgURL":"mipo/chesthair/chesthair-02.png",
                 "pHex":"2B5E85FF",
                 "pURL":"type8.png",
-                "fgURL":"borsthaar2-mask.png",
+                "fgURL":"mipo/chesthair/chesthair-02-mask.png",
                 "bgHex":"0F0B39FF",
                 "cached":{
                   "pR":0.1686,
@@ -10684,7 +10684,7 @@
                   "bgG":0.0431,
                   "fgRGB":[1,1,1]
                 },
-                "bgURL":"hair9.png",
+                "bgURL":"mipo/hair/hair-09.png",
                 "wmul":0.3,
                 "bgHex":"0F0B39FF",
                 "pURL":"type2t.png"
@@ -10720,7 +10720,7 @@
                 "fgHex":"842BE6FF",
                 "pHex":"082B96FF",
                 "dir":1,
-                "fgURL":"leg1-mask.png",
+                "fgURL":"mipo/leg/leg-01-mask.png",
                 "cached":{
                   "pR":0.0314,
                   "pG":0.1686,
@@ -10738,7 +10738,7 @@
                   "bgG":0.0078,
                   "fgRGB":[0.5176,0.1686,0.902]
                 },
-                "bgURL":"leg1.png",
+                "bgURL":"mipo/leg/leg-01.png",
                 "wmul":0.4741,
                 "bgHex":"020202ff",
                 "pURL":"type4.png"
@@ -10832,7 +10832,7 @@
                   "bgG":0.0431,
                   "fgRGB":[1,1,1]
                 },
-                "bgURL":"hair9.png",
+                "bgURL":"mipo/hair/hair-09.png",
                 "wmul":0.3,
                 "bgHex":"0F0B39FF",
                 "pURL":"type2t.png"
@@ -10868,7 +10868,7 @@
                 "fgHex":"842BE6FF",
                 "pHex":"082B96FF",
                 "dir":-1,
-                "fgURL":"leg1-mask.png",
+                "fgURL":"mipo/leg/leg-01-mask.png",
                 "cached":{
                   "pR":0.0314,
                   "pG":0.1686,
@@ -10886,7 +10886,7 @@
                   "bgG":0.0078,
                   "fgRGB":[0.5176,0.1686,0.902]
                 },
-                "bgURL":"leg1.png",
+                "bgURL":"mipo/leg/leg-01.png",
                 "wmul":0.4741,
                 "bgHex":"020202ff",
                 "pURL":"type4.png"
@@ -10965,10 +10965,10 @@
               "zOffset":192,
               "main":{
                 "fgHex":"39FF65FF",
-                "bgURL":"shapes7.png",
+                "bgURL":"mipo/body/body-11.png",
                 "pHex":"725786FF",
                 "pURL":"type8.png",
-                "fgURL":"shapes7-mask.png",
+                "fgURL":"mipo/body/body-11-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":0.4471,
@@ -11033,10 +11033,10 @@
               "zOffset":197,
               "main":{
                 "fgHex":"BFD2BFFF",
-                "bgURL":"borsthaar3.png",
+                "bgURL":"mipo/chesthair/chesthair-03.png",
                 "pHex":"2B5E85FF",
                 "pURL":"type8.png",
-                "fgURL":"borsthaar3-mask.png",
+                "fgURL":"mipo/chesthair/chesthair-03-mask.png",
                 "bgHex":"0F0B39FF",
                 "cached":{
                   "pR":0.1686,
@@ -11081,10 +11081,10 @@
               "curvePoints":[-89.277,54.2352,-77.0042,45.462,5.837,42.5376,92.5134,36.6888,100.1839,65.9328,84.0759,73.2438,5.837,73.2438,-79.3054,79.0926],
               "main":{
                 "fgHex":"eeeeeeff",
-                "bgURL":"teeth7.png",
+                "bgURL":"mipo/teeth/teeth-07.png",
                 "pHex":"ffffff00",
                 "pURL":"",
-                "fgURL":"teeth7-mask.png",
+                "fgURL":"mipo/teeth/teeth-07-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":1,
@@ -11140,10 +11140,10 @@
               "rot":0,
               "main":{
                 "fgHex":"cc5555ff",
-                "bgURL":"upperlip1.png",
+                "bgURL":"mipo/upperlip/upperlip-01.png",
                 "pHex":"ffffff00",
                 "pURL":"",
-                "fgURL":"upperlip1-mask.png",
+                "fgURL":"mipo/upperlip/upperlip-01-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":1,
@@ -11193,10 +11193,10 @@
               "curvePoints":[-89.277,54.2352,-77.0042,45.462,5.837,42.5376,92.5134,36.6888,100.1839,65.9328,84.0759,73.2438,5.837,73.2438,-79.3054,79.0926],
               "main":{
                 "fgHex":"cc5555ff",
-                "bgURL":"lowerlip3.png",
+                "bgURL":"mipo/lowerlip/lowerlip-03.png",
                 "pHex":"ffffff00",
                 "pURL":"",
-                "fgURL":"lowerlip3-mask.png",
+                "fgURL":"mipo/lowerlip/lowerlip-03-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":1,
@@ -11244,10 +11244,10 @@
               "fgHex":"",
               "main":{
                 "fgHex":"69E1C6FF",
-                "bgURL":"nose7.png",
+                "bgURL":"mipo/nose/nose-07.png",
                 "pHex":"ffffff00",
                 "pURL":"",
-                "fgURL":"nose7-mask.png",
+                "fgURL":"mipo/nose/nose-07-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":1,
@@ -11298,7 +11298,7 @@
               "fgURL":"",
               "w":63.8936,
               "zOffset":252,
-              "bgURL":"brow1.png",
+              "bgURL":"mipo/brow/brow-01.png",
               "browMirror":true,
               "h":55.265,
               "ox":61.7539,
@@ -11323,7 +11323,7 @@
               "fgURL":"",
               "w":63.8936,
               "zOffset":252,
-              "bgURL":"brow1.png",
+              "bgURL":"mipo/brow/brow-01.png",
               "browMirror":false,
               "h":55.265,
               "ox":-51.0388,
@@ -11347,13 +11347,13 @@
               "oy":-53.2319,
               "zGroupOffset":4,
               "eyeH":94.1332,
-              "eyeMaskURL":"eye1-mask.png",
+              "eyeMaskURL":"mipo/eye/eye-01-mask.png",
               "rot":0,
               "mirror":false,
               "isEye":true,
               "w":32.2053,
               "h":31.0415,
-              "bgURL":"pupil3.png",
+              "bgURL":"mipo/pupil/pupil-03.png",
               "eyeRot":0,
               "zOffset":251,
               "OMP":false,
@@ -11384,10 +11384,10 @@
               "ox":61.7539,
               "main":{
                 "fgHex":"ffffffff",
-                "bgURL":"eye1.png",
+                "bgURL":"mipo/eye/eye-01.png",
                 "pHex":"ffffff00",
                 "pURL":"",
-                "fgURL":"eye1-mask.png",
+                "fgURL":"mipo/eye/eye-01-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":1,
@@ -11429,13 +11429,13 @@
               "oy":-53.2319,
               "zGroupOffset":4,
               "eyeH":94.1332,
-              "eyeMaskURL":"eye1-mask.png",
+              "eyeMaskURL":"mipo/eye/eye-01-mask.png",
               "rot":0,
               "mirror":true,
               "isEye":true,
               "w":32.2053,
               "h":31.0415,
-              "bgURL":"pupil3.png",
+              "bgURL":"mipo/pupil/pupil-03.png",
               "eyeRot":0,
               "zOffset":251,
               "OMP":false,
@@ -11466,10 +11466,10 @@
               "ox":-51.0388,
               "main":{
                 "fgHex":"ffffffff",
-                "bgURL":"eye1.png",
+                "bgURL":"mipo/eye/eye-01.png",
                 "pHex":"ffffff00",
                 "pURL":"",
-                "fgURL":"eye1-mask.png",
+                "fgURL":"mipo/eye/eye-01-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":1,
@@ -11510,7 +11510,7 @@
               "width":63.747,
               "main":{
                 "fgHex":"EB06ADFF",
-                "bgURL":"hair3.png",
+                "bgURL":"mipo/hair/hair-03.png",
                 "pHex":"BE8D1EFF",
                 "pURL":"type2t.png",
                 "fgURL":"",
@@ -11596,7 +11596,7 @@
               "main":{
                 "fgHex":"1AC39FFF",
                 "pHex":"972ED0FF",
-                "fgURL":"hand3r-mask.png",
+                "fgURL":"mipo/hand/hand-01-mask.png",
                 "cached":{
                   "pR":0.5922,
                   "pG":0.1804,
@@ -11614,7 +11614,7 @@
                   "bgG":0,
                   "fgRGB":[0.102,0.7647,0.6235]
                 },
-                "bgURL":"hand3r.png",
+                "bgURL":"mipo/hand/hand-01.png",
                 "psy":0.18,
                 "pURL":"type3_.png",
                 "fx":-1,
@@ -11718,7 +11718,7 @@
                 "fgHex":"1AC39FFF",
                 "pHex":"972ED0FF",
                 "dir":-1,
-                "fgURL":"hand3r-mask.png",
+                "fgURL":"mipo/hand/hand-01-mask.png",
                 "cached":{
                   "pR":0.5922,
                   "pG":0.1804,
@@ -11736,7 +11736,7 @@
                   "bgG":0,
                   "fgRGB":[0.102,0.7647,0.6235]
                 },
-                "bgURL":"hand3r.png",
+                "bgURL":"mipo/hand/hand-01.png",
                 "psx":0.15,
                 "psy":0.18,
                 "bgHex":"000000ff",
@@ -11872,7 +11872,7 @@
                   "bgG":0.6353,
                   "fgRGB":[1,1,1]
                 },
-                "bgURL":"hair10.png",
+                "bgURL":"mipo/hair/hair-10.png",
                 "wmul":0.3,
                 "bgHex":"9EA24BFF",
                 "pURL":"type2t.png"
@@ -11908,7 +11908,7 @@
                 "fgHex":"6169BAFF",
                 "pHex":"04DF44FF",
                 "dir":1,
-                "fgURL":"leg1-mask.png",
+                "fgURL":"mipo/leg/leg-01-mask.png",
                 "cached":{
                   "pR":0.0157,
                   "pG":0.8745,
@@ -11926,7 +11926,7 @@
                   "bgG":0.0078,
                   "fgRGB":[0.3804,0.4118,0.7294]
                 },
-                "bgURL":"leg1.png",
+                "bgURL":"mipo/leg/leg-01.png",
                 "wmul":0.3173,
                 "bgHex":"020202ff",
                 "pURL":"type4.png"
@@ -12014,7 +12014,7 @@
                   "bgG":0.6353,
                   "fgRGB":[1,1,1]
                 },
-                "bgURL":"hair10.png",
+                "bgURL":"mipo/hair/hair-10.png",
                 "wmul":0.3,
                 "bgHex":"9EA24BFF",
                 "pURL":"type2t.png"
@@ -12050,7 +12050,7 @@
                 "fgHex":"6169BAFF",
                 "pHex":"04DF44FF",
                 "dir":-1,
-                "fgURL":"leg1-mask.png",
+                "fgURL":"mipo/leg/leg-01-mask.png",
                 "cached":{
                   "pR":0.0157,
                   "pG":0.8745,
@@ -12068,7 +12068,7 @@
                   "bgG":0.0078,
                   "fgRGB":[0.3804,0.4118,0.7294]
                 },
-                "bgURL":"leg1.png",
+                "bgURL":"mipo/leg/leg-01.png",
                 "wmul":0.3173,
                 "bgHex":"020202ff",
                 "pURL":"type4.png"
@@ -12121,10 +12121,10 @@
               "zGroupOffset":1,
               "main":{
                 "fgHex":"4B5454FF",
-                "bgURL":"earx10r.png",
+                "bgURL":"mipo/ear/ear-10.png",
                 "pHex":"5C95C3FF",
                 "pURL":"type2t.png",
-                "fgURL":"earx10r-mask.png",
+                "fgURL":"mipo/ear/ear-10-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":0.3608,
@@ -12195,9 +12195,9 @@
               "zGroupOffset":1,
               "main":{
                 "fgHex":"4B5454FF",
-                "bgURL":"earx10r.png",
+                "bgURL":"mipo/ear/ear-10.png",
                 "pHex":"5C95C3FF",
-                "fgURL":"earx10r-mask.png",
+                "fgURL":"mipo/ear/ear-10-mask.png",
                 "pURL":"type2t.png",
                 "fx":-1,
                 "bgHex":"000000ff",
@@ -12272,7 +12272,7 @@
                 "fgHex":"FC8536FF",
                 "pHex":"8B914DFF",
                 "dir":1,
-                "fgURL":"feet7r-mask.png",
+                "fgURL":"mipo/foot/foot-05-mask.png",
                 "cached":{
                   "pR":0.5451,
                   "pG":0.5686,
@@ -12290,7 +12290,7 @@
                   "bgG":0,
                   "fgRGB":[0.9882,0.5216,0.2118]
                 },
-                "bgURL":"feet7r.png",
+                "bgURL":"mipo/foot/foot-05.png",
                 "pURL":"type7.png",
                 "fx":-1,
                 "bgHex":"000000ff"
@@ -12346,11 +12346,11 @@
               "zGroupOffset":1,
               "main":{
                 "fgHex":"FC8536FF",
-                "bgURL":"feet7r.png",
+                "bgURL":"mipo/foot/foot-05.png",
                 "pHex":"8B914DFF",
                 "dir":-1,
                 "pURL":"type7.png",
-                "fgURL":"feet7r-mask.png",
+                "fgURL":"mipo/foot/foot-05-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":0.5451,
@@ -12542,7 +12542,7 @@
                   "bgG":0.6353,
                   "fgRGB":[1,1,1]
                 },
-                "bgURL":"hair10.png",
+                "bgURL":"mipo/hair/hair-10.png",
                 "wmul":0.3,
                 "bgHex":"9EA24BFF",
                 "pURL":"type2t.png"
@@ -12578,7 +12578,7 @@
                 "fgHex":"C1D4CBFF",
                 "pHex":"81954DFF",
                 "dir":1,
-                "fgURL":"leg5-mask.png",
+                "fgURL":"mipo/leg/leg-05-mask.png",
                 "cached":{
                   "pR":0.5059,
                   "pG":0.5843,
@@ -12596,7 +12596,7 @@
                   "bgG":0.0078,
                   "fgRGB":[0.7569,0.8314,0.7961]
                 },
-                "bgURL":"leg5.png",
+                "bgURL":"mipo/leg/leg-05.png",
                 "wmul":0.3957,
                 "bgHex":"020202ff",
                 "pURL":"type0.png"
@@ -12690,7 +12690,7 @@
                   "bgG":0.6353,
                   "fgRGB":[1,1,1]
                 },
-                "bgURL":"hair10.png",
+                "bgURL":"mipo/hair/hair-10.png",
                 "wmul":0.3,
                 "bgHex":"9EA24BFF",
                 "pURL":"type2t.png"
@@ -12726,7 +12726,7 @@
                 "fgHex":"C1D4CBFF",
                 "pHex":"81954DFF",
                 "dir":-1,
-                "fgURL":"leg5-mask.png",
+                "fgURL":"mipo/leg/leg-05-mask.png",
                 "cached":{
                   "pR":0.5059,
                   "pG":0.5843,
@@ -12744,7 +12744,7 @@
                   "bgG":0.0078,
                   "fgRGB":[0.7569,0.8314,0.7961]
                 },
-                "bgURL":"leg5.png",
+                "bgURL":"mipo/leg/leg-05.png",
                 "wmul":0.3957,
                 "bgHex":"020202ff",
                 "pURL":"type0.png"
@@ -12823,10 +12823,10 @@
               "zOffset":192,
               "main":{
                 "fgHex":"608510FF",
-                "bgURL":"shapes7.png",
+                "bgURL":"mipo/body/body-11.png",
                 "pHex":"2626D2FF",
                 "pURL":"type8.png",
-                "fgURL":"shapes7-mask.png",
+                "fgURL":"mipo/body/body-11-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":0.149,
@@ -12891,10 +12891,10 @@
               "zOffset":197,
               "main":{
                 "fgHex":"9AEAD5FF",
-                "bgURL":"borsthaar1.png",
+                "bgURL":"mipo/chesthair/chesthair-01.png",
                 "pHex":"9E1AB5FF",
                 "pURL":"type2t.png",
-                "fgURL":"borsthaar1-mask.png",
+                "fgURL":"mipo/chesthair/chesthair-01-mask.png",
                 "bgHex":"9EA24BFF",
                 "cached":{
                   "pR":0.6196,
@@ -12942,10 +12942,10 @@
               "rot":0,
               "main":{
                 "fgHex":"cc5555ff",
-                "bgURL":"upperlip1.png",
+                "bgURL":"mipo/upperlip/upperlip-01.png",
                 "pHex":"ffffff00",
                 "pURL":"",
-                "fgURL":"upperlip1-mask.png",
+                "fgURL":"mipo/upperlip/upperlip-01-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":1,
@@ -12995,10 +12995,10 @@
               "curvePoints":[-133.1318,81.6509,-115.2338,74.4203,5.5774,72.0101,131.9818,67.1897,143.1681,91.2917,119.677,97.3172,5.5774,97.3172,-118.5897,102.1376],
               "main":{
                 "fgHex":"cc5555ff",
-                "bgURL":"lowerlip2.png",
+                "bgURL":"mipo/lowerlip/lowerlip-02.png",
                 "pHex":"ffffff00",
                 "pURL":"",
-                "fgURL":"lowerlip2-mask.png",
+                "fgURL":"mipo/lowerlip/lowerlip-02-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":1,
@@ -13046,10 +13046,10 @@
               "fgHex":"",
               "main":{
                 "fgHex":"E26006FF",
-                "bgURL":"nose9.png",
+                "bgURL":"mipo/nose/nose-09.png",
                 "pHex":"ffffff00",
                 "pURL":"",
-                "fgURL":"nose9-mask.png",
+                "fgURL":"mipo/nose/nose-09-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":1,
@@ -13100,7 +13100,7 @@
               "fgURL":"",
               "w":55.0828,
               "zOffset":252,
-              "bgURL":"brow5.png",
+              "bgURL":"mipo/brow/brow-05.png",
               "browMirror":true,
               "h":47.0574,
               "ox":92.3187,
@@ -13125,7 +13125,7 @@
               "fgURL":"",
               "w":55.0828,
               "zOffset":252,
-              "bgURL":"brow5.png",
+              "bgURL":"mipo/brow/brow-05.png",
               "browMirror":false,
               "h":47.0574,
               "ox":-82.5622,
@@ -13149,13 +13149,13 @@
               "oy":-55.7304,
               "zGroupOffset":1,
               "eyeH":89.5639,
-              "eyeMaskURL":"eye1-mask.png",
+              "eyeMaskURL":"mipo/eye/eye-01-mask.png",
               "rot":0,
               "mirror":false,
               "isEye":true,
               "w":38.8119,
               "h":51.6409,
-              "bgURL":"pupil2.png",
+              "bgURL":"mipo/pupil/pupil-02.png",
               "eyeRot":0,
               "zOffset":251,
               "OMP":false,
@@ -13186,10 +13186,10 @@
               "ox":92.3187,
               "main":{
                 "fgHex":"ffffffff",
-                "bgURL":"eye1.png",
+                "bgURL":"mipo/eye/eye-01.png",
                 "pHex":"ffffff00",
                 "pURL":"",
-                "fgURL":"eye1-mask.png",
+                "fgURL":"mipo/eye/eye-01-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":1,
@@ -13231,13 +13231,13 @@
               "oy":-55.7304,
               "zGroupOffset":1,
               "eyeH":89.5639,
-              "eyeMaskURL":"eye1-mask.png",
+              "eyeMaskURL":"mipo/eye/eye-01-mask.png",
               "rot":0,
               "mirror":true,
               "isEye":true,
               "w":38.8119,
               "h":51.6409,
-              "bgURL":"pupil2.png",
+              "bgURL":"mipo/pupil/pupil-02.png",
               "eyeRot":0,
               "zOffset":251,
               "OMP":false,
@@ -13268,10 +13268,10 @@
               "ox":-82.5622,
               "main":{
                 "fgHex":"ffffffff",
-                "bgURL":"eye1.png",
+                "bgURL":"mipo/eye/eye-01.png",
                 "pHex":"ffffff00",
                 "pURL":"",
-                "fgURL":"eye1-mask.png",
+                "fgURL":"mipo/eye/eye-01-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":1,
@@ -13312,7 +13312,7 @@
               "width":40.7915,
               "main":{
                 "fgHex":"EB06ADFF",
-                "bgURL":"hair11.png",
+                "bgURL":"mipo/hair/hair-11.png",
                 "pHex":"BE8D1EFF",
                 "pURL":"type2t.png",
                 "fgURL":"",
@@ -13397,10 +13397,10 @@
               "zGroupOffset":5,
               "main":{
                 "fgHex":"804B0CFF",
-                "bgURL":"earx2r.png",
+                "bgURL":"mipo/ear/ear-02.png",
                 "pHex":"3F76EEFF",
                 "pURL":"type6.png",
-                "fgURL":"earx2r-mask.png",
+                "fgURL":"mipo/ear/ear-02-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":0.2471,
@@ -13471,9 +13471,9 @@
               "zGroupOffset":5,
               "main":{
                 "fgHex":"804B0CFF",
-                "bgURL":"earx2r.png",
+                "bgURL":"mipo/ear/ear-02.png",
                 "pHex":"3F76EEFF",
-                "fgURL":"earx2r-mask.png",
+                "fgURL":"mipo/ear/ear-02-mask.png",
                 "pURL":"type6.png",
                 "fx":-1,
                 "bgHex":"000000ff",
@@ -13546,9 +13546,9 @@
               "zGroupOffset":5,
               "main":{
                 "fgHex":"CA1A19FF",
-                "bgURL":"hand3r.png",
+                "bgURL":"mipo/hand/hand-01.png",
                 "pHex":"5AC4F5FF",
-                "fgURL":"hand3r-mask.png",
+                "fgURL":"mipo/hand/hand-01-mask.png",
                 "pURL":"type0.png",
                 "fx":-1,
                 "bgHex":"000000ff",
@@ -13631,11 +13631,11 @@
               "zGroupOffset":5,
               "main":{
                 "fgHex":"CA1A19FF",
-                "bgURL":"hand3r.png",
+                "bgURL":"mipo/hand/hand-01.png",
                 "pHex":"5AC4F5FF",
                 "dir":-1,
                 "pURL":"type0.png",
-                "fgURL":"hand3r-mask.png",
+                "fgURL":"mipo/hand/hand-01-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":0.3529,
@@ -13819,7 +13819,7 @@
                   "bgG":0.9059,
                   "fgRGB":[1,1,1]
                 },
-                "bgURL":"hair9.png",
+                "bgURL":"mipo/hair/hair-09.png",
                 "wmul":0.3,
                 "bgHex":"A4E742FF",
                 "pURL":"type2t.png"
@@ -13855,7 +13855,7 @@
                 "fgHex":"DFABA9FF",
                 "pHex":"AC3EAEFF",
                 "dir":1,
-                "fgURL":"leg1-mask.png",
+                "fgURL":"mipo/leg/leg-01-mask.png",
                 "cached":{
                   "pR":0.6745,
                   "pG":0.2431,
@@ -13873,7 +13873,7 @@
                   "bgG":0.0078,
                   "fgRGB":[0.8745,0.6706,0.6627]
                 },
-                "bgURL":"leg1.png",
+                "bgURL":"mipo/leg/leg-01.png",
                 "wmul":0.2857,
                 "bgHex":"020202ff",
                 "pURL":"type3_.png"
@@ -13961,7 +13961,7 @@
                   "bgG":0.9059,
                   "fgRGB":[1,1,1]
                 },
-                "bgURL":"hair9.png",
+                "bgURL":"mipo/hair/hair-09.png",
                 "wmul":0.3,
                 "bgHex":"A4E742FF",
                 "pURL":"type2t.png"
@@ -13997,7 +13997,7 @@
                 "fgHex":"DFABA9FF",
                 "pHex":"AC3EAEFF",
                 "dir":-1,
-                "fgURL":"leg1-mask.png",
+                "fgURL":"mipo/leg/leg-01-mask.png",
                 "cached":{
                   "pR":0.6745,
                   "pG":0.2431,
@@ -14015,7 +14015,7 @@
                   "bgG":0.0078,
                   "fgRGB":[0.8745,0.6706,0.6627]
                 },
-                "bgURL":"leg1.png",
+                "bgURL":"mipo/leg/leg-01.png",
                 "wmul":0.2857,
                 "bgHex":"020202ff",
                 "pURL":"type3_.png"
@@ -14070,7 +14070,7 @@
                 "fgHex":"69AE64FF",
                 "pHex":"87D170FF",
                 "dir":1,
-                "fgURL":"feet7r-mask.png",
+                "fgURL":"mipo/foot/foot-05-mask.png",
                 "cached":{
                   "pR":0.5294,
                   "pG":0.8196,
@@ -14088,7 +14088,7 @@
                   "bgG":0,
                   "fgRGB":[0.4118,0.6824,0.3922]
                 },
-                "bgURL":"feet7r.png",
+                "bgURL":"mipo/foot/foot-05.png",
                 "pURL":"type1.png",
                 "fx":-1,
                 "bgHex":"000000ff"
@@ -14144,11 +14144,11 @@
               "zGroupOffset":5,
               "main":{
                 "fgHex":"69AE64FF",
-                "bgURL":"feet7r.png",
+                "bgURL":"mipo/foot/foot-05.png",
                 "pHex":"87D170FF",
                 "dir":-1,
                 "pURL":"type1.png",
-                "fgURL":"feet7r-mask.png",
+                "fgURL":"mipo/foot/foot-05-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":0.5294,
@@ -14340,7 +14340,7 @@
                   "bgG":0.9059,
                   "fgRGB":[1,1,1]
                 },
-                "bgURL":"hair11.png",
+                "bgURL":"mipo/hair/hair-11.png",
                 "wmul":0.3,
                 "bgHex":"A4E742FF",
                 "pURL":"type2t.png"
@@ -14376,7 +14376,7 @@
                 "fgHex":"6AFCC1FF",
                 "pHex":"2EEE97FF",
                 "dir":1,
-                "fgURL":"leg5-mask.png",
+                "fgURL":"mipo/leg/leg-05-mask.png",
                 "cached":{
                   "pR":0.1804,
                   "pG":0.9333,
@@ -14394,7 +14394,7 @@
                   "bgG":0.0078,
                   "fgRGB":[0.4157,0.9882,0.7569]
                 },
-                "bgURL":"leg5.png",
+                "bgURL":"mipo/leg/leg-05.png",
                 "wmul":0.3506,
                 "bgHex":"020202ff",
                 "pURL":"type8.png"
@@ -14488,7 +14488,7 @@
                   "bgG":0.9059,
                   "fgRGB":[1,1,1]
                 },
-                "bgURL":"hair11.png",
+                "bgURL":"mipo/hair/hair-11.png",
                 "wmul":0.3,
                 "bgHex":"A4E742FF",
                 "pURL":"type2t.png"
@@ -14524,7 +14524,7 @@
                 "fgHex":"6AFCC1FF",
                 "pHex":"2EEE97FF",
                 "dir":-1,
-                "fgURL":"leg5-mask.png",
+                "fgURL":"mipo/leg/leg-05-mask.png",
                 "cached":{
                   "pR":0.1804,
                   "pG":0.9333,
@@ -14542,7 +14542,7 @@
                   "bgG":0.0078,
                   "fgRGB":[0.4157,0.9882,0.7569]
                 },
-                "bgURL":"leg5.png",
+                "bgURL":"mipo/leg/leg-05.png",
                 "wmul":0.3506,
                 "bgHex":"020202ff",
                 "pURL":"type8.png"
@@ -14621,10 +14621,10 @@
               "zOffset":192,
               "main":{
                 "fgHex":"C7AED7FF",
-                "bgURL":"shapes7.png",
+                "bgURL":"mipo/body/body-11.png",
                 "pHex":"4D72B0FF",
                 "pURL":"type6.png",
-                "fgURL":"shapes7-mask.png",
+                "fgURL":"mipo/body/body-11-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":0.302,
@@ -14689,10 +14689,10 @@
               "zOffset":197,
               "main":{
                 "fgHex":"2176D9FF",
-                "bgURL":"borsthaar7.png",
+                "bgURL":"mipo/chesthair/chesthair-07.png",
                 "pHex":"0A2F80FF",
                 "pURL":"type8.png",
-                "fgURL":"borsthaar7-mask.png",
+                "fgURL":"mipo/chesthair/chesthair-07-mask.png",
                 "bgHex":"A4E742FF",
                 "cached":{
                   "pR":0.0392,
@@ -14740,10 +14740,10 @@
               "rot":0,
               "main":{
                 "fgHex":"cc5555ff",
-                "bgURL":"upperlip3.png",
+                "bgURL":"mipo/upperlip/upperlip-03.png",
                 "pHex":"ffffff00",
                 "pURL":"",
-                "fgURL":"upperlip3-mask.png",
+                "fgURL":"mipo/upperlip/upperlip-03-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":1,
@@ -14793,10 +14793,10 @@
               "curvePoints":[-167.4786,72.1321,-144.9911,56.0566,6.8002,50.6981,165.6187,39.9811,179.6735,93.5661,150.1585,106.9624,6.8002,106.9624,-149.2075,117.6794],
               "main":{
                 "fgHex":"cc5555ff",
-                "bgURL":"lowerlip1.png",
+                "bgURL":"mipo/lowerlip/lowerlip-01.png",
                 "pHex":"ffffff00",
                 "pURL":"",
-                "fgURL":"lowerlip1-mask.png",
+                "fgURL":"mipo/lowerlip/lowerlip-01-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":1,
@@ -14844,10 +14844,10 @@
               "fgHex":"",
               "main":{
                 "fgHex":"C3EF8BFF",
-                "bgURL":"nose8.png",
+                "bgURL":"mipo/nose/nose-08.png",
                 "pHex":"ffffff00",
                 "pURL":"",
-                "fgURL":"nose8-mask.png",
+                "fgURL":"mipo/nose/nose-08-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":1,
@@ -14898,7 +14898,7 @@
               "fgURL":"",
               "w":62.0668,
               "zOffset":252,
-              "bgURL":"brow4.png",
+              "bgURL":"mipo/brow/brow-04.png",
               "browMirror":true,
               "h":51.792,
               "ox":126.7713,
@@ -14923,7 +14923,7 @@
               "fgURL":"",
               "w":62.0668,
               "zOffset":252,
-              "bgURL":"brow4.png",
+              "bgURL":"mipo/brow/brow-04.png",
               "browMirror":false,
               "h":51.792,
               "ox":-114.9278,
@@ -14947,13 +14947,13 @@
               "oy":-52.8606,
               "zGroupOffset":5,
               "eyeH":101.5088,
-              "eyeMaskURL":"eye1-mask.png",
+              "eyeMaskURL":"mipo/eye/eye-01-mask.png",
               "rot":0,
               "mirror":false,
               "isEye":true,
               "w":62.6891,
               "h":44.0849,
-              "bgURL":"pupil2.png",
+              "bgURL":"mipo/pupil/pupil-02.png",
               "eyeRot":0,
               "zOffset":251,
               "OMP":false,
@@ -14984,10 +14984,10 @@
               "ox":126.7713,
               "main":{
                 "fgHex":"ffffffff",
-                "bgURL":"eye1.png",
+                "bgURL":"mipo/eye/eye-01.png",
                 "pHex":"ffffff00",
                 "pURL":"",
-                "fgURL":"eye1-mask.png",
+                "fgURL":"mipo/eye/eye-01-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":1,
@@ -15029,13 +15029,13 @@
               "oy":-52.8606,
               "zGroupOffset":5,
               "eyeH":101.5088,
-              "eyeMaskURL":"eye1-mask.png",
+              "eyeMaskURL":"mipo/eye/eye-01-mask.png",
               "rot":0,
               "mirror":true,
               "isEye":true,
               "w":62.6891,
               "h":44.0849,
-              "bgURL":"pupil2.png",
+              "bgURL":"mipo/pupil/pupil-02.png",
               "eyeRot":0,
               "zOffset":251,
               "OMP":false,
@@ -15066,10 +15066,10 @@
               "ox":-114.9278,
               "main":{
                 "fgHex":"ffffffff",
-                "bgURL":"eye1.png",
+                "bgURL":"mipo/eye/eye-01.png",
                 "pHex":"ffffff00",
                 "pURL":"",
-                "fgURL":"eye1-mask.png",
+                "fgURL":"mipo/eye/eye-01-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":1,
@@ -15115,10 +15115,10 @@
               "endIndex":3,
               "main":{
                 "fgHex":"EB06ADFF",
-                "bgURL":"hair8.png",
+                "bgURL":"mipo/hair/hair-08.png",
                 "pHex":"BE8D1EFF",
                 "pURL":"type2t.png",
-                "fgURL":"hair8-mask.png",
+                "fgURL":"mipo/hair/hair-08-mask.png",
                 "bgHex":"A4E742FF",
                 "cached":{
                   "pR":0.7451,
@@ -15195,10 +15195,10 @@
               "zGroupOffset":2,
               "main":{
                 "fgHex":"C9FFCAFF",
-                "bgURL":"earx13r.png",
+                "bgURL":"mipo/ear/ear-13.png",
                 "pHex":"46BDDFFF",
                 "pURL":"type4.png",
-                "fgURL":"earx13r-mask.png",
+                "fgURL":"mipo/ear/ear-13-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":0.2745,
@@ -15279,9 +15279,9 @@
               "zGroupOffset":2,
               "main":{
                 "fgHex":"C9FFCAFF",
-                "bgURL":"earx13r.png",
+                "bgURL":"mipo/ear/ear-13.png",
                 "pHex":"46BDDFFF",
-                "fgURL":"earx13r-mask.png",
+                "fgURL":"mipo/ear/ear-13-mask.png",
                 "pURL":"type4.png",
                 "fx":-1,
                 "bgHex":"000000ff",
@@ -15364,9 +15364,9 @@
               "zGroupOffset":2,
               "main":{
                 "fgHex":"2908A7FF",
-                "bgURL":"hand3r.png",
+                "bgURL":"mipo/hand/hand-01.png",
                 "pHex":"540C09FF",
-                "fgURL":"hand3r-mask.png",
+                "fgURL":"mipo/hand/hand-01-mask.png",
                 "pURL":"type0.png",
                 "fx":-1,
                 "bgHex":"000000ff",
@@ -15449,11 +15449,11 @@
               "zGroupOffset":2,
               "main":{
                 "fgHex":"2908A7FF",
-                "bgURL":"hand3r.png",
+                "bgURL":"mipo/hand/hand-01.png",
                 "pHex":"540C09FF",
                 "dir":-1,
                 "pURL":"type0.png",
-                "fgURL":"hand3r-mask.png",
+                "fgURL":"mipo/hand/hand-01-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":0.3294,
@@ -15637,7 +15637,7 @@
                   "bgG":0.8118,
                   "fgRGB":[1,1,1]
                 },
-                "bgURL":"hair11.png",
+                "bgURL":"mipo/hair/hair-11.png",
                 "wmul":0.3,
                 "bgHex":"25CFD5FF",
                 "pURL":"type2t.png"
@@ -15673,7 +15673,7 @@
                 "fgHex":"A9D4CCFF",
                 "pHex":"6771F5FF",
                 "dir":1,
-                "fgURL":"leg5-mask.png",
+                "fgURL":"mipo/leg/leg-05-mask.png",
                 "cached":{
                   "pR":0.4039,
                   "pG":0.4431,
@@ -15691,7 +15691,7 @@
                   "bgG":0.0078,
                   "fgRGB":[0.6627,0.8314,0.8]
                 },
-                "bgURL":"leg5.png",
+                "bgURL":"mipo/leg/leg-05.png",
                 "wmul":0.3667,
                 "bgHex":"020202ff",
                 "pURL":"type3_.png"
@@ -15779,7 +15779,7 @@
                   "bgG":0.8118,
                   "fgRGB":[1,1,1]
                 },
-                "bgURL":"hair11.png",
+                "bgURL":"mipo/hair/hair-11.png",
                 "wmul":0.3,
                 "bgHex":"25CFD5FF",
                 "pURL":"type2t.png"
@@ -15815,7 +15815,7 @@
                 "fgHex":"A9D4CCFF",
                 "pHex":"6771F5FF",
                 "dir":-1,
-                "fgURL":"leg5-mask.png",
+                "fgURL":"mipo/leg/leg-05-mask.png",
                 "cached":{
                   "pR":0.4039,
                   "pG":0.4431,
@@ -15833,7 +15833,7 @@
                   "bgG":0.0078,
                   "fgRGB":[0.6627,0.8314,0.8]
                 },
-                "bgURL":"leg5.png",
+                "bgURL":"mipo/leg/leg-05.png",
                 "wmul":0.3667,
                 "bgHex":"020202ff",
                 "pURL":"type3_.png"
@@ -15888,7 +15888,7 @@
                 "fgHex":"E0ED9FFF",
                 "pHex":"5D9D34FF",
                 "dir":1,
-                "fgURL":"feet7r-mask.png",
+                "fgURL":"mipo/foot/foot-05-mask.png",
                 "cached":{
                   "pR":0.3647,
                   "pG":0.6157,
@@ -15906,7 +15906,7 @@
                   "bgG":0,
                   "fgRGB":[0.8784,0.9294,0.6235]
                 },
-                "bgURL":"feet7r.png",
+                "bgURL":"mipo/foot/foot-05.png",
                 "pURL":"type0.png",
                 "fx":-1,
                 "bgHex":"000000ff"
@@ -15962,11 +15962,11 @@
               "zGroupOffset":2,
               "main":{
                 "fgHex":"E0ED9FFF",
-                "bgURL":"feet7r.png",
+                "bgURL":"mipo/foot/foot-05.png",
                 "pHex":"5D9D34FF",
                 "dir":-1,
                 "pURL":"type0.png",
-                "fgURL":"feet7r-mask.png",
+                "fgURL":"mipo/foot/foot-05-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":0.3647,
@@ -16140,7 +16140,7 @@
                 "fgHex":"6C9A70FF",
                 "pHex":"B47E5AFF",
                 "dir":1,
-                "fgURL":"leg1-mask.png",
+                "fgURL":"mipo/leg/leg-01-mask.png",
                 "cached":{
                   "pR":0.7059,
                   "pG":0.4941,
@@ -16158,7 +16158,7 @@
                   "bgG":0.0078,
                   "fgRGB":[0.4235,0.6039,0.4392]
                 },
-                "bgURL":"leg1.png",
+                "bgURL":"mipo/leg/leg-01.png",
                 "wmul":0.3357,
                 "bgHex":"020202ff",
                 "pURL":"type8.png"
@@ -16234,7 +16234,7 @@
                 "fgHex":"6C9A70FF",
                 "pHex":"B47E5AFF",
                 "dir":-1,
-                "fgURL":"leg1-mask.png",
+                "fgURL":"mipo/leg/leg-01-mask.png",
                 "cached":{
                   "pR":0.7059,
                   "pG":0.4941,
@@ -16252,7 +16252,7 @@
                   "bgG":0.0078,
                   "fgRGB":[0.4235,0.6039,0.4392]
                 },
-                "bgURL":"leg1.png",
+                "bgURL":"mipo/leg/leg-01.png",
                 "wmul":0.3357,
                 "bgHex":"020202ff",
                 "pURL":"type8.png"
@@ -16331,10 +16331,10 @@
               "zOffset":192,
               "main":{
                 "fgHex":"FE3EF2FF",
-                "bgURL":"shapes7.png",
+                "bgURL":"mipo/body/body-11.png",
                 "pHex":"DD8D10FF",
                 "pURL":"type4.png",
-                "fgURL":"shapes7-mask.png",
+                "fgURL":"mipo/body/body-11-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":0.8667,
@@ -16399,10 +16399,10 @@
               "zOffset":197,
               "main":{
                 "fgHex":"A67F21FF",
-                "bgURL":"borsthaar3.png",
+                "bgURL":"mipo/chesthair/chesthair-03.png",
                 "pHex":"64EABAFF",
                 "pURL":"type2t.png",
-                "fgURL":"borsthaar3-mask.png",
+                "fgURL":"mipo/chesthair/chesthair-03-mask.png",
                 "bgHex":"25CFD5FF",
                 "cached":{
                   "pR":0.3922,
@@ -16447,10 +16447,10 @@
               "curvePoints":[-78.6738,43.0319,-66.8342,29.9897,-0.3503,181.2783,76.1518,24.7729,87.9914,44.3361,76.1518,71.7245,-0.3503,195.6246,-65.0127,74.3329],
               "main":{
                 "fgHex":"eeeeeeff",
-                "bgURL":"teeth2.png",
+                "bgURL":"mipo/teeth/teeth-02.png",
                 "pHex":"ffffff00",
                 "pURL":"",
-                "fgURL":"teeth2-mask.png",
+                "fgURL":"mipo/teeth/teeth-02-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":1,
@@ -16506,10 +16506,10 @@
               "rot":0,
               "main":{
                 "fgHex":"cc5555ff",
-                "bgURL":"upperlip3.png",
+                "bgURL":"mipo/upperlip/upperlip-03.png",
                 "pHex":"ffffff00",
                 "pURL":"",
-                "fgURL":"upperlip3-mask.png",
+                "fgURL":"mipo/upperlip/upperlip-03-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":1,
@@ -16559,10 +16559,10 @@
               "curvePoints":[-78.6738,43.0319,-66.8342,29.9897,-0.3503,181.2783,76.1518,24.7729,87.9914,44.3361,76.1518,71.7245,-0.3503,195.6246,-65.0127,74.3329],
               "main":{
                 "fgHex":"cc5555ff",
-                "bgURL":"lowerlip1.png",
+                "bgURL":"mipo/lowerlip/lowerlip-01.png",
                 "pHex":"ffffff00",
                 "pURL":"",
-                "fgURL":"lowerlip1-mask.png",
+                "fgURL":"mipo/lowerlip/lowerlip-01-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":1,
@@ -16610,10 +16610,10 @@
               "fgHex":"",
               "main":{
                 "fgHex":"79C7E7FF",
-                "bgURL":"nose8.png",
+                "bgURL":"mipo/nose/nose-08.png",
                 "pHex":"ffffff00",
                 "pURL":"",
-                "fgURL":"nose8-mask.png",
+                "fgURL":"mipo/nose/nose-08-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":1,
@@ -16664,7 +16664,7 @@
               "fgURL":"",
               "w":40.1409,
               "zOffset":252,
-              "bgURL":"brow4.png",
+              "bgURL":"mipo/brow/brow-04.png",
               "browMirror":true,
               "h":34.3894,
               "ox":66.4318,
@@ -16689,7 +16689,7 @@
               "fgURL":"",
               "w":40.1409,
               "zOffset":252,
-              "bgURL":"brow4.png",
+              "bgURL":"mipo/brow/brow-04.png",
               "browMirror":false,
               "h":34.3894,
               "ox":-59.1633,
@@ -16713,13 +16713,13 @@
               "oy":4.3752,
               "zGroupOffset":2,
               "eyeH":76.0626,
-              "eyeMaskURL":"eye1-mask.png",
+              "eyeMaskURL":"mipo/eye/eye-01-mask.png",
               "rot":0,
               "mirror":false,
               "isEye":true,
               "w":60.1557,
               "h":28.7951,
-              "bgURL":"pupil3.png",
+              "bgURL":"mipo/pupil/pupil-03.png",
               "eyeRot":0,
               "zOffset":251,
               "OMP":false,
@@ -16750,10 +16750,10 @@
               "ox":66.4318,
               "main":{
                 "fgHex":"ffffffff",
-                "bgURL":"eye1.png",
+                "bgURL":"mipo/eye/eye-01.png",
                 "pHex":"ffffff00",
                 "pURL":"",
-                "fgURL":"eye1-mask.png",
+                "fgURL":"mipo/eye/eye-01-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":1,
@@ -16795,13 +16795,13 @@
               "oy":4.3752,
               "zGroupOffset":2,
               "eyeH":76.0626,
-              "eyeMaskURL":"eye1-mask.png",
+              "eyeMaskURL":"mipo/eye/eye-01-mask.png",
               "rot":0,
               "mirror":true,
               "isEye":true,
               "w":60.1557,
               "h":28.7951,
-              "bgURL":"pupil3.png",
+              "bgURL":"mipo/pupil/pupil-03.png",
               "eyeRot":0,
               "zOffset":251,
               "OMP":false,
@@ -16832,10 +16832,10 @@
               "ox":-59.1633,
               "main":{
                 "fgHex":"ffffffff",
-                "bgURL":"eye1.png",
+                "bgURL":"mipo/eye/eye-01.png",
                 "pHex":"ffffff00",
                 "pURL":"",
-                "fgURL":"eye1-mask.png",
+                "fgURL":"mipo/eye/eye-01-mask.png",
                 "bgHex":"000000ff",
                 "cached":{
                   "pR":1,
@@ -16876,7 +16876,7 @@
               "width":38.3735,
               "main":{
                 "fgHex":"EB06ADFF",
-                "bgURL":"hair2.png",
+                "bgURL":"mipo/hair/hair-02.png",
                 "pHex":"BE8D1EFF",
                 "pURL":"type2t.png",
                 "fgURL":"",
