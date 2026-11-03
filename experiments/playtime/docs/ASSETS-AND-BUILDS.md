@@ -137,8 +137,10 @@ snapshot for the moves, MEASURING.md) and both builds working.
   name with a repo scene and are the same or older; the other 188 are experiments from 2024-11 to
   2026-04 (contact sheets and all of them copied to `~/Projects/mipo-art/archive/save-folder-2026-11-03/`).
   Nikki: the archive copy is enough, the save folder stays as it is (2026-11-03).
-- [ ] **AB4. Build outputs out of git.** `webtest/output-*` into `.gitignore` and `git rm --cached`;
-  `profilingReport*.txt` ignored.
+- [x] **AB4. Build outputs out of git.** `webtest/output-*` into `.gitignore` and `git rm --cached`;
+  `profilingReport*.txt` ignored. Done 2026-11-03: `webtest/output*/`, `profilingReport*.txt` and
+  `__pycache__/` in playtime's `.gitignore`; the three old builds (`output`, `output-catapult`,
+  `output-knut`, ~18 MB) and both reports untracked, left on disk (history keeps them).
 - [ ] **AB5. Ship what's used.** First an exclude list in both build scripts (Knut, the unnamed
   textures, the unused sounds), the .love size before and after; later a list per room of what its
   scenes use, if rooms grow apart.

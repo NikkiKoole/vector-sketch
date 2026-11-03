@@ -10,3 +10,7 @@ native/ios/build/
 native/ios/flap.love
 textures/scantest/
 !tools/
+# build outputs and reports (docs/ASSETS-AND-BUILDS.md AB4)
+webtest/output*/
+profilingReport*.txt
+__pycache__/
