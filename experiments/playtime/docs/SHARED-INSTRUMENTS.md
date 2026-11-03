@@ -106,7 +106,12 @@ Steps, cheapest first:
     flanger switched back on starts from a clean line). Playtime's dylib rebuilt from it the same day
     (`native/desound/build.sh`), the game restarted, the synth playing. No Lua change.
   - [ ] I5d2. An idle skip (a bus silent past its tail stops running) and `instrument_fx_clear(slot)`.
-    Not picked yet.
+    Neither now (2026-11-03, both sessions agree): effects at 0 are already free. fx_clear when I5e or I4
+    needs it. The idle skip only if a device crackles from OUR load: measure the audio thread there first
+    (the iPhone SE 2; for dreamengine an older iPad with two AUv3 racks, or the web build on a phone). If
+    picked: half a day to a day, moderate risk (wait out every tail, group trees included; not
+    bit-identical, so every cart's baseline moves a little and needs listening). The cheap bit-identical
+    step first: switch a part's effects to 0 when it stops.
 - [ ] I5e. Playtime: a band bus per style (lofi, dusk: one tape and phaser for the band via
   `instrument_group`, the reverb folded in), bus holders instead of fx slots, so I4's cache covers the fx
   patches. Measured before and after (`./playtime.sh bench`, the phone).
