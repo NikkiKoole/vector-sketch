@@ -399,6 +399,10 @@ function lib.hasToms(jam) return lib.TOM_GROUPS[jam.group] or false end
 -- One bar. play and remember are music-parts' (every note goes through play: mutes, the panel, listeners).
 function lib.bookBar(play, remember, synth, t0, song, b)
     local style, jam = D.styles[song.style], song.jam
+    -- a jam already playing when this file hot-swapped hasn't got what newer plan()s set (it crashed on
+    -- jam.seed, 2026-11-03): fill it in
+    jam.seed = jam.seed or song.seed or 0
+    jam.ghosts = jam.ghosts or lib.GHOSTS[1]
     announceSounds(song, jam)
     local inPhrase = (b - 1) % style.phraseBars
     advance(jam, style, b)
