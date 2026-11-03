@@ -5,6 +5,7 @@
 -- click. Rooms could name one later. reset goes back to the style's own setup; undo undoes the last
 -- reset or setup put back (and undo again redoes it).
 local json = require('vendor.dkjson')
+local repoFiles = require('src.repo-files')
 local state = require('src.state')
 
 local lib = {}
@@ -69,7 +70,7 @@ function lib.list()
 end
 
 local function write()
-    local ok, err = love.filesystem.write(lib.FILE, json.encode(lib.list(), { indent = true }))
+    local ok, err = repoFiles.write(lib.FILE, json.encode(lib.list(), { indent = true }))
     if not ok then print('[music-setups] could not save: ' .. tostring(err)) end
 end
 

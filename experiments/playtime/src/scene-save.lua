@@ -5,6 +5,7 @@
 -- Split out of io.lua (CODE-SPLITS-2026-10.md SPLIT6); io.lua still hands these out.
 local logger = require('src.logger')
 local json = require('vendor.dkjson')
+local repoFiles = require('src.repo-files')
 local shapes = require('src.shapes')
 local jointHandlers = require('src.joint-handlers')
 local utils = require('src.utils')
@@ -245,8 +246,10 @@ function lib.gatherSaveData(world, camera)
     return saveData
 end
 
--- Writes the world to <filename>.playtime.json in the save directory: numbers rounded to 4
--- decimals (sub-pixel at any reasonable scale), influences packed (docs/FILESIZE-ANALYSIS.md).
+-- Writes the world to scripts/<filename>.playtime.json in the project when the game runs from it on the
+-- desktop (src/repo-files.lua, docs/ASSETS-AND-BUILDS.md AB3), else <filename>.playtime.json in the save
+-- directory: numbers rounded to 4 decimals (sub-pixel at any reasonable scale), influences packed
+-- (docs/FILESIZE-ANALYSIS.md). Opens the folder it went into.
 function lib.save(world, camera, filename)
     local saveData = lib.roundFloats(lib.gatherSaveData(world, camera), 4)
     for _, body in ipairs(saveData.bodies or {}) do
@@ -256,15 +259,15 @@ function lib.save(world, camera, filename)
     end
     local jsonData = json.encode(saveData, { indent = true })
 
-    local success, message = love.filesystem.write(filename .. FEXT.SCENE_JSON, jsonData)
+    local path = (repoFiles.root() and 'scripts/' or '') .. filename .. FEXT.SCENE_JSON
+    local success, where = repoFiles.write(path, jsonData)
     if success then
-        logger:info("World successfully saved to " .. filename)
-        logger:info("file://" .. love.filesystem.getSaveDirectory())
+        logger:info("World successfully saved to " .. where)
+        love.system.openURL("file://" .. where:match('^(.*)/[^/]+$'))
     else
-        logger:error("Failed to save world:", message)
+        logger:error("Failed to save world:", where)
     end
-
-    love.system.openURL("file://" .. love.filesystem.getSaveDirectory())
+    return success, where
 end
 
 return lib

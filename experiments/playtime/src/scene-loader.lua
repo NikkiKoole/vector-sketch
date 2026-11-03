@@ -71,6 +71,7 @@ end
 
 function lib.loadScriptAndScene(id)
     state.scene.id = id -- the room you're in (src/doors.lua)
+    state.editorPreferences.saveName = id -- saving it again writes this scene (scripts/<id>, src/repo-files.lua)
     local jsonPath = '/scripts/' .. id .. FEXT.SCENE_JSON
     local luaPath = '/scripts/' .. id .. FEXT.SCENE_LUA
     local jsoninfo = love.filesystem.getInfo(jsonPath)

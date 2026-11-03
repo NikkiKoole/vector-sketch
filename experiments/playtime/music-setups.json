@@ -1,0 +1,22 @@
+[{
+    "spice":2,
+    "band":"on",
+    "effects":0,
+    "jam":[],
+    "world":[],
+    "name":"wave 1",
+    "ideas":{
+      "answer":"always",
+      "flat9":"always"
+    },
+    "partsOff":{
+      "bass":true
+    },
+    "voices":{
+      "bass":"tb303",
+      "keys":"rhodes"
+    },
+    "style":"wave",
+    "soundsOff":[],
+    "soundVoices":[]
+  }]

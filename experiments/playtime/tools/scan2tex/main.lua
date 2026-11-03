@@ -10,7 +10,9 @@
 --   LOOKS LIKE: each part is compared with every texture in the game and the sheet's other parts; the
 --   close ones show next to it and on the sheet (≈), and saving one of those asks first
 --   the sheet's settings, sliders: size, mask inset, how far into the line, open below (applied when you let go)
---   ctrl-s save the named parts into textures/ (one saved before: ctrl-s again to overwrite it)
+--   ctrl-s save the named parts into textures/ (one saved before: ctrl-s again to overwrite it); the photo
+--     or scan is kept in ~/Projects/mipo-art/scans/ (<date>-<file>), with <date>-<file>.json beside it
+--     saying which part became which texture (docs/ASSETS-AND-BUILDS.md AB2)
 -- love tools/scan2tex --no-save [<file>]: try it out, saving only says what it would write (and opens <file>)
 -- What you set per sheet is remembered (the save folder's sheets.json), so a sheet can be opened again.
 
@@ -20,6 +22,8 @@ local json = require('dkjson')
 
 local PYTHON = os.getenv('PYTHON') or 'python3'
 local SCRIPT = ROOT .. '/claudetools/scan2tex.py'
+-- the photos and scans kept (AB2); SCAN2TEX_SCANS=<dir> elsewhere (then a --test-save keeps one too)
+local SCANS = os.getenv('SCAN2TEX_SCANS') or (os.getenv('HOME') .. '/Projects/mipo-art/scans')
 local WORK = love.filesystem.getSaveDirectory() .. '/work'
 local FILLS = { 'auto', 'close', 'open', 'mask' }
 local LINE, BODY, BACK = { 0.24, 0.12, 0.16 }, { 0.91, 0.59, 0.43 }, { 0.78, 0.86, 0.78 }
@@ -55,7 +59,7 @@ local testing = nil -- --test / --test-save (below): runs that leave the memory 
 local function remember()
     if not sheet or testing then return end
     local all = loadMemory()
-    local s = { picks = picks, settings = {} }
+    local s = { picks = picks, settings = {}, kept = sheet.kept }
     for _, set in ipairs(SETTINGS) do s.settings[set.key] = set.value end
     all[sheet.src] = s
     love.filesystem.write('sheets.json', json.encode(all, { indent = true }))
@@ -141,8 +145,10 @@ function love.filedropped(file)
     local base = src:match('([^/]+)$'):gsub('%.[^.]+$', ''):gsub('[^%w_-]', ''):lower()
     sheet, selected, picks, before = { src = src, base = base, parts = {} }, nil, {}, nil
     local memory = loadMemory()[src]
+    if src:sub(1, #SCANS + 1) == SCANS .. '/' then sheet.kept = src end -- opened from the kept scans
     if memory then
         picks = memory.picks or {}
+        sheet.kept = sheet.kept or memory.kept
         for _, set in ipairs(SETTINGS) do set.value = memory.settings and memory.settings[set.key] or set.value end
     end
     run()
@@ -209,6 +215,27 @@ local function write(path, bytes)
     local f = assert(io.open(path, 'wb'))
     f:write(bytes)
     f:close()
+end
+
+-- the photo or scan kept in SCANS (once per sheet), and beside it which part became which texture
+local function keepScan()
+    if not sheet.kept then
+        local name = sheet.src:match('([^/]+)$')
+        sheet.kept = SCANS .. '/' .. os.date('%Y-%m-%d') .. '-' .. name
+        if not exists(sheet.kept) then
+            os.execute(('mkdir -p %s && cp %s %s'):format(shellQuote(SCANS), shellQuote(sheet.src), shellQuote(sheet.kept)))
+        end
+    end
+    local parts, settings = {}, {}
+    for _, p in ipairs(sheet.parts) do
+        local pick = picks[p.id]
+        if pick and pick.saved then
+            parts[#parts + 1] = { part = p.id, texture = pick.saved.file .. '.png', box = p.box,
+                turned = (pick.rot or 0) * 90, fill = pick.fill }
+        end
+    end
+    for _, set in ipairs(SETTINGS) do settings[set.key] = set.value end
+    write(sheet.kept .. '.json', json.encode({ from = sheet.src, settings = settings, parts = parts }, { indent = true }))
 end
 
 -- the highest number in textures/<folder>/<kind>-<nn>.png (0 when there's none)
@@ -280,7 +307,9 @@ function save()
         t.pick.saved = { name = t.pick.name, file = t.file }
         saved[#saved + 1] = t.file
     end
+    if not testing or os.getenv('SCAN2TEX_SCANS') then keepScan() end
     message = 'saved into textures/: ' .. table.concat(saved, ', ')
+        .. (sheet.kept and ('\nthe scan kept: ' .. sheet.kept:gsub('^' .. os.getenv('HOME'), '~')) or '')
     if #stale > 0 then message = message .. '\n(no mask now, an old one is still there: ' .. table.concat(stale, ', ') .. ')' end
     remember()
 end

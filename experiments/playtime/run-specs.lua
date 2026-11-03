@@ -27,6 +27,9 @@ end
 
 local meter = require('src.physics-units').meterFromArgs(arg)
 
+-- a spec run: what the editor saves goes to the save folder, not the project (src/repo-files.lua)
+SPEC_RUN = true -- luacheck: ignore 111
+
 -- Override arg to look like: busted <specTarget>
 arg = { specTarget }
 arg[0] = 'busted'

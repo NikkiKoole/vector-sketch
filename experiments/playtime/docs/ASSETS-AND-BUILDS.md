@@ -120,10 +120,22 @@ snapshot for the moves, MEASURING.md) and both builds working.
   part, writing into a subfolder, the catalogs (shape-catalogs.lua) learning the new names.
 - [ ] **AB2. Keep the scans.** `~/Projects/mipo-art/scans/`, laid out like `textures/`, backed up
   (a cloud folder or a disk). New drawings from now on; old papers rescanned when a part is touched.
+  2026-11-03: `tools/scan2tex` keeps each photo or scan it saves parts from in
+  `~/Projects/mipo-art/scans/<date>-<file>`, with `<date>-<file>.json` beside it (which part became which
+  texture, its box, turn and fill, the sheet's settings): by sheet, not laid out like `textures/` (one
+  sheet holds many kinds of part; the json says where each went). The old scanner scans copied to
+  `scans/2024-2025-scanner/` (they're in git too, `vector-sketch/scans/`). Left: the backup.
 - [ ] **AB3. Prefabs, setups and saved scenes into the repo.** The game reads `library/` and music
   setups from the repo first (the save folder as the fallback), and on the desktop the editor saves a
   scene straight into `scripts/` (io.open works there; the web build keeps the save folder). Sort
   out the 204 saved scenes once: which are newer than the repo's copy, which are worth keeping.
+  2026-11-03: `src/repo-files.lua` writes into the project when the game runs from it on the desktop
+  (not the web, a .love, the phone or a spec run): the editor's save to `scripts/<name>.playtime.json`
+  (the name defaults to the scene that's open), prefabs to `library/`, music setups to
+  `music-setups.json`; the 8 prefabs and the setups copied in. The save folder's 202 scenes: 14 share a
+  name with a repo scene and are the same or older; the other 188 are experiments from 2024-11 to
+  2026-04 (contact sheets and all of them copied to `~/Projects/mipo-art/archive/save-folder-2026-11-03/`).
+  Left: which of those become repo scenes, and clearing the save folder.
 - [ ] **AB4. Build outputs out of git.** `webtest/output-*` into `.gitignore` and `git rm --cached`;
   `profilingReport*.txt` ignored.
 - [ ] **AB5. Ship what's used.** First an exclude list in both build scripts (Knut, the unnamed

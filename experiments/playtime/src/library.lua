@@ -20,6 +20,7 @@ local resourceLink = require('src.resource-link')
 local utils = require('src.utils')
 local CharacterManager = require('src.character-manager')
 local textureNames = require('src.texture-names')
+local repoFiles = require('src.repo-files')
 
 lib.DIR = 'library'
 
@@ -166,9 +167,8 @@ function lib.save(name, things)
     if name == '' then return false, 'no name' end
     local prefab = lib.gather(things)
     if not prefab then return false, 'nothing to save' end
-    love.filesystem.createDirectory(lib.DIR)
-    local ok, err = love.filesystem.write(pathOf(name), json.encode(prefab, { indent = true }))
-    return ok, err or name
+    local ok, err = repoFiles.write(pathOf(name), json.encode(prefab, { indent = true }))
+    return ok, ok and name or err
 end
 
 -- A scene file (or prefab) dropped on the library tab: its non-Mipo bodies and
@@ -181,9 +181,8 @@ function lib.import(filename, contents)
     local prefab = lib.trim(data)
     if not prefab then return false, 'nothing in it' end
     if name == '' then name = 'imported' end
-    love.filesystem.createDirectory(lib.DIR)
-    local ok, err = love.filesystem.write(pathOf(name), json.encode(prefab, { indent = true }))
-    return ok, err or name
+    local ok, err = repoFiles.write(pathOf(name), json.encode(prefab, { indent = true }))
+    return ok, ok and name or err
 end
 
 function lib.load(name)
@@ -265,7 +264,7 @@ function lib.place(name, x, y)
 end
 
 function lib.delete(name)
-    return love.filesystem.remove(pathOf(name))
+    return repoFiles.remove(pathOf(name))
 end
 
 return lib
