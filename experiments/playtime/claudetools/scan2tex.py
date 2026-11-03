@@ -92,6 +92,10 @@ for (x0, y0, x1, y1, n) in sorted(parts, key=lambda p: (p[1] // 60, p[0])):
     a = alpha.crop(box)
     if sum(1 for v in a.get_flattened_data() if v > 128) < MIN_AREA: continue
     k += 1
+    # specks first: islands of anything visible (grown 1 px, so the crayon grain next to the line counts as
+    # the line) smaller than SPECK px go, faint dust included
+    a = ImageChops.multiply(a, keep_big(a.point(lambda v: 255 if v > 0 else 0).filter(ImageFilter.MaxFilter(3)),
+                                        SPECK))
     outline = Image.merge('RGBA', (Image.new('L', a.size, 255),) * 3 + (a,))  # white under it all: no halo
     # mask: flood the outside from the border; whatever the flood can't reach is the shape
     # the mask: the whole shape, line included, its edge smoothed and pulled in by INSET px, so it
@@ -105,8 +109,6 @@ for (x0, y0, x1, y1, n) in sorted(parts, key=lambda p: (p[1] // 60, p[0])):
     mask = shape.filter(ImageFilter.MinFilter(INSET * 2 + 1)) if INSET > 0 else shape
     mask = pieces(mask)                                            # every real piece; crumbs go
     mask = mask.filter(ImageFilter.GaussianBlur(0.8))              # a soft, even edge
-    # specks in the line: ink islands smaller than a speck go
-    a = ImageChops.multiply(a, keep_big(a.point(lambda v: 255 if v > 40 else 0), SPECK))
     # an OPEN part (a line, a stroke, a filled dot like a pupil) has no inside to fill: no mask file, as
     # the game's brows, hair, pupils and lines have none (the bake draws them outline only)
     inside = ImageChops.subtract(shape, line.filter(ImageFilter.MaxFilter(3)))

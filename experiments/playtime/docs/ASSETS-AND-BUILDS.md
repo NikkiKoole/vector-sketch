@@ -92,6 +92,9 @@ snapshot for the moves, MEASURING.md) and both builds working.
   and lines have none (the bake draws them outline only): a part is open when under 7% of its shape
   is enclosed space, not line (Nikki; lines 0-6% open, the fern 12% and the lips and sprouts 17-33% get
   a mask, ovals and feet 30-78%).
+  SPECKS: islands of anything visible (grown 1 px, so grain next to the line counts as the line) under
+  60 px go, before the outline is written (the first cut cleaned them after: they stayed). Dust around
+  the parts gone; the crayon grain kept.
 - [ ] **AB2. Keep the scans.** `~/Projects/mipo-art/scans/`, laid out like `textures/`, backed up
   (a cloud folder or a disk). New drawings from now on; old papers rescanned when a part is touched.
 - [ ] **AB3. Prefabs, setups and saved scenes into the repo.** The game reads `library/` and music
