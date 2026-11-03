@@ -444,7 +444,11 @@ function lib.bookBar(play, remember, synth, t0, song, b)
     local chordsPicked = picks().chords and picks().chords ~= 'auto'
     if (jam.on.keys or chordsPicked) and not spot then bookKeys(play, synth, song, t0, jam, kind, cut) end
     local fill = lastBar and (jam.on.snare or jam.mode == 'break')
-    local written = fill and jam.fill -- the family's own fill plays the whole bar
+    -- the family's own fill plays the whole bar, two phrase ends in three; the other third (and the build
+    -- before a drop) is the jam's own run-up or tom roll (every Funk family has a written fill: before,
+    -- Funk never rolled its toms; dreamengine-4d's spec caught it)
+    local build = gap and jam.mode == 'break'
+    local written = fill and not build and roll(3) ~= 0 and jam.fill or nil
     local varMove = move('variations')
     local busy = (M.activity or 0) >= 2 * style.perLayer
     local turnaround = varMove ~= 'never' and (varMove == 'always' or busy) and #jam.patterns > 1
@@ -458,7 +462,7 @@ function lib.bookBar(play, remember, synth, t0, song, b)
     -- a drop is the BUILD (snare 16ths over the whole bar, getting louder); families with toms roll down
     -- them on the last beat now and then
     local activity = M.activity or 0
-    local runFrom = (gap and jam.mode == 'break') and 0
+    local runFrom = build and 0
         or activity >= 3 * style.perLayer and 8 or 12
     local toms = fill and not written and not gap and lib.hasToms(jam) and roll(3) == 0
     -- LEANING IN (J10): on the bar before a chord change (not a phrase's last bar, the fill has that) the

@@ -165,7 +165,9 @@ Until then the jam plays Playtime's drum patches; enough to hear whether the arr
     per change from the drums that are playing; 6 in 10 changes on auto ('jam lean-in'). Not on a
     phrase's last bar (the fill has it).
   - [x] J10b. FILLS: the snare run-up grows with the play level (a beat, half a bar at 3 layers' worth);
-    Funk and Breaks roll down the toms on the last beat a third of the time; the bar before a drop is
+    Funk and Breaks roll down the toms on the last beat a third of the time; a family's own written fill
+    plays two phrase ends in three, the jam's run-up the third (every Funk family has a written fill, so
+    Funk never rolled its toms: caught by dreamengine-4d's spec); the bar before a drop is
     the BUILD (snare 16ths over the whole bar, louder toward the one) and ends in THE GAP: every part
     silent on beat 4, then the crash ('jam gap'; always = at every phrase end, for listening).
     `spec/music-jam_spec.lua` checks the gap.
