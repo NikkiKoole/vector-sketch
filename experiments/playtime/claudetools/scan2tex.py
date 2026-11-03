@@ -20,8 +20,24 @@ OPEN_BELOW = 0.07     # under this share of the shape enclosed (not line), a par
 SPECK = 60            # px: ink islands smaller than this are dust
 PAD = 8               # px of transparent margin around a part
 
-g = ImageOps.grayscale(Image.open(src))
+# A phone photo works too (Nikki, 2026-11-03: "a bad relationship with my scanner"): HEIC goes through
+# macOS's sips first; uneven light (a hand's shadow, dark corners) is divided out below.
+if src.lower().endswith(('.heic', '.heif')):
+    import subprocess, tempfile
+    png = os.path.join(tempfile.mkdtemp(), 'photo.png')
+    subprocess.run(['sips', '-s', 'format', 'png', src, '--out', png], check=True, capture_output=True)
+    src = png
+g = ImageOps.grayscale(ImageOps.exif_transpose(Image.open(src)))
 g = g.resize((int(g.width * SCALE), int(g.height * SCALE)), Image.LANCZOS)
+# FLATTEN THE LIGHT: the paper's brightness everywhere (the ink taken out with a max filter, then a big
+# blur), divided out, so all the paper is equally white whatever the light did. A scan is already even:
+# this changes it very little.
+small = g.resize((max(1, g.width // 8), max(1, g.height // 8)), Image.BILINEAR)
+paper_light = small.filter(ImageFilter.MaxFilter(9)).filter(ImageFilter.GaussianBlur(12)).resize(g.size, Image.BILINEAR)
+import numpy as np
+g = Image.fromarray(np.clip(np.asarray(g, np.float32) / np.maximum(np.asarray(paper_light, np.float32), 1) * 255,
+                            0, 255).astype(np.uint8))  # pixel / the paper there (paper -> 255)
+g = g.filter(ImageFilter.MedianFilter(3))  # the photo's grain
 # levels: paper = a high percentile, ink = a low one
 hist = g.histogram(); total = sum(hist)
 def pct(p):

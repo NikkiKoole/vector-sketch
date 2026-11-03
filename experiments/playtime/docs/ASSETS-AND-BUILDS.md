@@ -95,6 +95,11 @@ snapshot for the moves, MEASURING.md) and both builds working.
   SPECKS: islands of anything visible (grown 1 px, so grain next to the line counts as the line) under
   60 px go, before the outline is written (the first cut cleaned them after: they stayed). Dust around
   the parts gone; the crayon grain kept.
+  PHONE PHOTOS (Nikki: "a bad relationship with my scanner"): HEIC through `sips`, the photo turned
+  upright (EXIF), the paper's brightness estimated (ink taken out, a big blur) and divided out, so a
+  shadow or dark corners go; a median for the grain. Tried on Scan 14 made into a fake phone photo
+  (a shadow over a corner, warm light, noise, JPEG): the same 10 parts, clean, masks right; the line
+  a little smoother (the median). Next: a real photo.
 - [ ] **AB2. Keep the scans.** `~/Projects/mipo-art/scans/`, laid out like `textures/`, backed up
   (a cloud folder or a disk). New drawings from now on; old papers rescanned when a part is touched.
 - [ ] **AB3. Prefabs, setups and saved scenes into the repo.** The game reads `library/` and music
