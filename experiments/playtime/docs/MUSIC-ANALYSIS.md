@@ -80,6 +80,19 @@ other   |+++.++++++.++.+++.+   .++        .  .+#.#. .#+        ++.++. |
   - **The bass** fits FM best: a round synth or electric bass, not an upright.
   - **Weak evidence overall:** the scores sit close together (0.3–0.6) and the targets are chords. A full run on single clean notes is the next step for any of these.
 
+## Song 2: Open Studio — Ride the Wave (2026-11-03)
+
+Source: [youtube hDkdyKOsJCg](https://www.youtube.com/watch?v=hDkdyKOsJCg), Peter Martin (piano), Kaleb Kirby (drums), Bob DeBoo (bass), 74 s. It's an "all 12 keys in 30 seconds" practice tip. Fetched with `python3 -m yt_dlp` (pip `--user`); the captions give the chord names, and `chords-from-audio.py` on 0:32–1:14 plus the demucs piano and bass stems give the rest.
+
+- **The two shapes:** A maj9 and D sus (9sus4: a C triad over D, with a B on top now and then). From the piano stem: Amaj9 voiced A2 | G♯3 C♯4 E4 G♯4 B4 C♯5 (the left hand's root, the right hand's 7 3 5 9), and Dsus voiced D3 | B3 C4 E4 G4 B4 D5.
+- **The cycle:** one chord a bar, ~96 BPM, straight 8ths (off-beat 0.52). The shapes are stated twice (A D A D), then the bass walks up in fourths, one root a bar: A D G C F B♭ E♭ A♭ D♭ G♭ B E A (12 bars, ~30 s), with maj9 and sus taking turns.
+- **What it really is:** each sus is the next maj9's V (Dsus → Gmaj9), so the home chord drops a whole step every two bars. The bass touches all 12 roots, but the maj9 lands on only six (A G F E♭ D♭ B, a whole-tone scale). Going round a second time with the roles swapped (sus first) puts maj9 on the other six.
+- **The hands:** demucs smears the piano too much to tell which hand plays what. The voicings above fit the left hand taking the root and the right hand the shape.
+- **In Playtime:** the style `wave` (`src/music-styles.lua`, `D.waveForms`). A is the lap, B is the lap with the roles swapped, the figure is `split` (root, then the shape an 8th later), it pushes into each maj9, and the lounge kit keeps it straight. The usual tune is off: its scale and ladder belong to one key, and this moves key every two bars.
+- **Extras, off unless turned up in the music panel's idea rows** (Nikki 2026-11-03: "not always all the notes at once, some strum, and a melody that's more like picking some of the keys you're going to play anyway, in some order"):
+  - `figures`: one comp figure per song. `split` (the root, then the shape), `arp`, `strum` (45 ms a note, up on a stab in the bar's first half and down in its second) or `broken` (bottom, top, middle, top in 8ths). `strum` and `broken` are new and work for any style that lists them.
+  - `picks`: a line made from the comp's own voicing (`bookPicks`, the patterns in `D.picks`). Per song it keeps one rhythm and one order, counted down from the voicing's top note. The voicings move to the nearest notes, so the order makes a sequence that follows the cycle, and it needs no key. Phrases are four bars, the fourth breathing after two notes.
+
 ## The score pieces next to our styles (2026-11-02)
 
 Why does Gershwin's Prelude II (`gershwin2`) sound so much richer than our own styles? To answer that, the notes themselves get analysed, not a recording.

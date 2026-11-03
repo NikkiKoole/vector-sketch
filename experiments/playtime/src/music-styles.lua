@@ -681,6 +681,66 @@ do
     }
 end
 
+-- wave: Peter Martin's two-chord practice cycle (Open Studio, "Ride the Wave"; transcribed from the
+-- recording 2026-11-03, docs/MUSIC-ANALYSIS.md). Two shapes, maj9 and 9sus, a bar each, the root up
+-- a fourth every bar: each sus is the next maj9's V (Dsus -> Gmaj9), so the home chord drops a whole
+-- step every two bars and the cycle is back in 12. A lap puts maj9 on six roots (a whole-tone scale:
+-- A G F Eb Db B in A); B swaps the roles (the sus first) for the other six, so A and B together play
+-- maj9 in all 12 keys. Straight 8ths at ~96, the left hand's root then the right hand's shape (the
+-- split figure), the pianist anticipating each maj9. No tune for now: the key moves every two bars
+-- and the tune's ladder and scale are one key's. The changes are the song.
+do
+    local A, B = {}, {}
+    for i = 0, 11 do
+        local root, first = (i * 5) % 12, i % 2 == 0
+        A[#A + 1] = { root, first and 'maj9' or 'sus' }
+        B[#B + 1] = { root, first and 'sus' or 'maj9', 4 }
+    end
+    D.styles.wave = {
+        bpm = { 92, 100 }, swing = 0.52, chordBars = { 1 }, lydianChance = 0, pushOdds = 0,
+        turnaroundOdds = 0, leadChance = 0, motifRepeat = 30, forms = 'wave',
+        -- one cell all song, full voicings (the shapes are the point), the push into every maj9 a habit
+        steady = true, sameCell = true, shellOdds = 0, pushHabit = 70, pushEvery = 2,
+        strumMs = 10, keys = 'piano', lead = 'pianoLead', bass = 'walk', bassPatch = 'musicBass', bassLo = 34,
+        drums = 'lounge', home = 'maj9', range = { 65, 84 }, staccato = 8,
+        -- the comp figures, one per song (the idea 'figures'): the left hand's root then the shape, rolled
+        -- up, strummed across (down-up), broken (bottom top middle top)
+        figures = { 'split', 'arp', 'strum', 'broken' },
+        -- the picks (the idea 'picks', music-parts' bookPicks): a line of the comp's own keys, a sequence
+        -- that follows the cycle. A borrowed chord or an approach would break the cycle
+        picks = true, picksVol = 4,
+        ideas = { borrow = false, approach = false, picks = { odds = 85, songs = 100 } },
+        A = { A }, B = { B },
+        -- the shape held, held with a lift on the and-of-3, the Charleston laid down soft
+        comps = {
+            { { 0, 14, 3 }, { 16, 14, 3 } },
+            { { 0, 10, 3 }, { 10, 4, 2 }, { 16, 10, 3 }, { 26, 4, 2 } },
+            { { 0, 3, 3 }, { 6, 8, 2 }, { 16, 3, 3 }, { 22, 8, 2 } },
+        },
+    }
+end
+-- the picks' rhythms (16ths in a bar, straight 8ths) and orders (down from the voicing's top: 1 = the
+-- top note, 0 = the top an octave up); an order shorter than its rhythm goes round
+D.picks = {
+    rhythms = {
+        { 2, 6, 8, 12 },        -- off the beat, settling on 3
+        { 0, 4, 6, 10, 14 },    -- on the one, then pushing
+        { 6, 8, 10, 14 },       -- after the chord: the answer in the bar's second half
+        { 2, 4, 8, 10, 12 },
+    },
+    orders = {
+        { 1, 2, 3, 2, 1 },      -- down and back
+        { 3, 2, 1, 0 },         -- up to the peak
+        { 1, 3, 2, 4 },
+        { 2, 1, 3, 1, 2 },      -- round the top
+    },
+}
+-- wave's forms: the shapes stated, one lap or both, home (the outro's first two bars are A's)
+D.waveForms = {
+    { { 'intro', 2 }, { 'A', 12 }, { 'B', 12 }, { 'outro', 3 } },
+    { { 'intro', 2 }, { 'A', 12 }, { 'B', 12 }, { 'A', 12 }, { 'outro', 3 } },
+}
+
 -- Puppetmaker's pattern, from its song file (mipo4.melodypaint.txt): per voice the patch, the pitch, the
 -- length and its hits { step 1..16, chance %, rnd = a random semitone }. dense = PM2's page 1 (outside,
 -- the crowd), sparse = page 2 (the editor). The chord is the rhodes2 sample: one up-strummed voicing,

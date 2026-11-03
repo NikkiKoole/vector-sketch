@@ -724,6 +724,26 @@ local function bookFigure(bar, h, voicing, figure)
             play(synth, 'keys', style.keys, t, voicing[k], math.min(7, k == #voicing and h.vol + 1 or h.vol),
                  lengthMs(song, s, stop - s) * 0.9, s)
         end
+    elseif figure == 'strum' then
+        -- a hand dragged across the keys, slower than the style's roll: up on a stab in the bar's
+        -- first half, down in its second (a guitarist's down-up), the last note leaning
+        local up, gap = h.s < 8, style.figureStrumMs or 45
+        for i = first, #voicing do
+            local k = up and i or #voicing + first - i
+            local t = stepTime(song, t0, h.s) + (i - first) * gap / 1000 + humanize(0.004)
+            play(synth, 'keys', style.keys, t, voicing[k], math.min(7, i == #voicing and h.vol + 1 or h.vol),
+                 lengthMs(song, h.s, h.len) * 0.95, h.s)
+        end
+    elseif figure == 'broken' then
+        -- a broken chord through the stab: bottom, top, a middle note, top, an 8th each (the
+        -- Alberti shape), each ringing to the stab's end as under a pedal
+        local mid = math.max(first, math.floor((first + #voicing) / 2))
+        local order = { first, #voicing, mid, #voicing }
+        local i, s = 0, h.s
+        while s < stop do
+            note(order[i % #order + 1], s, i == 0 and h.vol or h.vol - 1)
+            i, s = i + 1, s + every
+        end
     else -- arp: up a note at a time; a voicing longer than the stab puts its last notes together
         for k = first, #voicing do
             local s = math.min(h.s + (k - first) * every, stop - 1)
@@ -746,7 +766,11 @@ local function bookKeys(bar, hits)
         local again = not h.sidestep and M.voicingOf == name and M.voicing ~= nil
         local moveTop = again and revoiceOdds > 0 and revoiceRnd(100) < revoiceOdds
         local voicing = voiceChord(root, voicedQuality(song, chord), keysLo(song), 76, M.voicing, moveTop)
-        if not h.sidestep then M.voicing, M.voicingOf = voicing, name end
+        if not h.sidestep then
+            M.voicing, M.voicingOf = voicing, name
+            bar.voicings = bar.voicings or {}
+            bar.voicings[#bar.voicings + 1] = { s = h.s, voicing = voicing } -- the picks play from these
+        end
         local t = stepTime(song, t0, h.s) + humanize(0.005)
         local strum = (style.strumMs or 8) / 1000
         local figure = song.figure and not h.sidestep and h.len >= (style.figureMin or 6)
@@ -1016,6 +1040,51 @@ local function bookAnswer(bar, tunePlayed, tuneInSection)
         local vol = (answer.vol or 3) - (k == 1 and 0 or 1) + (k == #notes and 1 or 0) -- the first and last lean
         play(bar.synth, 'answer', answer.patch, stepTime(song, bar.t0, note.s) + humanize(0.006), note.midi, vol,
              lengthMs(song, note.s, len) * 0.92, note.s)
+    end
+end
+
+-- The picks (the idea 'picks', wave): a line made of the keys the comp plays anyway. Per song one
+-- rhythm and one order from D.picks; the order counts down from the voicing's top (1 = its top note,
+-- 0 = the top an octave up). The voicings move by the nearest notes from chord to chord, so the same
+-- order makes a sequence that follows the changes: no key needed (wave changes key every two bars).
+-- Phrases of four bars, the fourth only its first two notes and a breath. In A and B, the tune's place.
+local function voicingAt(bar, s)
+    local found
+    for _, v in ipairs(bar.voicings or {}) do
+        if v.s <= s then found = v.voicing end
+    end
+    if found then return found end
+    local song = bar.song
+    local chord = chordAtStep(song, bar.b, s)
+    local root = (song.key + chord.degree) % 12
+    if M.voicing and M.voicingOf == root .. chord.quality then return M.voicing end
+    return voiceChord(root, voicedQuality(song, chord), keysLo(song), 76, M.voicing)
+end
+
+local function bookPicks(bar)
+    local song, style, section, j = bar.song, bar.style, bar.section, bar.j
+    if section.kind ~= 'A' and section.kind ~= 'B' then return end
+    local rnd = stream(song.seed, 9700 + bar.b)
+    if rnd(100) >= ((song.ideaOdds or {}).picks or 0) then return end
+    if not song.picks then
+        local pick = stream(song.seed, 9699)
+        song.picks = { rhythm = D.picks.rhythms[pick(#D.picks.rhythms) + 1],
+                       order = D.picks.orders[pick(#D.picks.orders) + 1] }
+    end
+    local rhythm, order = song.picks.rhythm, song.picks.order
+    local count = j % 4 == 3 and math.min(2, #rhythm) or #rhythm
+    local lo, hi = (style.range or { 60, 84 })[1], (style.range or { 60, 84 })[2]
+    for k = 1, count do
+        local s = rhythm[k]
+        local voicing = voicingAt(bar, s)
+        local rank = order[(k - 1) % #order + 1]
+        local midi = voicing[math.max(1, #voicing - math.max(rank, 1) + 1)] + (rank == 0 and 12 or 0)
+        while midi < lo do midi = midi + 12 end
+        while midi > hi + 4 do midi = midi - 12 end
+        local len = (k < count and rhythm[k + 1] or 16) - s
+        local vol = (style.picksVol or 4) + (k == 1 and 0 or -1) + (k == count and 1 or 0)
+        play(bar.synth, 'lead', style.lead or style.keys, stepTime(song, bar.t0, s) + humanize(0.006), midi, vol,
+             lengthMs(song, s, len) * 0.9, s)
     end
 end
 
@@ -1472,6 +1541,7 @@ lib.bookGuitar = bookGuitar
 lib.bookStrings = bookStrings
 lib.bookTune = bookTune
 lib.bookAnswer = bookAnswer
+lib.bookPicks = bookPicks
 lib.LOOP_BARS = LOOP_BARS
 lib.bookTravis = bookTravis
 lib.bookJabs = bookJabs

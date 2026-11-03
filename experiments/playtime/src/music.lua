@@ -214,6 +214,7 @@ local function bookBar(synth, t0, song, b)
     local tuneInSection = lib.melody and bar.roles.lead and song.hasLead ~= false
     local tunePlayed = tuneInSection and bookTune(bar) or 0
     if style.answer and lib.melody then parts.bookAnswer(bar, tunePlayed, tuneInSection) end
+    if style.picks and lib.melody then parts.bookPicks(bar) end -- wave: a line from the comp's own keys
 end
 
 -- The style was just picked: skip the intro into the first A with the tune and the band in, so the

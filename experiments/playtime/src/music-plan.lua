@@ -171,7 +171,7 @@ local function planAmbient(song)
 end
 
 -- Data lookups for the planner: a style names its form set, its riffs and its horn figures
-local FORMS = { lofi = D.lofiForms, buymode = D.buymodeForms, jingle = D.jingleForms }
+local FORMS = { lofi = D.lofiForms, buymode = D.buymodeForms, jingle = D.jingleForms, wave = D.waveForms }
 local RIFFS = { dumont = D.dumontRiffs, dusk = D.duskRiffs }
 local HORN_HITS = { citypop = D.cityHornHits }
 
