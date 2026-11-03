@@ -144,7 +144,9 @@ Until then the jam plays Playtime's drum patches; enough to hear whether the arr
     Then the ways to play it (`lib.CHORD_FIGURES`, 16 steps of x / - / ., each on its own instrument):
     pad (Rhodes), disco stabs (the off-beat 8ths, `stab`), funk stabs (`clav`, syncopated), skank (2 and
     4, `jabGuitar`, high), strum (3+3+2, `guitar`, rolled). Picked in the panel's 'jam chords' row;
-    'auto' = the genre's (Disco: disco stabs; Funk, Breaks: funk stabs; the rest the pad). Each about
+    'auto' = the genre's (Disco: disco stabs; Funk, Breaks: funk stabs; the rest the pad), coming in as
+    the third layer with the play level; a figure PICKED plays from the next bar (Nikki: it took super long
+    to hear the funk stabs: a calm room never asks for layer 3). Each about
     3 dB under the bass (rendered SOLO).
   - [x] J9f. The wave (2026-11-03, playtime-9c's style, Peter Martin's maj9 / 9sus cycle; Nikki said yes):
     walks 'the wave' and 'the wave B' (9sus first), roots up a fourth through all twelve; kinds J = maj9

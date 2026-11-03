@@ -363,7 +363,10 @@ function lib.bookBar(play, remember, synth, t0, song, b)
         bookBass(play, synth, song, t0, loop, jam.root, nextRoot, b, riff and true,
                  riff and riffs.degrees(riff, kind))
     end
-    if jam.on.keys then bookKeys(play, synth, song, t0, jam, kind) end
+    -- the chords come in as a layer with the play level; picked in the panel they play from the next bar
+    -- (Nikki: "it took super long before I heard the funk stabs": a calm room never asked for layer 3)
+    local chordsPicked = picks().chords and picks().chords ~= 'auto'
+    if jam.on.keys or chordsPicked then bookKeys(play, synth, song, t0, jam, kind) end
     local lastBar = inPhrase == style.phraseBars - 1
     local fill = lastBar and (jam.on.snare or jam.mode == 'break')
     local written = fill and jam.fill -- the family's own fill plays the whole bar
