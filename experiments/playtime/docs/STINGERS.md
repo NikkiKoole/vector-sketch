@@ -2,7 +2,7 @@
 
 status: active
 
-A stinger is a short musical phrase played over the music when something happens: a Mipo found, a door opened, a toy snapped in place. This is MW4 in WORLD-AND-MUSIC.md. Research first (Nikki 2026-11-03: "sounds interesting, also something we need to research a bit beforehand"), nothing built yet.
+A stinger is a short musical phrase played over the music when something happens: a Mipo found, a door opened, a toy snapped in place. This is MW4 in WORLD-AND-MUSIC.md. Researched first (Nikki 2026-11-03: "sounds interesting, also something we need to research a bit beforehand"). Where it stands (2026-11-03): the composed styles play a chord-tone stinger (S1), the jam answers the same moments in drums (S4a); left: hearing it offline (S2), a shape per moment (S3b), the 'found' moment (S4b).
 
 ## How others do it
 
@@ -80,7 +80,9 @@ Keep the options open and get the feel by playing, alone and with the kids. Like
   - Checked live in wave: try at 9.08 s, the stinger on pianoLead at 9.41 / 9.57 / 10.04 (the next beat, then 16ths), C# D# F in Dbmaj9, and the lead silent in its window. `spec/music-stingers_spec.lua`.
   - Not yet: notes already ringing aren't choked.
 - [ ] **S2. Hear it offline.** render-music/music-when with events at given seconds (e.g. `EVENTS=20:found,31:found`), to check the timing and the notes in wave and bossa.
-- [ ] **S3. Variations and fatigue.** Mostly in S1 (the shuffled bag, softer when thick, one a bar). Left: shapes of its own per moment (a door's different from a snap's), which is question 3's motif.
+- [ ] **S3. Variations and fatigue.**
+  - [x] S3a. Came with S1 (2026-11-03): the shuffled bag, softer when they come thick, at most one a bar.
+  - [ ] S3b. A shape of its own per moment (a door's different from a snap's), which is question 3's motif.
 - [ ] **S4. The other moments**, and the jam answering them the same way (playtime-71's answerer).
   - [x] S4a. The jam answers in drums (2026-11-03; dreamengine-8e's grading, Nikki said yes): the chord-tone
     stinger would say what the impact plonks already say. Same switches ('stingers', 'stinger moments'): a

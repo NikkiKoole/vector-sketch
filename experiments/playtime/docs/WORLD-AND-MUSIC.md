@@ -49,8 +49,7 @@ Two functions and a settings panel, in `src/music-events.lua` (new), registered 
   fn)`, ctx.beatAt = the next beat at least 60 ms ahead, so it can still be booked). Mipo impacts send
   `'impact'` with strength 0..1 (`mipo-voice.lua`, next to its bump). The jam: 0.6+ a crash on the next
   beat, 0.9+ a one-beat snare fill there and the crash after, at most one a bar; 'jam impacts' in the
-  panel (crash and fill / crash / off), saved in setups (`world`). Composed styles don't answer yet
-  (MW4). `spec/music-events_spec.lua`.
+  panel (crash and fill / crash / off), saved in setups (`world`). The other moments: MW4. `spec/music-events_spec.lua`.
 - [x] **MW2. `music.on`: beat, bar, chord, drop.** (2026-11-03.) `music.on(name, what, fn(data, at, now),
   ahead)`: 'bar', 'beat' (every style, from music.lua's booking), 'chord' (data.pcs; composed styles
   where the booked chord changes, the jam with root and kind a bar early), 'phrase' and 'drop' (the jam,
@@ -61,6 +60,8 @@ Two functions and a settings panel, in `src/music-events.lua` (new), registered 
   on the drop a jump, idle Mipos only. The setting row: off / on. (DRUM-JAM J5's dance.)
 - [ ] **MW4. Stingers for moments.** A Mipo found, a door opened, a toy snapped in place: a short phrase
   in the key on the next beat, in the composed styles too. Research and the open questions: docs/STINGERS.md (2026-11-03).
+  Built (2026-11-03): the composed styles' chord-tone stinger (STINGERS S1) and the jam's answer in drums, a nod
+  or a fill (S4a), with one set of switches. Left: a shape per moment (S3b), a sender for 'found' (S4b).
 - [ ] **MW5. Each Mipo a part.** A Mipo held or played with leads a layer (the one you hold plays the
   bass louder, or the tune); far from the camera, quieter. Ties into the Mipo band.
 - [ ] **MW6. The world's state as music.** Not events but how things are: how many Mipos are awake,

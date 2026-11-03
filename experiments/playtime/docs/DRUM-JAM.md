@@ -193,7 +193,12 @@ Until then the jam plays Playtime's drum patches; enough to hear whether the arr
   accompaniment. Probably its own loop style rather than a jam genre (no layers, a waltz, a bass + chord
   from the rhythm itself), and it needs the Side Man voices as patches. To decide with Nikki.
 - [ ] **J5. In the game.** In the `set` rotation or not, what a room/scene can ask of it (a calmer jam
-  for a quiet room), and whether the Mipos dance to its kick (`music.onNote`).
+  for a quiet room), and whether the Mipos dance to its kick (`music.onNote`; WORLD-AND-MUSIC MW3).
+  Where it stands (2026-11-03): the game drives it through the play level and the world's moments
+  (impacts J10e; snaps, doors and the rest in drums, STINGERS S4a), but it's not in the set and no room
+  or zone cues it, so it's only heard when picked. As background music it hasn't been listened to over a
+  long session: fatigue, busy play masking the sound effects, handoffs to and from the composed styles.
+  The dreamengine port (rootwalk) gets its additions subtractive first (J8b's thinning, a busyness cap).
 
 ## Notes
 - Another session works on the composed styles (MUSIC-ANALYSIS.md's R-list) in music-plan / music-parts /
