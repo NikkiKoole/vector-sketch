@@ -58,16 +58,37 @@ bus for good (`fx_bus_for`); when the 7 are gone, the next slot asking stays DRY
 pianos, feltKeys, guitars, flute, junoPad, ...) share 5 effect slots (`lib.fxSlots`), switching the
 last patch's pedals off on load.
 
-Ideas to weigh (dreamengine-8e looks at the engine side):
-- **Group buses instead of per-instrument ones.** A band's tape wobble is the RECORDING's, not one
-  instrument's (lofi, dusk): one "band" bus with the tape and phaser, the instruments feeding it, costs
-  one bus instead of three and sounds more like one tape. The engine has the routing for reverb tanks
-  (`reverb_bus_into`, issue #47); a general "slot into group bus" would be the piece.
-- **A bus that can be given back** (`fx_bus_release(slot)` or re-pointing a bus to another slot), so a
-  pool doesn't have to keep effect slots apart, and I4 can cover the fx patches too.
-- **Which effects need a bus at all.** Autopan is a pan LFO; if it could live on the voice (like the
-  vibrato LFOs), it would take no bus. Same question for the fx filter.
-- **Say when it overflows.** `fx_bus_overflow` exists in the engine; Playtime's `./playtime.sh audio`
-  could show it, so a dry patch isn't a mystery.
-- **What a bus costs per frame** (each insert runs every sample, whether a note sounds or not?): a
-  measure before choosing; on the iPhone SE 2 the synth thread is the budget.
+What dreamengine-8e found in the engine (2026-11-03, measured on this Mac; read-only, nothing changed):
+- **Group buses exist** (#47, 2026-11-02): `instrument_group(slot, lead)` plays `slot` through `lead`'s
+  bus, `reverb_bus_into(tank, lead)` folds a reverb into it, `instrument_fx_filter(lead, ...)` filters the
+  group and its room as one record. A note keeps the bus it started with. Playtime's dylib (2026-11-03)
+  and CDEF already have `instrument_group`.
+- **No release**: buses go out 1..7 in order, back only at an engine reset. But a pool works TODAY: a few
+  BUS-HOLDER slots own the buses, set up once; a patch's slot points at one with `instrument_group`
+  (again to re-point). Missing: a way to wipe a bus's effects for reuse (`instrument_fx_clear(slot)`).
+- **No bus needed**: autopan has a per-voice twin (`instrument_lfo(slot, n, LFO_PAN, ...)`; each note sweeps
+  on its own, the same on a pad, not on a strum), tremolo too (LFO_VOLUME), and `instrument_filter` is
+  per voice: `instrument_fx_filter` only earns its bus on a group.
+- **Cost**, in voices (one held saw note ~0.09% of an M-series core; a phone 2-4x slower, the ratios
+  hold): leslie 2.9, tape 2.5, phaser 1.8, fx_filter 1.75, chorus 1.4, flanger 1.3, crush 0.7, tremolo
+  0.65, LFO_PAN 0.55 a note, eq 0.3, bus autopan 0.25, width 0.2; tape + phaser + chorus + autopan ~4.8.
+- **A bus runs every sample, silent or not** (no idle skip): a pedal patch parked on a quiet slot costs
+  its full price.
+- **"Off" isn't uniform**: phaser, tremolo and autopan stop at mix/depth 0; chorus, flanger and tape stay
+  live once set. Playtime's `definePatch` "switches off the last patch's pedals" on an fx slot by setting
+  chorus, flanger and tape to 0, so EVERY fx slot runs chorus + flanger + tape for good (~5.2 voices
+  each, ~26 for the 5) whether or not its patch has them. The first thing to fix.
+
+Steps, cheapest first:
+- [ ] I5a. Playtime: on an fx slot, call only the pedals the patch has, not chorus / flanger / tape at 0
+  (it doesn't undo a slot that already had them: that needs I5d).
+- [ ] I5b. Playtime: `./playtime.sh audio` shows the engine's "FX bus pool exhausted" warning (stdout
+  grep), so a dry patch isn't a mystery; later a real getter (`fx_buses_free()`, engine).
+- [ ] I5c. Playtime: autopan and tremolo as per-voice LFOs on the patches that hold one voice (pads,
+  held keys): no bus. The fx filter → `instrument_filter` where no group needs it.
+- [ ] I5d. Engine (Nikki picks, dreamengine-8e builds): chorus / flanger / tape honour 0 = off like the
+  others (a byte-identity check over existing carts); an idle skip (a bus silent past its tail stops
+  running); `instrument_fx_clear(slot)`.
+- [ ] I5e. Playtime: a band bus per style (lofi, dusk: one tape and phaser for the band via
+  `instrument_group`, the reverb folded in), bus holders instead of fx slots, so I4's cache covers the fx
+  patches. Measured before and after (`./playtime.sh bench`, the phone).
