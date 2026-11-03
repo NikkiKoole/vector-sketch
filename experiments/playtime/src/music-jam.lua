@@ -161,6 +161,17 @@ lib.LAYER_PICKS = { 'auto', 'all' }
 -- the drums' moves (J10), each 'auto' / 'always' / 'never' in the panel: 'lean' = the drums lean into a
 -- chord change, 'gap' = a beat of silence before the drop
 lib.MOVE_PICKS = { 'auto', 'always', 'never' }
+-- SPOTLIGHTS (J10c): the second half of a groove phrase (its last 4 bars) given to one part: the drum
+-- break (the drums alone, the breakdown's opposite), the bass feature (the bass alone with the drums,
+-- playing a riff's variations; the chords out) or trading (2 bars of bass alone, then 2 of drums alone).
+-- On auto: a busy groove phrase between two breakdowns, half the time. A spotlight named in the panel
+-- plays in every groove phrase (for listening).
+lib.SPOTS = { 'drum break', 'bass feature', 'trading' }
+lib.SPOT_PICKS = { 'auto', 'never', 'drum break', 'bass feature', 'trading' }
+-- VARIATIONS (J10d), with the play level: the hats double to 16ths, ghost snares come in, and a phrase's
+-- second-to-last bar plays the other variant (a turnaround into the fill). 'jam variations' auto / always / never.
+lib.GHOSTS = { '......x....x....', '.......x..x.....', '...x......x....x' } -- one per song
+
 local function move(name)
     local v = picks()[name]
     if v == 'always' or v == 'never' then return v end
@@ -184,6 +195,7 @@ function lib.plan(song, style, addSections)
     walk = picked(lib.WALKS, picks().walk) or walk -- rolled first either way, so a pick moves no other roll
     every = tonumber(picks().pace) or every
     song.jam = { group = group, family = family.name, patterns = family.loops, fill = family.fill, at = 1,
+                 seed = song.seed, ghosts = lib.GHOSTS[rnd(#lib.GHOSTS) + 1],
                  layers = style.minLayers, phrase = 0, mode = 'groove', on = {},
                  walk = walk, rootEvery = every,
                  step = 1, root = walk[1] } -- a walk may start away from home (2 5 1)
@@ -222,10 +234,18 @@ local function planPhrase(jam, style)
         if want > jam.layers then p.layers = jam.layers + 1
         elseif want < jam.layers then p.layers = jam.layers - 1 end
     end
+    local spotPick = picks().spot
+    if p.mode == 'groove' and spotPick and spotPick ~= 'auto' and spotPick ~= 'never' then
+        p.spot = spotPick
+    elseif p.mode == 'groove' and spotPick ~= 'never' and p.layers >= 4
+        and p.phrase % style.breakEvery == math.floor(style.breakEvery / 2) then
+        local rnd = stream(jam.seed + p.phrase * 104729, 11)
+        if rnd(2) == 0 then p.spot = lib.SPOTS[rnd(#lib.SPOTS) + 1] end
+    end
     return p
 end
 local function applyPhrase(jam, style, p)
-    jam.phrase, jam.mode, jam.layers = p.phrase, p.mode, p.layers
+    jam.phrase, jam.mode, jam.layers, jam.spot = p.phrase, p.mode, p.layers, p.spot
     if jam.phrase % style.variantEvery == 0 then jam.at = jam.at % #jam.patterns + 1 end
     for k, layer in ipairs(lib.LAYERS) do jam.on[layer.name] = k <= jam.layers end
     if jam.mode == 'break' then -- the breakdown: the floor drops out (no kick), the rest keeps going
@@ -393,22 +413,46 @@ function lib.bookBar(play, remember, synth, t0, song, b)
     local gap = lastBar and gapMove ~= 'never'
         and (gapMove == 'always' or (jam.nextPhrase and jam.nextPhrase.mode == 'drop'))
     local cut = gap and 12 or 16
-    if jam.on.bass then
+    -- the spotlight's bars (the phrase's last 4): who plays
+    local spot = jam.spot and inPhrase >= style.phraseBars - 4 and jam.spot or nil
+    local tradeBass = spot == 'trading' and inPhrase < style.phraseBars - 2 -- the bass's 2, then the drums'
+    local bassOut = spot == 'drum break' or (spot == 'trading' and not tradeBass)
+    local drumsOut = tradeBass
+    if jam.on.bass and not bassOut then
         local loops = lib.BASS_LOOPS[jam.group]
         local figure = picked(lib.FIGURES, picks().figure)
         local riff = figure and figure.riff
         local nextRoot, barsLeft = lib.ahead(jam)
-        local loop = riff and riffs.bar(riff, barsLeft) or figure and figure.loop or loops[(jam.at - 1) % #loops + 1]
+        if spot == 'bass feature' and not riff then -- a riff for the feature, rolled per phrase
+            riff = riffs.RIFFS[stream(song.seed + jam.phrase * 7, 12)(#riffs.RIFFS) + 1]
+        end
+        local loop
+        if spot == 'bass feature' then -- its variations in turn: A, B, A, C (or A, B, A, B)
+            local letters = {}
+            for letter in pairs(riff.vars or {}) do letters[#letters + 1] = letter end
+            table.sort(letters)
+            local seq = { 'A', letters[1] or 'A', 'A', letters[2] or letters[1] or 'A' }
+            loop = riffs.barWith(riff, seq[inPhrase - (style.phraseBars - 4) + 1])
+        else
+            loop = riff and riffs.bar(riff, barsLeft) or figure and figure.loop or loops[(jam.at - 1) % #loops + 1]
+        end
         bookBass(play, synth, song, t0, loop, jam.root, nextRoot, b, riff and true,
                  riff and riffs.degrees(riff, kind) or FIGURE_DEGREES[kind], cut)
     end
     -- the chords come in as a layer with the play level; picked in the panel they play from the next bar
     -- (Nikki: "it took super long before I heard the funk stabs": a calm room never asked for layer 3)
     local chordsPicked = picks().chords and picks().chords ~= 'auto'
-    if jam.on.keys or chordsPicked then bookKeys(play, synth, song, t0, jam, kind, cut) end
+    if (jam.on.keys or chordsPicked) and not spot then bookKeys(play, synth, song, t0, jam, kind, cut) end
     local fill = lastBar and (jam.on.snare or jam.mode == 'break')
     local written = fill and jam.fill -- the family's own fill plays the whole bar
-    local pattern = written or jam.patterns[jam.at]
+    local varMove = move('variations')
+    local busy = (M.activity or 0) >= 2 * style.perLayer
+    local turnaround = varMove ~= 'never' and (varMove == 'always' or busy) and #jam.patterns > 1
+        and inPhrase == style.phraseBars - 2
+    local pattern = written or jam.patterns[turnaround and jam.at % #jam.patterns + 1 or jam.at]
+    local ghosts = varMove ~= 'never' and (varMove == 'always' or busy) and jam.ghosts
+    local hats16 = varMove ~= 'never' and jam.group ~= 'Brushes'
+        and (varMove == 'always' or (M.activity or 0) >= 3 * style.perLayer)
     local accents = pattern.grid.AC
     -- FILLS (J10): the run-up grows with the play level (a beat, half a bar, the whole bar); the bar before
     -- a drop is the BUILD (snare 16ths over the whole bar, getting louder); families with toms roll down
@@ -435,7 +479,7 @@ function lib.bookBar(play, remember, synth, t0, song, b)
         for _, layer in ipairs(lib.LAYERS) do
             -- the hats let go before the one (under a run-up, or for the lean-in's open hat)
             local quietFill = (fill and not written or lean == 'hat') and layer.name == 'hats' and s >= 14
-            if layer.roles and jam.on[layer.name] and not quietFill then
+            if layer.roles and jam.on[layer.name] and not quietFill and not drumsOut then
                 for _, role in ipairs(layer.roles) do
                     local c = pattern.grid[role] and pattern.grid[role]:sub(s + 1, s + 1)
                     if c == 'x' or c == 'f' then
@@ -446,17 +490,31 @@ function lib.bookBar(play, remember, synth, t0, song, b)
                 end
             end
         end
-        if fill and not written and s >= runFrom then
-            if toms and s >= 12 then
-                hit(play, synth, t, lib.TOM_ROLL[s - 11], s, 0, 0, jam.group)
-            else -- a snare run-up, louder toward the one
-                hit(play, synth, t, 'SD', s, 0, math.floor((15 - s) * 3 / (16 - runFrom) + 0.5), jam.group)
+        if not drumsOut then
+            local ch, sd = pattern.grid.CH, pattern.grid.SD
+            local run = fill and not written and s >= runFrom
+            if run then
+                if toms and s >= 12 then
+                    hit(play, synth, t, lib.TOM_ROLL[s - 11], s, 0, 0, jam.group)
+                else -- a snare run-up, louder toward the one
+                    hit(play, synth, t, 'SD', s, 0, math.floor((15 - s) * 3 / (16 - runFrom) + 0.5), jam.group)
+                end
             end
-        end
-        if lean == 'hat' and s == 14 and jam.on.hats then hit(play, synth, t, 'OH', s, 1, 0, jam.group) end
-        if lean == 'kick' and s == 15 and jam.on.kick then hit(play, synth, t, 'BD', s, 0, 1, jam.group) end
-        if lean == 'snare' and s >= 12 and jam.on.snare then
-            hit(play, synth, t, 'SD', s, 0, 15 - s >= 2 and 2 or 1, jam.group)
+            -- the hats doubled to 16ths: a soft one after each 8th the pattern plays
+            local hatsFree = s < 14 or not (fill and not written or lean == 'hat')
+            if hats16 and jam.on.hats and hatsFree and s % 2 == 1 and ch and ch:sub(s, s) == 'x'
+                and ch:sub(s + 1, s + 1) ~= 'x' then
+                hit(play, synth, t, 'CH', s, 0, 1, jam.group)
+            end
+            if ghosts and jam.on.snare and not run and ghosts:sub(s + 1, s + 1) == 'x'
+                and not (sd and sd:sub(s + 1, s + 1) == 'x') then
+                hit(play, synth, t, 'SD', s, 0, 3, jam.group) -- a ghost: barely there
+            end
+            if lean == 'hat' and s == 14 and jam.on.hats then hit(play, synth, t, 'OH', s, 1, 0, jam.group) end
+            if lean == 'kick' and s == 15 and jam.on.kick then hit(play, synth, t, 'BD', s, 0, 1, jam.group) end
+            if lean == 'snare' and s >= 12 and jam.on.snare then
+                hit(play, synth, t, 'SD', s, 0, 15 - s >= 2 and 2 or 1, jam.group)
+            end
         end
     end
 end

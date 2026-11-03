@@ -169,11 +169,15 @@ Until then the jam plays Playtime's drum patches; enough to hear whether the arr
     the BUILD (snare 16ths over the whole bar, louder toward the one) and ends in THE GAP: every part
     silent on beat 4, then the crash ('jam gap'; always = at every phrase end, for listening).
     `spec/music-jam_spec.lua` checks the gap.
-  - [ ] J10c. Spotlights: the drum break (all but the drums out for 2-4 bars, the breakdown's opposite),
-    the bass feature (the riff's variations for a phrase, the chords out), trading 2s between bass and
-    drums.
-  - [ ] J10d. Pattern moves with play (J2's list): hats 8ths -> 16ths, ghost snares, the B variant as a
-    turnaround in a phrase's last 2 bars, a related family after a fill.
+  - [x] J10c. SPOTLIGHTS (2026-11-03): a groove phrase's last 4 bars given to one part: the DRUM BREAK
+    (drums alone, the breakdown's opposite), the BASS FEATURE (a riff's variations in turn, A B A C, the
+    chords out; a riff rolled if a plain figure is picked) or TRADING (2 bars of bass alone, 2 of drums).
+    Auto: a busy groove phrase halfway between breakdowns, half the time; 'jam spotlight' can name one
+    (then every groove phrase) or say never.
+  - [x] J10d. VARIATIONS with play ('jam variations'): ghost snares (one of three masks per song,
+    barely there) and the TURNAROUND (a phrase's second-to-last bar on the other variant, into the fill)
+    once play is busy (2 layers' worth); the hats doubled to 16ths at 3 (not Brushes). Still J2: a
+    related family after a fill.
   - [ ] J10e. The game drives it (J5): a big impact = a crash or a quick fill on the next beat.
 - [ ] **J6. The organ-era rhythm box** (Nikki: "the truly whimsical ones"). dreamengine has a sourced
   library of them: `runtime/rhythmbox.h` (101 preset rhythms read off the Ace Tone FR-2L, Roland TR-77

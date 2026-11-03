@@ -206,6 +206,8 @@ lib.rows = {
     jamRow('layers', 'jam layers', jam.LAYER_PICKS),
     jamRow('lean', 'jam lean-in', jam.MOVE_PICKS),
     jamRow('gap', 'jam gap', jam.MOVE_PICKS),
+    jamRow('spot', 'jam spotlight', jam.SPOT_PICKS),
+    jamRow('variations', 'jam variations', jam.MOVE_PICKS),
     -- the style's ideas (docs/MUSIC-CONCEPTS.md: the walks, the answer): spice scales them all, 0 plain
     -- to 2, 1 as designed; a row per idea the playing style has, from none to lots: never, less (half as
     -- often), some songs (the style's share, as designed), always (every song), lots (every song, twice
