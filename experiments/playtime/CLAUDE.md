@@ -14,7 +14,8 @@
 ./playtime.sh tried <word>  # was it tried before? doc lines + commits naming it, dropped/parked first
 ./playtime.sh bench [device] [secs] [--parts]  # frame timing: update/draw/frame ms, the slow frames and why;
                                                # --parts times each part of love.update (src/frame-bench.lua)
-./playtime.sh audio    # music pops: the synth's dropouts and what was busy then (docs/SOUND-SYNTH.md)
+./playtime.sh audio    # music pops: the synth's dropouts and what was busy then, and effect pools that
+                       # ran out (a patch gone silently dry) (docs/SOUND-SYNTH.md)
 METER=400 ./playtime.sh start  # another px-per-metre (default 200, state.world.meter; love . --meter 400)
 ./webtest/build-web.sh dollhouse && ./webtest/serve.sh 8080 dollhouse  # browser build, see docs/WEB-EXPORT-LOVEJS.md
                                                 # (both builds pack claudetools/ship-list.py's files)

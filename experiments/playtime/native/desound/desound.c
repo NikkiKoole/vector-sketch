@@ -29,6 +29,21 @@ DESOUND_API void printh(const char *fmt, ...) {
     fputc('\n', stderr);
 }
 
+// The engine's pool counters: requests that got nothing, so that effect is silently absent
+// (sound_tick's warning says the same, but on stderr, which the .app only flushes at exit).
+// 0 instrument FX bus, 1 reverb send-bus, 2 granular tank, 3 shimmer tank, 4 bowed body.
+// For ./playtime.sh audio (SHARED-INSTRUMENTS I5b).
+DESOUND_API int de_lua_pool_overflow(int which) {
+    switch (which) {
+    case 0: return fx_bus_overflow;
+    case 1: return rvb_bus_overflow;
+    case 2: return grain_overflow;
+    case 3: return shim_overflow;
+    case 4: return bow_body_overflow;
+    }
+    return 0;
+}
+
 static int desound_ready = 0;
 
 DESOUND_API int de_lua_init(void) {

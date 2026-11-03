@@ -330,6 +330,8 @@ void unschedule(int slot, double t1, double t2);
 if ffi then
     pcall(ffi.cdef, 'typedef struct { int glide_ms; float accent, harmonics, timbre, morph, gain; } NoteOpts;')
     pcall(ffi.cdef, CDEF_OPTIONAL)
+    -- Playtime's own (native/desound/desound.c), not the engine's: for audioReport, optional too
+    pcall(ffi.cdef, 'int de_lua_pool_overflow(int which);')
 end
 
 -- Lives on `state` so a lurker hot-swap of this file doesn't load the library or start the thread twice.
@@ -682,6 +684,18 @@ function lib.audioReport()
         string.format('render thread, last second: longest gap %d ms (the queue holds %d ms; longer runs it dry)',
             stats.maxGapMs or 0, stats.queueMs or 0),
     }
+    -- effects the engine had no room for: that slot plays dry, with no other sign (SHARED-INSTRUMENTS I5b)
+    local overflow = optionalFn('de_lua_pool_overflow')
+    if overflow then
+        local pools, full = { 'FX bus', 'reverb bus', 'granular tank', 'shimmer tank', 'bowed body' }, {}
+        for i, what in ipairs(pools) do
+            local n = overflow(i - 1)
+            if n > 0 then full[#full + 1] = string.format('%s %d', what, n) end
+        end
+        lines[#lines + 1] = #full == 0 and 'effect pools: none ran out'
+            or ('effect pools RAN OUT, so those effects are silently missing (requests refused): '
+                .. table.concat(full, ', '))
+    end
     for i = math.max(1, #dropouts - 9), #dropouts do
         local d = dropouts[i]
         lines[#lines + 1] = string.format('  %ds ago: away %d ms%s, %s, frame %d ms (worst %d)%s',

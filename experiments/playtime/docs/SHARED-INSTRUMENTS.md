@@ -117,8 +117,11 @@ What dreamengine-8e found in the engine (2026-11-03, measured on this Mac; read-
 Steps, cheapest first:
 - [ ] I5a. Playtime: on an fx slot, call only the pedals the patch has. Tidiness only since I5d1 (the
   zeroed ones cost nothing now).
-- [ ] I5b. Playtime: `./playtime.sh audio` shows the engine's "FX bus pool exhausted" warning (stdout
-  grep), so a dry patch isn't a mystery; later a real getter (`fx_buses_free()`, engine).
+- [x] I5b. Playtime: `./playtime.sh audio` says when an effect pool ran out (FX bus, reverb bus, granular,
+  shimmer, bowed body), so a dry patch isn't a mystery (2026-11-03). Not by grepping the engine's warning:
+  it goes to stderr, which the .app only flushes at exit. A getter in Playtime's own `desound.c`
+  (`de_lua_pool_overflow`) reads the engine's counters; no engine change. Optional in `synth.lua`, so an
+  older library just leaves the line out.
 - [ ] I5c. Playtime: autopan and tremolo as per-voice LFOs on the patches that hold one voice (pads,
   held keys): no bus. The fx filter → `instrument_filter` where no group needs it.
 - [ ] I5d. Engine (Nikki picks, dreamengine-8e builds).
