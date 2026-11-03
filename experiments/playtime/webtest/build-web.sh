@@ -17,7 +17,7 @@ PLAYTIME_DIR="$(cd "$WEBTEST_DIR/.." && pwd)"
 OUTPUT_DIR="$WEBTEST_DIR/output-${SCENE}"
 BUILD_DIR="$(mktemp -d)"
 LOVE_FILE="$BUILD_DIR.love"
-trap 'rm -rf "$BUILD_DIR" "$LOVE_FILE" "$BUILD_DIR.desound.wasm"' EXIT
+trap 'rm -rf "$BUILD_DIR" "$LOVE_FILE" "$BUILD_DIR.desound.wasm" "$BUILD_DIR.files" "$BUILD_DIR.files.report"' EXIT
 
 LOVEJS="${LOVEJS:-$(command -v love.js || ls "$HOME"/.nvm/versions/node/*/bin/love.js 2>/dev/null | head -1)}"
 [ -x "$LOVEJS" ] || { echo "love.js not found (npm i -g love.js, or set LOVEJS)" >&2; exit 1; }
@@ -25,31 +25,16 @@ LOVEJS="${LOVEJS:-$(command -v love.js || ls "$HOME"/.nvm/versions/node/*/bin/lo
 
 echo "=== Web build of '$SCENE' ==="
 
-cp "$PLAYTIME_DIR/main.lua" "$PLAYTIME_DIR/conf.lua" "$BUILD_DIR/"
-cp -r "$PLAYTIME_DIR/src" "$PLAYTIME_DIR/vendor" "$PLAYTIME_DIR/assets" "$PLAYTIME_DIR/textures" "$BUILD_DIR/"
-mkdir -p "$BUILD_DIR/scripts"
-# The scene and every room its doors lead to, door by door (DOOR behaviors' `to`, src/doors.lua):
-# with only the start scene, going through a door had nothing to load.
-ROOMS="$(python3 - "$PLAYTIME_DIR/scripts" "$SCENE" <<'EOF'
-import json, os, sys
-scripts, start = sys.argv[1], sys.argv[2]
-seen, todo = [], [start]
-while todo:
-    room = todo.pop()
-    path = os.path.join(scripts, room + '.playtime.json')
-    if room in seen or not os.path.exists(path):
-        continue
-    seen.append(room)
-    for body in json.load(open(path)).get('bodies', []):
-        for behavior in body.get('behaviors') or []:
-            if behavior.get('name') == 'DOOR' and behavior.get('to'):
-                todo.append(behavior['to'])
-print(' '.join(seen))
-EOF
-)"
-for room in $ROOMS; do
-    cp "$PLAYTIME_DIR/scripts/${room}.playtime."* "$BUILD_DIR/scripts/"
-done
+# What ships: the code, the scene and every room its doors lead to, and only the pictures and sounds
+# the code or those rooms name (claudetools/ship-list.py; spec/ship-list_spec.lua checks it against
+# what the game opens). It stops the build when something named isn't there.
+SHIP_LIST="$BUILD_DIR.files"
+python3 -I "$PLAYTIME_DIR/claudetools/ship-list.py" "$SCENE" --report > "$SHIP_LIST" 2> "$SHIP_LIST.report" \
+    || { cat "$SHIP_LIST.report" >&2; exit 1; }
+rsync -a --files-from="$SHIP_LIST" "$PLAYTIME_DIR/" "$BUILD_DIR/"
+ROOMS="$(sed -n 's/^rooms: //p' "$SHIP_LIST.report")"
+sed -n 's/^\(ships .*\):$/\1/p' "$SHIP_LIST.report"
+rm -f "$SHIP_LIST" "$SHIP_LIST.report"
 echo "rooms: $ROOMS"
 
 # LuaJIT's ffi doesn't exist here (src/synth.lua doesn't need it on the web); the stand-in keeps

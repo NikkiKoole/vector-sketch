@@ -141,9 +141,19 @@ snapshot for the moves, MEASURING.md) and both builds working.
   `profilingReport*.txt` ignored. Done 2026-11-03: `webtest/output*/`, `profilingReport*.txt` and
   `__pycache__/` in playtime's `.gitignore`; the three old builds (`output`, `output-catapult`,
   `output-knut`, ~18 MB) and both reports untracked, left on disk (history keeps them).
-- [ ] **AB5. Ship what's used.** First an exclude list in both build scripts (Knut, the unnamed
+- [x] **AB5. Ship what's used.** First an exclude list in both build scripts (Knut, the unnamed
   textures, the unused sounds), the .love size before and after; later a list per room of what its
   scenes use, if rooms grow apart.
+  Done 2026-11-03, as a ship list instead of an exclude list: `claudetools/ship-list.py <scene>` (both
+  builds copy from it) packs the code, the scene and the rooms behind its doors, and of `textures/`
+  and `assets/` only what a string in the code or those rooms names (a mask with its picture; the voice
+  sets and the band's samples whole, their names are made at runtime). It stops a build when something
+  named isn't there. `spec/ship-list_spec.lua` plays the builds' rooms (loaded, drawn, knocked about,
+  random Mipos) and fails on any file the game opens that the list leaves out (pictures; with
+  `--audio` the sounds too). Dollhouse .love 13.9 -> 9.9 MB: Knut, scantest, 8 unused patterns, the
+  drum machine samples, old logos, fonts and music loops stay home. Found on the way: omp-bake preloaded
+  `pat/type2.png` and `type3.png`, which are `type2t` and `type3_`. The per-room lists: when rooms grow
+  apart.
 - [x] **AB6. Textures in folders by use.** A move list (old path -> new), the loader looks a missing
   old name up in it so old scenes and the save folder's copies still load; then the scenes rewritten
   on their next save. `claudetools/` gets a check that lists every texture a scene or the code names

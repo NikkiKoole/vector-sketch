@@ -140,8 +140,7 @@ else
 fi
 
 # ── the .love ──────────────────────────────────────────────────────────────────────────────
-# What the web build packs: main, conf, src, vendor, assets, textures, and the scene with every
-# room its doors lead to.
+# The same files as the web build (claudetools/ship-list.py), and the synth's render thread.
 STAGE="$IOS_DIR/build/stage"
 rm -rf "$STAGE"; mkdir -p "$STAGE/scripts"
 if [ -n "$LOVE_DIR" ]; then
@@ -150,28 +149,18 @@ if [ -n "$LOVE_DIR" ]; then
     (cd "$STAGE" && zip -q -r -9 "$IOS_DIR/flap.love" . -x '.*' -x '*/.DS_Store')
     echo "▸ packed: $LOVE_DIR (not Playtime)"
 else
-cp "$PLAYTIME_DIR/conf.lua" "$STAGE/"
-cp -r "$PLAYTIME_DIR/src" "$PLAYTIME_DIR/vendor" "$PLAYTIME_DIR/assets" "$PLAYTIME_DIR/textures" "$STAGE/"
+# What ships: the code, the scene and every room its doors lead to, and only the pictures and sounds
+# the code or those rooms name (claudetools/ship-list.py, the web build's list too; it stops here
+# when something named isn't there). main.lua is written below with the launch options.
+/usr/bin/python3 -I "$PLAYTIME_DIR/claudetools/ship-list.py" "$SCENE" --report > "$STAGE.files" 2> "$STAGE.report" \
+    || { cat "$STAGE.report" >&2; exit 1; }
+grep -v '^main.lua$' "$STAGE.files" > "$STAGE.files2"
+rsync -a --files-from="$STAGE.files2" "$PLAYTIME_DIR/" "$STAGE/"
+ROOMS="$(sed -n 's/^rooms: //p' "$STAGE.report")"
+echo "▸ $(sed -n 's/^\(ships .*\):$/\1/p' "$STAGE.report")"
+rm -f "$STAGE.files" "$STAGE.files2" "$STAGE.report"
 mkdir -p "$STAGE/native/desound" # the synth's render thread
 cp "$PLAYTIME_DIR/native/desound/synth-thread.lua" "$STAGE/native/desound/"
-ROOMS="$(/usr/bin/python3 - "$PLAYTIME_DIR/scripts" "$SCENE" <<'EOF'
-import json, os, sys
-scripts, start = sys.argv[1], sys.argv[2]
-seen, todo = [], [start]
-while todo:
-    room = todo.pop()
-    path = os.path.join(scripts, room + '.playtime.json')
-    if room in seen or not os.path.exists(path):
-        continue
-    seen.append(room)
-    for body in json.load(open(path)).get('bodies', []):
-        for behavior in body.get('behaviors') or []:
-            if behavior.get('name') == 'DOOR' and behavior.get('to'):
-                todo.append(behavior['to'])
-print(' '.join(seen))
-EOF
-)"
-for room in $ROOMS; do cp "$PLAYTIME_DIR/scripts/${room}.playtime."* "$STAGE/scripts/"; done
 
 # iOS passes no command line, so the launch options go into main.lua's arg here, and the Mac's
 # address into the bridge's whitelist.

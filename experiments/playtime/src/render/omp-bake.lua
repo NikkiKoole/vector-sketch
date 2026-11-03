@@ -81,8 +81,8 @@ end
 local settings = { wrapX = 'mirroredrepeat', wrapY = 'mirroredrepeat' }
 getLoveImage('textures/pat/type0.png', settings)
 getLoveImage('textures/pat/type1.png', settings)
-getLoveImage('textures/pat/type2.png', settings)
-getLoveImage('textures/pat/type3.png', settings)
+getLoveImage('textures/pat/type2t.png', settings)
+getLoveImage('textures/pat/type3_.png', settings)
 getLoveImage('textures/pat/type4.png', settings)
 getLoveImage('textures/pat/type5.png', settings)
 getLoveImage('textures/pat/type6.png', settings)

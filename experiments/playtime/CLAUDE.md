@@ -17,6 +17,7 @@
 ./playtime.sh audio    # music pops: the synth's dropouts and what was busy then (docs/SOUND-SYNTH.md)
 METER=400 ./playtime.sh start  # another px-per-metre (default 200, state.world.meter; love . --meter 400)
 ./webtest/build-web.sh dollhouse && ./webtest/serve.sh 8080 dollhouse  # browser build, see docs/WEB-EXPORT-LOVEJS.md
+                                                # (both builds pack claudetools/ship-list.py's files)
 ./playtime.sh device dollhouse [--play]  # build + install on the iPhone/iPad on the cable (~20 s); the bridge
                                          # answers over wifi at the address it prints. Setup: native/ios/device.sh
 ```
