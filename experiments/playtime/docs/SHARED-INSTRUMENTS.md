@@ -74,21 +74,25 @@ What dreamengine-8e found in the engine (2026-11-03, measured on this Mac; read-
   0.65, LFO_PAN 0.55 a note, eq 0.3, bus autopan 0.25, width 0.2; tape + phaser + chorus + autopan ~4.8.
 - **A bus runs every sample, silent or not** (no idle skip): a pedal patch parked on a quiet slot costs
   its full price.
-- **"Off" isn't uniform**: phaser, tremolo and autopan stop at mix/depth 0; chorus, flanger and tape stay
-  live once set. Playtime's `definePatch` "switches off the last patch's pedals" on an fx slot by setting
-  chorus, flanger and tape to 0, so EVERY fx slot runs chorus + flanger + tape for good (~5.2 voices
-  each, ~26 for the 5) whether or not its patch has them. The first thing to fix.
+- **"Off" wasn't uniform**: phaser, tremolo and autopan stopped at mix/depth 0, chorus and flanger kept
+  running. Playtime's `definePatch` "switches off the last patch's pedals" on an fx slot by setting them
+  to 0, so every fx slot paid for a silent chorus (~1.1 voices) and flanger (~1.25): ~12 voices for the 5
+  (measured on Playtime's own calls; a zeroed tape was already near free). Fixed in the engine (I5d1).
 
 Steps, cheapest first:
-- [ ] I5a. Playtime: on an fx slot, call only the pedals the patch has, not chorus / flanger / tape at 0
-  (it doesn't undo a slot that already had them: that needs I5d).
+- [ ] I5a. Playtime: on an fx slot, call only the pedals the patch has. Tidiness only since I5d1 (the
+  zeroed ones cost nothing now).
 - [ ] I5b. Playtime: `./playtime.sh audio` shows the engine's "FX bus pool exhausted" warning (stdout
   grep), so a dry patch isn't a mystery; later a real getter (`fx_buses_free()`, engine).
 - [ ] I5c. Playtime: autopan and tremolo as per-voice LFOs on the patches that hold one voice (pads,
   held keys): no bus. The fx filter → `instrument_filter` where no group needs it.
-- [ ] I5d. Engine (Nikki picks, dreamengine-8e builds): chorus / flanger / tape honour 0 = off like the
-  others (a byte-identity check over existing carts); an idle skip (a bus silent past its tail stops
-  running); `instrument_fx_clear(slot)`.
+- [ ] I5d. Engine (Nikki picks, dreamengine-8e builds).
+  - [x] I5d1. Chorus and flanger at mix 0 skip their work (dreamengine `e0fb8df5`, 2026-11-03; output
+    bit-identical over every cart; the chorus's LFO keeps running so riding it back up is the same, a
+    flanger switched back on starts from a clean line). Playtime's dylib rebuilt from it the same day
+    (`native/desound/build.sh`), the game restarted, the synth playing. No Lua change.
+  - [ ] I5d2. An idle skip (a bus silent past its tail stops running) and `instrument_fx_clear(slot)`.
+    Not picked yet.
 - [ ] I5e. Playtime: a band bus per style (lofi, dusk: one tape and phaser for the band via
   `instrument_group`, the reverb folded in), bus holders instead of fx slots, so I4's cache covers the fx
   patches. Measured before and after (`./playtime.sh bench`, the phone).
