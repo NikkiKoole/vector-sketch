@@ -99,7 +99,10 @@ snapshot for the moves, MEASURING.md) and both builds working.
   upright (EXIF), the paper's brightness estimated (ink taken out, a big blur) and divided out, so a
   shadow or dark corners go; a median for the grain. Tried on Scan 14 made into a fake phone photo
   (a shadow over a corner, warm light, noise, JPEG): the same 10 parts, clean, masks right; the line
-  a little smoother (the median). Next: a real photo.
+  a little smoother (the median). A REAL photo (IMG_5534.HEIC, 2026-11-03, a sheet shot sideways with
+  the table edge in view): 13 parts, clean, masks on the closed shapes, the table edge dropped. It
+  showed one fault, now fixed: a part cut as a box took a neighbour's ink with it (the d and the B side
+  by side); each part keeps only its own ink now. Phone photos are good enough to skip the scanner.
 - [ ] **AB2. Keep the scans.** `~/Projects/mipo-art/scans/`, laid out like `textures/`, backed up
   (a cloud folder or a disk). New drawings from now on; old papers rescanned when a part is touched.
 - [ ] **AB3. Prefabs, setups and saved scenes into the repo.** The game reads `library/` and music

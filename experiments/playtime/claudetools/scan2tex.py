@@ -58,13 +58,14 @@ for y in range(h):
         if px[x, y] and not seen[y * w + x]:
             stack, x0, y0, x1, y1, n = [(x, y)], x, y, x, y, 0
             seen[y * w + x] = 1
+            own = []
             while stack:
-                cx, cy = stack.pop(); n += 1
+                cx, cy = stack.pop(); n += 1; own.append(cy * w + cx)
                 x0, y0, x1, y1 = min(x0, cx), min(y0, cy), max(x1, cx), max(y1, cy)
                 for nx, ny in ((cx + 1, cy), (cx - 1, cy), (cx, cy + 1), (cx, cy - 1)):
                     if 0 <= nx < w and 0 <= ny < h and px[nx, ny] and not seen[ny * w + nx]:
                         seen[ny * w + nx] = 1; stack.append((nx, ny))
-            parts.append((x0, y0, x1, y1, n))
+            parts.append((x0, y0, x1, y1, n, own))
 
 def regions(img):  # connected regions of the white pixels: lists of indices
     w, h = img.size; px = img.load(); seen = bytearray(w * h); out = []
@@ -102,10 +103,14 @@ def keep_big(img, minimum):
 
 os.makedirs(outdir, exist_ok=True)
 k = 0
-for (x0, y0, x1, y1, n) in sorted(parts, key=lambda p: (p[1] // 60, p[0])):
+for (x0, y0, x1, y1, n, own) in sorted(parts, key=lambda p: (p[1] // 60, p[0])):
     if x0 <= 2 or y0 <= 2 or x1 >= w - 3 or y1 >= h - 3: continue  # the scanner's paper edge, not a drawing
     box = (max(0, x0 - PAD), max(0, y0 - PAD), min(w, x1 + PAD + 1), min(h, y1 + PAD + 1))
-    a = alpha.crop(box)
+    # only this part's own ink: a neighbour reaching into the box stays out (the d and the B, side by side)
+    region = bytearray(w * h)
+    for i in own: region[i] = 255
+    mine = Image.frombytes('L', (w, h), bytes(region)).crop(box)
+    a = ImageChops.multiply(alpha.crop(box), mine)
     if sum(1 for v in a.get_flattened_data() if v > 128) < MIN_AREA: continue
     k += 1
     # specks first: islands of anything visible (grown 1 px, so the crayon grain next to the line counts as

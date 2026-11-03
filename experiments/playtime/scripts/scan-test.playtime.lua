@@ -5,7 +5,9 @@
 --   c the next body colour   b the next background   r bake again
 --   patterns (textures/pat/, as the Mipo look panel uses them): p next pattern (or off)   o its colour
 --   [ ] smaller / bigger   t turn it   m mixed: a random pattern and colour per part (a random Mipo's look)
--- The scan parts are made, not committed: for n in 12 14; do python3 -I claudetools/scan2tex.py \
+-- The parts are made, not committed (a phone photo: any name starting with photo, e.g. photo5534):
+--   python3 -I claudetools/scan2tex.py ~/Downloads/IMG_5534.HEIC textures/scantest photo5534
+-- for n in 12 14; do python3 -I claudetools/scan2tex.py \
 --   "../../scans/Scan $n.png" textures/scantest scan$n; done   (INSET=n sets how far inside the line the
 --   mask stops); then r here.
 
@@ -102,10 +104,13 @@ local function build()
     table.sort(scans)
     local game = {}
     for _, name in ipairs(GAME) do game[#game + 1] = name end
-    l.rows = { { title = 'from the scans (claudetools/scan2tex.py, no GIMP)', parts = {} },
+    l.rows = { { title = 'from a phone photo (claudetools/scan2tex.py)', parts = {} },
+               { title = 'from the scans (claudetools/scan2tex.py, no GIMP)', parts = {} },
                { title = "the game's textures now (GIMP)", parts = {} } }
-    for _, name in ipairs(scans) do table.insert(l.rows[1].parts, part(name)) end
-    for _, name in ipairs(game) do table.insert(l.rows[2].parts, part(name)) end
+    for _, name in ipairs(scans) do
+        table.insert(l.rows[name:find('^scantest/photo') and 1 or 2].parts, part(name))
+    end
+    for _, name in ipairs(game) do table.insert(l.rows[3].parts, part(name)) end
     bakeAll()
 end
 
