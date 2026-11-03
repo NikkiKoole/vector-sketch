@@ -63,11 +63,14 @@ lib.RIFFS = {
       vars = { B = '            7--A' }, form = 'AAAB' },
 }
 
--- a chord kind's pentatonic (the walks' `kinds` in src/music-jam.lua): m minor, M major, 7 dominant
+-- a chord kind's pentatonic (the walks' `kinds` in src/music-jam.lua): m minor, M major, 7 dominant,
+-- J maj9, s 9sus
 lib.CHORD_SCALES = {
     m = { 0, 3, 5, 7, 10 },
     M = { 0, 2, 4, 7, 9 },
     ['7'] = { 0, 2, 4, 7, 10 },
+    J = { 0, 2, 4, 7, 9 }, -- maj9 (the wave cycle, from Peter Martin's practice cycle): the major pentatonic
+    s = { 0, 2, 5, 7, 10 }, -- 9sus: no third, the 4th in its place
 }
 
 -- letter -> semitones for this riff over a chord of `kind`: the jam's DEGREE, with the minor pentatonic's

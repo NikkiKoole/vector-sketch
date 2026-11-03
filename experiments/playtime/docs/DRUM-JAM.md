@@ -146,6 +146,10 @@ Until then the jam plays Playtime's drum patches; enough to hear whether the arr
     4, `jabGuitar`, high), strum (3+3+2, `guitar`, rolled). Picked in the panel's 'jam chords' row;
     'auto' = the genre's (Disco: disco stabs; Funk, Breaks: funk stabs; the rest the pad). Each about
     3 dB under the bass (rendered SOLO).
+  - [x] J9f. The wave (2026-11-03, playtime-9c's style, Peter Martin's maj9 / 9sus cycle; Nikki said yes):
+    walks 'the wave' and 'the wave B' (9sus first), roots up a fourth through all twelve; kinds J = maj9
+    (bass: major pentatonic; pad 1 3 7 9) and s = 9sus (bass 1 2 4 5 b7; pad 1 4 b7 9), the same chars in
+    rootwalk.c. The plain figures' b7 rubs on the maj9; the riffs follow it.
   - [ ] J9e. The panel's 'jam walk' row as 'jam progression', and more progressions (minor-key ones:
     1m b7 b6 b7, 1m 4m 5m).
 - [ ] **J6. The organ-era rhythm box** (Nikki: "the truly whimsical ones"). dreamengine has a sourced

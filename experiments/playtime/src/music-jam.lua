@@ -97,7 +97,8 @@ local DEGREE = riffs.DEGREE -- b = the b5, for blues riffs (src/music-riffs.lua)
 -- The chord part (J9d): the progression played as chords, voiced close to the last one
 -- (theory.voiceChord). The chords per kind keep out of the bass's way: the major one has the 9th, not the
 -- major 7th (the figures play a b7 over every chord), the minor and the dominant their b7.
-lib.KEYS_CHORDS = { M = { 0, 4, 7, 14 }, m = { 0, 3, 7, 10 }, ['7'] = { 0, 4, 7, 10 } }
+lib.KEYS_CHORDS = { M = { 0, 4, 7, 14 }, m = { 0, 3, 7, 10 }, ['7'] = { 0, 4, 7, 10 },
+                    J = { 0, 4, 11, 14 }, s = { 0, 5, 10, 14 } } -- maj9 and 9sus: the wave's chords
 -- How the chords are played: 16 steps, 'x' a hit, '-' holding it, '.' silence; each figure on its own
 -- instrument (the panel's keys row can swap it), voiced in lo..hi, rolled by `roll` seconds a note.
 -- Picked in the panel's 'jam chords' row; 'auto' = the genre's (CHORDS_BY_GENRE).
@@ -115,7 +116,8 @@ lib.CHORDS_BY_GENRE = { Disco = 'disco stabs', Funk = 'funk stabs', Breaks = 'fu
 -- song: 1 4 5 1 (home, away, the pull, home), 1 5 6 4 (the pop loop that never settles), 1 6 4 5
 -- (doo-wop), 2 5 1 (the jazz arrival), 1 4 1 5, 1 bVII 1 4, around the fourths. A walk moves every
 -- rootEvery bars, unless it carries its own lengths (bars = { bars per step }).
--- A walk is a chord PROGRESSION (J9): `kinds` gives each step's chord, M major, m minor, 7 dominant
+-- A walk is a chord PROGRESSION (J9): `kinds` gives each step's chord, M major, m minor, 7 dominant,
+-- J maj9, s 9sus
 -- (src/music-riffs.lua's CHORD_SCALES: a riff that follows the chord plays its pentatonic there).
 -- Named for the music panel's 'jam walk' row. Paces: 2 or 4 bars (8 was too slow to hear the walk).
 lib.WALKS = {
@@ -123,6 +125,11 @@ lib.WALKS = {
     { name = '1 6 4 5 doo-wop', kinds = 'MmM7', 0, 9, 5, 7 }, { name = '2 5 1', kinds = 'm7MM', 2, 7, 0, 0 },
     { name = '1 4 1 5', kinds = 'MMM7', 0, 5, 0, 7 }, { name = '1 b7 1 4', kinds = 'MMMM', 0, 10, 0, 5 },
     { name = 'round the fourths', kinds = '77777777', 0, 5, 10, 3, 8, 1, 6, 0 },
+    -- the wave (playtime-9c's composed style, Peter Martin's maj9 / 9sus cycle): roots up a fourth each
+    -- step, maj9 and 9sus taking turns, so the maj9 drops a whole step every two; all twelve, then home.
+    -- The plain figures' b7 rubs on the maj9 (its 7th is major); the riffs follow it.
+    { name = 'the wave', kinds = 'JsJsJsJsJsJs', 0, 5, 10, 3, 8, 1, 6, 11, 4, 9, 2, 7 },
+    { name = 'the wave B', kinds = 'sJsJsJsJsJsJ', 0, 5, 10, 3, 8, 1, 6, 11, 4, 9, 2, 7 }, -- 9sus first
 }
 -- the chord on the walk's current step
 function lib.kind(walk, step) return walk.kinds and walk.kinds:sub(step, step) or 'm' end
