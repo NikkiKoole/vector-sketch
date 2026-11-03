@@ -167,6 +167,17 @@ describe('music-events', function()
             assert.are.equal('ride', hits[6].patch)
         end)
 
+        it('no answer into the gap (the silent beat before a drop): the hole stays a hole', function()
+            local s = song()
+            state.musicSettings.world = { stingerSize = 'small', stingerMoments = 'rare' }
+            s.jam.gapAt = { s.beat * 3, s.beat * 4 }
+            assert.are.equal(0, #answerMoment(s, 'snap', s.beat * 3))   -- a nod in it
+            assert.are.equal(0, #answerMoment(s, 'door', s.beat * 2))   -- a fill landing in it
+            assert.are.equal(0, #answerImpact(s, 0.7, s.beat * 3))      -- a crash in it
+            assert.are.equal(1, #answerMoment(s, 'snap', s.beat * 4))   -- the drop's one: fine
+            s.jam.gapAt = nil
+        end)
+
         it('tells the next chord a bar early, and it is the chord that comes', function()
             local s = song()
             local told = {}

@@ -404,8 +404,16 @@ lib.IMPACT_HARD, lib.IMPACT_VERY_HARD = 0.6, 0.9
 -- graded: a NOD on the next beat for a small moment (an accented open hat, a kick while the hats are
 -- out), a one-beat snare FILL landing on a kick for a door or a room (and the try button); 'big' moves
 -- each up a step (a nod becomes the fill, the fill gets the crash). The gap (a beat of silence) is kept
--- out: often, it would sound like a dropout. One answer a bar, impacts included.
+-- out: often, it would sound like a dropout. One answer a bar, impacts included, none into the gap.
 lib.FILL_MOMENTS = { door = true, room = true, stinger = true }
+
+-- An answer with a hit inside THE GAP (the silent beat before a drop) is skipped, so the hole stays a
+-- hole (dreamengine-8e's guard in rootwalk, 2026-11-03). bookBar keeps the gap's time: jam.gapAt.
+local function inGap(jam, from, to)
+    local g = jam.gapAt
+    return g and from < g[2] - 1e-6 and to > g[1] - 1e-6 or false
+end
+lib.inGap = inGap
 
 local function answerMoment(name, ctx, jam)
     if not require('src.music-stingers').wants(name) then return end
@@ -414,6 +422,7 @@ local function answerMoment(name, ctx, jam)
     local big = events.setting('stingerSize', 'off') == 'big'
     local tier = (lib.FILL_MOMENTS[name] and 2 or 1) + (big and 1 or 0)
     local at, beat = ctx.beatAt, ctx.beat
+    if inGap(jam, at, at + (tier == 1 and 1e-3 or beat + 1e-3)) then return end
     if tier == 1 then
         if jam.on.hats then hit(ctx.play, ctx.synth, at, 'OH', 0, 1, 0, jam.group)
         else hit(ctx.play, ctx.synth, at, 'BD', 0, 1, 0, jam.group) end
@@ -435,7 +444,9 @@ events.answer('jam', function(name, opts, ctx)
     local m = state.music
     if m.answeredAt and ctx.beatAt < m.answeredAt + 4 * ctx.beat - 1e-6 then return end
     local crashAt = ctx.beatAt
-    if strength >= lib.IMPACT_VERY_HARD and pick == 'crash and fill' then
+    local filled = strength >= lib.IMPACT_VERY_HARD and pick == 'crash and fill'
+    if inGap(jam, ctx.beatAt, ctx.beatAt + (filled and ctx.beat or 0) + 1e-3) then return end
+    if filled then
         for k = 0, 3 do hit(ctx.play, ctx.synth, ctx.beatAt + k * ctx.beat / 4, 'SD', 1, 0, 3 - k, jam.group) end
         crashAt = ctx.beatAt + ctx.beat
     end
@@ -485,6 +496,7 @@ function lib.bookBar(play, remember, synth, t0, song, b)
     local gap = lastBar and gapMove ~= 'never'
         and (gapMove == 'always' or (jam.nextPhrase and jam.nextPhrase.mode == 'drop'))
     local cut = gap and 12 or 16
+    if gap then jam.gapAt = { t0 + 3 * song.beat, t0 + 4 * song.beat } end -- the world's answers keep out
     -- the spotlight's bars (the phrase's last 4): who plays
     local spot = jam.spot and inPhrase >= style.phraseBars - 4 and jam.spot or nil
     local tradeBass = spot == 'trading' and inPhrase < style.phraseBars - 2 -- the bass's 2, then the drums'

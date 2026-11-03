@@ -88,7 +88,8 @@ Keep the options open and get the feel by playing, alone and with the kids. Like
     stinger would say what the impact plonks already say. Same switches ('stingers', 'stinger moments'): a
     small moment NODS on the next beat (an accented open hat, a kick while the hats are out), a door or a
     room (and the try button) gets a one-beat snare FILL landing on a kick; 'big' moves each up a step (the
-    fill gets the crash). One answer a bar, impacts included. `src/music-jam.lua` (answerMoment),
+    fill gets the crash). One answer a bar, impacts included, and none with a hit in the gap before a drop (dreamengine-8e's
+    guard: the hole stays a hole). `src/music-jam.lua` (answerMoment),
     `spec/music-events_spec.lua`. Kept out: THE GAP as an answer (a beat of silence; often, it reads as a
     dropout), maybe later for one moment that really matters. rootwalk mirrors it as an accent input.
   - [ ] S4b. The other moments: 'found' has no sender yet.
