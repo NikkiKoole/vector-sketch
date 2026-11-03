@@ -26,11 +26,19 @@ Nikki: "feels nice", "pretty good already".
 - A panel in play mode: dig / earth back (shift for the other one), brush 100-800, cell size
   15-120 (resamples what was dug; ~200 ms at 20), reset (earth + Mipos), new landscape.
 - `script.call('drawBelow')` in main.lua: a scene script's ground draws under the bodies.
+- 2026-11-03, the earth's look ("pretty good"): a shader works it out per pixel from where it is
+  (the sand in the sea spike, `SEA.md`): topsoil, clay, deeper ground with wobbling edges,
+  sediment bands, grain, fine roots near the top. The dug-out wall is the earth a metre further
+  back: the same layers at the same depths, its own noise, darker. `t` toggles it off.
+- Rocks: shader stones looked wrong ("the rocks need to be handdrawn"), so they're 70 shape8
+  bodies with an OMP skin, borrowing the Mipo body outlines until rocks are drawn
+  (`THINGS-TO-DRAW` A8). Kinematic while there's earth under them (no dragging them out), then
+  a 0.7 s wobble and they turn dynamic and fall. Scene scripts get `fixtures` for this.
 
 ## What could be next
 
-- The look, after the picture: a pale top soil over darker earth, a hand-drawn rim, worms,
-  stones, bones and roots in the earth for digging to uncover.
+- The look, after the picture: a hand-drawn rim, worms and bones in the earth for digging
+  to uncover; drawn rocks in place of the borrowed outlines.
 - Floors Mipos can stand on: curved floors over ~10° make them walk downhill
   (`WORLD-METRICS.md`). A flat-bottomed brush, or a tool that flattens.
 - Small: leftover specks of earth, floating earth that could fall, a cell-size change can bury a Mipo.

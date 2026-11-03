@@ -26,6 +26,7 @@ local fabuland = require('src.fabuland')
 local shape8Dict = require('src.shape8-dict')
 local shapeCatalogs = require('src.shape-catalogs')
 local dnaDefaults = require('src.dna-defaults')
+local fixtures = require('src.fixtures')
 --- here a tiny collection of helper function will grow, function i am sure that will be reused in various scripts.
 local function getObjectsByLabel(label)
     local objects = {}
@@ -89,6 +90,7 @@ local baseEnv = {
     tonumber                 = tonumber,
     pcall                    = pcall,
     ompBake                  = require('src.render.omp-bake'), -- the outline + mask + pattern bake (scan-test)
+    fixtures                 = fixtures, -- sfixtures on a script's own bodies (burrow's OMP rocks)
     -- Add global utilities like NeedManager, etc.
     --broadcastEvent = function(eventName, data)
     -- Implementation for event broadcasting

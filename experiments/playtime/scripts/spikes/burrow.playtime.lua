@@ -7,7 +7,7 @@
 --
 -- play mode (tab): drag on earth to dig (or put earth back: the panel, or hold shift).
 -- The panel (bottom left) has the brush size, the cell size and a new landscape.
--- keys: [ ] brush size   m: a new Mipo at the mouse   r: new landscape
+-- keys: [ ] brush size   m: a new Mipo at the mouse   r: new landscape   t: plain / textured earth
 
 local s = {}
 
@@ -32,6 +32,46 @@ useCell(40)
 local earthColor = { 0.62, 0.45, 0.30, 1 }
 local wallColor = { 0.36, 0.25, 0.17, 1 } -- the dug-out back wall
 local rimColor = { 0.25, 0.17, 0.11, 1 }
+
+-- The earth's look, worked out per pixel from where it is in the world (like the sand in
+-- scripts/spikes/sea.playtime.lua): topsoil, clay, deeper ground, grain, fine roots near
+-- the top. `wall` draws the dug-out back wall with the same earth, darker and flatter. 't' toggles.
+local earthShader = love.graphics.newShader([[
+varying vec2 wpos;
+extern float wall;
+#ifdef VERTEX
+vec4 position(mat4 tp, vec4 vp) { wpos = vp.xy; return tp * vp; }
+#endif
+#ifdef PIXEL
+float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float vnoise(vec2 p) {
+    vec2 i = floor(p); vec2 f = fract(p); f = f * f * (3.0 - 2.0 * f);
+    return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
+}
+vec4 effect(vec4 color, Image tex, vec2 tc, vec2 sc) {
+    float depth = wpos.y;
+    // the wall is the earth a metre further back: the same layers at the same depths,
+    // its own grain and roots (the noise read from far away)
+    vec2 wpos = wpos + vec2(5371.0, 2113.0) * wall;
+    // the layers, their edges wobbling
+    float y = depth + (vnoise(vec2(wpos.x * 0.002, 3.0)) - 0.5) * 260.0;
+    vec3 topsoil = vec3(0.36, 0.25, 0.16);
+    vec3 clay = vec3(0.62, 0.44, 0.28);
+    vec3 deep = vec3(0.52, 0.40, 0.33);
+    vec3 col = mix(topsoil, clay, smoothstep(150.0, 450.0, y));
+    col = mix(col, deep, smoothstep(1500.0, 2300.0, y));
+    // thin bands of sediment, and grain at three sizes
+    col *= 0.94 + 0.10 * smoothstep(0.45, 0.6, vnoise(vec2(wpos.x * 0.0015, wpos.y * 0.015)));
+    col *= 0.86 + hash(floor(wpos / 7.0)) * 0.12 + vnoise(wpos * 0.012) * 0.12 + vnoise(wpos * 0.003) * 0.08;
+    // fine roots in the topsoil: where a stretched noise crosses one value
+    float rn = vnoise(vec2(wpos.x * 0.008, wpos.y * 0.004)) + vnoise(wpos * 0.03) * 0.15;
+    float root = (1.0 - smoothstep(0.0, 0.025, abs(rn - 0.5))) * (1.0 - smoothstep(200.0, 700.0, depth));
+    col = mix(col, vec3(0.22, 0.15, 0.10), root * 0.7);
+    if (wall > 0.5) col = mix(col, vec3(dot(col, vec3(0.33))), 0.3) * 0.5;
+    return vec4(col, 1.0);
+}
+#endif
+]])
 
 local function idx(i, j) return j * SW + i + 1 end
 
@@ -336,6 +376,154 @@ local function stamp(b, wx, wy, r, fill)
     end
 end
 
+---------------------------------------------------------------- rocks
+-- Hand-drawn rocks buried in the earth: shape8 bodies (the collision is the drawing's outline)
+-- with an OMP skin (outline + mask + pattern, like a Mipo part). Kinematic while there's earth
+-- under them (no dragging them out); dig it away and one shakes, turns dynamic and falls.
+-- Until rocks are drawn (THINGS-TO-DRAW A8) they borrow the Mipo body outlines, in stone colours.
+local ROCK_PICTURES = {}
+for n = 1, 18 do
+    local url = string.format('mipo/body/body-%02d.png', n)
+    if shape8Dict[url] and shape8Dict[url].dimensions then ROCK_PICTURES[#ROCK_PICTURES + 1] = url end
+end
+local ROCK_STONES = { 'A39C8EFF', '8E8579FF', 'B4A893FF', '7D776EFF', '9A8F80FF' }
+local ROCK_PATTERNS = { 'pattern3.png', 'pattern5.png', 'type4.png' }
+local ROCK_COUNT = 70
+local SHAKE_TIME = 0.7
+
+local function earthAt(b, x, y)
+    local i = math.floor((x - X0) / CELL + 0.5)
+    local j = math.floor((y - Y0) / CELL + 0.5)
+    if i < 0 or i > COLS or j < 0 or j > ROWS then return 0 end
+    return b.dens[idx(i, j)] or 0
+end
+
+-- how much earth is still holding the rock up (0..1): the bottom half of a ring just outside
+-- it, in the world (a rock with the earth gone from under it drops, whatever is above)
+local function buriedness(b, rock)
+    local x, y = rock.body:getPosition()
+    local r = rock.r * 1.15
+    local n, earth = 9, 0
+    for k = 0, n - 1 do
+        local t = k / (n - 1) * math.pi -- 0..pi: right, down, left (y is down)
+        if earthAt(b, x + math.cos(t) * r, y + math.sin(t) * r) > 0.5 then earth = earth + 1 end
+    end
+    return earth / n
+end
+
+-- kinematic while the earth holds it (it can't be dragged and doesn't move, Mipos bump into it),
+-- dynamic once it's loose
+local function hold(body, held)
+    if held then
+        body:setType('kinematic')
+        body:setLinearVelocity(0, 0)
+        body:setAngularVelocity(0)
+    else
+        body:setType('dynamic')
+        body:setAwake(true)
+    end
+end
+
+local function makeRockBody(rock)
+    local entry = shape8Dict[rock.url]
+    local verts = {}
+    for k = 1, #entry.vertices, 2 do
+        verts[k], verts[k + 1] = entry.vertices[k] * rock.scale, entry.vertices[k + 1] * rock.scale
+    end
+    local thing = objectManager.addThing('shape8', { x = rock.x, y = rock.y, vertices = verts,
+        label = 'burrow-rock', bodyType = 'dynamic' })
+    if not thing then return end
+    local body = thing.body
+    body:setAngle(rock.angle)
+    for _, fixture in ipairs(body:getFixtures()) do
+        fixture:setDensity(2)
+        fixture:setFriction(0.8)
+        fixture:setRestitution(0.05)
+    end
+    body:resetMassData()
+    -- the skin: the picture's document size, a little bigger, as Mipo parts do (mipo-textures)
+    local grow = 1.1
+    local fixture = fixtures.createSFixture(body, 0, 0, 'texfixture', {
+        width = entry.dimensions[1] * rock.scale * grow, height = entry.dimensions[2] * rock.scale * grow })
+    local ud = fixture:getUserData()
+    ud.extra.OMP = true
+    ud.extra.dirty = true
+    ud.extra.zOffset = 0
+    ud.extra.main = {
+        bgURL = rock.url, bgHex = '2B2119FF',             -- the outline, dark earth-brown ink
+        fgURL = rock.url:gsub('%.png', '-mask.png'), fgHex = rock.stone,
+        pURL = rock.pattern, pHex = rock.patternHex,
+    }
+    hold(body, not rock.loose)
+    rock.body = body
+end
+
+local function destroyRocks(b)
+    for _, rock in ipairs(b.rocks or {}) do
+        if rock.body and not rock.body:isDestroyed() then objectManager.destroyBody(rock.body) end
+        rock.body = nil
+    end
+end
+
+local function placeRocks(b)
+    destroyRocks(b)
+    b.rocks = {}
+    if #ROCK_PICTURES == 0 then return end
+    local rng = love.math.newRandomGenerator(1000 + b.seed)
+    local tries = 0
+    while #b.rocks < ROCK_COUNT and tries < ROCK_COUNT * 20 do
+        tries = tries + 1
+        local r = 45 + rng:random() ^ 2 * 190
+        local x = X0 + 300 + rng:random() * (WORLD_W - 600)
+        local y = surfaceAt(b, x) + 150 + r + rng:random() * (WORLD_H - 900)
+        local free = y + r < Y0 + WORLD_H - 200 and earthAt(b, x, y) > 0.5
+        for _, other in ipairs(b.rocks) do
+            if free and (other.x - x) ^ 2 + (other.y - y) ^ 2 < (other.r + r + 40) ^ 2 then free = false end
+        end
+        if free then
+            local url = ROCK_PICTURES[rng:random(1, #ROCK_PICTURES)]
+            local dims = shape8Dict[url].dimensions
+            local stone = ROCK_STONES[rng:random(1, #ROCK_STONES)]
+            local rock = {
+                x = x, y = y, angle = rng:random() * math.pi * 2, url = url, r = r,
+                scale = 2 * r / math.max(dims[1], dims[2]),
+                stone = stone, pattern = ROCK_PATTERNS[rng:random(1, #ROCK_PATTERNS)],
+                patternHex = ROCK_STONES[rng:random(1, #ROCK_STONES)],
+            }
+            makeRockBody(rock)
+            b.rocks[#b.rocks + 1] = rock
+        end
+    end
+end
+
+local function rocksUpdate(b, dt)
+    for _, rock in ipairs(b.rocks or {}) do
+        local body = rock.body
+        if body and not body:isDestroyed() then
+            rock.x, rock.y = body:getPosition()
+            rock.angle = body:getAngle()
+            if not rock.loose then
+                local left = buriedness(b, rock)
+                if rock.shaking then
+                    if left > 0.6 then
+                        rock.shaking = nil -- buried again
+                    else
+                        rock.shaking = rock.shaking + dt
+                        -- a wobble while it works loose
+                        body:setAngle(rock.angle + (love.math.random() - 0.5) * 0.03)
+                        if rock.shaking >= SHAKE_TIME then
+                            rock.loose, rock.shaking = true, nil
+                            hold(body, false)
+                        end
+                    end
+                elseif left < 0.45 then
+                    rock.shaking = 0
+                end
+            end
+        end
+    end
+end
+
 local function spawnMipo(b, x, y, dna)
     local inst
     if dna then
@@ -366,6 +554,7 @@ end
 -- Reset: the landscape as it started and every Mipo (same looks) back where it came in.
 local function reset(b)
     newLandscape(b)
+    placeRocks(b)
     rebuildEverything(b)
     local mipos = aliveMipos(b)
     b.mipos = {}
@@ -390,6 +579,10 @@ function s.onStart()
     local b = burrow()
     useCell(b.cell)
     if not b.dens then newLandscape(b) end
+    if not b.rocks or (b.rocks[1] and not b.rocks[1].url) then placeRocks(b) end
+    for _, rock in ipairs(b.rocks) do
+        if not rock.body or rock.body:isDestroyed() then makeRockBody(rock) end
+    end
     rebuildEverything(b)
     b.mipos = aliveMipos(b)
     if #b.mipos == 0 then
@@ -403,6 +596,7 @@ function s.onUnload()
     local b = state.burrow
     if not b then return end
     for _, chunk in pairs(b.chunks or {}) do destroyChunk(chunk) end
+    destroyRocks(b)
 end
 
 function s.onKeyPress(key)
@@ -417,6 +611,8 @@ function s.onKeyPress(key)
         spawnMipo(b, mx, my)
     elseif key == 'r' then
         reset(b)
+    elseif key == 't' then
+        b.plain = not b.plain
     end
 end
 
@@ -457,6 +653,7 @@ function s.update(dt)
         rebuildChunk(b, key % CHUNKS_X, math.floor(key / CHUNKS_X))
     end
     b.dirty = {}
+    rocksUpdate(b, dt)
 end
 
 function s.drawUI()
@@ -487,10 +684,11 @@ function s.drawUI()
         if ui.button(x, y, w - 20, 'new landscape') then
             b.seed = b.seed + 1
             newLandscape(b)
+            placeRocks(b)
             rebuildEverything(b)
         end
         x, y = ui.nextLayoutPosition(layout, w - 20, BH)
-        ui.label(x, y, 'shift: the other one  m: Mipo')
+        ui.label(x, y, 'shift: the other one  m: Mipo  t: plain')
     end)
 end
 
@@ -507,12 +705,16 @@ end
 function s.drawBelow()
     local b = state.burrow
     if not (b and b.chunks) then return end
-    love.graphics.setColor(wallColor)
+    if not b.plain then love.graphics.setShader(earthShader) end
+    earthShader:send('wall', 1)
+    love.graphics.setColor(b.plain and wallColor or { 1, 1, 1, 1 })
     if b.wall then love.graphics.draw(b.wall) end
-    love.graphics.setColor(earthColor)
+    earthShader:send('wall', 0)
+    love.graphics.setColor(b.plain and earthColor or { 1, 1, 1, 1 })
     for _, chunk in pairs(b.chunks) do
         if chunk.mesh then love.graphics.draw(chunk.mesh) end
     end
+    love.graphics.setShader()
     love.graphics.setColor(rimColor)
     love.graphics.setLineWidth(8)
     love.graphics.setLineJoin('bevel')
