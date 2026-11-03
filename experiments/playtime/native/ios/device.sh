@@ -44,7 +44,9 @@ done
 LOVE_DIR="${LOVE_DIR:-}"
 [ -n "$LOVE_DIR" ] && LOVE_DIR="$(cd "$PLAYTIME_DIR" && cd "$LOVE_DIR" && pwd)"
 if [ -z "$LOVE_DIR" ]; then
-    [ -f "$PLAYTIME_DIR/scripts/$SCENE.playtime.json" ] || { echo "✗ no scene scripts/$SCENE.playtime.json"; exit 1; }
+    # scenes live in scripts/rooms, spikes, tests, tech (src/scene-catalog.lua)
+    [ -n "$(find "$PLAYTIME_DIR/scripts" -name "$SCENE.playtime.json" -print -quit)" ] \
+        || { echo "✗ no scene $SCENE.playtime.json under scripts/"; exit 1; }
 fi
 
 # appelflap's repo has the ios/libraries in it, so on a new machine this is all the setup there is
