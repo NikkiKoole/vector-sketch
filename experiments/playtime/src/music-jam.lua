@@ -151,6 +151,10 @@ function lib.walkNames() return names(lib.WALKS) end
 function lib.figureNames() return names(lib.FIGURES) end
 function lib.chordNames() return names(lib.CHORD_FIGURES) end
 lib.PACES = { 'auto', '2', '4' }
+-- 'all': every layer plays from the next bar, whatever the play level (for listening; Nikki 2026-11-03).
+-- The breakdown and the drop still come round.
+lib.LAYER_PICKS = { 'auto', 'all' }
+local function allLayers() return picks().layers == 'all' end
 
 -- The plan: a genre (style.groups, one per song) at its own tempo, one of its families, a bass walk, and
 -- a long run of phrases. What happens in them is decided as they come (bookBar), from the play level.
@@ -177,8 +181,9 @@ function lib.plan(song, style, addSections)
     addSections(song, sections)
 end
 
--- How many layers the play level asks for now.
+-- How many layers the play level asks for now (all of them when the panel says so).
 local function target(style)
+    if allLayers() then return #lib.LAYERS end
     local n = style.minLayers + math.floor((M.activity or 0) / style.perLayer)
     return math.max(style.minLayers, math.min(#lib.LAYERS, n))
 end
@@ -257,6 +262,10 @@ local function advance(jam, style, b)
         if jam.nextRoot then applyRoot(jam, jam.nextRoot) else jam.left = jam.left - 1 end
     end
     jam.nextPhrase, jam.nextRoot = nil, nil
+    if allLayers() and jam.mode ~= 'break' then -- at once, not a layer a phrase
+        jam.layers = #lib.LAYERS
+        for _, layer in ipairs(lib.LAYERS) do jam.on[layer.name] = true end
+    end
     if (b - 1) % style.phraseBars == style.phraseBars - 1 then jam.nextPhrase = planPhrase(jam, style) end
     local drop = jam.nextPhrase and jam.nextPhrase.mode == 'drop'
     if drop or jam.left <= 1 then jam.nextRoot = planRoot(jam, style, drop) end
