@@ -1,0 +1,100 @@
+# Assets and builds — where things live, how drawings get in, what ships
+
+status: active
+
+Nikki 2026-11-03: "our assets are all over the place, source files too; keep in mind we will be
+growing levels, textures and more." This plan tidies it in small steps that each leave the game
+working, and makes a new drawing cheap to get in. Measured on 2026-11-03 (the numbers below).
+
+## How it is now
+
+**Work that isn't in git.** Saving a scene ('s') writes to the LÖVE save folder
+(`~/Library/Application Support/LOVE/playtime/`, 439 MB: 204 scenes, 1039 PNGs, videos, flight
+recordings), not to `scripts/`. Only scenes copied over by hand reach the repo and the builds, and
+some exist in both places with no telling which is newer (`crowd.playtime.json`). The library's
+8 prefabs and the music setups live only there.
+
+**The builds ship everything.** `native/ios/device.sh` and `webtest/build-web.sh` copy all of
+`assets/` and `textures/`. About 83 of 330 textures (3.3 MB) aren't named by any scene or code (old
+feet, necks, torsos, patterns), the Knut textures (`textures/knut/`, 1.4 MB) ride along, and so do
+unused sounds (`cr78`, `bd-perc`, two rubber-stretch), two old music loops, two start images
+(1.4 MB), a font.
+
+**Textures are one flat folder**: 297 files in `textures/` (ears, feet, noses, brows, outlines next to
+masks), `pat/`, `knut/` and `world/` (one file). The names carry the structure (`earx12r-mask.png`).
+
+**Scenes**: `scripts/` holds the rooms (overworld, bakery, treehouse), the spikes and the checks
+together, data and code side by side (SCENES.md says which to keep).
+
+**Source art is in five places or nowhere**: `oldtextures/`, `knut-is-dead/` (15 MB, still used by 3
+scenes), `backdrops/` (Knut), `krita/`, `archive/scenes`. The scans aren't kept at all.
+
+**Build outputs in git**: `webtest/output-*` (19 MB, 26 MB in history). `native/ios/` (489 MB) and
+`.snapshots/` are rightly ignored. `profilingReport6.txt` is committed.
+
+## How a drawing gets in (Nikki)
+
+Drawn on paper, scanned, then in GIMP the white turned transparent (and the colours flipped). The
+`-mask` is a shape drawn on paper too and treated the same way. The papers are kept, the scans are
+not. Then, sometimes, `experiments/alpha-padder` (2023, LÖVE: drop files; pads transparent pixels
+with their neighbour's colour 1 px wide, an alpha multiplier, alpha to grey). Also on disk:
+`~/Projects/alpha-bleeding-master` (urraka's C tool, the full bleed; not built).
+
+Measured: of the 111 textures with a hard edge, 109 hide black under the transparency (fine under a
+black outline); the masks have hard edges and a dark grey fill, so no halo shows today. Soft edges
+drawn small would.
+
+## Where it should go
+
+```
+playtime/
+  textures/                    what the game draws, by use
+    mipo/<part>/               ears, feet, noses ... (outline + -mask side by side)
+    world/                     grass, ground, props
+    pat/                       patterns
+  scripts/
+    rooms/                     the game's rooms (what ships)
+    spikes/                    experiments and checks (SCENES.md)
+  library/                     prefabs, in the repo (the game reads these, saves new ones here)
+  assets/                      sounds, voices, fonts, icons: what's used
+  tools/art/                   the scan-to-texture tool
+~/Projects/mipo-art/           outside the repo, backed up
+  scans/<same layout>/         every scan, as scanned
+  sources/                     .kra, GIMP files
+  archive/                     Knut, old textures, backdrops
+```
+
+## Steps
+
+Each step leaves every scene loading the same (`spec/scenes-smoke_spec.lua`, and a before/after
+snapshot for the moves, MEASURING.md) and both builds working.
+
+- [ ] **AB1. The scan-to-texture tool, tried on one scan.** A LÖVE tool like the alpha padder (drop a
+  scan, see it, a slider or two): levels and a threshold, the paper to transparent and the ink to a
+  clean line, the bleed a few pixels wide, saved under the scan's name. Try it on one fresh scan of
+  an existing part, side by side with the GIMP version in the game. Only then the rest of the tool
+  (masks, batches, naming).
+- [ ] **AB2. Keep the scans.** `~/Projects/mipo-art/scans/`, laid out like `textures/`, backed up
+  (a cloud folder or a disk). New drawings from now on; old papers rescanned when a part is touched.
+- [ ] **AB3. Prefabs, setups and saved scenes into the repo.** The game reads `library/` and music
+  setups from the repo first (the save folder as the fallback), and on the desktop the editor saves a
+  scene straight into `scripts/` (io.open works there; the web build keeps the save folder). Sort
+  out the 204 saved scenes once: which are newer than the repo's copy, which are worth keeping.
+- [ ] **AB4. Build outputs out of git.** `webtest/output-*` into `.gitignore` and `git rm --cached`;
+  `profilingReport*.txt` ignored.
+- [ ] **AB5. Ship what's used.** First an exclude list in both build scripts (Knut, the unnamed
+  textures, the unused sounds), the .love size before and after; later a list per room of what its
+  scenes use, if rooms grow apart.
+- [ ] **AB6. Textures in folders by use.** A move list (old path -> new), the loader looks a missing
+  old name up in it so old scenes and the save folder's copies still load; then the scenes rewritten
+  on their next save. `claudetools/` gets a check that lists every texture a scene or the code names
+  and every file nothing names.
+- [ ] **AB7. Rooms and spikes apart.** `scripts/rooms/` and `scripts/spikes/` (scene-catalog already
+  walks folders); the builds take rooms from `rooms/`.
+- [ ] **AB8. The source art out of the game folder.** `oldtextures/`, `backdrops/`, `krita/`, Knut's
+  pictures not used by a scene into `~/Projects/mipo-art/`; the 3 scenes using `knut-is-dead/` keep
+  theirs (or go to `spikes/` with them).
+
+Later, not steps yet: the tool making the mask from the outline when they're the same shape; a
+texture atlas per Mipo part set (MIPO-DRAWING.md says it saves nothing on the phone today); Playtime
+in its own repo (it's `vector-sketch/experiments/playtime`, a 639 MB `.git` shared with the old app).
