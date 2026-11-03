@@ -33,6 +33,7 @@ local sheet = nil       -- { src, base, img, w, h, parts = { {id, box, w, h, mas
 local picks = {}        -- per part id: { name, fill, rot, skip } (saved per sheet)
 local selected = nil    -- index into sheet.parts
 local busy, message = false, 'drop a photo or a scan of drawings on this window'
+local busySince = 0    -- when the running script started (the window shows how long it's been)
 local again = false     -- a change came in while the script ran: run once more after it
 local dragging = nil    -- the slider being dragged
 local before = nil      -- what the last run gave, to say what a change did
@@ -70,6 +71,7 @@ local function run()
     if not sheet then return end
     if busy then again = true return end
     busy, message = true, 'working on ' .. sheet.base .. ' ...'
+    busySince = love.timer.getTime()
     local fill = {}
     for id, p in pairs(picks) do if p.fill and p.fill ~= 'auto' then fill[#fill + 1] = id .. ':' .. p.fill end end
     local env = { 'FILL=' .. shellQuote(table.concat(fill, ',')) }
@@ -324,7 +326,8 @@ function love.draw()
             love.graphics.setColor(0, 0, 0, 0.45)
             love.graphics.rectangle('fill', px, 10, likeX - px - 10, 380, 6)
             love.graphics.setColor(1, 1, 1)
-            love.graphics.printf('working...', px, 190, likeX - px - 10, 'center')
+            love.graphics.printf(('working... %d s%s'):format(love.timer.getTime() - busySince,
+                again and '  (and once more after: you changed something)' or ''), px, 190, likeX - px - 10, 'center')
         end
         love.graphics.setColor(1, 1, 1)
         local y = 400

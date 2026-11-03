@@ -30,6 +30,12 @@ OPEN_BELOW = float(os.environ.get('OPEN_BELOW', 0.07))  # under this share enclo
 SPECK = 60            # px: ink islands smaller than this are dust
 PAD = 8               # px of transparent margin around a part
 
+# square max / min filters (grow / shrink by k//2 px), scipy's: their cost doesn't grow with k the way
+# PIL's MaxFilter / MinFilter did (k squared: size 1 with a wide inset took 20 s); edges replicated as PIL's
+# (copied: an image made on a numpy array shares its memory, and ImageDraw.floodfill didn't fill it)
+def grow(img, k): return Image.fromarray(ndimage.maximum_filter(np.asarray(img), size=k, mode='nearest')).copy()
+def shrink(img, k): return Image.fromarray(ndimage.minimum_filter(np.asarray(img), size=k, mode='nearest')).copy()
+
 # A phone photo works too (Nikki, 2026-11-03: "a bad relationship with my scanner"): HEIC goes through
 # macOS's sips first; uneven light (a hand's shadow, dark corners) is divided out below.
 if src.lower().endswith(('.heic', '.heif')):
@@ -45,7 +51,7 @@ g = g.resize((int(g.width * SCALE), int(g.height * SCALE)), Image.LANCZOS)
 # blur), divided out, so all the paper is equally white whatever the light did. A scan is already even:
 # this changes it very little.
 small = g.resize((max(1, g.width // 8), max(1, g.height // 8)), Image.BILINEAR)
-paper_light = small.filter(ImageFilter.MaxFilter(9)).filter(ImageFilter.GaussianBlur(12)).resize(g.size, Image.BILINEAR)
+paper_light = grow(small, 9).filter(ImageFilter.GaussianBlur(12)).resize(g.size, Image.BILINEAR)
 g = Image.fromarray(np.clip(np.asarray(g, np.float32) / np.maximum(np.asarray(paper_light, np.float32), 1) * 255,
                             0, 255).astype(np.uint8))  # pixel / the paper there (paper -> 255)
 g = g.filter(ImageFilter.MedianFilter(3))  # the photo's grain
@@ -62,7 +68,7 @@ lo, hi = ink + (paper - ink) * 0.10, paper - (paper - ink) * 0.15
 alpha = g.point(lambda v: 255 if v <= lo else 0 if v >= hi else int(255 * (hi - v) / (hi - lo)))
 
 # parts: ink grown by MERGE px, then connected regions (4-connected)
-grown = alpha.point(lambda a: 255 if a > 40 else 0).filter(ImageFilter.MaxFilter(MERGE * 2 + 1))
+grown = grow(alpha.point(lambda a: 255 if a > 40 else 0), MERGE * 2 + 1)
 w, h = grown.size
 labels, count = ndimage.label(np.asarray(grown) > 0)
 parts = []
@@ -90,13 +96,14 @@ def keep_big(img, minimum):
     return keep_where(lab, np.nonzero(sizes >= minimum)[0] + 1)
 
 def half_width(line):  # about half the stroke's thickness: how many 1-px shrinks until most of it is gone
-    total = nonzero(line)
+    # (n shrinks keep the pixels whose chessboard distance to the outside is over n: one pass, not n)
+    b = np.asarray(line) > 0
+    total = int(b.sum())
     if not total: return 0
-    img, n = line, 0
-    while n < 40:
-        img = img.filter(ImageFilter.MinFilter(3)); n += 1
-        if nonzero(img) < total * 0.2: break
-    return n
+    dist = ndimage.distance_transform_cdt(np.pad(b, 1, mode='edge'), metric='chessboard')[1:-1, 1:-1][b]
+    for n in range(1, 41):
+        if int((dist > n).sum()) < total * 0.2: return n
+    return 40
 
 def hull(line):  # the convex hull of the line's pixels, filled
     w, h = line.size; px = line.load()
@@ -129,17 +136,16 @@ for (x0, y0, x1, y1, own) in sorted(parts, key=lambda p: (p[1] // 60, p[0])):
     k += 1
     # specks first: islands of anything visible (grown 1 px, so the crayon grain next to the line counts as
     # the line) smaller than SPECK px go, faint dust included
-    a = ImageChops.multiply(a, keep_big(a.point(lambda v: 255 if v > 0 else 0).filter(ImageFilter.MaxFilter(3)),
-                                        SPECK))
+    a = ImageChops.multiply(a, keep_big(grow(a.point(lambda v: 255 if v > 0 else 0), 3), SPECK))
     outline = Image.merge('RGBA', (Image.new('L', a.size, 255),) * 3 + (a,))  # white under it all: no halo
     # mask: flood the outside from the border; whatever the flood can't reach is the shape
     # the mask: the whole shape, line included, its edge smoothed and pulled in by INSET px, so it
     # reaches under the line but never past it (Nikki: "under the black lines, just not over")
     line = a.point(lambda v: 255 if v > 60 else 0)
-    closed = line.filter(ImageFilter.MaxFilter(CLOSE))            # gaps in the line closed
+    closed = grow(line, CLOSE)            # gaps in the line closed
     ImageDraw.floodfill(closed, (0, 0), 128)                      # what the outside reaches -> 128
     shape = closed.point(lambda v: 0 if v == 128 else 255)         # not outside: the shape, grown CLOSE/2
-    shape = shape.filter(ImageFilter.MinFilter(CLOSE))             # back to the line's outer edge
+    shape = shrink(shape, CLOSE)             # back to the line's outer edge
     fill = FILL.get('%s-%02d' % (name, k), 'auto')
     if fill == 'close':  # the opening drawn shut: the line's outer hull is the shape
         shape = hull(line)
@@ -149,12 +155,12 @@ for (x0, y0, x1, y1, own) in sorted(parts, key=lambda p: (p[1] // 60, p[0])):
     # in by about half the line's thickness (measured per part: a fat crayon line and a thin marker one
     # differ), INSET px at least (Nikki: the photo's upper lip had colour at its line's edge)
     inset = max(INSET, int(round(half_width(line) * INTO)))
-    mask = shape.filter(ImageFilter.MinFilter(inset * 2 + 1)) if inset > 0 else shape
+    mask = shrink(shape, inset * 2 + 1) if inset > 0 else shape
     mask = pieces(mask)                                            # every real piece; crumbs go
     mask = mask.filter(ImageFilter.GaussianBlur(0.8))              # a soft, even edge
     # an OPEN part (a line, a stroke, a filled dot like a pupil) has no inside to fill: no mask file, as
     # the game's brows, hair, pupils and lines have none (the bake draws them outline only)
-    inside = ImageChops.subtract(shape, line.filter(ImageFilter.MaxFilter(3)))
+    inside = ImageChops.subtract(shape, grow(line, 3))
     inside_px, shape_px = nonzero(inside), nonzero(shape)
     has_inside = (fill in ('close', 'mask')) or (fill != 'open' and shape_px > 0 and inside_px / shape_px >= OPEN_BELOW)
     outline.save(os.path.join(outdir, '%s-%02d.png' % (name, k)))
@@ -193,7 +199,7 @@ def iou(a, b):
     return inter / union if union else 0
 def silhouette_of(line_img, mask_img):  # the shape: the mask, else the line (grown a little, so thin lines count)
     if mask_img is not None: return signature(mask_img)
-    return signature(line_img.filter(ImageFilter.MaxFilter(5)))
+    return signature(grow(line_img, 5))
 textures = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'textures')
 # the game's textures' silhouettes, kept in CACHE by file and its change time (and the mask's)
 index_path = os.path.join(CACHE, 'textures-%d.pickle' % SIG)
