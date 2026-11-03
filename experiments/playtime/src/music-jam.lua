@@ -25,6 +25,7 @@ local lib = {}
 lib.LAYERS = {
     { name = 'kick', roles = { 'BD' } },
     { name = 'bass' },
+    { name = 'keys' }, -- the chord part (J9d): plays the progression, not a pattern
     { name = 'hats', roles = { 'CH', 'OH', 'SW' } },
     { name = 'snare', roles = { 'SD', 'CPS' } },
     { name = 'perc', roles = { 'RS', 'CB', 'TB', 'LT', 'MT', 'HT', 'CY' } },
@@ -92,6 +93,13 @@ lib.BASS_LOOPS = {
     Brushes = { 'R..8..7.........', 'R-----........A.' },
 }
 local DEGREE = riffs.DEGREE -- b = the b5, for blues riffs (src/music-riffs.lua)
+
+-- The chord part (J9d): a soft Rhodes pad, the chord struck on each bar's one and held through it, voiced
+-- close to the last one (theory.voiceChord). The chords per kind keep out of the bass's way: the major
+-- one has the 9th, not the major 7th (the figures play a b7 over every chord), the minor and the
+-- dominant their b7.
+lib.KEYS = 'rhodes'
+lib.KEYS_CHORDS = { M = { 0, 4, 7, 14 }, m = { 0, 3, 7, 10 }, ['7'] = { 0, 4, 7, 10 } }
 
 -- The walks the root takes (semitones over the song's key), and how often it moves, both rolled per
 -- song: 1 4 5 1 (home, away, the pull, home), 1 5 6 4 (the pop loop that never settles), 1 6 4 5
@@ -244,6 +252,16 @@ function lib.ahead(jam)
     return nxt.walk[nxt.step], 1
 end
 
+local function bookKeys(play, synth, song, t0, jam, kind)
+    local root = (song.key + jam.root) % 12
+    jam.voicing = theory.voiceChord(root, lib.KEYS_CHORDS[kind], 52, 74, jam.voicing)
+    if not jam.voicing then return end
+    local ms = song.barLength * 1000 * 0.97
+    for k, midi in ipairs(jam.voicing) do -- rolled a little, a hand on the keys
+        play(synth, 'keys', lib.KEYS, stepTime(song, t0, 0) + (k - 1) * 0.012, midi, 2, ms, 0)
+    end
+end
+
 local function hit(play, synth, t, role, s, accent, quieter, genre)
     local own = lib.GENRE_VOICES[genre]
     local v = own and own[role] or lib.VOICES[role]
@@ -317,6 +335,7 @@ function lib.bookBar(play, remember, synth, t0, song, b)
         bookBass(play, synth, song, t0, loop, jam.root, nextRoot, b, riff and true,
                  riff and riffs.degrees(riff, kind))
     end
+    if jam.on.keys then bookKeys(play, synth, song, t0, jam, kind) end
     local lastBar = inPhrase == style.phraseBars - 1
     local fill = lastBar and (jam.on.snare or jam.mode == 'break')
     local written = fill and jam.fill -- the family's own fill plays the whole bar

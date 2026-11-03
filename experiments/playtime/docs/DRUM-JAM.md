@@ -137,8 +137,11 @@ Until then the jam plays Playtime's drum patches; enough to hear whether the arr
     place on the chord's own (major: R m 4 5 7 -> R 2 3 5 6; dominant: R 2 3 5 b7). `follow = false`, or a
     scale of its own (blues, dorian), keeps a riff's notes. The jam's figures (root-octave-b7 ...) don't
     follow. To listen: `JAM='figure=riff: climb;walk=1 5 6 4;pace=2'`.
-  - [ ] J9d. A chord part: stabs or a pad playing the progression (the organ's one-finger chord), its own
-    layer.
+  - [x] J9d. A chord part, first cut (2026-11-03): a soft Rhodes PAD (`lib.KEYS`), the chord struck on
+    each bar's one and held, voiced close to the last (theory.voiceChord, E3..D5), its own layer after the
+    bass (`keys`: kick, bass, keys, hats, snare, perc); it plays through the breakdown. Chords per kind:
+    M = 1 3 5 9 (no major 7th: the figures play a b7), m = m7, 7 = dom7. About 3 dB under the bass.
+    Next if it's liked: stabs (disco/funk off-beats, a reggae skank) and a strum, per genre.
   - [ ] J9e. The panel's 'jam walk' row as 'jam progression', and more progressions (minor-key ones:
     1m b7 b6 b7, 1m 4m 5m).
 - [ ] **J6. The organ-era rhythm box** (Nikki: "the truly whimsical ones"). dreamengine has a sourced
