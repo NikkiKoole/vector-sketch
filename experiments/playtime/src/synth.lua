@@ -322,6 +322,7 @@ void instrument_group(int slot, int lead);
 void reverb_bus_into(int tank, int lead);
 void instrument_fx_filter(int slot, int mode, float cutoff_hz, float resonance);
 void instrument_mono(int slot, int on);
+void unschedule(int slot, double t1, double t2);
 ]]
 -- the struct on its own: a hot reload redeclaring it errors, which must not stop the functions above
 if ffi then
@@ -759,6 +760,20 @@ function lib.scheduleAt(patchName, t, midi, vol, durMs, opts)
     else
         S.C.schedule_at(t, midi, slot, vol, dur)
     end
+end
+
+-- Take back a patch's booked notes that start in [t1, t2) on the audio clock (scheduleAt's t; t2 nil = from
+-- t1 on): a part resting while a stinger plays (docs/STINGERS.md). Notes already sounding ring on. The
+-- slot is the one the patch holds now; a shared pool slot handed to another patch inside the window
+-- loses that patch's notes too. Returns false without the engine call (an older library, the web).
+function lib.unschedule(patchName, t1, t2)
+    if not S.started then return false end
+    local patch = lib.patches[patchName]
+    local slot = patch and residentSlot(patchName, patch)
+    local f = slot and optionalFn('unschedule')
+    if not f then return false end
+    f(slot, t1, t2 or 0)
+    return true
 end
 
 -- Ride a patch's lowpass live (the music's tone automation); the patch keeps its filter mode.
