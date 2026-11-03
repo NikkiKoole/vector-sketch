@@ -45,6 +45,22 @@ lib.RIFFS = {
       vars = { B = '        7.5.4.mA' }, form = 'AAAB' },
     { name = 'low and high', phrase = 'R...L...R..m4...',
       vars = { B = '        R..m5.N.' }, form = 'AAAB' },
+    -- more (Nikki 2026-11-03: "any more bass figures"), each a different feel
+    { name = 'disco octaves', phrase = 'R.8.', -- the octave on every 8th, a little run home
+      vars = { B = '            7.5A' }, form = 'AAAB' },
+    { name = 'one drop', phrase = 'R--.....5-.m....', -- reggae: the space is the groove
+      vars = { B = '        5-.7.8.A' }, form = 'AAAB' },
+    { name = 'motown', phrase = 'R...5...8...5.4.', -- quarter notes with a pickup
+      vars = { B = '        7...5.mA' }, form = 'AAAB' },
+    { name = 'sixteenth funk', phrase = 'R.RR..7.R.m.4.5.', -- the ghosted double root
+      vars = { B = '        8.7.5.4A' }, form = 'AAAB' },
+    { name = 'hip hop low', phrase = 'R-------L-----..', -- two long notes, the fifth below
+      vars = { B = '        L---m-A.' }, form = 'AAAB' },
+    { name = 'ladder', phrase = 'R.m.4.5.7.8.7.5.', -- up the pentatonic and back
+      vars = { B = '        8.7.5.mA' }, form = 'AAAB' },
+    { name = 'push and pop', phrase = 'R..8...R......N.', form = 'A' }, -- the next root early, every bar
+    { name = 'brush walk', phrase = 'R---m---4---5---', -- held quarters for the upright
+      vars = { B = '            7--A' }, form = 'AAAB' },
 }
 
 -- a chord kind's pentatonic (the walks' `kinds` in src/music-jam.lua): m minor, M major, 7 dominant
