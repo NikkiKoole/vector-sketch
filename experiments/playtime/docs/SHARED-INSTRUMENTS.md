@@ -33,6 +33,20 @@ Playtime warns when its dylib lacks one. No level, no reverb send, no FX buses i
   name)`: an engine API change and every cart that adopts it; later, if at all). And whether a preset
   may span slots: the 303 (`acid303.h`) and the drum kits (`drumkit.h`, `tr808.h`) are several slots
   plus logic, and the first slice meets them.
+  Nikki (2026-11-03), not decided: "we still want a way to model an instrument just here, but at the
+  same time we might just want a big ass library of instruments in dreamengine that just works(tm);
+  also might need a cart in dreamengine that allows us to listen to all of them, at the same time
+  this conflicts with the 1 cart for a game thing". One way it could fit (an option, not picked):
+  - The library is DATA, not a cart: dreamengine's `presets.json`, read by every cart and game.
+  - The listening cart is a TOOL cart (like the probe carts, patch-match), not a game, so maybe not
+    against one-cart-per-game; check with dreamengine-8e what the rule covers.
+  - Or listen in Playtime: a preset browser in the voice lab once I3 reads them, heard through
+    Playtime's own mix and reverb (the sound the game has). Then the dreamengine cart is optional.
+  - Instruments made here: a `presets-local` in the same format; a Playtime patch is either a named
+    preset + Playtime's slot / level / reverb, or a whole preset of its own. Local wins over
+    dreamengine's; a good local one gets promoted into dreamengine's file and the copy goes.
+    Nothing has to start in dreamengine.
+  Still open with it: presets spanning slots (the 303, the kits), and export-only vs read at runtime.
 - [ ] **I2. The first slice, ~10 presets**: the ones Playtime already copies, so they stop drifting:
   epiano/suitcase, the upright pizz (rootwalk uses it too), vibes, kalimba, the 303, 3-4 drum skins.
   Written by hand at first; for more, a probe cart per preset that dumps the slot's real state (DE_TRACE).
