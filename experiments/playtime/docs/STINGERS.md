@@ -80,5 +80,5 @@ Keep the options open and get the feel by playing, alone and with the kids. Like
   - Checked live in wave: try at 9.08 s, the stinger on pianoLead at 9.41 / 9.57 / 10.04 (the next beat, then 16ths), C# D# F in Dbmaj9, and the lead silent in its window. `spec/music-stingers_spec.lua`.
   - Not yet: notes already ringing aren't choked.
 - [ ] **S2. Hear it offline.** render-music/music-when with events at given seconds (e.g. `EVENTS=20:found,31:found`), to check the timing and the notes in wave and bossa.
-- [ ] **S3. Variations and fatigue.** Several shapes per moment, picked without repeats; quieter on a repeat within a few seconds.
+- [ ] **S3. Variations and fatigue.** Mostly in S1 (the shuffled bag, softer when thick, one a bar). Left: shapes of its own per moment (a door's different from a snap's), which is question 3's motif.
 - [ ] **S4. The other moments**, and the jam answering them the same way (playtime-71's answerer).
