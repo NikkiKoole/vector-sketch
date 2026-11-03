@@ -158,8 +158,9 @@ local MAX_PEDAL_LINES = 12
 -- new rows into the old tables, and an old row's `visible` stays on whatever row lands in its place
 -- (2026-11-02: the whole panel hid behind 'off').
 -- The drum jam's picks (src/music-jam.lua, docs/DRUM-JAM.md): the bass's walk, its figure, how the
--- chords are played, how often the root moves. 'auto' = what the song rolled. Live (the walk from its next change), shown only while the jam
--- plays, kept in state.musicSettings.jam (a setup saves it: src/music-setups.lua's CHOICES).
+-- chords are played, how often the root moves. 'auto' = what the song rolled. Live (the walk from its
+-- next change), shown only while the jam plays, kept in state.musicSettings.jam (a setup saves it:
+-- src/music-setups.lua's CHOICES).
 local function jamRow(key, label, options)
     return { key = label, kind = 'choice', options = options, stepper = true,
         visible = function()
