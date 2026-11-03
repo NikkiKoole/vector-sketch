@@ -9,7 +9,7 @@ from PIL import Image, ImageFilter, ImageOps, ImageChops, ImageDraw
 
 src, outdir = sys.argv[1], sys.argv[2]
 name = sys.argv[3] if len(sys.argv) > 3 else os.path.splitext(os.path.basename(src))[0].replace(' ', '')
-SCALE = 0.5           # 300 dpi scans -> game size (the game's parts are ~250-500 px)
+SCALE = float(os.environ.get('SCALE', 0.5))  # 300 dpi scans -> game size (the game's parts are ~250-500 px)
 MERGE = 4             # px (at game size): strokes this close are one part
 MIN_AREA = 400        # px of ink: smaller is a speck
 CLOSE = 9             # px: gaps in a line up to this are closed before the mask is filled
@@ -21,7 +21,7 @@ INTO = float(os.environ.get('INTO', 0.6))
 # open (no mask) / mask (a mask even when it's thin)
 FILL = dict(kv.split(':') for kv in os.environ.get('FILL', '').split(',') if ':' in kv)  # how far into the line the mask stops, as a share of half its width
 SMOOTH = 2.5          # the mask's edge smoothing (a blur radius, then cut)
-OPEN_BELOW = 0.07     # under this share of the shape enclosed (not line), a part is open: no mask
+OPEN_BELOW = float(os.environ.get('OPEN_BELOW', 0.07))  # under this share enclosed (not line): open, no mask
 SPECK = 60            # px: ink islands smaller than this are dust
 PAD = 8               # px of transparent margin around a part
 
@@ -132,6 +132,9 @@ def keep_big(img, minimum):
     return only(img, [r for r in regions(img) if len(r) >= minimum])
 
 os.makedirs(outdir, exist_ok=True)
+# for tools/scan2tex: the sheet as the parts see it (light flattened), and a list of the parts (parts.json)
+g.save(os.path.join(outdir, '_sheet.png'))
+listing = []
 k = 0
 for (x0, y0, x1, y1, n, own) in sorted(parts, key=lambda p: (p[1] // 60, p[0])):
     if x0 <= 2 or y0 <= 2 or x1 >= w - 3 or y1 >= h - 3: continue  # the scanner's paper edge, not a drawing
@@ -177,7 +180,71 @@ for (x0, y0, x1, y1, n, own) in sorted(parts, key=lambda p: (p[1] // 60, p[0])):
     outline.save(os.path.join(outdir, '%s-%02d.png' % (name, k)))
     if has_inside:
         mask.convert('RGB').save(os.path.join(outdir, '%s-%02d-mask.png' % (name, k)))
+    listing.append({ 'id': '%s-%02d' % (name, k), 'box': box, 'w': a.width, 'h': a.height, 'mask': has_inside,
+                     'inside': inside_px / max(1, shape_px), 'fill': fill })
     print('%s-%02d %dx%d  %s (inside %d%%)%s' % (name, k, a.width, a.height,
           'mask' if has_inside else 'no mask: open', 100 * inside_px // max(1, shape_px),
           '' if fill == 'auto' else '  [FILL ' + fill + ']'))
+# LOOKS LIKE (Nikki: "a check that it won't add similar or identical things, or asks"): each part's
+# silhouette against every texture already in the game and the sheet's other parts. A silhouette: the
+# mask (or the line, for an open part), cropped, fit into SIG x SIG, compared by overlap (IoU), turned
+# and mirrored (the game's 'r' parts are mirrored). A re-import of the same drawing scores ~0.95+; two
+# ovals can score high too, so the tool asks, it doesn't refuse.
+import numpy as np, glob
+SIG = 40
+SIMILAR = float(os.environ.get('SIMILAR', 0.85))
+def signature(img):
+    b = np.asarray(img.convert('L'), np.uint8) > 100
+    ys, xs = np.nonzero(b)
+    if len(xs) == 0: return None
+    b = b[ys.min():ys.max() + 1, xs.min():xs.max() + 1]
+    h, w = b.shape; k = SIG / max(w, h)
+    small = Image.fromarray((b * 255).astype(np.uint8)).resize((max(1, round(w * k)), max(1, round(h * k))), Image.BILINEAR)
+    out = np.zeros((SIG, SIG), bool); sw, sh = small.size
+    out[(SIG - sh) // 2:(SIG - sh) // 2 + sh, (SIG - sw) // 2:(SIG - sw) // 2 + sw] = np.asarray(small) > 127
+    return out
+def variants(sig):
+    out = []
+    for flip in (sig, sig[:, ::-1]):
+        for r in range(4): out.append(np.rot90(flip, r))
+    return out
+def iou(a, b):
+    inter = np.logical_and(a, b).sum(); union = np.logical_or(a, b).sum()
+    return inter / union if union else 0
+def silhouette_of(line_img, mask_img):  # the shape: the mask, else the line (grown a little, so thin lines count)
+    if mask_img is not None: return signature(mask_img)
+    return signature(line_img.filter(ImageFilter.MaxFilter(5)))
+textures = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'textures')
+known = []
+for f in glob.glob(os.path.join(textures, '*.png')) + glob.glob(os.path.join(textures, '*', '*.png')):
+    if f.endswith('-mask.png') or '/scantest/' in f: continue
+    rel = os.path.relpath(f, textures)[:-4]
+    m = f[:-4] + '-mask.png'
+    try:
+        line_img = Image.open(f).getchannel('A') if Image.open(f).mode in ('RGBA', 'LA') else Image.open(f).convert('L')
+        sig = silhouette_of(line_img, Image.open(m).convert('L') if os.path.exists(m) else None)
+    except Exception:
+        continue
+    if sig is not None: known.append((rel, sig))
+mine = []
+for entry in listing:
+    m = os.path.join(outdir, entry['id'] + '-mask.png')
+    line_img = Image.open(os.path.join(outdir, entry['id'] + '.png')).getchannel('A')
+    mine.append(silhouette_of(line_img, Image.open(m).convert('L') if os.path.exists(m) else None))
+for i, entry in enumerate(listing):
+    sig = mine[i]; found = []
+    if sig is not None:
+        vs = variants(sig)
+        for rel, other in known + [('(this sheet) ' + listing[j]['id'], mine[j]) for j in range(len(listing)) if j != i and mine[j] is not None]:
+            score = max(iou(v, other) for v in vs)
+            if score >= SIMILAR: found.append({ 'name': rel, 'score': round(float(score), 3) })
+    found.sort(key=lambda f: -f['score'])
+    entry['similar'] = found[:4]
+import json
+with open(os.path.join(outdir, '_parts.json'), 'w') as f:
+    json.dump({ 'name': name, 'sheet': [g.width, g.height], 'scale': SCALE, 'paper': paper, 'ink': ink,
+                'parts': listing, 'known': len(known) }, f)
+for entry in listing:
+    if entry['similar']:
+        print('  %s looks like %s' % (entry['id'], ', '.join('%s %d%%' % (f['name'], f['score'] * 100) for f in entry['similar'])))
 print('paper %d, ink %d; %d parts' % (paper, ink, k))

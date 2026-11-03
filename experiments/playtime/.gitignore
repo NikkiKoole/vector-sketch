@@ -9,3 +9,4 @@ native/ios/love/
 native/ios/build/
 native/ios/flap.love
 textures/scantest/
+!tools/

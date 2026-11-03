@@ -107,6 +107,17 @@ snapshot for the moves, MEASURING.md) and both builds working.
   least, the soft fringe counted as line (the photo's upper lip had colour at its line's edge). Shapes
   that ALMOST close are Nikki's call per part ("it depends"): FILL='name-05:close,name-01:open', auto /
   close (the line's hull: the opening drawn shut) / open (no mask) / mask; in the LÖVE tool a click.
+  THE TOOL (2026-11-03): `love tools/scan2tex` (from a terminal: it runs claudetools/scan2tex.py with
+  the python3 that has Pillow and numpy). Drop a photo or scan; the sheet shows with its parts boxed,
+  the selected one baked large. Enter names it, f fill, r turns 90°, x skips; the sheet's settings
+  (size, mask inset, into the line, open below) with - / +; ctrl-s writes the named parts into
+  textures/ (turned by copying pixels: a canvas lost the white under the transparency). Per sheet it
+  remembers the names and picks (its save folder's sheets.json). LOOKS LIKE (Nikki: "a check that it
+  won't add similar or identical things, or asks"): every part's silhouette against the game's 213
+  textures and the sheet's other parts, overlap (IoU) turned and mirrored, 85%+ listed with a picture;
+  saving one of those, or over an existing name, asks (ctrl-s again). `--test <file>` /
+  `--test-save <file>` run it without clicking (a screenshot in its save folder). Not yet: a size per
+  part, writing into a subfolder, the catalogs (shape-catalogs.lua) learning the new names.
 - [ ] **AB2. Keep the scans.** `~/Projects/mipo-art/scans/`, laid out like `textures/`, backed up
   (a cloud folder or a disk). New drawings from now on; old papers rescanned when a part is touched.
 - [ ] **AB3. Prefabs, setups and saved scenes into the repo.** The game reads `library/` and music
