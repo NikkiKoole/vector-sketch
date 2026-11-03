@@ -60,7 +60,7 @@ Two functions and a settings panel, in `src/music-events.lua` (new), registered 
 - [ ] **MW3. Mipos move to the music.** On the kick a nod or a small bounce (mipo-actions' breathe),
   on the drop a jump, idle Mipos only. The setting row: off / on. (DRUM-JAM J5's dance.)
 - [ ] **MW4. Stingers for moments.** A Mipo found, a door opened, a toy snapped in place: a short phrase
-  in the key on the next beat, in the composed styles too.
+  in the key on the next beat, in the composed styles too. Research and the open questions: docs/STINGERS.md (2026-11-03).
 - [ ] **MW5. Each Mipo a part.** A Mipo held or played with leads a layer (the one you hold plays the
   bass louder, or the tune); far from the camera, quieter. Ties into the Mipo band.
 - [ ] **MW6. The world's state as music.** Not events but how things are: how many Mipos are awake,
