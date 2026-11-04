@@ -60,6 +60,11 @@ MACHINE's voices: an 808's long kick and cowbell, a 909's hats. dreamengine has 
 carts, and each voice is a recipe of several layered notes. Two ways in, decided at J4:
 - **Port the recipes to Lua patches** in synth.lua (each voice = one or a few patches + how to fire them).
   Stays inside the existing patch / slot pool machinery; costs slots (48 are already full, J4 must budget).
+  Cheaper since dreamengine 409701fd: a booked note picks its own filter TYPE (`opts.filter` = 'high' /
+  'band' / 'low' / 'off', in synth.scheduleAt; checked in the game 2026-11-04), next to cutoff (octaves),
+  release, damp and gain. So a kit's noise voices (hats high-passed, clap band-passed, hiss low-passed) can
+  share ONE noise slot; only the decay stays the slot's, so they get re-voiced, not copied. The same for a
+  funk guitar layer (muted scratches thin, stabs band-passed: dreamengine's wahhand, 6 slots for 18).
 - **Expose the banks through `native/desound/desound.c`** (a C call per hit: `tr808_fire(role, …)`).
   Faithful by construction and no slots spent in Lua, but new C surface on every platform (dylib, iOS, web).
 Until then the jam plays Playtime's drum patches; enough to hear whether the arrangement works.
