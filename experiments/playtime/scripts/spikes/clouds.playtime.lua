@@ -75,7 +75,8 @@ local function clouds()
     b.weather = b.weather or 1
     b.settings = b.settings or {}
     -- Nikki's settings (2026-11-03): no strokes, hairs or grain, strong light
-    local defaults = { wind = 1, morph = 1, strokes = 0, hair = 0, grain = 0, light = 2 }
+    local defaults = { wind = 1, morph = 1, strokes = 0, hair = 0, grain = 0, light = 2, cotton = 1,
+        back = 0.84, front = 1.12, behind = 40, infront = 110, blades = 1 }
     for key, v in pairs(defaults) do
         if b.settings[key] == nil then b.settings[key] = v end
     end
@@ -237,18 +238,114 @@ local function buildGround(b)
     fixture:setFriction(0.8)
 end
 
-local groundMesh
-local function buildGroundMesh()
-    local verts = {}
-    local top = { 0.30, 0.62, 0.22 }
-    local bot = { 0.04, 0.30, 0.13 }
-    for x = -GROUND_W / 2, GROUND_W / 2, GROUND_STEP do
+-- The ground a little 2.5D, as in physics-testbed's downhill (renderJoy.lua drawHillGround): the
+-- top of the ground seen from a little above, then the side face down, in Nikki's grass patterns
+-- over a light grass colour; a row of grass blades at the back (behind the Mipos) and one at the
+-- front edge (in front of their feet). And the perspective of scrolling-world's ground plane
+-- (src/groundplane.lua: the back edge through a far camera layer, the front through a near one):
+-- the back edge is further away, so it's drawn pulled in towards the middle of the view (K_BACK),
+-- the front edge nearer, pushed out (K_FRONT); the line the Mipos stand on in between stays. A pan
+-- moves the back slower than the front, and from higher up you see more of the top.
+-- set each frame from the panel (planeFrom): the depths of the back and front edges, how far
+-- behind and in front of the line they are (a little ground even at eye level), the blades' size
+local K_BACK, K_FRONT = 0.84, 1.12
+local BACK, FRONT = 40, 110
+local BLADE_SIZE = 1
+local function planeFrom(set)
+    K_BACK, K_FRONT = set.back, set.front
+    BACK, FRONT, BLADE_SIZE = set.behind, set.infront, set.blades
+end
+local LIGHT_GRASS = { 0x86 / 255, 0xa5 / 255, 0x42 / 255 }
+local DARK_GRASS = { 0x2a / 255, 0x5b / 255, 0x3e / 255 }
+local topPattern = love.graphics.newImage('textures/world/grasspattern2.png')
+local sidePattern = love.graphics.newImage('textures/world/grasspattern4.png')
+topPattern:setWrap('repeat', 'repeat')
+sidePattern:setWrap('repeat', 'repeat')
+local blades = love.graphics.newImage('textures/world/sprieten.png')
+-- the blade atlas's quads and base pivots (src/grass.lua, measured in physics-testbed)
+local BLADES = {
+    { 0, 0, 49, 192, 22, 185 }, { 51, 164, 40, 197, 12, 187 }, { 51, 0, 41, 162, 19, 144 },
+    { 94, 0, 46, 186, 25, 176 }, { 0, 194, 47, 231, 27, 224 }, { 94, 188, 45, 236, 16, 210 },
+    { 142, 197, 47, 208, 22, 190 }, { 142, 0, 52, 195, 30, 173 },
+}
+local bladeQuads = {}
+for i, q in ipairs(BLADES) do bladeQuads[i] = love.graphics.newQuad(q[1], q[2], q[3], q[4], blades:getDimensions()) end
+local backBlades = love.graphics.newSpriteBatch(blades, 1000, 'stream')
+local frontBlades = love.graphics.newSpriteBatch(blades, 1000, 'stream')
+
+local STRIP_MAX = 200
+local topMesh = love.graphics.newMesh(STRIP_MAX * 2, 'strip', 'stream')
+local sideMesh = love.graphics.newMesh(STRIP_MAX * 2, 'strip', 'stream')
+local BAND_DEPTH = 700             -- how deep the top is, for its pattern (foreshortened by the strip)
+
+-- a point at depth k (1 = the line the Mipos stand on), as it shows through the real camera
+local function project(x, y, k, cx, cy)
+    return cx + (x - cx) * k, cy + (y - cy) * k
+end
+
+-- the x's to make the ground at: wide enough that the pulled-in back edge still fills the view
+local function groundXs(k)
+    local w, _, cx, _, scale = view()
+    local half = w / 2 / scale / k + GROUND_STEP
+    local step = math.max(100, 2 * half / (STRIP_MAX - 2))
+    return math.floor((cx - half) / step) * step, cx + half, step
+end
+
+local function drawGround()
+    local _, _, cx, cy = view()
+    local x0, x1, step = groundXs(K_BACK)
+    local tw, th = topPattern:getWidth() * 1.6, topPattern:getHeight() * 1.6
+    local sw, sh = sidePattern:getWidth() * 1.4, sidePattern:getHeight() * 1.4
+    local top, side = {}, {}
+    for x = x0, x1, step do
         local y = groundAt(x)
-        local n = love.math.noise(x * 0.002, 4.4) * 0.08
-        verts[#verts + 1] = { x, y, 0, 0, top[1] + n, top[2] + n, top[3], 1 }
-        verts[#verts + 1] = { x, y + 2600, 0, 0, bot[1], bot[2], bot[3], 1 }
+        local bx, by = project(x, y - BACK, K_BACK, cx, cy)
+        local fx, fy = project(x, y + FRONT, K_FRONT, cx, cy)
+        top[#top + 1] = { bx, by, x / tw, 0, 1, 1, 1, 1 }
+        top[#top + 1] = { fx, fy, x / tw, BAND_DEPTH / th, 1, 1, 1, 1 }
+        side[#side + 1] = { fx, fy, fx / sw, fy / sh, 1, 1, 1, 1 }
+        side[#side + 1] = { fx, fy + 2600, fx / sw, (fy + 2600) / sh, 1, 1, 1, 1 }
     end
-    groundMesh = love.graphics.newMesh(verts, 'strip', 'static')
+    topMesh:setVertices(top)
+    topMesh:setDrawRange(1, #top)
+    sideMesh:setVertices(side)
+    sideMesh:setDrawRange(1, #side)
+    -- the side face: a little darker than the top, the pattern twice
+    sideMesh:setTexture()
+    love.graphics.setColor(LIGHT_GRASS[1] * 0.82, LIGHT_GRASS[2] * 0.85, LIGHT_GRASS[3] * 0.8, 1)
+    love.graphics.draw(sideMesh)
+    sideMesh:setTexture(sidePattern)
+    love.graphics.setColor(DARK_GRASS[1], DARK_GRASS[2], DARK_GRASS[3], 0.55)
+    love.graphics.draw(sideMesh)
+    love.graphics.setColor(DARK_GRASS[1], DARK_GRASS[2], DARK_GRASS[3], 0.3)
+    love.graphics.draw(sideMesh)
+    -- the top
+    topMesh:setTexture()
+    love.graphics.setColor(LIGHT_GRASS[1], LIGHT_GRASS[2], LIGHT_GRASS[3], 1)
+    love.graphics.draw(topMesh)
+    topMesh:setTexture(topPattern)
+    love.graphics.setColor(DARK_GRASS[1], DARK_GRASS[2], DARK_GRASS[3], 0.8)
+    love.graphics.draw(topMesh)
+    love.graphics.setColor(1, 1, 1, 1)
+end
+
+-- a row of blades along the ground at depth k, yOff from the line; their height and drawing from
+-- noise on x, so they stay put; further back is smaller
+local function bladeRow(batch, k, yOff, seedP, size, time)
+    local _, _, cx, cy = view()
+    local x0, x1, step = groundXs(k)
+    step = math.max(55, step / 3)
+    batch:clear()
+    for x = math.floor(x0 / step) * step, x1, step do
+        local px, py = project(x, groundAt(x) + yOff, k, cx, cy)
+        local hh = 0.3 + love.math.noise(x / 1000, seedP) * 0.9
+        local i = math.min(#BLADES, 1 + math.floor(love.math.noise(x * 0.37, seedP * 3.1) * #BLADES))
+        local q = BLADES[i]
+        local ang = math.sin(hh * 9) * 0.1 + math.sin(time * 1.3 + x * 0.003) * 0.06
+        local sz = size * k * BLADE_SIZE
+        batch:add(bladeQuads[i], px, py, ang, sz, sz * hh, q[5], q[6])
+    end
+    love.graphics.draw(batch)
 end
 
 local function aliveMipos(b)
@@ -305,6 +402,7 @@ uniform float strokes;
 uniform float grain;
 uniform float light;
 uniform float alphaMul;
+uniform float cotton;    // 0 real clouds .. 1 cotton wool balls
 varying vec2 q0;
 
 #ifdef VERTEX
@@ -337,6 +435,19 @@ float fbm(vec2 p) {
         a *= 0.5;
     }
     return s / 0.9375;
+}
+
+// cotton wool: soft strands in three wandering directions, broad enough to be fibres, not specks
+float wisps(vec2 p) {
+    float s = 0.0;
+    // short and tangled: the direction turns quickly, the strands are only a little longer than wide
+    for (int i = 0; i < 4; i++) {
+        float a = float(i) * 1.57 + seed + (vn(p * 3.0 + float(i) * 3.0) - 0.5) * 6.0;
+        vec2 d = vec2(cos(a), sin(a));
+        vec2 r = vec2(dot(p, d), dot(p, vec2(-d.y, d.x)));
+        s += vn(r * vec2(9.0, 22.0) + float(i) * 11.0);
+    }
+    return s / 4.0;
 }
 
 #define LOBES 7
@@ -463,15 +574,28 @@ vec4 effect(vec4 color, Image tex, vec2 uv, vec2 sc) {
         float E = heap(q, sp, t);
         float Esun = heap(q + sunDir * 0.16, sp + sunDir * 0.16, t);
         float Eup = heap(q + vec2(0.0, -0.16), sp + vec2(0.0, -0.16), t);
-        float dens = smoothstep(0.0, 0.3, E);
+        // cotton: the edge pulled in and out by the fibres, softer, a few loose ones just past it
+        float wv = wisps(sp);
+        float lumps = fbm(sp * 3.5 + t * 0.02) - 0.5;              // a lumpy, pulled outline
+        float Ec = E + cotton * (lumps * 0.35 + (wv - 0.5) * 0.3);
+        float dens = smoothstep(0.0, mix(0.3, 0.45, cotton), Ec);
+        float halo = cotton * smoothstep(-0.18, 0.0, Ec) * (1.0 - smoothstep(0.0, 0.12, Ec))
+                   * smoothstep(0.5, 0.75, wv) * 0.6;
+        dens = max(dens, halo);
         float st0 = fbm(vec2(sp.x * 0.8, sp.y * 8.0));
         dens *= mix(1.0, smoothstep(0.12, 0.85, st0) * 1.35, 0.6 * strokes);
-        dens *= smoothstep(baseLine + 0.06, baseLine - 0.04, q.y + rag * 0.05);   // the flat bottom
-        dens = clamp(dens, 0.0, 1.0) * 0.92;
+        // the flat bottom of a real cloud; a cotton ball is round all over
+        float cut = smoothstep(baseLine + 0.06, baseLine - 0.04, q.y + rag * 0.05);
+        dens *= mix(cut, 1.0, cotton * 0.85);
+        dens = clamp(dens, 0.0, 1.0) * mix(0.92, 0.97, cotton);
         // lit where the shape ends towards the sun and on top; grey towards the bottom
         float lit = 0.55 + light * ((E - Esun) * 0.9 + (E - Eup) * 0.6);
         lit -= smoothstep(-0.2, baseLine, q.y) * 0.3 * light;
+        // cotton: white on top, a soft warm grey underneath and in the folds, not a blue belly
+        lit = mix(lit, 0.68 + (lit - 0.55) * 0.75 + (E - 0.4) * 0.25, cotton);
+        belly = mix(belly, mix(vec3(0.83, 0.82, 0.84), vec3(0.6, 0.62, 0.66), rain), cotton);
         col = mix(belly, top, clamp(lit, 0.0, 1.0));
+        col *= 1.0 - cotton * 0.1 * (1.0 - wv);
         col += lining * sunNear * (1.0 - smoothstep(0.0, 0.4, E)) * 0.55;
         col *= dens;
         a = dens;
@@ -506,7 +630,6 @@ function s.onStart()
     worldState.paused = false
     local b = clouds()
     buildGround(b)
-    buildGroundMesh()
     b.mipos = aliveMipos(b)
     if #b.mipos == 0 then
         spawnMipo(b, -900, -1400)
@@ -683,6 +806,7 @@ local function sendCommon(b)
     cloudShader:send('strokes', set.strokes)
     cloudShader:send('grain', set.grain)
     cloudShader:send('light', set.light)
+    cloudShader:send('cotton', set.cotton)
     cloudShader:send('hazeColor', { 0.85, 0.92, 0.86 })
 end
 
@@ -801,8 +925,10 @@ local function drawShadows(b)
                 local u = (x - wx) / rx
                 local al = strength * (1 - u * u) ^ 1.5
                 local y = groundAt(x)
-                verts[#verts + 1] = { x, y, 0, 0, 0.02, 0.1, 0.05, al }
-                verts[#verts + 1] = { x, y + 520, 0, 0, 0.02, 0.1, 0.05, 0 }
+                local _, by = project(x, y - BACK, K_BACK, cx, cy)
+                local _, fy = project(x, y + FRONT, K_FRONT, cx, cy)
+                verts[#verts + 1] = { x, by, 0, 0, 0.02, 0.1, 0.05, al }
+                verts[#verts + 1] = { x, fy + 520, 0, 0, 0.02, 0.1, 0.05, 0 }
             end
             shadowMesh:setVertices(verts)
             shadowMesh:setDrawRange(1, #verts)
@@ -828,9 +954,11 @@ function s.drawBelow()
     love.graphics.pop()
     drawSky(b, false)
     -- the ground, in the world
-    love.graphics.setColor(1, 1, 1, 1)
-    if groundMesh then love.graphics.draw(groundMesh) end
+    planeFrom(b.settings)
+    drawGround()
     drawShadows(b)
+    love.graphics.setColor(DARK_GRASS[1], DARK_GRASS[2], DARK_GRASS[3], 1)
+    bladeRow(backBlades, K_BACK + 0.02, -BACK, 1, 1.5, b.time)
     love.graphics.setColor(1, 1, 1, 1)
     -- the Mipos draw themselves; the plain ground line would show
     if state.playMode then
@@ -852,6 +980,9 @@ function s.draw()
         love.graphics.setColor(0.85, 0.92, 1, p.life * 2.4)
         love.graphics.ellipse('fill', p.x, p.y - 6, 22 * (1.3 - p.life * 2), 7)
     end
+    -- the front row a little lighter than the band, so it stands out in front of it
+    love.graphics.setColor(LIGHT_GRASS[1] * 1.15, LIGHT_GRASS[2] * 1.12, LIGHT_GRASS[3] * 0.95, 1)
+    bladeRow(frontBlades, K_FRONT, FRONT, 2, 2.0, b.time)
     drawSky(b, true)
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.setLineWidth(1)
@@ -864,7 +995,8 @@ function s.drawUI()
     local BH, pad, w = 36, 8, 400
     local rows = {
         { 'wind', -3, 3 }, { 'morph', 0, 4 }, { 'strokes', 0, 2 },
-        { 'grain', 0, 2 }, { 'light', 0, 2 },
+        { 'grain', 0, 2 }, { 'light', 0, 2 }, { 'cotton', 0, 1 },
+        { 'back', 0.5, 1 }, { 'front', 1, 1.6 }, { 'behind', 0, 400, 1 }, { 'infront', 0, 400, 1 }, { 'blades', 0, 3 },
     }
     local h = (BH + pad) * (#rows + 2) + pad + 24
     local _, sh = love.graphics.getDimensions()
@@ -875,7 +1007,8 @@ function s.drawUI()
         for _, row in ipairs(rows) do
             local key = row[1]
             local x, y = ui.nextLayoutPosition(layout, w - 20, BH)
-            local v = ui.sliderWithInput('clouds' .. key, x, y, 180, row[2], row[3], b.settings[key], nil, 1)
+            -- row[4] = 1: whole numbers; else two decimals
+            local v = ui.sliderWithInput('clouds' .. key, x, y, 180, row[2], row[3], b.settings[key], nil, row[4])
             if v then b.settings[key] = v + 0 end
             ui.label(x + 280, y, key)
         end

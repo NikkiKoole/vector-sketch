@@ -2,6 +2,8 @@
 
 status: parked — kept as a spike: "pretty good" (tried 2026-11-03: shader clouds after Puppetmaker 2's, then the real kinds in layers)
 
+**Nikki's favourites** (2026-11-04): the sea, the burrow and the clouds inspired her most of all the spikes. Hand-drawn assets come first from now on; these are where a shader earns its place.
+
 The spike is `scripts/spikes/clouds.playtime.lua` (scene `clouds`). It started from Puppetmaker 2's
 brushy clouds (`../puppet-maker2/assets/world/clouds1.png`, `worldparts/clouds3.png`): could a
 shader make them, many of them, moving? Then: real clouds in the layers of the atmosphere.
@@ -34,6 +36,15 @@ pushed back; the real kinds at their heights instead of a band); the middle hill
 a pan (fixed).
 
 The noise and the shapes are written here, nothing copied from Shadertoy (SHADER-LOOKS.md).
+
+- **Cotton** (2026-11-04, slider, default 1): cotton wool balls after mood picture 11: a lumpy
+  edge with short tangled fibres, round all over (no flat bottom), white with a warm grey
+  underneath instead of a blue belly. 0 is the real clouds.
+- **The ground a little 2.5D** (2026-11-04): physics-testbed downhill's top band and side face in
+  Nikki's grass patterns (`textures/world/grasspattern2/4.png`, from the testbed), a row of blades
+  behind the Mipos and one in front of their feet; with scrolling-world's ground-plane perspective:
+  the back edge further away (pulled in to the middle of the view), the front nearer, the line the
+  Mipos stand on in between. Sliders: back, front, behind, infront, blades.
 
 Not done / open:
 - [ ] On the phone: not measured. Each cloud runs fbm a few times per pixel (heaped ones three
