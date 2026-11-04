@@ -128,6 +128,9 @@ Until then the jam plays Playtime's drum patches; enough to hear whether the arr
     normalized on its own: compare inside a file). Nikki picks a letter per role; then a `best` table in
     drum-machines.lua (role -> source) and KITS -> best. Not now (2026-11-05: "don't feel like doing this
     now"); the auditions are ready when she does.
+  - [ ] J4c. ELECTRO 3 HAS NO HATS: its patterns are kick and snare only (drum-patterns.json), so an
+    Electro song on that family has nothing on top, on the 808 too. Either leave that family out of the
+    pick, or give the jam a hat layer of its own where a family has none. Quick; noted 2026-11-05.
   - [ ] J4b. HOW A SONG GETS ITS KIT. Having heard the auditions, Nikki likes all three kits (old, 808, 909;
     2026-11-05), so maybe no best-of at all. Proposed: auto = the kit rolled per song like the genre and
     family, leaving out a kit where it didn't fit (Disco: the old drums, she preferred them to the 909),
