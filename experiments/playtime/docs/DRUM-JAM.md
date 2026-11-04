@@ -124,6 +124,12 @@ Until then the jam plays Playtime's drum patches; enough to hear whether the arr
     normalized on its own: compare inside a file). Nikki picks a letter per role; then a `best` table in
     drum-machines.lua (role -> source) and KITS -> best. Not now (2026-11-05: "don't feel like doing this
     now"); the auditions are ready when she does.
+  - [ ] J4b. HOW A SONG GETS ITS KIT. Having heard the auditions, Nikki likes all three kits (old, 808, 909;
+    2026-11-05), so maybe no best-of at all. Proposed: auto = the kit rolled per song like the genre and
+    family, leaving out a kit where it didn't fit (Disco: the old drums, she preferred them to the 909),
+    plus a 'jam kit' row (auto / old / 808 / 909) to pin one; it would replace the per-genre KITS.
+    LATER: it waits for the bigger "band shape in the editor" work (MUSIC-IDEAS.md: lots of UI moving,
+    not specced yet).
 - [x] **J7. The auto-accompaniment bass** (2026-11-03: the walk is done; riffs go on in J8) (Nikki: "bass loops that change root, transposed every n
   bars"; the idea from Aaron Batzdorff's one-note synth bass trick (TikTok and YouTube @aaronbatzdorff): a Keystep
   Pro transposing a one-note sequence on a Model D, also dreamengine's `onenote.c` cart). The organ
