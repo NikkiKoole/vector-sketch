@@ -133,7 +133,8 @@ The short list after a long day of styles; the details live in the entries furth
 - [ ] **Jazz quartet**: piano, bass, drums and one horn or vibes. Room to breathe, trading solos.
 
 ## Small ideas
-- [ ] **A note's own filter type, parked** (2026-11-05: built, checked, unused). `synth.scheduleAt(...,
+- [x] **A note's own filter type** (2026-11-05: built, checked; first used the same day by the drum jam's
+  'funk guitar' chord figure, DRUM-JAM.md J9d). `synth.scheduleAt(...,
   { filter = 'band' })` ('low' / 'high' / 'band' / 'notch' / 'off' or a FILTER_* number; dreamengine
   409701fd, NoteOpts.filter) gives one booked note its own filter type on the slot's cutoff. Pays off for
   an instrument whose strokes want different filters: a funk guitar in the drum jam (muted scratches thin,

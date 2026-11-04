@@ -118,6 +118,11 @@ lib.CHORD_FIGURES = {
     { name = 'funk stabs', steps = '....x..x.x....x.', patch = 'clav', vol = 3, lo = 55, hi = 76, roll = 0.004 },
     { name = 'skank', steps = '....x-......x-..', patch = 'jabGuitar', vol = 1, lo = 60, hi = 79, roll = 0.008 },
     { name = 'strum', steps = 'x--x--x-x--x--x-', patch = 'guitar', vol = 1, lo = 52, hi = 76, roll = 0.022 },
+    -- dreamengine's wahhand: a two-bar groove of strokes, S a chord stab (band-passed, a quack), x a muted
+    -- scratch (high-passed, damped), H a held chord (low-passed, round), on the four funkString patches
+    -- (one per string, synth.lua) with a wah foot (bookFunkGuitar)
+    { name = 'funk guitar', groove = { 'S.xSx.xSx.S.xSxx', 'S.xSx.xS..x.H...' }, lo = 55, hi = 76,
+      strings = { 'funkString1', 'funkString2', 'funkString3', 'funkString4' } },
 }
 lib.CHORDS_BY_GENRE = { Disco = 'disco stabs', Funk = 'funk stabs', Breaks = 'funk stabs', Electro = 'pad',
                         ['Hip Hop'] = 'pad', Brushes = 'pad' }
@@ -317,13 +322,52 @@ function lib.ahead(jam)
     return nxt.walk[nxt.step], 1
 end
 
-local function bookKeys(play, synth, song, t0, jam, kind, cut)
+-- The funk guitar (wahhand): each stroke on the voicing's strings, a few ms apart, downstrokes on the
+-- 8ths (low string first), upstrokes on the 16ths between (an upstroke scratch catches only the top
+-- strings); each string's note with its stroke's own filter type, damping and cutoff (synth.scheduleAt's
+-- opts). The wah foot: heel on each beat, toe on each 'and', ramping between, on every string's cutoff.
+local STROKES = {
+    S = { filter = 'band', damp = 0.30, cutoff = -0.2, ms = 150, force = 0.90 },
+    x = { filter = 'high', damp = 0.85, cutoff = -0.5, morph = 0.70, ms = 45, force = 0.55 },
+    H = { filter = 'low', cutoff = 0.6, ms = 1300, force = 0.90 },
+}
+local function bookFunkGuitar(play, synth, song, t0, figure, voicing, b, cut)
+    local groove = figure.groove[(b - 1) % #figure.groove + 1]
+    local r = stream(song.seed + b * 7919, 13)
+    local n = math.min(#voicing, #figure.strings)
+    local sixteenth = song.beat / 4
+    for s = 0, cut - 1 do
+        local t = stepTime(song, t0, s)
+        local stroke = STROKES[groove:sub(s + 1, s + 1)]
+        if stroke then
+            local down = s % 2 == 0
+            local lo = (not down and stroke == STROKES.x) and math.max(1, n - 2) or 1
+            local force = 0.75 + 0.20 * r()
+            local at = t + (r() - 0.5) * 0.006
+            for i = 0, n - lo do
+                local k = down and lo + i or n - i
+                local opts = { filter = stroke.filter, damp = stroke.damp, cutoff = stroke.cutoff,
+                               morph = stroke.morph, gain = force * stroke.force * (0.9 + 0.1 * r()) }
+                play(synth, 'keys', figure.strings[k], at + i * 0.005 + (r() - 0.5) * 0.003, voicing[k], 7,
+                     stroke.ms, s, false, nil, opts)
+            end
+        end
+        if s % 2 == 0 and synth.laneAt then -- the wah foot
+            for k = 1, n do
+                synth.laneAt(figure.strings[k], t, 'cutoff', s % 4 == 2 and 0.9 or -0.7, sixteenth * 2000 * 0.9)
+            end
+        end
+    end
+end
+
+local function bookKeys(play, synth, song, t0, jam, kind, cut, b)
     cut = cut or 16
     local figure = picked(lib.CHORD_FIGURES, picks().chords)
         or picked(lib.CHORD_FIGURES, lib.CHORDS_BY_GENRE[jam.group]) or lib.CHORD_FIGURES[1]
     local root = (song.key + jam.root) % 12
     jam.voicing = theory.voiceChord(root, lib.KEYS_CHORDS[kind], figure.lo, figure.hi, jam.voicing)
     if not jam.voicing then return end
+    if figure.groove then return bookFunkGuitar(play, synth, song, t0, figure, jam.voicing, b or 1, cut) end
     local steps = figure.steps
     for s = 0, cut - 1 do
         if steps:sub(s + 1, s + 1) == 'x' then
@@ -541,7 +585,7 @@ function lib.bookBar(play, remember, synth, t0, song, b)
     -- the chords come in as a layer with the play level; picked in the panel they play from the next bar
     -- (Nikki: "it took super long before I heard the funk stabs": a calm room never asked for layer 3)
     local chordsPicked = picks().chords and picks().chords ~= 'auto'
-    if (jam.on.keys or chordsPicked) and not spot then bookKeys(play, synth, song, t0, jam, kind, cut) end
+    if (jam.on.keys or chordsPicked) and not spot then bookKeys(play, synth, song, t0, jam, kind, cut, b) end
     local fill = lastBar and (jam.on.snare or jam.mode == 'break')
     -- the family's own fill plays the whole bar, two phrase ends in three; the other third (and the build
     -- before a drop) is the jam's own run-up or tom roll (every Funk family has a written fill: before,

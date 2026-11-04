@@ -379,6 +379,18 @@ do
     P.tr909CrashNoise = p(76, 'NOISE', { 0, 807, 0, 320 }, { 1, 8600, 4 })
 end
 
+-- The drum jam's funk guitar (music-jam's 'funk guitar' chord figure), after dreamengine's wahhand cart:
+-- a guitar as its STRINGS, each a mono slot (a string rings once: strike it again and the old note stops,
+-- so a scratch cuts the stab ringing on it). One slot per string, not one per string per filter type: each
+-- stroke picks its own filter (NoteOpts.filter, synth.scheduleAt's opts.filter): scratches high-passed,
+-- stabs band-passed, a held note low-passed, all around the slot's 1800 Hz; the wah foot rides the cutoff
+-- lane. Four strings: the jam voices its chords in four. Slots 77-80. modes: [0] string weight, [1] click.
+for i = 1, 4 do
+    lib.patches['funkString' .. i] = { slot = 76 + i, wave = 'GUITAR', adsr = { 1, 0, 7, 260 },
+        harmonics = 0.35, timbre = 0.70, morph = 0.10, modes = { [0] = 0.40, [1] = 0.45 }, mono = true,
+        filter = { mode = 1, cutoff = 1800, resonance = 8 }, reverb = 0.10, level = 0.4 }
+end
+
 local CDEF = [[
 int  de_lua_init(void);
 void de_lua_tick(float dt);
