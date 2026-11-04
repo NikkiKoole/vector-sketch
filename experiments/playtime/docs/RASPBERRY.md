@@ -9,7 +9,10 @@ How it works (`src/mipo-raspberry.lua`): `raspberry.blow(instance)` first closes
 lips pressed onto a line through its corners), then slides the tongue out from under the teeth
 (the lips part a little in the middle to let it through; the teeth are drawn again over the
 tongue), a beat, the lips shake against each other while a pbbbbt plays, the tongue goes back
-in and the mouth opens again (Nikki: close first, then the tongue, then the rasps). It runs on the
+in and the mouth opens again (Nikki: close first, then the tongue, then the rasps).
+Every raspberry rolls its own: how far the tongue comes out (`reach`), how quick it comes, a
+short, medium or long buzz (`buzzKinds`), and now and then a slow pull back in (`slowIn`); the
+pbbbbt is one long sound faded out where that buzz ends. It runs on the
 face's thing like the voice's mouth flap (`mouthShapeVec`, plus `tongueOut` and `tongueBuzz`),
 so nothing is saved. The tongue is a `mouth-tongue` drawable from the lower lip decal, over the
 lower lip and under the upper one (`src/render/mouth.lua` drawTongue). The Mipo editor's

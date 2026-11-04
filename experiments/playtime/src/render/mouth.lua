@@ -448,7 +448,7 @@ local function drawTongue(d)
     local rootX = (p[5] + p[13]) / 2
     local rootY = p[6] + (p[14] - p[6]) * 0.3
     -- from inside the mouth (out = 0: nothing) to past the lower lip
-    local tipY = rootY + out * (p[14] - rootY + mouthW * lib.tongueLength)
+    local tipY = rootY + out * (p[14] - rootY + mouthW * lib.tongueLength * (thing.tongueReach or 1))
     local length = tipY - rootY
     if length <= 0 then return end
     local half = mouthW * lib.tongueWidth / 2
