@@ -134,17 +134,56 @@ local function keepingUp(cam, s, mx, my, grabX, grabY)
     return mathutils.clamp(2 - lag / near, 0, 1)
 end
 
--- Pan when the mouse, dragging something, is near the screen edge. Returns the pan in world units.
+-- How far into the edge margin a dragged thing is on one axis: the cursor, or the thing's own
+-- outline (lo..hi on the screen) if that's further out, so a Mipo held by its hand still keeps
+-- room on its other side. A thing too big for that (over 60% of the screen) goes by the cursor.
+local function rangeDepth(p, lo, hi, size, margin)
+    if not lo or hi - lo > size * 0.6 then return edgeDepth(p, size, margin) end
+    local l = edgeDepth(math.min(p, lo), size, margin)
+    local r = edgeDepth(math.max(p, hi), size, margin)
+    if l < 0 and r > 0 then return edgeDepth(p, size, margin) end
+    return l < 0 and l or r
+end
+
+-- The screen outline of a dragged body: the whole Mipo it's part of (pictures too), else itself.
+local function screenOutline(cam, body)
+    if not body then return nil end
+    local instance = mipoRegistry.getFromBody(body)
+    local bodies = {}
+    if instance and instance.parts then
+        for _, part in pairs(instance.parts) do
+            if alive(part.body) then bodies[#bodies + 1] = part.body end
+        end
+    else
+        bodies[1] = body
+    end
+    local x1, y1, x2, y2 = math.huge, math.huge, -math.huge, -math.huge
+    for _, b in ipairs(bodies) do
+        for _, fixture in ipairs(b:getFixtures()) do
+            local ax, ay, bx, by = fixture:getBoundingBox()
+            x1, y1 = math.min(x1, ax), math.min(y1, ay)
+            x2, y2 = math.max(x2, bx), math.max(y2, by)
+        end
+    end
+    if x1 > x2 then return nil end
+    local sx1, sy1 = cam:getScreenCoordinates(x1, y1)
+    local sx2, sy2 = cam:getScreenCoordinates(x2, y2)
+    return { math.min(sx1, sx2), math.min(sy1, sy2), math.max(sx1, sx2), math.max(sy1, sy2) }
+end
+
+-- Pan when the mouse, dragging something, is near the screen edge (or the dragged thing is: its
+-- screen `outline`, { x1, y1, x2, y2 }, optional). Returns the pan in world units.
 -- grabX/grabY: where the dragged thing is held (world); when it lags behind, the pan stops.
-function lib.edgePan(dt, mx, my, grabX, grabY)
+function lib.edgePan(dt, mx, my, grabX, grabY, outline)
     local s = lib.settings()
     if not s.edgePan then return 0, 0 end
     local cam = camera.getInstance()
     local w, h = love.graphics.getDimensions()
     local margin = math.max(1, s.edgeMargin)
     local speed = s.edgeSpeed * dt / cam.scale * keepingUp(cam, s, mx, my, grabX, grabY)
-    local dx = edgeDepth(mx, w, margin) * speed
-    local dy = edgeDepth(my, h, margin) * speed
+    local o = outline or {}
+    local dx = rangeDepth(mx, o[1], o[3], w, margin) * speed
+    local dy = rangeDepth(my, o[2], o[4], h, margin) * speed
     if dx ~= 0 or dy ~= 0 then
         local cx, cy = cam:getTranslation()
         cam:setTranslation(cx + dx, cy + dy)
@@ -173,7 +212,10 @@ end
 -- Looks where the target is going: a thrown or falling Mipo sits back from the middle, on the
 -- side it comes from (falling fast: high on the screen). The camera's catching up trails a
 -- moving target by v / speed, so the aim goes that much further on too; then at a steady speed
--- the target is the whole lead ahead of the middle. The aim is eased, so a throw doesn't jerk.
+-- the target is the whole lead ahead of the middle. The aim is eased, so a throw doesn't jerk;
+-- it starts from nothing after a drag (an old aim from before would point the wrong way).
+-- Whatever the speed, the target never gets nearer the edge than KEEP of the screen.
+local KEEP = 0.15
 local function follow(dt, cam, s, w, h)
     local body = lib.target()
     if not body then F.lead = nil; return end
@@ -184,7 +226,7 @@ local function follow(dt, cam, s, w, h)
     local maxX, maxY = w * s.maxLead / scale, h * s.maxLead / scale
     local aimX = mathutils.clamp(vx * s.lookAhead, -maxX, maxX) + vx / speed
     local aimY = mathutils.clamp(vy * s.lookAhead, -maxY, maxY) + vy / speed
-    local lead = F.lead or { aimX, aimY }
+    local lead = F.lead or { 0, 0 }
     local kl = 1 - math.exp(-dt * 4)
     lead[1] = lead[1] + (aimX - lead[1]) * kl
     lead[2] = lead[2] + (aimY - lead[2]) * kl
@@ -193,7 +235,10 @@ local function follow(dt, cam, s, w, h)
     local k = 1 - math.exp(-dt * speed)
     local zoneX = w * s.deadZone / scale * zoneAtSpeed(math.abs(vx) * scale)
     local zoneY = h * s.deadZone / scale * zoneAtSpeed(math.abs(vy) * scale)
-    cam:setTranslation(approach(cx, tx + lead[1], zoneX, k), approach(cy, ty + lead[2], zoneY, k))
+    cx, cy = approach(cx, tx + lead[1], zoneX, k), approach(cy, ty + lead[2], zoneY, k)
+    local m = math.min(w, h) * KEEP
+    local keepX, keepY = (w / 2 - m) / scale, (h / 2 - m) / scale
+    cam:setTranslation(mathutils.clamp(cx, tx - keepX, tx + keepX), mathutils.clamp(cy, ty - keepY, ty + keepY))
 end
 
 -- A scripted zoom (lib.zoomTo), eased; it wins over the zoom limits.
@@ -242,6 +287,7 @@ function lib.update(dt)
 
     local dragged = dragging()
     if dragged then
+        F.lead = nil
         -- a pointer joint's second anchor is the point held on the body
         local pj = pointerJoints.getPointerJointAttachedTo(dragged)
         local grabX, grabY
@@ -250,7 +296,7 @@ function lib.update(dt)
             grabX, grabY = ax, ay
         end
         local mx, my = love.mouse.getPosition()
-        lib.edgePan(dt, mx, my, grabX, grabY)
+        lib.edgePan(dt, mx, my, grabX, grabY, screenOutline(cam, dragged))
         if #pointerJoints.getInteractedWithPointer() > 0 then
             F.last = standIn(dragged)
             F.handsOff = false

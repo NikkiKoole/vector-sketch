@@ -65,6 +65,93 @@ describe('camera follow', function()
         assert.is_true(sy > 0, 'screen y ' .. sy)
     end)
 
+    it('never loses a body falling faster and faster, at any zoom', function()
+        local w, h = love.graphics.getDimensions()
+        for _, scale in ipairs({ 1, 0.25 }) do
+            cam:setScale(scale)
+            cam:setTranslation(0, 0)
+            state.cameraFollow.lead = nil
+            body:setPosition(0, 0)
+            local vx, vy = 300, 0
+            local worst = math.huge
+            for _ = 1, 600 do
+                vy = vy + 1960 / 60 -- gravity at 200 px per metre
+                body:setLinearVelocity(vx, vy)
+                local x, y = body:getPosition()
+                body:setPosition(x + vx / 60, y + vy / 60)
+                cameraFollow.update(1 / 60)
+                local sx, sy = cam:getScreenCoordinates(body:getPosition())
+                worst = math.min(worst, sx, sy, w - sx, h - sy)
+            end
+            assert.is_true(worst > h * 0.05, 'scale ' .. scale .. ': came within ' .. worst .. ' px of the edge')
+        end
+    end)
+
+    it('never loses a body thrown hard, even from near the edge', function()
+        local w, h = love.graphics.getDimensions()
+        for _, start in ipairs({ 0, 0.4 }) do -- from the middle, and from near the top
+            cam:setScale(0.25)
+            cam:setTranslation(0, 0)
+            state.cameraFollow.lead = nil
+            local x0, y0 = 0, -start * h / 0.25
+            body:setPosition(x0, y0)
+            local vx, vy = 2000, 9000
+            local worst = math.huge
+            for _ = 1, 120 do
+                body:setLinearVelocity(vx, vy)
+                local x, y = body:getPosition()
+                body:setPosition(x + vx / 60, y + vy / 60)
+                cameraFollow.update(1 / 60)
+                local sx, sy = cam:getScreenCoordinates(body:getPosition())
+                worst = math.min(worst, sx, sy, w - sx, h - sy)
+            end
+            assert.is_true(worst > h * 0.05, 'start ' .. start .. ': came within ' .. worst .. ' px of the edge')
+        end
+    end)
+
+    it('keeps a body thrown outwards from near the edge on the screen', function()
+        local w, h = love.graphics.getDimensions()
+        for _, dir in ipairs({ { 0, -1 }, { 0, 1 }, { -1, 0 }, { 1, 0 } }) do
+            cam:setScale(0.25)
+            cam:setTranslation(0, 0)
+            state.cameraFollow.lead = nil
+            -- let go 5% from the edge, flying outwards fast
+            local x0 = dir[1] * (w / 2 - h * 0.05) / 0.25
+            local y0 = dir[2] * (h / 2 - h * 0.05) / 0.25
+            body:setPosition(x0, y0)
+            local vx, vy = dir[1] * 9000, dir[2] * 9000
+            local worst = math.huge
+            for i = 1, 120 do
+                body:setLinearVelocity(vx, vy)
+                local x, y = body:getPosition()
+                body:setPosition(x + vx / 60, y + vy / 60)
+                cameraFollow.update(1 / 60)
+                local sx, sy = cam:getScreenCoordinates(body:getPosition())
+                if i > 2 then worst = math.min(worst, sx, sy, w - sx, h - sy) end
+            end
+            assert.is_true(worst > h * 0.1, dir[1] .. ',' .. dir[2] .. ': came within ' .. worst .. ' px of the edge')
+        end
+    end)
+
+    it('keeps a body thrown up on the screen when the last aim pointed down (a fall before)', function()
+        local w, h = love.graphics.getDimensions()
+        cam:setScale(0.25)
+        cam:setTranslation(0, 0)
+        body:setPosition(0, 0)
+        state.cameraFollow.lead = { 0, 6000 } -- left over from a fall
+        local vy = -9000
+        local worst = math.huge
+        for _ = 1, 60 do
+            body:setLinearVelocity(0, vy)
+            local x, y = body:getPosition()
+            body:setPosition(x, y + vy / 60)
+            cameraFollow.update(1 / 60)
+            local sx, sy = cam:getScreenCoordinates(body:getPosition())
+            worst = math.min(worst, sx, sy, w - sx, h - sy)
+        end
+        assert.is_true(worst >= math.min(w, h) * 0.15 - 1, 'came within ' .. worst .. ' px of the edge')
+    end)
+
     it('stays put while paused', function()
         state.world.paused = true
         assert.are.equal(0, (run(2)))
@@ -114,6 +201,17 @@ describe('camera follow', function()
         assert.are.equal(0, dx); assert.are.equal(0, dy)
         cameraFollow.settings().edgePan = false
         assert.are.equal(0, (cameraFollow.edgePan(1 / 60, w - 1, h / 2)))
+    end)
+
+    it('pans when the dragged thing, not only the cursor, reaches the edge margin', function()
+        local w, h = love.graphics.getDimensions()
+        local mx, my = w - 200, h / 2                       -- the cursor well inside
+        local dx = cameraFollow.edgePan(1 / 60, mx, my, nil, nil, { mx - 50, my - 100, w - 20, my + 100 })
+        assert.is_true(dx > 0, 'the Mipo on the right edge pans right')
+        dx = cameraFollow.edgePan(1 / 60, mx, my, nil, nil, { mx - 50, my - 100, mx + 50, my + 100 })
+        assert.are.equal(0, dx, 'all of it inside: no pan')
+        dx = cameraFollow.edgePan(1 / 60, mx, my, nil, nil, { 0, my - 100, w, my + 100 })
+        assert.are.equal(0, dx, 'too big for the screen: the cursor decides')
     end)
 
     it('stops edge panning when the dragged thing is stuck behind the cursor', function()
