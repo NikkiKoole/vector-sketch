@@ -50,9 +50,9 @@ lib.GENRE_VOICES = {
                 CH = { 'hat', 80, 4, 30 } },
 }
 -- a genre played on a drum machine (src/drum-machines.lua, J4): its roles fire the machine's voices instead
--- of VOICES (a role the machine hasn't got falls back to VOICES). Electro and Hip Hop are 808 music, Disco
--- the 909's (house grew out of it; Funk and Breaks stay on the played-kit patches).
-lib.KITS = { Electro = 'tr808', ['Hip Hop'] = 'tr808', Disco = 'tr909' }
+-- of VOICES (a role the machine hasn't got falls back to VOICES). Electro and Hip Hop are 808 music. The 909
+-- is built (drum-machines.lua) but plays nothing: on Disco Nikki preferred the old drums (2026-11-05).
+lib.KITS = { Electro = 'tr808', ['Hip Hop'] = 'tr808' }
 -- genres the drum library hasn't got, written here: the same shape as src/music-jam-patterns.lua.
 -- SW = a brush sweep (long, slow attack), SD = the brush's tap
 lib.EXTRA = {

@@ -95,8 +95,9 @@ carts, and each voice is a recipe of several layered notes. Two ways in, decided
   metal filter's default XY; each tom its own slot, since tr909_fire re-sets one shared tom slot's decay
   per hit and the jam books ahead; no ride), voices in drum-machines.lua (`lib.tr909`), played by Disco
   (KITS). Same kit level 0.4: Disco renders 0.9 dB over the old drums; 13 of 32 voices at most. Render:
-  seed 3 = Disco. The music-events specs pin the played-kit voices (their song is Disco) and check
-  the 909's crash. Still open: maybe the 808
+  seed 3 = Disco. The music-events specs pin the played-kit voices and check a 909 crash.
+  tried 2026-11-05: the 909 on Disco; Nikki: "I think I preferred old". Disco is back on the old drums;
+  the 909 stays built, parked (KITS names no genre for it), for a panel kit pick. Still open: maybe the 808
   snare's body tones (F#3 + E4) alone on the quiet hits (tried: quiet hits as noise only, not decided;
   the "octave up toot" heard then may well have been the pad); ELECTRO 3 has no hats at all.
 Until then the jam plays Playtime's drum patches; enough to hear whether the arrangement works.

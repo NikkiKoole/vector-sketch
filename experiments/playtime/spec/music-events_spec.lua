@@ -81,8 +81,8 @@ describe('music-events', function()
 
     describe('the jam', function()
         local style = D.styles.jam
-        -- these are about the answers, on the jam's played-kit voices: the song (seed 2) is Disco, which
-        -- plays the 909 (music-jam's KITS, a hit = several notes); the last test checks a kit's own
+        -- these are about the answers, on the jam's played-kit voices (a drum machine genre plays a hit as
+        -- several notes, music-jam's KITS); the last test checks a kit's own
         local kits
         before_each(function() kits, jam.KITS = jam.KITS, {} end)
         after_each(function() jam.KITS = kits end)
@@ -204,9 +204,8 @@ describe('music-events', function()
         end)
 
         it('a drum machine genre answers on its machine: the 909 crash is its metal and its noise', function()
-            jam.KITS = kits
             local s = song()
-            assert.are.equal('tr909', jam.KITS[s.jam.group])
+            jam.KITS = { [s.jam.group] = 'tr909' } -- the 909 plays no genre now (parked); the answer still works
             local hits = answerImpact(s, 0.7, s.beat * 3)
             assert.are.equal(2, #hits)
             assert.are.equal('tr909Crash', hits[1].patch)
