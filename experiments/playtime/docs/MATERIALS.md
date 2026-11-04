@@ -59,3 +59,15 @@ What all 16 pictures share, and what makes them read as "made by hand":
 - Felt on a Mipo part: fuzz edge + fibre grain + puffiness, next to the plasticine shader, so we
   can compare.
 - Moss edge on the ground, with a scatter of pebbles and flowers.
+
+## The spike (tried 2026-11-04): "not looking too great", a good outcome too
+
+`scripts/spikes/materials.playtime.lua` (scene `materials`): every material from one shader, no
+pictures, on a little diorama (paper wall, crayon sun, cardboard slab with moss, felt ball and
+block, collage box, bells, candies, jellybeans, cellophane water). Parked as a spike. What we learnt:
+- Noise alone reads as "computer": the crayon sun, corrugated face and moss were the closest; the
+  felt grain made a triangle grid until its fibre directions wandered.
+- Candies as perfect circles look like plastic balls; jellybean speckles too regular.
+- The cellophane (Voronoi cells, each tilted) looked like broken glass / stained glass: round
+  cells all one size, a smooth top edge, one flat layer. Take two: `CELLOPHANE-WATER.md`.
+- Real photos or scans of real felt, moss and torn paper would beat the noise (not the AI pictures).
