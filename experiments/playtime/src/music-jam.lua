@@ -124,8 +124,16 @@ lib.CHORD_FIGURES = {
     { name = 'funk guitar', groove = { 'S.xSx.xSx.S.xSxx', 'S.xSx.xS..x.H...' }, lo = 55, hi = 76,
       strings = { 'funkString1', 'funkString2', 'funkString3', 'funkString4' } },
 }
-lib.CHORDS_BY_GENRE = { Disco = 'disco stabs', Funk = 'funk stabs', Breaks = 'funk stabs', Electro = 'pad',
-                        ['Hip Hop'] = 'pad', Brushes = 'pad' }
+-- A list = rolled per song: Funk plays the funk guitar two songs in three, the clav's stabs the third (Nikki
+-- 2026-11-05: "promote the guitar", the clav's nice too).
+lib.CHORDS_BY_GENRE = { Disco = 'disco stabs', Funk = { 'funk guitar', 'funk guitar', 'funk stabs' },
+                        Breaks = 'funk stabs', Electro = 'pad', ['Hip Hop'] = 'pad', Brushes = 'pad' }
+-- the genre's chord figure for this song (a list rolls once per song)
+local function genreChords(song, group)
+    local auto = lib.CHORDS_BY_GENRE[group]
+    if type(auto) ~= 'table' then return auto end
+    return auto[stream(song.seed, 14)(#auto) + 1]
+end
 
 -- The walks the root takes (semitones over the song's key), and how often it moves, both rolled per
 -- song: 1 4 5 1 (home, away, the pull, home), 1 5 6 4 (the pop loop that never settles), 1 6 4 5
@@ -352,7 +360,7 @@ local function bookFunkGuitar(play, synth, song, t0, figure, voicing, b, cut)
                      stroke.ms, s, false, nil, opts)
             end
         end
-        if s % 2 == 0 and synth.laneAt then -- the wah foot
+        if s % 2 == 0 and synth and synth.laneAt then -- the wah foot (no synth in the pure specs)
             for k = 1, n do
                 synth.laneAt(figure.strings[k], t, 'cutoff', s % 4 == 2 and 0.9 or -0.7, sixteenth * 2000 * 0.9)
             end
@@ -363,7 +371,7 @@ end
 local function bookKeys(play, synth, song, t0, jam, kind, cut, b)
     cut = cut or 16
     local figure = picked(lib.CHORD_FIGURES, picks().chords)
-        or picked(lib.CHORD_FIGURES, lib.CHORDS_BY_GENRE[jam.group]) or lib.CHORD_FIGURES[1]
+        or picked(lib.CHORD_FIGURES, genreChords(song, jam.group)) or lib.CHORD_FIGURES[1]
     local root = (song.key + jam.root) % 12
     jam.voicing = theory.voiceChord(root, lib.KEYS_CHORDS[kind], figure.lo, figure.hi, jam.voicing)
     if not jam.voicing then return end

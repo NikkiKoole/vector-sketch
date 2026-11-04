@@ -210,8 +210,9 @@ Until then the jam plays Playtime's drum patches; enough to hear whether the arr
     each stroke's filter its own (NoteOpts.filter via scheduleAt's opts.filter), down on the 8ths and up
     between, a wah foot on the cutoff lane (heel on the beat, toe on the and). Checked: the guitar's
     centroid 6.9 kHz with the per-note filters, 3.0 kHz without; ~3 dB under the bass; 18 of 32 voices in
-    a busy jam. Picked in 'jam chords' ('funk guitar'); not any genre's auto yet. Render: seed 10 = Funk,
-    `JAM='chords=funk guitar;layers=all'`.
+    a busy jam. Picked in 'jam chords' ('funk guitar'). Funk's auto since 2026-11-05 (Nikki: "promote
+    the guitar", the clav's nice too): rolled per song, the guitar two songs in three, the clav stabs the
+    third (CHORDS_BY_GENRE takes a list). Render: seed 10 = Funk, `JAM='chords=funk guitar;layers=all'`.
   - [x] J9f. The wave (2026-11-03, playtime-9c's style, Peter Martin's maj9 / 9sus cycle; Nikki said yes):
     walks 'the wave' and 'the wave B' (9sus first), roots up a fourth through all twelve; kinds J = maj9
     (bass: major pentatonic; pad 1 3 7 9) and s = 9sus (bass 1 2 4 5 b7; pad 1 4 b7 9), the same chars in
