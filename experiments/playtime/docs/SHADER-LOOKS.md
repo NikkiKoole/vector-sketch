@@ -1,6 +1,6 @@
 # Shader looks — shaders as part of the engine, not stuck in a scene script
 
-status: active
+status: parked — hand-drawn assets first, shaders for moments (tried 2026-11-04: the materials and cellophane spikes felt "a bit Toy Story 1, synthesized"); SH3, the effects stack, is the part worth keeping for moments like the sea's bending
 
 The burrow earth and the sea (2026-11-03) both came down to "a shader paints this area", and both
 live in a scene script (`scripts/spikes/burrow.playtime.lua`, `scripts/spikes/sea.playtime.lua`).
