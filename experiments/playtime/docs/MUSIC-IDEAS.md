@@ -48,7 +48,8 @@ The music panel is one panel for every style now (settings → music: a row per 
   chords (the flute's root against the piano's maj7, a copied bar over another chord, endings off the sounding
   chord): fixed in the tune and by making I and IV sixth chords, `claudetools/music-rubs.lua` 18 -> 0. And a piano
   correction measured with YIN, which reads a stiff piano's sharp upper partials: it made the piano flat; only
-  dreamengine's measured fundamental residual is taken back now (`pianoCents`), until their §I4d fix.
+  dreamengine's measured residual was taken back, until their §I4d fix landed (1fe6f78e, same day): no
+  correction since.
   **Lesson:** when a part "sounds off", count the rubs first; measure a piano's tuning by its fundamental
   (dreamengine's inharm-spec), never YIN.
 - [x] **Upright** (2026-11-04, Nikki: "make one using upright bass"): the `upright` style (`src/music-upright.lua`),

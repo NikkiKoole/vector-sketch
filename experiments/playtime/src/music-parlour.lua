@@ -169,15 +169,9 @@ end
 -- the ringing, lifted at the chord change and pressed again just after (a legato pedal). Plain: every
 -- note gated to the bar's end, no pedal.
 local RH = { [2] = 1, [4] = 2, [6] = 3, [10] = 2, [12] = 3, [14] = 2 }
--- The piano engine's FUNDAMENTAL runs a little sharp at hPiano's macros: the deliberate stretch plus an open
--- loop offset (dreamengine §I4d) of about +1 c in the bass to +5 c in the treble (dreamengine-a2, measured
--- partial by partial with inharm-spec, 2026-11-04). Only that residual is taken back here, until §I4d is
--- fixed there. (A first cut took back -7..-14 c read with YIN, which follows the stiff string's sharp upper
--- partials: it left the piano FLAT, and the flute sounded off against it.)
-local function pianoCents(midi)
-    if midi <= 50 then return -1 elseif midi <= 62 then return -2 elseif midi <= 70 then return -3 end
-    return -4.5
-end
+-- (No tuning correction on the piano: dreamengine 1fe6f78e fixed its loop offset, §I4d, 2026-11-04; what's
+-- left is the deliberate stretch. Measure a piano by its fundamental, inharm-spec, never YIN: YIN follows the
+-- stiff string's sharp upper partials, and a correction read that way left the piano flat.)
 local function bookPiano(play, synth, t0, song, _b, chord, h)
     local root, _ = chordTones(song, chord)
     local intervals = lib.QUALITIES[chord[2]] -- rootless (the bass has it): a maj7's root and 7th would rub
@@ -190,10 +184,9 @@ local function bookPiano(play, synth, t0, song, _b, chord, h)
         if h then
             local rel = midi >= 89 and 1100 or math.floor(260 + math.max(0, 84 - midi) * 7)
             play(synth, 'keys', patch, t, midi, 6, lengthMs(song, s, keyBeats * 4) * 0.9, s, nil, nil,
-                 { gain = math.max(0.08, gain + r1() * 0.04), release = rel, cents = pianoCents(midi) })
-        else -- tuning isn't humanizing: the plain notes are pulled in tune too
-            play(synth, 'keys', patch, t, midi, 4, barMs - lengthMs(song, 0, s) - 20, s, nil, nil,
-                 { cents = pianoCents(midi) })
+                 { gain = math.max(0.08, gain + r1() * 0.04), release = rel })
+        else
+            play(synth, 'keys', patch, t, midi, 4, barMs - lengthMs(song, 0, s) - 20, s)
         end
     end
     local bass = inRange(root, 40)
@@ -405,8 +398,7 @@ function lib.bookBar(play, remember, synth, t0, song, b)
     if who.drums then bookDrums(play, synth, t0, song, b, h) end
 end
 
--- shared with the upright style (src/music-upright.lua): the brushes, and the piano's tuning
+-- shared with the upright style (src/music-upright.lua): the brushes
 lib.bookDrums = bookDrums
-lib.pianoCents = pianoCents
 
 return lib

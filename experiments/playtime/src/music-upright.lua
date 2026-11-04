@@ -226,14 +226,12 @@ local function bookPiano(play, synth, t0, song, b, roles, h)
     for _, s in ipairs(hits) do
         local keyMs = lengthMs(song, s, s == 0 and #hits == 1 and 8 or 2) * 0.8
         for k, midi in ipairs(song.upright.voicing) do
-            local cents = parlour.pianoCents(midi)
             if h then
                 local t = stepTime(song, t0, s) + (k - 1) * (0.008 + 0.006 * love.math.random()) + humanize(0.006)
                 play(synth, 'keys', 'hPiano', t, midi, 6, keyMs, s, nil, nil,
-                     { gain = 0.42 + (k == #song.upright.voicing and 0.06 or 0) + r1() * 0.05, release = 320,
-                       cents = cents })
+                     { gain = 0.42 + (k == #song.upright.voicing and 0.06 or 0) + r1() * 0.05, release = 320 })
             else
-                play(synth, 'keys', 'hPiano', stepTime(song, t0, s), midi, 4, keyMs, s, nil, nil, { cents = cents })
+                play(synth, 'keys', 'hPiano', stepTime(song, t0, s), midi, 4, keyMs, s)
             end
         end
     end
