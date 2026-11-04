@@ -626,7 +626,8 @@ D.styles = {
     acid = { loop = 'acid', bpm = { 120, 128 }, swing = 0.5,
         scale = { 0, 0, 0, 3, 5, 7, 7, 10, 12, 12, 15, 1 },
         density = 0.72, accentOdds = 0.28, slideOdds = 0.35, tieOdds = 0.12, octaveOdds = 0.18,
-        cutoff = { 260, 1600 }, sweepBars = 16 },
+        -- kit: the drums on a drum machine, src/drum-machines.lua (nil = bapKick, clap, shaker)
+        cutoff = { 260, 1600 }, sweepBars = 16, kit = 'tr909' },
     -- jam: the drum jam (docs/DRUM-JAM.md, src/music-jam.lua). No song form: a drum machine's groove in
     -- 8-bar phrases, arranged live by the play level (a layer in or out per phrase, a breakdown and a drop
     -- every breakEvery phrases when it's busy, a fill closing each phrase). groups: the pattern groups

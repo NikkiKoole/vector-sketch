@@ -1170,6 +1170,13 @@ end
 -- a note the next step SLIDES into is held 30 ms past that step instead, so its key is still down when
 -- the slide comes (legato, synth.lua's tb303: mono, a 60 ms glide). An ACCENT is the note's own. The
 -- cutoff breathes over style.sweepBars; the kick is four on the floor, the clap and shaker the band's.
+-- One hit of a drum machine's voice (src/drum-machines.lua: a voice = a few notes), quieter = volume steps off
+local function machineHit(synth, kit, role, t, s, quieter)
+    for _, n in ipairs(require('src.drum-machines').notes(kit, role, 0, quieter) or {}) do
+        play(synth, 'drums', n[1], t + n[5] / 1000, n[2], n[3], n[4], s, false, 0)
+    end
+end
+
 local function acidStep(song, b, s) -- the pattern step at bar b, step s (s past 15 / below 0 = the bar next / before)
     while s > 15 do s, b = s - 16, b + 1 end
     while s < 0 do s, b = s + 16, b - 1 end
@@ -1190,10 +1197,20 @@ local function bookAcidBar(synth, t0, song, b)
     local band, groove = bandPlays(), section.kind ~= 'intro' and section.kind ~= 'outro'
     for s = 0, 15 do
         local t = stepTime(song, t0, s)
-        if s % 4 == 0 then play(synth, 'drums', 'bapKick', t, 36, 5, 120, s) end
-        if band and groove then
-            if s == 4 or s == 12 then play(synth, 'drums', 'clap', t, 60, 4, 90, s) end
-            if s % 2 == 0 then play(synth, 'drums', 'shaker', t, 80, s % 4 == 2 and 4 or 2, 40, s) end
+        if style.kit then -- a drum machine (src/drum-machines.lua): the same groove, the shaker's 8ths as
+            -- the house hats, open on the off-beat, closed and softer on the beat
+            if s % 4 == 0 then machineHit(synth, style.kit, 'BD', t, s) end
+            if band and groove then
+                if s == 4 or s == 12 then machineHit(synth, style.kit, 'CPS', t, s) end
+                if s % 4 == 2 then machineHit(synth, style.kit, 'OH', t, s)
+                elseif s % 2 == 0 then machineHit(synth, style.kit, 'CH', t, s, 1) end
+            end
+        else
+            if s % 4 == 0 then play(synth, 'drums', 'bapKick', t, 36, 5, 120, s) end
+            if band and groove then
+                if s == 4 or s == 12 then play(synth, 'drums', 'clap', t, 60, 4, 90, s) end
+                if s % 2 == 0 then play(synth, 'drums', 'shaker', t, 80, s % 4 == 2 and 4 or 2, 40, s) end
+            end
         end
         local step = acidStep(song, b, s)
         if step and step.on and not step.tie then

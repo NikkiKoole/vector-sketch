@@ -97,7 +97,11 @@ carts, and each voice is a recipe of several layered notes. Two ways in, decided
   (KITS). Same kit level 0.4: Disco renders 0.9 dB over the old drums; 13 of 32 voices at most. Render:
   seed 3 = Disco. The music-events specs pin the played-kit voices and check a 909 crash.
   tried 2026-11-05: the 909 on Disco; Nikki: "I think I preferred old". Disco is back on the old drums;
-  the 909 stays built, parked (KITS names no genre for it), for a panel kit pick. Still open: maybe the 808
+  the 909 stays built, parked (KITS names no genre for it), for a panel kit pick.
+  The 909 found its place on the ACID style instead (2026-11-05, Nikki: "keep the 909 on acid"): the
+  303 + 909 pair. `kit = 'tr909'` in music-styles' acid; bookAcidBar plays its groove on it (kick on the
+  beat, clap on 2 and 4, the shaker's 8ths as house hats: open on the off-beat, closed and softer on the
+  beat). Rendered level with the old drums (-29.6 / -29.8 dB). Still open: maybe the 808
   snare's body tones (F#3 + E4) alone on the quiet hits (tried: quiet hits as noise only, not decided;
   the "octave up toot" heard then may well have been the pad); ELECTRO 3 has no hats at all.
 Until then the jam plays Playtime's drum patches; enough to hear whether the arrangement works.
