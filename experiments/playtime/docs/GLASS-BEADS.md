@@ -1,6 +1,6 @@
 # Glass beads — Nikki's closed shapes as see-through glass
 
-status: parked — kept as a spike: "looks promising", the laughing-mirror lens "nice" (tried 2026-11-04, scene `glass`)
+status: parked — kept as a spike: "very nice! love the glass", the laughing-mirror lens "nice" (tried 2026-11-04, scene `glass`)
 
 `scripts/spikes/glass.playtime.lua`. Every bead is one of the drawn Mipo parts with an outline +
 mask (bodies, patches, rings, a heart, 22 in all): the mask is the glass, the outline is drawn on
