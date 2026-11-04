@@ -89,7 +89,8 @@ carts, and each voice is a recipe of several layered notes. Two ways in, decided
   the Rhodes engine fades by itself; what held flat was a slot whose define the engine's queue had
   DROPPED (the 808 + jamPad took a full define past 511 calls), left a default square wave. The tooter
   that changed between renders was that (the upright `musicBass` too, in some runs). Fixed in synth.lua
-  (defines spread over frames, SOUND-SYNTH.md gotchas). jamPad's fade stays (liked). Still open: maybe the 808
+  (defines spread over frames, SOUND-SYNTH.md gotchas). jamPad's fade stays (liked). Fresh renders after
+  the fix (Electro seed 5, Hip Hop seed 2), Nikki: "sounds much much better". Still open: maybe the 808
   snare's body tones (F#3 + E4) alone on the quiet hits (tried: quiet hits as noise only, not decided;
   the "octave up toot" heard then may well have been the pad); ELECTRO 3 has no hats at all.
 Until then the jam plays Playtime's drum patches; enough to hear whether the arrangement works.
