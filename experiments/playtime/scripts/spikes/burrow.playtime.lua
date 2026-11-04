@@ -709,10 +709,49 @@ local function smooth01(x)
     return x * x * (3 - 2 * x)
 end
 
+-- A chain in one fixed form, so the same edge always gets the same stroke: rebuilding a chunk
+-- (digging somewhere else in it) can string its outline together from another point or the other
+-- way round. A loop starts at its top-left-most point and runs clockwise on the screen; an open
+-- chain runs from its top-left-most end.
+local function before(a, c)
+    local ax, ay, cx, cy = math.floor(a[1] + 0.5), math.floor(a[2] + 0.5), math.floor(c[1] + 0.5), math.floor(c[2] + 0.5)
+    if ax ~= cx then return ax < cx end
+    return ay < cy
+end
+local function canonical(pts, loop)
+    local n = #pts
+    if n < 2 then return pts end
+    local reversed = false
+    if loop then
+        local area = 0
+        for i = 1, n do
+            local a, c = pts[i], pts[i % n + 1]
+            area = area + a[1] * c[2] - c[1] * a[2]
+        end
+        reversed = area < 0
+    else
+        reversed = before(pts[n], pts[1])
+    end
+    if reversed then
+        local r = {}
+        for i = n, 1, -1 do r[#r + 1] = pts[i] end
+        pts = r
+    end
+    if loop then
+        local first = 1
+        for i = 2, n do if before(pts[i], pts[first]) then first = i end end
+        local r = {}
+        for i = 0, n - 1 do r[#r + 1] = pts[(first - 1 + i) % n + 1] end
+        pts = r
+    end
+    return pts
+end
+
 -- the chain cut at its sharp corners into pieces; flags say which ends are cut (taper there)
 local function cornerPieces(flat, loop)
     local pts = {}
     for i = 1, #flat, 2 do pts[#pts + 1] = { flat[i], flat[i + 1] } end
+    pts = canonical(pts, loop)
     local n = #pts
     local sharp = {}
     for i = 1, n do

@@ -81,6 +81,10 @@ outlined with the crayon strokes below. Nikki: "pretty nice", "looks pretty good
   - Which picture goes where comes from a world grid, starting exactly where the line crosses a
     grid line, so digging changes only the strokes near it. Before, the textures shifted along the
     whole edge.
+  - Each edge loop in one fixed form before it's stroked (it starts at its top-left-most point
+    and runs one way round; open chains from their top-left-most end): rebuilding a chunk could
+    string a hole's edge together from another point, so digging near an unconnected hole
+    changed its strokes.
   Keys: `o` the drawn rim or the plain line, `b` boil. Sliders: rim width, rim wobble. Left: a
   tunnel opening into another can still change a piece's strokes; boil isn't measured on a
   well-dug burrow.
