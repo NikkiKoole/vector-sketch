@@ -116,6 +116,14 @@ Until then the jam plays Playtime's drum patches; enough to hear whether the arr
 - [ ] **J3. The 303 as a layer.** The acid style's pattern code shared, not copied: the 303 enters as a
   layer, its filter sweep tied to the phrase (open into the drop).
 - [ ] **J4. The kit.** Decide port vs desound.c (above), then an 808 and a 909 kit, picked per group.
+  - [ ] J4a. A BEST-OF kit (Nikki 2026-11-05: "a bit of everything instead of many full kits"): per
+    role the voice she likes best of the old patches, the 808 and the 909, as ONE kit for every jam genre
+    (Brushes keeps its brushes); Electro / Hip Hop's 808 in KITS goes then. Audition first:
+    `luajit claudetools/drum-audition.lua <dir>` writes kick / snare / clap / closed-hat / open-hat /
+    crash / rim / toms / cowbell / tambourine .wav, each the pattern on A old, B 808, C 909 (each file
+    normalized on its own: compare inside a file). Nikki picks a letter per role; then a `best` table in
+    drum-machines.lua (role -> source) and KITS -> best. Not now (2026-11-05: "don't feel like doing this
+    now"); the auditions are ready when she does.
 - [x] **J7. The auto-accompaniment bass** (2026-11-03: the walk is done; riffs go on in J8) (Nikki: "bass loops that change root, transposed every n
   bars"; the idea from Aaron Batzdorff's one-note synth bass trick (TikTok and YouTube @aaronbatzdorff): a Keystep
   Pro transposing a one-note sequence on a Model D, also dreamengine's `onenote.c` cart). The organ
