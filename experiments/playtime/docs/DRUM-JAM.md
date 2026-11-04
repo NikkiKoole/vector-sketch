@@ -81,6 +81,13 @@ carts, and each voice is a recipe of several layered notes. Two ways in, decided
   old drums had it (rendered, within 0.1 dB). Voices: a busy jam (every layer) peaks at 13 of 32, the old
   kit 11-13. To listen: `JAM='layers=all' luajit claudetools/render-music.lua out.wav 40 jam auto 0 5`
   (seed 5 = Electro, 2 = Hip Hop). Next: Nikki listens; then the 909, and a panel pick for the kit.
+  First listen (2026-11-04), left open (Nikki: "unsure, let's just leave this"): the jam's Rhodes PAD
+  (Electro and Hip Hop's chord figure) is a "tooter" that covers everything, rendering ~14 dB over
+  the bass instead of J9d's 3 dB under; a swap was rendered (junoPad, strings, hPad, lofiKeys), none
+  picked. With the pad off, something toots an octave up: maybe the 808 snare's body tones (F#3 + E4)
+  left alone on the jam's quiet hits (ghosts, run-ups), where the noise drops out. Tried: quiet hits as
+  noise only; not decided. ELECTRO 3 has no hats at all (kick and snare), and the upright plays its
+  short electro notes.
 Until then the jam plays Playtime's drum patches; enough to hear whether the arrangement works.
 
 ## Steps
