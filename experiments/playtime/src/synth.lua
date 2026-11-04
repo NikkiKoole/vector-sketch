@@ -30,6 +30,8 @@ lib.INSTR = {
 -- lib.poolSlots and lib.fxSlots): wave,
 -- attack/decay ms, sustain 0..7, release ms, macros,
 -- reverb send 0..1, level 0..1 (balances engines: some run much hotter), optional engine modes and filter,
+-- analog 0..2 (dreamengine's instrument_analog: every voice a little different + a slow drift, an old
+-- polysynth; on the saw / square synth patches, Nikki 2026-11-05: junoPad, strings, stab, citySynth, hPad),
 -- glide ms (held notes slide to a new pitch over this long), tape { wow, flutter, saturation, warble } 0..1
 -- (a cassette on just this slot; warble = a worn tape that sags now and then), autopan, phaser.
 lib.patches = {
@@ -69,7 +71,7 @@ lib.patches = {
     cityGuitar = { pool = true, wave = 'GUITAR', adsr = { 1, 0, 7, 90 },
                    harmonics = 0.45, timbre = 0.78, morph = 0.5, reverb = 0.15, level = 1.8,
                    filter = { mode = 2, cutoff = 220, resonance = 0 } },
-    strings = { pool = true, wave = 'SAW', adsr = { 260, 0, 6, 260 }, reverb = 0.45, level = 0.22,
+    strings = { pool = true, wave = 'SAW', adsr = { 260, 0, 6, 260 }, reverb = 0.45, level = 0.22, analog = 1,
                 filter = { mode = 1, cutoff = 2600, resonance = 0 }, lfo = { { 0, 5.0, 0.04 } } },
     -- other melody voices: the Rhodes a little brighter for a tune on top, and a kalimba: a
     -- mallet halfway between wood and bell
@@ -116,7 +118,7 @@ lib.patches = {
     -- ringing), and a drum machine clap (high-passed noise, a big room).
     -- No tape/autopan/phaser here: each of those takes one of the engine's 7 aux FX buses
     -- (SOUND_FX_BUSES); the patches with pedals share five of them through lib.fxSlots.
-    stab = { pool = true, wave = 'SAW', adsr = { 3, 180, 2, 160 }, reverb = 0.35, level = 0.38,
+    stab = { pool = true, wave = 'SAW', adsr = { 3, 180, 2, 160 }, reverb = 0.35, level = 0.38, analog = 1,
              filter = { mode = 1, cutoff = 1500, resonance = 2 } },
     dubBass = { slot = 29, wave = 'TRI', adsr = { 3, 0, 7, 90 }, reverb = 0.05, level = 0.5,
                 filter = { mode = 1, cutoff = 1100, resonance = 3 } },
@@ -178,6 +180,7 @@ lib.patches = {
              filter = { mode = 1, cutoff = 3600, resonance = 1 } },
     -- citypop's glossy synth lead: a square with a slow vibrato and a little glide
     citySynth = { pool = true, wave = 'SQUARE', adsr = { 6, 160, 6, 180 }, reverb = 0.3, level = 0.35, glide = 18,
+                  analog = 1,
                   filter = { mode = 1, cutoff = 3400, resonance = 0 }, lfo = { { 0, 5.2, 0.08 } } },
     -- the strum style's clean electric guitar, on the neck pickup: the guitar engine warm (timbre low;
     -- the pedalboard's 0.85 is a bright jangly pick, harpsichord-like here), less banjo in the body, a
@@ -241,7 +244,7 @@ lib.patches = {
                      lfo = { { 0, 4.6, 0.08 }, { 2, 3.9, 0.06 } } },
     -- jingle's Juno chords (dreamengine's juno.c): a saw pad, slow in, through a warm resonant lowpass
     -- and the Juno's chorus I (slow and lush; the chorus is what makes it a Juno)
-    junoPad = { fx = true, wave = 'SAW', adsr = { 24, 0, 6, 460 }, reverb = 0.35, level = 0.15,
+    junoPad = { fx = true, wave = 'SAW', adsr = { 24, 0, 6, 460 }, reverb = 0.35, level = 0.15, analog = 1,
                 filter = { mode = 1, cutoff = 1400, resonance = 4 }, chorus = { 0.6, 0.45, 0.5 } },
     -- jingle's bass: a soft round sine, rolled off at 520 Hz
     jingleBass = { pool = true, wave = 'SINE', adsr = { 3, 280, 4, 110 }, reverb = 0.05, level = 0.22,
