@@ -34,7 +34,7 @@ The music panel is one panel for every style now (settings → music: a row per 
 - [ ] **The 78 / Caretaker treatment** can be built now: the group bus (`instrument_group`), the room on the record (`reverb_bus_into`), a group filter and `stereo_width` are bound in synth.lua but unused. Open question first: a grouped slot plays through the lead's bus, so the pedalled patches would lose their own pedals inside the group (SOUND-SYNTH.md). The 303's own slide/accent PATTERN (per-step flags, the 303 knobs item above) is still to do; today it only slides in legato lines and accents downbeats.
 - [ ] **Before shipping a score piece**: the furniture music (carrelage, tapisserie) was unpublished in Satie's lifetime; check when it was first printed (late first publication has its own rules in the US and the EU). The Gnossienne's engraving is CC BY-SA: credit Knute Snortum / Mutopia.
 - [ ] **The 1920s dance band / Caretaker style**: Nikki is finding examples to take apart (MUSIC-ANALYSIS.md); public domain tunes to build it on are in the notebook doc (Charmaine, Diane, Japanese Sandman, After the Ball, ...; check each writer's dates).
-- [x] **Parlour** (2026-11-04, dreamengine-a2's brief, Nikki: "go ahead with your song"): the `parlour` style
+- [x] **Parlour** (2026-11-04, dreamengine-a2's brief, Nikki: "go ahead with your song"; a humanizing test, sad on purpose, she's happy with it): the `parlour` style
   (`src/music-parlour.lua`), a slow warm original song that shows the humanizing engine, the instruments coming in
   one per section: the felt piano with a real sustain pedal (a damper lane, each key only as long as a hand holds
   it), then the cello (one bow a bar, slurs on the same voice, a connected bow change at each bar line, swells, its
@@ -58,7 +58,10 @@ The music panel is one panel for every style now (settings → music: a row per 
   the mono voice), ghosts (damp 1) and rakes between beats, a wooden thump under every pluck that varies with
   the hand. The form: the turnaround as intro, a chorus in two, two walking, one for the bass (more slides and
   ghosts, the piano nearly out), a last walking one, ii V I on a ringing root. Brushes from parlour, a felt
-  piano comping rootless shells. The `humanize` row plays it plainly too. Waiting on an ear pass.
+  piano comping rootless shells. The `humanize` row plays it plainly too. Nikki (2026-11-04): "i like upright".
+  Left open: 33-43 half-step rubs a song between the walking bass and the piano's held shells (some are the
+  walk's chromatic approaches, idiomatic; the fix if they ever bother: the piano letting go before beat 4,
+  the walk's middle notes avoiding a half step against the shell).
 - Bowed strings: tried 2026-11-02 for the furniture music and parked (the parlour cello, 2026-11-04, is the
   booked-note answer: bow changes, slurs and its own vibrato are there now): hard to make sound right with booked notes (no bow movement through a note, no late vibrato, no section). The violin / viola / cello / clarinet patches stay in the instrument lists.
 
