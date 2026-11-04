@@ -27,6 +27,7 @@ local shape8Dict = require('src.shape8-dict')
 local shapeCatalogs = require('src.shape-catalogs')
 local dnaDefaults = require('src.dna-defaults')
 local fixtures = require('src.fixtures')
+local scriptPanel = require('src.ui.script-panel')
 --- here a tiny collection of helper function will grow, function i am sure that will be reused in various scripts.
 local function getObjectsByLabel(label)
     local objects = {}
@@ -45,12 +46,16 @@ local function mouseWorldPos()
     return cx, cy
 end
 
+-- A scene script's ui: the real one, except that its panel can be folded away
+-- (src/ui/script-panel.lua); ui.isPanelFolded(label) tells a script its panel is folded.
+local scriptUi = setmetatable({ panel = scriptPanel.panel, isPanelFolded = scriptPanel.isFolded }, { __index = ui })
+
 -- end collection
 
 local baseEnv = {
     generateID               = uuid.generateID,
     objectManager            = objectManager,
-    ui                       = ui,
+    ui                       = scriptUi,
     cam                      = cam,
     camera                   = cameraFollow.script, -- follow, setBounds, shake, zoomTo
     mathutils                = mathutils,

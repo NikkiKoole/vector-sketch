@@ -619,6 +619,7 @@ end
 -- the panel's rectangle on screen, so a press on it doesn't dig
 local panelRect = { 20, 0, 380, 0 }
 local function overPanel()
+    if ui.isPanelFolded('•• burrow ••') then return false end
     local mx, my = love.mouse.getPosition()
     local r = panelRect
     return mx >= r[1] and mx <= r[1] + r[3] and my >= r[2] and my <= r[2] + r[4]

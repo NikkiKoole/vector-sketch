@@ -762,7 +762,7 @@ end
 
 local panelRect = { 20, 0, 400, 0 }
 local function overPanel(b)
-    if not b.showPanel then return false end
+    if not b.showPanel or ui.isPanelFolded('•• sea ••') then return false end
     local mx, my = love.mouse.getPosition()
     local r = panelRect
     return mx >= r[1] and mx <= r[1] + r[3] and my >= r[2] and my <= r[2] + r[4]
