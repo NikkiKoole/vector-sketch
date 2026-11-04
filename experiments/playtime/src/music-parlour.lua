@@ -64,6 +64,12 @@ local function defineShapes(synth)
 end
 
 local function human() return state.musicSettings.humanize ~= false end
+
+-- The PIPE engine lands a SLID note flat (measured 2026-11-04 on dreamengine 10f4de3f, no extras on the
+-- notes: 1 semitone up at C6 -14 c, 3 semitones -26..-41 c, 5 semitones -65..-74 c; the glide time doesn't
+-- matter, an attacked note is in tune). Nikki heard the flute flat. Until dreamengine fixes it, the flute's
+-- slurred notes start again softly (no tongue puff) instead of sliding; true again once it's fixed.
+local FLUTE_SLIDES = false
 local function r1() return love.math.random() * 2 - 1 end
 local function smooth01(x) x = math.max(0, math.min(1, x)); return x * x * (3 - 2 * x) end
 
@@ -149,6 +155,13 @@ end
 -- the ringing, lifted at the chord change and pressed again just after (a legato pedal). Plain: every
 -- note gated to the bar's end, no pedal.
 local RH = { [2] = 1, [4] = 2, [6] = 3, [10] = 2, [12] = 3, [14] = 2 }
+-- The piano engine at hPiano's macros plays sharp (measured 2026-11-04, dreamengine tools/tune-check.js
+-- --engine PIANO --macros 0.08,0.44,0.6: +16 c at G3, +12 by C#4, +7..9 from E4 up), so a flute in tune
+-- sounded flat against it (Nikki). Each piano note is pulled back by its register's offset.
+local function pianoCents(midi)
+    if midi <= 58 then return -14 elseif midi <= 62 then return -12 elseif midi <= 68 then return -8 end
+    return -7
+end
 local function bookPiano(play, synth, t0, song, _b, chord, h)
     local root, _ = chordTones(song, chord)
     local intervals = lib.QUALITIES[chord[2]] -- rootless (the bass has it): a maj7's root and 7th would rub
@@ -161,9 +174,10 @@ local function bookPiano(play, synth, t0, song, _b, chord, h)
         if h then
             local rel = midi >= 89 and 1100 or math.floor(260 + math.max(0, 84 - midi) * 7)
             play(synth, 'keys', patch, t, midi, 6, lengthMs(song, s, keyBeats * 4) * 0.9, s, nil, nil,
-                 { gain = math.max(0.08, gain + r1() * 0.04), release = rel })
-        else
-            play(synth, 'keys', patch, t, midi, 4, barMs - lengthMs(song, 0, s) - 20, s)
+                 { gain = math.max(0.08, gain + r1() * 0.04), release = rel, cents = pianoCents(midi) })
+        else -- tuning isn't humanizing: the plain notes are pulled in tune too
+            play(synth, 'keys', patch, t, midi, 4, barMs - lengthMs(song, 0, s) - 20, s, nil, nil,
+                 { cents = pianoCents(midi) })
         end
     end
     local bass = inRange(root, 40)
@@ -278,8 +292,9 @@ local function bookFlute(play, synth, t0, song, b, section, j, h)
                 if n.phraseEnd then shapes[2] = { id = SH.fade, target = 'gain', scale = 1, stretch = held }
                 elseif len > 0.5 then shapes[2] = { id = SH.swell, target = 'gain', scale = 1, stretch = len } end
                 if tongued and #shapes < 3 then shapes[#shapes + 1] = { id = SH.puff, target = 'timbre', scale = 1 } end
-                local opts = { gain = math.max(0.05, math.min(1, vol / 7)), cents = (vol - 5) * 4 + r1() * 2,
-                               glide = tongued and 0 or 40, shapes = shapes }
+                -- blowing harder pushes a flute sharp; centred so the soft notes don't sit flat (Nikki: "a bit flat")
+                local opts = { gain = math.max(0.05, math.min(1, vol / 7)), cents = (vol - 4.6) * 3 + r1() * 1.5,
+                               glide = (tongued or not FLUTE_SLIDES) and 0 or 40, shapes = shapes }
                 if len > 0.32 then
                     opts.vib = { cents = (13 + 8 * love.math.random() + (n.midi == peak and 5 or 0)),
                                  rate = 4.9 + 0.8 * love.math.random(),
