@@ -133,6 +133,13 @@ The short list after a long day of styles; the details live in the entries furth
 - [ ] **Jazz quartet**: piano, bass, drums and one horn or vibes. Room to breathe, trading solos.
 
 ## Small ideas
+- [ ] **A note's own filter type, parked** (2026-11-05: built, checked, unused). `synth.scheduleAt(...,
+  { filter = 'band' })` ('low' / 'high' / 'band' / 'notch' / 'off' or a FILTER_* number; dreamengine
+  409701fd, NoteOpts.filter) gives one booked note its own filter type on the slot's cutoff. Pays off for
+  an instrument whose strokes want different filters: a funk guitar in the drum jam (muted scratches thin,
+  stabs band-passed: dreamengine's `wahhand`), a cymbal's bell vs its wash. Its first reason, saving slots
+  for the drum kits, went with the 128-slot engine. Not tried in the web build yet. The NoteOpts field
+  itself must stay whatever happens (the size check, SOUND-SYNTH.md).
 - [ ] Melody voices to revisit: kalimba A (mallet). Kalimba B (wavescan + low-pass gate) was retired for a slot on 2026-10-30; it's in git history (`kalimbaPlonk`).
 - [x] ~~Slide sound~~: the whistle was too synthetic and got annoying; slide-sound was deleted on 2026-10-30 (CL5) and its slot went to the pool.
 - [ ] Gesture sounds: throw, drop, stretch, wash and squish, each tied to the music's scale.
