@@ -491,6 +491,16 @@ local function drawTongue(d)
     end
     love.graphics.setLineWidth(lw)
     love.graphics.pop()
+
+    -- the tongue comes out from under the teeth: draw this mouth's teeth again over it (they're
+    -- below the lower lip, the tongue over it), clipped to the opening as always
+    for _, fixture in ipairs(body:getFixtures()) do
+        local ud = fixture:getUserData()
+        if ud and ud.extra and ud.extra.mouthCurve == 'teeth' then
+            lib.drawers['mouth-teeth']({ extra = ud.extra, body = body })
+            break
+        end
+    end
 end
 
 -- The mouth's drawables (createDrawables): drawn on the face body, around its curve points.

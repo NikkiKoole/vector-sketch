@@ -5,9 +5,11 @@ status: parked — kept as a spike in its own scene, `raspberry` (tried 2026-11-
 **Started:** 2026-11-04, Nikki: "i like the idea of them blowing rasperries". A spike: the tongue
 and the sound are placeholders, made in code, until there's a drawing and a recording.
 
-How it works (`src/mipo-raspberry.lua`): `raspberry.blow(instance)` presses the lips together
-(a line through the mouth's corners, a small gap in the middle), slides the tongue out, shakes
-the lips against each other while a pbbbbt plays, then pulls the tongue back in. It runs on the
+How it works (`src/mipo-raspberry.lua`): `raspberry.blow(instance)` first closes the mouth (the
+lips pressed onto a line through its corners), then slides the tongue out from under the teeth
+(the lips part a little in the middle to let it through; the teeth are drawn again over the
+tongue), a beat, the lips shake against each other while a pbbbbt plays, the tongue goes back
+in and the mouth opens again (Nikki: close first, then the tongue, then the rasps). It runs on the
 face's thing like the voice's mouth flap (`mouthShapeVec`, plus `tongueOut` and `tongueBuzz`),
 so nothing is saved. The tongue is a `mouth-tongue` drawable from the lower lip decal, over the
 lower lip and under the upper one (`src/render/mouth.lua` drawTongue). The Mipo editor's
