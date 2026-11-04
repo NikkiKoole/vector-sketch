@@ -2,6 +2,8 @@
 
 status: parked — kept as a spike: "looking pretty good" (tried 2026-11-03: realistic water around drawn Mipos)
 
+**Nikki's favourites** (2026-11-04): of all the spikes (sea, clouds, burrow, materials, cellophane), the sea and the burrow inspired her most. Hand-drawn assets come first from now on; these two are where a shader earns its place.
+
 The question (2026-11-03): what if water in Mipo's world isn't hand-drawn but looks real, a
 photographic sea around drawn Mipos and props? The spike is `scripts/spikes/sea.playtime.lua`
 (scene `sea`): a lagoon seen from the side, beaches at both ends.

@@ -2,6 +2,8 @@
 
 status: idea
 
+**Nikki's favourites** (2026-11-04): of all the spikes (sea, clouds, burrow, materials, cellophane), the sea and the burrow inspired her most. Hand-drawn assets come first from now on; these two are where a shader earns its place.
+
 A side view of the earth under the grass: drag a finger to dig, the Mipos tumble into the
 tunnels and live there. One verb (dig), like an ant farm. Water flowing in is the later payoff,
 only once digging feels right.
