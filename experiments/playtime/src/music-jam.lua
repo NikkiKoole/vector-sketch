@@ -112,7 +112,7 @@ lib.KEYS_CHORDS = { M = { 0, 4, 7, 14 }, m = { 0, 3, 7, 10 }, ['7'] = { 0, 4, 7,
 -- instrument (the panel's keys row can swap it), voiced in lo..hi, rolled by `roll` seconds a note.
 -- Picked in the panel's 'jam chords' row; 'auto' = the genre's (CHORDS_BY_GENRE).
 lib.CHORD_FIGURES = {
-    { name = 'pad', steps = 'x---------------', patch = 'rhodes', vol = 2, lo = 52, hi = 74, roll = 0.012 },
+    { name = 'pad', steps = 'x---------------', patch = 'jamPad', vol = 2, lo = 52, hi = 74, roll = 0.012 },
     { name = 'disco stabs', steps = '..x-..x-..x-..x-', patch = 'stab', vol = 2, lo = 55, hi = 76, roll = 0 },
     { name = 'funk stabs', steps = '....x..x.x....x.', patch = 'clav', vol = 3, lo = 55, hi = 76, roll = 0.004 },
     { name = 'skank', steps = '....x-......x-..', patch = 'jabGuitar', vol = 1, lo = 60, hi = 79, roll = 0.008 },
