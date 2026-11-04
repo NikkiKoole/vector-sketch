@@ -50,6 +50,10 @@ guitar, `breathflute` flute, `tablahand.c` tabla):
   fade), per-note timbre/size (for INSTR_SING), maybe a macro curve (the tabla's palm). The consonant
   lead stays a booking offset in Playtime. **On hold**: Nikki wants more voices and instruments first,
   so the shape fits all of them before anything is built.
+- **The combined needs list** lives in dreamengine, `docs/design/humanized-playing.md` §6 (owned by the
+  dreamengine side): the voice's needs are §6.3, among them two hard limits for moving syllables to the
+  synth: a take (or sample region) chosen per note and latched at note-on (8 sample slots vs ~120 takes),
+  and a singer's slot that can overlap itself (the consonant lead starts the next syllable early).
 
 ## Left open
 
