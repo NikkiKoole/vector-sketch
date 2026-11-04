@@ -40,6 +40,12 @@ it's drawn. It's the same idea as parallax: some things are only there to look a
   That's scrolling-world's lesson ("scenery doesn't need to be physics"), but here it can still
   become physics where it's played with.
 
+- **A boat needs one too** (Nikki 2026-11-04, scene `boat2`: a boat of planks): the far side
+  behind the Mipos (the far gunwale and railing, the cabin's back wall seen past them), the deck
+  to stand on (play), the near railing in front. The spike fakes it per plank (a back / mid /
+  front draw order, the back ones sensors), so a boat with real depth is a case for this doc.
+  The `planks` treehouse does the same by hand (back wall, solid floor, porch railing in front).
+
 ## Open questions
 
 - In **play mode**, can back parts still be dragged and snapped (building while playing, as in
@@ -58,3 +64,4 @@ it's drawn. It's the same idea as parallax: some things are only there to look a
 - `WORLDS-AND-DOORS.md`: a door block is a door into a room
 - `DOLL-PLAY.md` R5: stacked rooms and one-way floors between them
 - `SCENES.md`: the `platforms` scene, kept for its one-way floors
+- the `boat2` and `planks` spikes: back / mid / front by hand, per plank
