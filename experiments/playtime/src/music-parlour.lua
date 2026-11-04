@@ -27,15 +27,17 @@ local stream, stepTime, lengthMs, inRange, voiceChord, humanize =
 
 local lib = {}
 
-lib.QUALITIES = { maj7 = { 4, 7, 11 }, m7 = { 3, 7, 10 }, ['7'] = { 4, 7, 10 }, sus = { 5, 7, 10 },
+-- I and IV are major SIXTH chords: a maj7's 7th, arpeggiated in the piano or held in the pad, bit against the
+-- flute singing the root (a half step plus an octave; Nikki: "flute sounds off", 2026-11-04)
+lib.QUALITIES = { ['6'] = { 4, 7, 9 }, m7 = { 3, 7, 10 }, ['7'] = { 4, 7, 10 }, sus = { 5, 7, 10 },
                   m6 = { 3, 7, 9 } }
 lib.PROGRESSIONS = {
-    intro = { { 0, 'maj7' }, { 5, 'maj7' }, { 0, 'maj7' }, { 7, 'sus' } },
-    A = { { 0, 'maj7' }, { 9, 'm7' }, { 5, 'maj7' }, { 7, 'sus' },
-          { 0, 'maj7' }, { 4, 'm7' }, { 2, 'm7' }, { 7, '7' } },
-    B = { { 5, 'maj7' }, { 4, 'm7' }, { 2, 'm7' }, { 7, '7' },
-          { 5, 'maj7' }, { 5, 'm6' }, { 2, 'm7' }, { 7, 'sus' } },
-    outro = { { 5, 'maj7' }, { 5, 'm6' }, { 0, 'maj7' }, { 0, 'maj7' } },
+    intro = { { 0, '6' }, { 5, '6' }, { 0, '6' }, { 7, 'sus' } },
+    A = { { 0, '6' }, { 9, 'm7' }, { 5, '6' }, { 7, 'sus' },
+          { 0, '6' }, { 4, 'm7' }, { 2, 'm7' }, { 7, '7' } },
+    B = { { 5, '6' }, { 4, 'm7' }, { 2, 'm7' }, { 7, '7' },
+          { 5, '6' }, { 5, 'm6' }, { 2, 'm7' }, { 7, 'sus' } },
+    outro = { { 5, '6' }, { 5, 'm6' }, { 0, '6' }, { 0, '6' } },
 }
 -- who plays where: one more instrument each section
 lib.FORM = {
@@ -108,11 +110,21 @@ local function planTune(song, kind, rnd)
                 local best, bestScore
                 for midi = lo, hi do
                     local pc = midi % 12
-                    local inChord, inScale = false, false
-                    for _, c in ipairs(pcs) do if c == pc then inChord = true end end
+                    -- a strong beat sings the root, 3rd or 5th (a held maj7 over the root bites); a passing note
+                    -- may be any chord tone or a scale note, but none a half step from a chord tone (no rubs;
+                    -- that also keeps the key's notes off the borrowed IVm6). Nikki 2026-11-04: "flute sounds off"
+                    local inTriad, inChord, inScale, rubs = false, false, false, false
+                    for i, c in ipairs(pcs) do
+                        if c == pc then inChord = true; if i <= 3 then inTriad = true end end
+                        local d = (pc - c) % 12
+                        if d == 1 or d == 11 then rubs = true end
+                    end
                     for _, d in ipairs(SCALE) do if (song.key + d) % 12 == pc then inScale = true end end
                     local last = home and j == first + count - 1 and k == #rhythm
-                    local fits = (last and pc == song.key % 12) or (not last and (inChord or (not strong and inScale)))
+                    local fits
+                    if last then fits = pc == pcs[1] -- the phrase ends on the root of the chord under it
+                    elseif strong then fits = inTriad
+                    else fits = inChord or (inScale and not rubs) end
                     if fits then
                         local score = math.abs(midi - target) * 0.6 + rnd() * 1.2
                         if prev then
@@ -130,9 +142,11 @@ local function planTune(song, kind, rnd)
         end
     end
     phrase(0, 4, false)
-    bars[4], bars[5] = bars[0], bars[1]
-    prev = bars[5][#bars[5]].midi
-    phrase(6, 2, kind == 'A')
+    -- the second phrase starts as the first (bar 1 again: the same chord under it both times; bar 2's
+    -- differs, so it's written fresh) and ends its own way
+    bars[4] = bars[0]
+    prev = bars[4][#bars[4]].midi
+    phrase(5, 3, kind == 'A')
     return bars
 end
 
@@ -155,12 +169,14 @@ end
 -- the ringing, lifted at the chord change and pressed again just after (a legato pedal). Plain: every
 -- note gated to the bar's end, no pedal.
 local RH = { [2] = 1, [4] = 2, [6] = 3, [10] = 2, [12] = 3, [14] = 2 }
--- The piano engine at hPiano's macros plays sharp (measured 2026-11-04, dreamengine tools/tune-check.js
--- --engine PIANO --macros 0.08,0.44,0.6: +16 c at G3, +12 by C#4, +7..9 from E4 up), so a flute in tune
--- sounded flat against it (Nikki). Each piano note is pulled back by its register's offset.
+-- The piano engine's FUNDAMENTAL runs a little sharp at hPiano's macros: the deliberate stretch plus an open
+-- loop offset (dreamengine §I4d) of about +1 c in the bass to +5 c in the treble (dreamengine-a2, measured
+-- partial by partial with inharm-spec, 2026-11-04). Only that residual is taken back here, until §I4d is
+-- fixed there. (A first cut took back -7..-14 c read with YIN, which follows the stiff string's sharp upper
+-- partials: it left the piano FLAT, and the flute sounded off against it.)
 local function pianoCents(midi)
-    if midi <= 58 then return -14 elseif midi <= 62 then return -12 elseif midi <= 68 then return -8 end
-    return -7
+    if midi <= 50 then return -1 elseif midi <= 62 then return -2 elseif midi <= 70 then return -3 end
+    return -4.5
 end
 local function bookPiano(play, synth, t0, song, _b, chord, h)
     local root, _ = chordTones(song, chord)
@@ -264,7 +280,8 @@ local function bookFlute(play, synth, t0, song, b, section, j, h)
         if j ~= 0 then return end
         local chord = song.chords[b]
         local root = (song.key + chord[1]) % 12
-        notes = { { at = 0, len = 16, midi = inRange((root + 4) % 12, 74), phraseEnd = true, long = true } }
+        -- the 5th: the outro's IV6 and IVm6 both have it (their 3rds differ, and the note rings into both)
+        notes = { { at = 0, len = 16, midi = inRange((root + 7) % 12, 74), phraseEnd = true, long = true } }
     else
         local tune = song.parlour.tunes[section.kind]
         notes = tune and tune[j] or {}
@@ -292,11 +309,11 @@ local function bookFlute(play, synth, t0, song, b, section, j, h)
                 if n.phraseEnd then shapes[2] = { id = SH.fade, target = 'gain', scale = 1, stretch = held }
                 elseif len > 0.5 then shapes[2] = { id = SH.swell, target = 'gain', scale = 1, stretch = len } end
                 if tongued and #shapes < 3 then shapes[#shapes + 1] = { id = SH.puff, target = 'timbre', scale = 1 } end
-                -- blowing harder pushes a flute sharp; centred so the soft notes don't sit flat (Nikki: "a bit flat")
-                local opts = { gain = math.max(0.05, math.min(1, vol / 7)), cents = (vol - 4.6) * 3 + r1() * 1.5,
+                -- blowing harder pushes a flute sharp: a touch, centred on the pitch (Nikki: "sounds off")
+                local opts = { gain = math.max(0.05, math.min(1, vol / 7)), cents = (vol - 5) * 2 + r1(),
                                glide = (tongued or not FLUTE_SLIDES) and 0 or 40, shapes = shapes }
                 if len > 0.32 then
-                    opts.vib = { cents = (13 + 8 * love.math.random() + (n.midi == peak and 5 or 0)),
+                    opts.vib = { cents = (10 + 5 * love.math.random() + (n.midi == peak and 3 or 0)),
                                  rate = 4.9 + 0.8 * love.math.random(),
                                  delay = math.floor((160 + 200 * love.math.random()) * (len > 1 and 1.3 or 1)),
                                  fade = 400, wander = 0.5 }
