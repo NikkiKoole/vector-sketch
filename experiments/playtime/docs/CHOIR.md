@@ -55,6 +55,28 @@ guitar, `breathflute` flute, `tablahand.c` tabla):
   synth: a take (or sample region) chosen per note and latched at note-on (8 sample slots vs ~120 takes),
   and a singer's slot that can overlap itself (the consonant lead starts the next syllable early).
 
+## WORLD: morphing and re-tuning (tried 2026-11-04, "very promising")
+
+The WORLD vocoder (`pyworld`, offline in Python) splits a take into pitch, spectral envelope (the
+throat, where the formants are) and aperiodicity (breathiness), so each can be moved on its own.
+Needs a venv: `python3 -m venv --system-site-packages /tmp/venv && /tmp/venv/bin/pip install pyworld`.
+
+- **Morphing one syllable into another** (`claudetools/voice-morph.py`): frames lined up with DTW, then
+  pitch blended in log, envelope in log, aperiodicity linear. Nikki liked the **morph over time** (one
+  sound turning from A into B) and the **50% blend** (a voice between two Mipos: Theo-Herman "mi" lands
+  at 244 Hz, between 293 and 207, its brightness and length in between too). A plain crossfade sounds
+  like two voices on top of each other.
+- **Re-tuning the choir** (`claudetools/choir-score-dump.lua` → `claudetools/choir-world-render.py`): the
+  scene's real score rendered with WORLD instead of resampling: the pitch moves, the throat and the
+  length stay. Equally in tune (Twinkle, Theo: 42 notes, all within half a semitone, either way), but
+  the syllables keep their length (×1.00-1.02 instead of ×0.63-1.19) and no chipmunk or slow-mo on the
+  big shifts (Herman and Nikki in the round). The singer model's scoop and vibrato go into WORLD's pitch
+  curve directly. Nikki: "I really like the world ones"; plain vs singer still undecided.
+- **To the game** (not built): WORLD can't run in LÖVE, so bake: every syllable re-tuned in advance to a
+  few pitches (every ~3 semitones across each voice's range), the game picks the nearest and resamples
+  the rest (≤1.5 st, too small to chipmunk). A few hundred small files, made by a script, no engine
+  change. The singer model's scoop and vibrato stay live (setPitch on top of the baked take).
+
 ## Left open
 
 - Nobody has judged the singer feel by ear yet; the personalities (push, steady, lean, lung) are guesses.
