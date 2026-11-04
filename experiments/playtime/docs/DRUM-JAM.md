@@ -66,7 +66,15 @@ carts, and each voice is a recipe of several layered notes. Two ways in, decided
   share ONE noise slot; only the decay stays the slot's, so they get re-voiced, not copied. The same for a
   funk guitar layer (muted scratches thin, stabs band-passed: dreamengine's wahhand, 6 slots for 18).
 - **Expose the banks through `native/desound/desound.c`** (a C call per hit: `tr808_fire(role, …)`).
-  Faithful by construction and no slots spent in Lua, but new C surface on every platform (dylib, iOS, web).
+  Faithful by construction, but new C surface on every platform (dylib, iOS, web). And it spends slots
+  just the same: `tr808_build` claims 16 of the engine's slots, `tr909_build` 13, and `tr808_fire` times
+  its hits in ms from now (`schedule_hit`), not on the audio clock the music books on.
+
+  DECIDED 2026-11-04 (Nikki): port to Lua, and dreamengine raises `SOUND_INSTR_SLOTS` 48 -> 128 for
+  everyone (about 34 KB more; asked of dreamengine-a2, with the choke mask widened: a uint32 per slot,
+  so chokes on slots 32-47 were already broken). The 808 goes in slots 48-63 (`tr808_build` /
+  `tr808_fire` copied into patches + a fire recipe per voice), the 909 after it. Watch polyphony
+  (`SOUND_VOICES` 32): a clap is 4 hits, the three-band cymbal up to 9.
 Until then the jam plays Playtime's drum patches; enough to hear whether the arrangement works.
 
 ## Steps
