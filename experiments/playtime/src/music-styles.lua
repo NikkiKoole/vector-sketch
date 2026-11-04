@@ -631,6 +631,10 @@ D.styles = {
     -- 8-bar phrases, arranged live by the play level (a layer in or out per phrase, a breakdown and a drop
     -- every breakEvery phrases when it's busy, a fill closing each phrase). groups: the pattern groups
     -- (src/music-jam-patterns.lua), one per song, each at its own tempo (bpms).
+    -- parlour: a slow warm song showing dreamengine's humanizing engine, the instruments coming in one at a
+    -- time (piano with a real pedal, cello bowing, flute breathing, pad with a hand on the filter, brushes);
+    -- the music panel's 'humanize' row plays the same notes plainly to compare (src/music-parlour.lua)
+    parlour = { loop = 'parlour', bpm = { 70, 76 }, swing = 0.5 },
     jam = { loop = 'jam', bpm = 120, swing = 0.5,
         groups = { 'Electro', 'Hip Hop', 'Breaks', 'Disco', 'Funk', 'Brushes' },
         bpms = { Electro = { 118, 128 }, ['Hip Hop'] = { 86, 94 }, Breaks = { 96, 108 }, Disco = { 116, 124 },

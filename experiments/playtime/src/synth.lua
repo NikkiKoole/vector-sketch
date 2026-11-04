@@ -255,6 +255,35 @@ lib.patches = {
               filter = { mode = 2, cutoff = 8200, resonance = 3 } },
     brush = { slot = 25, wave = 'NOISE', adsr = { 60, 300, 2, 200 }, reverb = 0.15, level = 0.2,
               filter = { mode = 2, cutoff = 4800, resonance = 1 } },
+    -- the parlour style (src/music-parlour.lua): dreamengine's humanizing engine, each instrument after its
+    -- spike cart (tools/carts/pianohand, cellohand, breathflute, synthhand, drumhand). A ...Plain twin is
+    -- the same sound with the engine's defaults back (its own vibrato, no analog cards), for the A/B.
+    -- The piano: the release is the felt's (each note's own release_ms; the pedal lane holds the rest)
+    hPiano = { pool = true, wave = 'PIANO', adsr = { 1, 0, 7, 900 }, harmonics = 0.08, timbre = 0.44,
+               morph = 0.6, reverb = 0.3, level = 1.9, releaseShape = 'damper',
+               filter = { mode = 1, cutoff = 3600, resonance = 1 } },
+    -- cellohand's cello: bowed.c's preset on a cello-sized body; vibrato 0: each note carries its own
+    hCello = { pool = true, wave = 'BOWED', adsr = { 60, 0, 7, 240 }, harmonics = 0.55, timbre = 0.42, morph = 0.55,
+               reverb = 0.32, level = 0.6, modes = { [0] = 0, [1] = 0.85, [2] = 0.7086 }, vibrato = 0,
+               filter = { mode = 1, cutoff = 4200, resonance = 0 } },
+    hCelloPlain = { pool = true, wave = 'BOWED', adsr = { 60, 0, 7, 240 }, harmonics = 0.55, timbre = 0.42,
+                    morph = 0.55, reverb = 0.32, level = 0.6, modes = { [0] = 0, [1] = 0.85, [2] = 0.7086 },
+                    filter = { mode = 1, cutoff = 4200, resonance = 0 } },
+    -- breathflute's flute: the in-tune embouchure (morph 0.70), the engine's vibrato off
+    hFlute = { pool = true, wave = 'PIPE', adsr = { 30, 0, 7, 110 }, harmonics = 0, timbre = 0.38, morph = 0.7,
+               reverb = 0.38, level = 0.2, vibrato = 0 },
+    hFlutePlain = { pool = true, wave = 'PIPE', adsr = { 30, 0, 7, 110 }, harmonics = 0, timbre = 0.38, morph = 0.7,
+                    reverb = 0.38, level = 0.2 },
+    -- synthhand's pad: saw through the ladder, its own filter at 900 Hz (the lane moves it in octaves),
+    -- analog 1 = eight voice cards in rotation and a slow drift
+    hPad = { pool = true, wave = 'SAW', adsr = { 380, 0, 6, 700 }, reverb = 0.4, level = 0.13, analog = 1,
+             filter = { mode = 1, cutoff = 900, resonance = 3 } },
+    hPadPlain = { pool = true, wave = 'SAW', adsr = { 380, 0, 6, 700 }, reverb = 0.4, level = 0.13,
+                  filter = { mode = 1, cutoff = 900, resonance = 3 } },
+    -- drumhand's hat: metal plates that RING (so the stroke's damp and the foot's level lane are heard)
+    hHat = { pool = true, wave = 'METAL', adsr = { 0, 0, 7, 60 }, harmonics = 0.7, timbre = 0.85, morph = 0.85,
+             reverb = 0.12, level = 0.12, modes = { [0] = 0.66, [1] = 0.2 },
+             filter = { mode = 1, cutoff = 11000, resonance = 2 } },
 }
 
 local CDEF = [[
@@ -459,6 +488,13 @@ local function definePatch(slot, patch, name)
     if analog then analog(slot, patch.analog or 0) end
     local releaseShape = optionalFn('instrument_release_shape')
     if releaseShape then releaseShape(slot, lib.RELEASE[patch.releaseShape] or patch.releaseShape or 0) end
+    -- a shared slot's lanes (lane_at: the pedal, the filter hand...) back at rest for the next patch: the last
+    -- one may have left the damper down or the filter closed
+    local lane = (patch.pool or patch.fx) and optionalFn('lane_at')
+    if lane and S.C.audio_time then
+        local now = S.C.audio_time()
+        lane(now, slot, 0, 0, 0); lane(now, slot, 1, 0, 0); lane(now, slot, 2, 0, 0); lane(now, slot, 3, 1, 0)
+    end
     for i, lfo in ipairs(patch.lfo or {}) do
         S.C.instrument_lfo(slot, i - 1, lfo[1], lfo[2], lfo[3])
         if lfo.shape or patch.pool or patch.fx then S.C.lfo_shape(slot, i - 1, lfo.shape or 0) end
@@ -924,6 +960,9 @@ function lib.scheduleAt(patchName, t, midi, vol, durMs, opts)
     local music = lib.musicVolume or 1
     if music <= 0 then return end
     local gain = music < 0.999 and music or nil
+    -- a note's own gain (opts.gain 0..1: a player's touch, finer than the 0..7 vol) times the music volume;
+    -- the engine reads gain 0 as unset (full), so a tiny one stays a tiny one
+    if opts and opts.gain then gain = math.max(0.001, math.min(1, (gain or 1) * opts.gain)) end
     vol = math.max(0, math.min(7, math.floor(vol + 0.5)))
     if patch.mono then -- one voice: of two notes at the same instant (root + fifth) the first one plays.
         S.monoAt = S.monoAt or {} -- 15 ms: the parts humanize each note's time on its own (a few ms), while

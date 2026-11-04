@@ -72,7 +72,10 @@ lib.TONAL = TONAL
 -- the panel's instrument swap, so the 303 on the bass slides and accents wherever it plays.
 -- accent (0..1, optional): this note's own accent (a 303 pattern's); without it a downbeatAccent patch
 -- accents each bar's first step.
-local function play(synth, part, patch, t, midi, vol, durMs, step, slide, accent)
+-- human (optional): a booked note's humanizing fields, passed on to synth.scheduleAt's opts (cents, vib,
+-- shapes, damp, release, gain, glide...: src/synth.lua). Returns the booking id scheduleAt gave (nil when
+-- the note didn't go out, or went out without one), for synth.noteEvent (the parlour style's cello).
+local function play(synth, part, patch, t, midi, vol, durMs, step, slide, accent, human)
     local settings = state.musicSettings
     if M.song then
         M.styleParts = M.styleParts or {}
@@ -113,9 +116,14 @@ local function play(synth, part, patch, t, midi, vol, durMs, step, slide, accent
         opts = opts or {}
         opts.accent = lean
     end
-    synth.scheduleAt(patch, t, midi, vol, durMs, opts)
+    if human then
+        opts = opts or {}
+        for k, v in pairs(human) do opts[k] = v end
+    end
+    local id = synth.scheduleAt(patch, t, midi, vol, durMs, opts)
     if M.trace then M.trace(part, t, midi, vol, durMs) end
     notify(part, patch, midi, vol, durMs, t, step)
+    return id
 end
 
 -- One bar of Puppetmaker's loop: every hit rolls its chance, rnd ones land on a random semitone.
@@ -1207,7 +1215,10 @@ local function bookAcidBar(synth, t0, song, b)
 end
 
 local LOOP_BARS = { satie = bookSatieBar, ambient = bookAmbientBar, score = bookScoreBar, acid = bookAcidBar,
-    jam = function(synth, t0, song, b) return require('src.music-jam').bookBar(play, remember, synth, t0, song, b) end }
+    jam = function(synth, t0, song, b) return require('src.music-jam').bookBar(play, remember, synth, t0, song, b) end,
+    parlour = function(synth, t0, song, b)
+        return require('src.music-parlour').bookBar(play, remember, synth, t0, song, b)
+    end }
 
 -- strum's guitar: the strings of a chord's barre grip, low to high (nil = damped)
 local function guitarStrings(song, chord)

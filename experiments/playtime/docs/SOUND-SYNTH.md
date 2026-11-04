@@ -30,6 +30,21 @@ The main thread calls the dreamengine API, which drops commands into a lock-free
 - `hit(patch, midi, vol, durMs, x, y)` plays a one-shot note at a world position.
 - `noteOn(patch, midi, vol, x, y)` returns a handle; then `noteSet(handle, ...)` and `noteOff(handle)`.
 - `audioTime()` and `scheduleAt(patch, t, midi, vol, durMs, opts)` book sample-accurate notes. The music uses these. `opts` (optional): `{ glide = ms }` slides from the patch's note still sounding (legato), `{ accent = 0..1 }`, `{ harmonics/timbre/morph = -1..1 }` this note's macro offsets.
+- **Humanized playing** (dreamengine's booked-note engine, bound 2026-11-04; dreamengine
+  `docs/guides/humanizing-sounds.md`): `scheduleAt`'s opts also take `cents`, `cutoff` (octaves), `damp` 0..1,
+  `release` (ms), `regionStart/End`, `vib = { cents, rate, delay, fade, wander }`, `shapes` (up to 3
+  `{ id, target = 'pitch'/'gain'/'harmonics'/'timbre'/'morph'/'cutoff', scale, stretch }`), `origin` and `gain`
+  (0..1, times the music volume), and it returns the booking id. `noteEvent(id, t, 'reartic'/'damp'/'release',
+  amount)` acts inside a booked note (a slurred note takes over the id: send events to the newest one).
+  `defineShape(id, times, values, interp)` once at setup, never per frame. `laneAt(patch, t, 'damper'/'cutoff'/
+  'level'/'vib', value, rampMs)` is a curve on the patch's whole slot. A patch can set `vibrato` (0 = off, its
+  notes carry their own), `analog` (0..2) and `releaseShape` ('linear'/'exp'/'damper'); a shared slot's lanes go
+  back to rest on every define. **NoteOpts must match the engine's**: the engine reads the whole struct, so
+  synth.lua declares it as dreamengine's `runtime/studio.h` does (108 bytes) and checks it against the
+  library's own size (`de_note_opts_size`, native/desound/desound.c) at the first booked note. When the
+  engine's struct grows, copy the new declaration (field order and all) into synth.lua and the web
+  processor (`webtest/desound-processor.js`). Rebuild the library to a temp file and move it into place: a
+  running game has it loaded.
 - Patches are named in `lib.patches`. Each has a slot, an instrument id (`lib.INSTR`), adsr, three macros (harmonics/timbre/morph), and optionally level, reverb, filter, tape, autopan and phaser.
 
 ## Music, in short

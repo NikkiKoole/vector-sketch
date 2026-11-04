@@ -1,5 +1,5 @@
 -- Renders the real src/music.lua + src/synth.lua offline to a WAV.
--- usage: luajit render.lua <out.wav> <seconds> <style: set|bossa|guaraldi|ballad> <rhythm: auto|on|off>
+-- usage: luajit render.lua <out.wav> <seconds> <style: set|bossa|guaraldi|ballad|parlour...> <rhythm: auto|on|off>
 --        [busyFrom seconds] [seed]
 -- env: MELODY=<patch> swaps the tune's voice, VOICES=bass:tb303,lead:flute any part's, SOLO=<patch,patch> a stem,
 --      TUNE=classic builds the tune the old way (the default is guide, src/music-guide.lua),
@@ -30,6 +30,8 @@ if os.getenv('JAM') then -- after src.music, which fills in state.musicSettings
     package.loaded['src.state'].musicSettings.jam = jam
 end
 if os.getenv('TUNE') then music.tune = os.getenv('TUNE') end
+-- HUMANIZE=0: the parlour style's notes played plainly (the music panel's 'humanize' row)
+if os.getenv('HUMANIZE') then package.loaded['src.state'].musicSettings.humanize = os.getenv('HUMANIZE') ~= '0' end
 if os.getenv('MELODY') then music.melody, music.melodyPatch = true, os.getenv('MELODY') end
 -- VOICES=bass:tb303,lead:flute plays parts on other instruments, as the panel's part rows do
 if os.getenv('VOICES') then

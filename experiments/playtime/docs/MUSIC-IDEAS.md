@@ -34,7 +34,17 @@ The music panel is one panel for every style now (settings → music: a row per 
 - [ ] **The 78 / Caretaker treatment** can be built now: the group bus (`instrument_group`), the room on the record (`reverb_bus_into`), a group filter and `stereo_width` are bound in synth.lua but unused. Open question first: a grouped slot plays through the lead's bus, so the pedalled patches would lose their own pedals inside the group (SOUND-SYNTH.md). The 303's own slide/accent PATTERN (per-step flags, the 303 knobs item above) is still to do; today it only slides in legato lines and accents downbeats.
 - [ ] **Before shipping a score piece**: the furniture music (carrelage, tapisserie) was unpublished in Satie's lifetime; check when it was first printed (late first publication has its own rules in the US and the EU). The Gnossienne's engraving is CC BY-SA: credit Knute Snortum / Mutopia.
 - [ ] **The 1920s dance band / Caretaker style**: Nikki is finding examples to take apart (MUSIC-ANALYSIS.md); public domain tunes to build it on are in the notebook doc (Charmaine, Diane, Japanese Sandman, After the Ball, ...; check each writer's dates).
-- Bowed strings: tried 2026-11-02 for the furniture music and parked: hard to make sound right with booked notes (no bow movement through a note, no late vibrato, no section). The violin / viola / cello / clarinet patches stay in the instrument lists.
+- [x] **Parlour** (2026-11-04, dreamengine-a2's brief, Nikki: "go ahead with your song"): the `parlour` style
+  (`src/music-parlour.lua`), a slow warm original song that shows the humanizing engine, the instruments coming in
+  one per section: the felt piano with a real sustain pedal (a damper lane, each key only as long as a hand holds
+  it), then the cello (one bow a bar, slurs on the same voice, a connected bow change at each bar line, swells, its
+  own late vibrato), the flute (breath-sharp cents, a scoop, a swell or the phrase-end fade, the tongue's puff,
+  vibrato blooming late), the pad (analog voice cards, a hand on the filter as cutoff-lane ramps), then brushes
+  (the buried kick, damped ghosts, the hi-hat foot easing an open hat into the chick). The music panel's
+  `humanize` row (shown while it plays) plays the same notes plainly to compare. In the style list, not the set.
+  Waiting on an ear pass.
+- Bowed strings: tried 2026-11-02 for the furniture music and parked (the parlour cello, 2026-11-04, is the
+  booked-note answer: bow changes, slurs and its own vibrato are there now): hard to make sound right with booked notes (no bow movement through a note, no late vibrato, no section). The violin / viola / cello / clarinet patches stay in the instrument lists.
 
 ## Earlier (left open on 2026-10-30)
 The short list after a long day of styles; the details live in the entries further down.
