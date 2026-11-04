@@ -85,7 +85,11 @@ carts, and each voice is a recipe of several layered notes. Two ways in, decided
   everything. SOLVED the same day (Nikki: "much better, the tooter is gone!"): the pad has its own patch,
   `jamPad` (slot 62): no auto-pan / phaser / tape (the shared `rhodes` wobbled at 4 Hz on a held chord),
   2-3 dB under the bass (the shared one rendered ~15 dB over), and above all it FADES (decay 2 s to
-  sustain 1): at full sustain a chord held a whole bar stayed flat, an organ. Still open: maybe the 808
+  sustain 1): at full sustain a chord held a whole bar stayed flat, an organ. CORRECTED later that day:
+  the Rhodes engine fades by itself; what held flat was a slot whose define the engine's queue had
+  DROPPED (the 808 + jamPad took a full define past 511 calls), left a default square wave. The tooter
+  that changed between renders was that (the upright `musicBass` too, in some runs). Fixed in synth.lua
+  (defines spread over frames, SOUND-SYNTH.md gotchas). jamPad's fade stays (liked). Still open: maybe the 808
   snare's body tones (F#3 + E4) alone on the quiet hits (tried: quiet hits as noise only, not decided;
   the "octave up toot" heard then may well have been the pad); ELECTRO 3 has no hats at all.
 Until then the jam plays Playtime's drum patches; enough to hear whether the arrangement works.

@@ -57,6 +57,15 @@ The main thread calls the dreamengine API, which drops commands into a lock-free
 - The settings are at the top of `src/music.lua`: style ('set' or one style), set, rhythmSection, upright, melody, melodyPatch, and more. `music.nowPlaying()` says which style, key and section is playing.
 
 ## Gotchas
+- **The engine's request queue holds 511 calls and DROPS the rest** (`[sound] WARNING: request queue
+  overflow`, on stderr: in `.playtime.log`, not the bridge console). A dropped define leaves its slot the
+  engine's default, a FLAT SQUARE WAVE: an organ "tooter" in whatever plays there, a different patch each
+  run (pairs order), so renders stopped repeating. Hit 2026-11-04 when the 808 and jamPad took a full
+  define from ~400 calls to ~600. Since then `definePatches` spreads them (8 patches a batch, the next
+  only once the audio clock has moved, so the render thread is draining), a note for a patch still
+  waiting defines it first (`slotOf`). Adding patches is free again; any OTHER burst of engine calls in
+  one frame (hundreds of shapes, samples) needs the same care. When a sound is odd, grep the log for
+  `overflow` first.
 - **A PIANO patch always sets `harmonics`**: on the PIANO engine it picks the voicing (0.08 = the grand; the
   engine's default 0.5 = the harpsichord, dreamengine-a2 2026-11-04). definePatch sends `patch.harmonics or 0`,
   so a piano patch without it gets 0, not the grand.

@@ -573,17 +573,44 @@ local function definePatch(slot, patch, name)
     sendPedals(slot, name)
 end
 
+-- A slot-owning patch onto its slot, and its choke (another patch's name: a note on this one cuts that
+-- one's ringing note, the 808's hats). Chokes are per slot, so the other needn't be defined yet.
+local function defineOwnSlot(name)
+    local patch = lib.patches[name]
+    if not (patch and patch.slot) then return end
+    definePatch(patch.slot, patch, name)
+    local other = patch.choke and lib.patches[patch.choke]
+    local choke = other and other.slot and optionalFn('instrument_choke')
+    if choke then choke(patch.slot, other.slot) end
+end
+
+-- The engine's request queue holds 511 calls and DROPS the rest ("[sound] WARNING: request queue
+-- overflow"); defining every patch at once is ~600 (2026-11-04, with the 808), and lib.start does it
+-- before the render thread drains anything. A dropped define leaves its slot the engine's default, a
+-- flat square wave: a "tooter" in whatever plays there. So the patches go in a few at a time (about
+-- 150 calls), the rest from lib.update, a frame each; a note for one still waiting defines it first
+-- (slotOf), which is also all the offline renderer needs (it never calls update).
+local DEFINES_PER_STEP = 8
+local function defineSome(n)
+    local pending = S.pendingDefines
+    while pending and #pending > 0 and n > 0 do
+        local name = table.remove(pending, 1)
+        S.pendingSet[name] = nil
+        defineOwnSlot(name)
+        n = n - 1
+    end
+end
+
 local function definePatches()
     S.C.reverb(lib.reverbSize, lib.reverbDamping)
+    local names = {}
     for name, patch in pairs(lib.patches) do
-        if patch.slot then definePatch(patch.slot, patch, name) end
+        if patch.slot then names[#names + 1] = name end
     end
-    -- choke = another patch's name: a note on this one cuts that one's ringing note (the 808's hats)
-    local choke = optionalFn('instrument_choke')
-    for _, patch in pairs(lib.patches) do
-        local other = patch.choke and lib.patches[patch.choke]
-        if choke and patch.slot and other and other.slot then choke(patch.slot, other.slot) end
-    end
+    table.sort(names) -- the same order every run
+    S.pendingDefines, S.pendingSet = names, {}
+    for _, name in ipairs(names) do S.pendingSet[name] = true end
+    defineSome(DEFINES_PER_STEP)
     S.pool, S.fx = {}, {} -- the shared slots load their patches on first use
 end
 
@@ -620,7 +647,16 @@ local function claim(name, patch, t, durMs, slots, residents)
 end
 
 local function slotOf(name, patch, t, durMs)
-    if patch.slot then return patch.slot end
+    if patch.slot then
+        if S.pendingSet and S.pendingSet[name] then -- not defined yet (definePatches spreads them): now
+            for i, pending in ipairs(S.pendingDefines) do
+                if pending == name then table.remove(S.pendingDefines, i) break end
+            end
+            S.pendingSet[name] = nil
+            defineOwnSlot(name)
+        end
+        return patch.slot
+    end
     if patch.fx then
         S.fx = S.fx or {}
         return claim(name, patch, t, durMs, lib.fxSlots, S.fx)
@@ -842,6 +878,16 @@ function lib.update(dt, camera)
     if S.thread then
         noteFrame(dt)
         collectDropouts(dt)
+    end
+    -- the patches still waiting (definePatches), a batch only once the audio clock has moved since the last
+    -- one: the render thread is draining the queue then (at startup it takes a while to begin, and slow
+    -- first frames sent batch after batch into a queue nobody emptied: 33 calls dropped)
+    if S.pendingDefines and #S.pendingDefines > 0 then
+        local now = S.C.audio_time and S.C.audio_time() or 0
+        if not S.definedAt or now > S.definedAt then
+            defineSome(DEFINES_PER_STEP)
+            S.definedAt = now
+        end
     end
     S.C.de_lua_tick(dt)
     if S.fxHeld and #S.fxHeld > 0 then -- release the hits played as held notes (lib.hit, below full FX volume)
