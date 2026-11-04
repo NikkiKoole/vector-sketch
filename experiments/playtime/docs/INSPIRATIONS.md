@@ -12,6 +12,9 @@ The pictures, toys and apps behind Mipo, and what to take from each. Add one whe
   A side view under the grass: naked mole-rats in the tunnels, worms in a pale top soil, a potato
   hanging its roots into darker earth with bones and stones. The picture behind the burrow
   (`BURROW.md`). Nikki's 2022 trace of it: `resources/svg_to_love/molletjes.svg` (vector-sketch root).
+- **Nikki's AI mood pictures** (2026-11-04): Mipos in handmade dioramas, felt, moss, cardboard,
+  cellophane water. For mood only, not to use or ship: `docs/inspiration/ai-materials/`. What the
+  materials are and how to get them at runtime: `MATERIALS.md`.
 - **Roy Scholten, *50 vogels***: https://grafiek.royscholten.nl/project/50-vogels/ (at the top of
   `../scrolling-world/main.lua`).
 
