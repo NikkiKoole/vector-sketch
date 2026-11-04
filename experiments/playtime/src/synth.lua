@@ -280,6 +280,17 @@ lib.patches = {
              filter = { mode = 1, cutoff = 900, resonance = 3 } },
     hPadPlain = { pool = true, wave = 'SAW', adsr = { 380, 0, 6, 700 }, reverb = 0.4, level = 0.13,
                   filter = { mode = 1, cutoff = 900, resonance = 3 } },
+    -- the upright style (src/music-upright.lua): basshand.c's upright, voiced as upright.c / rootwalk.c:
+    -- pizzicato on the double-bass body, the FINGER pluck (mode 6), dark (350 Hz), mono like a walking
+    -- line (a ghost on the same slot stops the ringing note, as the cart's choked ghost slot does)
+    hUpright = { pool = true, wave = 'BOWED', adsr = { 4, 0, 7, 475 }, harmonics = 0.3, timbre = 0.3, morph = 0.45,
+                 reverb = 0.22, level = 0.8, mono = true, vibrato = 0,
+                 modes = { [0] = 1, [1] = 0.85, [2] = 1, [6] = 1 },
+                 filter = { mode = 1, cutoff = 350, resonance = 3 } },
+    -- and its THUMP: the finger and the body knocked, a short low membrane under every pluck (a real pizz is
+    -- loud, then rings on ~15 dB down)
+    hThump = { pool = true, wave = 'MEMBRANE', adsr = { 1, 0, 7, 300 }, harmonics = 0.8, timbre = 0.2, morph = 0.25,
+               reverb = 0.3, level = 0.8, filter = { mode = 1, cutoff = 700, resonance = 1 } },
     -- drumhand's hat: metal plates that RING (so the stroke's damp and the foot's level lane are heard)
     hHat = { pool = true, wave = 'METAL', adsr = { 0, 0, 7, 60 }, harmonics = 0.7, timbre = 0.85, morph = 0.85,
              reverb = 0.12, level = 0.12, modes = { [0] = 0.66, [1] = 0.2 },

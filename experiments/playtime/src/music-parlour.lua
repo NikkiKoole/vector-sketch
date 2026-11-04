@@ -65,11 +65,11 @@ end
 
 local function human() return state.musicSettings.humanize ~= false end
 
--- The PIPE engine lands a SLID note flat (measured 2026-11-04 on dreamengine 10f4de3f, no extras on the
--- notes: 1 semitone up at C6 -14 c, 3 semitones -26..-41 c, 5 semitones -65..-74 c; the glide time doesn't
--- matter, an attacked note is in tune). Nikki heard the flute flat. Until dreamengine fixes it, the flute's
--- slurred notes start again softly (no tongue puff) instead of sliding; true again once it's fixed.
-local FLUTE_SLIDES = false
+-- The PIPE engine landed a SLID note flat (measured 2026-11-04 on dreamengine 10f4de3f: 1 semitone up at
+-- C6 -14 c, 5 semitones -65..-74 c; Nikki heard the flute flat). Fixed in dreamengine 399976bd (re-measured
+-- in parlour: every pitch +1..+7 c, the intended breath-sharpness). false = the slurs start again softly
+-- instead of sliding, for a library built before that.
+local FLUTE_SLIDES = true
 local function r1() return love.math.random() * 2 - 1 end
 local function smooth01(x) x = math.max(0, math.min(1, x)); return x * x * (3 - 2 * x) end
 
@@ -387,5 +387,9 @@ function lib.bookBar(play, remember, synth, t0, song, b)
     if who.pad then bookPad(play, synth, t0, song, b, chord, h, j) end
     if who.drums then bookDrums(play, synth, t0, song, b, h) end
 end
+
+-- shared with the upright style (src/music-upright.lua): the brushes, and the piano's tuning
+lib.bookDrums = bookDrums
+lib.pianoCents = pianoCents
 
 return lib

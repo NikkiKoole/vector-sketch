@@ -237,11 +237,12 @@ lib.rows = {
           { 'set', 'bossa', 'guaraldi', 'island', 'dusk', 'dumont', 'supermarket', 'herbs', 'lofi', 'puppetmaker',
             'strum', 'rollo', 'jingle', 'vibesnight', 'wave', 'sesame', 'citypop', 'buymode', 'satie', 'ambient',
             'bethena', 'gnossienne', 'gymnopedie', 'bachprelude', 'traumerei', 'carrelage', 'tapisserie', 'gershwin2',
-            'ballad', 'acid', 'jam', 'parlour' }, nil, true),
-    -- parlour (src/music-parlour.lua): its instruments humanized (dreamengine's booked-note engine) or plain
+            'ballad', 'acid', 'jam', 'parlour', 'upright' }, nil, true),
+    -- parlour and upright (src/music-parlour.lua, music-upright.lua): humanized (dreamengine's booked notes) or plain
     { key = 'humanize', kind = 'bool', visible = function()
             local now = music().nowPlaying()
-            return (now and now.style or music().style) == 'parlour'
+            local style = now and now.style or music().style
+            return style == 'parlour' or style == 'upright'
         end,
         get = function() return state().musicSettings.humanize ~= false end,
         set = function(_, v) state().musicSettings.humanize = v end },

@@ -43,6 +43,17 @@ The music panel is one panel for every style now (settings → music: a row per 
   (the buried kick, damped ghosts, the hi-hat foot easing an open hat into the chick). The music panel's
   `humanize` row (shown while it plays) plays the same notes plainly to compare. In the style list, not the set.
   Waiting on an ear pass.
+  Tuning (Nikki, 2026-11-04: "the flute is a bit flat"): dreamengine's PIPE landed slid notes flat (to -74 c),
+  fixed there in 399976bd; the piano engine plays +7..16 c sharp at these macros (a known residual), so
+  parlour's piano notes are pulled back by register (`pianoCents`) until dreamengine fixes it.
+- [x] **Upright** (2026-11-04, Nikki: "make one using upright bass"): the `upright` style (`src/music-upright.lua`),
+  a slow jazz blues (104–114 bpm, swing 0.6) where the upright is the voice, played by two hands the way
+  dreamengine's `basshand.c` plays it: each pluck its own force, finger spot and brightness, the left hand
+  deciding the length (open strings ring on), slides in from a semitone or two under (a pluck, then a glide on
+  the mono voice), ghosts (damp 1) and rakes between beats, a wooden thump under every pluck that varies with
+  the hand. The form: the turnaround as intro, a chorus in two, two walking, one for the bass (more slides and
+  ghosts, the piano nearly out), a last walking one, ii V I on a ringing root. Brushes from parlour, a felt
+  piano comping rootless shells. The `humanize` row plays it plainly too. Waiting on an ear pass.
 - Bowed strings: tried 2026-11-02 for the furniture music and parked (the parlour cello, 2026-11-04, is the
   booked-note answer: bow changes, slurs and its own vibrato are there now): hard to make sound right with booked notes (no bow movement through a note, no late vibrato, no section). The violin / viola / cello / clarinet patches stay in the instrument lists.
 

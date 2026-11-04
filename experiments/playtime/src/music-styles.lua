@@ -635,6 +635,10 @@ D.styles = {
     -- time (piano with a real pedal, cello bowing, flute breathing, pad with a hand on the filter, brushes);
     -- the music panel's 'humanize' row plays the same notes plainly to compare (src/music-parlour.lua)
     parlour = { loop = 'parlour', bpm = { 70, 76 }, swing = 0.5 },
+    -- upright: a slow jazz blues where the upright bass is the voice, played by two hands as dreamengine's
+    -- basshand.c plays it (force, finger spot, length, slides, ghosts, rakes, the thump), brushes and a felt
+    -- piano comping; the music panel's 'humanize' row plays it plainly (src/music-upright.lua)
+    upright = { loop = 'upright', bpm = { 104, 114 }, swing = 0.6 },
     jam = { loop = 'jam', bpm = 120, swing = 0.5,
         groups = { 'Electro', 'Hip Hop', 'Breaks', 'Disco', 'Funk', 'Brushes' },
         bpms = { Electro = { 118, 128 }, ['Hip Hop'] = { 86, 94 }, Breaks = { 96, 108 }, Disco = { 116, 124 },
