@@ -367,7 +367,7 @@ function s.drawUI()
     ui.startFrame()
     local BH, pad, w = 36, 8, 400
     local rows = {
-        { 'facet', 40, 250 }, { 'stretch', 0.5, 3 }, { 'slant', -1, 1 }, { 'crumple', 0, 2 },
+        { 'facet', 40, 250, 1 }, { 'stretch', 0.5, 3 }, { 'slant', -1, 1 }, { 'crumple', 0, 2 },
         { 'peaks', 0, 3 }, { 'alpha', 0, 1 }, { 'shine', 2, 60 },
     }
     local h = (BH + pad) * (#rows + 1) + pad + 24
@@ -377,7 +377,7 @@ function s.drawUI()
         for _, row in ipairs(rows) do
             local name = row[1]
             local x, y = ui.nextLayoutPosition(layout, w - 20, BH)
-            local v = ui.sliderWithInput('cello' .. name, x, y, 180, row[2], row[3], b.settings[name], nil, 1)
+            local v = ui.sliderWithInput('cello' .. name, x, y, 180, row[2], row[3], b.settings[name], nil, row[4])
             if v then b.settings[name] = v + 0 end
             ui.label(x + 280, y, name)
         end

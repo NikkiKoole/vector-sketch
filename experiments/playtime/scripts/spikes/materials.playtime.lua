@@ -661,7 +661,7 @@ function s.drawUI()
         for _, row in ipairs(rows) do
             local key = row[1]
             local x, y = ui.nextLayoutPosition(layout, w - 20, BH)
-            local v = ui.sliderWithInput('materials' .. key, x, y, 180, row[2], row[3], b.settings[key], nil, 1)
+            local v = ui.sliderWithInput('materials' .. key, x, y, 180, row[2], row[3], b.settings[key])
             if v then b.settings[key] = v + 0 end
             ui.label(x + 280, y, key)
         end
