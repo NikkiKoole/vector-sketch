@@ -43,9 +43,14 @@ The music panel is one panel for every style now (settings → music: a row per 
   (the buried kick, damped ghosts, the hi-hat foot easing an open hat into the chick). The music panel's
   `humanize` row (shown while it plays) plays the same notes plainly to compare. In the style list, not the set.
   Waiting on an ear pass.
-  Tuning (Nikki, 2026-11-04: "the flute is a bit flat"): dreamengine's PIPE landed slid notes flat (to -74 c),
-  fixed there in 399976bd; the piano engine plays +7..16 c sharp at these macros (a known residual), so
-  parlour's piano notes are pulled back by register (`pianoCents`) until dreamengine fixes it.
+  Tuning (Nikki, 2026-11-04: "the flute is a bit flat", then "sounds off", then "its all in tune now!"): three
+  causes. dreamengine's PIPE landed slid notes flat (to -74 c), fixed there in 399976bd. The tune clashed with the
+  chords (the flute's root against the piano's maj7, a copied bar over another chord, endings off the sounding
+  chord): fixed in the tune and by making I and IV sixth chords, `claudetools/music-rubs.lua` 18 -> 0. And a piano
+  correction measured with YIN, which reads a stiff piano's sharp upper partials: it made the piano flat; only
+  dreamengine's measured fundamental residual is taken back now (`pianoCents`), until their §I4d fix.
+  **Lesson:** when a part "sounds off", count the rubs first; measure a piano's tuning by its fundamental
+  (dreamengine's inharm-spec), never YIN.
 - [x] **Upright** (2026-11-04, Nikki: "make one using upright bass"): the `upright` style (`src/music-upright.lua`),
   a slow jazz blues (104–114 bpm, swing 0.6) where the upright is the voice, played by two hands the way
   dreamengine's `basshand.c` plays it: each pluck its own force, finger spot and brightness, the left hand
