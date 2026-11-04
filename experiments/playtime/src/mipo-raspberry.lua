@@ -16,7 +16,7 @@ lib.wait = 0.2         -- seconds with the tongue out before the buzz
 lib.inTime = 0.45      -- seconds to go back in
 lib.openTime = 0.3     -- seconds for the mouth to open again after
 lib.shakeRate = 10     -- lip/tongue wobbles a second (each frame was far too fast)
-lib.lipBuzz = 6        -- how far the lips shake (mouth-shape units; a mouth is ~150 wide)
+lib.lipBuzz = 2        -- how far the lips shake (mouth-shape units; a mouth is ~150 wide); 6 moved too much
 lib.wide = 1.15        -- the pressed mouth a bit wider than it rests
 lib.press = 1          -- 0 = the resting mouth, 1 = the lips fully pressed together
 lib.gap = 10           -- half the lips' gap in the middle, where the tongue comes through
