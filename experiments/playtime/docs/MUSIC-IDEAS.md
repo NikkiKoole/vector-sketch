@@ -60,9 +60,12 @@ The music panel is one panel for every style now (settings → music: a row per 
   the hand. The form: the turnaround as intro, a chorus in two, two walking, one for the bass (more slides and
   ghosts, the piano nearly out), a last walking one, ii V I on a ringing root. Brushes from parlour, a felt
   piano comping rootless shells. The `humanize` row plays it plainly too. Nikki (2026-11-04): "i like upright". In the set since 2026-11-04, with parlour ("it might grow on me").
-  Left open: 33-43 half-step rubs a song between the walking bass and the piano's held shells (some are the
-  walk's chromatic approaches, idiomatic; the fix if they ever bother: the piano letting go before beat 4,
-  the walk's middle notes avoiding a half step against the shell).
+  Bass/piano rubs (fixed 2026-11-04, Nikki: "keep it"): the first count, 33-43 a song, was mostly the thumps,
+  ghosts and slide graces (short notes logged as bass); real plucks gave 7-11. Now the walk's middle notes
+  avoid a half step from the piano's shell, and the piano leaves out a key a half step from a bass note
+  ringing under it (the shell plays on with two; the walk's approach on four stays). 0-6 left, all the
+  mono bass's previous note logged past the next pluck: none sound. Count rubs on plucks only (drop the
+  1-step bass notes from the score) for this style.
 - Bowed strings: tried 2026-11-02 for the furniture music and parked (the parlour cello, 2026-11-04, is the
   booked-note answer: bow changes, slurs and its own vibrato are there now): hard to make sound right with booked notes (no bow movement through a note, no late vibrato, no section). The violin / viola / cello / clarinet patches stay in the instrument lists.
 

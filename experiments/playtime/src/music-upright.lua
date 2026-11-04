@@ -84,6 +84,13 @@ local function planLine(song, rnd)
         local scale = {}
         for _, s in ipairs(lib.SCALES[chord[2]]) do scale[#scale + 1] = (root + s) % 12 end
         local function inScale(m) for _, pc in ipairs(scale) do if pc == m % 12 then return true end end end
+        -- a half step (or a b9, a maj7) from a note of the piano's shell over this chord bites: walk around it
+        local function rubsShell(m)
+            for _, s in ipairs(lib.SHELLS[chord[2]]) do
+                local d = (m - root - s) % 12
+                if d == 1 or d == 11 then return true end
+            end
+        end
         local function walkTo(from, aim, strong)
             local best, bestCost
             for m = math.max(LO, from - 5), math.min(HI, from + 5) do
@@ -93,6 +100,7 @@ local function planLine(song, rnd)
                         if (root + tone) % 12 == m % 12 then isTone = true end
                     end
                     local cost = math.abs(m - aim) + (strong and not isTone and 1.5 or 0) + rnd() * 0.8
+                        + (rubsShell(m) and 3 or 0)
                     if not bestCost or cost < bestCost then best, bestCost = m, cost end
                 end
             end
@@ -223,13 +231,33 @@ local function bookPiano(play, synth, t0, song, b, roles, h)
     if roles.feature then hits = (b % 2 == 1) and { 0 } or {}
     else hits = COMPS[stream(song.seed, 500 + b)(#COMPS) + 1] end
     synth.laneAt('hPiano', t0, 'damper', 0, 0) -- no pedal here (the slot may have had parlour's)
+    -- the bass notes ringing under the bar, as {from, to, midi} in steps: a quarter (a half in two) and a
+    -- little more; the walk's last note is its approach into the next chord, a half step from it on purpose
+    local line, under = song.upright.line[b], {}
+    if roles.feel == 'two' then
+        under = { { 0, 8.5, line[1] }, { 8, 16.5, line[4] } }
+    else
+        for q = 1, 4 do under[#under + 1] = { (q - 1) * 4, (q - 1) * 4 + 4.5, line[q] } end
+    end
     for _, s in ipairs(hits) do
-        local keyMs = lengthMs(song, s, s == 0 and #hits == 1 and 8 or 2) * 0.8
-        for k, midi in ipairs(song.upright.voicing) do
+        local keySteps = s == 0 and #hits == 1 and 8 or 2
+        local keyMs = lengthMs(song, s, keySteps) * 0.8
+        -- the release rings about two steps more: a key a half step from a bass note under it lets go
+        -- (the shell plays on with two)
+        local voicing = {}
+        for _, midi in ipairs(song.upright.voicing) do
+            local bites = false
+            for _, u in ipairs(under) do
+                local d = (midi - u[3]) % 12
+                if u[1] < s + keySteps + 2 and u[2] > s and (d == 1 or d == 11) then bites = true end
+            end
+            if not bites then voicing[#voicing + 1] = midi end
+        end
+        for k, midi in ipairs(voicing) do
             if h then
                 local t = stepTime(song, t0, s) + (k - 1) * (0.008 + 0.006 * love.math.random()) + humanize(0.006)
                 play(synth, 'keys', 'hPiano', t, midi, 6, keyMs, s, nil, nil,
-                     { gain = 0.42 + (k == #song.upright.voicing and 0.06 or 0) + r1() * 0.05, release = 320 })
+                     { gain = 0.42 + (k == #voicing and 0.06 or 0) + r1() * 0.05, release = 320 })
             else
                 play(synth, 'keys', 'hPiano', stepTime(song, t0, s), midi, 4, keyMs, s)
             end
