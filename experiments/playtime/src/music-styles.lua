@@ -6,7 +6,7 @@
 local D = {}
 
 D.set = { 'bossa', 'guaraldi', 'island', 'dusk', 'dumont', 'supermarket', 'herbs', 'lofi', 'puppetmaker', 'strum',
-            'satie', 'ambient', 'sesame', 'citypop', 'buymode', 'rollo', 'jingle', 'vibesnight' }
+            'satie', 'ambient', 'sesame', 'citypop', 'buymode', 'rollo', 'jingle', 'vibesnight', 'upright', 'parlour' }
 D.lookahead = 0.3          -- seconds of music booked ahead
 D.activityHalfLife = 8     -- seconds for the play level to halve
 D.bandJoins = 4            -- play level at which the rhythm section comes in...

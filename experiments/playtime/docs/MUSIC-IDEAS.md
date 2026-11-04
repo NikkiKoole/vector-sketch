@@ -58,7 +58,7 @@ The music panel is one panel for every style now (settings → music: a row per 
   the mono voice), ghosts (damp 1) and rakes between beats, a wooden thump under every pluck that varies with
   the hand. The form: the turnaround as intro, a chorus in two, two walking, one for the bass (more slides and
   ghosts, the piano nearly out), a last walking one, ii V I on a ringing root. Brushes from parlour, a felt
-  piano comping rootless shells. The `humanize` row plays it plainly too. Nikki (2026-11-04): "i like upright".
+  piano comping rootless shells. The `humanize` row plays it plainly too. Nikki (2026-11-04): "i like upright". In the set since 2026-11-04, with parlour ("it might grow on me").
   Left open: 33-43 half-step rubs a song between the walking bass and the piano's held shells (some are the
   walk's chromatic approaches, idiomatic; the fix if they ever bother: the piano letting go before beat 4,
   the walk's middle notes avoiding a half step against the shell).
