@@ -8,6 +8,7 @@
 -- play mode (tab): drag on earth to dig (or put earth back: the panel, or hold shift).
 -- The panel (bottom left) has the brush size, the cell size and a new landscape.
 -- keys: [ ] brush size   m: a new Mipo at the mouse   r: new landscape   t: plain / textured earth
+--       o: drawn rim / plain line   b: line boil
 
 local s = {}
 
@@ -87,6 +88,16 @@ local function burrow()
     state.burrow = b
     b.brush, b.cell, b.seed = b.brush or 300, b.cell or 40, b.seed or 0
     return b
+end
+
+-- the drawn rim's settings (the rim itself is further down, at drawRim)
+local RIM_DEFAULTS = { drawn = true, width = 26, wobble = 1.5, boil = false }
+local function rim(b)
+    b.rim = b.rim or {}
+    for k, v in pairs(RIM_DEFAULTS) do
+        if b.rim[k] == nil then b.rim[k] = v end
+    end
+    return b.rim
 end
 
 local function surfaceAt(b, x)
@@ -613,6 +624,10 @@ function s.onKeyPress(key)
         spawnMipo(b, mx, my)
     elseif key == 'r' then
         reset(b)
+    elseif key == 'b' then
+        rim(b).boil = not rim(b).boil
+    elseif key == 'o' then
+        rim(b).drawn = not rim(b).drawn
     elseif key == 't' then
         b.plain = not b.plain
     end
@@ -657,6 +672,266 @@ function s.update(dt)
     end
     b.dirty = {}
     rocksUpdate(b, dt)
+end
+
+-- The rim drawn by hand (BURROW.md, "an interesting outline for any shape", the route Nikki picked
+-- 2026-10-30): ../drawn-outline's textured stroke on the earth's edge. A crayon stroke picture
+-- (textures/strokes: line*.png drawn upwards, track*.png sideways) repeats along the edge, each
+-- repeat another picture of its kind, sometimes mirrored or backwards, so the repeat doesn't show.
+-- The edge comes in chains that end at chunk borders, so the wobble and the width are read from
+-- the place in the world, not from the distance along a chain: the line runs on across chunks.
+-- Sharp corners (where the strip would fold over itself into a dark notch) break the stroke: each
+-- piece runs a little past the corner and tapers, like a pen lifted and put down again. Line boil
+-- (b): the wobble and the pictures re-rolled 10 times a second.
+local STROKE_FAMILIES = {
+    line = { alongX = false, from = 0.1, to = 0.9 },
+    track = { alongX = true, from = 0.02, to = 0.98 },
+}
+local STROKES = {}
+do
+    local files = love.filesystem.getDirectoryItems('textures/strokes')
+    table.sort(files)
+    for _, file in ipairs(files) do
+        local family = file:match('^(%a+)%d*%.png$')
+        local f = STROKE_FAMILIES[family]
+        if f then
+            local image = love.graphics.newImage('textures/strokes/' .. file, { mipmaps = true })
+            image:setMipmapFilter('linear')
+            STROKES[#STROKES + 1] = { image = image, family = family, alongX = f.alongX, from = f.from, to = f.to }
+        end
+    end
+end
+local RIM_SPACING = 12        -- world units between the stroke's points
+local CORNER = math.rad(55)   -- a sharper turn than this breaks the stroke
+
+local function smooth01(x)
+    x = math.max(0, math.min(1, x))
+    return x * x * (3 - 2 * x)
+end
+
+-- the chain cut at its sharp corners into pieces; flags say which ends are cut (taper there)
+local function cornerPieces(flat, loop)
+    local pts = {}
+    for i = 1, #flat, 2 do pts[#pts + 1] = { flat[i], flat[i + 1] } end
+    local n = #pts
+    local sharp = {}
+    for i = 1, n do
+        local a = pts[i - 1] or (loop and pts[n])
+        local c = pts[i + 1] or (loop and pts[1])
+        if a and c then
+            local p = pts[i]
+            local t1 = math.atan2(p[2] - a[2], p[1] - a[1])
+            local t2 = math.atan2(c[2] - p[2], c[1] - p[1])
+            local turn = math.abs((t2 - t1 + math.pi) % (2 * math.pi) - math.pi)
+            sharp[i] = turn > CORNER
+        end
+    end
+    local first
+    if loop then
+        for i = 1, n do if sharp[i] then first = i; break end end
+        if not first then
+            local closed = {}
+            for i = 1, n do closed[i] = pts[i] end
+            closed[n + 1] = { pts[1][1], pts[1][2] }
+            return { { pts = closed, cutStart = false, cutEnd = false } }
+        end
+    end
+    local pieces, cur = {}, nil
+    local count = loop and n or n - 1
+    local startI = loop and first or 1
+    cur = { pts = { pts[startI] }, cutStart = loop }
+    for s = 1, count do
+        local i = (startI - 1 + s) % n + 1
+        cur.pts[#cur.pts + 1] = pts[i]
+        local last = s == count
+        if sharp[i] and not last then
+            cur.cutEnd = true
+            pieces[#pieces + 1] = cur
+            cur = { pts = { pts[i] }, cutStart = true }
+        end
+    end
+    cur.cutEnd = loop
+    pieces[#pieces + 1] = cur
+    return pieces
+end
+
+-- points every RIM_SPACING along a piece, its cut ends run on a little past the corner
+local function penLine(piece, over)
+    local src = piece.pts
+    local out = {}
+    for i = 1, #src - 1 do
+        local a, c = src[i], src[i + 1]
+        local len = math.sqrt((c[1] - a[1]) ^ 2 + (c[2] - a[2]) ^ 2)
+        local k = math.max(1, math.ceil(len / RIM_SPACING))
+        for j = 0, k - 1 do
+            local t = j / k
+            out[#out + 1] = { a[1] + (c[1] - a[1]) * t, a[2] + (c[2] - a[2]) * t }
+        end
+    end
+    out[#out + 1] = src[#src]
+    local function extend(p, q)
+        local dx, dy = p[1] - q[1], p[2] - q[2]
+        local len = math.sqrt(dx * dx + dy * dy)
+        if len < 1e-6 then return nil end
+        return { p[1] + dx / len * over, p[2] + dy / len * over }
+    end
+    if piece.cutStart and #out >= 2 then
+        local e = extend(out[1], out[2])
+        if e then table.insert(out, 1, e) end
+    end
+    if piece.cutEnd and #out >= 2 then
+        local e = extend(out[#out], out[#out - 1])
+        if e then out[#out + 1] = e end
+    end
+    return out
+end
+
+local function hash3(a, b, c)
+    local h = math.sin(a * 127.1 + b * 311.7 + c * 74.7) * 43758.5453
+    return h - math.floor(h)
+end
+
+-- one piece as a strip of triangles, the stroke pictures repeating along it, into byPicture.
+-- Which picture, mirrored or not, comes from the square of a world grid the stroke is in (not
+-- from where the chain starts), so digging only changes the strokes where it dug.
+local function strokePiece(piece, set, step, byPicture)
+    local halfW = set.width / 2
+    local path = penLine(piece, halfW * 1.2)
+    if #path < 2 then return end
+    local seed = 3.7 + step * 7.3
+    local dist, total = { 0 }, 0
+    for i = 2, #path do
+        local a, c = path[i - 1], path[i]
+        total = total + math.sqrt((c[1] - a[1]) ^ 2 + (c[2] - a[2]) ^ 2)
+        dist[i] = total
+    end
+    local taper = math.min(halfW * 4, total * 0.3)
+    local amt = set.wobble * halfW / 9
+    local f1, f2 = 0.012 * 9 / halfW, 0.05 * 9 / halfW
+    local centre, widths = {}, {}
+    for i, p in ipairs(path) do
+        local a = path[math.max(1, i - 1)]
+        local c = path[math.min(#path, i + 1)]
+        local dx, dy = c[1] - a[1], c[2] - a[2]
+        local len = math.sqrt(dx * dx + dy * dy)
+        local nx, ny = 0, 0
+        if len > 0 then nx, ny = -dy / len, dx / len end
+        local wob = (love.math.noise(seed, p[1] * f1, p[2] * f1) - 0.5) * 2 * amt * 4
+            + (love.math.noise(seed + 50, p[1] * f2, p[2] * f2) - 0.5) * amt
+        centre[i] = { p[1] + nx * wob, p[2] + ny * wob }
+        local w = halfW * (0.8 + love.math.noise(seed + 100, p[1] * 0.004, p[2] * 0.004) * 0.4)
+        if piece.cutStart then w = w * (0.25 + 0.75 * smooth01(dist[i] / taper)) end
+        if piece.cutEnd then w = w * (0.25 + 0.75 * smooth01((total - dist[i]) / taper)) end
+        widths[i] = w
+    end
+    local function sides(i)
+        local a = centre[math.max(1, i - 1)]
+        local c = centre[math.min(#centre, i + 1)]
+        local dx, dy = c[1] - a[1], c[2] - a[2]
+        local len = math.sqrt(dx * dx + dy * dy)
+        if len == 0 then len = 1 end
+        local nx, ny = -dy / len, dx / len
+        local p, w = centre[i], widths[i]
+        return p[1] + nx * w, p[2] + ny * w, p[1] - nx * w, p[2] - ny * w
+    end
+    local tile
+    local GRID = halfW * 12             -- about one stroke picture long
+    local function cellOf(p) return math.floor(p[1] / GRID), math.floor(p[2] / GRID) end
+    local function nextTile(at, gx, gy, k)
+        local h1, h2, h3 = hash3(gx, gy, k + step * 17), hash3(gy, gx, k * 3 + 1), hash3(gx + k, gy - k, 7)
+        local pic = STROKES[math.min(#STROKES, 1 + math.floor(h1 * #STROKES))]
+        local iw, ih = pic.image:getDimensions()
+        local thick = pic.alongX and ih or iw
+        local long = pic.alongX and iw or ih
+        tile = { pic = pic, start = at, length = long * (pic.to - pic.from) * (halfW * 2 / thick),
+            mirror = h2 < 0.5, backwards = h3 < 0.5, gx = gx, gy = gy, k = k }
+    end
+    local function vertex(x, y, across, d)
+        local along = (d - tile.start) / tile.length
+        if tile.mirror then across = 1 - across end
+        if tile.backwards then along = 1 - along end
+        local p = tile.pic
+        along = p.from + (p.to - p.from) * along
+        if p.alongX then return { x, y, along, across } end
+        return { x, y, across, along }
+    end
+    local function quad(ax, ay, bx, by, d0, cx, cy, dx, dy, d1)
+        local verts = byPicture[tile.pic]
+        if not verts then verts = {}; byPicture[tile.pic] = verts end
+        local q1, q2 = vertex(ax, ay, 0, d0), vertex(bx, by, 1, d0)
+        local q3, q4 = vertex(cx, cy, 0, d1), vertex(dx, dy, 1, d1)
+        verts[#verts + 1] = q1; verts[#verts + 1] = q2; verts[#verts + 1] = q3
+        verts[#verts + 1] = q2; verts[#verts + 1] = q4; verts[#verts + 1] = q3
+    end
+    local gx, gy = cellOf(path[1])
+    nextTile(0, gx, gy, 0)
+    for i = 2, #centre do
+        local d0, d1 = dist[i - 1], dist[i]
+        local ax, ay, bx, by = sides(i - 1)
+        local cx, cy, dx, dy = sides(i)
+        -- into another grid square: a new picture from exactly where the line crosses the grid
+        -- line (not from the nearest point, which slides when digging moves the piece's start)
+        local ngx, ngy = cellOf(path[i])
+        if ngx ~= tile.gx or ngy ~= tile.gy then
+            local pa, pc = path[i - 1], path[i]
+            local t = 1
+            local agx, agy = cellOf(pa)
+            if agx ~= ngx and pc[1] ~= pa[1] then
+                t = math.min(t, (math.max(agx, ngx) * GRID - pa[1]) / (pc[1] - pa[1]))
+            end
+            if agy ~= ngy and pc[2] ~= pa[2] then
+                t = math.min(t, (math.max(agy, ngy) * GRID - pa[2]) / (pc[2] - pa[2]))
+            end
+            t = math.max(0, math.min(1, t))
+            local dm = d0 + (d1 - d0) * t
+            local mx1, my1 = ax + (cx - ax) * t, ay + (cy - ay) * t
+            local mx2, my2 = bx + (dx - bx) * t, by + (dy - by) * t
+            if t > 0 then quad(ax, ay, bx, by, d0, mx1, my1, mx2, my2, dm) end
+            nextTile(dm, ngx, ngy, 0)
+            ax, ay, bx, by, d0 = mx1, my1, mx2, my2, dm
+        end
+        while d1 > tile.start + tile.length and d1 > d0 do
+            local dm = tile.start + tile.length
+            local s = (dm - d0) / (d1 - d0)
+            local mx1, my1 = ax + (cx - ax) * s, ay + (cy - ay) * s
+            local mx2, my2 = bx + (dx - bx) * s, by + (dy - by) * s
+            quad(ax, ay, bx, by, d0, mx1, my1, mx2, my2, dm)
+            nextTile(dm, tile.gx, tile.gy, tile.k + 1)
+            ax, ay, bx, by, d0 = mx1, my1, mx2, my2, dm
+        end
+        quad(ax, ay, bx, by, d0, cx, cy, dx, dy, d1)
+    end
+end
+
+-- a chunk's rim as meshes (one per stroke picture), made again when its edge, the settings or the
+-- boil step change
+local function chunkRim(chunk, set, step)
+    local key = table.concat({ tostring(chunk.outlines), set.width, set.wobble, step }, ',')
+    if chunk.rimKey == key then return chunk.rimMeshes end
+    local byPicture = {}
+    for _, o in ipairs(chunk.outlines) do
+        local f = o.flat
+        for _, piece in ipairs(cornerPieces(f, o.loop)) do strokePiece(piece, set, step, byPicture) end
+    end
+    local meshes = {}
+    for pic, verts in pairs(byPicture) do
+        local mesh = love.graphics.newMesh(verts, 'triangles', 'static')
+        mesh:setTexture(pic.image)
+        meshes[#meshes + 1] = mesh
+    end
+    chunk.rimKey, chunk.rimMeshes = key, meshes
+    return meshes
+end
+
+local function drawRim(b)
+    local set = rim(b)
+    local step = set.boil and math.floor(love.timer.getTime() * 10) % 3 or 0
+    love.graphics.setColor(rimColor)
+    for _, chunk in pairs(b.chunks) do
+        if chunk.outlines and #chunk.outlines > 0 then
+            for _, mesh in ipairs(chunkRim(chunk, set, step)) do love.graphics.draw(mesh) end
+        end
+    end
 end
 
 -- The grass on top a little 2.5D, like the clouds spike's ground (after physics-testbed's downhill and
@@ -858,8 +1133,8 @@ function s.drawUI()
     local b = state.burrow
     if not (b and state.playMode) then return end
     ui.startFrame() -- play mode draws no editor UI, so nothing else starts the frame
-    local BH, pad, w = 40, 10, 380
-    local h = BH * 12 + pad * 13 + 20
+    local BH, pad, w = 34, 6, 380
+    local h = BH * 14 + pad * 15 + 20
     local _, sh = love.graphics.getDimensions()
     local x0, y0 = 20, sh - h - 20
     panelRect[2], panelRect[4] = y0, h
@@ -895,8 +1170,16 @@ function s.drawUI()
             if v then pl[row[1]] = v + 0 end
             ui.label(x + 260, y, row[1])
         end
+        -- the drawn rim: its width and wobble
+        local rs = rim(b)
+        for _, row in ipairs({ { 'width', 6, 80 }, { 'wobble', 0, 4 } }) do
+            x, y = ui.nextLayoutPosition(layout, w - 20, BH)
+            v = ui.sliderWithInput('burrowrim' .. row[1], x, y, 160, row[2], row[3], rs[row[1]])
+            if v then rs[row[1]] = v + 0 end
+            ui.label(x + 260, y, 'rim ' .. row[1])
+        end
         x, y = ui.nextLayoutPosition(layout, w - 20, BH)
-        ui.label(x, y, 'shift: the other one  m: Mipo  t: plain')
+        ui.label(x, y, 'shift: other  m Mipo  t plain  o rim  b boil')
     end)
 end
 
@@ -929,15 +1212,19 @@ function s.drawBelow()
         if chunk.mesh then love.graphics.draw(chunk.mesh) end
     end
     love.graphics.setShader()
-    love.graphics.setColor(rimColor)
-    love.graphics.setLineWidth(8)
-    love.graphics.setLineJoin('bevel')
-    for _, chunk in pairs(b.chunks) do
-        for _, o in ipairs(chunk.outlines) do
-            if o.loop then love.graphics.polygon('line', o.flat) else love.graphics.line(o.flat) end
+    if rim(b).drawn and #STROKES > 0 then
+        drawRim(b)
+    else
+        love.graphics.setColor(rimColor)
+        love.graphics.setLineWidth(8)
+        love.graphics.setLineJoin('bevel')
+        for _, chunk in pairs(b.chunks) do
+            for _, o in ipairs(chunk.outlines) do
+                if o.loop then love.graphics.polygon('line', o.flat) else love.graphics.line(o.flat) end
+            end
         end
+        love.graphics.setLineWidth(1)
     end
-    love.graphics.setLineWidth(1)
     if not b.plain then
         drawGrassTop(b)
         love.graphics.setColor(DARK_GRASS[1], DARK_GRASS[2], DARK_GRASS[3], 1)

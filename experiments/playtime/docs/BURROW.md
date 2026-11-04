@@ -72,7 +72,19 @@ outlined with the crayon strokes below. Nikki: "pretty nice", "looks pretty good
   the mix; Nikki will add a few lines of their own.
 - Left: sharp corners fold the strip over itself (a dark notch); break the stroke there and
   start a new piece. The hatch shows vertical bands.
-- Next: put it on the burrow rim, then on playtime shapes.
+- **On the burrow rim (2026-11-04): "as a spike it's promising".** The stroke pictures are in
+  `textures/strokes/`. Three things needed changing:
+  - The earth's edge comes in chains cut at chunk borders, so the wobble and width are read from
+    the place in the world.
+  - Sharp corners (over 55°) break the stroke into pieces that run on past the corner and taper
+    (the dark notch is gone).
+  - Which picture goes where comes from a world grid, starting exactly where the line crosses a
+    grid line, so digging changes only the strokes near it. Before, the textures shifted along the
+    whole edge.
+  Keys: `o` the drawn rim or the plain line, `b` boil. Sliders: rim width, rim wobble. Left: a
+  tunnel opening into another can still change a piece's strokes; boil isn't measured on a
+  well-dug burrow.
+- Next: on Playtime shapes (bodies, props).
 - The stroke: a triangle strip along the outline (like `src/render/ribbon.lua`) with a scanned
   line of Nikki's own (pencil, crayon, brush pen) repeating along its length, tapered ends, a
   little width change. Seeded per shape so it stays put.
