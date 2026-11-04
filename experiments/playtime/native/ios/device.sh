@@ -219,7 +219,7 @@ if "$PLAYTIME_DIR/native/desound/build-ios.sh" "$IOS_DIR/build/libdesound-ios.a"
     CDEF_FILES="$(grep -rl '^local CDEF = \[\[' "$PLAYTIME_DIR/src" ${LOVE_DIR:+"$LOVE_DIR"} --include='*.lua')"
     for f in $(sed -n '/^local CDEF = \[\[/,/^\]\]/p' $CDEF_FILES \
         | grep -oE '[a-z_0-9]+\(' | tr -d '(' | sort -u) de_lua_init de_lua_render_s16 \
-        de_lua_pool_overflow; do
+        de_lua_pool_overflow de_note_opts_size; do
         SYNTH_FLAGS="$SYNTH_FLAGS -Wl,-u,_$f"
     done
     # and the synth's CDEF_OPTIONAL ones (slides, accents, unschedule, ...), each only if this

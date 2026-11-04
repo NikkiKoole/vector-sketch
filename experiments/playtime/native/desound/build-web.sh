@@ -17,6 +17,6 @@ for f in $(sed -n '/^local CDEF_OPTIONAL = \[\[/,/^\]\]/p' ../../src/synth.lua |
     grep -qE "^[a-z].* $f\(" "$R/sound.h" && FUNCS="$FUNCS\"_$f\","
 done
 emcc -std=gnu11 -O2 -DDE_NO_RAYLIB -I"$R" desound.c -o "$OUT" --no-entry -sSTANDALONE_WASM \
-    -sALLOW_MEMORY_GROWTH -sEXPORTED_FUNCTIONS="[${FUNCS}\"_de_lua_render\",\"_malloc\"]" \
+    -sALLOW_MEMORY_GROWTH -sEXPORTED_FUNCTIONS="[${FUNCS}\"_de_lua_render\",\"_de_note_opts_size\",\"_malloc\"]" \
     -Wno-shift-count-overflow
 echo "built $OUT from dreamengine $(git -C "$DREAMENGINE" rev-parse --short HEAD)"

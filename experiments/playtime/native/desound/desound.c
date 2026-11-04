@@ -44,6 +44,12 @@ DESOUND_API int de_lua_pool_overflow(int which) {
     return 0;
 }
 
+// The engine's NoteOpts size, as this dreamengine declares it. src/synth.lua compares it with its own
+// declaration: the engine reads the WHOLE struct, so a Lua NoteOpts smaller than the engine's would
+// hand it whatever lies past the end (random detune, cut notes, stray curves, no error). The struct
+// grew in place (dreamengine humanized-playing §8: 24 bytes, then 108), so a bigger Lua one is fine.
+DESOUND_API int de_note_opts_size(void) { return (int)sizeof(NoteOpts); }
+
 static int desound_ready = 0;
 
 DESOUND_API int de_lua_init(void) {

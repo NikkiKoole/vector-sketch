@@ -315,8 +315,18 @@ if ffi then pcall(ffi.cdef, CDEF) end
 -- without slides for now (S.hasNoteAt is false there). Since 2026-11-03 both get them when the engine has them:
 -- device.sh and build-web.sh also take the CDEF_OPTIONAL functions runtime/sound.h defines, and the web
 -- passes NoteOpts flat (schedule_note_at_flat, built into a struct by webtest/desound-processor.js).
+-- Humanized playing (dreamengine humanized-playing.md §8, 2026-11-04): schedule_note_at returns a booking
+-- id, note_event_at acts inside a booked note (a bow change), shape_define's curves ride on booked notes
+-- (NoteOpts.shape), lane_at books a slot-wide curve (the sustain pedal, the hand on the filter), and a
+-- slot's built-in vibrato, analog warmth and release shape. docs/guides/humanizing-sounds.md there.
 local CDEF_OPTIONAL = [[
-void schedule_note_at(double t, int midi, int instr, int vol, int dur_ms, const NoteOpts *opts);
+int  schedule_note_at(double t, int midi, int instr, int vol, int dur_ms, const NoteOpts *opts);
+void note_event_at(int booking, double t, int event, float amount);
+void shape_define(int id, int n, const float *t_ms, const float *v, int interp);
+void lane_at(double t, int slot, int lane, float value, int ramp_ms);
+void instrument_vibrato(int slot, float amount);
+void instrument_analog(int slot, float amount);
+void instrument_release_shape(int slot, int shape);
 void instrument_accent(int slot, int route, float amount);
 void stereo_width(float amount);
 void instrument_stereo_width(int slot, float amount);
@@ -326,12 +336,24 @@ void instrument_fx_filter(int slot, int mode, float cutoff_hz, float resonance);
 void instrument_mono(int slot, int on);
 void unschedule(int slot, double t1, double t2);
 ]]
--- the struct on its own: a hot reload redeclaring it errors, which must not stop the functions above
+-- The structs on their own: a hot reload redeclaring one errors, which must not stop the functions.
+-- NoteOpts copied from dreamengine runtime/studio.h, FIELD ORDER AND ALL: the engine reads the whole of it,
+-- so a smaller one here hands it what lies past the end (random detune, cut notes, stray curves, no error).
+-- It grew in place (the first six fields first, 24 bytes, now 108), so an older engine reading only the
+-- start is fine with this one. noteOptsFits() checks it against the library's own size.
+-- LuaJIT keeps the first typedef for the whole run: a running game hot-reloading this keeps the old one.
 if ffi then
-    pcall(ffi.cdef, 'typedef struct { int glide_ms; float accent, harmonics, timbre, morph, gain; } NoteOpts;')
-    pcall(ffi.cdef, CDEF_OPTIONAL)
-    -- Playtime's own (native/desound/desound.c), not the engine's: for audioReport, optional too
+    pcall(ffi.cdef, 'typedef struct { float cents, rate_hz; int delay_ms, fade_ms; float wander; } NoteVib;')
+    pcall(ffi.cdef, 'typedef struct { unsigned char id, target; float scale, stretch; } NoteShape;')
+    pcall(ffi.cdef, [[typedef struct { int glide_ms; float accent, harmonics, timbre, morph, gain;
+                     float cents, cutoff_oct, damp; int release_ms; float region_start, region_end;
+                     NoteVib vib; NoteShape shape[3]; int origin_ms; } NoteOpts;]])
+    -- one function at a time: schedule_note_at's return changed (void -> int), and a running game
+    -- redeclaring it differently errors, which mustn't keep the others undeclared
+    for line in CDEF_OPTIONAL:gmatch('[^\n]+') do pcall(ffi.cdef, line) end
+    -- Playtime's own (native/desound/desound.c), not the engine's: for audioReport and the NoteOpts check
     pcall(ffi.cdef, 'int de_lua_pool_overflow(int which);')
+    pcall(ffi.cdef, 'int de_note_opts_size(void);')
 end
 
 -- Lives on `state` so a lurker hot-swap of this file doesn't load the library or start the thread twice.
@@ -427,6 +449,16 @@ local function definePatch(slot, patch, name)
     -- engine default 0); set on every define so a shared slot's next patch is back at 0
     local accentRoute = optionalFn('instrument_accent')
     if accentRoute then accentRoute(slot, 5, patch.accentCutoff or 0) end
+    -- humanized playing (on every define, so a shared slot's next patch is back at the engine's defaults):
+    -- vibrato = the built-in vibrato of PIPE/REED/BOWED/BRASS (1 as played, 0 off: a booked note's own
+    -- .vib instead), analog = 0..2 every voice a little different + a slow drift (an old polysynth),
+    -- releaseShape = 'linear' / 'exp' / 'damper' (a piano's felt)
+    local vibrato = optionalFn('instrument_vibrato')
+    if vibrato then vibrato(slot, patch.vibrato or 1) end
+    local analog = optionalFn('instrument_analog')
+    if analog then analog(slot, patch.analog or 0) end
+    local releaseShape = optionalFn('instrument_release_shape')
+    if releaseShape then releaseShape(slot, lib.RELEASE[patch.releaseShape] or patch.releaseShape or 0) end
     for i, lfo in ipairs(patch.lfo or {}) do
         S.C.instrument_lfo(slot, i - 1, lfo[1], lfo[2], lfo[3])
         if lfo.shape or patch.pool or patch.fx then S.C.lfo_shape(slot, i - 1, lfo.shape or 0) end
@@ -773,12 +805,31 @@ function lib.audioTime()
     return S.started and S.C.audio_time() or nil
 end
 
+-- Names for the engine's numbers (#defines don't cross the FFI): dreamengine runtime/studio.h.
+lib.SHP = { pitch = 1, gain = 2, harmonics = 3, timbre = 4, morph = 5, cutoff = 6 } -- a curve's target:
+                                       -- cents, dB, macro offsets -1..1, octaves
+lib.SHAPE = { linear = 0, ease = 1, fast = 2 }                      -- how a curve moves between its points
+lib.LANE = { damper = 0, cutoff = 1, level = 2, vib = 3 }            -- 0..1 pedal, octaves, dB, vibrato scale
+lib.NEV = { reartic = 1, damp = 2, release = 3 }                    -- events inside a booked note
+lib.RELEASE = { linear = 0, exp = 1, damper = 2 }                   -- a patch's releaseShape
+
 -- A note at audio time t exactly (sample-accurate; book it at least a buffer ahead). Not placed in the world.
 -- opts (optional, dreamengine-studio#47): { glide = ms } SLIDES from this patch's note still sounding at
 -- t instead of attacking (legato: the previous note must last past t; a phrase stays on one slot because
 -- a patch keeps its slot while it sounds), { accent = 0..1 } leans on it (louder, a harder filter kick,
 -- the engine's own "harder" macro), { harmonics/timbre/morph = -1..1 } shifts this note's macros.
--- A library without schedule_note_at plays the note plainly.
+-- Humanized playing (dreamengine humanized-playing.md §8; docs/guides/humanizing-sounds.md there):
+--   cents       this note's pitch offset (±1200): a player a little sharp or flat
+--   cutoff      its filter, octaves (±6)
+--   damp        0..1 how fast its ring dies (1 = stopped at once: a closed hat, a ghost note)
+--   release     its own release, ms (0 = the slot's)
+--   regionStart, regionEnd   its sample chop (sample engines; 0, 0 = the slot's)
+--   vib         its own vibrato { cents, rate (Hz, 0 = 5.5), delay (ms), fade (ms, blooming in), wander 0..1 }
+--   shapes      up to 3 curves { id = a lib.defineShape id, target = 'pitch' / 'gain' / ... (lib.SHP),
+--               scale (0 = 1), stretch (times, 0 = 1) }: a scoop, a swell, a phrase-end fade
+--   origin      ms after note-on where the curves' time 0 is (the vowel after the consonant)
+-- Returns the booking id (for lib.noteEvent) when the note went out with opts and the engine has events;
+-- nil otherwise. A library without schedule_note_at plays the note plainly.
 -- Music notes play at the MUSIC volume (lib.musicVolume) as each note's own gain (dreamengine 898a7aa4's
 -- NoteOpts.gain), never as a slot level: an impact may borrow this patch's slot (see lib.hit).
 -- Without schedule_note_at, or with a NoteOpts declared before gain existed (LuaJIT keeps the first
@@ -790,6 +841,82 @@ local function noteOptsHasGain()
                                                ffi.offsetof('NoteOpts', 'gain') ~= nil or false end
     return S.noteGain
 end
+
+-- The humanizing fields (cents ... origin_ms) in the NoteOpts declared this run (not in a game that
+-- hot-reloaded this file over the old 24-byte typedef).
+local function noteOptsFull()
+    if IS_WEB then return true end
+    if S.noteFull == nil then S.noteFull = ffi ~= nil and pcall(ffi.offsetof, 'NoteOpts', 'origin_ms') and
+                                               ffi.offsetof('NoteOpts', 'origin_ms') ~= nil or false end
+    return S.noteFull
+end
+
+-- May NoteOpts go to this library at all? Its engine reads the whole struct: if the engine's is bigger
+-- than ours, it'd read past our end. The library says its size (de_note_opts_size, native/desound/desound.c);
+-- one built before that has the 24-byte engine, which our bigger struct (same start) suits. A mismatch
+-- turns the extras off (plain schedule_at) and says so once, instead of playing garbage.
+local function noteOptsFits()
+    if IS_WEB or not ffi then return true end -- the page checks its wasm (webtest/desound-processor.js)
+    if S.noteFits == nil then
+        local sizeFn = optionalFn('de_note_opts_size')
+        local engine, ours = sizeFn and sizeFn(), ffi.sizeof('NoteOpts')
+        S.noteFits = not engine or engine <= ours
+        if not S.noteFits then
+            print(string.format('[synth] NoteOpts: the engine\'s is %d bytes, ours %d: booked extras off ' ..
+                '(declare the engine\'s NoteOpts in src/synth.lua, see dreamengine runtime/studio.h)', engine, ours))
+        end
+    end
+    return S.noteFits
+end
+
+local function shapeTarget(target)
+    return lib.SHP[target] or tonumber(target) or 0
+end
+
+-- the humanizing fields, flat (the web sends them as text; the page builds the struct): 22 numbers
+local function humanFields(opts)
+    local v = opts.vib or {}
+    local out = { opts.cents or 0, opts.cutoff or 0, opts.damp or 0, opts.release or 0,
+                  opts.regionStart or 0, opts.regionEnd or 0,
+                  v.cents or 0, v.rate or 0, v.delay or 0, v.fade or 0, v.wander or 0, opts.origin or 0 }
+    for i = 1, 3 do
+        local sh = opts.shapes and opts.shapes[i]
+        out[#out + 1] = sh and sh.id or 0
+        out[#out + 1] = sh and shapeTarget(sh.target) or 0
+        out[#out + 1] = sh and sh.scale or 0
+        out[#out + 1] = sh and sh.stretch or 0
+    end
+    return out
+end
+
+local function noteOptsStruct(opts, gain)
+    local o = ffi.new('NoteOpts')
+    o.glide_ms, o.accent = opts.glide or 0, opts.accent or 0
+    o.harmonics, o.timbre, o.morph = opts.harmonics or 0, opts.timbre or 0, opts.morph or 0
+    if gain then o.gain = gain end
+    if noteOptsFull() then
+        o.cents, o.cutoff_oct, o.damp = opts.cents or 0, opts.cutoff or 0, opts.damp or 0
+        o.release_ms = opts.release or 0
+        o.region_start, o.region_end = opts.regionStart or 0, opts.regionEnd or 0
+        local v = opts.vib
+        if v then
+            o.vib.cents, o.vib.rate_hz, o.vib.wander = v.cents or 0, v.rate or 0, v.wander or 0
+            o.vib.delay_ms, o.vib.fade_ms = v.delay or 0, v.fade or 0
+        end
+        for i = 1, 3 do
+            local sh = opts.shapes and opts.shapes[i]
+            if sh then
+                o.shape[i - 1].id, o.shape[i - 1].target = sh.id or 0, shapeTarget(sh.target)
+                o.shape[i - 1].scale, o.shape[i - 1].stretch = sh.scale or 0, sh.stretch or 0
+            end
+        end
+        o.origin_ms = opts.origin or 0
+    end
+    return o
+end
+
+S.nextBooking = S.nextBooking or 0 -- the web's own booking numbers (the page maps them to the engine's)
+
 function lib.scheduleAt(patchName, t, midi, vol, durMs, opts)
     if not S.started then return end
     local patch = lib.patches[patchName]
@@ -807,7 +934,8 @@ function lib.scheduleAt(patchName, t, midi, vol, durMs, opts)
     local slot, dur = slotOf(patchName, patch, t, durMs), math.max(1, math.floor(durMs))
     if (opts or gain) and S.hasNoteAt == nil then -- the optional #47 functions (CDEF_OPTIONAL): looked up once,
         local ok, f = pcall(function() return S.C.schedule_note_at end) -- on first use: the offline renderer too
-        S.hasNoteAt = (ffi ~= nil or IS_WEB) and ok and f ~= nil
+        S.hasNoteAt = (ffi ~= nil or IS_WEB) and ok and f ~= nil and noteOptsFits()
+        S.hasEvents = optionalFn('note_event_at') ~= nil -- else schedule_note_at's return is no id (void before)
     end
     local exactGain = gain and S.hasNoteAt and noteOptsHasGain()
     if gain and not exactGain then -- no per-note gain here: scale the whole-step vol
@@ -816,18 +944,64 @@ function lib.scheduleAt(patchName, t, midi, vol, durMs, opts)
     end
     if (opts or exactGain) and S.hasNoteAt then
         opts = opts or {}
-        local fields = { glide_ms = opts.glide or 0, accent = opts.accent or 0,
-                         harmonics = opts.harmonics or 0, timbre = opts.timbre or 0, morph = opts.morph or 0 }
-        if exactGain then fields.gain = gain end
         if IS_WEB then -- no struct over the page's text bridge: the fields flat, the page builds the NoteOpts
-            S.C.schedule_note_at_flat(t, midi, slot, vol, dur, fields.glide_ms, fields.accent, fields.harmonics,
-                                      fields.timbre, fields.morph, fields.gain or 0)
-        else
-            S.C.schedule_note_at(t, midi, slot, vol, dur, ffi.new('NoteOpts', fields))
+            S.nextBooking = S.nextBooking % 1000000 + 1
+            S.C.schedule_note_at_flat(t, midi, slot, vol, dur, opts.glide or 0, opts.accent or 0,
+                opts.harmonics or 0, opts.timbre or 0, opts.morph or 0, exactGain and gain or 0,
+                S.nextBooking, unpack(humanFields(opts)))
+            return S.nextBooking
         end
-    else
-        S.C.schedule_at(t, midi, slot, vol, dur)
+        local id = S.C.schedule_note_at(t, midi, slot, vol, dur, noteOptsStruct(opts, exactGain and gain))
+        return S.hasEvents and tonumber(id) and id > 0 and id or nil
     end
+    S.C.schedule_at(t, midi, slot, vol, dur)
+end
+
+-- Something inside a booked note at audio time t (booking = what scheduleAt returned): 'reartic' a bow
+-- change or the wind's onset again (amount 0..1 = how slowly the bow turns), 'damp' its ring dies at
+-- amount (0..1) from t, 'release' key up at t. False without the engine call.
+function lib.noteEvent(booking, t, event, amount)
+    if not (S.started and booking) then return false end
+    local f = optionalFn('note_event_at')
+    if not f then return false end
+    f(booking, t, lib.NEV[event] or event, amount or 0)
+    return true
+end
+
+-- A curve booked notes can carry (opts.shapes), defined ONCE at setup (never per frame): id 1..63,
+-- up to 6 points, times in ms and values in the target's unit (cents, dB, ...), interp 'linear' /
+-- 'ease' / 'fast'. Defining an id again replaces it. False without the engine call.
+function lib.defineShape(id, times, values, interp)
+    if not S.started then return false end
+    local f = optionalFn('shape_define')
+    if not f then return false end
+    local n = math.min(6, #times, #values)
+    local how = lib.SHAPE[interp] or interp or 0
+    if IS_WEB then -- arrays don't cross the text bridge: the points flat, the page builds them
+        local flat = {}
+        for i = 1, n do flat[#flat + 1] = times[i] end
+        for i = 1, n do flat[#flat + 1] = values[i] end
+        f(id, n, how, unpack(flat))
+        return true
+    end
+    local tArr, vArr = ffi.new('float[?]', n), ffi.new('float[?]', n)
+    for i = 1, n do tArr[i - 1], vArr[i - 1] = times[i], values[i] end
+    f(id, n, tArr, vArr, how)
+    return true
+end
+
+-- A curve shared by every sounding note of a patch's slot, booked at audio time t: the lane ramps to
+-- value over rampMs. 'damper' the sustain pedal (0 up .. 1 down), 'cutoff' the hand on the filter
+-- (octaves), 'level' a swell (dB), 'vib' the notes' own vibrato scaled (the mod wheel). The slot the
+-- patch holds now; unschedule takes its booked lane points back too. False without the engine call.
+function lib.laneAt(patchName, t, lane, value, rampMs)
+    if not S.started then return false end
+    local patch = lib.patches[patchName]
+    local slot = patch and residentSlot(patchName, patch)
+    local f = slot and optionalFn('lane_at')
+    if not f then return false end
+    f(t, slot, lib.LANE[lane] or lane, value, math.floor(rampMs or 0))
+    return true
 end
 
 -- Take back a patch's booked notes that start in [t1, t2) on the audio clock (scheduleAt's t; t2 nil = from
