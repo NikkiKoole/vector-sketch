@@ -50,7 +50,7 @@ editor goes into `spikes/`, move it when it becomes a room.
 | tech/hoop, tech/workmoreclean | from Knut | *spec* (meshusert-bind, resource-link): the MESHUSERT (skinning) and resource scenes |
 | tech/knutjump | from Knut | WORLD-BUILDING's tile-repeat grass example |
 | catapult | a catapult toy | works again, a fun room toy |
-| burrow, fabuland, hair, tufts | today's and yesterday's spikes | parked plans point at them |
+| burrow, fabuland, hair, tufts, raspberry | today's and yesterday's spikes | parked plans point at them (raspberry: RASPBERRY.md) |
 
 ## Might not need (Nikki decides)
 
