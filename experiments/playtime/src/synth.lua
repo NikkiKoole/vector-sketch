@@ -334,8 +334,9 @@ end
 -- the drum jam's chord pad (music-jam's 'pad' figure): the Rhodes, held for most of a bar. The shared
 -- 'rhodes' (bossa's comping) has a 4 Hz auto-pan, a phaser and tape wow; on a chord held that long they
 -- wobbled into a wah-wah "tooter" (Nikki, 2026-11-04). This one is still: a little mellower, rolled off,
--- a slow drift of pan as the only movement (an LFO: no FX bus), its own slot.
-lib.patches.jamPad = { slot = 62, wave = 'EPIANO', adsr = { 1, 0, 7, 600 },
+-- a slow drift of pan as the only movement (an LFO: no FX bus), its own slot. And it FADES (decay 2 s to
+-- sustain 1): at sustain 7 a chord held a whole bar stayed flat at full level, an organ, still a toot.
+lib.patches.jamPad = { slot = 62, wave = 'EPIANO', adsr = { 1, 2000, 1, 600 },
                        harmonics = 0.12, timbre = 0.22, morph = 0.12, reverb = 0.4, level = 0.35,
                        filter = { mode = 1, cutoff = 2400, resonance = 0 }, lfo = { { 7, 0.15, 0.2 } } }
 
