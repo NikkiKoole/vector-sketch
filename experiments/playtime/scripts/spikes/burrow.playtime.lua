@@ -52,7 +52,7 @@ vec4 effect(vec4 color, Image tex, vec2 tc, vec2 sc) {
     float depth = wpos.y;
     // the wall is the earth a metre further back: the same layers at the same depths,
     // its own grain and roots (the noise read from far away)
-    vec2 wpos = wpos + vec2(5371.0, 2113.0) * wall;
+    vec2 wpos = wpos + vec2(5371.0, 2113.0) * step(0.25, wall);
     // the layers, their edges wobbling
     float y = depth + (vnoise(vec2(wpos.x * 0.002, 3.0)) - 0.5) * 260.0;
     vec3 topsoil = vec3(0.36, 0.25, 0.16);
@@ -67,8 +67,9 @@ vec4 effect(vec4 color, Image tex, vec2 tc, vec2 sc) {
     float rn = vnoise(vec2(wpos.x * 0.008, wpos.y * 0.004)) + vnoise(wpos * 0.03) * 0.15;
     float root = (1.0 - smoothstep(0.0, 0.025, abs(rn - 0.5))) * (1.0 - smoothstep(200.0, 700.0, depth));
     col = mix(col, vec3(0.22, 0.15, 0.10), root * 0.7);
-    if (wall > 0.5) col = mix(col, vec3(dot(col, vec3(0.33))), 0.3) * 0.5;
-    return vec4(col, 1.0);
+    // the back wall (1) darker and flatter; the sides of a tunnel (0.5) between it and the front
+    col = mix(col, vec3(dot(col, vec3(0.33))), 0.3 * wall) * (1.0 - 0.5 * wall);
+    return vec4(col, 1.0) * color;
 }
 #endif
 ]])
@@ -597,6 +598,7 @@ function s.onUnload()
     if not b then return end
     for _, chunk in pairs(b.chunks or {}) do destroyChunk(chunk) end
     destroyRocks(b)
+    if b.savedDrawBodies ~= nil then state.world.debugDrawBodies = b.savedDrawBodies end
 end
 
 function s.onKeyPress(key)
@@ -657,12 +659,207 @@ function s.update(dt)
     rocksUpdate(b, dt)
 end
 
+-- The grass on top a little 2.5D, like the clouds spike's ground (after physics-testbed's downhill and
+-- scrolling-world's ground plane): the top of the ground seen from a little above, a band from a
+-- back edge (further away: pulled in towards the middle of the view) to a front edge (nearer:
+-- pushed out), the line the Mipos stand on in between; Nikki's grass pattern on it, a row of
+-- blades at the back (behind the Mipos) and at the front (in front of their feet). The earth's
+-- cut face is the side face. Only where the top is still about where the landscape had it: dig
+-- into it and the grass is gone, put the earth back and it grows again.
+local PLANE_DEFAULTS = { back = 0.84, front = 1.12, behind = 40, infront = 110, blades = 1, tunnel = 0.9 }
+local LIGHT_GRASS = { 0x86 / 255, 0xa5 / 255, 0x42 / 255 }
+local DARK_GRASS = { 0x2a / 255, 0x5b / 255, 0x3e / 255 }
+local topPattern = love.graphics.newImage('textures/world/grasspattern2.png')
+topPattern:setWrap('repeat', 'repeat')
+local blades = love.graphics.newImage('textures/world/sprieten.png')
+-- the blade atlas's quads and base pivots (src/grass.lua, measured in physics-testbed)
+local BLADES = {
+    { 0, 0, 49, 192, 22, 185 }, { 51, 164, 40, 197, 12, 187 }, { 51, 0, 41, 162, 19, 144 },
+    { 94, 0, 46, 186, 25, 176 }, { 0, 194, 47, 231, 27, 224 }, { 94, 188, 45, 236, 16, 210 },
+    { 142, 197, 47, 208, 22, 190 }, { 142, 0, 52, 195, 30, 173 },
+}
+local bladeQuads = {}
+for i, q in ipairs(BLADES) do bladeQuads[i] = love.graphics.newQuad(q[1], q[2], q[3], q[4], blades:getDimensions()) end
+local backBlades = love.graphics.newSpriteBatch(blades, 2000, 'stream')
+local frontBlades = love.graphics.newSpriteBatch(blades, 2000, 'stream')
+local TOP_MAX = 6 * (math.floor(WORLD_W / CELL_MIN) + 2)
+local topMesh = love.graphics.newMesh(TOP_MAX, 'triangles', 'stream')
+local BAND_DEPTH = 700
+
+local function plane(b)
+    b.plane = b.plane or {}
+    for k, v in pairs(PLANE_DEFAULTS) do
+        if b.plane[k] == nil then b.plane[k] = v end
+    end
+    return b.plane
+end
+
+local function viewCentre()
+    local w, h = love.graphics.getDimensions()
+    local cx, cy = cam:getWorldCoordinates(w / 2, h / 2)
+    return cx, cy, w, cam:getScale()
+end
+
+-- a point at depth k (1 = the line the Mipos stand on), as it shows through the real camera
+local function project(x, y, k, cx, cy)
+    return cx + (x - cx) * k, cy + (y - cy) * k
+end
+
+-- the visible columns' tops: the first earth from above, if it's still the grassy surface
+local function grassTops(b, k)
+    local cx, _, w, scale = viewCentre()
+    local half = w / 2 / scale / k + CELL * 2
+    local i0 = math.max(0, math.floor((cx - half - X0) / CELL))
+    local i1 = math.min(COLS, math.ceil((cx + half - X0) / CELL))
+    local dens, tops = b.dens, {}
+    for i = i0, i1 do
+        local j = 0
+        while j <= ROWS and dens[idx(i, j)] < 0.5 do j = j + 1 end
+        if j > 0 and j <= ROWS then
+            local y = Y0 + (j - 1 + crossing(dens[idx(i, j - 1)], dens[idx(i, j)])) * CELL
+            if math.abs(y - b.surface[i]) < CELL * 1.5 then tops[i] = y end
+        end
+    end
+    return tops, i0, i1
+end
+
+-- the band's edges at one column, kept at least `behind` / `infront` from the line (with the eye
+-- under the ground the perspective would turn the band over)
+local function edges(pl, x, y, cx, cy)
+    local bx, by = project(x, y - pl.behind, pl.back, cx, cy)
+    local fx, fy = project(x, y + pl.infront, pl.front, cx, cy)
+    return bx, math.min(by, y - pl.behind), fx, math.max(fy, y + pl.infront)
+end
+
+local function drawGrassTop(b)
+    local pl = plane(b)
+    local cx, cy = viewCentre()
+    local tops, i0, i1 = grassTops(b, pl.back)
+    b.tops = tops
+    local tw, th = topPattern:getWidth() * 1.6, topPattern:getHeight() * 1.6
+    local verts = {}
+    for i = i0, i1 - 1 do
+        local ya, yb = tops[i], tops[i + 1]
+        if ya and yb and #verts + 6 <= TOP_MAX then
+            local xa, xb = X0 + i * CELL, X0 + (i + 1) * CELL
+            local bax, bay, fax, fay = edges(pl, xa, ya, cx, cy)
+            local bbx, bby, fbx, fby = edges(pl, xb, yb, cx, cy)
+            local A = { bax, bay, xa / tw, 0, 1, 1, 1, 1 }
+            local B = { bbx, bby, xb / tw, 0, 1, 1, 1, 1 }
+            local C = { fbx, fby, xb / tw, BAND_DEPTH / th, 1, 1, 1, 1 }
+            local D = { fax, fay, xa / tw, BAND_DEPTH / th, 1, 1, 1, 1 }
+            verts[#verts + 1] = A; verts[#verts + 1] = B; verts[#verts + 1] = C
+            verts[#verts + 1] = A; verts[#verts + 1] = C; verts[#verts + 1] = D
+        end
+    end
+    if #verts == 0 then return end
+    topMesh:setVertices(verts)
+    topMesh:setDrawRange(1, #verts)
+    topMesh:setTexture()
+    love.graphics.setColor(LIGHT_GRASS[1], LIGHT_GRASS[2], LIGHT_GRASS[3], 1)
+    love.graphics.draw(topMesh)
+    topMesh:setTexture(topPattern)
+    love.graphics.setColor(DARK_GRASS[1], DARK_GRASS[2], DARK_GRASS[3], 0.8)
+    love.graphics.draw(topMesh)
+end
+
+-- The inside of what's dug, in depth: the back wall is further away (pulled in towards the middle
+-- of the view by `tunnel`), and every edge of the earth is joined to it by a face, like a box cut
+-- out of the ground. Floors face up (lit), ceilings down (darker), walls to the side; a face turned
+-- away from the eye lands inside the earth and the earth's front face covers it.
+local LIGHT_DIR = { -0.4, -0.92 }
+local sideMesh, sideMax = nil, 0
+local function drawTunnelSides(b)
+    local k = plane(b).tunnel
+    local cx, cy = viewCentre()
+    local verts = {}
+    for _, chunk in pairs(b.chunks) do
+        for _, o in ipairs(chunk.outlines) do
+            local f, n = o.flat, #o.flat
+            local last = o.loop and n or n - 2
+            for a = 1, last, 2 do
+                local b2 = a + 2
+                if b2 > n then b2 = 1 end
+                local ax, ay, bx, by = f[a], f[a + 1], f[b2], f[b2 + 1]
+                local dx, dy = bx - ax, by - ay
+                local len = math.sqrt(dx * dx + dy * dy)
+                if len > 1e-3 then
+                    -- the face's normal, pointing into the air
+                    local nx, ny = dy / len, -dx / len
+                    local mx, my = (ax + bx) / 2, (ay + by) / 2
+                    if earthAt(b, mx + nx * CELL * 0.5, my + ny * CELL * 0.5) > 0.5 then nx, ny = -nx, -ny end
+                    local lit = 0.62 + 0.38 * math.max(0, nx * LIGHT_DIR[1] + ny * LIGHT_DIR[2])
+                    if ny > 0.3 then lit = lit * 0.75 end                    -- a ceiling
+                    local pax, pay = project(ax, ay, k, cx, cy)
+                    local pbx, pby = project(bx, by, k, cx, cy)
+                    local A = { ax, ay, 0, 0, lit, lit, lit, 1 }
+                    local B = { bx, by, 0, 0, lit, lit, lit, 1 }
+                    local Bp = { pbx, pby, 0, 0, lit, lit, lit, 1 }
+                    local Ap = { pax, pay, 0, 0, lit, lit, lit, 1 }
+                    verts[#verts + 1] = A; verts[#verts + 1] = B; verts[#verts + 1] = Bp
+                    verts[#verts + 1] = A; verts[#verts + 1] = Bp; verts[#verts + 1] = Ap
+                end
+            end
+        end
+    end
+    if #verts == 0 then return end
+    if #verts > sideMax then
+        sideMax = math.max(#verts * 2, 6000)
+        sideMesh = love.graphics.newMesh(sideMax, 'triangles', 'stream')
+    end
+    sideMesh:setVertices(verts)
+    sideMesh:setDrawRange(1, #verts)
+    love.graphics.draw(sideMesh)
+end
+
+-- the back wall at the tunnels' depth
+local function drawBackWall(b)
+    local k = plane(b).tunnel
+    local cx, cy = viewCentre()
+    love.graphics.push()
+    love.graphics.translate(cx, cy)
+    love.graphics.scale(k)
+    love.graphics.translate(-cx, -cy)
+    love.graphics.draw(b.wall)
+    love.graphics.pop()
+end
+
+-- a row of blades on the grassy top, at the back (front = false) or the front edge
+local function bladeRow(b, batch, front, seedP, size)
+    local pl, tops = plane(b), b.tops
+    if not tops or pl.blades <= 0 then return end
+    local cx, cy, w, scale = viewCentre()
+    local k = front and pl.front or pl.back + 0.02
+    local half = w / 2 / scale / k + 400
+    local step = math.max(55, 6 / scale)
+    local t = love.timer.getTime()
+    batch:clear()
+    for x = math.floor((cx - half) / step) * step, cx + half, step do
+        local fi = (x - X0) / CELL
+        local i = math.floor(fi)
+        local ya, yb = tops[i], tops[i + 1]
+        if ya and yb then
+            local y = ya + (yb - ya) * (fi - i)
+            local bx, by, fx, fy = edges(pl, x, y, cx, cy)
+            local px, py = bx, by
+            if front then px, py = fx, fy end
+            local hh = 0.3 + love.math.noise(x / 1000, seedP) * 0.9
+            local n = math.min(#BLADES, 1 + math.floor(love.math.noise(x * 0.37, seedP * 3.1) * #BLADES))
+            local q = BLADES[n]
+            local ang = math.sin(hh * 9) * 0.1 + math.sin(t * 1.3 + x * 0.003) * 0.06
+            local sz = size * k * pl.blades
+            batch:add(bladeQuads[n], px, py, ang, sz, sz * hh, q[5], q[6])
+        end
+    end
+    love.graphics.draw(batch)
+end
+
 function s.drawUI()
     local b = state.burrow
     if not (b and state.playMode) then return end
     ui.startFrame() -- play mode draws no editor UI, so nothing else starts the frame
     local BH, pad, w = 40, 10, 380
-    local h = BH * 6 + pad * 7 + 20
+    local h = BH * 12 + pad * 13 + 20
     local _, sh = love.graphics.getDimensions()
     local x0, y0 = 20, sh - h - 20
     panelRect[2], panelRect[4] = y0, h
@@ -688,6 +885,16 @@ function s.drawUI()
             placeRocks(b)
             rebuildEverything(b)
         end
+        -- the grass top's plane: depth of its back and front edges, how far they're off the line,
+        -- the blades' size
+        local pl = plane(b)
+        for _, row in ipairs({ { 'back', 0.5, 1 }, { 'front', 1, 1.6 }, { 'behind', 0, 400, 1 },
+            { 'infront', 0, 400, 1 }, { 'blades', 0, 3 }, { 'tunnel', 0.6, 1 } }) do
+            x, y = ui.nextLayoutPosition(layout, w - 20, BH)
+            v = ui.sliderWithInput('burrowplane' .. row[1], x, y, 160, row[2], row[3], pl[row[1]], nil, row[4])
+            if v then pl[row[1]] = v + 0 end
+            ui.label(x + 260, y, row[1])
+        end
         x, y = ui.nextLayoutPosition(layout, w - 20, BH)
         ui.label(x, y, 'shift: the other one  m: Mipo  t: plain')
     end)
@@ -709,7 +916,13 @@ function s.drawBelow()
     if not b.plain then love.graphics.setShader(earthShader) end
     earthShader:send('wall', 1)
     love.graphics.setColor(b.plain and wallColor or { 1, 1, 1, 1 })
-    if b.wall then love.graphics.draw(b.wall) end
+    if b.wall then
+        if b.plain then love.graphics.draw(b.wall) else drawBackWall(b) end
+    end
+    if not b.plain then
+        earthShader:send('wall', 0.5)
+        drawTunnelSides(b)
+    end
     earthShader:send('wall', 0)
     love.graphics.setColor(b.plain and earthColor or { 1, 1, 1, 1 })
     for _, chunk in pairs(b.chunks) do
@@ -725,12 +938,33 @@ function s.drawBelow()
         end
     end
     love.graphics.setLineWidth(1)
+    if not b.plain then
+        drawGrassTop(b)
+        love.graphics.setColor(DARK_GRASS[1], DARK_GRASS[2], DARK_GRASS[3], 1)
+        bladeRow(b, backBlades, false, 1, 1.5)
+    end
     love.graphics.setColor(1, 1, 1, 1)
+    -- the plain debug lines of the earth's chains would show over the grass (the Mipos and rocks
+    -- draw themselves); back on in draw
+    if state.playMode then
+        b.savedDrawBodies = state.world.debugDrawBodies
+        state.world.debugDrawBodies = false
+    end
 end
 
 function s.draw()
     local b = state.burrow
-    if not (b and state.playMode) then return end
+    if not b then return end
+    if b.savedDrawBodies ~= nil then
+        state.world.debugDrawBodies = b.savedDrawBodies
+        b.savedDrawBodies = nil
+    end
+    if not b.plain and b.chunks then
+        love.graphics.setColor(LIGHT_GRASS[1] * 1.15, LIGHT_GRASS[2] * 1.12, LIGHT_GRASS[3] * 0.95, 1)
+        bladeRow(b, frontBlades, true, 2, 2.0)
+        love.graphics.setColor(1, 1, 1, 1)
+    end
+    if not state.playMode then return end
     local mx, my = mouseWorldPos()
     love.graphics.setColor(1, 1, 1, 0.5)
     love.graphics.setLineWidth(4)

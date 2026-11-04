@@ -2,7 +2,7 @@
 
 status: idea
 
-**Nikki's favourites** (2026-11-04): of all the spikes (sea, clouds, burrow, materials, cellophane), the sea and the burrow inspired her most. Hand-drawn assets come first from now on; these two are where a shader earns its place.
+**Nikki's favourites** (2026-11-04): of all the spikes (sea, clouds, burrow, materials, cellophane), the sea, the burrow and the clouds inspired her most. Hand-drawn assets come first from now on; these are where a shader earns its place.
 
 A side view of the earth under the grass: drag a finger to dig, the Mipos tumble into the
 tunnels and live there. One verb (dig), like an ant farm. Water flowing in is the later payoff,
@@ -36,6 +36,13 @@ Nikki: "feels nice", "pretty good already".
   bodies with an OMP skin, borrowing the Mipo body outlines until rocks are drawn
   (`THINGS-TO-DRAW` A8). Kinematic while there's earth under them (no dragging them out), then
   a 0.7 s wobble and they turn dynamic and fall. Scene scripts get `fixtures` for this.
+
+- **Depth** (2026-11-04): the grass on top a little 2.5D, as in the clouds spike (a band in Nikki's
+  grass pattern with perspective, blades behind and in front), only where the top is still the
+  landscape's: dig through it and the grass is gone. Underground, the back wall is further away
+  (`tunnel`) and every edge of the earth is joined to it by a face, like a box cut out of the
+  ground: floors lit, walls by how they face the light, ceilings darker; a face turned away lands
+  inside the earth and is covered. Sliders: back, front, behind, infront, blades, tunnel.
 
 ## What could be next
 
