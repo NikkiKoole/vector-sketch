@@ -1,6 +1,6 @@
 # Cellophane water — crumpled plastic wrap as the sea
 
-status: active
+status: parked — "feels a bit Toy Story 1, synthesized": Nikki will work more with hand-drawn assets, shaders only for moments (tried 2026-11-04: one flat-shaded crumpled sheet, then overlapping see-through shards, scene `cellophane`)
 
 Take two after the materials spike (MATERIALS.md, tried 2026-11-04: the Voronoi cellophane looked
 like broken glass). The look to get is in Nikki's mood pictures: `docs/inspiration/ai-materials/`
@@ -59,3 +59,10 @@ So it's a crumpled *sheet*, not a pattern: geometry with folds, lit facet by fac
 
 Open: is it the sea everywhere, or the look of one toy-like place (the island, the bath)? And does
 it stay at its own size when the camera zooms (facets bigger close up, as real wrap would be)?
+
+## Tried (2026-11-04), and why it stopped
+
+CW1 in `scripts/spikes/cellophane.playtime.lua` (scene `cellophane`): first one crumpled sheet as a
+flat-shaded mesh (read as low-poly terrain), then many overlapping see-through shards with light
+edges, in rows of crests (read as an icy field). Nikki: "it feels a bit Toy Story 1 like,
+synthesized"; she'll work more with hand-drawn assets, and use a shader where a moment asks for one.
