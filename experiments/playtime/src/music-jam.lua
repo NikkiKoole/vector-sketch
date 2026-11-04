@@ -16,6 +16,7 @@ local D = require('src.music-styles')
 local theory = require('src.music-theory')
 local PATTERNS = require('src.music-jam-patterns')
 local riffs = require('src.music-riffs')
+local machines = require('src.drum-machines')
 local events = require('src.music-events')
 local stream, stepTime, inRange = theory.stream, theory.stepTime, theory.inRange
 local M = state.music
@@ -48,6 +49,9 @@ lib.GENRE_VOICES = {
     Brushes = { BD = { 'kick', 36, 5, 150 }, SD = { 'snare', 60, 3, 70 }, SW = { 'brush', 70, 4, 900 },
                 CH = { 'hat', 80, 4, 30 } },
 }
+-- a genre played on a drum machine (src/drum-machines.lua, J4): its roles fire the machine's voices instead
+-- of VOICES (a role the machine hasn't got falls back to VOICES). Electro and Hip Hop are 808 music.
+lib.KITS = { Electro = 'tr808', ['Hip Hop'] = 'tr808' }
 -- genres the drum library hasn't got, written here: the same shape as src/music-jam-patterns.lua.
 -- SW = a brush sweep (long, slow attack), SD = the brush's tap
 lib.EXTRA = {
@@ -334,6 +338,11 @@ local function bookKeys(play, synth, song, t0, jam, kind, cut)
 end
 
 local function hit(play, synth, t, role, s, accent, quieter, genre)
+    local notes = lib.KITS[genre] and machines.notes(lib.KITS[genre], role, accent, quieter)
+    if notes then -- the machine's own voice: its notes, the accent already in their volumes
+        for _, n in ipairs(notes) do play(synth, 'drums', n[1], t + n[5] / 1000, n[2], n[3], n[4], s, false, 0) end
+        return
+    end
     local own = lib.GENRE_VOICES[genre]
     local v = own and own[role] or lib.VOICES[role]
     if not v then return end
@@ -376,9 +385,14 @@ local function announceSounds(song, jam)
     jam.announced = true
     local own = lib.GENRE_VOICES[jam.group] or {}
     local sounds = {}
+    local kit = lib.KITS[jam.group] and machines[lib.KITS[jam.group]]
     local function add(grid) for role in pairs(grid) do
-        local v = own[role] or lib.VOICES[role]
-        if v then sounds[v[1]] = true end
+        if kit and kit[role] then
+            for _, h in ipairs(kit[role]) do sounds[h[1]] = true end
+        else
+            local v = own[role] or lib.VOICES[role]
+            if v then sounds[v[1]] = true end
+        end
     end end
     for _, p in ipairs(jam.patterns) do add(p.grid) end
     if jam.fill then add(jam.fill.grid) end

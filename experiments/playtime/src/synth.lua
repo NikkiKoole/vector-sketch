@@ -297,6 +297,40 @@ lib.patches = {
              filter = { mode = 1, cutoff = 11000, resonance = 2 } },
 }
 
+-- The TR-808 (the drum jam's kit, docs/DRUM-JAM.md J4): dreamengine's runtime/tr808.h tr808_build, slot
+-- for slot, at the cart's neutral knobs (the decays tr808_fire sets at knob 0.5: kick 391, open hat 403,
+-- cymbal 642). src/drum-machines.lua fires them (a voice = a few hits on these). In slots 48-61, which
+-- the engine has since dreamengine 9f2b18dd (128 slots); an older library ignores them (no sound).
+-- The congas and claves are left out: the jam has no role for them. env.dest 1 = ENV_PITCH (a drop in
+-- semitones), choke = the patch whose ringing note a hit on this one cuts (closed hat -> open hat).
+do
+    -- one level and reverb send for the whole kit, so its own balance stays the cart's; 0.4 (-8 dB) puts
+    -- the jam at the level it had on the old drum patches (rendered Electro and Hip Hop, within 0.1 dB)
+    local L, R = 0.4, 0.08
+    local function p(slot, wave, adsr, filter, extra)
+        local patch = { slot = slot, wave = wave, adsr = adsr, level = L, reverb = R, kit = 'tr808',
+                        filter = filter and { mode = filter[1], cutoff = filter[2], resonance = filter[3] } }
+        for k, v in pairs(extra or {}) do patch[k] = v end
+        return patch
+    end
+    local P = lib.patches
+    P.tr808Kick = p(48, 'SINE', { 0, 391, 0, 60 }, { 1, 250, 3 },
+                    { env = { 0, 50, 26, dest = 1 }, drive = 0.28, driveMode = 0 })
+    P.tr808SnareBody = p(49, 'SINE', { 0, 100, 0, 30 }, { 1, 1200, 1 }, { env = { 0, 20, 3, dest = 1 } })
+    P.tr808Snappy = p(50, 'NOISE', { 0, 130, 0, 40 }, { 1, 7500, 4 })
+    P.tr808Tom = p(51, 'SINE', { 0, 260, 0, 50 }, nil, { env = { 0, 80, 6, dest = 1 } })
+    P.tr808TomThud = p(52, 'NOISE', { 0, 28, 0, 12 }, { 3, 900, 2 })
+    P.tr808Rim = p(53, 'TRI', { 0, 18, 0, 8 }, { 2, 500, 3 })
+    P.tr808Clap = p(54, 'NOISE', { 0, 110, 0, 50 }, { 3, 1100, 8 })
+    P.tr808Maracas = p(55, 'NOISE', { 0, 24, 0, 10 }, { 3, 8500, 13 })
+    P.tr808Cowbell = p(56, 'SQUARE', { 0, 250, 0, 60 }, { 3, 900, 6 })
+    P.tr808Cymbal = p(57, 'SQUARE', { 0, 642, 0, 200 }, { 3, 5000, 9 })
+    P.tr808CymbalMid = p(58, 'SQUARE', { 3, 420, 0, 120 }, { 3, 6200, 3 })
+    P.tr808CymbalHigh = p(59, 'SQUARE', { 2, 150, 0, 50 }, { 3, 7100, 3 })
+    P.tr808HatOpen = p(60, 'NOISE', { 0, 403, 0, 90 }, { 3, 6600, 14 })
+    P.tr808HatClosed = p(61, 'NOISE', { 0, 42, 0, 16 }, { 3, 8800, 14 }, { choke = 'tr808HatOpen' })
+end
+
 local CDEF = [[
 int  de_lua_init(void);
 void de_lua_tick(float dt);
@@ -375,12 +409,13 @@ void reverb_bus_into(int tank, int lead);
 void instrument_fx_filter(int slot, int mode, float cutoff_hz, float resonance);
 void instrument_mono(int slot, int on);
 void unschedule(int slot, double t1, double t2);
+void instrument_choke(int slot_a, int slot_b);
 ]]
 -- The structs on their own: a hot reload redeclaring one errors, which must not stop the functions.
 -- NoteOpts copied from dreamengine runtime/studio.h, FIELD ORDER AND ALL: the engine reads the whole of it,
 -- so a smaller one here hands it what lies past the end (random detune, cut notes, stray curves, no error).
--- It grew in place (the first six fields first, 24 bytes, then 108, now 112 with filter), so an older engine reading only the
--- start is fine with this one. noteOptsFits() checks it against the library's own size.
+-- It grew in place (the first six fields first, 24 bytes, then 108, now 112 with filter), so an older
+-- engine reading only the start is fine with this one. noteOptsFits() checks it against the library's own size.
 -- LuaJIT keeps the first typedef for the whole run: a running game hot-reloading this keeps the old one.
 if ffi then
     pcall(ffi.cdef, 'typedef struct { float cents, rate_hz; int delay_ms, fade_ms; float wander; } NoteVib;')
@@ -510,9 +545,10 @@ local function definePatch(slot, patch, name)
         S.C.instrument_lfo(slot, i - 1, lfo[1], lfo[2], lfo[3])
         if lfo.shape or patch.pool or patch.fx then S.C.lfo_shape(slot, i - 1, lfo.shape or 0) end
     end
-    -- env = { attack ms, decay ms, amount }: a filter envelope kicked by every note (ENV_CUTOFF);
+    -- env = { attack ms, decay ms, amount, dest = 0 }: an envelope kicked by every note, on the filter
+    -- (dest 0, ENV_CUTOFF, amount in Hz) or the pitch (dest 1, ENV_PITCH, semitones: a drum's drop);
     -- a shared slot gets it switched off when its patch has none
-    if patch.env then S.C.instrument_env(slot, 0, 0, patch.env[1], patch.env[2], patch.env[3])
+    if patch.env then S.C.instrument_env(slot, 0, patch.env.dest or 0, patch.env[1], patch.env[2], patch.env[3])
     elseif patch.pool or patch.fx then S.C.instrument_env(slot, 0, 0, 0, 0, 0) end
     if patch.pool then return end -- inserts take an FX bus for good: never on a pool slot
     if patch.fx then -- an effect slot: switch off the last patch's pedals on its bus, then put on these
@@ -532,6 +568,12 @@ local function definePatches()
     S.C.reverb(lib.reverbSize, lib.reverbDamping)
     for name, patch in pairs(lib.patches) do
         if patch.slot then definePatch(patch.slot, patch, name) end
+    end
+    -- choke = another patch's name: a note on this one cuts that one's ringing note (the 808's hats)
+    local choke = optionalFn('instrument_choke')
+    for _, patch in pairs(lib.patches) do
+        local other = patch.choke and lib.patches[patch.choke]
+        if choke and patch.slot and other and other.slot then choke(patch.slot, other.slot) end
     end
     S.pool, S.fx = {}, {} -- the shared slots load their patches on first use
 end

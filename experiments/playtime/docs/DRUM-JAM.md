@@ -75,6 +75,12 @@ carts, and each voice is a recipe of several layered notes. Two ways in, decided
   so chokes on slots 32-47 were already broken). The 808 goes in slots 48-63 (`tr808_build` /
   `tr808_fire` copied into patches + a fire recipe per voice), the 909 after it. Watch polyphony
   (`SOUND_VOICES` 32): a clap is 4 hits, the three-band cymbal up to 9.
+  The 808 is in (2026-11-04): patches `tr808*` in synth.lua (slots 48-61, dreamengine 9f2b18dd), its
+  voices in `src/drum-machines.lua` (tr808_fire at the neutral knobs; the volume-0 hits left out), played
+  by the genres in `lib.KITS` of music-jam.lua: Electro and Hip Hop. Kit level 0.4 puts the jam where the
+  old drums had it (rendered, within 0.1 dB). Voices: a busy jam (every layer) peaks at 13 of 32, the old
+  kit 11-13. To listen: `JAM='layers=all' luajit claudetools/render-music.lua out.wav 40 jam auto 0 5`
+  (seed 5 = Electro, 2 = Hip Hop). Next: Nikki listens; then the 909, and a panel pick for the kit.
 Until then the jam plays Playtime's drum patches; enough to hear whether the arrangement works.
 
 ## Steps
