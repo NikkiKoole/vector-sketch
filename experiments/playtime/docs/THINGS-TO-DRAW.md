@@ -37,6 +37,21 @@ and what's there already. Pick a few, draw them, drop them in `textures/`, tick 
   - Draw: outline + mask, pointing down, about 120×200, root at the top (it hides behind the
     upper lip). Maybe two or three: plain, with a groove, a fat one.
 
+- [ ] **A11. Nail tops, screw tops and other markings on wood.** For the plank spikes (`planks`,
+  `boat2`, `drawn-sea`, `wild`; `PLANKS.md`, `BOAT.md`), where they're drawn in code today: nails
+  are two grey circles, rivets the same, stains are dark ellipses, rust a straight line, knots a
+  stroked oval, moss clumps of circles, vine leaves a diamond with a line.
+  - Draw, outline + mask, about 48×48, a few of each so they don't repeat: **nail heads** (round,
+    a bit off-centre, one hammered in crooked), **screw heads** (slot, cross), **rivets**, a
+    **bolt with a washer**.
+  - Markings, white on transparent (tinted, no mask), a few variants each: **rust streaks**
+    running down from a nail (about 40×160), **stains / water marks** (soft blotches, 200×120),
+    **knots** (with the grain bending round them), **cracks and splits** from a plank's end,
+    **end grain** (rings, for a plank seen end on), **paint chips / peeling** (for the grime end of
+    `wild`), a **saw mark** or two.
+  - For `wild`'s growth end, if they're drawn too: **moss clumps** (outline + mask), **vine
+    leaves** (two or three shapes), a **cobweb** for a window corner, **small flowers**.
+
 ## Worth doing in the same sessions
 
 - [ ] **A4. Hands.** Only 3 hand shapes (`hand1`-`hand3`, `hand3r`) against 8 feet with r/x
