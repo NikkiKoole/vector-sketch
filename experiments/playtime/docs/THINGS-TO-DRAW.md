@@ -52,6 +52,16 @@ and what's there already. Pick a few, draw them, drop them in `textures/`, tick 
   - For `wild`'s growth end, if they're drawn too: **moss clumps** (outline + mask), **vine
     leaves** (two or three shapes), a **cobweb** for a window corner, **small flowers**.
 
+- [ ] **A12. Leaves, many kinds.** For the `plants` spike (`PLANTS.md`), which grows L-system plants
+  and hangs leaves on them; today every leaf is one of the scanned ovals (`textures/plants/oval-*`,
+  `petal-*`, from Scan 12), so a daisy, a sunflower and a bush all wear the same leaf.
+  - Draw, outline + mask, drawn pointing **up with the stalk end at the bottom** (that's where it
+    joins the stem), about 150×300, a few of each so they don't repeat: round, heart-shaped,
+    long and narrow (grass, tulip), serrated, lobed (oak-ish), a fern leaflet, a big floppy one
+    (sunflower), a small one for bushes, a curled or folded one. A vein down the middle is welcome.
+  - Also handy: petals in a few shapes (round, pointed, ragged), buds, a seed head, a sprout or two
+    more (`sprout-*` has three).
+
 ## Worth doing in the same sessions
 
 - [ ] **A4. Hands.** Only 3 hand shapes (`hand1`-`hand3`, `hand3r`) against 8 feet with r/x
