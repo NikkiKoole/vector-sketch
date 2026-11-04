@@ -72,10 +72,13 @@ Needs a venv: `python3 -m venv --system-site-packages /tmp/venv && /tmp/venv/bin
   the syllables keep their length (×1.00-1.02 instead of ×0.63-1.19) and no chipmunk or slow-mo on the
   big shifts (Herman and Nikki in the round). The singer model's scoop and vibrato go into WORLD's pitch
   curve directly. Nikki: "I really like the world ones"; plain vs singer still undecided.
-- **To the game** (not built): WORLD can't run in LÖVE, so bake: every syllable re-tuned in advance to a
-  few pitches (every ~3 semitones across each voice's range), the game picks the nearest and resamples
-  the rest (≤1.5 st, too small to chipmunk). A few hundred small files, made by a script, no engine
-  change. The singer model's scoop and vibrato stay live (setPitch on top of the baked take).
+- **In the game, baked** (spike, 2026-11-04): WORLD can't run in LÖVE, so `claudetools/voice-bake.py`
+  re-tunes every syllable the choir's tunes sing, for all three speakers, to a pitch every 3 semitones
+  (G#2-C5): 31 syllables × 3 × 11 = 1023 files, 7.7 MB, ~30 s, into `assets/voices-baked/` with an
+  `index.lua` (generated, git-ignored: run the script to make them). The scene's `w` switches between
+  speed change and the baked voices (on by default when they exist): a note plays the nearest baked
+  pitch and the rest by playback rate (≤1 semitone in the songs). The singer model's scoop and vibrato
+  stay live on top (setPitch). For a real build the bake would cover only what's sung, or a coarser grid.
 
 ## Left open
 

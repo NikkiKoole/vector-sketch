@@ -8,7 +8,11 @@
 -- keys: space sing / stop   n next tune   m round / mixed (every note another voice) / solo (one voice)
 --       v the solo voice (theo / herman / nikki)   t tuning (syllable / speaker / raw)
 --       r swap rough takes for another speaker's (not in a solo)   u feel: off / jitter / singer   h the panels
---       1-5 the singer's layers: time, force, pitch, breath, tire
+--       1-5 the singer's layers: time, force, pitch, breath, tire   w voice: speed change / WORLD baked
+--
+-- WORLD baked (docs/CHOIR.md; make them with claudetools/voice-bake.py): each syllable re-tuned in advance
+-- to a pitch every 3 semitones by the WORLD vocoder (throat and length kept); a note plays the nearest and
+-- the rest by playback rate. Without the bake the switch stays on speed change.
 --
 -- Feel 'jitter': each voice its own lag and slow pitch drift, each note a little timing jitter, detune,
 -- loudness, sometimes a scoop, vibrato on the long ones. Feel 'singer' (the strumhand way: a model of the
@@ -127,17 +131,19 @@ end
 
 ---------------------------------------------------------------- sounds
 
+-- WORLD re-tuned takes (claudetools/voice-bake.py; generated, not in git): nil when not baked yet
+local okBaked, BAKED = pcall(function() return love.filesystem.load('assets/voices-baked/index.lua')() end)
+if not okBaked then BAKED = nil end
+
 local sources, gains = {}, {}
-local function source(sp, syl)
-    local key = sp .. '/' .. syl
-    if sources[key] == nil then
-        local path = 'assets/voices/' .. key .. '.ogg'
-        if not love.filesystem.getInfo(path) then sources[key] = false return false end
-        local r = DATA[sp] and DATA[sp][syl]
-        gains[key] = math.min(0.35 / math.max(r and r.peak or 0.35, 0.001), 3) -- peaks from voice-pitch.py
-        sources[key] = love.audio.newSource(path, 'static')
+-- a take by its path, loaded once; peak = its loudest sample (to even out loudness)
+local function source(path, peak)
+    if sources[path] == nil then
+        if not love.filesystem.getInfo(path) then sources[path] = false return false end
+        gains[path] = math.min(0.35 / math.max(peak or 0.35, 0.001), 3)
+        sources[path] = love.audio.newSource(path, 'static')
     end
-    return sources[key]
+    return sources[path]
 end
 
 -- which recording sings this note, at what playback rate, how early to start it
@@ -155,11 +161,26 @@ local function take(c, sp, syl, midi)
             end
         end
     end
-    if not (r and source(sp, syl)) then return nil end
+    if not r then return nil end
     local target = midi + octave + c.transpose
+    local baked = c.baked and BAKED and BAKED[sp] and BAKED[sp][syl]
+    if baked then
+        -- the nearest WORLD-tuned take; the rest (<= 1.5 st) by playback rate, too little to chipmunk
+        local best
+        for g in pairs(baked.pitches) do
+            if not best or math.abs(g - target) < math.abs(best - target) then best = g end
+        end
+        local path = 'assets/voices-baked/' .. sp .. '/' .. syl .. '/' .. best .. '.ogg'
+        if source(path, baked.pitches[best]) then
+            local rate = 2 ^ ((target - best) / 12)
+            return { sp = sp, syl = syl, rate = rate, lead = (baked.start or 0) / rate, key = path }
+        end
+    end
+    local path = 'assets/voices/' .. sp .. '/' .. syl .. '.ogg'
+    if not source(path, r.peak) then return nil end
     local from = (c.tuning == 'syllable' and r.midi) or (c.tuning == 'speaker' and SPEAKER_MIDI[sp]) or target
     local rate = 2 ^ ((target - from) / 12)
-    return { sp = sp, syl = syl, rate = rate, lead = (r.start or 0) / rate, key = sp .. '/' .. syl }
+    return { sp = sp, syl = syl, rate = rate, lead = (r.start or 0) / rate, key = path }
 end
 
 ---------------------------------------------------------------- the score
@@ -343,6 +364,7 @@ end
 function s.onStart()
     worldState.paused = false
     local c = choir()
+    if c.baked == nil then c.baked = BAKED ~= nil end -- the WORLD voices when they're baked
     buildStage(c)
     c.mipos = aliveMipos(c)
     for i = 1, 3 do
@@ -413,6 +435,7 @@ function s.onKeyPress(k)
     elseif k == 'v' then c.solo = c.solo % #SPEAKERS + 1
     elseif k == 'r' then c.swapRough = not c.swapRough
     elseif k == 'h' then c.showPanel = not c.showPanel
+    elseif k == 'w' then c.baked = not c.baked
     elseif k == 'u' then c.feel = ({ off = 'jitter', jitter = 'singer', singer = 'off' })[c.feel]
     elseif tonumber(k) and LAYERS[tonumber(k)] then
         local name = LAYERS[tonumber(k)]
@@ -430,7 +453,7 @@ function s.drawUI()
     if not (c and state.playMode and c.showPanel) then return end
     ui.startFrame()
     local BH, pad, w = 36, 8, 420
-    local h = (BH + pad) * 7 + pad + 24
+    local h = (BH + pad) * 8 + pad + 24
     local x0, y0 = 20, 20
     ui.panel(x0, y0, w, h, '•• choir ••', function()
         local layout = ui.createLayout({ type = 'columns', spacing = pad, startX = x0 + pad, startY = y0 + pad + 20 })
@@ -454,7 +477,10 @@ function s.drawUI()
         if ui.button(x, y, 190, c.swapRough and 'rough: swapped' or 'rough: kept') then s.onKeyPress('r') end
         if ui.button(x + 200, y, 190, 'mode: ' .. c.mode) then s.onKeyPress('m') end
         x, y = ui.nextLayoutPosition(layout, w - 20, BH)
-        ui.label(x, y, 'space n t m v r u 1-5 h')
+        if ui.button(x, y, 390, not BAKED and 'voice: speed (not baked: voice-bake.py)'
+            or (c.baked and 'voice: WORLD baked' or 'voice: speed change')) then s.onKeyPress('w') end
+        x, y = ui.nextLayoutPosition(layout, w - 20, BH)
+        ui.label(x, y, 'space n t m v r w u 1-5 h')
     end)
 
     -- the second panel: the feel (jitter's dice or the singer model) and the vowel filter
