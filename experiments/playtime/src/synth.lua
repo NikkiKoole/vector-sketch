@@ -379,7 +379,7 @@ void unschedule(int slot, double t1, double t2);
 -- The structs on their own: a hot reload redeclaring one errors, which must not stop the functions.
 -- NoteOpts copied from dreamengine runtime/studio.h, FIELD ORDER AND ALL: the engine reads the whole of it,
 -- so a smaller one here hands it what lies past the end (random detune, cut notes, stray curves, no error).
--- It grew in place (the first six fields first, 24 bytes, now 108), so an older engine reading only the
+-- It grew in place (the first six fields first, 24 bytes, then 108, now 112 with filter), so an older engine reading only the
 -- start is fine with this one. noteOptsFits() checks it against the library's own size.
 -- LuaJIT keeps the first typedef for the whole run: a running game hot-reloading this keeps the old one.
 if ffi then
@@ -387,7 +387,7 @@ if ffi then
     pcall(ffi.cdef, 'typedef struct { unsigned char id, target; float scale, stretch; } NoteShape;')
     pcall(ffi.cdef, [[typedef struct { int glide_ms; float accent, harmonics, timbre, morph, gain;
                      float cents, cutoff_oct, damp; int release_ms; float region_start, region_end;
-                     NoteVib vib; NoteShape shape[3]; int origin_ms; } NoteOpts;]])
+                     NoteVib vib; NoteShape shape[3]; int origin_ms; int filter; } NoteOpts;]])
     -- one function at a time: schedule_note_at's return changed (void -> int), and a running game
     -- redeclaring it differently errors, which mustn't keep the others undeclared
     for line in CDEF_OPTIONAL:gmatch('[^\n]+') do pcall(ffi.cdef, line) end
@@ -920,7 +920,23 @@ local function shapeTarget(target)
     return lib.SHP[target] or tonumber(target) or 0
 end
 
--- the humanizing fields, flat (the web sends them as text; the page builds the struct): 22 numbers
+-- opts.filter: this note's own filter TYPE (dreamengine 409701fd), a name or the engine's FILTER_* number;
+-- nil/0 = the slot's, 'off' = unfiltered (NOTE_FILTER_OFF)
+local FILTER_TYPE = { off = -1, low = 1, high = 2, band = 3, notch = 4, ladder = 5, steiner = 6,
+                      steiner_hp = 7, steiner_bp = 8, steiner_nf = 9, diode = 10 }
+local function filterType(f)
+    return FILTER_TYPE[f] or tonumber(f) or 0
+end
+
+-- filter in the NoteOpts declared this run (not in a game that hot-reloaded over the 108-byte typedef)
+local function noteOptsHasFilter()
+    if IS_WEB then return true end
+    if S.noteFilter == nil then S.noteFilter = ffi ~= nil and pcall(ffi.offsetof, 'NoteOpts', 'filter') and
+                                                   ffi.offsetof('NoteOpts', 'filter') ~= nil or false end
+    return S.noteFilter
+end
+
+-- the humanizing fields, flat (the web sends them as text; the page builds the struct): 25 numbers
 local function humanFields(opts)
     local v = opts.vib or {}
     local out = { opts.cents or 0, opts.cutoff or 0, opts.damp or 0, opts.release or 0,
@@ -933,6 +949,7 @@ local function humanFields(opts)
         out[#out + 1] = sh and sh.scale or 0
         out[#out + 1] = sh and sh.stretch or 0
     end
+    out[#out + 1] = filterType(opts.filter)
     return out
 end
 
@@ -959,6 +976,7 @@ local function noteOptsStruct(opts, gain)
         end
         o.origin_ms = opts.origin or 0
     end
+    if opts.filter and noteOptsHasFilter() then o.filter = filterType(opts.filter) end
     return o
 end
 

@@ -97,17 +97,17 @@ class Desound extends AudioWorkletProcessor {
     }
 
     // A booked note with extras: src/synth.lua sends the NoteOpts fields flat (scheduleAt); here they go
-    // into a struct in the wasm's memory, laid out as dreamengine runtime/studio.h declares it (108 bytes;
-    // offsets checked against the C compiler, 2026-11-04). The engine reads the WHOLE struct, so it must be
+    // into a struct in the wasm's memory, laid out as dreamengine runtime/studio.h declares it (112 bytes;
+    // offsets checked against the C compiler, 2026-11-04; filter at 108 since dreamengine 409701fd). The engine reads the WHOLE struct, so it must be
     // at least the engine's size: a wasm that says a bigger one (de_note_opts_size) gets plain notes. One
     // from before that has the 24-byte engine, which reads only the first six fields. The engine copies
     // the struct at the call, so one does for every note. A wasm without schedule_note_at plays it plainly.
     // args: t midi slot vol dur  glide accent harmonics timbre morph gain  booking
     //       cents cutoff_oct damp release_ms region_start region_end  vib: cents rate delay fade wander
-    //       origin_ms  shape x3: id target scale stretch
+    //       origin_ms  shape x3: id target scale stretch  filter
     noteAt(args) {
         const [t, midi, slot, vol, dur, glide, accent, harmonics, timbre, morph, gain, booking] = args;
-        const SIZE = 108;
+        const SIZE = 112;
         if (this.optsFit === undefined) {
             const engine = this.ex.de_note_opts_size ? this.ex.de_note_opts_size() : 24;
             this.optsFit = engine <= SIZE;
@@ -131,6 +131,7 @@ class Desound extends AudioWorkletProcessor {
             view.setUint16(p + o + 2, 0, true);
             f32(o + 4, h[j + 2]); f32(o + 8, h[j + 3]);
         }
+        i32(108, h[24]);                                                                          // filter (0 = the slot's)
         const id = this.ex.schedule_note_at(t + this.offset, midi, slot, vol, dur, p);
         if (booking && id > 0) {
             this.bookings.set(booking, id);
