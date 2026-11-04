@@ -57,6 +57,12 @@ The main thread calls the dreamengine API, which drops commands into a lock-free
 - The settings are at the top of `src/music.lua`: style ('set' or one style), set, rhythmSection, upright, melody, melodyPatch, and more. `music.nowPlaying()` says which style, key and section is playing.
 
 ## Gotchas
+- **128 instrument slots since dreamengine 9f2b18dd (2026-11-04)**; Playtime's fixed slots now run past 47
+  (48-61 the 808, 62 jamPad, 63-76 the 909, 77-80 the funk guitar's strings; 81-127 free). A library built
+  from an older dreamengine has 48: it ignores those slots, so they play nothing (no error). The desktop
+  dylib is rebuilt; the iPhone (`./playtime.sh device`) and web (`webtest/build-web.sh`) builds take
+  dreamengine as it is when they build, so rebuild them before listening to the jam or acid there.
+  NoteOpts is 112 bytes (its `filter` field) from 409701fd on: same rule.
 - **The engine's request queue holds 511 calls and DROPS the rest** (`[sound] WARNING: request queue
   overflow`, on stderr: in `.playtime.log`, not the bridge console). A dropped define leaves its slot the
   engine's default, a FLAT SQUARE WAVE: an organ "tooter" in whatever plays there, a different patch each
