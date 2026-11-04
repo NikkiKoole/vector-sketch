@@ -80,6 +80,19 @@ Needs a venv: `python3 -m venv --system-site-packages /tmp/venv && /tmp/venv/bin
   pitch and the rest by playback rate (≤1 semitone in the songs). The singer model's scoop and vibrato
   stay live on top (setPitch). For a real build the bake would cover only what's sung, or a coarser grid.
 
+## Renders to listen to (`docs/choir-renders/`)
+
+Offline renders from 2026-11-04 (the choir's real score; remake them with the claudetools above):
+
+- `frere-jacques-1-speed-change`, `-2-world-plain`, `-3-world-singer`: the round, three ways. 1 is the
+  game's old way (pitch and length together); 2 re-tuned with WORLD; 3 WORLD with the singer model's
+  scoop and vibrato in the pitch curve. Nikki: "I really like the world ones" (2 vs 3 undecided).
+- `twinkle-1-…`, `-2-…`, `-3-…`: the same three for Twinkle Twinkle, Theo solo (smaller shifts).
+- `morph-theo-to-herman-mi-1-theo` … `-5-world-blend-50`: the two takes, a plain crossfade (two voices on
+  top of each other), the WORLD morph over time and the 50% blend. **4 and 5 are the ones Nikki liked.**
+- `morph-theo-mi-to-po-…`, `morph-herman-ma-to-mo-…`, `morph-theo-la-to-bi-…`: WORLD morphs between
+  syllables (the vowel only, a syllable, both consonant and vowel: the hardest).
+
 ## Left open
 
 - Nobody has judged the singer feel by ear yet; the personalities (push, steady, lean, lung) are guesses.
