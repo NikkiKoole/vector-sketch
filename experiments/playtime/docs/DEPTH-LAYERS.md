@@ -46,6 +46,43 @@ it's drawn. It's the same idea as parallax: some things are only there to look a
   front draw order, the back ones sensors), so a boat with real depth is a case for this doc.
   The `planks` treehouse does the same by hand (back wall, solid floor, porch railing in front).
 
+## The spike (2026-11-04, scene `depth`)
+
+Nikki: "a good experiment" (2026-11-04); kept as a spike, the idea still open.
+
+`scripts/spikes/depth.playtime.lua`: a toy house of chunky blocks, a porch, a picket fence,
+crates, and Mipos in two lanes.
+
+- **Blocks drawn with depth:** every block's front face is its body; its sides and top go back
+  to a vanishing point near the top of the screen (sliders: depth, persp, horizon), so the house
+  turns a little as the camera moves; `v` for oblique (a fixed slant) instead. All sides of a
+  layer first, then all fronts, so a neighbour's side never lands on a front. Windows and the
+  door are holes with a reveal (the wall's thickness shows on two sides). Light from the upper
+  left. Front faces get the crayon outline (`drawn-stroke.lua`), the sides plain lines.
+- **Layers in the physics** (`preSolve`): back blocks (walls, the floor between the storeys,
+  the roof) let Mipos pass in front, and their tops are one-way floors: decided when the pair
+  first touches (the Mipo's lowest point above the top there, not going up) and kept until they
+  part. Play blocks are solid (porch floor, crates); front blocks (pillars, porch roof, railing,
+  fence) never touch Mipos. Blocks only collide with blocks in their own layer. `k` makes the
+  house loose; the porch and fence are welded together.
+- **Mipos with depth:** a soft contact shadow on whatever is under them (a ray down from the
+  torso), and **two lanes**: a back-lane Mipo walks on the path behind the house, drawn behind
+  it and hazed, touching only the path, the ground and other back Mipos (`l` swaps the Mipo at
+  the mouse). The world's draw is split between the lanes: a scene can set
+  `state.drawSplits = { { z, fn } }` and `drawTexturedWorld` calls `fn` before the first drawable
+  at that z; back-lane Mipos get z groups under the split, front ones `500 + n`.
+- **Mipos with a body** (sliders `mipo depth`, its own apart from the house's `depth`; `round`, `roundSize`): each lane's Mipos are drawn
+  into a canvas (the lane splits open and close it), then laid down with copies of it behind,
+  each shrunk a little toward the same vanishing point as the blocks and darkened: a cut-out's
+  edge going back, so a Mipo looks like a chunky wooden or cardboard figure. `round` is a shader
+  on the real one: a warm light edge toward the light, a shaded edge away (the silhouette's
+  alpha looked up both ways), so it reads a bit pillowy. Both act on the whole lane's
+  silhouette, not per part (an arm in front of the body gets no edge of its own).
+- **Engine bits it needed:** `state.drawSplits` (`src/physics/box2d-draw-textured.lua`);
+  `state.passableBodies` so the joint guard doesn't take a static wall Mipos pass in front of
+  for a wall a limb is stuck through (it ghosted limbs, which then fell through floors);
+  `instance.lane` so two Mipos in different lanes don't count as knotted (untangle fired).
+
 ## Open questions
 
 - In **play mode**, can back parts still be dragged and snapped (building while playing, as in

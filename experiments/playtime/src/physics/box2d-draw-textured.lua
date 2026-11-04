@@ -1041,7 +1041,18 @@ function lib.drawTexturedWorld(_world) -- draws what's registered (createDrawabl
     local tCreate = times and tBuilt - tStart
     local tSort = times and love.timer.getTime() - tBuilt
 
+    -- state.drawSplits = { { z = n, fn = f }, ... } (sorted by z): a scene draws its own layer
+    -- between the drawables, f called before the first one at z or higher (the depth spike draws
+    -- its house between the back lane's Mipos and the front lane's). Set per frame by the scene.
+    local splits, nextSplit = state.drawSplits, 1
     for i = 1, #drawables do
+        if splits then
+            local z = drawables[i].z
+            while splits[nextSplit] and splits[nextSplit].z <= z do
+                splits[nextSplit].fn()
+                nextSplit = nextSplit + 1
+            end
+        end
         local t0 = times and love.timer.getTime()
         local mipoThing = drawables[i].mipoThing
         if mipoThing and mipoThing.mipoId and hiddenMipos[mipoThing.mipoId] then
@@ -1063,6 +1074,9 @@ function lib.drawTexturedWorld(_world) -- draws what's registered (createDrawabl
                 counts[kind] = (counts[kind] or 0) + 1
             end
         end
+    end
+    if splits then
+        for k = nextSplit, #splits do splits[k].fn() end
     end
     cullStats.culled = culled
     if times then

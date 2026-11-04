@@ -179,6 +179,16 @@ local function collectSubtree(instance, partName, out)
     return out
 end
 
+-- A wall: something static and solid. state.passableBodies (a set of bodies, kept by a scene)
+-- names static bodies Mipos pass through or in front of (the depth spike's back and front layers,
+-- scripts/spikes/depth.playtime.lua): a limb across one isn't stuck.
+local function isWall(fixture)
+    local body = fixture:getBody()
+    if body:getType() ~= 'static' or fixture:isSensor() then return false end
+    local passable = state.passableBodies
+    return not (passable and passable[body])
+end
+
 -- Joints are made parent (body A) -> child (body B), see character-manager.
 -- Is there a wall (anything static) between the two points? Healing is a
 -- teleport (setPosition), which skips Box2D's tunnelling protection: a limb
@@ -187,7 +197,7 @@ local function wallBetween(x1, y1, x2, y2)
     if (x2 - x1) ^ 2 + (y2 - y1) ^ 2 < 1 then return false end
     local blocked = false
     state.physicsWorld:rayCast(x1, y1, x2, y2, function(fixture)
-        if fixture:getBody():getType() == 'static' and not fixture:isSensor() then
+        if isWall(fixture) then
             blocked = true
             return 0
         end
@@ -226,7 +236,7 @@ local function wallFixtureBetween(x1, y1, x2, y2)
     if (x2 - x1) ^ 2 + (y2 - y1) ^ 2 < 1 then return nil end
     local found
     state.physicsWorld:rayCast(x1, y1, x2, y2, function(fixture)
-        if fixture:getBody():getType() == 'static' and not fixture:isSensor() then
+        if isWall(fixture) then
             found = fixture
             return 0
         end
@@ -271,7 +281,7 @@ local function touchingWall(body)
         if contact:isTouching() then
             local fa, fb = contact:getFixtures()
             local other = fa:getBody() == body and fb or fa
-            if other:getBody():getType() == 'static' and not other:isSensor() then return true end
+            if isWall(other) then return true end
         end
     end
     return false
@@ -294,13 +304,14 @@ end
 -- a limb went through and wraps around the other's arm, leg or body. Returns
 -- the first part of another Mipo on the path parent centre -> joint -> child
 -- centre (the wallAcrossLimb path), and that Mipo.
-local function otherMipoAcross(x1, y1, x2, y2, ownId)
+-- A Mipo in another lane (instance.lane, the depth spike's back lane) passes by, it can't hook.
+local function otherMipoAcross(x1, y1, x2, y2, ownId, ownLane)
     if (x2 - x1) ^ 2 + (y2 - y1) ^ 2 < 1 then return nil end
     local found, foundInstance
     state.physicsWorld:rayCast(x1, y1, x2, y2, function(fixture)
         if fixture:isSensor() then return -1 end
         local instance = mipoRegistry.getFromBody(fixture:getBody())
-        if instance and instance.id ~= ownId then
+        if instance and instance.id ~= ownId and instance.lane == ownLane then
             found, foundInstance = fixture, instance
             return 0
         end
@@ -318,9 +329,9 @@ local function hooksOf(owner, result)
             local x1, y1, x2, y2 = joint:getAnchors()
             local ax, ay = bodyA:getPosition()
             local bx, by = bodyB:getPosition()
-            local fixture, other = otherMipoAcross(ax, ay, x1, y1, instance.id)
-            if not fixture then fixture, other = otherMipoAcross(x1, y1, x2, y2, instance.id) end
-            if not fixture then fixture, other = otherMipoAcross(x2, y2, bx, by, instance.id) end
+            local fixture, other = otherMipoAcross(ax, ay, x1, y1, instance.id, instance.lane)
+            if not fixture then fixture, other = otherMipoAcross(x1, y1, x2, y2, instance.id, instance.lane) end
+            if not fixture then fixture, other = otherMipoAcross(x2, y2, bx, by, instance.id, instance.lane) end
             if fixture then
                 local _, through = mipoRegistry.getFromBody(fixture:getBody())
                 result[#result + 1] = { a = instance, b = other, part = partName, through = through }
