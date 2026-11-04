@@ -198,6 +198,9 @@ function love.load(_args)
         end
     end
     local playScene = playMode.sceneFromArgs(arg) -- --play <scene>: straight into play mode
+    -- the editor starts quiet (Nikki 2026-11-04); the music panel's 'music' row turns it on.
+    -- Straight into play mode, the music plays.
+    if not playScene then require('src.music').enabled = false end
     sceneLoader.loadScriptAndScene(playScene or startScene)
     if playScene then playMode.enter() end
 end
