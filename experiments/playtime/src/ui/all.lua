@@ -297,7 +297,10 @@ function ui.sliderWithInput(id, x, y, w, min, max, value, _changed, step)
         if step and step == 1 then
             value = math.floor(panelSlider + 0.5)
         else
-            value = tonumber(string.format("%.2f", panelSlider))
+            -- two decimals, or as many as a finer step needs (0.0001: four; the depth spike's persp)
+            local decimals = 2
+            if step and step > 0 and step < 0.01 then decimals = math.ceil(-math.log10(step) - 1e-9) end
+            value = tonumber(string.format("%." .. decimals .. "f", panelSlider))
         end
         returnValue = value
     end
