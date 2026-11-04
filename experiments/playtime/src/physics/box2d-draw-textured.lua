@@ -22,7 +22,8 @@ local spineSkin = require('src.spine-skin')
 local earBend = require('src.ear-bend')
 -- face parts drawn on their body around extra.ox/oy: on a spine torso they ride the bend
 local faceDrawables = { decal = true, brow = true, ['mouth-backdrop'] = true, ['mouth-lower'] = true,
-    ['mouth-upper'] = true, ['mouth-teeth'] = true }
+    ['mouth-upper'] = true, ['mouth-teeth'] = true,
+    ['mouth-tongue'] = true }
 
 local gazeRadius = 1000 -- world units; cursor within this distance → track, outside → look ahead
 local mipoFace = require('src.mipo-face')
@@ -297,6 +298,14 @@ local function createDrawables()
                             table.insert(drawables, {
                                 type = 'mouth-backdrop',
                                 z = composedZ - 2,
+                                extra = ud.extra,
+                                body = body,
+                            })
+                            -- the tongue, out only during a raspberry (src/mipo-raspberry.lua):
+                            -- over the lower lip, under the upper one (253)
+                            table.insert(drawables, {
+                                type = 'mouth-tongue',
+                                z = composedZ + 0.6,
                                 extra = ud.extra,
                                 body = body,
                             })

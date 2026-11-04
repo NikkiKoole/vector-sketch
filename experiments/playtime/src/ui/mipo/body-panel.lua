@@ -305,6 +305,9 @@ function lib.drawActions(p, y)
         if ui.checkbox(x, y, isPointing, 'point at cursor') then
             if isPointing then mipoActions.stopPointing(instance) else mipoActions.pointAt(instance, 'cursor') end
         end
+        if ui.button(x + hw + 4, y, hw, 'raspberry') then
+            require('src.mipo-raspberry').blow(instance)
+        end
         y = y + ROW
     end)
     return y

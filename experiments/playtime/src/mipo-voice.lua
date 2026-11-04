@@ -286,6 +286,30 @@ local function shapeByName(name)
     return nil
 end
 
+lib.findMouth = findMouth
+lib.shapeByName = shapeByName
+
+-- The mouth as it rests now (16 numbers, unscaled): its animated shape when it has one, else the
+-- DNA mouth recovered from the lip decal's scaled curve points.
+function lib.restingShape(thing, lip)
+    if thing.mouthShapeVec then return thing.mouthShapeVec end
+    local from, cp = {}, lip.curvePoints
+    for i = 1, 16, 2 do
+        from[i] = (cp[i] - lip.mouthX) / lip.mouthScaleX
+        from[i + 1] = (cp[i + 1] - lip.mouthY) / lip.mouthScaleY
+    end
+    return from
+end
+
+-- Stop a mouth flap where it is and give back the shape it would have restored (nil = DNA mouth).
+function lib.cancelFlap(instance)
+    local flap = instance and flaps[instance.id]
+    if not flap then return nil, false end
+    flaps[instance.id] = nil
+    flap.thing.mouthShapeVec = flap.restore
+    return flap.restore, true
+end
+
 local openShapes = { 'O_U_agh', 'open_tween', 'A_I' }
 
 -- Open the mouth for `duration` seconds, then close it again:

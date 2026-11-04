@@ -32,6 +32,10 @@ and what's there already. Pick a few, draw them, drop them in `textures/`, tick 
   - Have: the tufts borrow the fuzzy ear (`earx2r`, 215×256).
   - Draw: like an ear, outline + mask, about that size. A few kinds: spiky, curly, flat lock,
     wispy. The haircuts (spiky, mohawk, swept, pigtails, cowlick, fringe) want different ones.
+- [ ] **A9. A tongue.** For the raspberry (`RASPBERRY.md`); drawn in code until then.
+  - Have: nothing; `src/render/mouth.lua` drawTongue draws a pink rounded placeholder.
+  - Draw: outline + mask, pointing down, about 120×200, root at the top (it hides behind the
+    upper lip). Maybe two or three: plain, with a groove, a fat one.
 
 ## Worth doing in the same sessions
 

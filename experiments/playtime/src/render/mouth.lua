@@ -421,12 +421,85 @@ local function drawTeeth(d)
 end
 
 
+-- The tongue (src/mipo-raspberry.lua): out between the lips while the face's thing has tongueOut
+-- (0..1), shaking with tongueBuzz (-1..1). Drawn in code for now, a placeholder for a picture:
+-- a pink rounded tongue, its root behind the upper lip, a groove down the middle.
+lib.tongueHex = 'E57F8Fff'
+lib.tongueLineHex = '5A1E2Aff'
+lib.tongueLength = 0.6 -- how far it comes out past the lower lip, times the mouth's width
+lib.tongueWidth = 0.42 -- times the mouth's width
+local tongueFill, tongueLine
+local function drawTongue(d)
+    local body = d.body
+    if not body or body:isDestroyed() then return end
+    local thing = utils.thingOf(body)
+    local out = thing and thing.tongueOut
+    if not out or out <= 0 then return end
+    local extra = d.extra
+    local p = animatedCurvePoints(extra, body) or extra.curvePoints
+    if not p or #p ~= 16 then return end
+    local mouthW = math.sqrt((p[9] - p[1]) ^ 2 + (p[10] - p[2]) ^ 2)
+    if mouthW < 1 then return end
+    local buzz = thing.tongueBuzz or 0
+    local rootX = (p[5] + p[13]) / 2
+    local rootY = p[6] + (p[14] - p[6]) * 0.3
+    local tipY = p[14] + out * mouthW * lib.tongueLength
+    local length = tipY - rootY
+    if length <= 0 then return end
+    local half = mouthW * lib.tongueWidth / 2
+    -- the centre line bends sideways with the buzz, more toward the tip
+    local function centreX(s) return rootX + buzz * mouthW * 0.04 * s * s end
+    local left, right = {}, {}
+    local steps = 8
+    local tipStart = math.max(0, length - half) -- the round tip's centre
+    for k = 0, steps do
+        local s = k / steps
+        local y = rootY + tipStart * s
+        local w = half * (0.85 + 0.15 * s) -- a little wider toward the tip
+        local cx = centreX(y > rootY and (y - rootY) / length or 0)
+        left[#left + 1], left[#left + 2] = cx - w, y
+        right[#right + 1], right[#right + 2] = cx + w, y
+    end
+    local poly = {}
+    for k = 1, #left, 2 do poly[#poly + 1], poly[#poly + 2] = left[k], left[k + 1] end
+    local tipX, tipCY, tipR = centreX(tipStart / length), rootY + tipStart, half
+    for k = 1, 9 do -- the round end, from the left side under to the right
+        local a = math.pi - math.pi * k / 10
+        poly[#poly + 1], poly[#poly + 2] = tipX + math.cos(a) * tipR, tipCY + math.sin(a) * tipR
+    end
+    for k = #right - 1, 1, -2 do poly[#poly + 1], poly[#poly + 2] = right[k], right[k + 1] end
+    local ok, tris = pcall(love.math.triangulate, poly)
+    if not ok then return end
+
+    tongueFill = tongueFill or { color.hexToColor(lib.tongueHex) }
+    tongueLine = tongueLine or { color.hexToColor(lib.tongueLineHex) }
+    love.graphics.push()
+    love.graphics.translate(body:getPosition())
+    love.graphics.rotate(body:getAngle())
+    love.graphics.setColor(tongueFill)
+    for k = 1, #tris do love.graphics.polygon('fill', tris[k]) end
+    love.graphics.setColor(tongueLine)
+    local lw = love.graphics.getLineWidth()
+    love.graphics.setLineWidth(math.max(1, mouthW * 0.035))
+    love.graphics.setLineJoin('bevel')
+    love.graphics.line(poly)
+    -- the groove: down the middle, from inside the mouth to halfway down what shows
+    local grooveTo = p[14] + (tipY - p[14]) * 0.55
+    if grooveTo > rootY then
+        love.graphics.setLineWidth(math.max(1, mouthW * 0.02))
+        love.graphics.line(centreX(0), rootY, centreX((grooveTo - rootY) / length), grooveTo)
+    end
+    love.graphics.setLineWidth(lw)
+    love.graphics.pop()
+end
+
 -- The mouth's drawables (createDrawables): drawn on the face body, around its curve points.
 lib.drawers = {
     ['mouth-backdrop'] = drawMouthBackdrop,
     ['mouth-lower'] = drawLowerLip,
     ['mouth-upper'] = drawUpperLip,
     ['mouth-teeth'] = drawTeeth,
+    ['mouth-tongue'] = drawTongue,
 }
 
 return lib
