@@ -81,6 +81,11 @@ describe('music-events', function()
 
     describe('the jam', function()
         local style = D.styles.jam
+        -- these are about the answers, on the jam's played-kit voices: the song (seed 2) is Disco, which
+        -- plays the 909 (music-jam's KITS, a hit = several notes); the last test checks a kit's own
+        local kits
+        before_each(function() kits, jam.KITS = jam.KITS, {} end)
+        after_each(function() jam.KITS = kits end)
         local function song()
             local s = { seed = 2, key = 5, style = 'jam', swing = style.swing }
             jam.plan(s, style, function() end)
@@ -196,6 +201,17 @@ describe('music-events', function()
                     if math.abs(r.at - c.at) < 1e-6 then assert.are.equal(r.root, c.root) end
                 end
             end
+        end)
+
+        it('a drum machine genre answers on its machine: the 909 crash is its metal and its noise', function()
+            jam.KITS = kits
+            local s = song()
+            assert.are.equal('tr909', jam.KITS[s.jam.group])
+            local hits = answerImpact(s, 0.7, s.beat * 3)
+            assert.are.equal(2, #hits)
+            assert.are.equal('tr909Crash', hits[1].patch)
+            assert.are.equal('tr909CrashNoise', hits[2].patch)
+            assert.is_true(math.abs(hits[1].t - s.beat * 3) < 1e-6)
         end)
     end)
 end)

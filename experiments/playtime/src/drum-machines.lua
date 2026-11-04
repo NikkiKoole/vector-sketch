@@ -35,6 +35,25 @@ lib.tr808 = {
     HT = { { 'tr808Tom', 54, 5, 80 }, { 'tr808TomThud', 60, 3, 30 } },
 }
 
+-- The TR-909 is runtime/tr909.h's tr909_fire, the same way: neutral knobs (the kick tuned up 2 semitones to
+-- 35, the snare 3 to 54 / 60 and its noise 63, the toms 3: tr909__knob4 at 0.5), the crash at its centre
+-- (no tune). The jam has no ride, cowbell or tambourine for it: those roles play VOICES (music-jam's hit).
+lib.tr909 = {
+    BD = { { 'tr909Kick', 35, 6, 174 }, { 'tr909KickClick', 60, 2, 10 } },
+    SD = { { 'tr909SnareBody', 54, 5, 95, tilt = -1 },        -- 161 Hz at the real knob's mark 3
+           { 'tr909SnareBody', 60, 3, 95, tilt = -1 },        -- its second mode, a few dB under
+           { 'tr909Snappy', 63, 3, 180, tilt = 1 } },
+    CPS = { { 'tr909Clap', 60, 5, 11 }, { 'tr909Clap', 60, 5, 11, 9 }, { 'tr909Clap', 60, 5, 11, 18 },
+            { 'tr909Clap', 60, 3, 130, 26 } },
+    CH = { { 'tr909HatClosed', 84, 4, 98 } },
+    OH = { { 'tr909HatOpen', 84, 4, 232 } },
+    CY = { { 'tr909Crash', 100, 4, 807 }, { 'tr909CrashNoise', 60, 4, 807 } },
+    RS = { { 'tr909Rim', 57, 5, 30 }, { 'tr909Rim', 70, 2, 30 } },
+    LT = { { 'tr909TomLow', 43, 5, 251 }, { 'tr909TomLow', 55, 2, 167 }, { 'tr909TomClick', 70, 3, 14 } },
+    MT = { { 'tr909TomMid', 47, 5, 150 }, { 'tr909TomMid', 59, 2, 100 }, { 'tr909TomClick', 70, 3, 14 } },
+    HT = { { 'tr909TomHigh', 50, 5, 177 }, { 'tr909TomHigh', 62, 2, 118 }, { 'tr909TomClick', 70, 3, 14 } },
+}
+
 -- the jam's accent (0..1) as the cart's boost
 function lib.boost(accent)
     if not accent or accent <= 0 then return 0 end
@@ -47,7 +66,7 @@ function lib.notes(kit, role, accent, quieter)
     local voice = lib[kit] and lib[kit][role]
     if not voice then return nil end
     local boost, out = lib.boost(accent), {}
-    local tilt = kit == 'tr808' and boost or 0 -- tr808__snare_tilt: boost x tr808_snare_dyn (1)
+    local tilt = boost -- tr808__snare_tilt / tr909__snare_tilt: boost x snare_dyn (1 on both)
     for _, h in ipairs(voice) do
         local vol = h[3] + (h.tilt or 0) * tilt + boost
         vol = math.max(0, math.min(7, vol)) - (quieter or 0)

@@ -90,7 +90,13 @@ carts, and each voice is a recipe of several layered notes. Two ways in, decided
   DROPPED (the 808 + jamPad took a full define past 511 calls), left a default square wave. The tooter
   that changed between renders was that (the upright `musicBass` too, in some runs). Fixed in synth.lua
   (defines spread over frames, SOUND-SYNTH.md gotchas). jamPad's fade stays (liked). Fresh renders after
-  the fix (Electro seed 5, Hip Hop seed 2), Nikki: "sounds much much better". Still open: maybe the 808
+  the fix (Electro seed 5, Hip Hop seed 2), Nikki: "sounds much much better".
+  The 909 is in (2026-11-04): `tr909*` patches in slots 63-76 (tr909_build at the neutral knobs and the
+  metal filter's default XY; each tom its own slot, since tr909_fire re-sets one shared tom slot's decay
+  per hit and the jam books ahead; no ride), voices in drum-machines.lua (`lib.tr909`), played by Disco
+  (KITS). Same kit level 0.4: Disco renders 0.9 dB over the old drums; 13 of 32 voices at most. Render:
+  seed 3 = Disco. The music-events specs pin the played-kit voices (their song is Disco) and check
+  the 909's crash. Still open: maybe the 808
   snare's body tones (F#3 + E4) alone on the quiet hits (tried: quiet hits as noise only, not decided;
   the "octave up toot" heard then may well have been the pad); ELECTRO 3 has no hats at all.
 Until then the jam plays Playtime's drum patches; enough to hear whether the arrangement works.

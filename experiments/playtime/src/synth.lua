@@ -334,11 +334,50 @@ end
 -- the drum jam's chord pad (music-jam's 'pad' figure): the Rhodes, held for most of a bar. The shared
 -- 'rhodes' (bossa's comping) has a 4 Hz auto-pan, a phaser and tape wow; on a chord held that long they
 -- wobbled into a wah-wah "tooter" (Nikki, 2026-11-04). This one is still: a little mellower, rolled off,
--- a slow drift of pan as the only movement (an LFO: no FX bus), its own slot. And it FADES (decay 2 s to
--- sustain 1): at sustain 7 a chord held a whole bar stayed flat at full level, an organ, still a toot.
+-- a slow drift of pan as the only movement (an LFO: no FX bus), its own slot. It fades a bit quicker than
+-- the engine's own Rhodes decay (decay 2 s to sustain 1; liked). The flat "toot" that seemed to need the
+-- fade was a dropped define, a default square wave (definePatches, below).
 lib.patches.jamPad = { slot = 62, wave = 'EPIANO', adsr = { 1, 2000, 1, 600 },
                        harmonics = 0.12, timbre = 0.22, morph = 0.12, reverb = 0.4, level = 0.35,
                        filter = { mode = 1, cutoff = 2400, resonance = 0 }, lfo = { { 7, 0.15, 0.2 } } }
+
+-- The TR-909 (the drum jam's other kit, DRUM-JAM.md J4): dreamengine's runtime/tr909.h tr909_build at the
+-- cart's neutral knobs (tune / decay / colour 0.5) and the metal filter's default XY (cut .40, res .33:
+-- the lowpasses x0.86, resonance 4), its voices in src/drum-machines.lua. tr909_fire re-sets the kick's,
+-- toms', hats' and crash's slot decay per hit; the jam books ahead, so those are the neutral-knob decays
+-- here, and each tom has its own slot (the cart shares one). The ride is left out (the jam has no ride
+-- role). Slots 63-76. hats + crash: the METAL engine, modes [0] decay, [1] spread.
+do
+    local L, R = 0.4, 0.08 -- as the 808: one level for the kit, set against the old drums by render
+    local function p(slot, wave, adsr, filter, extra)
+        local patch = { slot = slot, wave = wave, adsr = adsr, level = L, reverb = R, kit = 'tr909',
+                        filter = filter and { mode = filter[1], cutoff = filter[2], resonance = filter[3] } }
+        for k, v in pairs(extra or {}) do patch[k] = v end
+        return patch
+    end
+    local P = lib.patches
+    P.tr909Kick = p(63, 'SINE', { 0, 174, 0, 50 }, { 1, 380, 2 },
+                    { env = { 0, 35, 30, dest = 1 }, drive = 0.22, driveMode = 0 })
+    P.tr909KickClick = p(64, 'NOISE', { 0, 9, 0, 4 }, { 2, 2500, 2 })
+    P.tr909SnareBody = p(65, 'SINE', { 0, 90, 0, 25 }, { 1, 1400, 1 }, { env = { 0, 15, 4, dest = 1 } })
+    P.tr909Snappy = p(66, 'NOISE', { 0, 170, 0, 50 }, { 1, 8500, 4 })
+    P.tr909TomLow = p(67, 'SINE', { 0, 251, 0, 45 }, nil, { env = { 0, 60, 7, dest = 1 } })
+    P.tr909TomMid = p(68, 'SINE', { 0, 150, 0, 45 }, nil, { env = { 0, 60, 7, dest = 1 } })
+    P.tr909TomHigh = p(69, 'SINE', { 0, 177, 0, 45 }, nil, { env = { 0, 60, 7, dest = 1 } })
+    P.tr909TomClick = p(70, 'NOISE', { 0, 12, 0, 5 }, { 3, 2000, 3 })
+    P.tr909Rim = p(71, 'TRI', { 0, 28, 0, 10 }, { 2, 150, 2 })
+    P.tr909Clap = p(72, 'NOISE', { 0, 100, 0, 45 }, { 3, 1200, 5 })
+    local hat = { harmonics = 0.7, timbre = 0.85, morph = 0.85 }
+    P.tr909HatClosed = p(73, 'METAL', { 0, 98, 0, 16 }, { 1, 12470, 4 },
+                         { harmonics = hat.harmonics, timbre = hat.timbre, morph = hat.morph,
+                           modes = { [0] = 0.40, [1] = 0.20 }, choke = 'tr909HatOpen' })
+    P.tr909HatOpen = p(74, 'METAL', { 0, 232, 0, 110 }, { 1, 12470, 4 },
+                       { harmonics = hat.harmonics, timbre = hat.timbre, morph = hat.morph,
+                         modes = { [0] = 0.66, [1] = 0.20 } })
+    P.tr909Crash = p(75, 'METAL', { 0, 807, 0, 280 }, { 1, 9460, 4 },
+                     { harmonics = 0.55, timbre = 0.30, morph = 0.30, modes = { [0] = 0.80, [1] = 0.15 } })
+    P.tr909CrashNoise = p(76, 'NOISE', { 0, 807, 0, 320 }, { 1, 8600, 4 })
+end
 
 local CDEF = [[
 int  de_lua_init(void);
