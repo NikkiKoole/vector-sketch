@@ -342,13 +342,17 @@ local function drawTeeth(d)
             -- available, otherwise copied from bind so we can safely mutate.
             local curvePoints = extra.curvePoints and animatedCurvePoints(extra, body)
             if curvePoints then
-                -- Anchor at corner midpoint (stable) with a small pull toward
-                -- p3 (top of opening) so teeth follow lip motion subtly.
-                local cmx = (curvePoints[1] + curvePoints[9])  * 0.5
-                local cmy = (curvePoints[2] + curvePoints[10]) * 0.5
-                local k = 0.3
-                ox = cmx * (1 - k) + curvePoints[5] * k
-                oy = cmy * (1 - k) + curvePoints[6] * k
+                -- Follow the lips: the anchor (corner midpoint with a small pull toward p3, the top
+                -- of the opening) moved from where it is at rest, added to the resting place. Was
+                -- the anchor itself, so the teeth and gum jumped on the first animated frame.
+                local function anchor(cp)
+                    local k = 0.3
+                    return (cp[1] + cp[9]) * 0.5 * (1 - k) + cp[5] * k,
+                        (cp[2] + cp[10]) * 0.5 * (1 - k) + cp[6] * k
+                end
+                local ax, ay = anchor(curvePoints)
+                local rx, ry = anchor(extra.curvePoints)
+                ox, oy = ox + ax - rx, oy + ay - ry
             elseif extra.curvePoints then
                 curvePoints = {}
                 for ci = 1, #extra.curvePoints do
@@ -443,7 +447,8 @@ local function drawTongue(d)
     local buzz = thing.tongueBuzz or 0
     local rootX = (p[5] + p[13]) / 2
     local rootY = p[6] + (p[14] - p[6]) * 0.3
-    local tipY = p[14] + out * mouthW * lib.tongueLength
+    -- from inside the mouth (out = 0: nothing) to past the lower lip
+    local tipY = rootY + out * (p[14] - rootY + mouthW * lib.tongueLength)
     local length = tipY - rootY
     if length <= 0 then return end
     local half = mouthW * lib.tongueWidth / 2
@@ -451,7 +456,9 @@ local function drawTongue(d)
     local function centreX(s) return rootX + buzz * mouthW * 0.04 * s * s end
     local left, right = {}, {}
     local steps = 8
-    local tipStart = math.max(0, length - half) -- the round tip's centre
+    -- the round tip flattens as the tongue gets short, so it slides back into the slit
+    local tipR = math.min(half, length)
+    local tipStart = length - tipR -- the round tip's centre
     for k = 0, steps do
         local s = k / steps
         local y = rootY + tipStart * s
@@ -462,10 +469,10 @@ local function drawTongue(d)
     end
     local poly = {}
     for k = 1, #left, 2 do poly[#poly + 1], poly[#poly + 2] = left[k], left[k + 1] end
-    local tipX, tipCY, tipR = centreX(tipStart / length), rootY + tipStart, half
+    local tipX, tipCY = centreX(tipStart / length), rootY + tipStart
     for k = 1, 9 do -- the round end, from the left side under to the right
         local a = math.pi - math.pi * k / 10
-        poly[#poly + 1], poly[#poly + 2] = tipX + math.cos(a) * tipR, tipCY + math.sin(a) * tipR
+        poly[#poly + 1], poly[#poly + 2] = tipX + math.cos(a) * half, tipCY + math.sin(a) * tipR
     end
     for k = #right - 1, 1, -2 do poly[#poly + 1], poly[#poly + 2] = right[k], right[k + 1] end
     local ok, tris = pcall(love.math.triangulate, poly)
@@ -484,7 +491,7 @@ local function drawTongue(d)
     love.graphics.setLineJoin('bevel')
     love.graphics.line(poly)
     -- the groove: down the middle, from inside the mouth to halfway down what shows
-    local grooveTo = p[14] + (tipY - p[14]) * 0.55
+    local grooveTo = math.min(p[14] + (tipY - p[14]) * 0.55, rootY + tipStart)
     if grooveTo > rootY then
         love.graphics.setLineWidth(math.max(1, mouthW * 0.02))
         love.graphics.line(centreX(0), rootY, centreX((grooveTo - rootY) / length), grooveTo)
