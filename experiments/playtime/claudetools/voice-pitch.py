@@ -88,6 +88,7 @@ if write:
            "-- midi = median pitch of the vowel's steady middle (60 = middle C); glide = semitones end minus start;",
            "-- spread = 10-90% wobble in semitones; start/stop = where the vowel is voiced (s); dur = file length (s);",
            "-- peak = the loudest sample (0..1), to even out loudness.",
+           "-- luacheck: no max line length",
            "return {"]
     for sp, rows in results.items():
         out.append(f"  {sp} = {{")

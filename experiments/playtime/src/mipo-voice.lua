@@ -459,7 +459,8 @@ local function playImpact(kind, body1, body2, speed, source)
     if #sources == 0 then return end
     local clone = sources[love.math.random(#sources)]:clone()
     clone:setPitch(mapInto(speed, sound.soft, sound.hard, sound.pitch[1], sound.pitch[2]))
-    clone:setVolume(mapInto(speed, sound.soft, sound.hard, sound.volume[1], sound.volume[2]) * lib.masterVolume * fxVolume())
+    local loudness = mapInto(speed, sound.soft, sound.hard, sound.volume[1], sound.volume[2])
+    clone:setVolume(loudness * lib.masterVolume * fxVolume())
     clone:play()
 end
 

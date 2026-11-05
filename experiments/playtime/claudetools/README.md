@@ -105,6 +105,6 @@ docs/MEASURING.md.
 |---|---|---|
 | `plans.lua` | The work board, built from the docs' `status:` lines and checkboxes | `./playtime.sh todo` |
 | `ship-list.py` | What a build packs; both the web and iOS builds read it | `python3 -I claudetools/ship-list.py <scene> [--report]` |
-| `find-forward-refs.lua` | Local functions used before they're defined (breaks hot reload) | `lua claudetools/find-forward-refs.lua [dir]` |
+| `find-forward-refs.lua` | Local functions used before they're defined (breaks hot reload). Too many false alarms; use luacheck | `lua claudetools/find-forward-refs.lua [dir]` |
 | `make-door-rooms.lua` | Rebuilds the door test rooms in `scripts/` (overwrites them) | `love . --specs claudetools/make-door-rooms.lua` |
-| `concat2.lua` | Dumps the code into one `output.md` (needs luafilesystem) | `lua claudetools/concat2.lua` |
+| `old/concat2.lua` | Dumps the code into one `output.md` (needs luafilesystem). Unused since 2026-05 | `lua claudetools/old/concat2.lua <dirs or files>` |

@@ -117,7 +117,7 @@ Both should report **0 warnings / 0 errors**; keep it that way.
 
 - `main.lua` — entry point, keybindings, UI callbacks
 - `src/` — core modules (src/, src/ui/, src/physics/)
-- `claudetools/` — dev tools (e.g. find-forward-refs.lua)
+- `claudetools/` — dev tools, listed with how to run them and what they need in `claudetools/README.md`
 - `vendor/` — third-party libs (claude-bridge, lurker, dkjson, ProFi, jprof, etc.)
 - `scripts/` — scenes (.playtime.json + .playtime.lua script) in `rooms/`, `spikes/`, `tests/`, `tech/`; called by name alone (`dollhouse`), `src/scene-catalog.lua` `pathOf` finds the file, so names are unique
 - `textures/` — Mipo parts in `mipo/<part>/<part>-<nn>.png` (+ `-mask.png`; OMP: outline + mask + pattern), `world/`, `pat/`; old names -> new in `src/texture-names.lua` (scenes migrate on load), `claudetools/texture-check.py` lists names pointing at nothing and files nothing names
@@ -187,7 +187,7 @@ Both should report **0 warnings / 0 errors**; keep it that way.
 ## Lua Gotchas
 
 - Closures capture upvalues by reference — `local x, y` must be declared before any closure that uses them
-- When making functions `local`, check for forward references (function used before its definition). Lurker hot-reload re-executes files top-to-bottom, so a local function must be defined before first use. Use `claudetools/find-forward-refs.lua` to scan for these.
+- When making functions `local`, check for forward references (function used before its definition). Lurker hot-reload re-executes files top-to-bottom, so a local function must be defined before first use. luacheck catches these (an undefined global where the local was meant). `claudetools/find-forward-refs.lua` reports too many false alarms to use (182 on src/, 2026-11-05).
 - The web build (`webtest/build-web.sh`, docs/WEB-EXPORT-LOVEJS.md) runs PUC Lua 5.1, not LuaJIT: no `goto` (use `repeat ... until true` with `break`), no FFI outside `src/synth.lua`'s desktop path
 - `registry.getBodyByID()` — capital ID, not Id
 - `require('src.game-loop')` — use parentheses for module names with hyphens; bare string syntax (`require 'src.game-loop'`) can confuse the parser

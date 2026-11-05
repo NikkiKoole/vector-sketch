@@ -2,6 +2,9 @@
 -- Usage: lua claudetools/find-forward-refs.lua [dir]
 -- Default dir: src/
 --
+-- 2026-11-05: too noisy to use (182 hits on src/, mostly table fields and parameters with a
+-- function's name). luacheck finds the real ones (CLAUDE.md, Lua Gotchas). Kept for reference.
+--
 -- Detects local functions that are called before their definition line,
 -- which breaks lurker hot-reload (file re-executes top-to-bottom, local is nil).
 

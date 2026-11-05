@@ -2,6 +2,7 @@
 -- midi = median pitch of the vowel's steady middle (60 = middle C); glide = semitones end minus start;
 -- spread = 10-90% wobble in semitones; start/stop = where the vowel is voiced (s); dur = file length (s);
 -- peak = the loudest sample (0..1), to even out loudness.
+-- luacheck: no max line length
 return {
   nikki = {
     ['ba'] = { midi = 48.70, glide = -0.80, spread = 0.70, start = 0.395, stop = 0.453, dur = 0.702, peak = 0.720, rough = true },
