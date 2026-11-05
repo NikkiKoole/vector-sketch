@@ -193,8 +193,7 @@ function lib.drawPositioners(p, y)
         ui.alignedLabel(x, y, '  leg stance')
         if legX and legX ~= pos.leg.x then
             CharacterManager.updatePositioners(instance, { legX = legX })
-            CharacterManager.rebuildFromCreation(instance, {})
-            CharacterManager.rebuildTextures(instance)
+            rebuild(instance, {})
         end
         y = y + ROW
 
@@ -203,8 +202,7 @@ function lib.drawPositioners(p, y)
         ui.alignedLabel(x, y, '  ear vertical')
         if earY and earY ~= pos.ear.y then
             CharacterManager.updatePositioners(instance, { earY = earY })
-            CharacterManager.rebuildFromCreation(instance, {})
-            CharacterManager.rebuildTextures(instance)
+            rebuild(instance, {})
         end
         y = y + ROW
 
@@ -216,8 +214,7 @@ function lib.drawPositioners(p, y)
             ui.alignedLabel(x, y, '  L ear angle')
             if lVal and lVal ~= lAngle then
                 learPart.stanceAngle = lVal
-                CharacterManager.rebuildFromCreation(instance, {})
-                CharacterManager.rebuildTextures(instance)
+                rebuild(instance, {})
             end
             y = y + ROW
         end
@@ -230,8 +227,7 @@ function lib.drawPositioners(p, y)
             ui.alignedLabel(x, y, '  R ear angle')
             if rVal and rVal ~= rAngle then
                 rearPart.stanceAngle = rVal
-                CharacterManager.rebuildFromCreation(instance, {})
-                CharacterManager.rebuildTextures(instance)
+                rebuild(instance, {})
             end
             y = y + ROW
         end

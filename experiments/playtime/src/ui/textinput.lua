@@ -115,6 +115,12 @@ return function(ui)
         return newCursorPosition
     end
 
+    -- the selection collapsed onto pos
+    local function collapseSelection(state, pos)
+        state.selectionStart = { line = pos.line, char = pos.char }
+        state.selectionEnd = { line = pos.line, char = pos.char }
+    end
+
     function ui.handleTextInputForTextInput(t, state)
 
         if state.isNumeric and not tonumber(t) and t ~= "." and t ~= "-" then
@@ -141,17 +147,9 @@ return function(ui)
             state.lines[pos.line] = line:sub(1, pos.char) .. t .. line:sub(pos.char + 1)
             pos.char = pos.char + #t
         end
-        -- Update selection
-        state.selectionStart = { line = pos.line, char = pos.char }
-        state.selectionEnd = { line = pos.line, char = pos.char }
+        collapseSelection(state, pos)
         -- Reconstruct text
         state.text = ui.reconstructText(state.lines)
-    end
-
-    -- the selection collapsed onto pos
-    local function collapseSelection(state, pos)
-        state.selectionStart = { line = pos.line, char = pos.char }
-        state.selectionEnd = { line = pos.line, char = pos.char }
     end
 
     -- after the cursor moved: with shift the selection grows to it, else it collapses there
