@@ -22,7 +22,8 @@ Where the work stands is not written down here. It comes from the docs themselve
   the focus moves.
 - **Steps are checkboxes**: `- [ ] **W2. Persistence.** ...`, ticked `- [x]` when done (with the
   date in the text). `- [~]` is a step parked inside an active plan. A short id at the start
-  (W2, P8, G3) lets the drift check find commits that name it.
+  (W2, P8, G3) lets the drift check find commits that name it. A commit naming another doc's step with the
+  same id writes the doc before it (`RASPBERRY.md R1`), so it isn't taken for this one's.
 - **A new plan** is a new doc with a status line and checkboxes. It shows up on the board.
 - **When a step is done:** tick it in the same commit as the code, and name the id in the
   commit message.

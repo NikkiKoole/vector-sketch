@@ -84,6 +84,12 @@ local function untickedMentions(doc)
     for line in log:gmatch('[^\n]+') do
         -- a range ('V1-V6', 'W2–W5', 'BUG1-18') names a group of steps, not one that got done
         line = line:gsub('%u+%d+%a?%s*%-%s*%u*%d+%a?', ''):gsub('%u+%d+%a?%s*–%s*%u*%d+%a?', '')
+        -- 'RASPBERRY.md R1' is another doc's step, not this one's R1
+        local own = doc.path:match('([^/]+)$')
+        line = line:gsub('([%w%-]+%.md)(%s+%u+%d+%a?)', function(name, id)
+            if name ~= own then return name end
+            return name .. id
+        end)
         for id, state in pairs(doc.ids) do
             if state == 'open' and line:find('%f[%w]' .. id .. '%f[%W]') then
                 found[#found + 1] = id .. ' in ' .. line
