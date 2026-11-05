@@ -169,7 +169,8 @@ parts (music-theory, skinning's `meshusertVertices`, the polygon modules) run wi
   torso1 click 36/38, lhand 36/38). The failed rebuild leaves a body with no fixtures and the next
   rebuild dies at `mipo-build.lua:267` (`body:getFixtures()[1]:getGroupIndex()`). Dragging the slider
   through 0 in the editor does the same. FIXED in the panel: `awayFromZero` keeps |sx|, |sy| >= 0.1,
-  sign kept (src/ui/mipo/body-panel.lua). Not yet: getPoseCache could survive a fixture-less body.
+  sign kept (src/ui/mipo/body-panel.lua). And getPoseCache survives a fixture-less body now
+  (spec/mipo-rebuild-fixtureless_spec.lua, failing first at mipo-build:267).
   On this machine the editor snapshot didn't repeat even before the fix (two takes differ from that
   click on: the half-rebuilt state varies). With the fix the clicks get further and the WHOLE RUN
   ABORTS (exit 134) at potato lhand click 41 (a colour button), in the GPU driver: macOS's crash

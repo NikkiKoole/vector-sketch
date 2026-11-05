@@ -264,7 +264,9 @@ local function getPoseCache(instance)
     for partName, part in pairs(instance.parts) do
         local body = part.body
 
-        local groupIndex = body:getFixtures()[1]:getGroupIndex()
+        -- a body a failed rebuild left without fixtures has no group to remember (MEASURING M6)
+        local first = body:getFixtures()[1]
+        local groupIndex = first and first:getGroupIndex()
         poseCache[partName] = {
             pos = { body:getPosition() },
             angle = body:getAngle(),
