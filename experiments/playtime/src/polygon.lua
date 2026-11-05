@@ -389,4 +389,27 @@ function lib.getCenterAndDimensions(body)
     return cx, cy, w, h
 end
 
+-- The flat { x, y, ... } polygon without the points that lie on the line between their
+-- neighbours (the sine of the turn under `tolerance`, default 1e-6). For Box2D: its hull drops such
+-- points anyway, but nearly-in-line ones can send LÖVE 11.5's Box2D round the hull forever,
+-- writing past its 8-entry array until the game dies in newPolygonShape (MEASURING M6: a spine
+-- Mipo's torso, three points down each side, at 100+ px per metre). Returns the input if fewer
+-- than 3 points would be left.
+function lib.dropCollinear(points, tolerance)
+    tolerance = tolerance or 1e-6
+    local n = #points / 2
+    local out = {}
+    for i = 1, n do
+        local h, j = (i - 2) % n + 1, i % n + 1
+        local ux, uy = points[i * 2 - 1] - points[h * 2 - 1], points[i * 2] - points[h * 2]
+        local vx, vy = points[j * 2 - 1] - points[i * 2 - 1], points[j * 2] - points[i * 2]
+        local lu, lv = math.sqrt(ux * ux + uy * uy), math.sqrt(vx * vx + vy * vy)
+        if lu > 0 and lv > 0 and math.abs(ux * vy - uy * vx) > tolerance * lu * lv then
+            out[#out + 1], out[#out + 2] = points[i * 2 - 1], points[i * 2]
+        end
+    end
+    if #out < 6 then return points end
+    return out
+end
+
 return lib

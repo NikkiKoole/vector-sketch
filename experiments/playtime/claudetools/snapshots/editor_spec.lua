@@ -83,7 +83,9 @@ describe('editor snapshot', function()
         setmetatable(states, { __index = function() return true end })
 
         local canvas = love.graphics.newCanvas(1200, 768)
-        for _, potato in ipairs({ false, true }) do
+        -- a plain Mipo, a potato head, and one with a spine and a neck (its creation rows: spine bend,
+        -- neck height, neck skin)
+        for _, potato in ipairs({ false, true, 'spine' }) do
             for _, part in ipairs({ 'head', 'torso1', 'torso2', 'luarm', 'llarm', 'lhand', 'luleg', 'lfoot', 'lear' }) do
                 local world = love.physics.newWorld(0, 0, true)
                 state.physicsWorld = world
@@ -91,7 +93,10 @@ describe('editor snapshot', function()
                 require('src.mipo-registry').reset()
                 math.randomseed(7); love.math.setRandomSeed(7)
                 local instance = CM.createCharacter('humanoid', 0, 0, 0.3)
-                if potato then CM.rebuildFromCreation(instance, { isPotatoHead = true, torsoSegments = 2 }) end
+                if potato == true then CM.rebuildFromCreation(instance, { isPotatoHead = true, torsoSegments = 2 }) end
+                if potato == 'spine' then
+                    CM.rebuildFromCreation(instance, { torsoSpine = true, torsoSegments = 3, neckSegments = 2 })
+                end
                 if instance.dna.parts[part] then
                     love.graphics.setCanvas({ canvas, stencil = true })
                     ui.startFrame()

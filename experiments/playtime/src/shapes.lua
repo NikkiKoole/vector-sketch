@@ -280,7 +280,8 @@ local function makeShapeListFromPolygon(polygon, keepOrigin)
         -- Box2D asserts on degenerate polygons (vertices closer than b2_linearSlop
         -- ≈ 0.005m / ~0.15px). Scaling a shape down via slider/W+wheel can produce
         -- these. Match the pcall pattern used at lines 337 and 478 below.
-        local shapeOk, shape = pcall(love.physics.newPolygonShape, localVertices)
+        -- points in a line can crash Box2D outright, past any pcall (polygon.dropCollinear)
+        local shapeOk, shape = pcall(love.physics.newPolygonShape, mathutils.dropCollinear(localVertices))
         if shapeOk then
             table.insert(shapesList, shape)
         else
