@@ -130,7 +130,10 @@ lib.rows = {
           for _, fixture in ipairs(collisionFixtures(thing)) do fixture:setSensor(v) end
       end },
     { key = 'group', kind = 'numberText', advanced = true, visible = hasCollision,
-      get = function(thing) return thing.body:getFixtures()[1]:getGroupIndex() end,
+      get = function(thing)
+          local first = collisionFixtures(thing)[1]
+          return first and first:getGroupIndex() or 0
+      end,
       set = function(thing, v)
           v = mathutils.clamp(math.floor(v), -32768, 32767)
           for _, fixture in ipairs(thing.body:getFixtures()) do fixture:setGroupIndex(v) end
