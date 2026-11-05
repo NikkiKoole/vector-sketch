@@ -20,8 +20,10 @@
 -- struck with the bass's long notes and its beat-3/4 notes and held to the next; the organ a hair behind the
 -- grid, the guitar further (a down-strum, ~15 ms).
 -- The kit plays the same in both: the sampled bar is a drummer's, with its own fixed pushes.
--- The form: the bass alone for a pass, then the organ and guitar, then the kit; the bass and organ to end,
--- on the riff's last note.
+-- The form follows Electric Relaxation's (MUSIC-ANALYSIS Song 3, "The song's map"), shorter: an intro of drums
+-- and bells, the full loop (the organ swelling over its last two bars, the guitar out for the last), a verse of
+-- bass, drums and the verse bells, no chords; again; a break of drums and bells; the full loop; the riff's last
+-- note ringing. (ER's verses are a second Mystic Brew chop, played a little differently: here the same riff.)
 -- Registered as loop = 'brew' in music-plan's LOOP_PLANS and music-parts' LOOP_BARS (as music-upright.lua).
 local state = require('src.state')
 local theory = require('src.music-theory')
@@ -80,11 +82,25 @@ lib.GUITAR = {
     { 11.0, 61, 65, 68, 73 },  -- C# F G# C# over C#
 }
 
+-- the bells (Eb, Electric Relaxation's pitch: as heard there), { beat in the bar, midi, midi }. The verse: the low
+-- bell's fifth in 8ths a little late (~a 16th), once a pass in its second bar. The intro and break: two bars,
+-- the high bell on 2, 2&, 4, 4&, the middle one on 3, 3&; then the verse figure, the middle bell, the high one
+local LOW, MID, HIGH = { 87, 94 }, { 88 }, { 92, 100 }
+lib.BELLS = {
+    verse = { { 0.2, LOW }, { 0.7, LOW }, { 1.2, LOW }, { 1.7, LOW }, { 2.2, LOW }, { 2.7, LOW } },
+    introA = { { 1, HIGH }, { 1.5, HIGH }, { 2, MID }, { 2.5, MID }, { 3, HIGH }, { 3.5, HIGH } },
+    introB = { { 0.2, LOW }, { 0.7, LOW }, { 1.2, LOW }, { 1.7, LOW }, { 2.25, MID }, { 2.75, MID },
+               { 3, HIGH }, { 3.5, HIGH } },
+}
+
 lib.FORM = {
-    { 'intro', 3, {} },
-    { 'in', 3, { band = true } },
-    { 'A', 24, { band = true, drums = true } },
-    { 'outro', 6, { organ = true } },
+    { 'intro', 3, { drums = true, bells = 'intro', bass = false } },
+    { 'A', 12, { band = true, drums = true, swell = true } },
+    { 'verse', 9, { drums = true, bells = 'verse' } },
+    { 'A', 12, { band = true, drums = true, swell = true } },
+    { 'verse', 6, { drums = true, bells = 'verse' } },
+    { 'break', 3, { drums = true, bells = 'intro', bass = false } },
+    { 'A', 9, { band = true, drums = true } },
     { 'end', 1, { ending = true } },
 }
 
@@ -210,6 +226,24 @@ local function bookChords(play, synth, t0, song, b, list, part, patch, h, feel, 
     end
 end
 
+---------------------------------------------------------------- the bells
+
+local function bookBells(play, synth, t0, song, b, kind)
+    local list
+    if kind == 'verse' then
+        if (b - 1) % 3 ~= 1 then return end -- once a pass, in its second bar
+        list = lib.BELLS.verse
+    else
+        list = song.barIndex[b] % 2 == 0 and lib.BELLS.introA or lib.BELLS.introB
+    end
+    for _, hit in ipairs(list) do
+        local t = t0 + hit[1] * song.beat
+        for _, midi in ipairs(hit[2]) do
+            play(synth, 'perc', 'brewBell', t, midi, 3, 150, math.floor(hit[1] * 4 + 0.5))
+        end
+    end
+end
+
 ---------------------------------------------------------------- the kit
 
 -- Electric Relaxation's drum bar (Outside Love's drummer, measured on the sampler-straight grid, ms at
@@ -241,13 +275,17 @@ function lib.bookBar(play, remember, synth, t0, song, b)
     local h = human()
     if h then defineShapes(synth) end
     local roles = song.barSection[b].roles
-    bookBass(play, synth, t0, song, b, roles, h)
+    if roles.bass ~= false then bookBass(play, synth, t0, song, b, roles, h) end
+    -- into a verse (ER's bars 17-18) the organ swells and the guitar drops out for the last bar
+    local left = song.barSection[b].bars - song.barIndex[b]
+    local swell = roles.swell and left <= 2
     if roles.band or roles.organ then -- the organ a hair behind the grid, its keys together
-        bookChords(play, synth, t0, song, b, lib.ORGAN, 'keys', 'brewOrgan', h, 0.008, 0.002, 4, 0.7)
+        bookChords(play, synth, t0, song, b, lib.ORGAN, 'keys', 'brewOrgan', h, 0.008, 0.002, 4, swell and 1 or 0.7)
     end
-    if roles.band then                -- the guitar further behind, a quick down-strum
+    if roles.band and not (swell and left == 1) then -- the guitar further behind, a quick down-strum
         bookChords(play, synth, t0, song, b, lib.GUITAR, 'guitar', 'brewGuitar', h, 0.018, 0.012, 4, 0.75)
     end
+    if roles.bells then bookBells(play, synth, t0, song, b, roles.bells) end
     if roles.drums then bookDrums(play, synth, t0, song) end
 end
 
