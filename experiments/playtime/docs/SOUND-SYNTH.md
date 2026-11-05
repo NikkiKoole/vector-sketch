@@ -40,7 +40,7 @@ The main thread calls the dreamengine API, which drops commands into a lock-free
   'level'/'vib', value, rampMs)` is a curve on the patch's whole slot. A patch can set `vibrato` (0 = off, its
   notes carry their own), `analog` (0..2) and `releaseShape` ('linear'/'exp'/'damper'); a shared slot's lanes go
   back to rest on every define. **NoteOpts must match the engine's**: the engine reads the whole struct, so
-  synth.lua declares it as dreamengine's `runtime/studio.h` does (108 bytes) and checks it against the
+  synth.lua declares it as dreamengine's `runtime/studio.h` does (112 bytes since 409701fd) and checks it against the
   library's own size (`de_note_opts_size`, native/desound/desound.c) at the first booked note. When the
   engine's struct grows, copy the new declaration (field order and all) into synth.lua and the web
   processor (`webtest/desound-processor.js`). Rebuild the library to a temp file and move it into place: a

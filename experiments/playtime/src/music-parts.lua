@@ -22,6 +22,7 @@ local lengthMs = theory.lengthMs
 local plan = require('src.music-plan')
 local buildPhrase = plan.buildPhrase
 local guide = require('src.music-guide')
+local rhodes = require('src.music-rhodes')
 
 local lib = {}
 
@@ -698,7 +699,8 @@ local function keysHits(bar)
             for _, h in ipairs(hits) do h.len = math.min(h.len, 14 - h.s) end -- let go for it
             local nextChord = nextChords[1]
             nextChord.root = (song.key + nextChord.degree) % 12
-            hits[#hits + 1] = { s = 14, len = 2 + math.min(nextChord.len, 6), vol = 4, chord = nextChord }
+            hits[#hits + 1] = { s = 14, len = 2 + math.min(nextChord.len, 6), vol = 4, chord = nextChord,
+                                pushed = true }
             song.pushed = song.pushed or {}
             song.pushed[b] = true
         elseif nextChords and style.sidestepOdds
@@ -719,21 +721,27 @@ end
 -- under a pedal; 'split' plays the bottom note on the stab and the rest an 8th later (the left hand,
 -- then the right). The style report measured our keys re-striking one chord where the pieces' keys
 -- play arpeggios, oom-pah and a bass note against a chord (docs/MUSIC-ANALYSIS.md, R3b)
-local function bookFigure(bar, h, voicing, figure)
+local function bookFigure(bar, h, voicing, figure, player)
     local synth, song, style, t0 = bar.synth, bar.song, bar.style, bar.t0
     local every, stop = style.figureEvery or 2, h.s + h.len
     local first = h.light and 2 or 1
+    -- the player's touch averages a strike step under plain (gain ~0.8): one step up makes it even
+    local lift = player and 1 or 0
+    if player then t0 = t0 + player.feel end
+    -- the Rhodes player's touch on voicing[k] (src/music-rhodes.lua), nil when the keys play plainly
+    local function touch(k) return player and rhodes.touch(player, h, k, #voicing, voicing[k]) end
     local function note(k, s, vol)
         local t = stepTime(song, t0, s) + humanize(0.005)
-        play(synth, 'keys', style.keys, t, voicing[k], math.min(7, vol), lengthMs(song, s, stop - s) * 0.95, s)
+        play(synth, 'keys', style.keys, t, voicing[k], math.min(7, vol + lift), lengthMs(song, s, stop - s) * 0.95, s,
+             nil, nil, touch(k))
     end
     if figure == 'split' then
         note(first, h.s, h.vol)
         local s = math.min(h.s + every, stop - 1)
         for k = first + 1, #voicing do
             local t = stepTime(song, t0, s) + (k - first - 1) * (style.strumMs or 8) / 1000 + humanize(0.004)
-            play(synth, 'keys', style.keys, t, voicing[k], math.min(7, k == #voicing and h.vol + 1 or h.vol),
-                 lengthMs(song, s, stop - s) * 0.9, s)
+            play(synth, 'keys', style.keys, t, voicing[k], math.min(7, (k == #voicing and h.vol + 1 or h.vol) + lift),
+                 lengthMs(song, s, stop - s) * 0.9, s, nil, nil, touch(k))
         end
     elseif figure == 'strum' then
         -- a hand dragged across the keys, slower than the style's roll: up on a stab in the bar's
@@ -742,8 +750,8 @@ local function bookFigure(bar, h, voicing, figure)
         for i = first, #voicing do
             local k = up and i or #voicing + first - i
             local t = stepTime(song, t0, h.s) + (i - first) * gap / 1000 + humanize(0.004)
-            play(synth, 'keys', style.keys, t, voicing[k], math.min(7, i == #voicing and h.vol + 1 or h.vol),
-                 lengthMs(song, h.s, h.len) * 0.95, h.s)
+            play(synth, 'keys', style.keys, t, voicing[k], math.min(7, (i == #voicing and h.vol + 1 or h.vol) + lift),
+                 lengthMs(song, h.s, h.len) * 0.95, h.s, nil, nil, touch(k))
         end
     elseif figure == 'broken' then
         -- a broken chord through the stab: bottom, top, a middle note, top, an 8th each (the
@@ -770,6 +778,7 @@ local function bookKeys(bar, hits)
     local synth, song, style, t0 = bar.synth, bar.song, bar.style, bar.t0
     local revoiceRnd, revoiceOdds = stream(song.seed, 9000 + bar.b), (song.ideaOdds or {}).revoice or 0
     local figureRnd, figureOdds = stream(song.seed, 9500 + bar.b), (song.ideaOdds or {}).figures or 0
+    local player = rhodes.bar(bar, hits) -- an electric piano, humanized: the Rhodes player
     for _, h in ipairs(hits) do
         local chord = h.sidestep or h.chord
         local root = (song.key + chord.degree) % 12
@@ -787,13 +796,22 @@ local function bookKeys(bar, hits)
         local figure = song.figure and not h.sidestep and h.len >= (style.figureMin or 6)
             and figureRnd(100) < figureOdds and song.figure
         if figure then
-            bookFigure(bar, h, voicing, figure)
+            bookFigure(bar, h, voicing, figure, player)
         else
-            for k = h.light and 2 or 1, #voicing do
+            local first = h.light and 2 or 1
+            local times = player and rhodes.times(player, h, #voicing, first, t, strum)
+            local len = player and rhodes.length(player, h, h.len) or h.len
+            for k = first, #voicing do
                 local note = voicing[k] + (h.sidestep and 1 or 0)
                 local vol = (k == #voicing) and h.vol + 1 or h.vol
-                local dur = lengthMs(song, h.s, h.len) * (h.ring and 1 or 0.9)
-                play(synth, 'keys', style.keys, t + (k - 1) * strum, note, math.min(7, vol), dur)
+                local dur = lengthMs(song, h.s, len) * (h.ring and 1 or 0.9)
+                if player then
+                    -- a strike step up: the touch's gains average ~0.8 (src/music-rhodes.lua)
+                    play(synth, 'keys', style.keys, times[k], note, math.min(7, vol + 1), dur, h.s, nil, nil,
+                         rhodes.touch(player, h, k, #voicing, note))
+                else
+                    play(synth, 'keys', style.keys, t + (k - 1) * strum, note, math.min(7, vol), dur)
+                end
                 if style.echo and style.echo.keys and not h.sidestep then
                     for e = 1, 2 do
                         local s, chordEnd = h.s + 3 * e, h.chord.s + h.chord.len
@@ -805,6 +823,7 @@ local function bookKeys(bar, hits)
                     end
                 end
             end
+            if player and player.ghost == h then rhodes.ghost(player, h, voicing, play) end
         end
     end
 end

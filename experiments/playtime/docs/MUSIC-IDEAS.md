@@ -133,6 +133,19 @@ The short list after a long day of styles; the details live in the entries furth
 - [ ] **Jazz quartet**: piano, bass, drums and one horn or vibes. Room to breathe, trading solos.
 
 ## Small ideas
+- [x] **A Rhodes player** (2026-11-05, `src/music-rhodes.lua`): the keys part on an electric piano (rhodes,
+  lofiKeys, clav: bossa, island, supermarket, herbs, lofi, sesame, citypop, ballad) played by a keyboardist,
+  using the booked-note fields. Touch: a 4-bar phrase that swells, downbeats leaning, the top voice over
+  softer inner ones (the engine's Rhodes is brighter the harder it's struck, so the dynamics are tone too);
+  bark (morph, read live) dug in and settling on pushes, side-steps and a phrase's first downbeat, soft
+  hits rounder. Tines a few cents off per key, fixed per song. Hands: the left lands first, the right a
+  few ms after, each hit rolled at its own speed (a long one now and then down); behind the beat in lofi
+  (16 ms) and herbs, on top of it in citypop. The pedal (LANE_DAMPER) on held and ringing chords and
+  the ballad, lifted at each change; stabs dry, with a short felt-damper release. A rare ghost chuck: a
+  stab cut short and struck again soft and damped (bossa, citypop, herbs, lofi, island). One strike
+  step up makes up for the touch's gains (keys stem within 0.6 dB of plain). The music panel's humanize
+  row plays the keys plainly (render: `HUMANIZE=0`). Not built yet: the vocabulary (grace-note crush,
+  fills, a trill, a bell note), wah/Wurli per style, a volume-pedal swell. Waiting on an ear pass.
 - [x] **A note's own filter type** (2026-11-05: built, checked; first used the same day by the drum jam's
   'funk guitar' chord figure, DRUM-JAM.md J9d). `synth.scheduleAt(...,
   { filter = 'band' })` ('low' / 'high' / 'band' / 'notch' / 'off' or a FILTER_* number; dreamengine
