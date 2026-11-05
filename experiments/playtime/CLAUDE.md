@@ -234,7 +234,7 @@ Older findings and hidden constraints: `docs/DEEPER-ISSUES.md`. Risks to keep in
 
 - Box2D doesn't guarantee fixture ordering — the ordering invariant can break silently
 - Tool modes go through `src/modes.lua` (`modes.set/clear/is/get`) but there are no enter/exit rules: any caller can switch any mode to any other
-- Image/OMP/canvas caches never cleared — memory grows over long sessions
+- Image/OMP/canvas caches are never cleared, but they level off: ~64 MB of textures over 600 Mipo randomizes (2026-11-05, MEASURING M4). Watch it when adding a cache keyed by something that keeps changing
 - Backdrop/UV system: mostly fixed 2026-10-28 (imageURL + id link); what's left in `docs/UV-BACKDROP-FRAGILITY.md`
 
 ## Docs and where the work stands

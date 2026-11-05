@@ -64,6 +64,13 @@ there. Ticked items are kept here as the record of what's built (with dates and 
     The pair collides again the first step it's free (2026-11-03): released by the sliced hook
     cache every 0.25 s, it flew apart free but still a ghost for up to ~0.7 s and fell back
     into the same knot (the saved knot's pass-through 1.07 -> 0.45 s).
+  - [ ] **The untangle, done nicely** (noted 2026-11-05): Nikki: "the problem also isn't really
+    solved nicely still". What it does now: hop and pass through, a pair rests knotted after 6
+    tries (hands-mess), a wedged Mipo gives up (feet-pile). Its spec is flaky too: the wedged-pile
+    test (`spec/mipo-untangle_spec.lua`) allows one late try after 30 s and saw two in 2 of 9
+    full-suite runs on 2026-11-05 (a busy machine; passes alone): the pile plays out differently
+    per run. Look at both together: what a nice untangle looks like first, then a test that
+    holds it steadily (a fixed outcome, not a count of tries).
   - [ ] **Arms that never collide with other Mipos** — parked, tried 2026-11-03 (talked through,
     not built): upper + lower arms and hands in their own Box2D category, masked against
     every Mipo part (floors, walls, toys still collide; hand-holding is by distance, so it

@@ -80,8 +80,14 @@ local function untickedMentions(doc)
     local last = run('git log -1 --format=%H -- "' .. doc.path .. '" 2>/dev/null'):match('%x+')
     if not last then return {} end
     local log = run('git log ' .. last .. '..HEAD --format="%h %s" -- . 2>/dev/null')
+    -- commits to this board tool name ids as examples, not as steps done
+    local own = {}
+    for hash in run('git log ' .. last .. '..HEAD --format=%h -- claudetools/plans.lua 2>/dev/null'):gmatch('%x+') do
+        own[hash] = true
+    end
     local found = {}
     for line in log:gmatch('[^\n]+') do
+        if own[line:match('^%x+')] then line = '' end
         -- a range ('V1-V6', 'W2–W5', 'BUG1-18') names a group of steps, not one that got done
         line = line:gsub('%u+%d+%a?%s*%-%s*%u*%d+%a?', ''):gsub('%u+%d+%a?%s*–%s*%u*%d+%a?', '')
         -- 'RASPBERRY.md R1' is another doc's step, not this one's R1
