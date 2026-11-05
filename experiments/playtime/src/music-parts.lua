@@ -1454,25 +1454,24 @@ local function jingleTuneNote(song, chord, rnd)
     return best
 end
 
-local function bookJingle(bar)
-    local synth, song, style, t0, section, j, rnd = bar.synth, bar.song, bar.style, bar.t0, bar.section, bar.j,
-        bar.rnd
-    local kind, b = section.kind, bar.b
-    song.bassLast, song.melPitch = song.bassLast or 43, song.melPitch or 79
-    -- the outro: two bars picked, then one strum ringing out under a held root
-    if kind == 'outro' and j >= 2 then
-        if j == 2 then
-            local chord = bar.chords[1]
-            local ringMs = lengthMs(song, 0, 32) - 40
-            for k, midi in ipairs(jingleVoicing(song, chord)) do
-                play(synth, 'keys', style.pickPatch, t0 + (k - 1) * 0.03, midi, 4, ringMs, 0)
-            end
-            play(synth, 'bass', style.bassPatch, t0, jingleBassNear((song.key + chord.degree) % 12, song.bassLast),
-                 4, ringMs, 0)
-        end
-        return
+-- The jingle's parts, one function each, played in this order by bookJingle (they share the bar's random
+-- stream and love.math.random's, so the order is part of the sound).
+
+-- the outro's last bar but one: a strum ringing out under a held root
+local function bookJingleRingOut(bar)
+    local synth, song, style, t0 = bar.synth, bar.song, bar.style, bar.t0
+    local chord = bar.chords[1]
+    local ringMs = lengthMs(song, 0, 32) - 40
+    for k, midi in ipairs(jingleVoicing(song, chord)) do
+        play(synth, 'keys', style.pickPatch, t0 + (k - 1) * 0.03, midi, 4, ringMs, 0)
     end
-    -- the bass
+    play(synth, 'bass', style.bassPatch, t0, jingleBassNear((song.key + chord.degree) % 12, song.bassLast),
+         4, ringMs, 0)
+end
+
+-- the bass: the root on 1, the root or fifth on 3, a half step into the next root when it's close
+local function bookJingleBass(bar)
+    local synth, song, style, t0, b, rnd = bar.synth, bar.song, bar.style, bar.t0, bar.b, bar.rnd
     for _, s in ipairs({ 0, 8, 14 }) do
         local chord = chordAtStep(song, b, s)
         local root = jingleBassNear((song.key + chord.degree) % 12, song.bassLast)
@@ -1496,7 +1495,12 @@ local function bookJingle(bar)
         end
         if s == 0 then song.bassLast = root end
     end
-    -- the guitar
+end
+
+-- the guitar: picked notes on the 8ths (with gaps), strummed in a strumming chorus
+local function bookJingleGuitar(bar)
+    local synth, song, style, t0, b, rnd, kind = bar.synth, bar.song, bar.style, bar.t0, bar.b, bar.rnd,
+        bar.section.kind
     local strum = kind == 'B' and song.strumChorus
     for s = 0, 14, 2 do
         local chord = chordAtStep(song, b, s)
@@ -1515,60 +1519,84 @@ local function bookJingle(bar)
                  s == 0 and 4 or 3, lengthMs(song, s, ring), s)
         end
     end
-    -- the Juno chords ('strings'): each chord held, root and its shape around middle C, softer in the verse
-    if kind == 'A' or kind == 'B' then
-        for _, chord in ipairs(bar.chords) do
-            local root = (song.key + chord.degree) % 12
-            local intervals = { 0 }
-            for _, interval in ipairs(qualityOf(song, chord.quality)) do intervals[#intervals + 1] = interval end
-            song.padVoicing = voiceChord(root, intervals, 52, 74, song.padVoicing)
-            local guitar = jingleVoicing(song, chord)
-            local t = stepTime(song, t0, chord.s) + humanize(0.004)
-            for _, midi in ipairs(song.padVoicing) do
-                local clash = false -- the guitar's shape spans two octaves: leave out what rubs it
-                for _, g in ipairs(guitar) do
-                    local d = math.abs(g - midi)
-                    if d == 1 or d == 13 or d == 25 then clash = true end
-                end
-                if not clash then
-                    play(synth, 'strings', style.padPatch, t, midi, kind == 'B' and 4 or 3,
-                         lengthMs(song, chord.s, chord.len) - 40, chord.s)
-                end
+end
+
+-- the Juno chords ('strings'): each chord held, root and its shape around middle C, softer in the verse;
+-- a note that rubs the guitar's shape (it spans two octaves) left out
+local function bookJinglePad(bar)
+    local synth, song, style, t0, kind = bar.synth, bar.song, bar.style, bar.t0, bar.section.kind
+    for _, chord in ipairs(bar.chords) do
+        local root = (song.key + chord.degree) % 12
+        local intervals = { 0 }
+        for _, interval in ipairs(qualityOf(song, chord.quality)) do intervals[#intervals + 1] = interval end
+        song.padVoicing = voiceChord(root, intervals, 52, 74, song.padVoicing)
+        local guitar = jingleVoicing(song, chord)
+        local t = stepTime(song, t0, chord.s) + humanize(0.004)
+        for _, midi in ipairs(song.padVoicing) do
+            local clash = false
+            for _, g in ipairs(guitar) do
+                local d = math.abs(g - midi)
+                if d == 1 or d == 13 or d == 25 then clash = true end
+            end
+            if not clash then
+                play(synth, 'strings', style.padPatch, t, midi, kind == 'B' and 4 or 3,
+                     lengthMs(song, chord.s, chord.len) - 40, chord.s)
             end
         end
     end
-    -- the kit, with the band, in the verse and the chorus
-    if bar.band and (kind == 'A' or kind == 'B') then
-        song.kitLag = song.kitLag or love.math.random(2, 9) / 1000
-        local function hit(s, patch, midi, vol, durMs)
-            play(synth, 'drums', patch, stepTime(song, t0, s) + song.kitLag + love.math.random() * 0.004, midi, vol,
-                 durMs, s)
-        end
-        if kind == 'B' then
-            hit(0, 'kick', 36, 3, 120)
-            if rnd(100) < 70 then hit(8, 'kick', 36, 3, 120) end
-        end
-        hit(4, 'rim', 79, 3, 40)
-        hit(12, 'rim', 79, 3, 40)
-        for s = 0, 14, 2 do hit(s, 'hat', 60, s % 8 == 4 and 2 or 1, 22) end
+end
+
+-- the kit: rims on 2 and 4, hats on the 8ths, kicks in the chorus; all of it a little late (kitLag)
+local function bookJingleKit(bar)
+    local synth, song, t0, rnd, kind = bar.synth, bar.song, bar.t0, bar.rnd, bar.section.kind
+    song.kitLag = song.kitLag or love.math.random(2, 9) / 1000
+    local function hit(s, patch, midi, vol, durMs)
+        play(synth, 'drums', patch, stepTime(song, t0, s) + song.kitLag + love.math.random() * 0.004, midi, vol,
+             durMs, s)
     end
-    -- the tune, in the chorus: seeded by its place, so every chorus sings the same
-    if kind == 'B' and state.musicSettings.melody and song.hasLead ~= false then
-        if j == 0 then song.melPitch = 79 end
-        local tuneRnd = stream(song.seed, 7000 + j)
-        local patch = state.musicSettings.melodyPatch or style.lead
-        local cell, half = song.cell, (j % 2) * 16
-        for i, s32 in ipairs(cell) do
-            local s = s32 - half
-            if s >= 0 and s < 16 and tuneRnd(100) < 85 then
-                local chord = chordAtStep(song, b, s)
-                local gap = math.min((cell[i + 1] or 32) - s32, chord.s + chord.len - s)
-                local durMs = math.min(1100, lengthMs(song, s, gap) * 0.85)
-                local midi = jingleTuneNote(song, chord, tuneRnd)
-                play(synth, 'lead', patch, stepTime(song, t0, s) + 0.012 + humanize(0.004), midi, 4, durMs, s)
-            end
+    if kind == 'B' then
+        hit(0, 'kick', 36, 3, 120)
+        if rnd(100) < 70 then hit(8, 'kick', 36, 3, 120) end
+    end
+    hit(4, 'rim', 79, 3, 40)
+    hit(12, 'rim', 79, 3, 40)
+    for s = 0, 14, 2 do hit(s, 'hat', 60, s % 8 == 4 and 2 or 1, 22) end
+end
+
+-- the tune, in the chorus: seeded by its place, so every chorus sings the same
+local function bookJingleTune(bar)
+    local synth, song, style, t0, b, j = bar.synth, bar.song, bar.style, bar.t0, bar.b, bar.j
+    if j == 0 then song.melPitch = 79 end
+    local tuneRnd = stream(song.seed, 7000 + j)
+    local patch = state.musicSettings.melodyPatch or style.lead
+    local cell, half = song.cell, (j % 2) * 16
+    for i, s32 in ipairs(cell) do
+        local s = s32 - half
+        if s >= 0 and s < 16 and tuneRnd(100) < 85 then
+            local chord = chordAtStep(song, b, s)
+            local gap = math.min((cell[i + 1] or 32) - s32, chord.s + chord.len - s)
+            local durMs = math.min(1100, lengthMs(song, s, gap) * 0.85)
+            local midi = jingleTuneNote(song, chord, tuneRnd)
+            play(synth, 'lead', patch, stepTime(song, t0, s) + 0.012 + humanize(0.004), midi, 4, durMs, s)
         end
     end
+end
+
+-- One bar of the jingle: bass, guitar, the Juno chords and the kit in the verse and chorus, the tune in the
+-- chorus; the outro two bars picked, then one strum ringing out.
+local function bookJingle(bar)
+    local song, kind, j = bar.song, bar.section.kind, bar.j
+    song.bassLast, song.melPitch = song.bassLast or 43, song.melPitch or 79
+    if kind == 'outro' and j >= 2 then
+        if j == 2 then bookJingleRingOut(bar) end
+        return
+    end
+    local inSong = kind == 'A' or kind == 'B'
+    bookJingleBass(bar)
+    bookJingleGuitar(bar)
+    if inSong then bookJinglePad(bar) end
+    if bar.band and inSong then bookJingleKit(bar) end -- the kit, with the band, in the verse and the chorus
+    if kind == 'B' and state.musicSettings.melody and song.hasLead ~= false then bookJingleTune(bar) end
 end
 
 lib.bandPlays = bandPlays
