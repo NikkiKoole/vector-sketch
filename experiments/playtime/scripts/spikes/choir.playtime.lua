@@ -139,7 +139,8 @@ local sources, gains = {}, {}
 -- a take by its path, loaded once; peak = its loudest sample (to even out loudness)
 local function source(path, peak)
     if sources[path] == nil then
-        if not love.filesystem.getInfo(path) then sources[path] = false return false end
+        -- no file, or no audio (the specs run without it unless --audio): sings nothing
+        if not love.audio or not love.filesystem.getInfo(path) then sources[path] = false return false end
         gains[path] = math.min(0.35 / math.max(peak or 0.35, 0.001), 3)
         sources[path] = love.audio.newSource(path, 'static')
     end
@@ -296,7 +297,7 @@ end
 local effectsOk = nil
 local function effects()
     if effectsOk == nil then
-        local ok, yes = pcall(love.audio.isEffectsSupported)
+        local ok, yes = love.audio ~= nil and pcall(love.audio.isEffectsSupported)
         effectsOk = ok and yes or false
     end
     return effectsOk
