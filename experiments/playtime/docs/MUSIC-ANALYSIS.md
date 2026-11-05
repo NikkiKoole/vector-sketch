@@ -130,6 +130,23 @@ bar 3:  D#2 (1, short)   F#2 (1&, long 1.3)  C2 (3&, short)  C#2 (4, 0.8, loudes
 - **The drums are Brethren's "Outside Love"** ([youtube c1kqX1WnULc](https://www.youtube.com/watch?v=c1kqX1WnULc)): ER's drum bar against Outside Love's drum stem scores 0.80 by mel-spectrogram cross-correlation (Mystic Brew's drums, the control, 0.52), at several places in the record (1, 4, 13, 28, 88 s), so it's the band's steady groove, not one break. Outside Love is at ~79.5 BPM; Q-Tip **sped it up ×1.235, about +3.7 semitones**, to 98.2. So the beat is two records pulled to meet in the middle: the 80 BPM drums pushed up, the 112 BPM riff pulled down 2 semitones.
 - **The drum bar** (ER, one live bar looped; the band split into kick 30–120 Hz, snare noise 1.5–5 kHz, hats 6–11 kHz, hits within 12 dB of each drum's loud level): kick on 1, a **swung 16th just before 2** (5/6 of the beat, 50 ms past the straight 16th), the and-of-2 and the and-of-3 (6–10 ms early); snare on 2 and 4, on time; hats in straight 8ths. The bass riff's first note (the G♯) lands on the drums' **2**, so its long notes on the "and" fall on 2&, 4&, … Repeated, the bar's per-hit spread is 12 ms: that's my measuring noise, the averages are real.
 - **Outside Love's drummer, live** (64 bars): the same groove plus ghost kicks (2e, 3e, the a of 4, ~−7 dB), the snare's 4 harder than its 2, the hats' beats louder. The 16th offbeats sit ~45 ms after the 8ths (~62:38: the 16ths swing, the 8ths don't). The tempo wanders 77–84 BPM; per-hit spread ~30 ms, of which some is my tracker following the drift (so ~20–27 ms real).
+- **The keys** (Mystic Brew's "other" stem, in from ~6 s, so in Q-Tip's chop; Ronnie's organ by every sign: held, dark (~520 Hz), swelling not decaying, the engine race all sustained engines, FM/SAW/PD, nothing struck). Pooled over passes 2 and 3 per riff slot, the chords are lush but **the top barely moves: bars 1–2 hang on an A**, bar 3 on an **E♭**:
+
+  | bass | keys (strongest first) | heard as |
+  |---|---|---|
+  | C | A C E D | C6/9 |
+  | G | E A | G13sus, open 4ths |
+  | F | A F G C E | Fmaj9 |
+  | B♭ | A D | B♭maj7 |
+  | E♭ | A F B♭ D | E♭maj9♯11 (Lydian: the A) |
+  | G | A F B♭ | Gm9 |
+  | A♭ | F B♭ C | A♭6/9 |
+  | E♭ | B♭ E♭ F | E♭sus2 |
+  | F♯ | E♭ B♭ | G♭6 |
+  | C | A♭ B♭ E♭ F | A♭6/9 over C |
+  | C♯ | E♭ C B♭ F | D♭maj9/13 |
+
+  The A is C's 6th, G's 9th, F's 3rd, B♭'s maj7, E♭'s ♯11, Gm's 9th: one held note recoloured by every bass note. The keys strike with the bass's long notes and its beat-3 and beat-4 notes, skip the pickups, and hold to the next chord; on the grid to ~20 ms behind it.
 - `brew` plays ER's bar as a fixed table (`lib.KIT`, the pushes the same every bar, as a sampled bar is) and starts the riff a beat into the bar, ending on the riff's last note ringing.
 - **In Playtime: the style `brew`** (`src/music-brew.lua`): the riff on `hUpright` with the table above, over a rigid sampler kit (the bass alone two passes, the kit, the bass alone to end); the panel's humanize row plays it on the grid. Always in Eb, ER's pitch (Nikki: moved through the set's keys, in Ab 3 up, it sat too high; pinned 2026-11-05). Checked by running a render back through the same tools: the feel per note comes back within ~10 ms of Ronnie's (G♯ −30, C +32, A♯ +35, D♯ −28, F♯ +16), jitter 11 ms, loudness 1.1 dB, the tone closing 0.6–1.0 oct. `damp` is steep on this patch: 0.35–0.5 hardly stops a note (−20 dB/s), 0.6 gives −30, 0.75+ −70 to −140; 0.7–0.8 lands on Ronnie's −40 to −65.
 
