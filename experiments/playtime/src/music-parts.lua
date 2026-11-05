@@ -676,18 +676,71 @@ local function applyLift(song, section)
     end
 end
 
--- The keys' hits in a bar: the comp cell clipped to the chords, held chords in the intro and outro,
--- the push (the next chord on the and-of-4) or the side-step. Returns the hits, where the
--- side-step starts and whether the bar pushes.
 -- where the keys' voicing starts: a shell sits up around middle C, the way a guitarist plays it,
 -- clear of the bass (lower, its 7th lands right under the bass's root)
 local function keysLo(song)
     return song.comping == 'shell' and 53 or 48
 end
 
+-- the comp cell's stabs clipped to each chord (not the downbeat a push took, not under this bar's own
+-- push); a chord no stab falls on still sounds
+local function compHits(bar, pushedInto, pushes)
+    local song, style, b, j, rnd = bar.song, bar.style, bar.b, bar.j, bar.rnd
+    local hits = {}
+    local pick = song.comp[b - j % 2] or 1
+    local cell, lightMask = D.compsOf(style)[pick], song.lightMask and song.lightMask[pick]
+    local half = (j % 2) * 16
+    for _, chord in ipairs(bar.chords) do
+        local c0, c1, own = chord.s, chord.s + chord.len, 0
+        for k, h in ipairs(cell) do
+            local s = h[1] - half
+            if s >= c0 and s < c1 and not (pushedInto and s == 0) and not (pushes and s >= 14) then
+                own = own + 1
+                local light -- a steady song's stabs are light where its mask says, the others roll
+                if lightMask then light = lightMask[k] else light = rnd(100) < (style.lightOdds or 30) end
+                hits[#hits + 1] = { s = s, len = math.min(h[2], c1 - s), vol = h[3], chord = chord, light = light }
+            end
+        end
+        if own == 0 and not (pushedInto and c0 == 0) then -- a change always sounds
+            hits[#hits + 1] = { s = c0, len = style.holdChanges and c1 - c0 or math.min(4, c1 - c0), vol = 4,
+                                chord = chord }
+        end
+    end
+    return hits
+end
+
+-- anticipate: the next chord on the and-of-4 (the stabs let go for it), the next bar skips its downbeat
+local function pushInto(bar, hits)
+    local song = bar.song
+    for _, h in ipairs(hits) do h.len = math.min(h.len, 14 - h.s) end
+    local nextChord = bar.nextChords[1]
+    nextChord.root = (song.key + nextChord.degree) % 12
+    hits[#hits + 1] = { s = 14, len = 2 + math.min(nextChord.len, 6), vol = 4, chord = nextChord, pushed = true }
+    song.pushed = song.pushed or {}
+    song.pushed[bar.b] = true
+end
+
+-- the side-step: the bar's last stab is the next chord a half-step high, sliding into it (a song rolls it
+-- per bar, or always on a phrase's last bar). Returns where it starts, or nil.
+local function sidestepInto(bar, hits)
+    local song, style, nextChords, chords = bar.song, bar.style, bar.nextChords, bar.chords
+    if nextChords and style.sidestepOdds
+        and (song.sidesteps == nil and bar.rnd(100) < style.sidestepOdds or song.sidesteps and bar.j % 4 == 3)
+        and nextChords[1].degree ~= chords[#chords].degree then
+        local last = hits[#hits]
+        if last and last.s >= 8 then
+            last.sidestep = nextChords[1]
+            return last.s
+        end
+    end
+end
+
+-- The keys' hits in a bar: the comp cell clipped to the chords, held chords in the intro and outro,
+-- the push (the next chord on the and-of-4) or the side-step. Returns the hits, where the
+-- side-step starts and whether the bar pushes.
 local function keysHits(bar)
-    local song, style, b, j, section, roles = bar.song, bar.style, bar.b, bar.j, bar.section, bar.roles
-    local chords, nextChords, rnd = bar.chords, bar.nextChords, bar.rnd
+    local song, b, j, section, roles = bar.song, bar.b, bar.j, bar.section, bar.roles
+    local chords, nextChords = bar.chords, bar.nextChords
     local hits, sidestepAt = {}, nil
     local pushedInto = b > 1 and song.pushed and song.pushed[b - 1]
     local pushes = roles.keys == 'comp' and song.push[b] and nextChords
@@ -698,40 +751,8 @@ local function keysHits(bar)
     elseif roles.keys == 'outro' then
         if j == 2 then hits[1] = { s = 0, len = (section.bars - 2) * 16, vol = 4, chord = chords[1], ring = true } end
     else
-        local pick = song.comp[b - j % 2] or 1
-        local cell, lightMask = D.compsOf(style)[pick], song.lightMask and song.lightMask[pick]
-        local half = (j % 2) * 16
-        for _, chord in ipairs(chords) do
-            local c0, c1, own = chord.s, chord.s + chord.len, 0
-            for k, h in ipairs(cell) do
-                local s = h[1] - half
-                if s >= c0 and s < c1 and not (pushedInto and s == 0) and not (pushes and s >= 14) then
-                    own = own + 1
-                    local light -- a steady song's stabs are light where its mask says, the others roll
-                    if lightMask then light = lightMask[k] else light = rnd(100) < (style.lightOdds or 30) end
-                    hits[#hits + 1] = { s = s, len = math.min(h[2], c1 - s), vol = h[3], chord = chord, light = light }
-                end
-            end
-            if own == 0 and not (pushedInto and c0 == 0) then -- a change always sounds
-                hits[#hits + 1] = { s = c0, len = style.holdChanges and c1 - c0 or math.min(4, c1 - c0), vol = 4,
-                                    chord = chord }
-            end
-        end
-        if pushes then -- anticipate: the next chord on the and-of-4, the next bar skips its downbeat
-            for _, h in ipairs(hits) do h.len = math.min(h.len, 14 - h.s) end -- let go for it
-            local nextChord = nextChords[1]
-            nextChord.root = (song.key + nextChord.degree) % 12
-            hits[#hits + 1] = { s = 14, len = 2 + math.min(nextChord.len, 6), vol = 4, chord = nextChord,
-                                pushed = true }
-            song.pushed = song.pushed or {}
-            song.pushed[b] = true
-        elseif nextChords and style.sidestepOdds
-            and (song.sidesteps == nil and rnd(100) < style.sidestepOdds or song.sidesteps and j % 4 == 3)
-            and nextChords[1].degree ~= chords[#chords].degree then
-            -- the side-step: the bar's last stab is the next chord a half-step high, sliding into it
-            local last = hits[#hits]
-            if last and last.s >= 8 then last.sidestep, sidestepAt = nextChords[1], last.s end
-        end
+        hits = compHits(bar, pushedInto, pushes)
+        if pushes then pushInto(bar, hits) else sidestepAt = sidestepInto(bar, hits) end
     end
     table.sort(hits, function(a, c) return a.s < c.s end)
     return hits, sidestepAt, pushes
@@ -793,63 +814,78 @@ local function bookFigure(bar, h, voicing, figure, player)
     end
 end
 
--- the comp: each stab voiced nearest the last (voiceChord). The same chord struck again is re-voiced
--- now and then, its top note moving (the idea 'revoice'; the style report measured our keys
--- re-striking one chord 50-80% of the time against 8-28% in the pieces: docs/MUSIC-ANALYSIS.md)
+-- a stab's voicing, nearest the last (voiceChord); the same chord struck again is re-voiced now and then,
+-- its top note moving (the idea 'revoice'). A side-step's doesn't count as the last.
+local function voiceStab(bar, h, revoiceRnd, revoiceOdds)
+    local song = bar.song
+    local chord = h.sidestep or h.chord
+    local root = (song.key + chord.degree) % 12
+    local name = root .. chord.quality
+    local again = not h.sidestep and M.voicingOf == name and M.voicing ~= nil
+    local moveTop = again and revoiceOdds > 0 and revoiceRnd(100) < revoiceOdds
+    local voicing = voiceChord(root, voicedQuality(song, chord), keysLo(song), 76, M.voicing, moveTop)
+    if not h.sidestep then
+        M.voicing, M.voicingOf = voicing, name
+        bar.voicings = bar.voicings or {}
+        bar.voicings[#bar.voicings + 1] = { s = h.s, voicing = voicing } -- the picks play from these
+    end
+    return voicing
+end
+
+-- the dub echo: a stab's note repeated twice, softer, while its chord lasts (not into the next chord)
+local function echoNote(bar, h, k, note, vol, dur, strum)
+    local song = bar.song
+    for e = 1, 2 do
+        local s, chordEnd = h.s + 3 * e, h.chord.s + h.chord.len
+        if s >= chordEnd or vol - 2 * e < 1 then break end
+        local echoDur = math.min(dur, lengthMs(song, s, chordEnd - s) * 0.9)
+        play(bar.synth, 'keys', bar.style.keys, stepTime(song, bar.t0, s) + (k - 1) * strum, note, vol - 2 * e,
+             echoDur)
+    end
+end
+
+-- a stab struck as a chord, rolled by the style's strum, or by the Rhodes player (its times, lengths,
+-- touch, and its grace note, ghost chuck, bell and tremolo on the stabs it picked)
+local function strikeStab(bar, h, voicing, player, t, strum)
+    local synth, song, style = bar.synth, bar.song, bar.style
+    local first = h.light and 2 or 1
+    local times = player and rhodes.times(player, h, #voicing, first, t, strum)
+    local len = player and rhodes.length(player, h, h.len) or h.len
+    if player and player.grace == h then rhodes.grace(player, h, voicing, times, play) end
+    for k = first, #voicing do
+        local note = voicing[k] + (h.sidestep and 1 or 0)
+        local vol = (k == #voicing) and h.vol + 1 or h.vol
+        local dur = lengthMs(song, h.s, len) * (h.ring and 1 or 0.9)
+        if player then
+            -- a strike step up: the touch's gains average ~0.8 (src/music-rhodes.lua)
+            play(synth, 'keys', style.keys, times[k], note, math.min(7, vol + 1), dur, h.s, nil, nil,
+                 rhodes.touch(player, h, k, #voicing, note))
+        else
+            play(synth, 'keys', style.keys, t + (k - 1) * strum, note, math.min(7, vol), dur)
+        end
+        if style.echo and style.echo.keys and not h.sidestep then echoNote(bar, h, k, note, vol, dur, strum) end
+    end
+    if player and player.ghost == h then rhodes.ghost(player, h, voicing, play) end
+    if player and player.bell == h then rhodes.bell(player, h, voicing, times, play) end
+    if player and player.tremolo == h then rhodes.tremolo(player, h, voicing, play) end
+end
+
+-- the comp: each stab voiced (voiceStab), then a comp figure (the idea 'figures') or struck (strikeStab).
+-- The style report measured our keys re-striking one chord 50-80% of the time against 8-28% in the
+-- pieces (docs/MUSIC-ANALYSIS.md): hence the revoicing and the figures.
 local function bookKeys(bar, hits)
-    local synth, song, style, t0 = bar.synth, bar.song, bar.style, bar.t0
+    local song, style, t0 = bar.song, bar.style, bar.t0
     local revoiceRnd, revoiceOdds = stream(song.seed, 9000 + bar.b), (song.ideaOdds or {}).revoice or 0
     local figureRnd, figureOdds = stream(song.seed, 9500 + bar.b), (song.ideaOdds or {}).figures or 0
     local player = rhodes.bar(bar, hits) -- an electric piano, humanized: the Rhodes player
     for _, h in ipairs(hits) do
-        local chord = h.sidestep or h.chord
-        local root = (song.key + chord.degree) % 12
-        local name = root .. chord.quality
-        local again = not h.sidestep and M.voicingOf == name and M.voicing ~= nil
-        local moveTop = again and revoiceOdds > 0 and revoiceRnd(100) < revoiceOdds
-        local voicing = voiceChord(root, voicedQuality(song, chord), keysLo(song), 76, M.voicing, moveTop)
-        if not h.sidestep then
-            M.voicing, M.voicingOf = voicing, name
-            bar.voicings = bar.voicings or {}
-            bar.voicings[#bar.voicings + 1] = { s = h.s, voicing = voicing } -- the picks play from these
-        end
+        local voicing = voiceStab(bar, h, revoiceRnd, revoiceOdds)
         local t = stepTime(song, t0, h.s) + humanize(0.005)
         local strum = (style.strumMs or 8) / 1000
         local figure = song.figure and not h.sidestep and h.len >= (style.figureMin or 6)
             and figureRnd(100) < figureOdds and song.figure
-        if figure then
-            bookFigure(bar, h, voicing, figure, player)
-        else
-            local first = h.light and 2 or 1
-            local times = player and rhodes.times(player, h, #voicing, first, t, strum)
-            local len = player and rhodes.length(player, h, h.len) or h.len
-            if player and player.grace == h then rhodes.grace(player, h, voicing, times, play) end
-            for k = first, #voicing do
-                local note = voicing[k] + (h.sidestep and 1 or 0)
-                local vol = (k == #voicing) and h.vol + 1 or h.vol
-                local dur = lengthMs(song, h.s, len) * (h.ring and 1 or 0.9)
-                if player then
-                    -- a strike step up: the touch's gains average ~0.8 (src/music-rhodes.lua)
-                    play(synth, 'keys', style.keys, times[k], note, math.min(7, vol + 1), dur, h.s, nil, nil,
-                         rhodes.touch(player, h, k, #voicing, note))
-                else
-                    play(synth, 'keys', style.keys, t + (k - 1) * strum, note, math.min(7, vol), dur)
-                end
-                if style.echo and style.echo.keys and not h.sidestep then
-                    for e = 1, 2 do
-                        local s, chordEnd = h.s + 3 * e, h.chord.s + h.chord.len
-                        if s >= chordEnd or vol - 2 * e < 1 then break end
-                        -- not into the next chord
-                        local echoDur = math.min(dur, lengthMs(song, s, chordEnd - s) * 0.9)
-                        play(synth, 'keys', style.keys, stepTime(song, t0, s) + (k - 1) * strum, note, vol - 2 * e,
-                             echoDur)
-                    end
-                end
-            end
-            if player and player.ghost == h then rhodes.ghost(player, h, voicing, play) end
-            if player and player.bell == h then rhodes.bell(player, h, voicing, times, play) end
-            if player and player.tremolo == h then rhodes.tremolo(player, h, voicing, play) end
-        end
+        if figure then bookFigure(bar, h, voicing, figure, player)
+        else strikeStab(bar, h, voicing, player, t, strum) end
     end
     if player and player.fill then rhodes.fill(player, play) end
 end
