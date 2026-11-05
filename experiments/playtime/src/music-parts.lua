@@ -801,6 +801,7 @@ local function bookKeys(bar, hits)
             local first = h.light and 2 or 1
             local times = player and rhodes.times(player, h, #voicing, first, t, strum)
             local len = player and rhodes.length(player, h, h.len) or h.len
+            if player and player.grace == h then rhodes.grace(player, h, voicing, times, play) end
             for k = first, #voicing do
                 local note = voicing[k] + (h.sidestep and 1 or 0)
                 local vol = (k == #voicing) and h.vol + 1 or h.vol
@@ -824,6 +825,7 @@ local function bookKeys(bar, hits)
                 end
             end
             if player and player.ghost == h then rhodes.ghost(player, h, voicing, play) end
+            if player and player.bell == h then rhodes.bell(player, h, voicing, times, play) end
         end
     end
 end

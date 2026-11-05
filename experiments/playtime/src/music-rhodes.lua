@@ -17,9 +17,13 @@
 --   endings  a stab's key comes up with a short release of its own (the felt damper), slower low down.
 --   ghosts   now and then a stab is cut short and chucked again on the next 16th, soft and damped: mostly
 --            the hammer's click (neo-soul / funk comping), at most one a bar.
+-- And a little vocabulary, rare:
+--   grace    now and then a stab's top gets a grace note crushed into it from half a step under.
+--   bell     one high note (the top an octave up) a beat after the outro's last chord, sometimes after
+--            the intro's last stab.
 -- The music panel's 'humanize' row (state.musicSettings.humanize) plays the keys plainly instead, as
--- before. Built 2026-11-05 (MUSIC-IDEAS.md, "A Rhodes player"); the vocabulary (grace notes, fills,
--- trills) and other machines (wah, Wurli) are left for later.
+-- before. Built 2026-11-05 (MUSIC-IDEAS.md, "A Rhodes player"); fills, a trill and other machines
+-- (wah, Wurli) are left for later.
 local state = require('src.state')
 local theory = require('src.music-theory')
 local stream, stepTime, humanize = theory.stream, theory.stepTime, theory.humanize
@@ -33,6 +37,11 @@ local PEDAL = { ballad = true }
 -- the odds (percent) a comp bar gets a ghost chuck, per style; a style not here gets none
 -- (supermarket's and sesame's stabs are 16ths: no room for one)
 local GHOSTS = { bossa = 20, citypop = 30, herbs = 15, lofi = 15, island = 10 }
+-- the odds (percent) a bar's stab gets a grace note crushed into its top, per style
+local GRACE = { bossa = 12, island = 10, supermarket = 12, herbs = 15, lofi = 18, citypop = 12, ballad = 15,
+                sesame = 8 }
+-- the odds (percent) of a bell note: a beat after the outro's last chord, after the intro's last stab
+local BELL = { outro = 70, intro = 40 }
 -- the phrase's swell over 4 bars (a gain on the strike)
 local ARC = { 0.9, 0.96, 1.0, 0.93 }
 
@@ -107,6 +116,20 @@ function lib.bar(bar, hits)
             p.ghost, p.ghostAt = pick.h, pick.s
         end
     end
+    -- a grace note: half a step under a stab's top, crushed into it
+    local graceOdds = GRACE[song.style] or 0
+    if graceOdds > 0 and role ~= 'outro' and rnd(100) < graceOdds then
+        local options = {}
+        for _, h in ipairs(hits) do
+            if h.len >= 2 and not h.sidestep then options[#options + 1] = h end
+        end
+        if #options > 0 then p.grace = options[rnd(#options) + 1] end
+    end
+    -- a bell note: one high note over the last chord, closing the intro or the song
+    local last, section = hits[#hits], bar.section
+    local closes = role == 'outro' and last and last.ring and 'outro'
+        or section and section.kind == 'intro' and bar.j == section.bars - 1 and 'intro'
+    if last and closes and rnd(100) < BELL[closes] then p.bell = last end
     return p
 end
 
@@ -165,6 +188,31 @@ function lib.touch(p, h, k, n, midi)
     return opts
 end
 
+local function cents(p, midi) return stream(p.song.seed, 7700 + midi)(9) - 4 end
+
+-- the grace note crushed into a stab's top: half a step under it, soft and short, just before it; the
+-- top lands a touch late for it. Skipped where the note under the top is in the voicing already
+function lib.grace(p, h, voicing, times, play)
+    local n = #voicing
+    local top, grace = voicing[n], voicing[n] - 1
+    for k = 1, n - 1 do if voicing[k] == grace then return end end
+    times[n] = times[n] + 0.02
+    local t = times[n] - (0.035 + 0.02 * p.rnd())
+    play(p.synth, 'keys', p.patch, t, grace, math.max(1, h.vol - 1), 45, h.s, nil, nil,
+         { gain = 0.45, release = 30, cents = cents(p, grace) })
+    return top
+end
+
+-- the bell note: the voicing's top an octave up, soft, a beat after the stab (or just after a short one),
+-- ringing out
+function lib.bell(p, h, voicing, times, play)
+    local midi = voicing[#voicing] + 12
+    if midi > 90 then return end
+    local t = h.len >= 6 and stepTime(p.song, p.bar.t0, h.s + 4) + p.feel or times[#voicing] + 0.14
+    play(p.synth, 'keys', p.patch, t, midi, h.vol, math.max(1200, h.len * p.song.beat / 4 * 1000), h.s, nil, nil,
+         { gain = 0.5, cents = cents(p, midi), timbre = -0.04 })
+end
+
 -- the ghost chuck after a stab: its voicing (no bass note) on the next 16th, soft, damped to a click
 function lib.ghost(p, h, voicing, play)
     local song, t0 = p.song, p.bar.t0
@@ -173,7 +221,7 @@ function lib.ghost(p, h, voicing, play)
     for k = 2, #voicing do
         play(p.synth, 'keys', p.patch, t + (k - 2) * 0.002 + humanize(0.002), voicing[k], math.max(1, h.vol - 1), 70,
              s, nil, nil, { gain = 0.32, damp = 0.9, release = 40,
-                                  cents = stream(song.seed, 7700 + voicing[k])(9) - 4, timbre = -0.05 })
+                                  cents = cents(p, voicing[k]), timbre = -0.05 })
     end
 end
 

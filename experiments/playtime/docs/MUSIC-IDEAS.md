@@ -144,8 +144,10 @@ The short list after a long day of styles; the details live in the entries furth
   the ballad, lifted at each change; stabs dry, with a short felt-damper release. A rare ghost chuck: a
   stab cut short and struck again soft and damped (bossa, citypop, herbs, lofi, island). One strike
   step up makes up for the touch's gains (keys stem within 0.6 dB of plain). The music panel's humanize
-  row plays the keys plainly (render: `HUMANIZE=0`). Not built yet: the vocabulary (grace-note crush,
-  fills, a trill, a bell note), wah/Wurli per style, a volume-pedal swell. Waiting on an ear pass.
+  row plays the keys plainly (render: `HUMANIZE=0`). The first vocabulary, rare (same day): a grace note
+  crushed into a stab's top from half a step under (~1 in 8 bars), a bell note (the top an octave up)
+  a beat after the outro's last chord (70%) or the intro's last stab (40%). Not built yet: fills, a
+  trill, wah/Wurli per style, a volume-pedal swell. Waiting on an ear pass.
 - [x] **A note's own filter type** (2026-11-05: built, checked; first used the same day by the drum jam's
   'funk guitar' chord figure, DRUM-JAM.md J9d). `synth.scheduleAt(...,
   { filter = 'band' })` ('low' / 'high' / 'band' / 'notch' / 'off' or a FILTER_* number; dreamengine
