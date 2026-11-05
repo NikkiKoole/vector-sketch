@@ -14,6 +14,7 @@ local mathutils = require('src.math-utils')
 local behaviors = require('src.behaviors')
 local contactTracker = require('src.physics.contact-tracker')
 local camera = require('src.camera')
+local facing = require('src.mipo-facing')
 
 local lib = {}
 
@@ -729,7 +730,8 @@ local function gazeGoal(instance, now)
         instance._wanderDX, instance._wanderDY = math.cos(angle) * r, math.sin(angle) * r * 0.5
         instance._wanderAt = now + randomIn(lib.gazeWanderEvery)
     end
-    return fx + instance._wanderDX, fy + instance._wanderDY
+    local cx, cy = facing.gazeCenter(instance, fx, fy) -- facing a side: around a spot ahead
+    return cx + instance._wanderDX, cy + instance._wanderDY
 end
 
 local function updateGaze(instance, now)

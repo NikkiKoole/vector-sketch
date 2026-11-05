@@ -38,6 +38,8 @@ function lib.applySpine(...) return balance.applySpine(...) end
 
 function lib.updatePart(...) return build.updatePart(...) end
 function lib.rebuildFromCreation(...) return build.rebuildFromCreation(...) end
+function lib.switchFacing(...) return build.switchFacing(...) end -- left / front / right, in place
+function lib.switchArms(...) return build.switchArms(...) end -- the arms alone (dna.armFacing)
 function lib.createCharacterFromExistingDNA(...) return build.createCharacterFromExistingDNA(...) end
 function lib.createCharacterFromJustDNA(...) return build.createCharacterFromJustDNA(...) end
 function lib.poseTpose(...) return build.poseTpose(...) end

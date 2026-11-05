@@ -147,7 +147,8 @@ end
 
 -- The screen outline of a dragged body: the whole Mipo it's part of (pictures too), else itself.
 local function screenOutline(cam, body)
-    if not body then return nil end
+    -- gone: a Mipo rebuilt while dragged (a turn in scripts/spikes/facing) leaves the old body
+    if not body or not alive(body) then return nil end
     local instance = mipoRegistry.getFromBody(body)
     local bodies = {}
     if instance and instance.parts then

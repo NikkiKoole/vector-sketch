@@ -125,7 +125,16 @@ local function drawCombinedImageVanilla(ompImage, extra, texfixture, _thing)
             love.graphics.setColor(r, g, b, a)
         end
 
-        drawSquishableHairOver(img, body:getX(), body:getY(), body:getAngle(), sx, sy, 1, vertices, extra, 'omp')
+        local bx, by, angle = body:getX(), body:getY(), body:getAngle()
+        if extra.leanAngle and extra.leanAngle ~= 0 then
+            -- the picture turned about a point of the body (a Mipo foot leaning round as it
+            -- turns, scripts/spikes/facing); the body itself stays where it is
+            local px, py = body:getWorldPoint(extra.leanPivotX or 0, extra.leanPivotY or 0)
+            local cs, sn = math.cos(extra.leanAngle), math.sin(extra.leanAngle)
+            local rx, ry = bx - px, by - py
+            bx, by, angle = px + rx * cs - ry * sn, py + rx * sn + ry * cs, angle + extra.leanAngle
+        end
+        drawSquishableHairOver(img, bx, by, angle, sx, sy, 1, vertices, extra, 'omp')
     end
 end
 

@@ -20,6 +20,7 @@ local lerp = mathutils.clampedLerp
 local makeTransformedVertices = mathutils.scalePolygonPoints
 
 local shape8Dict = require('src.shape8-dict')
+local facing = require('src.mipo-facing')
 
 -- specs swap in their own shapes
 function lib.setShape8Dict(dict)
@@ -265,12 +266,16 @@ parentStrategies.outline = function(partName, instance, entry)
 
     local part = instance.dna.parts[partName]
     local skin = part.appearance and part.appearance.skin
-    local behind = not (skin and skin.zOffset and skin.zOffset > 200)
+    -- facing a side, the back ear draws over the head (mipo-facing): no tuck behind it
+    local behind = not (skin and skin.zOffset and skin.zOffset > 200) and not facing.isBackEar(instance, partName)
     local distance = math.sqrt(x * x + y * y)
     if behind and distance > 0 and isShape8(part) then
         local inset = math.min(lib.earInset * earHeight(part, scale), distance / 2)
         x, y = x - x / distance * inset, y - y / distance * inset
     end
+    -- facing a side, the ears turn with the face (src/mipo-facing.lua)
+    local cx, r = facing.headBox(instance, entry.parent)
+    if cx then x = facing.turnEarX(instance, partName, x, cx, r) end
     return x, y
 end
 

@@ -22,6 +22,7 @@ local D = require('src.dna-defaults')
 local topology = require('src.character-topology')
 local units = require('src.physics-units')
 local registry = require('src.registry')
+local facing = require('src.mipo-facing')
 local dna, earJoint = mipoDna.dna, mipoDna.earJoint
 local TORSO_SKIN_Z, TORSO_HAIR_ABOVE_SKIN = mipoDna.TORSO_SKIN_Z, mipoDna.TORSO_HAIR_ABOVE_SKIN
 local initBlock = appearance.initBlock
@@ -103,10 +104,11 @@ local footRest = { lfoot = math.pi / 2, rfoot = -math.pi / 2 }
 -- motor and the Mipo hopped forever; necks and heads were limited off-centre.
 local function applyLegLimits(instance, joint, partName)
     if not joint or joint:isDestroyed() or joint:getType() ~= 'revolute' then return end
-    local partDNA = instance.dna.parts[partName]
+    local source = facing.source(instance, partName) -- facing a side: this side's leg (mipo-facing)
+    local partDNA = instance.dna.parts[source]
     local limits = partDNA and partDNA.j and partDNA.j.limits
     if not (limits and limits.low and limits.up) then return end
-    local rest = footRest[partName] or partDNA.stanceAngle or 0
+    local rest = footRest[source] or partDNA.stanceAngle or 0
     local ref = joint:getReferenceAngle()
     joint:setLimits(rest + limits.low - ref, rest + limits.up - ref)
     joint:setLimitsEnabled(true)
@@ -138,11 +140,13 @@ local function applyFootMaterial(thing, partName)
 end
 
 -- How makePart builds a part from its DNA at this scale.
-local function partSettings(partName, partData, scale, x, y)
+local function partSettings(partName, partData, scale, x, y, instance)
     -- feet are mirrored left/right like hands; a hand picture the other way round, so it
-    -- stands on its palm edge with the thumb up, not on the thumb
+    -- stands on its palm edge with the thumb up, not on the thumb. Facing a side, both feet
+    -- take that side's picture (src/mipo-facing.lua).
     if (partName == 'lfoot' or partName == 'rfoot') and partData.shape8URL then
-        local mirrored = (partName == 'rfoot') ~= shapeCatalogs.isHandPicture(partData.shape8URL)
+        local source = instance and facing.source(instance, partName) or partName
+        local mirrored = (source == 'rfoot') ~= shapeCatalogs.isHandPicture(partData.shape8URL)
         local size = math.abs(partData.dims.sx or 1)
         partData.dims.sx = mirrored and -size or size
     end
@@ -189,7 +193,8 @@ local function makePart(partName, instance, settings)
     end
 
     local ownOffsetX, ownOffsetY = topology.getOwnOffset(partName, instance, entry)
-    local xangle = topology.getAngleOffset(partName, instance, entry)
+    local source = facing.source(instance, partName) -- facing a side: this side's foot angle
+    local xangle = topology.getAngleOffset(source, instance, instance.entryMap[source] or entry)
 
     -- Rotate own offset into parent space
     local rotatedOwnX, rotatedOwnY = mathutils.rotatePoint(ownOffsetX, ownOffsetY, 0, 0, prevA + xangle)
@@ -228,6 +233,7 @@ local function makePart(partName, instance, settings)
 
         if (partA_thing and partB_thing) then
             local jointData = instance.dna.parts[partName].j
+            local sourceJoint = instance.dna.parts[source] and instance.dna.parts[source].j
             local jointCreationData = {
                 body1 = partA_thing.body,
                 body2 = partB_thing.body,
@@ -247,13 +253,13 @@ local function makePart(partName, instance, settings)
             jointCreationData.offsetA.x = jointCreationData.offsetA.x + offX
             jointCreationData.offsetA.y = jointCreationData.offsetA.y + offY
             local joint = joints.createJoint(jointCreationData)
-            local limits = jointData.limits
+            local limits = (sourceJoint or jointData).limits
 
             if joint and limits and limits.low and limits.up then
                 joint:setLimits(limits.low, limits.up)
                 joint:setLimitsEnabled(true)
             end
-            applyShoulderLimits(joint, partName)
+            applyShoulderLimits(joint, facing.source(instance, partName))
             applyLegLimits(instance, joint, partName)
         end
     end
@@ -343,7 +349,7 @@ local function updateSinglePart(partName, data, instance)
     end
 
     local children = instance.childrenMap[partName] or {}
-    makePart(partName, instance, partSettings(partName, partData, instance.scale or 1, oldPosX, oldPosY))
+    makePart(partName, instance, partSettings(partName, partData, instance.scale or 1, oldPosX, oldPosY, instance))
 
     if not instance.parts[partName] then return end
 
@@ -380,6 +386,70 @@ function lib.updatePart(partName, data, instance)
     balance.balanceMasses(instance)
     applyPoseCache(instance, poseCache)
     if positionTorso then fixDrift(positionTorso, instance) end
+end
+
+-- The joint limits of a built part set again: after its facing changed (switchFacing).
+local function reapplyLimits(instance, partName)
+    local part, entry = instance.parts[partName], instance.entryMap[partName]
+    local parent = entry and entry.parent and instance.parts[entry.parent]
+    if not (part and parent) then return end
+    local source = facing.source(instance, partName)
+    local j = instance.dna.parts[source] and instance.dna.parts[source].j
+    for _, joint in ipairs(part.body:getJoints()) do
+        local a, b = joint:getBodies()
+        if a == parent.body and b == part.body and joint:getType() == 'revolute' then
+            if j and j.limits and j.limits.low and j.limits.up then
+                joint:setLimits(j.limits.low, j.limits.up)
+                joint:setLimitsEnabled(true)
+            end
+            applyShoulderLimits(joint, source)
+            applyLegLimits(instance, joint, partName)
+        end
+    end
+end
+
+local LIMBS = { 'luleg', 'ruleg', 'llleg', 'rlleg', 'luarm', 'ruarm', 'llarm', 'rlarm' }
+local FEET = { 'lfoot', 'rfoot' }
+
+-- A built Mipo turned to another facing ('left' / 'front' / 'right', src/mipo-facing.lua)
+-- without rebuilding it: torso, head, legs and arms keep their bodies (and how they move), the
+-- limbs get the new side's joint limits, the foot that turns and the ears are remade (their
+-- angle, picture and attach point change) and the textures redrawn (the draw order with them).
+function lib.switchFacing(instance, want)
+    local before = {}
+    for _, name in ipairs(FEET) do before[name] = facing.source(instance, name) end
+    instance.dna.facing = want
+    for _, name in ipairs(LIMBS) do reapplyLimits(instance, name) end
+    -- only a foot that turns is remade (in one step that's one foot): the other keeps its pose
+    local turned = {}
+    for _, name in ipairs(FEET) do
+        turned[name] = facing.source(instance, name) ~= before[name]
+        if turned[name] and instance.parts[name] then lib.updatePart(name, {}, instance) end
+    end
+    for _, name in ipairs({ 'lear', 'rear' }) do
+        if instance.parts[name] then lib.updatePart(name, {}, instance) end
+    end
+    -- updatePart keeps a part's angle; a turned foot goes to its new rest instead
+    for _, name in ipairs(FEET) do
+        local foot, entry = instance.parts[name], instance.entryMap[name]
+        local shin = entry and instance.parts[entry.parent]
+        if turned[name] and foot and shin then
+            local source = facing.source(instance, name)
+            local offset = topology.getAngleOffset(source, instance, instance.entryMap[source] or entry)
+            foot.body:setAngle(shin.body:getAngle() + offset)
+        end
+    end
+    textures.rebuildTextures(instance)
+    applyGroupAndZ(instance, true)
+end
+
+-- The arms alone turned to another facing (dna.armFacing; nil again follows the body): their
+-- joint limits and draw order, at their own moment in a turn (scripts/spikes/facing).
+function lib.switchArms(instance, want)
+    instance.dna.armFacing = want
+    for _, name in ipairs({ 'luarm', 'ruarm', 'llarm', 'rlarm' }) do reapplyLimits(instance, name) end
+    textures.rebuildTextures(instance)
+    applyGroupAndZ(instance, true)
 end
 
 -- given an instance with dna and a new creation, this function is made to change
@@ -541,7 +611,8 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
 
     for i = 1, #ordered do
         local partName = ordered[i]
-        makePart(partName, instance, partSettings(partName, instance.dna.parts[partName], instance.scale, x, y))
+        local partData = instance.dna.parts[partName]
+        makePart(partName, instance, partSettings(partName, partData, instance.scale, x, y, instance))
         if optionalTorsoAngle and partName == 'torso1' then
             instance.parts['torso1'].body:setAngle(optionalTorsoAngle)
         end
@@ -684,7 +755,7 @@ local function adoptPart(instance, partName, body)
     for _, joint in ipairs(body:getJoints()) do
         local _, bodyB = joint:getBodies()
         if bodyB == body then
-            applyShoulderLimits(joint, partName)
+            applyShoulderLimits(joint, facing.source(instance, partName))
             applyLegLimits(instance, joint, partName)
         end
     end

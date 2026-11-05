@@ -85,6 +85,7 @@ local baseEnv = {
     mipoActions              = mipoActions,
     mipoRaspberry            = require('src.mipo-raspberry'), -- blow(instance) (raspberry spike)
     mipoRegistry             = require('src.mipo-registry'),
+    mipoFacing               = require('src.mipo-facing'), -- facing left / front / right (facing spike)
     props                    = props,
     signals                  = signals,
     snap                     = snap,

@@ -8,6 +8,7 @@ and `FACE-SYSTEM-PLAN.md` (gaze, blink, brows done). Checked against the code 20
 - [ ] **E1. Hair tension/spacing sliders.** trace-vertices already read `extra.tension` (default
   0.02) and `extra.spacing` (default 5); the Mipo editor has no slider for them.
 - [ ] **E2. Leg facing.** A creation option 'left' / 'right' / 'front' that sets the foot stance angles.
+  Built as `dna.facing` 2026-11-05 (docs/MIPO-FACING.md, spike `facing`); the editor pick is MF4.
 - [ ] **E3. Speaking mouth.** The mouth flaps while a squeak plays (`src/mipo-voice.lua`, 2026-10-29),
   but the 15 phoneme shapes in `src/mouth-shapes.lua` aren't driven by anything (`mouthOpen` /
   `mouthWide`).
