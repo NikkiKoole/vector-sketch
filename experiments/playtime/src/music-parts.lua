@@ -826,6 +826,7 @@ local function bookKeys(bar, hits)
             end
             if player and player.ghost == h then rhodes.ghost(player, h, voicing, play) end
             if player and player.bell == h then rhodes.bell(player, h, voicing, times, play) end
+            if player and player.trill == h then rhodes.trill(player, h, voicing, play) end
         end
     end
 end
