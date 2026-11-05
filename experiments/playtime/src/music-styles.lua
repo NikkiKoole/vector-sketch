@@ -920,10 +920,10 @@ D.commonIdeas = { dynamics = { odds = 70, songs = 90 }, revoice = { odds = 50, s
                   figures = { odds = 60, songs = 70, comps = true, figures = true },
                   -- the Rhodes player's vocabulary (src/music-rhodes.lua), only where the keys are an
                   -- electric piano: grace (a grace note crushed into a stab's top, odds a bar), bell (a
-                  -- high note closing the intro or the song), trill (a held chord's top two notes shaken)
+                  -- high note closing the intro or the song), tremolo (a held chord's top two notes rocked)
                   grace = { odds = 15, songs = 70, rhodes = true },
                   bell = { odds = 70, songs = 80, rhodes = true },
-                  trill = { odds = 25, songs = 60, rhodes = true } }
+                  tremolo = { odds = 25, songs = 60, rhodes = true } }
 -- the keys patches that are an electric piano (synth.lua's EPIANO): the Rhodes player's ideas show for them
 local EPIANO_KEYS = { rhodes = true, lofiKeys = true, clav = true }
 local ideasCache = setmetatable({}, { __mode = 'k' })

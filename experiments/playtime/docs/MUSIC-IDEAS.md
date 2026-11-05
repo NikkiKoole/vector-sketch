@@ -148,8 +148,9 @@ The short list after a long day of styles; the details live in the entries furth
   vocabulary is three of the panel's ideas, never by default, shown only where the keys are an electric
   piano (same day): **grace** (a grace note crushed into a stab's top from half a step under, 15% of
   bars), **bell** (the top an octave up a beat after the outro's last chord, the intro's last stab at
-  0.6 of the odds), **trill** (under the pedal, a held chord's top two notes shaken soft for about a
-  second, 25% of pedalled bars). Not built yet: fills (book after the tune, in its breaths, like the
+  0.6 of the odds), **tremolo** (under the pedal, a held chord's top two notes rocked soft for about a
+  second, at most an octave apart, 25% of pedalled bars; first called trill, but a trill is two
+  neighbours). Not built yet: fills (book after the tune, in its breaths, like the
   answer), wah/Wurli per style, a volume-pedal swell. Waiting on an ear pass.
 - [x] **A note's own filter type** (2026-11-05: built, checked; first used the same day by the drum jam's
   'funk guitar' chord figure, DRUM-JAM.md J9d). `synth.scheduleAt(...,

@@ -22,7 +22,7 @@
 --   bell     one high note (the top an octave up) a beat after the outro's last chord, sometimes after
 --            the intro's last stab.
 -- The music panel's 'humanize' row (state.musicSettings.humanize) plays the keys plainly instead, as
--- before. Built 2026-11-05 (MUSIC-IDEAS.md, "A Rhodes player"); fills, a trill and other machines
+-- before. Built 2026-11-05 (MUSIC-IDEAS.md, "A Rhodes player"); fills, a tremolo and other machines
 -- (wah, Wurli) are left for later.
 local state = require('src.state')
 local theory = require('src.music-theory')
@@ -37,9 +37,9 @@ local PEDAL = { ballad = true }
 -- the odds (percent) a comp bar gets a ghost chuck, per style; a style not here gets none
 -- (supermarket's and sesame's stabs are 16ths: no room for one)
 local GHOSTS = { bossa = 20, citypop = 30, herbs = 15, lofi = 15, island = 10 }
--- The vocabulary is the music panel's ideas (music-styles' commonIdeas: grace, bell, trill; never by
+-- The vocabulary is the music panel's ideas (music-styles' commonIdeas: grace, bell, tremolo; never by
 -- default), its odds song.ideaOdds: grace a bar, bell where a song closes (the intro's at 0.6 of it),
--- trill a held chord. Each rolls on a stream of its own, so switching one doesn't move the others.
+-- tremolo a held chord. Each rolls on a stream of its own, so switching one doesn't move the others.
 local function ideaRnd(p, k) return stream(p.song.seed, k + p.bar.b) end
 -- the phrase's swell over 4 bars (a gain on the strike)
 local ARC = { 0.9, 0.96, 1.0, 0.93 }
@@ -130,14 +130,14 @@ function lib.bar(bar, hits)
     local closes = role == 'outro' and last and last.ring and 1
         or section and section.kind == 'intro' and bar.j == section.bars - 1 and 0.6
     if last and closes and ideaRnd(p, 130000)(100) < (ideas.bell or 0) * closes then p.bell = last end
-    -- a trill: a held chord's top two notes shaken, under the pedal (a ballad, held chords)
-    local trillRnd = ideaRnd(p, 140000)
-    if p.pedal and (ideas.trill or 0) > 0 and trillRnd(100) < ideas.trill then
+    -- a tremolo: a held chord's top two notes shaken, under the pedal (a ballad, held chords)
+    local tremoloRnd = ideaRnd(p, 140000)
+    if p.pedal and (ideas.tremolo or 0) > 0 and tremoloRnd(100) < ideas.tremolo then
         local options = {}
         for _, h in ipairs(hits) do
             if h.len >= 8 and not h.sidestep and h ~= p.grace then options[#options + 1] = h end
         end
-        if #options > 0 then p.trill = options[trillRnd(#options) + 1] end
+        if #options > 0 then p.tremolo = options[tremoloRnd(#options) + 1] end
     end
     return p
 end
@@ -222,13 +222,15 @@ function lib.bell(p, h, voicing, times, play)
          { gain = 0.5, cents = cents(p, midi), timbre = -0.04 })
 end
 
--- the trill: from a beat into a held chord, its top two notes alternating fast and soft (at most ten,
--- about a second), swelling and dying away again, ringing under the pedal
-function lib.trill(p, h, voicing, play)
+-- the tremolo: from a beat into a held chord, its top two notes alternating fast and soft (at most ten,
+-- about a second), swelling and dying away again, ringing under the pedal. A pianist's tremolo, not a
+-- trill (two neighbours): the wrist rocks between thumb and 4th or 5th finger, at most an octave apart
+function lib.tremolo(p, h, voicing, play)
     local n = #voicing
     if n < 3 then return end
     local song, rnd = p.song, ideaRnd(p, 150000)
     local lo, hi = voicing[n - 1], voicing[n]
+    if hi - lo > 12 then return end -- wider than one hand rocks
     local from = stepTime(song, p.bar.t0, h.s + 4) + p.feel
     local to = stepTime(song, p.bar.t0, h.s + math.min(h.len, 16) - 2) + p.feel
     local gap = 0.1 + 0.025 * rnd()
