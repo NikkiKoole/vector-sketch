@@ -148,170 +148,150 @@ return function(ui)
         state.text = ui.reconstructText(state.lines)
     end
 
+    -- the selection collapsed onto pos
+    local function collapseSelection(state, pos)
+        state.selectionStart = { line = pos.line, char = pos.char }
+        state.selectionEnd = { line = pos.line, char = pos.char }
+    end
+
+    -- after the cursor moved: with shift the selection grows to it, else it collapses there
+    local function afterMove(state, pos, isShiftDown)
+        if isShiftDown then
+            state.selectionEnd = { line = pos.line, char = pos.char }
+        else
+            collapseSelection(state, pos)
+        end
+    end
+
+    local function paste(state)
+        local clipboardText = love.system.getClipboardText() or ""
+        if clipboardText == "" then return end
+        if not ui.isSelectionEmpty(state) then
+            ui.deleteSelection(state)
+        end
+        local pos = state.cursorPosition -- after the delete: where the selection was
+        local linesToInsert = ui.splitTextIntoLines(clipboardText)
+        local line = state.lines[pos.line]
+        if #linesToInsert == 1 then
+            state.lines[pos.line] = line:sub(1, pos.char) .. linesToInsert[1] .. line:sub(pos.char + 1)
+            pos.char = pos.char + #linesToInsert[1]
+        else
+            local beforeCursor = line:sub(1, pos.char)
+            local afterCursor = line:sub(pos.char + 1)
+            state.lines[pos.line] = beforeCursor .. linesToInsert[1]
+            for i = 2, #linesToInsert - 1 do
+                table.insert(state.lines, pos.line + i - 1, linesToInsert[i])
+            end
+            table.insert(state.lines, pos.line + #linesToInsert - 1,
+                linesToInsert[#linesToInsert] .. afterCursor)
+            pos.line = pos.line + #linesToInsert - 1
+            pos.char = #linesToInsert[#linesToInsert]
+        end
+        collapseSelection(state, pos)
+        state.text = ui.reconstructText(state.lines)
+    end
+
+    -- with ctrl / cmd held
+    local shortcuts = {
+        c = function(state) -- copy
+            if not ui.isSelectionEmpty(state) then
+                love.system.setClipboardText(ui.getSelectedText(state))
+            end
+        end,
+        v = paste,
+        x = function(state) -- cut
+            if not ui.isSelectionEmpty(state) then
+                love.system.setClipboardText(ui.getSelectedText(state))
+                ui.deleteSelection(state)
+            end
+        end,
+    }
+
+    -- the other keys: key(state, pos, isShiftDown), pos the cursor as it was when the key came
+    -- (backspace and delete set the selection from it even after deleteSelection replaced it)
+    local keys = {}
+    keys.backspace = function(state, pos)
+        if not ui.isSelectionEmpty(state) then
+            ui.deleteSelection(state)
+        elseif pos.char > 0 then -- the character before the cursor
+            local line = state.lines[pos.line]
+            state.lines[pos.line] = line:sub(1, pos.char - 1) .. line:sub(pos.char + 1)
+            pos.char = pos.char - 1
+        elseif pos.line > 1 then -- merge with the previous line
+            local prevLine = state.lines[pos.line - 1]
+            pos.char = #prevLine
+            state.lines[pos.line - 1] = prevLine .. state.lines[pos.line]
+            table.remove(state.lines, pos.line)
+            pos.line = pos.line - 1
+        end
+        collapseSelection(state, pos)
+        state.text = ui.reconstructText(state.lines)
+    end
+    keys.delete = function(state, pos)
+        if not ui.isSelectionEmpty(state) then
+            ui.deleteSelection(state)
+        elseif pos.char < #state.lines[pos.line] then -- the character after the cursor
+            local line = state.lines[pos.line]
+            state.lines[pos.line] = line:sub(1, pos.char) .. line:sub(pos.char + 2)
+        elseif pos.line < #state.lines then -- merge with the next line
+            state.lines[pos.line] = state.lines[pos.line] .. state.lines[pos.line + 1]
+            table.remove(state.lines, pos.line + 1)
+        end
+        collapseSelection(state, pos)
+        state.text = ui.reconstructText(state.lines)
+    end
+    keys.left = function(state, pos, isShiftDown)
+        if pos.char > 0 then
+            pos.char = pos.char - 1
+        elseif pos.line > 1 then
+            pos.line = pos.line - 1
+            pos.char = #state.lines[pos.line]
+        end
+        afterMove(state, pos, isShiftDown)
+    end
+    keys.right = function(state, pos, isShiftDown)
+        if pos.char < #state.lines[pos.line] then
+            pos.char = pos.char + 1
+        elseif pos.line < #state.lines then
+            pos.line = pos.line + 1
+            pos.char = 0
+        end
+        afterMove(state, pos, isShiftDown)
+    end
+    keys.up = function(state, pos, isShiftDown)
+        if pos.line > 1 then
+            pos.line = pos.line - 1
+            pos.char = math.min(pos.char, #state.lines[pos.line])
+        end
+        afterMove(state, pos, isShiftDown)
+    end
+    keys.down = function(state, pos, isShiftDown)
+        if pos.line < #state.lines then
+            pos.line = pos.line + 1
+            pos.char = math.min(pos.char, #state.lines[pos.line])
+        end
+        afterMove(state, pos, isShiftDown)
+    end
+    keys.home = function(state, pos, isShiftDown)
+        pos.char = 0
+        afterMove(state, pos, isShiftDown)
+    end
+    keys['end'] = function(state, pos, isShiftDown)
+        pos.char = #state.lines[pos.line]
+        afterMove(state, pos, isShiftDown)
+    end
+    keys['return'] = function(state) ui.handleTextInputForTextInput("\n", state) end -- a new line
+    keys.kpenter = keys['return']
+    keys.escape = function() ui.focusedTextInputID = nil end
+
     function ui.handleKeyPressForTextInput(key, state)
         local isCtrlDown = love.keyboard.isDown('lctrl', 'rctrl')
         local isShiftDown = love.keyboard.isDown('lshift', 'rshift')
         local isCMDDown = love.keyboard.isDown('lgui', 'rgui')
         if isCtrlDown or isCMDDown then
-            if key == 'c' then
-                -- Copy
-                if not ui.isSelectionEmpty(state) then
-                    local selectedText = ui.getSelectedText(state)
-                    love.system.setClipboardText(selectedText)
-                end
-            elseif key == 'v' then
-                -- Paste
-                local clipboardText = love.system.getClipboardText() or ""
-                if clipboardText ~= "" then
-                    -- Delete selected text if any
-                    if not ui.isSelectionEmpty(state) then
-                        ui.deleteSelection(state)
-                    end
-                    -- Insert clipboard text
-                    local pos = state.cursorPosition
-                    local linesToInsert = ui.splitTextIntoLines(clipboardText)
-                    if #linesToInsert == 1 then
-                        -- Insert into current line
-                        local line = state.lines[pos.line]
-                        state.lines[pos.line] = line:sub(1, pos.char) .. linesToInsert[1] .. line:sub(pos.char + 1)
-                        pos.char = pos.char + #linesToInsert[1]
-                    else
-                        -- Insert multiple lines
-                        local line = state.lines[pos.line]
-                        local beforeCursor = line:sub(1, pos.char)
-                        local afterCursor = line:sub(pos.char + 1)
-                        state.lines[pos.line] = beforeCursor .. linesToInsert[1]
-                        for i = 2, #linesToInsert - 1 do
-                            table.insert(state.lines, pos.line + i - 1, linesToInsert[i])
-                        end
-                        table.insert(state.lines, pos.line + #linesToInsert - 1,
-                            linesToInsert[#linesToInsert] .. afterCursor)
-                        pos.line = pos.line + #linesToInsert - 1
-                        pos.char = #linesToInsert[#linesToInsert]
-                    end
-                    -- Clear selection
-                    state.selectionStart = { line = pos.line, char = pos.char }
-                    state.selectionEnd = { line = pos.line, char = pos.char }
-                    -- Reconstruct text
-                    state.text = ui.reconstructText(state.lines)
-                end
-            elseif key == 'x' then
-                -- Cut
-                if not ui.isSelectionEmpty(state) then
-                    local selectedText = ui.getSelectedText(state)
-                    love.system.setClipboardText(selectedText)
-                    ui.deleteSelection(state)
-                end
-            end
-        else
-            -- Handle other keys
-            local pos = state.cursorPosition
-            if key == "backspace" then
-                if not ui.isSelectionEmpty(state) then
-                    ui.deleteSelection(state)
-                elseif pos.char > 0 then
-                    -- Delete character before cursor
-                    local line = state.lines[pos.line]
-                    state.lines[pos.line] = line:sub(1, pos.char - 1) .. line:sub(pos.char + 1)
-                    pos.char = pos.char - 1
-                elseif pos.line > 1 then
-                    -- Merge with previous line
-                    local prevLine = state.lines[pos.line - 1]
-                    pos.char = #prevLine
-                    state.lines[pos.line - 1] = prevLine .. state.lines[pos.line]
-                    table.remove(state.lines, pos.line)
-                    pos.line = pos.line - 1
-                end
-                -- Update selection
-                state.selectionStart = { line = pos.line, char = pos.char }
-                state.selectionEnd = { line = pos.line, char = pos.char }
-                state.text = ui.reconstructText(state.lines)
-            elseif key == "delete" then
-                if not ui.isSelectionEmpty(state) then
-                    ui.deleteSelection(state)
-                elseif pos.char < #state.lines[pos.line] then
-                    -- Delete character after cursor
-                    local line = state.lines[pos.line]
-                    state.lines[pos.line] = line:sub(1, pos.char) .. line:sub(pos.char + 2)
-                elseif pos.line < #state.lines then
-                    -- Merge with next line
-                    state.lines[pos.line] = state.lines[pos.line] .. state.lines[pos.line + 1]
-                    table.remove(state.lines, pos.line + 1)
-                end
-                -- Update selection
-                state.selectionStart = { line = pos.line, char = pos.char }
-                state.selectionEnd = { line = pos.line, char = pos.char }
-                state.text = ui.reconstructText(state.lines)
-            elseif key == "left" then
-                if pos.char > 0 then
-                    pos.char = pos.char - 1
-                elseif pos.line > 1 then
-                    pos.line = pos.line - 1
-                    pos.char = #state.lines[pos.line]
-                end
-                if isShiftDown then
-                    state.selectionEnd = { line = pos.line, char = pos.char }
-                else
-                    state.selectionStart = { line = pos.line, char = pos.char }
-                    state.selectionEnd = { line = pos.line, char = pos.char }
-                end
-            elseif key == "right" then
-                if pos.char < #state.lines[pos.line] then
-                    pos.char = pos.char + 1
-                elseif pos.line < #state.lines then
-                    pos.line = pos.line + 1
-                    pos.char = 0
-                end
-                if isShiftDown then
-                    state.selectionEnd = { line = pos.line, char = pos.char }
-                else
-                    state.selectionStart = { line = pos.line, char = pos.char }
-                    state.selectionEnd = { line = pos.line, char = pos.char }
-                end
-            elseif key == "up" then
-                if pos.line > 1 then
-                    pos.line = pos.line - 1
-                    pos.char = math.min(pos.char, #state.lines[pos.line])
-                end
-                if isShiftDown then
-                    state.selectionEnd = { line = pos.line, char = pos.char }
-                else
-                    state.selectionStart = { line = pos.line, char = pos.char }
-                    state.selectionEnd = { line = pos.line, char = pos.char }
-                end
-            elseif key == "down" then
-                if pos.line < #state.lines then
-                    pos.line = pos.line + 1
-                    pos.char = math.min(pos.char, #state.lines[pos.line])
-                end
-                if isShiftDown then
-                    state.selectionEnd = { line = pos.line, char = pos.char }
-                else
-                    state.selectionStart = { line = pos.line, char = pos.char }
-                    state.selectionEnd = { line = pos.line, char = pos.char }
-                end
-            elseif key == "home" then
-                pos.char = 0
-                if isShiftDown then
-                    state.selectionEnd = { line = pos.line, char = pos.char }
-                else
-                    state.selectionStart = { line = pos.line, char = pos.char }
-                    state.selectionEnd = { line = pos.line, char = pos.char }
-                end
-            elseif key == "end" then
-                pos.char = #state.lines[pos.line]
-                if isShiftDown then
-                    state.selectionEnd = { line = pos.line, char = pos.char }
-                else
-                    state.selectionStart = { line = pos.line, char = pos.char }
-                    state.selectionEnd = { line = pos.line, char = pos.char }
-                end
-            elseif key == "return" or key == "kpenter" then
-                -- Handle new line on enter key
-                ui.handleTextInputForTextInput("\n", state)
-            elseif key == "escape" then
-                ui.focusedTextInputID = nil
-            end
+            if shortcuts[key] then shortcuts[key](state) end
+        elseif keys[key] then
+            keys[key](state, state.cursorPosition, isShiftDown)
         end
     end
 
