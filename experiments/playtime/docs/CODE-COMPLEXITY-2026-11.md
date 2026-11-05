@@ -132,7 +132,7 @@ run took 4 GB: thousands of frames drawn and never ended (no `present`); it ends
 
 - [x] Nothing over 40.
 - The 19 functions between 31 and 38: diminishing returns; split one when it's in the way.
-- knutjump has a body saved 4 million pixels below the world (fell out, then saved): worth a look.
+- [x] knutjump's two figures that fell out of the world (22 bodies at y 4 and 34 million px, 20 joints, nothing else naming them) removed 2026-11-05.
 - MEASURING M6's iMac run (`claudetools/snapshot.sh take a editor`, `love . --specs spec/mipo-spine_spec.lua`).
 - Little-used features need using to find their bugs: `docs/LITTLE-USED.md`.
 - A clone silently leaves out joints whose other body wasn't selected (DEEPER-ISSUES 6): telling the
