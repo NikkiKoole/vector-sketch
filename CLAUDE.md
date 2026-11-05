@@ -44,6 +44,11 @@ love .                           # Run the app
 # Press tab for dopesheet
 ```
 
+## Shell: zsh, not bash
+
+- `for x in $var` doesn't split `$var` into words in zsh (the whole string is one item). Use `${=var}`, a zsh array, `while read`, or do it in Python / `bash -c '…'`.
+- A glob that matches nothing is an error (`no matches found`), not left as literal text.
+
 ## How to run tests
 
 There are currently no automated tests for the main application.
