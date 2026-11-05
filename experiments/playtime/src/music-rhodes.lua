@@ -74,6 +74,74 @@ local function lift(synth, t)
     state.music.rhodesPedal = nil
 end
 
+-- The pedal for the bar: down on a ballad, held chords and the outro's ring (up as each chord lands, down
+-- again just after; let go at a handoff), else up.
+local function pressPedal(p)
+    local synth, song, bar, patch, t0 = p.synth, p.song, p.bar, p.patch, p.bar.t0
+    local role = bar.roles.keys
+    p.pedal = PEDAL[song.style] or role == 'hold' or role == 'outro'
+    if not p.pedal then return lift(synth, t0) end
+    if state.music.rhodesPedal and state.music.rhodesPedal ~= patch then lift(synth, t0) end
+    for _, chord in ipairs(bar.chords) do
+        local t = stepTime(song, t0, chord.s) + p.feel
+        synth.laneAt(patch, t - 0.01, 'damper', 0, 25)                           -- up as the chord lands
+        synth.laneAt(patch, t + 0.09 + humanize(0.012), 'damper', 1, 60)         -- down again just after
+    end
+    state.music.rhodesPedal = patch
+    local M = state.music
+    if M.clipAt then synth.laneAt(patch, M.clipAt, 'damper', 0, 30) end           -- a handoff: let go
+end
+
+-- a ghost chuck: a stab with room after it is cut short and struck again (on the a-of-the-beat after a
+-- long one, the next 8th after a short one), soft and damped
+local function pickGhost(p, hits)
+    local odds = GHOSTS[p.song.style] or 0
+    if p.bar.roles.keys ~= 'comp' or odds <= 0 or p.rnd(100) >= odds then return end
+    local options = {}
+    for i, h in ipairs(hits) do
+        local s, nxt = h.s + (h.len >= 4 and 3 or 2), hits[i + 1]
+        if h.len >= 3 and not h.sidestep and s < 16 and s < h.chord.s + h.chord.len
+            and not (nxt and nxt.s <= s) then
+            options[#options + 1] = { h = h, s = s }
+        end
+    end
+    if #options > 0 then
+        local pick = options[p.rnd(#options) + 1]
+        p.ghost, p.ghostAt = pick.h, pick.s
+    end
+end
+
+-- one of the stabs that pass `keep`, at random, or nil
+local function pickStab(hits, rnd, keep)
+    local options = {}
+    for _, h in ipairs(hits) do if keep(h) then options[#options + 1] = h end end
+    if #options > 0 then return options[rnd(#options) + 1] end
+end
+
+-- The player's ideas for the bar, each at its odds and on a stream of its own (song.ideaOdds): a fill
+-- first (it takes the stabs it plays over away, before the others pick theirs), then a grace note, a bell,
+-- a tremolo.
+local function pickIdeas(p, hits)
+    local ideas, role = p.song.ideaOdds or {}, p.bar.roles.keys
+    local fillRnd = ideaRnd(p, 160000)
+    if (ideas.fills or 0) > 0 and fillRnd(100) < ideas.fills then p.fill = lib.planFill(p, hits, fillRnd) end
+    -- a grace note: half a step under a stab's top, crushed into it
+    local graceRnd = ideaRnd(p, 120000)
+    if (ideas.grace or 0) > 0 and role ~= 'outro' and graceRnd(100) < ideas.grace then
+        p.grace = pickStab(hits, graceRnd, function(h) return h.len >= 2 and not h.sidestep end)
+    end
+    -- a bell note: one high note over the last chord, closing the intro or the song
+    local last, section = hits[#hits], p.bar.section
+    local closes = role == 'outro' and last and last.ring and 1
+        or section and section.kind == 'intro' and p.bar.j == section.bars - 1 and 0.6
+    if last and closes and ideaRnd(p, 130000)(100) < (ideas.bell or 0) * closes then p.bell = last end
+    -- a tremolo: a held chord's top two notes shaken, under the pedal (a ballad, held chords)
+    local tremoloRnd = ideaRnd(p, 140000)
+    if p.pedal and (ideas.tremolo or 0) > 0 and tremoloRnd(100) < ideas.tremolo then
+        p.tremolo = pickStab(hits, tremoloRnd, function(h) return h.len >= 8 and not h.sidestep and h ~= p.grace end)
+    end
+end
+
 -- The player for one bar of keys, or nil when the keys play plainly (humanize off, not an electric piano,
 -- no per-note engine). Books the bar's pedal. Call before the bar's stabs.
 function lib.bar(bar, hits)
@@ -84,69 +152,12 @@ function lib.bar(bar, hits)
         return nil
     end
     defineShapes(synth)
-    local rnd = stream(song.seed, 9900 + bar.b)
-    local p = { synth = synth, song = song, style = style, bar = bar, patch = patch, rnd = rnd,
+    local p = { synth = synth, song = song, style = style, bar = bar, patch = patch,
+                rnd = stream(song.seed, 9900 + bar.b),
                 feel = (FEEL[song.style] or 0) / 1000, arc = ARC[(bar.j or 0) % 4 + 1] }
-    -- the pedal: a ballad, held chords, the outro's ring
-    local role = bar.roles.keys
-    p.pedal = PEDAL[song.style] or role == 'hold' or role == 'outro'
-    if p.pedal then
-        if state.music.rhodesPedal and state.music.rhodesPedal ~= patch then lift(synth, t0) end
-        for _, chord in ipairs(bar.chords) do
-            local t = stepTime(song, t0, chord.s) + p.feel
-            synth.laneAt(patch, t - 0.01, 'damper', 0, 25)                           -- up as the chord lands
-            synth.laneAt(patch, t + 0.09 + humanize(0.012), 'damper', 1, 60)         -- down again just after
-        end
-        state.music.rhodesPedal = patch
-        local M = state.music
-        if M.clipAt then synth.laneAt(patch, M.clipAt, 'damper', 0, 30) end           -- a handoff: let go
-    else
-        lift(synth, t0)
-    end
-    -- a ghost chuck: a stab with room after it is cut short and struck again (on the a-of-the-beat
-    -- after a long one, the next 8th after a short one), soft and damped
-    local odds = GHOSTS[song.style] or 0
-    if role == 'comp' and odds > 0 and rnd(100) < odds then
-        local options = {}
-        for i, h in ipairs(hits) do
-            local s, nxt = h.s + (h.len >= 4 and 3 or 2), hits[i + 1]
-            if h.len >= 3 and not h.sidestep and s < 16 and s < h.chord.s + h.chord.len
-                and not (nxt and nxt.s <= s) then
-                options[#options + 1] = { h = h, s = s }
-            end
-        end
-        if #options > 0 then
-            local pick = options[rnd(#options) + 1]
-            p.ghost, p.ghostAt = pick.h, pick.s
-        end
-    end
-    local ideas = song.ideaOdds or {}
-    -- a fill (first: it takes the stabs it plays over away, before the others pick theirs)
-    local fillRnd = ideaRnd(p, 160000)
-    if (ideas.fills or 0) > 0 and fillRnd(100) < ideas.fills then p.fill = lib.planFill(p, hits, fillRnd) end
-    -- a grace note: half a step under a stab's top, crushed into it
-    local graceRnd = ideaRnd(p, 120000)
-    if (ideas.grace or 0) > 0 and role ~= 'outro' and graceRnd(100) < ideas.grace then
-        local options = {}
-        for _, h in ipairs(hits) do
-            if h.len >= 2 and not h.sidestep then options[#options + 1] = h end
-        end
-        if #options > 0 then p.grace = options[graceRnd(#options) + 1] end
-    end
-    -- a bell note: one high note over the last chord, closing the intro or the song
-    local last, section = hits[#hits], bar.section
-    local closes = role == 'outro' and last and last.ring and 1
-        or section and section.kind == 'intro' and bar.j == section.bars - 1 and 0.6
-    if last and closes and ideaRnd(p, 130000)(100) < (ideas.bell or 0) * closes then p.bell = last end
-    -- a tremolo: a held chord's top two notes shaken, under the pedal (a ballad, held chords)
-    local tremoloRnd = ideaRnd(p, 140000)
-    if p.pedal and (ideas.tremolo or 0) > 0 and tremoloRnd(100) < ideas.tremolo then
-        local options = {}
-        for _, h in ipairs(hits) do
-            if h.len >= 8 and not h.sidestep and h ~= p.grace then options[#options + 1] = h end
-        end
-        if #options > 0 then p.tremolo = options[tremoloRnd(#options) + 1] end
-    end
+    pressPedal(p)
+    pickGhost(p, hits)
+    pickIdeas(p, hits)
     return p
 end
 
