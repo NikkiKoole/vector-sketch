@@ -99,6 +99,25 @@ docs/MEASURING.md.
 | `snapshot.sh` + `snapshots/` | Before/after snapshots of scenes, Mipos and the editor for refactors | `claudetools/snapshot.sh take before`, `... diff before after` |
 | `flight-analyze.py`, `flight-window.py` | Summaries of a flight-recorder dump (`src/flight-recorder.lua`): grab force, joint stretch | `python3 claudetools/flight-analyze.py dump.json` |
 
+## Checking the code
+
+`claudetools/lint.sh` runs the checks in one go: luacheck (should say 0 warnings), module functions nothing
+calls, shellcheck, ruff. `--all` adds luacheck's list of the most complex functions and lua-language-server
+(~25 s). Only luacheck has to be clean; the rest are lists to read.
+
+lua-language-server (2026-11-05, config `claudetools/luals.json`) is mostly noise here: it doesn't know
+LÖVE's or Box2D's objects (undefined-field), scene scripts' globals (undefined-global, archive/) or tables
+filled in later (need-check-nil, inject-field). Its known false alarms: `function lib.x(...) return y(...) end`
+wrappers and `love.draw(lag / dt)` (redundant-parameter), `bassLine(...)` in music-parts (the bass lines take
+different arguments), `dt or 1 / 60` (ambiguity-1). Installs: `brew install lua-language-server shellcheck`,
+`python3 -I -m pip install --break-system-packages ruff` (Homebrew's ruff builds Rust from source on this Mac).
+
+| Tool | What | Run |
+|---|---|---|
+| `lint.sh` | All the static checks | `claudetools/lint.sh [--all]` |
+| `unused-functions.py` | `lib.x` / `M.x` / `ui.x` in src/ that nothing names | `python3 -I claudetools/unused-functions.py` |
+| `luals.json` | lua-language-server's settings for lint.sh | |
+
 ## Project upkeep
 
 | Tool | What | Run |

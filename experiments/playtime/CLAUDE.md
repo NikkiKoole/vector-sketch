@@ -208,7 +208,7 @@ Both should report **0 warnings / 0 errors**; keep it that way.
 ## UI patterns
 
 - Modules return `lib = {}` table, live in `src/ui/`
-- Layout helpers: `ui.alignedLabel()` for vertical centering, `ui.sameLine()` for horizontal flow
+- Layout helpers: `ui.alignedLabel()` for vertical centering, `ui.createLayout()` + `ui.nextLayoutPosition()` for rows/columns of widgets (`ui.sameLine()` exists but nothing uses it)
 - Accordion state tables are local to their respective extracted module
 
 ## Mesh deformation & skinning

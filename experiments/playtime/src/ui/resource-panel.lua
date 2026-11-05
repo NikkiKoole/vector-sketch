@@ -2,7 +2,6 @@
 -- The RESOURCE part of the sfixture panel (src/ui/sfixture-editor.lua): which backdrop's picture it
 -- uses (outlined on stage), its mesh kept fresh (src/cdt.lua), clear splits, centre on the body.
 -- Split out of sfixture-editor.lua (CODE-SPLITS-2026-10.md SPLIT4).
-local mathutils = require('src.math-utils')
 local ui = require('src.ui.all')
 local camera = require('src.camera')
 local cam = camera.getInstance()
@@ -68,7 +67,7 @@ function lib.draw(ud, myID, x, y, advance)
                 resBodyThing.extraSteiner = nil
                 local bd = resourceLink.backdrop(ud)
                 if bd then
-                    cdt.computeResourceMesh(ud, resBody, bd, mathutils)
+                    cdt.computeResourceMesh(ud, resBody, bd)
                 end
             end
             nextRow()

@@ -65,7 +65,8 @@ function lib.apply(s)
             music.style = s.style
         end
     end
-    if layers and music.layers then music.layers(layers, { at = s.at }) end
+    -- music.layers switches at the next bar line; it takes no timing, so a zone's `at` doesn't apply here
+    if layers and music.layers then music.layers(layers) end
 end
 
 return lib

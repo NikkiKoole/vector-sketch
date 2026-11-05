@@ -1,0 +1,8 @@
+{
+  "runtime.version": "LuaJIT",
+  "runtime.path": ["?.lua", "?/init.lua"],
+  "diagnostics.globals": ["love", "jit", "describe", "it", "before_each", "after_each", "assert", "pending", "spy", "stub", "setup", "teardown"],
+  "workspace.ignoreDir": ["vendor", "spec", "experiments", "webtest", "native", "claudetools", "tools", ".snapshots", "scripts"],
+  "workspace.checkThirdParty": false,
+  "workspace.library": []
+}
