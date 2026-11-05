@@ -164,20 +164,21 @@ end
 local ideaOdds = plan.ideaOdds
 lib.ideaOdds = ideaOdds
 
--- One bar of a song, part by part, in this order (the parts share the bar's random stream and the
--- performance jitter, so the order is part of the sound).
-local function bookBar(synth, t0, song, b)
-    local style = lib.styles[song.style]
-    M.barStart = t0
+-- The bar's feel, for every style (the loops too): the ideas' odds, the dynamics (every part a volume step
+-- or two up or down this bar: music-parts' play adds it) and the range idea's bass drop (a phrase's first
+-- downbeat an octave down, at the idea's odds).
+local function barFeel(song, style, b)
     song.ideaOdds = ideaOdds(song, style)
-    -- dynamics: every part a volume step or two up or down this bar (music-parts' play adds it)
     M.dynamic = not style.loop and plan.dynamicAt(song, b, song.ideaOdds.dynamics or 0) or 0
-    -- range: a phrase's first downbeat the bass an octave down (music-parts' play), at the idea's odds
     local rangeOdds, j0 = song.ideaOdds.range or 0, song.barIndex and song.barIndex[b]
     local kind = song.barSection and song.barSection[b] and song.barSection[b].kind
     M.bassDrop = not style.loop and rangeOdds > 0 and j0 and j0 % 4 == 0 and (kind == 'A' or kind == 'B')
         and stream(song.seed, 9800 + b)(100) < rangeOdds
-    if style.loop then return (LOOP_BARS[style.loop] or bookLoopBar)(synth, t0, song, b) end
+end
+
+-- What the parts of a composed bar share: its section, chords (the impacts play along in them), the band,
+-- and the bar's random stream.
+local function newBar(synth, t0, song, b, style)
     local section, j = song.barSection[b], song.barIndex[b]
     applyLift(song, section)
     local bar = { synth = synth, t0 = t0, song = song, b = b, style = style, section = section, j = j,
@@ -188,37 +189,69 @@ local function bookBar(synth, t0, song, b)
         chord.lydian = song.lydian and chord.quality == 'maj9'
         remember(stepTime(song, t0, chord.s), chordPcs(song, chord)) -- impacts play along in the chord
     end
-    if style.picking == 'travis' then return parts.bookTravis(bar) end -- strum: the guitar alone
-    if style.picking == 'jabs' then return parts.bookJabs(bar) end     -- rollo: bass and guitar stabs
-    if style.picking == 'jingle' then return parts.bookJingle(bar) end -- jingle: its own four parts
-    -- the tune plays this bar's section (the Rhodes player's fills wait for its breaths)
-    bar.tuneOn = lib.melody and section.roles.lead and song.hasLead ~= false
-    local hits, sidestepAt, pushes = keysHits(bar)
-    bookKeys(bar, hits)
-    local groove = style.groove == 'lofi'
-        and lofiGroove(song, section.kind, j, section.bars, bar.band and bar.roles.drums or 'none',
-                       stream(song.seed, 3000 + b))
-    if song.tone then bookTone(synth, song, section, j, bar.rnd) end
+    return bar
+end
+
+-- lofi's tape tone; once a song without one starts, the shared patches it rode get their own cutoffs back
+local function bookTapeTone(bar)
+    local synth, song = bar.synth, bar.song
+    if song.tone then bookTone(synth, song, bar.section, bar.j, bar.rnd) end
     if not song.tone and not song.toneReset and synth.slotFilter and synth.patches then
-        -- lofi's tape tone stays on the shared patches it rides: put their own cutoffs back
         song.toneReset = true
         for _, name in ipairs({ 'lofiKeys', 'vibes', 'roundBass' }) do
             local patch = synth.patches[name]
             if patch and patch.filter then synth.slotFilter(name, patch.filter.cutoff) end
         end
     end
-    if style.vinyl then bookVinyl(bar) end
-    bookBass(bar, groove, pushes, sidestepAt)
-    if style.riff and not (section.kind == 'outro' and j >= 2) then bookRiff(bar) end
-    bookDrums(bar, groove)
+end
+
+-- The band's colours, in a song's A and B: the horns on a phrase's third bar, the guitar, the strings in B.
+local function bookColours(bar, pushes)
+    local song, style, section, j = bar.song, bar.style, bar.section, bar.j
     local inSong = section.kind == 'A' or section.kind == 'B'
     if song.horns and bar.band and inSong and j % 4 == 2 then bookHorns(bar) end
     if style.guitar and bar.band and inSong then bookGuitar(bar, pushes) end
     if style.strings and section.kind == 'B' then bookStrings(bar) end
+end
+
+-- The lines over the band: the tune, its answer, wave's picked line.
+local function bookLines(bar)
+    local song, style = bar.song, bar.style
     local tuneInSection = lib.melody and bar.roles.lead and song.hasLead ~= false
     local tunePlayed = tuneInSection and bookTune(bar) or 0
     if style.answer and lib.melody then parts.bookAnswer(bar, tunePlayed, tuneInSection) end
     if style.picks and lib.melody then parts.bookPicks(bar) end -- wave: a line from the comp's own keys
+end
+
+-- the styles that play one instrument their own way (style.picking): music-parts' function for each
+local PICKING = { travis = 'bookTravis', -- strum: the guitar alone
+                  jabs = 'bookJabs',     -- rollo: bass and guitar stabs
+                  jingle = 'bookJingle' } -- jingle: its own four parts
+
+-- One bar of a song, part by part, in this order (the parts share the bar's random stream and the
+-- performance jitter, so the order is part of the sound).
+local function bookBar(synth, t0, song, b)
+    local style = lib.styles[song.style]
+    M.barStart = t0
+    barFeel(song, style, b)
+    if style.loop then return (LOOP_BARS[style.loop] or bookLoopBar)(synth, t0, song, b) end
+    local bar = newBar(synth, t0, song, b, style)
+    if PICKING[style.picking] then return parts[PICKING[style.picking]](bar) end
+    local section = bar.section
+    -- the tune plays this bar's section (the Rhodes player's fills wait for its breaths)
+    bar.tuneOn = lib.melody and section.roles.lead and song.hasLead ~= false
+    local hits, sidestepAt, pushes = keysHits(bar)
+    bookKeys(bar, hits)
+    local groove = style.groove == 'lofi'
+        and lofiGroove(song, section.kind, bar.j, section.bars, bar.band and bar.roles.drums or 'none',
+                       stream(song.seed, 3000 + b))
+    bookTapeTone(bar)
+    if style.vinyl then bookVinyl(bar) end
+    bookBass(bar, groove, pushes, sidestepAt)
+    if style.riff and not (section.kind == 'outro' and bar.j >= 2) then bookRiff(bar) end
+    bookDrums(bar, groove)
+    bookColours(bar, pushes)
+    bookLines(bar)
 end
 
 -- The style was just picked: skip the intro into the first A with the tune and the band in, so the
