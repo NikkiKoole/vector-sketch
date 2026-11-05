@@ -164,3 +164,33 @@ parts (music-theory, skinning's `meshusertVertices`, the polygon modules) run wi
   potato head's torso1 panel that makes a shape Box2D refuses (`fixtures.lua:132: Box2D assertion
   failed`), and the next click finds the Mipo half rebuilt. Same before and after the splits, so
   older. Find which slider, and keep its values to shapes Box2D takes.
+  2026-11-05 (the iMac, Radeon Pro 575X 4 GB, macOS 14.6): FOUND the slider: the shape panel's `mipo_sx` /
+  `mipo_sy` run -10..10 (negative = mirrored), so the midpoint is scale 0, a part 0 wide (any part:
+  torso1 click 36/38, lhand 36/38). The failed rebuild leaves a body with no fixtures and the next
+  rebuild dies at `mipo-build.lua:267` (`body:getFixtures()[1]:getGroupIndex()`). Dragging the slider
+  through 0 in the editor does the same. FIXED in the panel: `awayFromZero` keeps |sx|, |sy| >= 0.1,
+  sign kept (src/ui/mipo/body-panel.lua). Not yet: getPoseCache could survive a fixture-less body.
+  On this machine the editor snapshot didn't repeat even before the fix (two takes differ from that
+  click on: the half-rebuilt state varies). With the fix the clicks get further and the WHOLE RUN
+  ABORTS (exit 134) at potato lhand click 41 (a colour button), in the GPU driver: macOS's crash
+  report says `Graphics kernel error` in `glDrawElements` under `love.graphics.printf` ->
+  `flushStreamDraws` (AMDRadeonX4000GLDriver kills the client). Same at a minimum scale of 0.25 and 0.5,
+  so not the tiny part. The potato lhand panel ALONE runs all 59 clicks clean: so it's something the
+  earlier panels leave behind, not the hand itself. Ruled out, each by a run that still aborted:
+  - bad numbers: no NaN / inf / >1e7 reaches any rectangle, polygon, line, circle, arc, draw, print,
+    printf (all wrapped and checked);
+  - GPU memory: love.graphics.getStats after each panel stays flat (texturememory ~47-50 MB, 122-146
+    images, 2 canvases, on a 4 GB card); a full collectgarbage between panels changes nothing;
+  - the draws themselves: the last 40 calls before the abort are plain UI (rounded rectangles, button
+    labels; it dies on printf('random rubberleg-pearbod'), which only flushes the batch);
+  - images / canvases released while still bound: Image and Canvas :release() made no-ops, still aborts.
+  The driver dies in glrATI_SI_ResourceMgrValidateConstantState: checking the resources still BOUND
+  (texture units, a shader's uniform images), not the batch. Open suspects: a Mesh (or its texture)
+  released or rebuilt while still bound (Mesh:release wasn't covered), a shader uniform left pointing at
+  a dead texture (the Mipo shader's pattern/mask images), or this AMD GL driver alone.
+  NEXT, on the other machine: (1) `claudetools/snapshot.sh take a editor` twice and diff: does it run
+  through and repeat there? If yes, the abort is this iMac's driver and the snapshot is usable there;
+  take the reference there before refactoring body-panel / mipo-build. (2) If it aborts there too:
+  run the panels in halves (editor_spec's part list) to find which earlier panel sets it up, and count
+  live images / canvases (love.graphics.getStats: images, canvases, texturememory) per panel.
+  Seen on the way: `mipos` snapshot repeats fine on this machine; `outlines` and `overlay` too.

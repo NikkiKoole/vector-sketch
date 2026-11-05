@@ -17,6 +17,13 @@ local editPartAndMirror = widgets.editPartAndMirror
 local BUTTON_SPACING = ui.theme.spacing
 local limbSkinTextures = C.limbSkinTextures
 
+-- a part's scale (sx / sy) kept at least MIN_SCALE from zero, its sign (the mirror) kept; nil stays nil
+local MIN_SCALE = 0.1
+local function awayFromZero(v)
+    if v == nil or math.abs(v) >= MIN_SCALE then return v end
+    return v < 0 and -MIN_SCALE or MIN_SCALE
+end
+
 -- on a spine every band is cut from torso1's shape, so its shape panel edits torso1
 local function shapePartFor(instance, partName)
     local creation = instance.dna and instance.dna.creation
@@ -342,8 +349,9 @@ function lib.drawShape(p, y)
             -- Advance y past the grid
             y = y + gridHeight + BUTTON_SPACING
 
-            -- sx slider
-            local sxVal = ui.sliderWithInput('mipo_sx', x, y, 120, -10, 10, partData.dims.sx or 1)
+            -- sx slider (negative mirrors the part; kept off zero: a part 0 wide is a shape Box2D refuses, and
+            -- the Mipo was left half rebuilt, MEASURING M6)
+            local sxVal = awayFromZero(ui.sliderWithInput('mipo_sx', x, y, 120, -10, 10, partData.dims.sx or 1))
             ui.alignedLabel(x, y, '  sx')
             if sxVal and sxVal ~= (partData.dims.sx or 1) then
                 editPartAndMirror(instance, shapePart, function(name)
@@ -355,7 +363,7 @@ function lib.drawShape(p, y)
             y = y + ROW
 
             -- sy slider
-            local syVal = ui.sliderWithInput('mipo_sy', x, y, 120, -10, 10, partData.dims.sy or 1)
+            local syVal = awayFromZero(ui.sliderWithInput('mipo_sy', x, y, 120, -10, 10, partData.dims.sy or 1))
             ui.alignedLabel(x, y, '  sy')
             if syVal and syVal ~= (partData.dims.sy or 1) then
                 editPartAndMirror(instance, shapePart, function(name)
