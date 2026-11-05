@@ -103,6 +103,7 @@ curl -X POST localhost:8001/specs -d '{"fresh":true}'                          #
 - Pure specs (math, utils, shapes): work everywhere, no guard needed
 - LÖVE-dependent specs (physics, integration, ui-smoke): start with `if not love then return end`
 - Busted must be installed for Lua 5.1: `luarocks --lua-version 5.1 install busted`
+- Changing music code that shouldn't change what plays (a refactor, a cleanup): `luajit claudetools/music-trace.lua take <dir>/before` first, then `take <dir>/after` and `diff <dir>/before <dir>/after`. Every synth call of 133 fixed scenarios (every style, the ideas, the jam's picks), ~7 s; it must say `all identical`. A new code path needs a scenario that runs it (the file's top comment).
 
 ## Luacheck
 
