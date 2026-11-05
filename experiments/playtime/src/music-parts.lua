@@ -1101,40 +1101,47 @@ end
 -- silent in ~60% of the bars against ~5% in the real pieces (docs/MUSIC-ANALYSIS.md).
 -- style.answer = { patch, lo, hi (its range), vol }; how often: the 'answer' idea's odds (% of the free
 -- bars; style.ideas, the spice slider, song.ideaOdds)
-local function bookAnswer(bar, tunePlayed, tuneInSection)
-    local song, style, section, j = bar.song, bar.style, bar.section, bar.j
-    local answer = style.answer
+-- whether this bar answers: the band in, an A or B, the tune silent (in a section with no tune, every other
+-- bar), the keys not filling its end (src/music-rhodes.lua), citypop's horns not shouting there; then the
+-- idea's odds. Returns the bar's answer stream, or nil.
+local function answerStream(bar, tunePlayed, tuneInSection)
+    local song, section, j = bar.song, bar.section, bar.j
     if not bar.band or (section.kind ~= 'A' and section.kind ~= 'B') or tunePlayed > 0 then return end
-    if bar.filled then return end -- the keys fill this bar's end (src/music-rhodes.lua)
+    if bar.filled then return end
     if not tuneInSection and j % 2 == 0 then return end
-    if song.horns and j % 4 == 2 then return end -- citypop's horns shout here: they are the answer
+    if song.horns and j % 4 == 2 then return end
     local rnd = stream(song.seed, 8000 + bar.b)
     if rnd(100) >= ((song.ideaOdds or {}).answer or 0) then return end
-    local rhythm, start = D.answers[rnd(#D.answers) + 1], 2
-    local chord = chordAtStep(song, bar.b, start)
+    return rnd
+end
+
+-- the first note: the guide tone (the chord's 3rd or 7th) nearest a point near the top, up or down (an
+-- octave of range always holds one; searching only down, it once stuck at the floor and slid out of the
+-- key by half steps, Bb A G# over F6/9, heard 2026-11-02)
+local function answerStart(song, chord, answer, rnd)
     local root = (song.key + chord.degree) % 12
     local guides = {}
     for _, interval in ipairs(qualityOf(song, chord.quality)) do
         local i = interval % 12
         if i == 3 or i == 4 or i == 10 or i == 11 then guides[(root + i) % 12] = true end
     end
-    -- the first note: the guide tone nearest a point near the top, up or down (an octave of range
-    -- always holds one; searching only down, it once stuck at the floor and slid out of the key by
-    -- half steps, Bb A G# over F6/9, heard 2026-11-02)
     local aim, midi = answer.hi - rnd(5), nil
     for d = 0, 11 do
         if not midi and aim - d >= answer.lo and guides[(aim - d) % 12] then midi = aim - d end
         if not midi and aim + d <= answer.hi and guides[(aim + d) % 12] then midi = aim + d end
     end
-    midi = midi or aim
-    -- the steps down keep to the key's scale (the chord's avoid notes skipped), and may go a fifth
-    -- under the range rather than leave the key
-    local floor = answer.lo - 7
+    return midi or aim
+end
+
+-- the line: the steps down keep to the key's scale (the chord's avoid notes skipped), and may go a fifth
+-- under the range (floor) rather than leave the key; the last note lands on the nearest chord tone at or
+-- below it
+local function answerLine(song, b, rhythm, start, midi, floor)
     local notes = {}
     for k, step in ipairs(rhythm) do
         local s = start + step
         if s > 15 then break end
-        local here = chordAtStep(song, bar.b, s)
+        local here = chordAtStep(song, b, s)
         if k > 1 then
             local m = midi - 1
             while m > floor and not (theory.inKey(song, m) and not theory.isAvoid(song, m, here)) do m = m - 1 end
@@ -1144,11 +1151,21 @@ local function bookAnswer(bar, tunePlayed, tuneInSection)
         notes[#notes + 1] = { s = s, midi = midi, chord = here }
     end
     local last = notes[#notes]
-    if last then -- the last note on a chord tone: the nearest one at or below it
+    if last then
         local m = last.midi
         while m > floor and not theory.isChordTone(song, m, last.chord) do m = m - 1 end
         if m > floor then last.midi = m end
     end
+    return notes
+end
+
+local function bookAnswer(bar, tunePlayed, tuneInSection)
+    local song, answer = bar.song, bar.style.answer
+    local rnd = answerStream(bar, tunePlayed, tuneInSection)
+    if not rnd then return end
+    local rhythm, start = D.answers[rnd(#D.answers) + 1], 2
+    local midi = answerStart(song, chordAtStep(song, bar.b, start), answer, rnd)
+    local notes = answerLine(song, bar.b, rhythm, start, midi, answer.lo - 7)
     for k, note in ipairs(notes) do
         local len = notes[k + 1] and notes[k + 1].s - note.s or 4
         local vol = (answer.vol or 3) - (k == 1 and 0 or 1) + (k == #notes and 1 or 0) -- the first and last lean
