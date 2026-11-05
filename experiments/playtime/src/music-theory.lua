@@ -27,22 +27,25 @@ end
 -- one that moves least from the previous voicing (top-voice leaps over 4 cost extra), pulled toward 62.
 -- moveTop: the same chord struck again, re-voiced: not the previous voicing, and the top note moving
 -- if it can (top-line comping, the idea 'revoice': music-parts' bookKeys)
-local function voiceChord(rootPc, intervals, lo, hi, previous, moveTop)
-    if intervals.stack then -- a fixed shape: the octave nearest the previous voicing's middle
-        local best, bestCost = nil, math.huge
-        for octave = 2, 7 do
-            local v = {}
-            for j, interval in ipairs(intervals) do v[j] = rootPc + interval + 12 * octave end
-            if v[1] >= lo and v[1] <= lo + 12 and v[#v] <= hi then
-                local mean = 0
-                for j = 1, #v do mean = mean + v[j] / #v end
-                local target = previous and (previous[1] + previous[#previous]) / 2 or 62
-                local cost = math.abs(mean - target)
-                if cost < bestCost then bestCost, best = cost, v end
-            end
+-- a fixed shape (intervals.stack): the octave nearest the previous voicing's middle
+local function voiceStack(rootPc, intervals, lo, hi, previous)
+    local best, bestCost = nil, math.huge
+    for octave = 2, 7 do
+        local v = {}
+        for j, interval in ipairs(intervals) do v[j] = rootPc + interval + 12 * octave end
+        if v[1] >= lo and v[1] <= lo + 12 and v[#v] <= hi then
+            local mean = 0
+            for j = 1, #v do mean = mean + v[j] / #v end
+            local target = previous and (previous[1] + previous[#previous]) / 2 or 62
+            local cost = math.abs(mean - target)
+            if cost < bestCost then bestCost, best = cost, v end
         end
-        return best or previous
     end
+    return best or previous
+end
+
+-- the chord's pitch classes, each once, sorted
+local function pitchClasses(rootPc, intervals)
     local pcs = {}
     for _, interval in ipairs(intervals) do
         local pc = (rootPc + interval) % 12
@@ -51,47 +54,69 @@ local function voiceChord(rootPc, intervals, lo, hi, previous, moveTop)
         if not dup then pcs[#pcs + 1] = pc end
     end
     table.sort(pcs)
+    return pcs
+end
+
+-- the pitch classes stacked upward from the one at `rotation`, the second from the top dropped
+-- an octave when drop2
+local function chordShape(pcs, rotation, drop2)
+    local n = #pcs
+    local shape = {}
+    for j = 0, n - 1 do
+        local note = pcs[(rotation + j) % n + 1]
+        while j > 0 and note <= shape[j] do note = note + 12 end
+        shape[j + 1] = note
+    end
+    if drop2 then
+        shape[n - 1] = shape[n - 1] - 12
+        table.sort(shape)
+    end
+    return shape
+end
+
+-- no semitone or minor ninth (or its octave) between any two notes, no close notes down low
+local function playable(v, n)
+    for a = 1, n do
+        for b = a + 1, n do
+            local d = v[b] - v[a]
+            if d == 1 or d == 13 or d == 25 then return false end
+        end
+        if a > 1 and v[a] - v[a - 1] < 3 and v[a - 1] < 52 then return false end
+    end
+    return true
+end
+
+-- pulled toward 62; how far each voice moves from the previous voicing, top-voice leaps over 4
+-- extra; moveTop: the same voicing again all but ruled out, a top note that stays a little worse
+local function voicingCost(v, n, previous, moveTop)
+    local mean = 0
+    for j = 1, n do mean = mean + v[j] end
+    local cost = 0.5 * math.abs(mean / n - 62)
+    if not previous then return cost end
+    for j = 1, n do cost = cost + math.abs(v[j] - previous[math.min(j, #previous)]) end
+    local topLeap = math.abs(v[n] - previous[#previous])
+    if topLeap > 4 then cost = cost + 2 * (topLeap - 4) end
+    if moveTop then
+        local same = #previous == n
+        for j = 1, n do same = same and v[j] == previous[j] end
+        if same then cost = cost + 1000 elseif topLeap == 0 then cost = cost + 3 end
+    end
+    return cost
+end
+
+local function voiceChord(rootPc, intervals, lo, hi, previous, moveTop)
+    if intervals.stack then return voiceStack(rootPc, intervals, lo, hi, previous) end
+    local pcs = pitchClasses(rootPc, intervals)
     local n, best, bestCost = #pcs, nil, math.huge
     for rotation = 0, n - 1 do
         for drop2 = 0, (n >= 3 and 1 or 0) do
-            local shape = {}
-            for j = 0, n - 1 do
-                local note = pcs[(rotation + j) % n + 1]
-                while j > 0 and note <= shape[j] do note = note + 12 end
-                shape[j + 1] = note
-            end
-            if drop2 == 1 then
-                shape[n - 1] = shape[n - 1] - 12
-                table.sort(shape)
-            end
+            local shape = chordShape(pcs, rotation, drop2 == 1)
             for octave = 2, 7 do
                 local v = {}
                 for j = 1, n do v[j] = shape[j] + 12 * octave end
-                if v[1] >= lo and v[1] <= lo + 12 and v[n] <= hi then
-                    local bad = false
-                    for a = 1, n do
-                        for b = a + 1, n do
-                            local d = v[b] - v[a]
-                            if d == 1 or d == 13 or d == 25 then bad = true end
-                        end
-                        if a > 1 and v[a] - v[a - 1] < 3 and v[a - 1] < 52 then bad = true end
-                    end
-                    if not bad then
-                        local mean = 0
-                        for j = 1, n do mean = mean + v[j] end
-                        local cost = 0.5 * math.abs(mean / n - 62)
-                        if previous then
-                            for j = 1, n do cost = cost + math.abs(v[j] - previous[math.min(j, #previous)]) end
-                            local topLeap = math.abs(v[n] - previous[#previous])
-                            if topLeap > 4 then cost = cost + 2 * (topLeap - 4) end
-                            if moveTop then
-                                local same = #previous == n
-                                for j = 1, n do same = same and v[j] == previous[j] end
-                                if same then cost = cost + 1000 elseif topLeap == 0 then cost = cost + 3 end
-                            end
-                        end
-                        if cost < bestCost then bestCost, best = cost, v end
-                    end
+                if v[1] >= lo and v[1] <= lo + 12 and v[n] <= hi and playable(v, n) then
+                    local cost = voicingCost(v, n, previous, moveTop)
+                    if cost < bestCost then bestCost, best = cost, v end
                 end
             end
         end
