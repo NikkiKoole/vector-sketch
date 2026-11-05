@@ -77,7 +77,7 @@ end
 -- Causes "candy wrapper" / bowtie collapse at joints when influencing bodies
 -- rotate in opposite directions (the averaged midpoint falls inside the joint).
 -- One vertex, linear blend: the weighted average of where each live bone puts it,
--- in the root body's coordinates.
+-- in the root body's coordinates. Nil when none of its bones is left.
 local function lbsVertex(inflList, rootBody)
     local wxSum, wySum, wSum = 0, 0, 0
     for k = 1, #inflList do
@@ -90,14 +90,22 @@ local function lbsVertex(inflList, rootBody)
             wSum = wSum + infl.w
         end
     end
-    if wSum > 0 then wxSum = wxSum / wSum; wySum = wySum / wSum end
-    return rootBody:getLocalPoint(wxSum, wySum)
+    if wSum <= 0 then return nil end
+    return rootBody:getLocalPoint(wxSum / wSum, wySum / wSum)
 end
 
-local function deformWorldVertsLBS(influences, numVerts, rootBody)
+-- A vertex with no bone left (its joint / anchor deleted, its body destroyed) stays at its rest
+-- place on its own body (restVerts: the placed polygon, body-local) instead of coming loose.
+local function lbsVertexOrRest(inflList, rootBody, restVerts, vi)
+    local x, y = lbsVertex(inflList, rootBody)
+    if x then return x, y end
+    return restVerts[(vi - 1) * 2 + 1], restVerts[(vi - 1) * 2 + 2]
+end
+
+local function deformWorldVertsLBS(influences, numVerts, rootBody, restVerts)
     local out = {}
     for vi = 1, numVerts do
-        out[(vi - 1) * 2 + 1], out[(vi - 1) * 2 + 2] = lbsVertex(influences[vi], rootBody)
+        out[(vi - 1) * 2 + 1], out[(vi - 1) * 2 + 2] = lbsVertexOrRest(influences[vi], rootBody, restVerts, vi)
     end
     return out
 end
@@ -110,7 +118,7 @@ end
 --
 -- Requires per-influence `bindAngle` and per-vertex `bindVerts`. Falls back to LBS
 -- if either is missing (old scenes that were never rebound).
-local function deformWorldVertsDQS(influences, bindVerts, numVerts, rootBody)
+local function deformWorldVertsDQS(influences, bindVerts, numVerts, rootBody, restVerts)
     local atan2, cos, sin = math.atan2, math.cos, math.sin
     local out = {}
 
@@ -124,7 +132,7 @@ local function deformWorldVertsDQS(influences, bindVerts, numVerts, rootBody)
             out[(vi - 1) * 2 + 2] = 0
         -- Fallback path: no bind data for this vertex → LBS for this vertex only.
         elseif not bv then
-            out[(vi - 1) * 2 + 1], out[(vi - 1) * 2 + 2] = lbsVertex(inflList, rootBody)
+            out[(vi - 1) * 2 + 1], out[(vi - 1) * 2 + 2] = lbsVertexOrRest(inflList, rootBody, restVerts, vi)
         else
             local bx, by = bv[1], bv[2]
 
@@ -158,7 +166,9 @@ local function deformWorldVertsDQS(influences, bindVerts, numVerts, rootBody)
             end
 
             if not pxs then -- a bone without its bind angle: linear blend for this vertex
-                out[(vi - 1) * 2 + 1], out[(vi - 1) * 2 + 2] = lbsVertex(inflList, rootBody)
+                out[(vi - 1) * 2 + 1], out[(vi - 1) * 2 + 2] = lbsVertexOrRest(inflList, rootBody, restVerts, vi)
+            elseif wSum <= 0 then -- no bone left
+                out[(vi - 1) * 2 + 1], out[(vi - 1) * 2 + 2] = restVerts[(vi - 1) * 2 + 1], restVerts[(vi - 1) * 2 + 2]
             else
                 -- Blended delta rotation (circular mean).
                 local len = (cosSum * cosSum + sinSum * sinSum) ^ 0.5
@@ -198,11 +208,11 @@ local function deformWorldVertsDQS(influences, bindVerts, numVerts, rootBody)
     return out
 end
 
-local function deformWorldVerts(influences, bindVerts, numVerts, rootBody)
+local function deformWorldVerts(influences, bindVerts, numVerts, rootBody, restVerts)
     if lib.useDQS then
-        return deformWorldVertsDQS(influences, bindVerts, numVerts, rootBody)
+        return deformWorldVertsDQS(influences, bindVerts, numVerts, rootBody, restVerts)
     else
-        return deformWorldVertsLBS(influences, numVerts, rootBody)
+        return deformWorldVertsLBS(influences, numVerts, rootBody, restVerts)
     end
 end
 
@@ -300,7 +310,7 @@ local function deform(extra, body, verts, numVerts)
     if extra.spineBind then
         return spineVerts(extra, body) or verts
     elseif extra.influences and #extra.influences > 0 then
-        return deformWorldVerts(extra.influences, extra.bindVerts, numVerts, body)
+        return deformWorldVerts(extra.influences, extra.bindVerts, numVerts, body, verts)
     end
     return verts
 end
