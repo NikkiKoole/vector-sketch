@@ -428,6 +428,11 @@ local function pressedSelect(hitted, cx, cy)
     if state.scene.sceneScript and not state.world.paused and state.selection.selectedObj then
         state.selection.selectedObj = nil
     end
+    -- a selection left over from before (a click on a body without a thing keeps it) may be gone by now
+    local selected = state.selection.selectedObj
+    if selected and (not selected.body or selected.body:isDestroyed()) then
+        state.selection.selectedObj = nil
+    end
     if modes.is(modes.JOINT_CREATION) and state.selection.selectedObj then
         pressedJointCreation(cx, cy, hitted)
     end
