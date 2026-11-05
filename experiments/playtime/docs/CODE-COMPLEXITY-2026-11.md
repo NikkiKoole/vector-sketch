@@ -101,10 +101,38 @@ destroyed in the editor comes back without that limb's ribbon. The sweep doesn't
 own sfixtures when comparing the reload. Run it again after changing the panels, the rebuilds
 (`recreateThingFromBody`, `recreateJoint`, flip) or the draw of an sfixture kind.
 
+## The tool-modes sweep
+
+`claudetools/tool-modes_spec.lua`: the editor's tool modes and drags, driven by the mouse through
+`src/input-manager.lua` in every scene, whole and cut off halfway by something else (the tool's
+thing destroyed or rebuilt from its panel, another tool, the tool switched off, play mode, the room
+loaded again), then a next click; every frame the game's (world, overlay, panels). 3388 runs. With
+a spec failing first:
+
+- A tool stayed on after its thing was gone: adding ribbon / mesh nodes, placing an sfixture, the
+  mesh triangles, Steiner points (their sfixture or body destroyed from its panel, or a door to
+  another room), and the next click in the world died. Joint making kept a body destroyed or rebuilt
+  after it was picked. `modes.dropWhatsGone` (src/modes.lua), before every press and move: a tool
+  whose thing is gone ends, a gone pick is unpicked, corners of something gone stop being edited;
+  a room load ends every tool (`modes.endAll`). DEEPER-ISSUES 4, in small: what each tool needs is
+  written down in one place now (spec/tool-target-gone_spec.lua).
+- A Steiner point grabbed and the tool switched off before letting go left the drag behind; the next
+  Steiner tool died on a mouse move. It's let go of all the same.
+- `fixtures.replaceShape` destroyed the old sfixture before making the new shape: one Box2D refused
+  lost it and left the registry holding a destroyed one. Found clicking a body knutjump saved 4
+  million pixels below the world. The old one stays (spec/replace-shape-fails_spec.lua).
+- A body rebuilt while dragged with the world running took the drag's mouse joint for one of its
+  own, logging four errors; it's left out quietly (spec/rebuild-while-dragged_spec.lua).
+
+Only logged, as it should be: a draw tool given one point ('Not enough vertices'). Run it again
+after changing input-manager, modes, a panel's tool buttons or what they rebuild. The first full
+run took 4 GB: thousands of frames drawn and never ended (no `present`); it ends each frame now.
+
 ## What's left
 
 - [x] Nothing over 40.
 - The 19 functions between 31 and 38: diminishing returns; split one when it's in the way.
+- knutjump has a body saved 4 million pixels below the world (fell out, then saved): worth a look.
 - MEASURING M6's iMac run (`claudetools/snapshot.sh take a editor`, `love . --specs spec/mipo-spine_spec.lua`).
 - Little-used features need using to find their bugs: `docs/LITTLE-USED.md`.
 - A clone silently leaves out joints whose other body wasn't selected (DEEPER-ISSUES 6): telling the

@@ -29,11 +29,17 @@ end
 -- still a sensor, same density, friction, restitution and group. Returns the new fixture.
 function lib.replaceShape(fixture, points, ud)
     ud = ud or fixture:getUserData()
+    -- the shape first: one Box2D refuses (no area) keeps the old fixture, not none at all
+    local ok, shape = pcall(shapes.newPolygon, points)
+    if not ok then
+        logger:error('sfixture shape refused, kept as it was:', shape)
+        return fixture
+    end
     local body = fixture:getBody()
     local density, friction = fixture:getDensity(), fixture:getFriction()
     local restitution, groupIndex = fixture:getRestitution(), fixture:getGroupIndex()
     fixture:destroy()
-    local newFixture = love.physics.newFixture(body, shapes.newPolygon(points), density)
+    local newFixture = love.physics.newFixture(body, shape, density)
     newFixture:setSensor(true)
     newFixture:setFriction(friction)
     newFixture:setRestitution(restitution)

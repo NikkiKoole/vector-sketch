@@ -138,7 +138,9 @@ describe("input-manager: handlePointer mode dispatch", function()
 
     describe("guard clauses", function()
         it("ignores press in editMeshTriangles mode", function()
-            addBodyAtScreen('rectangle', SX1, SY1, { width = 80, height = 80 })
+            local thing = addBodyAtScreen('rectangle', SX1, SY1, { width = 80, height = 80 })
+            -- the tool works on a selected mesh (without one it ends: modes.dropWhatsGone)
+            state.selection.selectedSFixture = fixtures.createSFixture(thing.body, 0, 0, 'meshusert', { radius = 20 })
             state.currentMode = 'editMeshTriangles'
             press(SX1, SY1)
             assert.is_nil(state.selection.selectedObj)

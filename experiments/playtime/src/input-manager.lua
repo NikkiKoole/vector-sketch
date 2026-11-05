@@ -351,7 +351,7 @@ end
 local function releasedPlaceSteiner()
     if steinerDragIdx > 0 then
         local thing = state.selection.selectedObj
-        if thing and thing.body then
+        if thing and thing.body and not thing.body:isDestroyed() then
             refreshResourceAfterSteinerChange(thing.body)
         end
         steinerDragIdx = 0
@@ -483,6 +483,7 @@ end
 
 local function handlePointer(x, y, id, action, button)
     if playMode.isOn() then return handlePlayPointer(x, y, id, action) end
+    modes.dropWhatsGone()
     if action == "pressed" then
         -- Track whether press originated over a UI element
         state.interaction.pressedOverUI = ui.activeElementID or ui.overPanel or false
@@ -529,6 +530,8 @@ local function handlePointer(x, y, id, action, button)
             recorder:recordMouseJointStart(madedata)
         end
     elseif action == "released" then
+        -- a Steiner point grabbed, then the tool switched off: let go of it all the same
+        if steinerDragIdx > 0 and not modes.is(modes.PLACE_STEINER) then releasedPlaceSteiner() end
         if modes.is(modes.EDIT_MESH_TRIS) then return end
         if modes.is(modes.PLACE_STEINER) then return releasedPlaceSteiner() end
 
@@ -734,6 +737,7 @@ function lib.handleMouseMoved(x, y, dx, dy)
         if love.mouse.isDown(3) or love.mouse.isDown(2) then panCamera(dx, dy) end
         return
     end
+    modes.dropWhatsGone()
 
     -- Steiner drag: live-update the grabbed point's body-local position.
     -- RESOURCE refresh runs on release so we don't thrash bind data per

@@ -99,6 +99,12 @@ Lua's `table.sort` is not stable. Two drawables with the same `composedZ` will a
 
 ## 4. State Mutation Chaos — 27 Writers for currentMode
 
+> 2026-11-05: modes go through `src/modes.lua` (set/clear/is). Leaving a mode now has one rule:
+> `modes.dropWhatsGone` ends a tool whose thing is gone before the editor acts on a press or move,
+> and a room load ends every tool (`modes.endAll`). Found and checked by
+> `claudetools/tool-modes_spec.lua` (CODE-COMPLEXITY-2026-11, the tool-modes sweep). Entering a
+> mode still has no rules.
+
 Analysis of who writes to shared state reveals no clear ownership:
 
 ### state.currentMode — 27 writes across 3 files

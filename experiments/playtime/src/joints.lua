@@ -133,34 +133,37 @@ function lib.extractJoints(body)
     local jointData = {}
 
     for _, joint in ipairs(joints) do
-        local bodyA, bodyB = joint:getBodies()
-        local otherBody = (bodyA == body) and bodyB or bodyA -- Determine the other connected body
-        local jointType = joint:getType()
-        local isBodyA = (bodyA == body)
+        -- a pointer dragging the body (a mouse joint) isn't one of its joints: not carried over
+        if joint:getType() ~= 'mouse' then
+            local bodyA, bodyB = joint:getBodies()
+            local otherBody = (bodyA == body) and bodyB or bodyA -- Determine the other connected body
+            local jointType = joint:getType()
+            local isBodyA = (bodyA == body)
 
-        local data = {
-            offsetA = lib.getJointMetaSetting(joint, "offsetA"),
-            offsetB = lib.getJointMetaSetting(joint, "offsetB"),
-            id = lib.getJointId(joint),
-            jointType = jointType,
-            otherBody = otherBody,
-            scriptmeta = (joint:getUserData() or {}).scriptmeta,
-        label = (joint:getUserData() or {}).label,
-            collideConnected = joint:getCollideConnected(),
-            originalBodyOrder = isBodyA and SIDES.BODY_A or SIDES.BODY_B,
-        }
+            local data = {
+                offsetA = lib.getJointMetaSetting(joint, "offsetA"),
+                offsetB = lib.getJointMetaSetting(joint, "offsetB"),
+                id = lib.getJointId(joint),
+                jointType = jointType,
+                otherBody = otherBody,
+                scriptmeta = (joint:getUserData() or {}).scriptmeta,
+            label = (joint:getUserData() or {}).label,
+                collideConnected = joint:getCollideConnected(),
+                originalBodyOrder = isBodyA and SIDES.BODY_A or SIDES.BODY_B,
+            }
 
-        local handler = jointHandlers[jointType]
-        if handler and handler.extract then
-            -- Extract additional data using the handler
-            local additionalData = handler.extract(joint)
-            for key, value in pairs(additionalData) do
-                data[key] = value
+            local handler = jointHandlers[jointType]
+            if handler and handler.extract then
+                -- Extract additional data using the handler
+                local additionalData = handler.extract(joint)
+                for key, value in pairs(additionalData) do
+                    data[key] = value
+                end
+
+                table.insert(jointData, data)
+            else
+                logger:error("extract: Unsupported joint type: " .. jointType)
             end
-
-            table.insert(jointData, data)
-        else
-            logger:error("extract: Unsupported joint type: " .. jointType)
         end
     end
 

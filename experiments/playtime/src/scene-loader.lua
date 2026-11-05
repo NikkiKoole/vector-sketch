@@ -8,6 +8,7 @@ local camera = require('src.camera')
 local SE = require('src.script-events')
 local FEXT = require('src.file-extensions')
 local signals = require('src.signals')
+local modes = require('src.modes')
 local cam = camera.getInstance()
 
 -- The scene script's hot reload (maybeHotReload): on state, so a hot swap of this file doesn't
@@ -50,6 +51,7 @@ function lib.loadSceneData(data, name)
     state.selection.selectedObj = nil
     state.selection.selectedSFixture = nil
     state.selection.selectedBodies = nil
+    modes.endAll() -- a tool left on would work on the old room's things
     -- Tear down any script still running from the previous scene before its
     -- bodies are destroyed below: fire its unload hook (so it can clean up
     -- while its bodies still exist), then drop the reference so its

@@ -36,10 +36,7 @@ love.mouse.getPosition = function() return 0, 0 end
 local ATTACH = { 'snap', 'anchor', 'texfixture', 'connected-texture', 'tile-repeat', 'grass', 'light',
     'softbody', 'liquid', 'resource', 'meshusert', 'uvusert', 'trace-vertices' }
 
-local function alive(object)
-    local ok, destroyed = pcall(object.isDestroyed, object)
-    return ok and not destroyed
-end
+local alive = sweep.alive
 
 local function resolve(v, target)
     if type(v) == 'function' then return v(target) end
@@ -172,57 +169,6 @@ local function apply(case)
     modes.clear()
 end
 
--- what the world holds: bodies, joints, sfixtures per subtype
-local function census(world)
-    local c = { bodies = world:getBodyCount(), joints = 0, sfixtures = {} }
-    for _, joint in ipairs(world:getJoints()) do
-        if (joint:getUserData() or {}).id then c.joints = c.joints + 1 end
-    end
-    for _, body in ipairs(world:getBodies()) do
-        -- a Mipo's own sfixtures are made again from its DNA on load (a limb's ribbon needs its
-        -- joints: one destroyed in the editor, its ribbon isn't made again), so not counted
-        local thing = utils.thingOf(body)
-        if not (thing and thing.mipoId) then
-            for _, fixture in ipairs(body:getFixtures()) do
-                local ud = fixture:getUserData()
-                if ud and ud.subtype then c.sfixtures[ud.subtype] = (c.sfixtures[ud.subtype] or 0) + 1 end
-            end
-        end
-    end
-    return c
-end
-
-local function compareCensus(p, before, after)
-    if after.bodies ~= before.bodies then p.add('reload bodies: ' .. after.bodies .. ' of ' .. before.bodies) end
-    if after.joints ~= before.joints then p.add('reload joints: ' .. after.joints .. ' of ' .. before.joints) end
-    for subtype, n in pairs(before.sfixtures) do
-        local m = after.sfixtures[subtype] or 0
-        if m ~= n then p.add('reload ' .. subtype .. ' sfixtures: ' .. m .. ' of ' .. n) end
-    end
-end
-
--- the sfixtures-first order and the registry agreeing with the world
-local function checkWorld(p, world)
-    for _, body in ipairs(world:getBodies()) do
-        local thing = utils.thingOf(body)
-        if not fixtures.hasFixturesWithUserDataAtBeginning(body:getFixtures()) then
-            p.add('sfixtures not first on a body: ' .. tostring(thing and thing.shapeType))
-        end
-        if thing and thing.id and registry.getBodyByID(thing.id) ~= body then
-            p.add('body not registered under its id')
-        end
-    end
-    for _, kind in ipairs({ 'bodies', 'joints', 'sfixtures' }) do
-        for _, object in pairs(registry[kind]) do
-            if not alive(object) then p.add('registry ' .. kind .. ' holds a destroyed one') end
-        end
-    end
-    for _, joint in ipairs(world:getJoints()) do
-        local id = (joint:getUserData() or {}).id
-        if id and registry.getJointByID(id) ~= joint then p.add('joint not registered under its id') end
-    end
-end
-
 -- one scene, one action (nil: as it is); returns the problems
 local function run(text, case)
     local p = sweep.problems()
@@ -232,21 +178,11 @@ local function run(text, case)
     if not p.phase('load', function() sceneIO.load(text, world, camera.getInstance()) end) then return p.finish() end
     p.phase('first draw', function() sweep.frame(world) end)
     if case and not p.phase('action', function() apply(case) end) then return p.finish() end
-    p.phase('check', function() checkWorld(p, world) end)
+    p.phase('check', function() sweep.checkWorld(p, world) end)
     p.phase('draw', function() sweep.frame(world) end)
     p.phase('step', function() for _ = 1, 3 do world:update(1 / 60) end end)
     p.phase('draw after step', function() sweep.frame(world) end)
-    local saved, before
-    if p.phase('save', function()
-            before = census(world)
-            saved = json.encode(sceneIO.gatherSaveData(world, camera.getInstance()))
-        end) then
-        local world2 = sweep.fresh()
-        if p.phase('reload', function() sceneIO.load(saved, world2, camera.getInstance()) end) then
-            compareCensus(p, before, census(world2))
-            p.phase('draw reloaded', function() sweep.frame(world2) end)
-        end
-    end
+    sweep.saveAndReload(p, world)
     return p.finish()
 end
 
