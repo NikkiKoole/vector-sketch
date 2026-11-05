@@ -12,6 +12,8 @@ local modes = require('src.modes')
 local bodyParams = require('src.body-params')
 local jointParams = require('src.joint-params')
 local sfixtureParams = require('src.sfixture-params')
+local texfixtureParams = require('src.texfixture-params')
+local subtypes = require('src.subtypes')
 local sweep = require('claudetools.sweep')
 
 local lib = {}
@@ -40,8 +42,16 @@ local function rowsOf(kind, target)
     elseif kind == 'joint' then
         add(jointParams.header); add(jointParams.byType[target:getType()])
     else
-        local rows = sfixtureParams.bySubtype[target:getUserData().subtype]
+        local ud = target:getUserData()
+        local rows = sfixtureParams.bySubtype[ud.subtype]
         add(sfixtureParams.header); add(rows); add(sfixtureParams.footer)
+        -- a texfixture's settings are the panel's accordions (src/ui/sfixture-editor.lua), not bySubtype
+        if not rows and ud.subtype == subtypes.TEXFIXTURE then
+            add(texfixtureParams.position); add(texfixtureParams.texture)
+            if ud.extra.hairs then add(texfixtureParams.hairs) end
+            if ud.extra.plasticine then add(texfixtureParams.plasticine) end
+            for _, layer in ipairs({ 'patch1', 'patch2', 'patch3' }) do add(texfixtureParams.patch(layer)) end
+        end
     end
     return list
 end

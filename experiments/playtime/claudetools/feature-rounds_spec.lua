@@ -28,6 +28,8 @@ local subtypes = require('src.subtypes')
 local registry = require('src.registry')
 local units = require('src.physics-units')
 local pointerJoints = require('src.physics.box2d-pointerjoints')
+local fixtures = require('src.fixtures')
+local shaders = require('src.render.shaders')
 local sweep = require('claudetools.sweep')
 local actions = require('claudetools.actions')
 
@@ -81,6 +83,33 @@ local function insideRim(nodes, x, y)
     return inside
 end
 
+-- a box wearing a picture (an OMP texfixture) drawn with a surface shader that reads the lights
+local function litBox(x, label, shader)
+    local thing = objectManager.addThing('rectangle', { x = x, y = 250, width = 200, height = 200, label = label })
+    local fixture = fixtures.createSFixture(thing.body, 0, 0, subtypes.TEXFIXTURE, { width = 200, height = 200 })
+    local extra = fixture:getUserData().extra
+    extra.OMP, extra.dirty, extra.main = true, true, blob.randomLook()
+    extra[shader] = true
+    return thing
+end
+
+-- the lights a shader gets for this body, against the LIGHT sfixtures in the world
+local function lightsReach(p, world)
+    local lights = 0
+    for _, fixture in ipairs(registry.sfixturesOf(subtypes.LIGHT)) do
+        if sweep.alive(fixture) and fixture:getBody():getWorld() == world then lights = lights + 1 end
+    end
+    for _, body in ipairs(world:getBodies()) do
+        local thing = utils.thingOf(body)
+        if thing and thing.label and thing.label:find('lit by', 1, true) then
+            local count = shaders.gatherLightsForBody(body)
+            if count ~= math.min(lights, 4) then -- MAX_LIGHTS in src/render/shaders.lua
+                p.add('a lit body gets ' .. count .. ' lights of ' .. lights)
+            end
+        end
+    end
+end
+
 -- name -> { build = fn() (makes it in the fresh world, returns its host thing), check = fn(p, world) }
 local RECIPES = {
     softbody = {
@@ -106,6 +135,21 @@ local RECIPES = {
                     end
                 end
             end
+        end,
+    },
+    light = {
+        build = function()
+            room()
+            litBox(-400, 'lit by plasticine', 'plasticine')
+            litBox(400, 'lit by hairs', 'hairs')
+            local lamp = objectManager.addThing('rectangle',
+                { x = 0, y = -300, width = 60, height = 60, label = 'lamp' })
+            fixtures.createSFixture(lamp.body, 0, 0, subtypes.LIGHT, { radius = 10 })
+            return lamp
+        end,
+        check = function(p, world)
+            sane(p, world)
+            lightsReach(p, world)
         end,
     },
 }

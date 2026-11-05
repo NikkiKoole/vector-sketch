@@ -36,5 +36,10 @@ first.
 - [ ] Grass round
 - [ ] Liquid round
 - [ ] Tile repeat round
-- [ ] Light round
+- [x] Light round (2026-11-06: a lamp with a LIGHT sfixture lighting a plasticine and a hairs box; 502 cases, 4
+  seeds x 2 meters, nothing broke, every lit body gets every light, also after a reload. Found on the way:
+  the sweeps never touched a texfixture's settings, its panel builds them from texfixture-params'
+  accordions, not sfixture-params' bySubtype; `claudetools/actions.lua` adds them now. To look at, not a
+  bug: a *directional* light also fades with the distance from its lamp (`range`, 500), so one 300 px
+  away only gives about a third, and turning the lamp round changed a box's halves by ~1%)
 - [ ] Recorder round
