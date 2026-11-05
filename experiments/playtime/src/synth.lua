@@ -562,7 +562,9 @@ local function optionalFn(name)
     return ok and f or nil
 end
 
-local function definePatch(slot, patch, name)
+-- the oscillator, its envelope and tone, level, reverb send; the modes (a shared slot gets all of
+-- them and its LFOs off: it may still hold the last patch's), filter, glide
+local function defineVoice(slot, patch)
     local a, d, s, r = unpack(patch.adsr)
     S.C.instrument(slot, lib.INSTR[patch.wave], a, d, s, r)
     S.C.instrument_harmonics(slot, patch.harmonics or 0)
@@ -570,7 +572,7 @@ local function definePatch(slot, patch, name)
     S.C.instrument_morph(slot, patch.morph or 0)
     S.C.instrument_level(slot, lib.volume * (patch.level or 1))
     S.C.instrument_reverb(slot, patch.reverb or 0)
-    if patch.pool or patch.fx then -- a shared slot may still hold the last patch's modes and LFOs
+    if patch.pool or patch.fx then
         for idx = 0, 6 do S.C.instrument_mode(slot, idx, patch.modes and patch.modes[idx] or MODE_DEFAULTS[idx]) end
         for i = 0, 2 do S.C.instrument_lfo(slot, i, 0, 0, 0) end
     else
@@ -579,50 +581,68 @@ local function definePatch(slot, patch, name)
     local filter = patch.filter or { mode = 0, cutoff = 0, resonance = 0 }
     S.C.instrument_filter(slot, filter.mode, filter.cutoff, filter.resonance)
     S.C.instrument_glide(slot, patch.glide or 0)
-    -- mono = true: one voice, a new note cuts the one sounding (dreamengine's instrument_mono, cb82042a);
-    -- set on every define, so a shared slot is polyphonic again for the next patch
+end
+
+-- How it's played, set on every define so a shared slot's next patch is back at the engine's
+-- defaults (each only with a library that has it):
+-- mono = true: one voice, a new note cuts the one sounding (dreamengine's instrument_mono, cb82042a);
+-- accentCutoff (octaves): an accented note opens the filter that much further (ACC_CUTOFF = 5);
+-- vibrato = the built-in vibrato of PIPE/REED/BOWED/BRASS (1 as played, 0 off: a booked note's own
+-- .vib instead), analog = 0..2 every voice a little different + a slow drift (an old polysynth),
+-- releaseShape = 'linear' / 'exp' / 'damper' (a piano's felt)
+local function definePlaying(slot, patch)
     local mono = optionalFn('instrument_mono')
     if mono then mono(slot, patch.mono and 1 or 0) end
-    -- accentCutoff (octaves): an accented note opens this patch's filter that much further (ACC_CUTOFF = 5,
-    -- engine default 0); set on every define so a shared slot's next patch is back at 0
     local accentRoute = optionalFn('instrument_accent')
     if accentRoute then accentRoute(slot, 5, patch.accentCutoff or 0) end
-    -- humanized playing (on every define, so a shared slot's next patch is back at the engine's defaults):
-    -- vibrato = the built-in vibrato of PIPE/REED/BOWED/BRASS (1 as played, 0 off: a booked note's own
-    -- .vib instead), analog = 0..2 every voice a little different + a slow drift (an old polysynth),
-    -- releaseShape = 'linear' / 'exp' / 'damper' (a piano's felt)
     local vibrato = optionalFn('instrument_vibrato')
     if vibrato then vibrato(slot, patch.vibrato or 1) end
     local analog = optionalFn('instrument_analog')
     if analog then analog(slot, patch.analog or 0) end
     local releaseShape = optionalFn('instrument_release_shape')
     if releaseShape then releaseShape(slot, lib.RELEASE[patch.releaseShape] or patch.releaseShape or 0) end
-    -- a shared slot's lanes (lane_at: the pedal, the filter hand...) back at rest for the next patch: the last
-    -- one may have left the damper down or the filter closed
+end
+
+-- a shared slot's lanes (lane_at: the pedal, the filter hand...) back at rest for the next patch: the
+-- last one may have left the damper down or the filter closed
+local function restLanes(slot, patch)
     local lane = (patch.pool or patch.fx) and optionalFn('lane_at')
     if lane and S.C.audio_time then
         local now = S.C.audio_time()
         lane(now, slot, 0, 0, 0); lane(now, slot, 1, 0, 0); lane(now, slot, 2, 0, 0); lane(now, slot, 3, 1, 0)
     end
+end
+
+-- The LFOs, and env = { attack ms, decay ms, amount, dest = 0 }: an envelope kicked by every note,
+-- on the filter (dest 0, ENV_CUTOFF, amount in Hz) or the pitch (dest 1, ENV_PITCH, semitones: a
+-- drum's drop); a shared slot gets it switched off when its patch has none
+local function defineModulation(slot, patch)
     for i, lfo in ipairs(patch.lfo or {}) do
         S.C.instrument_lfo(slot, i - 1, lfo[1], lfo[2], lfo[3])
         if lfo.shape or patch.pool or patch.fx then S.C.lfo_shape(slot, i - 1, lfo.shape or 0) end
     end
-    -- env = { attack ms, decay ms, amount, dest = 0 }: an envelope kicked by every note, on the filter
-    -- (dest 0, ENV_CUTOFF, amount in Hz) or the pitch (dest 1, ENV_PITCH, semitones: a drum's drop);
-    -- a shared slot gets it switched off when its patch has none
     if patch.env then S.C.instrument_env(slot, 0, patch.env.dest or 0, patch.env[1], patch.env[2], patch.env[3])
     elseif patch.pool or patch.fx then S.C.instrument_env(slot, 0, 0, 0, 0, 0) end
+end
+
+-- an effect slot: the last patch's pedals on its bus switched off
+local function pedalsOff(slot)
+    S.C.instrument_chorus(slot, 1.5, 0, 0)
+    S.C.instrument_flanger(slot, 0.3, 0, 0, 0)
+    S.C.instrument_phaser(slot, 0.8, 0, 0, 0, 6)
+    S.C.instrument_autopan(slot, 1, 0, 0)
+    S.C.instrument_tape(slot, 0, 0, 0)
+    S.C.instrument_tape_warble(slot, 0)
+    S.C.instrument_drive(slot, 0)
+end
+
+local function definePatch(slot, patch, name)
+    defineVoice(slot, patch)
+    definePlaying(slot, patch)
+    restLanes(slot, patch)
+    defineModulation(slot, patch)
     if patch.pool then return end -- inserts take an FX bus for good: never on a pool slot
-    if patch.fx then -- an effect slot: switch off the last patch's pedals on its bus, then put on these
-        S.C.instrument_chorus(slot, 1.5, 0, 0)
-        S.C.instrument_flanger(slot, 0.3, 0, 0, 0)
-        S.C.instrument_phaser(slot, 0.8, 0, 0, 0, 6)
-        S.C.instrument_autopan(slot, 1, 0, 0)
-        S.C.instrument_tape(slot, 0, 0, 0)
-        S.C.instrument_tape_warble(slot, 0)
-        S.C.instrument_drive(slot, 0)
-    end
+    if patch.fx then pedalsOff(slot) end -- then put on these
     S.pedals[name] = pedalsFromPatch(patch) -- a load starts from the patch's own settings
     sendPedals(slot, name)
 end
@@ -1133,6 +1153,38 @@ end
 
 S.nextBooking = S.nextBooking or 0 -- the web's own booking numbers (the page maps them to the engine's)
 
+-- A mono patch (one voice): of two notes at the same instant (root + fifth) the first one plays,
+-- the other is dropped. 15 ms: the parts humanize each note's time on its own (a few ms), while the
+-- fastest real line, 16ths, is ~100 ms apart.
+local function monoDrops(patchName, patch, t)
+    if not patch.mono then return false end
+    S.monoAt = S.monoAt or {}
+    local last = S.monoAt[patchName]
+    if last and math.abs(t - last) < 0.015 then return true end
+    S.monoAt[patchName] = t
+    return false
+end
+
+-- the optional #47 functions (CDEF_OPTIONAL): looked up once, on first use (the offline renderer too)
+local function lookUpNoteAt()
+    local ok, f = pcall(function() return S.C.schedule_note_at end)
+    S.hasNoteAt = (ffi ~= nil or IS_WEB) and ok and f ~= nil and noteOptsFits()
+    S.hasEvents = optionalFn('note_event_at') ~= nil -- else schedule_note_at's return is no id (void before)
+end
+
+-- a note with NoteOpts (or its own gain): its booking id, when the engine gives them
+local function scheduleWithOpts(t, midi, slot, vol, dur, opts, gain)
+    if IS_WEB then -- no struct over the page's text bridge: the fields flat, the page builds the NoteOpts
+        S.nextBooking = S.nextBooking % 1000000 + 1
+        S.C.schedule_note_at_flat(t, midi, slot, vol, dur, opts.glide or 0, opts.accent or 0,
+            opts.harmonics or 0, opts.timbre or 0, opts.morph or 0, gain or 0,
+            S.nextBooking, unpack(humanFields(opts)))
+        return S.nextBooking
+    end
+    local id = S.C.schedule_note_at(t, midi, slot, vol, dur, noteOptsStruct(opts, gain))
+    return S.hasEvents and tonumber(id) and id > 0 and id or nil
+end
+
 function lib.scheduleAt(patchName, t, midi, vol, durMs, opts)
     if not S.started then return end
     local patch = lib.patches[patchName]
@@ -1144,34 +1196,16 @@ function lib.scheduleAt(patchName, t, midi, vol, durMs, opts)
     -- the engine reads gain 0 as unset (full), so a tiny one stays a tiny one
     if opts and opts.gain then gain = math.max(0.001, math.min(1, (gain or 1) * opts.gain)) end
     vol = math.max(0, math.min(7, math.floor(vol + 0.5)))
-    if patch.mono then -- one voice: of two notes at the same instant (root + fifth) the first one plays.
-        S.monoAt = S.monoAt or {} -- 15 ms: the parts humanize each note's time on its own (a few ms), while
-        local last = S.monoAt[patchName] -- the fastest real line, 16ths, is ~100 ms apart
-        if last and math.abs(t - last) < 0.015 then return end
-        S.monoAt[patchName] = t
-    end
+    if monoDrops(patchName, patch, t) then return end
     local slot, dur = slotOf(patchName, patch, t, durMs), math.max(1, math.floor(durMs))
-    if (opts or gain) and S.hasNoteAt == nil then -- the optional #47 functions (CDEF_OPTIONAL): looked up once,
-        local ok, f = pcall(function() return S.C.schedule_note_at end) -- on first use: the offline renderer too
-        S.hasNoteAt = (ffi ~= nil or IS_WEB) and ok and f ~= nil and noteOptsFits()
-        S.hasEvents = optionalFn('note_event_at') ~= nil -- else schedule_note_at's return is no id (void before)
-    end
+    if (opts or gain) and S.hasNoteAt == nil then lookUpNoteAt() end
     local exactGain = gain and S.hasNoteAt and noteOptsHasGain()
     if gain and not exactGain then -- no per-note gain here: scale the whole-step vol
         vol = math.floor(vol * gain + 0.5)
         if vol <= 0 then return end
     end
     if (opts or exactGain) and S.hasNoteAt then
-        opts = opts or {}
-        if IS_WEB then -- no struct over the page's text bridge: the fields flat, the page builds the NoteOpts
-            S.nextBooking = S.nextBooking % 1000000 + 1
-            S.C.schedule_note_at_flat(t, midi, slot, vol, dur, opts.glide or 0, opts.accent or 0,
-                opts.harmonics or 0, opts.timbre or 0, opts.morph or 0, exactGain and gain or 0,
-                S.nextBooking, unpack(humanFields(opts)))
-            return S.nextBooking
-        end
-        local id = S.C.schedule_note_at(t, midi, slot, vol, dur, noteOptsStruct(opts, exactGain and gain))
-        return S.hasEvents and tonumber(id) and id > 0 and id or nil
+        return scheduleWithOpts(t, midi, slot, vol, dur, opts or {}, exactGain and gain)
     end
     S.C.schedule_at(t, midi, slot, vol, dur)
 end
