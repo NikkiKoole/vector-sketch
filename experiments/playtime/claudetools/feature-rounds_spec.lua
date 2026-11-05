@@ -51,6 +51,7 @@ end
 
 local blob = require('src.blob')
 local grass = require('src.grass')
+local liquid = require('src.liquid')
 
 -- which body: its label, or a blob's rim
 local function nameOf(body)
@@ -137,6 +138,40 @@ local function grassGrows(p, world)
     end
 end
 
+-- every container's water: a fill between 0 and 1, no more than it can hold at its angle (after a
+-- step it spilled the rest), and a level that holds exactly that amount
+local function waterHolds(p, world)
+    for _, fixture in ipairs(registry.sfixturesOf(subtypes.LIQUID)) do
+        if sweep.alive(fixture) and fixture:getBody():getWorld() == world then
+            local body, extra = fixture:getBody(), fixture:getUserData().extra
+            local fill = liquid.setting(extra, 'fill')
+            if type(fill) ~= 'number' or fill ~= fill or fill < 0 or fill > 1 then
+                p.add('water with a fill of ' .. tostring(fill))
+            else
+                local copy = utils.shallowCopy(extra)
+                local c = liquid.container(copy, body)
+                local full = liquid.volume(c.hull, c.holes)
+                local over = liquid.spill(copy, body)
+                if over > full * 0.01 then
+                    p.add(string.format('water over what its container holds: %.0f%% too much', over / full * 100))
+                end
+                local level, _, hull, holes = liquid.water(extra, body)
+                local amount = fill * full
+                if amount > full * 0.001 then
+                    if not level or level ~= level then
+                        p.add('water with no level')
+                    else
+                        local below = liquid.areaBelow(hull, holes, level)
+                        if math.abs(below - amount) > amount * 0.02 then
+                            p.add(string.format('a water level holding %.0f%% of its water', below / amount * 100))
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
 -- name -> { build = fn() (makes it in the fresh world, returns its host thing), check = fn(p, world) }
 local RECIPES = {
     softbody = {
@@ -178,6 +213,17 @@ local RECIPES = {
         check = function(p, world)
             sane(p, world)
             grassGrows(p, world)
+        end,
+    },
+    liquid = {
+        build = function()
+            room()
+            props.makeBath(-600, 160, 1)
+            return props.makeCup(500, 200, 1.5)
+        end,
+        check = function(p, world)
+            sane(p, world)
+            waterHolds(p, world)
         end,
     },
     light = {

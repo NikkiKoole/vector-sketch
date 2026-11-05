@@ -38,7 +38,10 @@ first.
   its upper edge at any angle, flipped and reloaded too (the check caught a planted fault). To look
   at, not a bug: the blade cache's key holds the body's angle, so a tumbling grassy body builds both
   its SpriteBatches again every frame; none is saved in a scene yet)
-- [ ] Liquid round
+- [x] Liquid round (2026-11-06: a dynamic cup and a static bath from the toys; 178 cases x 2 meters,
+  nothing broke: the fill stays in 0..1, no container holds more than it can at its angle, the level
+  always holds the water's amount, after a reload too (the check caught spilling switched off).
+  Pictures: level when tilted, empty when tipped past its mouth or flipped upside down)
 - [ ] Tile repeat round
 - [x] Light round (2026-11-06: a lamp with a LIGHT sfixture lighting a plasticine and a hairs box; 502 cases, 4
   seeds x 2 meters, nothing broke, every lit body gets every light, also after a reload. Found on the way:
