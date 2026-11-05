@@ -446,16 +446,20 @@ local lofiGrids = {
 local LANE_VEL = { K = 0.92, S = 0.88, H = 0.8, R = 0.8 }
 local HAT_ACCENT = { [0] = 1, 0.45, 0.7, 0.45 }
 
--- One bar of the lofi groove: { hits = { { s, lane, vel, ghost, open } }, kicks = { steps }, stop }.
--- mode: 'full' (the song's grid), 'hats' (the intro's last two bars), 'rim' (the break), 'outro'.
--- Planned before the bass, which plays on the kicks. Fills come on the 4th and 8th bars.
-local function lofiGroove(song, kind, j, bars, mode, rnd)
-    local out = { hits = {}, kicks = {} }
-    if mode == 'none' or (mode == 'hats' and j < bars - 2) or (mode == 'outro' and j >= 2) then return out end
-    local grid = lofiGrids[mode == 'rim' and 5 or song.grid]
-    local hits = out.hits
-    -- lanes in a fixed order: the velocities draw from rnd hit by hit, and pairs() order is the hash's
-    -- (it moved when this file changed, and differs between LuaJIT builds and the web's Lua)
+-- the hits that pass pred (a new list), and the hit on a lane at a step
+local function keepHits(hits, pred)
+    local kept = {}
+    for _, h in ipairs(hits) do if pred(h) then kept[#kept + 1] = h end end
+    return kept
+end
+local function hitAt(hits, lane, s)
+    for _, h in ipairs(hits) do if h.lane == lane and h.s == s then return h end end
+end
+
+-- the grid's hits, lanes in a fixed order: the velocities draw from rnd hit by hit, and pairs() order is
+-- the hash's (it moved when this file changed, and differs between LuaJIT builds and the web's Lua)
+local function gridHits(grid)
+    local hits = {}
     for _, lane in ipairs({ 'S', 'H', 'K', 'R' }) do
         local pattern = grid[lane] or ''
         for i = 1, #pattern do
@@ -463,56 +467,74 @@ local function lofiGroove(song, kind, j, bars, mode, rnd)
             if c ~= '.' then hits[#hits + 1] = { s = i - 1, lane = lane, ghost = c == 'g', open = c == 'o' } end
         end
     end
-    local function keep(pred)
-        local kept = {}
-        for _, h in ipairs(hits) do if pred(h) then kept[#kept + 1] = h end end
-        hits = kept
+    return hits
+end
+
+-- B: an open hat on the and-of-4 every other bar, ghost snares
+local function lofiChorus(hits, j, rnd)
+    if j % 2 == 1 then
+        local h = hitAt(hits, 'H', 14)
+        if h then h.open = true else hits[#hits + 1] = { s = 14, lane = 'H', open = true } end
+        hits = keepHits(hits, function(x) return not (x.lane == 'H' and x.s == 15) end)
     end
-    local function has(lane, s)
-        for _, h in ipairs(hits) do if h.lane == lane and h.s == s then return h end end
+    for _, gs in ipairs({ 7, 15 }) do
+        if rnd(100) < 30 and not hitAt(hits, 'S', gs) then hits[#hits + 1] = { s = gs, lane = 'S', ghost = true } end
     end
-    if mode == 'hats' then keep(function(h) return h.lane == 'H' end) end
-    if mode == 'outro' then keep(function(h) return h.lane ~= 'K' end) end
-    local groove = mode == 'full' or mode == 'rim'
-    if groove and j > 0 and rnd(100) < 8 then keep(function(h) return h.lane ~= 'K' end) end -- a bar without the kick
-    if mode == 'full' and kind == 'B' then -- B: an open hat on the and-of-4 every other bar, ghost snares
-        if j % 2 == 1 then
-            local h = has('H', 14)
-            if h then h.open = true else hits[#hits + 1] = { s = 14, lane = 'H', open = true } end
-            keep(function(x) return not (x.lane == 'H' and x.s == 15) end)
+    return hits
+end
+
+-- a fill on the 4th and 8th bars: a snare roll, everything stopping on beat 4, two kicks pushing into the
+-- next bar, or an open hat on the and-of-4. Returns the hits and the step the bar stops at (or nil).
+local function lofiFill(hits, rnd)
+    local fill = rnd(4) + 1
+    if fill == 1 then -- a snare roll into the next bar
+        hits = keepHits(hits, function(h) return not (h.lane == 'S' and h.s >= 12) end)
+        for i, v in ipairs({ 0.9, 0.3, 0.45, 0.65 }) do hits[#hits + 1] = { s = 11 + i, lane = 'S', vel = v } end
+    elseif fill == 2 then -- everything stops on beat 4
+        return keepHits(hits, function(h) return h.s < 12 end), 12
+    elseif fill == 3 then -- two kicks pushing into the next bar
+        for _, ks in ipairs({ 13, 15 }) do
+            if not hitAt(hits, 'K', ks) then hits[#hits + 1] = { s = ks, lane = 'K', vel = 0.7 } end
         end
-        for _, gs in ipairs({ 7, 15 }) do
-            if rnd(100) < 30 and not has('S', gs) then hits[#hits + 1] = { s = gs, lane = 'S', ghost = true } end
-        end
+    else -- an open hat on the and-of-4
+        hits = keepHits(hits, function(h) return not (h.lane == 'H' and h.s >= 14) end)
+        hits[#hits + 1] = { s = 14, lane = 'H', open = true }
     end
-    local pos = j + 1
-    local fillOdds = pos % 8 == 0 and 50 or pos % 4 == 0 and 20 or 0
-    if groove and fillOdds > 0 and rnd(100) < fillOdds then
-        local fill = rnd(4) + 1
-        if fill == 1 then -- a snare roll into the next bar
-            keep(function(h) return not (h.lane == 'S' and h.s >= 12) end)
-            for i, v in ipairs({ 0.9, 0.3, 0.45, 0.65 }) do hits[#hits + 1] = { s = 11 + i, lane = 'S', vel = v } end
-        elseif fill == 2 then -- everything stops on beat 4
-            keep(function(h) return h.s < 12 end)
-            out.stop = 12
-        elseif fill == 3 then -- two kicks pushing into the next bar
-            for _, ks in ipairs({ 13, 15 }) do
-                if not has('K', ks) then hits[#hits + 1] = { s = ks, lane = 'K', vel = 0.7 } end
-            end
-        else -- an open hat on the and-of-4
-            keep(function(h) return not (h.lane == 'H' and h.s >= 14) end)
-            hits[#hits + 1] = { s = 14, lane = 'H', open = true }
-        end
-    end
-    local scale = mode == 'rim' and 0.6 or 1
+    return hits
+end
+
+-- each hit's velocity: its lane's, the hats accented by place, kicks off the one a little softer, ghosts
+-- barely there; all of it scaled (the break's rim plays softer) and jittered
+local function lofiVelocities(hits, scale, rnd)
     for _, h in ipairs(hits) do
         local v = h.vel or LANE_VEL[h.lane]
         if h.lane == 'H' then v = v * (h.open and 0.95 or HAT_ACCENT[h.s % 4]) end
         if h.lane == 'K' and h.s ~= 0 and not h.vel then v = v * 0.9 end
         if h.ghost then v = 0.25 + 0.1 * rnd() end
         h.vel = v * scale * (1 + (rnd() * 2 - 1) * 0.08)
-        if h.lane == 'K' then out.kicks[#out.kicks + 1] = h.s end
     end
+end
+
+-- One bar of the lofi groove: { hits = { { s, lane, vel, ghost, open } }, kicks = { steps }, stop }.
+-- mode: 'full' (the song's grid), 'hats' (the intro's last two bars), 'rim' (the break), 'outro'.
+-- Planned before the bass, which plays on the kicks. Fills come on the 4th and 8th bars. Every step draws
+-- from rnd, in this order.
+local function lofiGroove(song, kind, j, bars, mode, rnd)
+    local out = { hits = {}, kicks = {} }
+    if mode == 'none' or (mode == 'hats' and j < bars - 2) or (mode == 'outro' and j >= 2) then return out end
+    local hits = gridHits(lofiGrids[mode == 'rim' and 5 or song.grid])
+    if mode == 'hats' then hits = keepHits(hits, function(h) return h.lane == 'H' end) end
+    if mode == 'outro' then hits = keepHits(hits, function(h) return h.lane ~= 'K' end) end
+    local groove = mode == 'full' or mode == 'rim'
+    if groove and j > 0 and rnd(100) < 8 then -- a bar without the kick
+        hits = keepHits(hits, function(h) return h.lane ~= 'K' end)
+    end
+    if mode == 'full' and kind == 'B' then hits = lofiChorus(hits, j, rnd) end
+    local pos = j + 1
+    local fillOdds = pos % 8 == 0 and 50 or pos % 4 == 0 and 20 or 0
+    if groove and fillOdds > 0 and rnd(100) < fillOdds then hits, out.stop = lofiFill(hits, rnd) end
+    lofiVelocities(hits, mode == 'rim' and 0.6 or 1, rnd)
+    for _, h in ipairs(hits) do if h.lane == 'K' then out.kicks[#out.kicks + 1] = h.s end end
     table.sort(hits, function(a, c) return a.s < c.s end)
     table.sort(out.kicks)
     out.hits = hits
