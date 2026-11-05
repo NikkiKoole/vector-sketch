@@ -28,6 +28,13 @@ describe('color.hexToColor', function()
         assert.are.same({ color.hexToColor('123456') }, { color.hexToColor('123456') })
     end)
 
+    it('remembers a bounded number (random Mipo colours are new every randomize)', function()
+        for i = 1, 20000 do color.hexToColor(string.format('%06x', i)) end
+        assert.is_true(color._test.parsedCount() <= 4096, tostring(color._test.parsedCount()))
+        local r, g, b = color.hexToColor('ff8000')
+        near(1, r); near(128 / 255, g); near(0, b)
+    end)
+
     it('has a palette of hex colours', function()
         assert.is_true(#color.palette > 50)
         for _, hex in ipairs(color.palette) do assert.are.equal(6, #hex) end

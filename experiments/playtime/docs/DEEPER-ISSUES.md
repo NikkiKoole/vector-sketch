@@ -199,6 +199,14 @@ This global function (joints.lua:222) recursively moves chains of connected bodi
 
 ## 8. Memory Management Patterns — Mostly Manual
 
+Measured 2026-11-05 (3 Mipos randomized 600 times, a frame drawn after each, full collects): texture
+memory levels off at ~64 MB once every source picture is loaded (round 10) and stays there; the image
+caches are keyed by path, so bounded by the pictures there are. Lua memory grew 2.7 -> 5.5 MB, from two
+leaks, both FIXED: ear-bend kept every rebuilt Mipo's old ear bodies (a weak-keyed table whose values
+hold their key: no ephemerons in Lua 5.1; spec/ear-bend-memory_spec.lua), and color.hexToColor kept
+every colour ever asked for (now at most 4096). After: 2.7 -> 2.9 MB (the colour cache filling).
+The February notes below are older than that.
+
 ### Image cache (box2d-draw-textured.lua)
 
 `getLoveImage` (line 26, global) caches loaded images by URL. The cache is never cleared. Over a long session with many texture changes, this accumulates stale images in memory.

@@ -75,16 +75,27 @@ function lib.groupColor(i)
 end
 
 -- hex -> r, g, b, a (0..1); white when it can't be read. Remembered: the renderer asks for
--- the same few colours for every drawable, every frame.
-local parsed = {}
+-- the same few colours for every drawable, every frame. Up to PARSED_MAX, then started afresh:
+-- every randomize brings new colours, and they were all kept.
+local PARSED_MAX = 4096
+local parsed, parsedCount = {}, 0
 function lib.hexToColor(hex)
     if type(hex) ~= 'string' then return 1, 1, 1, 1 end
     local c = parsed[hex]
     if not c then
+        if parsedCount >= PARSED_MAX then parsed, parsedCount = {}, 0 end
         c = { parse(hex) }
         parsed[hex] = c
+        parsedCount = parsedCount + 1
     end
     return c[1], c[2], c[3], c[4]
 end
+
+-- for spec/color_spec.lua: how many colours are remembered
+lib._test = { parsedCount = function()
+    local n = 0
+    for _ in pairs(parsed) do n = n + 1 end
+    return n
+end }
 
 return lib

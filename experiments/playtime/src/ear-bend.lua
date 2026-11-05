@@ -87,8 +87,16 @@ end
 
 -- What findBones says about a body, remembered (it was asked every frame for every 4-corner picture:
 -- 9% of the Lua time with 100 Mipos). An ear's answer holds while its joint exists and its picture's
--- corners are the same; any other body is never an ear.
+-- corners are the same; any other body is never an ear. Weak keys alone don't let a body go: an
+-- ear's entry holds its bones, so the body itself (Lua 5.1 has no ephemerons). Destroyed bodies are
+-- swept out whenever an ear is remembered (a rebuild makes new ones), so the table stays the size
+-- of the ears there are.
 local remembered = setmetatable({}, { __mode = 'k' }) -- [body] = { bones, joint, corners } or false
+local function forgetDestroyed()
+    for body in pairs(remembered) do
+        if body:isDestroyed() then remembered[body] = nil end
+    end
+end
 function lib.bonesOf(body, corners)
     if not lib.enabled then return nil end
     local r = remembered[body]
@@ -111,11 +119,19 @@ function lib.bonesOf(body, corners)
     if joint then
         local copy = {}
         for i = 1, #corners do copy[i] = corners[i] end
+        forgetDestroyed()
         remembered[body] = { bones = bones, joint = joint, corners = copy }
     else
         remembered[body] = nil
     end
     return bones
 end
+
+-- for spec/ear-bend-memory_spec.lua: how many bodies are remembered
+lib._test = { rememberedCount = function()
+    local n = 0
+    for _ in pairs(remembered) do n = n + 1 end
+    return n
+end }
 
 return lib
