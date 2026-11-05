@@ -7,7 +7,10 @@
 --   luajit claudetools/music-trace.lua list               the scenarios
 -- Run from experiments/playtime. Needs native/desound/libdesound.dylib (docs/SOUND-SYNTH.md): synth.lua
 -- defines its patches through it. The scenarios cover the jam (every genre, the play level rising and
--- falling, the panel's picks); add more for other styles in SCENARIOS.
+-- falling, the panel's picks) and every other style (calm with the ideas off, busy with every idea at 'some'
+-- and 'lots', the humanized players plain, the classic tune, the live set, cues). Together they run every
+-- line of the music's biggest functions but music-plan buildPhrase's pickup (dead: its 8-bar sections never
+-- reach slot 2) -- measured 2026-11-05; when a scenario is added for a new path, check it runs (a line hook).
 package.path = './?.lua;' .. package.path
 
 -- A scenario: style, seed, seconds; bumps = { {from s, to s, every s, amount} } raise the play level;
@@ -45,6 +48,34 @@ local BUSY = { { 5, 400, 0.6, 1 } }
 add('jam-funk-long', { style = 'jam', seed = 11, seconds = 400, bumps = BUSY })
 add('jam-breaks-long', { style = 'jam', seed = 1, seconds = 400, bumps = BUSY, jam = { variations = 'never' } })
 
+-- Every other style: calm with the ideas off (the default), busy with every idea at 'some' and the world's
+-- moments answered, and busy with every idea at 'lots'; the humanized players plain too; the live set.
+-- ideas = 'some' / 'lots': every idea the style has (music-styles' ideasOf) at that level.
+local STYLES = { 'acid', 'ambient', 'bachprelude', 'ballad', 'bethena', 'bossa', 'buymode', 'carrelage', 'citypop',
+                 'dumont', 'dusk', 'gershwin2', 'gnossienne', 'guaraldi', 'gymnopedie', 'herbs', 'island', 'jingle',
+                 'lofi', 'parlour', 'puppetmaker', 'rollo', 'satie', 'sesame', 'strum', 'supermarket', 'tapisserie',
+                 'traumerei', 'upright', 'vibesnight', 'wave' }
+local STINGERS = { stingerSize = 'small', stingerMoments = 'all' }
+for _, style in ipairs(STYLES) do
+    add(style .. '-calm', { style = style, seed = 1, seconds = 90 })
+    add(style .. '-busy', { style = style, seed = 2, seconds = 120, bumps = RISE_FALL, ideas = 'some',
+                            impacts = { { 33, 0.7 }, { 61, 0.95 } }, moments = MOMENTS, world = STINGERS })
+    add(style .. '-lots', { style = style, seed = 3, seconds = 120, bumps = RISE_FALL, ideas = 'lots' })
+end
+for _, style in ipairs({ 'parlour', 'upright', 'citypop', 'vibesnight', 'dusk', 'wave' }) do
+    add(style .. '-plain', { style = style, seed = 2, seconds = 90, bumps = RISE_FALL, ideas = 'some',
+                             humanize = false })
+end
+-- the tune built the old way (the panel's advanced 'tune' row: classic, music-plan's buildPhrase)
+for _, style in ipairs({ 'bossa', 'guaraldi', 'citypop', 'lofi', 'island', 'herbs' }) do
+    add(style .. '-classic', { style = style, seed = 6, seconds = 120, bumps = RISE_FALL, ideas = 'some',
+                               tune = 'classic' })
+end
+add('lofi-long', { style = 'lofi', seed = 8, seconds = 600, bumps = BUSY, ideas = 'some' }) -- its rare fills
+add('set-long', { style = 'set', seed = 4, seconds = 500, bumps = RISE_FALL, ideas = 'some' })
+add('bossa-cues', { style = 'bossa', seed = 5, seconds = 120, bumps = RISE_FALL,
+                    cues = { { 20, 'citypop' }, { 45, 'satie', 'bar' }, { 70, 'keep', 'cellar' }, { 95, 'jam' } } })
+
 local mode = arg[1]
 
 local function fmt(v, depth)
@@ -80,6 +111,19 @@ local function runOne(s)
     local st = package.loaded['src.state']
     if s.jam then st.musicSettings.jam = s.jam end
     if s.world then st.musicSettings.world = s.world end
+    if s.humanize ~= nil then st.musicSettings.humanize = s.humanize end
+    if s.tune then st.musicSettings.tune = s.tune end
+    if s.ideas and s.style ~= 'set' then
+        local D = require('src.music-styles')
+        local ideas = {}
+        for name in pairs(D.ideasOf(D.styles[s.style])) do ideas[name] = s.ideas end
+        st.musicSettings.ideas = ideas
+    elseif s.ideas then -- the set: every idea of every style
+        local D = require('src.music-styles')
+        local ideas = {}
+        for _, style in pairs(D.styles) do for name in pairs(D.ideasOf(style)) do ideas[name] = s.ideas end end
+        st.musicSettings.ideas = ideas
+    end
     local clock = 0
     synth.audioTime = function() return clock end
     local out, n = {}, 0
@@ -128,6 +172,14 @@ local function runOne(s)
         for _, e in ipairs(moments) do
             if not e.done and now >= e[1] then e.done = true music.event(e[2], {}) end
         end
+        for _, cue in ipairs(s.cues or {}) do -- as render-music.lua's CUES
+            if not cue.done and now >= cue[1] then
+                cue.done = true
+                if cue[2] == 'keep' then music.layers(cue[3])
+                else music.cue(cue[2], { at = cue[3] == 'bar' and 'bar' or 'phrase' }) end
+                log(('%.4f -- cue %s %s'):format(now, cue[2], tostring(cue[3])))
+            end
+        end
         music.update(synth, now)
         local booked = st.music.booked and st.music.booked[#st.music.booked]
         if booked and booked ~= lastBooked then
@@ -138,6 +190,9 @@ local function runOne(s)
         if song and song.jam and song.jam.group ~= group then
             group = song.jam.group
             log(('%.4f -- song: %s, group %s, family %s'):format(now, song.style, group, tostring(song.jam.family)))
+        elseif song and not song.jam and song ~= group then
+            group = song
+            log(('%.4f -- song: %s, key %s'):format(now, tostring(song.style), tostring(song.key)))
         end
     end
     log('styleSounds ' .. fmt(st.music.styleSounds))
