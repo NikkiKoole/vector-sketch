@@ -519,7 +519,9 @@ function lib.rebuildTextures(instance)
             end
         end
     end
-    applyGroupAndZ(instance, false) -- the new texture fixtures in the Mipo's z-range
+    -- the new texture fixtures in the Mipo's group and z-range (in group 0 they sensed its own parts;
+    -- spec/mipo-texture-group_spec.lua). No group yet on a new Mipo: createCharacterFromExistingDNA sets it after
+    applyGroupAndZ(instance, true)
 end
 
 

@@ -761,7 +761,6 @@ function lib.reconstructInstance(charData, partBodies)
     mipoRegistry.register(instance)
     if brokenTextures then
         textures.rebuildTextures(instance)
-        applyGroupAndZ(instance, true) -- the redrawn texture fixtures start in group 0
     end
     balance.applyNeck(instance, true)
     balance.balanceMasses(instance)
