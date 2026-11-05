@@ -172,6 +172,81 @@ local function listStillHolds()
     return true
 end
 
+-- A mouth decal (upper or lower lip, or the teeth). A lip's curve comes from extra.curvePoints
+-- when drawn (src/render/mouth.lua); without its 16 numbers it draws nothing.
+local function addMouth(out, extra, body, z)
+    if extra.mouthCurve == 'teeth' then
+        -- positioned image, optionally clipped to the mouth polygon
+        out[#out + 1] = { type = 'mouth-teeth', z = z, extra = extra, body = body }
+        return
+    end
+    if not fullMouth(extra) then return end
+    out[#out + 1] = { type = 'mouth-' .. extra.mouthCurve, z = z, extra = extra, body = body }
+    if extra.mouthCurve == 'lower' then
+        -- Dark interior fill renders below teeth so teeth always
+        -- sit on top of the void. zOffset 250 < non-stickOut teeth 251.
+        out[#out + 1] = { type = 'mouth-backdrop', z = z - 2, extra = extra, body = body }
+        -- the tongue, out only during a raspberry (src/mipo-raspberry.lua):
+        -- over the lower lip, under the upper one (253)
+        out[#out + 1] = { type = 'mouth-tongue', z = z + 0.6, extra = extra, body = body }
+    end
+end
+
+local function addDecal(out, ud, _, body, z)
+    local extra = ud.extra
+    if extra.browCurve then
+        out[#out + 1] = { type = 'brow', z = z, extra = extra, body = body }
+    elseif extra.mouthCurve then
+        addMouth(out, extra, body, z)
+    else
+        out[#out + 1] = { type = 'decal', z = z, extra = extra, body = body }
+    end
+end
+
+-- a picture laid over a fixture's shape (texfixture) or a skinned / uv-mapped mesh
+local function texturedMaker(kind, withLabel)
+    return function(out, ud, fixture, body, z)
+        out[#out + 1] = { type = kind, z = z, texfixture = fixture, label = withLabel and ud.label or nil,
+            extra = ud.extra, body = body, thing = utils.thingOf(body) }
+    end
+end
+
+-- [subtype] = function(out, ud, fixture, body, z): adds that sfixture's drawables to out, in
+-- draw order for equal z. A subtype not here draws nothing of its own.
+local makers = {
+    [subtypes.TRACE_VERTICES] = function(out, ud, _, body, z)
+        out[#out + 1] = { type = 'trace-vertices', z = z, extra = ud.extra, thing = utils.thingOf(body) }
+    end,
+    [subtypes.TILE_REPEAT] = function(out, ud, _, body, z)
+        out[#out + 1] = { type = 'tile-repeat', z = z, extra = ud.extra, thing = utils.thingOf(body) }
+    end,
+    [subtypes.GRASS] = function(out, ud, _, body, z)
+        -- two layers: behind the Mipos at its own z, in front of all of them (src/grass.lua)
+        local thing = utils.thingOf(body)
+        out[#out + 1] = { type = 'grass', layer = 'back', z = z, extra = ud.extra, thing = thing, body = body }
+        out[#out + 1] = { type = 'grass', layer = 'front', z = grass.FRONT_Z + (ud.extra.zOffset or 0),
+            extra = ud.extra, thing = thing, body = body }
+    end,
+    [subtypes.LIQUID] = function(out, ud, _, body, z)
+        -- water in a container (src/liquid.lua); 'front' puts it in front of the Mipos (a bath)
+        if ud.extra.front then z = liquid.FRONT_Z + (ud.extra.zOffset or 0) end
+        out[#out + 1] = { type = subtypes.LIQUID, z = z, extra = ud.extra, body = body }
+    end,
+    [subtypes.SOFTBODY] = function(out, _, fixture, _, z)
+        out[#out + 1] = { type = subtypes.SOFTBODY, z = z, fixture = fixture }
+    end,
+    [subtypes.TEXFIXTURE] = texturedMaker('texfixture', false),
+    [subtypes.MESHUSERT] = texturedMaker('meshusert', true),
+    [subtypes.UVUSERT] = texturedMaker('uvusert', true),
+    [subtypes.DECAL] = addDecal,
+    [subtypes.CONNECTED_TEXTURE] = function(out, ud, _, body, z)
+        -- its curve follows the joints: laid in drawConnectedTexture (ribbonPoints)
+        if ud.extra.nodes then
+            out[#out + 1] = { z = z, type = 'connected-texture', extra = ud.extra, body = body }
+        end
+    end,
+}
+
 -- Everything drawn here hangs off an sfixture, so the list is built from the registry's
 -- sfixtures, not by walking every fixture of every body (1500 fixtures, 650 of them
 -- sfixtures, with 20 Mipos). Each entry gets a `key` (its sfixture's id) and `sub` so
@@ -183,155 +258,22 @@ local function createDrawables()
     reachOf = setmetatable({}, { __mode = 'k' }) -- parts may have been rebuilt or resized
     for _, fixture in pairs(registry.sfixtures) do
         local ud = not fixture:isDestroyed() and fixture:getUserData()
-        if type(ud) ~= 'table' then -- only table userData is an sfixture
-            ud = nil
-        end
-        local body = ud and fixture:getBody()
-        local before = #drawables
-        -- each Mipo draws in its own z-range: zGroupOffset * 1000 + the part's zOffset
-        local composedZ = ud and ud.extra and ((ud.extra.zGroupOffset or 0) * 1000 + (ud.extra.zOffset or 0))
-        if ud and subtypes.is(ud, subtypes.TRACE_VERTICES) then
-
-            table.insert(drawables, {
-                type = 'trace-vertices',
-                z = composedZ,
-                extra = ud.extra,
-                thing = utils.thingOf(body)
-            })
-        end
-
-        if ud and subtypes.is(ud, subtypes.TILE_REPEAT) then
-
-            table.insert(drawables, {
-                type = 'tile-repeat',
-                z = composedZ,
-                extra = ud.extra,
-                thing = utils.thingOf(body)
-            })
-        end
-
-        if ud and subtypes.is(ud, subtypes.GRASS) then
-            -- two layers: behind the Mipos at its own z, in front of all of them (src/grass.lua)
-            local thing = utils.thingOf(body)
-            table.insert(drawables, { type = 'grass', layer = 'back', z = composedZ,
-                extra = ud.extra, thing = thing, body = body })
-            table.insert(drawables, { type = 'grass', layer = 'front', z = grass.FRONT_Z + (ud.extra.zOffset or 0),
-                extra = ud.extra, thing = thing, body = body })
-        end
-
-        if ud and subtypes.is(ud, subtypes.LIQUID) then
-            -- water in a container (src/liquid.lua); 'front' puts it in front of the Mipos (a bath)
-            if ud.extra.front then composedZ = liquid.FRONT_Z + (ud.extra.zOffset or 0) end
-            table.insert(drawables, { type = subtypes.LIQUID, z = composedZ, extra = ud.extra, body = body })
-        end
-
-        if ud and subtypes.is(ud, subtypes.SOFTBODY) then
-            table.insert(drawables, { type = subtypes.SOFTBODY, z = composedZ, fixture = fixture })
-        end
-
-        if ud and subtypes.is(ud, subtypes.TEXFIXTURE) then
-            table.insert(drawables,
-                {
-                    type = 'texfixture',
-                    z = composedZ,
-                    texfixture = fixture,
-                    extra = ud.extra,
-                    body = body,
-                    thing = utils.thingOf(body)
-                })
-        end
-        if ud and subtypes.is(ud, subtypes.MESHUSERT) then
-            table.insert(drawables,
-                {
-                    type = 'meshusert',
-                    z = composedZ,
-                    texfixture = fixture,
-                    label = ud.label,
-                    extra = ud.extra,
-                    body = body,
-                    thing = utils.thingOf(body)
-                })
-        end
-        if ud and subtypes.is(ud, subtypes.UVUSERT) then
-            table.insert(drawables,
-                {
-                    type = 'uvusert',
-                    z = composedZ,
-                    texfixture = fixture,
-                    label = ud.label,
-                    extra = ud.extra,
-                    body = body,
-                    thing = utils.thingOf(body)
-                })
-        end
-        if ud and subtypes.is(ud, subtypes.DECAL) then
-            if ud.extra.browCurve then
-                table.insert(drawables, {
-                    type = 'brow',
-                    z = composedZ,
-                    extra = ud.extra,
-                    body = body,
-                })
-            elseif ud.extra.mouthCurve then
-                if ud.extra.mouthCurve == 'teeth' then
-                    -- Teeth: positioned image, optionally clipped to mouth polygon
-                    table.insert(drawables, {
-                        type = 'mouth-teeth',
-                        z = composedZ,
-                        extra = ud.extra,
-                        body = body,
-                    })
-                else
-                    -- Mouth bezier curve decal (upper or lower lip); its curve comes from
-                    -- extra.curvePoints when drawn (src/render/mouth.lua)
-                    local pts = ud.extra.curvePoints
-                    if pts and #pts == 16 then
-                        table.insert(drawables, {
-                            type = 'mouth-' .. ud.extra.mouthCurve,
-                            z = composedZ,
-                            extra = ud.extra,
-                            body = body,
-                        })
-                        if ud.extra.mouthCurve == 'lower' then
-                            -- Dark interior fill renders below teeth so teeth always
-                            -- sit on top of the void. zOffset 250 < non-stickOut teeth 251.
-                            table.insert(drawables, {
-                                type = 'mouth-backdrop',
-                                z = composedZ - 2,
-                                extra = ud.extra,
-                                body = body,
-                            })
-                            -- the tongue, out only during a raspberry (src/mipo-raspberry.lua):
-                            -- over the lower lip, under the upper one (253)
-                            table.insert(drawables, {
-                                type = 'mouth-tongue',
-                                z = composedZ + 0.6,
-                                extra = ud.extra,
-                                body = body,
-                            })
-                        end
-                    end
-                end
-            else
-                table.insert(drawables, {
-                    type = 'decal',
-                    z = composedZ,
-                    extra = ud.extra,
-                    body = body,
-                })
+        if type(ud) == 'table' then -- only table userData is an sfixture
+            local body = fixture:getBody()
+            local before = #drawables
+            local make = makers[ud.subtype]
+            if make then
+                -- each Mipo draws in its own z-range: zGroupOffset * 1000 + the part's zOffset
+                local z = ud.extra and ((ud.extra.zGroupOffset or 0) * 1000 + (ud.extra.zOffset or 0))
+                make(drawables, ud, fixture, body, z)
             end
+            local thing = utils.thingOf(body)
+            for k = before + 1, #drawables do
+                drawables[k].key, drawables[k].sub = ud.id, k - before
+                drawables[k].mipoThing = thing and thing.mipoId and thing -- for culling (L0)
+            end
+            listState.entries[#listState.entries + 1] = sfixtureLooks({}, fixture, ud)
         end
-
-        if ud and subtypes.is(ud, subtypes.CONNECTED_TEXTURE) and ud.extra.nodes then
-            -- its curve follows the joints: laid in drawConnectedTexture (ribbonPoints)
-            table.insert(drawables, { z = composedZ, type = 'connected-texture', extra = ud.extra, body = body })
-        end
-        local thing = body and utils.thingOf(body)
-        for k = before + 1, #drawables do
-            drawables[k].key, drawables[k].sub = ud.id, k - before
-            drawables[k].mipoThing = thing and thing.mipoId and thing -- for culling (L0)
-        end
-        if ud then listState.entries[#listState.entries + 1] = sfixtureLooks({}, fixture, ud) end
     end
     return drawables
 end
