@@ -213,3 +213,8 @@ parts (music-theory, skinning's `meshusertVertices`, the polygon modules) run wi
   (fixtures, object-manager, scene-load, the triangle / ribbon / capsule paths), spec/polygon-safety_spec.lua
   feeds each path in-line points behind a guard that refuses them. On the way: dropCollinear dropped
   BOTH of two points on top of each other (a capsule whose corners meet), now one stays.
+  The other shapes, probed 2026-11-05 (each case in its own process, at 100 / 200 / 400 px per metre):
+  nothing else crashes. Chain points closer than Box2D's slop (1 px at 200), one point, NaN, and a
+  polygon of 2 or of 3 equal points all give a Lua error a pcall catches; an edge of length 0 and a
+  circle of radius 0 are taken. src/ makes no chains or edges; of the spikes only burrow builds
+  chains while you play, and it drops points within 2 px (enough up to 400 px per metre).
