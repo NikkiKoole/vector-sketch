@@ -33,7 +33,11 @@ first.
   does save and come back, rim and look, and a save loaded and saved again matches. Pictures through
   build / flip / size / drag / drop / reload looked right. What it found was in the sweeps: they stepped
   with a bare `world:update`, so blob rims and water never ran in them; `sweep.step` steps as the game does)
-- [ ] Grass round
+- [x] Grass round (2026-11-06: grassy ground and a grassy dynamic turf; 202 cases x 2 meters, a new
+  'turned upside down' case for every feature; nothing broke, every grass sfixture keeps blades on
+  its upper edge at any angle, flipped and reloaded too (the check caught a planted fault). To look
+  at, not a bug: the blade cache's key holds the body's angle, so a tumbling grassy body builds both
+  its SpriteBatches again every frame; none is saved in a scene yet)
 - [ ] Liquid round
 - [ ] Tile repeat round
 - [x] Light round (2026-11-06: a lamp with a LIGHT sfixture lighting a plasticine and a hairs box; 502 cases, 4

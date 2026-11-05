@@ -50,6 +50,7 @@ local function room()
 end
 
 local blob = require('src.blob')
+local grass = require('src.grass')
 
 -- which body: its label, or a blob's rim
 local function nameOf(body)
@@ -110,6 +111,32 @@ local function lightsReach(p, world)
     end
 end
 
+-- every grass sfixture has blades: a polygon body always has an edge within 45 degrees of up
+-- (maxSlope is 50), so none may come out bare
+local function grassGrows(p, world)
+    for _, fixture in ipairs(registry.sfixturesOf(subtypes.GRASS)) do
+        if sweep.alive(fixture) and fixture:getBody():getWorld() == world then
+            local body = fixture:getBody()
+            local thing = utils.thingOf(body)
+            local ud = fixture:getUserData()
+            if thing and thing.vertices and #thing.vertices >= 6 and (ud.extra.maxSlope or 50) >= 45
+                and (ud.extra.density or 8) >= 1 then
+                local cx, cy = 0, 0
+                for i = 1, #thing.vertices, 2 do cx, cy = cx + thing.vertices[i], cy + thing.vertices[i + 1] end
+                cx, cy = cx * 2 / #thing.vertices, cy * 2 / #thing.vertices
+                local local_ = {}
+                for i = 1, #thing.vertices, 2 do
+                    local_[i], local_[i + 1] = thing.vertices[i] - cx, thing.vertices[i + 1] - cy
+                end
+                if #grass.placeBlades(local_, body:getAngle(), ud.extra) == 0 then
+                    p.add('a grass sfixture without blades (a ' .. tostring(thing.shapeType) .. ' at '
+                        .. math.floor(math.deg(body:getAngle())) .. ' deg)')
+                end
+            end
+        end
+    end
+end
+
 -- name -> { build = fn() (makes it in the fresh world, returns its host thing), check = fn(p, world) }
 local RECIPES = {
     softbody = {
@@ -135,6 +162,22 @@ local RECIPES = {
                     end
                 end
             end
+        end,
+    },
+    grass = {
+        build = function()
+            room()
+            local ground = objectManager.addThing('rectangle', { x = 0, y = 250, width = 1600, height = 200,
+                bodyType = 'static', label = 'ground' })
+            fixtures.createSFixture(ground.body, 0, 0, subtypes.GRASS, { radius = 20 })
+            local turf = objectManager.addThing('rectangle', { x = 300, y = -300, width = 300, height = 120,
+                label = 'turf' })
+            fixtures.createSFixture(turf.body, 0, 0, subtypes.GRASS, { radius = 20 })
+            return turf
+        end,
+        check = function(p, world)
+            sane(p, world)
+            grassGrows(p, world)
         end,
     },
     light = {
@@ -201,6 +244,10 @@ local function extraCases(hostId, dt)
     local function host() return utils.thingOf(registry.getBodyByID(hostId)) end
     return {
         { 'clone everything', function(world) library.clone(things(world)) end },
+        { 'turned upside down', function()
+            local body = host().body
+            body:setAngle(body:getAngle() + math.pi)
+        end },
         { 'clone the feature alone', function() library.clone({ host() }) end },
         { 'load the save, save that and load it again', function(world, p)
             local first = json.encode(sceneIO.gatherSaveData(world, camera.getInstance()))
