@@ -58,6 +58,23 @@ function lib.frame(world)
     love.graphics.setCanvas()
 end
 
+-- n steps the way love.update in main.lua takes them (its physics part, without sound and faces):
+-- blob rims built and pushed, the world, signals, snaps, water spilling. A bare world:update
+-- skipped the blobs and the water, so the sweeps never ran them.
+function lib.step(world, n, dt)
+    dt = dt or 1 / 60
+    local blob, liquid = require('src.blob'), require('src.liquid')
+    local signals, snap = require('src.signals'), require('src.physics.snap')
+    for _ = 1, n do
+        blob.beforeStep(false, dt)
+        world:update(dt)
+        signals.update()
+        snap.update(dt)
+        blob.afterStep()
+        liquid.update(false)
+    end
+end
+
 -- a LÖVE object still there (one LÖVE released when its world went can't be asked: gone)
 function lib.alive(object)
     local ok, destroyed = pcall(object.isDestroyed, object)
@@ -67,7 +84,12 @@ local alive = lib.alive
 
 -- what the world holds: bodies, joints, sfixtures per subtype
 local function census(world)
-    local c = { bodies = world:getBodyCount(), joints = 0, sfixtures = {} }
+    -- a blob's rim bodies are made again from its sfixture, never saved (src/blob.lua)
+    local blob = require('src.blob')
+    local c = { bodies = 0, joints = 0, sfixtures = {} }
+    for _, body in ipairs(world:getBodies()) do
+        if not blob.ownerOf(body) then c.bodies = c.bodies + 1 end
+    end
     for _, joint in ipairs(world:getJoints()) do
         if (joint:getUserData() or {}).id then c.joints = c.joints + 1 end
     end
@@ -116,7 +138,8 @@ function lib.checkWorld(p, world)
     end
 end
 
--- save the world, load the save into a fresh one, compare what's in them, draw the reload
+-- save the world, load the save into a fresh one, compare what's in them, draw the reload;
+-- returns the reloaded world (nil if it didn't load)
 function lib.saveAndReload(p, world)
     local saved, before
     if p.phase('save', function()
@@ -127,6 +150,9 @@ function lib.saveAndReload(p, world)
         if p.phase('reload', function() sceneIO.load(saved, world2, camera.getInstance()) end) then
             compareCensus(p, before, census(world2))
             p.phase('draw reloaded', function() lib.frame(world2) end)
+            p.phase('step reloaded', function() lib.step(world2, 3) end)
+            p.phase('draw reloaded after step', function() lib.frame(world2) end)
+            return world2
         end
     end
 end

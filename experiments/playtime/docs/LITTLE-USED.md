@@ -29,7 +29,10 @@ first.
 
 - [ ] Skinned mesh round (the clone / load / vertex fixes of 2026-11-05 are in; the rest untried)
 - [ ] UV mesh + backdrop round
-- [ ] Soft body round (also: does one save and come back at all, with no scene holding one?)
+- [x] Soft body round (2026-11-06, `claudetools/feature-rounds_spec.lua`, 16 seeds x 2 meters: nothing broke. It
+  does save and come back, rim and look, and a save loaded and saved again matches. Pictures through
+  build / flip / size / drag / drop / reload looked right. What it found was in the sweeps: they stepped
+  with a bare `world:update`, so blob rims and water never ran in them; `sweep.step` steps as the game does)
 - [ ] Grass round
 - [ ] Liquid round
 - [ ] Tile repeat round
