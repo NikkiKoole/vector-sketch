@@ -78,11 +78,10 @@ function lib.plan(song, _style, addSections)
         list[#list + 1] = { entry[1], entry[2], function(j) return lib.CHORDS[j % 3 + 1] end, entry[3] }
     end
     addSections(song, list)
-    -- the riff moved to the song's key, always downwards (Nikki 2026-11-05: up a few, in Ab, it sat too
-    -- high): F as Mystic Brew, Eb as Electric Relaxation, Bb 7 down, Ab 9 down (its low C to a D#1)
-    local shift = (song.key - 5) % 12
-    if shift > 0 then shift = shift - 12 end
-    song.brew = { shift = shift, passGain = 0 }
+    -- always in Eb, Electric Relaxation's pitch: the riff 2 down from Mystic Brew's F (Nikki 2026-11-05: the
+    -- set's keys moved it up, in Ab it sat too high; pinned to the record's)
+    song.key = 3
+    song.brew = { shift = -2, passGain = 0 }
 end
 
 ---------------------------------------------------------------- the bass
