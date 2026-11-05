@@ -1,7 +1,7 @@
 #!/bin/bash
 # Before/after snapshots for refactors that shouldn't change what you see (claudetools/snapshots/).
-#   claudetools/snapshot.sh take before            # all six: scenes, mipos, editor, outlines (drawWorld), overlay,
-#                                                  # skinning (meshusertVertices)
+#   claudetools/snapshot.sh take before            # all seven: scenes, mipos, editor, outlines (drawWorld), overlay,
+#                                                  # skinning (meshusertVertices), meshpanel (the MESHUSERT panel)
 #   claudetools/snapshot.sh take after scenes      # one of them
 #   claudetools/snapshot.sh diff before after      # identical, or what changed
 # Run each "take" twice the first time on a new machine: the hashes should repeat.
@@ -14,7 +14,7 @@ LOVE=${LOVE:-/Applications/love115.app/Contents/MacOS/love}
 case "$1" in
 take)
     name=${2:?name}; mkdir -p ".snapshots/$name"
-    for kind in ${3:-scenes mipos editor outlines overlay skinning}; do
+    for kind in ${3:-scenes mipos editor outlines overlay skinning meshpanel}; do
         SNAPSHOT_OUT="$PWD/.snapshots/$name/$kind.txt" "$LOVE" . --specs "claudetools/snapshots/${kind}_spec.lua" \
             | grep -E "Error|Failure" -A6
         echo "$kind: $(wc -l < ".snapshots/$name/$kind.txt") lines"

@@ -510,4 +510,7 @@ function lib.draw(ud, myID, x, y, advance)
         end
 end
 
+-- for specs (claudetools/snapshots/meshpanel_spec.lua), not part of the API
+lib._test = { showTransformSliders = showTransformSliders }
+
 return lib
