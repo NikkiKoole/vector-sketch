@@ -76,40 +76,52 @@ lib.TONAL = TONAL
 -- human (optional): a booked note's humanizing fields, passed on to synth.scheduleAt's opts (cents, vib,
 -- shapes, damp, release, gain, glide...: src/synth.lua). Returns the booking id scheduleAt gave (nil when
 -- the note didn't go out, or went out without one), for synth.noteEvent (the parlour style's cello).
-local function play(synth, part, patch, t, midi, vol, durMs, step, slide, accent, human)
-    local settings = state.musicSettings
-    if M.song then
-        M.styleParts = M.styleParts or {}
-        local parts = M.styleParts[M.song.style] or {}
-        M.styleParts[M.song.style], parts[part] = parts, patch
-        if not TONAL[part] then
-            M.styleSounds = M.styleSounds or {}
-            local bySound = M.styleSounds[M.song.style] or {}
-            M.styleSounds[M.song.style] = bySound
-            bySound[part] = bySound[part] or {}
-            bySound[part][patch] = true
-        end
+-- the panel's memory of what the style plays: its instrument per part, its sounds per drum-like part
+local function rememberSound(part, patch)
+    if not M.song then return end
+    M.styleParts = M.styleParts or {}
+    local parts = M.styleParts[M.song.style] or {}
+    M.styleParts[M.song.style], parts[part] = parts, patch
+    if not TONAL[part] then
+        M.styleSounds = M.styleSounds or {}
+        local bySound = M.styleSounds[M.song.style] or {}
+        M.styleSounds[M.song.style] = bySound
+        bySound[part] = bySound[part] or {}
+        bySound[part][patch] = true
     end
-    if settings.partsOff and settings.partsOff[part] then return end
-    if M.mute and M.mute[part] then return end
-    -- a part resting under a stinger (src/music-stingers.lua): notes booked into its window are skipped
+end
+
+-- the patch the note plays on (the panel's swap), or false when the part or sound is switched off, muted
+-- this bar, or resting under a stinger (src/music-stingers.lua: notes booked into its window are skipped)
+local function voiceOf(settings, part, patch, t)
+    if settings.partsOff and settings.partsOff[part] then return false end
+    if M.mute and M.mute[part] then return false end
     local rest = M.rest and M.rest[part]
-    if rest and t >= rest.from and t < rest.to then return end
+    if rest and t >= rest.from and t < rest.to then return false end
     local voice
     if TONAL[part] then
         voice = settings.voices and settings.voices[part] or part == 'lead' and settings.melodyPatch
     else
-        if settings.soundsOff and settings.soundsOff[patch] then return end
+        if settings.soundsOff and settings.soundsOff[patch] then return false end
         voice = settings.soundVoices and settings.soundVoices[patch]
     end
-    if voice then patch = voice end
+    return voice or patch
+end
+
+-- the bar's say over a note: clipped at a handoff, the range idea's bass drop on a phrase's first
+-- downbeat (M.bassDrop, down to E1, as a left hand does on the one), the bar's dynamics (a soft note
+-- stays audible). Returns midi, vol, durMs.
+local function shapeNote(part, t, midi, vol, durMs, step)
     if M.clipAt and t + durMs / 1000 > M.clipAt then durMs = math.max(20, (M.clipAt - t) * 1000) end
-    -- range (the idea 'range'): on a phrase's first downbeat the bass drops an octave, as a left hand
-    -- does on the one, down to E1 (M.bassDrop, set per bar in src/music.lua's bookBar)
     if part == 'bass' and step == 0 and M.bassDrop and midi - 12 >= 28 then midi = midi - 12 end
-    -- the bar's dynamics (src/music.lua's bookBar, music-plan's dynamicAt); a soft note stays audible
     if M.dynamic and M.dynamic ~= 0 and vol > 0 then vol = math.max(math.min(vol, 1), vol + M.dynamic) end
-    local p, opts = synth.patches and synth.patches[patch], nil
+    return midi, vol, durMs
+end
+
+-- the note's booking options: a legato patch's slide, the accent (the note's own, or a downbeatAccent
+-- patch's on step 0), the humanizing fields
+local function noteOpts(p, step, slide, accent, human)
+    local opts
     if p and slide and p.legatoGlide then opts = { glide = p.legatoGlide } end
     local lean = accent
     if lean == nil and p and p.downbeatAccent and step == 0 then lean = p.downbeatAccent end
@@ -121,6 +133,15 @@ local function play(synth, part, patch, t, midi, vol, durMs, step, slide, accent
         opts = opts or {}
         for k, v in pairs(human) do opts[k] = v end
     end
+    return opts
+end
+
+local function play(synth, part, patch, t, midi, vol, durMs, step, slide, accent, human)
+    rememberSound(part, patch)
+    patch = voiceOf(state.musicSettings, part, patch, t)
+    if not patch then return end
+    midi, vol, durMs = shapeNote(part, t, midi, vol, durMs, step)
+    local opts = noteOpts(synth.patches and synth.patches[patch], step, slide, accent, human)
     local id = synth.scheduleAt(patch, t, midi, vol, durMs, opts)
     if M.trace then M.trace(part, t, midi, vol, durMs) end
     notify(part, patch, midi, vol, durMs, t, step)
