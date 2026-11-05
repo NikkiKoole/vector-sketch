@@ -341,7 +341,12 @@ function love.draw()
     script.call('drawBelow') -- a scene script's ground, under the bodies (scripts/spikes/burrow.playtime.lua)
 
     prof.push('drawworld')
+    -- the outlines and joints at least a screen pixel wide: zoomed out, a 1-wide line came out thinner
+    -- than a pixel (faint with the window's msaa, gone without it); zoomed in they scale as before
+    local lineWidth = love.graphics.getLineWidth()
+    love.graphics.setLineWidth(math.max(1, 1 / cam.scale))
     box2dDraw.drawWorld(state.physicsWorld, state.world.debugDrawMode)
+    love.graphics.setLineWidth(lineWidth)
     prof.pop('drawworld')
     doors.drawBehind() -- a door swinging open: over the door's own shape, behind the Mipos in it
     fabuland.draw() -- building parts, behind the Mipos; only while a scene turns it on (src/fabuland.lua)
