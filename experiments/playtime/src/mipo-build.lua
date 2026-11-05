@@ -643,66 +643,55 @@ function lib.serializeCharacters()
     return result
 end
 
--- Reconstruct a character instance from saved data and a map of already-loaded bodies.
--- partBodies: { [partName] = body } — the bodies that were just recreated by io.buildWorld.
--- Ensures DNA defaults so new fields added to dna-defaults are auto-populated on old saves.
-function lib.reconstructInstance(charData, partBodies)
-    if not partBodies then return nil end
-    local instance = newInstance(charData.dna, charData.scale, charData.id)
-    instance.zGroupOffset = charData.zGroupOffset
-    prepareDNA(instance)
-    balance.applyNeck(instance) -- neck limits (bend budget) before the rest-pose limits below
-    balance.applyTrunk(instance)
-    for partName, body in pairs(partBodies) do
-        local thing = utils.thingOf(body)
-        if thing then
-            instance.parts[partName] = thing
-            applyFootMaterial(thing, partName) -- scenes saved before feet had grip
-            -- scenes saved when every nose was drawn at z 490, above the arms; and when
-            -- torsos drew at the head's 200/210 (TORSO_SKIN_Z)
-            for _, fixture in ipairs(body:getFixtures()) do
-                local fud = fixture:getUserData()
-                if fud and fud.extra and partName:find('^torso%d') and fud.subtype == subtypes.TEXFIXTURE then
-                    if fud.extra.zOffset == 200 then
-                        fud.extra.zOffset = TORSO_SKIN_Z
-                    elseif fud.extra.zOffset == 210 then
-                        fud.extra.zOffset = TORSO_SKIN_Z + TORSO_HAIR_ABOVE_SKIN
-                    end
-                end
-                if fud and fud.label == 'upperlip' and fud.extra and fud.extra.main
-                    and fud.extra.main.bgURL == 'mipo/upperlip/upperlip-04.png' then -- the duck beak is out
-                    fud.extra.main.bgURL = 'mipo/upperlip/upperlip-01.png'
-                    fud.extra.main.fgURL = 'mipo/upperlip/upperlip-01-mask.png'
-                    fud.extra.dirty = true
-                end
-                if fud and fud.extra and fud.extra.zOffset == 490 then
-                    if fud.label == 'nose' then
-                        fud.extra.zOffset = 254
-                    elseif partName:find('^nose') then
-                        fud.extra.zOffset = 350
-                    end
-                end
-            end
-            do -- limits relative to the rest pose
-                for _, joint in ipairs(body:getJoints()) do
-                    local _, bodyB = joint:getBodies()
-                    if bodyB == body then
-                        applyShoulderLimits(joint, partName)
-                        applyLegLimits(instance, joint, partName)
-                    end
-                end
+-- Fixtures saved by older versions, brought up to date: torsos drawn at the head's 200/210
+-- (TORSO_SKIN_Z), the duck-beak upper lip (out), every nose drawn at z 490 above the arms.
+local function migrateSavedFixtures(body, partName)
+    for _, fixture in ipairs(body:getFixtures()) do
+        local fud = fixture:getUserData()
+        if fud and fud.extra and partName:find('^torso%d') and fud.subtype == subtypes.TEXFIXTURE then
+            if fud.extra.zOffset == 200 then
+                fud.extra.zOffset = TORSO_SKIN_Z
+            elseif fud.extra.zOffset == 210 then
+                fud.extra.zOffset = TORSO_SKIN_Z + TORSO_HAIR_ABOVE_SKIN
             end
         end
-        -- keep the saved group index so a rebuild doesn't hand out a new one
-        local first = body:getFixtures()[1]
-        if not instance.groupIndex and first and first:getGroupIndex() < 0 then
-            instance.groupIndex = first:getGroupIndex()
+        if fud and fud.label == 'upperlip' and fud.extra and fud.extra.main
+            and fud.extra.main.bgURL == 'mipo/upperlip/upperlip-04.png' then -- the duck beak is out
+            fud.extra.main.bgURL = 'mipo/upperlip/upperlip-01.png'
+            fud.extra.main.fgURL = 'mipo/upperlip/upperlip-01-mask.png'
+            fud.extra.dirty = true
+        end
+        if fud and fud.extra and fud.extra.zOffset == 490 then
+            if fud.label == 'nose' then
+                fud.extra.zOffset = 254
+            elseif partName:find('^nose') then
+                fud.extra.zOffset = 350
+            end
         end
     end
-    -- instance.joints ('parent->child' = joint id) is what texture rebuilds use
-    -- for connected-texture nodes. It isn't saved, so rebuild it from the bodies;
-    -- left empty, redrawing textures on a loaded Mipo pointed leg textures at
-    -- missing joints (untextured legs).
+end
+
+-- A loaded body taken in as the instance's part: its thing, foot grip (scenes saved before feet
+-- had it), old fixtures updated, the limits of the joint to its parent relative to the rest pose.
+local function adoptPart(instance, partName, body)
+    local thing = utils.thingOf(body)
+    if not thing then return end
+    instance.parts[partName] = thing
+    applyFootMaterial(thing, partName)
+    migrateSavedFixtures(body, partName)
+    for _, joint in ipairs(body:getJoints()) do
+        local _, bodyB = joint:getBodies()
+        if bodyB == body then
+            applyShoulderLimits(joint, partName)
+            applyLegLimits(instance, joint, partName)
+        end
+    end
+end
+
+-- instance.joints ('parent->child' = joint id) is what texture rebuilds use for
+-- connected-texture nodes. It isn't saved, so rebuild it from the bodies; left empty,
+-- redrawing textures on a loaded Mipo pointed leg textures at missing joints (untextured legs).
+local function rebuildJointIds(instance)
     for parentName, children in pairs(instance.childrenMap or {}) do
         local parent = instance.parts[parentName]
         for _, childName in ipairs(children) do
@@ -718,19 +707,24 @@ function lib.reconstructInstance(charData, partBodies)
             end
         end
     end
-    -- connected textures saved with missing joints (from the bug above): redraw
-    local brokenTextures = false
+end
+
+-- connected textures saved with missing joints (from the bug above) need redrawing
+local function hasBrokenTextures(instance)
     for _, part in pairs(instance.parts) do
         for _, fixture in ipairs(part.body:getFixtures()) do
             local fud = fixture:getUserData()
             for _, node in ipairs(fud and fud.extra and fud.extra.nodes or {}) do
-                if node.type == NT.JOINT and not registry.getJointByID(node.id) then brokenTextures = true end
+                if node.type == NT.JOINT and not registry.getJointByID(node.id) then return true end
             end
         end
     end
+    return false
+end
 
-    -- repair scenes saved before allocation skipped values in use: two Mipos
-    -- sharing a group index never collide, sharing a zGroupOffset interleaves textures
+-- repair scenes saved before allocation skipped values in use: two Mipos sharing a group
+-- index never collide, sharing a zGroupOffset interleaves textures
+local function repairGroupAndZ(instance)
     local groupTaken, zTaken = false, false
     for id, other in pairs(mipoRegistry.getAll()) do
         if id ~= instance.id then
@@ -741,6 +735,29 @@ function lib.reconstructInstance(charData, partBodies)
     if groupTaken then instance.groupIndex = allocateGroupIndex() end
     if zTaken then instance.zGroupOffset = allocateZGroupOffset(instance) end
     if groupTaken or zTaken then applyGroupAndZ(instance, true) end
+end
+
+-- Reconstruct a character instance from saved data and a map of already-loaded bodies.
+-- partBodies: { [partName] = body } — the bodies that were just recreated by io.buildWorld.
+-- Ensures DNA defaults so new fields added to dna-defaults are auto-populated on old saves.
+function lib.reconstructInstance(charData, partBodies)
+    if not partBodies then return nil end
+    local instance = newInstance(charData.dna, charData.scale, charData.id)
+    instance.zGroupOffset = charData.zGroupOffset
+    prepareDNA(instance)
+    balance.applyNeck(instance) -- neck limits (bend budget) before the rest-pose limits below
+    balance.applyTrunk(instance)
+    for partName, body in pairs(partBodies) do
+        adoptPart(instance, partName, body)
+        -- keep the saved group index so a rebuild doesn't hand out a new one
+        local first = body:getFixtures()[1]
+        if not instance.groupIndex and first and first:getGroupIndex() < 0 then
+            instance.groupIndex = first:getGroupIndex()
+        end
+    end
+    rebuildJointIds(instance)
+    local brokenTextures = hasBrokenTextures(instance)
+    repairGroupAndZ(instance)
     mipoRegistry.register(instance)
     if brokenTextures then
         textures.rebuildTextures(instance)
