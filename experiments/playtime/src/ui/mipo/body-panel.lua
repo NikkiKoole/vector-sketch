@@ -35,164 +35,146 @@ end
 lib.shapePartFor = shapePartFor
 
 -- === CREATION ACCORDION ===
+local function rebuild(instance, patch)
+    CharacterManager.rebuildFromCreation(instance, patch)
+    CharacterManager.rebuildTextures(instance)
+end
+
+-- the nose drawn on the face goes when the nose becomes a body (physics, or 2+ segments)
+local function clearOverlayNose(instance, creation)
+    local startParent = creation.isPotatoHead and 'torso1' or 'head'
+    CharacterManager.updateFaceOfPart(instance, startParent, { noseShape = 0 })
+end
+
+-- potato head, torso segments, spine (bend, sway)
+local function drawTorsoRows(instance, creation, x, y, ROW)
+    local cbClicked, cbChecked = ui.checkbox(x, y, creation.isPotatoHead or false, 'isPotatoHead')
+    if cbClicked then rebuild(instance, { isPotatoHead = cbChecked }) end
+    y = y + ROW
+
+    local ts = ui.sliderWithInput('mipo_torsoSeg', x, y, 120, 1, 5, creation.torsoSegments or 1, false, 1)
+    ui.alignedLabel(x, y, '  torso segments')
+    if ts and math.floor(ts) ~= creation.torsoSegments then
+        rebuild(instance, { torsoSegments = math.floor(ts) })
+    end
+    y = y + ROW
+
+    -- spine: the torso segments are bands of one torso that bend (docs/MIPO-SPINE.md)
+    local spClicked, spChecked = ui.checkbox(x, y, creation.torsoSpine or false, 'spine')
+    if spClicked then
+        local patch = { torsoSpine = spChecked }
+        if spChecked and (creation.torsoSegments or 1) < 2 then patch.torsoSegments = 2 end
+        rebuild(instance, patch)
+    end
+    y = y + ROW
+    if creation.torsoSpine then
+        local bend = ui.sliderWithInput('mipo_spineBend', x, y, 120, 0, 45, creation.spineBend or 15, false, 1)
+        ui.alignedLabel(x, y, '  spine bend')
+        bend = bend and math.floor(tonumber(bend) or 0)
+        if bend and bend ~= creation.spineBend then rebuild(instance, { spineBend = bend }) end
+        y = y + ROW
+        local sway = ui.sliderWithInput('mipo_spineSway', x, y, 120, 0, 1, creation.spineSway or 0.3)
+        ui.alignedLabel(x, y, '  spine sway')
+        if sway and sway ~= creation.spineSway then creation.spineSway = sway end -- read live
+        y = y + ROW
+    end
+    return y
+end
+
+-- neck picture and width: the strip from the top torso segment to the head (its
+-- connected-skin; randomize gives it the leg skin), set on every torso segment so a
+-- change of segment count keeps it
+local function drawNeckSkin(instance, creation, x, panelX, y, ROW)
+    local topTorso = instance.dna.parts['torso' .. (creation.torsoSegments or 1)]
+    local neckSkin = not creation.isPotatoHead and topTorso and topTorso.appearance
+        and topTorso.appearance['connected-skin']
+    if not (neckSkin and neckSkin.main) then return y end
+    local function setNeck(values)
+        for i = 1, creation.torsoSegments or 1 do
+            CharacterManager.updateConnectedAppearance(instance, 'torso' .. i, 'connected-skin', values)
+        end
+        CharacterManager.rebuildTextures(instance)
+    end
+    ui.label(x, y, 'neck skin')
+    y = y + ROW
+    local gridHeight = drawThumbnailGrid(limbSkinTextures, neckSkin.main.bgURL or '', panelX, y, 50,
+        function(url)
+            setNeck({ bgURL = url, fgURL = url:gsub('%.png', '-mask.png') })
+        end)
+    y = y + gridHeight + BUTTON_SPACING
+    local currentWmul = neckSkin.main.wmul or instance.scale or 1
+    local neckW = ui.sliderWithInput('mipo_neck_wmul', x, y, 120, 0.1, 10, currentWmul)
+    ui.alignedLabel(x, y, '  neck width')
+    if neckW and neckW ~= currentWmul then setNeck({ wmul = neckW }) end
+    return y + ROW
+end
+
+-- neck segments, height (all segments at once), skin
+local function drawNeckRows(instance, creation, x, panelX, y, ROW)
+    local ns = ui.sliderWithInput('mipo_neckSeg', x, y, 120, 0, 5, creation.neckSegments or 0, false, 1)
+    ui.alignedLabel(x, y, '  neck segments')
+    if ns and math.floor(ns) ~= creation.neckSegments then
+        rebuild(instance, { neckSegments = math.floor(ns) })
+    end
+    y = y + ROW
+
+    if (creation.neckSegments or 0) > 0 then
+        local firstNeck = instance.dna.parts['neck1']
+        local currentH = firstNeck and firstNeck.dims and firstNeck.dims.h or 150
+        local nh = ui.sliderWithInput('mipo_neckH', x, y, 120, 10, 500, currentH)
+        ui.alignedLabel(x, y, '  neck height')
+        if nh and nh ~= currentH then
+            for i = 1, creation.neckSegments do
+                CharacterManager.updatePart('neck' .. i, { h = nh }, instance)
+            end
+            CharacterManager.rebuildTextures(instance)
+        end
+        y = y + ROW
+    end
+    return drawNeckSkin(instance, creation, x, panelX, y, ROW)
+end
+
+-- nose segments; with one, whether it's a body (physics) or drawn on the face (overlay)
+local function drawNoseRows(instance, creation, x, y, ROW)
+    local noses = ui.sliderWithInput('mipo_noseSeg', x, y, 120, 0, 5, creation.noseSegments or 0, false, 1)
+    ui.alignedLabel(x, y, '  nose segments')
+    local val = noses and math.floor(noses)
+    if val and val ~= creation.noseSegments then
+        local updates = { noseSegments = val }
+        -- 0: no nose; 1: keeps its noseMode (a physics one has no overlay); 2+: segmented
+        if val == 1 and (creation.noseMode or 'overlay') == 'physics' then
+            clearOverlayNose(instance, creation)
+        elseif val >= 2 then
+            updates.noseMode = 'physics'
+            clearOverlayNose(instance, creation)
+        end
+        rebuild(instance, updates)
+    end
+    y = y + ROW
+
+    if (creation.noseSegments or 0) == 1 then
+        local currentMode = creation.noseMode or 'overlay'
+        local clicked, checked = ui.checkbox(x, y, currentMode == 'physics', 'physics nose')
+        if clicked then
+            local newMode = checked and 'physics' or 'overlay'
+            if newMode == 'physics' then clearOverlayNose(instance, creation) end
+            rebuild(instance, { noseMode = newMode })
+        end
+        y = y + ROW
+    end
+    return y
+end
+
 function lib.drawCreation(p, y)
     local instance, x, panelX, ROW = p.instance, p.x, p.panelX, p.ROW
-    local function drawAccordion(key, content)
-        y = widgets.accordionHeader(p, y, key)
-        if widgets.isOpen(key) then content() end
-    end
-    drawAccordion('creation', function()
+    y = widgets.accordionHeader(p, y, 'creation')
+    if widgets.isOpen('creation') then
+        -- read once: a rebuild may give the dna a new creation table, the rows below keep this one
         local creation = instance.dna.creation
-        local changed = false
-
-        -- isPotatoHead checkbox
-        local cbClicked, cbChecked = ui.checkbox(x, y, creation.isPotatoHead or false, 'isPotatoHead')
-        if cbClicked then
-            changed = true
-            CharacterManager.rebuildFromCreation(instance, { isPotatoHead = cbChecked })
-            CharacterManager.rebuildTextures(instance)
-        end
-        y = y + ROW
-
-        -- torsoSegments
-        local ts = ui.sliderWithInput('mipo_torsoSeg', x, y, 120, 1, 5, creation.torsoSegments or 1, false, 1)
-        ui.alignedLabel(x, y, '  torso segments')
-        if ts then
-            local val = math.floor(ts)
-            if val ~= creation.torsoSegments then
-                changed = true
-                CharacterManager.rebuildFromCreation(instance, { torsoSegments = val })
-                CharacterManager.rebuildTextures(instance)
-            end
-        end
-        y = y + ROW
-
-        -- spine: the torso segments are bands of one torso that bend (docs/MIPO-SPINE.md)
-        local spClicked, spChecked = ui.checkbox(x, y, creation.torsoSpine or false, 'spine')
-        if spClicked then
-            changed = true
-            local patch = { torsoSpine = spChecked }
-            if spChecked and (creation.torsoSegments or 1) < 2 then patch.torsoSegments = 2 end
-            CharacterManager.rebuildFromCreation(instance, patch)
-            CharacterManager.rebuildTextures(instance)
-        end
-        y = y + ROW
-        if creation.torsoSpine then
-            local bend = ui.sliderWithInput('mipo_spineBend', x, y, 120, 0, 45, creation.spineBend or 15, false, 1)
-            ui.alignedLabel(x, y, '  spine bend')
-            bend = bend and math.floor(tonumber(bend) or 0)
-            if bend and bend ~= creation.spineBend then
-                changed = true
-                CharacterManager.rebuildFromCreation(instance, { spineBend = bend })
-                CharacterManager.rebuildTextures(instance)
-            end
-            y = y + ROW
-            local sway = ui.sliderWithInput('mipo_spineSway', x, y, 120, 0, 1, creation.spineSway or 0.3)
-            ui.alignedLabel(x, y, '  spine sway')
-            if sway and sway ~= creation.spineSway then creation.spineSway = sway end -- read live
-            y = y + ROW
-        end
-
-        -- neckSegments
-        local ns = ui.sliderWithInput('mipo_neckSeg', x, y, 120, 0, 5, creation.neckSegments or 0, false, 1)
-        ui.alignedLabel(x, y, '  neck segments')
-        if ns then
-            local val = math.floor(ns)
-            if val ~= creation.neckSegments then
-                changed = true
-                CharacterManager.rebuildFromCreation(instance, { neckSegments = val })
-                CharacterManager.rebuildTextures(instance)
-            end
-        end
-        y = y + ROW
-
-        -- neck height (adjusts all neck segments at once)
-        if (creation.neckSegments or 0) > 0 then
-            local firstNeck = instance.dna.parts['neck1']
-            local currentH = firstNeck and firstNeck.dims and firstNeck.dims.h or 150
-            local nh = ui.sliderWithInput('mipo_neckH', x, y, 120, 10, 500, currentH)
-            ui.alignedLabel(x, y, '  neck height')
-            if nh and nh ~= currentH then
-                for i = 1, creation.neckSegments do
-                    CharacterManager.updatePart('neck' .. i, { h = nh }, instance)
-                end
-                CharacterManager.rebuildTextures(instance)
-            end
-            y = y + ROW
-        end
-
-        -- neck picture and width: the strip from the top torso segment to the head (its
-        -- connected-skin; randomize gives it the leg skin), set on every torso segment so a
-        -- change of segment count keeps it
-        local topTorso = instance.dna.parts['torso' .. (creation.torsoSegments or 1)]
-        local neckSkin = not creation.isPotatoHead and topTorso and topTorso.appearance
-            and topTorso.appearance['connected-skin']
-        if neckSkin and neckSkin.main then
-            local function setNeck(values)
-                for i = 1, creation.torsoSegments or 1 do
-                    CharacterManager.updateConnectedAppearance(instance, 'torso' .. i, 'connected-skin', values)
-                end
-                CharacterManager.rebuildTextures(instance)
-            end
-            ui.label(x, y, 'neck skin')
-            y = y + ROW
-            local gridHeight = drawThumbnailGrid(limbSkinTextures, neckSkin.main.bgURL or '', panelX, y, 50,
-                function(url)
-                    setNeck({ bgURL = url, fgURL = url:gsub('%.png', '-mask.png') })
-                end)
-            y = y + gridHeight + BUTTON_SPACING
-            local currentWmul = neckSkin.main.wmul or instance.scale or 1
-            local neckW = ui.sliderWithInput('mipo_neck_wmul', x, y, 120, 0.1, 10, currentWmul)
-            ui.alignedLabel(x, y, '  neck width')
-            if neckW and neckW ~= currentWmul then setNeck({ wmul = neckW }) end
-            y = y + ROW
-        end
-
-        -- noseSegments
-        local noses = ui.sliderWithInput('mipo_noseSeg', x, y, 120, 0, 5, creation.noseSegments or 0, false, 1)
-        ui.alignedLabel(x, y, '  nose segments')
-        if noses then
-            local val = math.floor(noses)
-            if val ~= creation.noseSegments then
-                local updates = { noseSegments = val }
-                -- val == 0: no nose — nothing extra
-                if val == 1 then
-                    -- Keep current noseMode; disable overlay if switching to physics
-                    if (creation.noseMode or 'overlay') == 'physics' then
-                        local startParent = creation.isPotatoHead and 'torso1' or 'head'
-                        CharacterManager.updateFaceOfPart(instance, startParent, { noseShape = 0 })
-                    end
-                elseif val >= 2 then
-                    -- 2+ → segmented, disable overlay
-                    updates.noseMode = 'physics'
-                    local startParent = creation.isPotatoHead and 'torso1' or 'head'
-                    CharacterManager.updateFaceOfPart(instance, startParent, { noseShape = 0 })
-                end
-                CharacterManager.rebuildFromCreation(instance, updates)
-                CharacterManager.rebuildTextures(instance)
-            end
-        end
-        y = y + ROW
-
-        -- When noseSegments == 1, show physics toggle checkbox
-        if (creation.noseSegments or 0) == 1 then
-            local currentMode = creation.noseMode or 'overlay'
-            local clicked, checked = ui.checkbox(x, y, currentMode == 'physics', 'physics nose')
-            if clicked then
-                local newMode = checked and 'physics' or 'overlay'
-                if newMode == 'physics' then
-                    local startParent = creation.isPotatoHead and 'torso1' or 'head'
-                    CharacterManager.updateFaceOfPart(instance, startParent, { noseShape = 0 })
-                end
-                CharacterManager.rebuildFromCreation(instance, { noseMode = newMode })
-                CharacterManager.rebuildTextures(instance)
-            end
-            y = y + ROW
-        end
-
-        -- suppress unused warning
-        local _ = changed
-    end)
+        y = drawTorsoRows(instance, creation, x, y, ROW)
+        y = drawNeckRows(instance, creation, x, panelX, y, ROW)
+        y = drawNoseRows(instance, creation, x, y, ROW)
+    end
     return y
 end
 
