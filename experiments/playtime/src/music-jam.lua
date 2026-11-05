@@ -588,45 +588,61 @@ local function bookJamBass(play, synth, song, t0, jam, style, b, inPhrase, kind,
              riff and riffs.degrees(riff, kind) or FIGURE_DEGREES[kind], bar.cut)
 end
 
+-- the family's own fill plays the whole bar, two phrase ends in three; the other third (and the build
+-- before a drop) is the jam's own run-up or tom roll (every Funk family has a written fill: before,
+-- Funk never rolled its toms; dreamengine-4d's spec caught it). Returns whether it's the build.
+local function planFill(d, roll, jam, bar)
+    d.fill = bar.lastBar and (jam.on.snare or jam.mode == 'break')
+    local build = bar.gap and jam.mode == 'break'
+    d.written = d.fill and not build and roll(3) ~= 0 and jam.fill or nil
+    return build
+end
+
+-- VARIATIONS (J10d): a turnaround into the fill, ghost snares, the hats doubled to 16ths
+local function planVariations(d, jam, style, inPhrase)
+    local varMove = move('variations')
+    local activity = M.activity or 0
+    local varied = varMove ~= 'never' and (varMove == 'always' or activity >= 2 * style.perLayer)
+    local turnaround = varied and #jam.patterns > 1 and inPhrase == style.phraseBars - 2
+    d.pattern = d.written or jam.patterns[turnaround and jam.at % #jam.patterns + 1 or jam.at]
+    d.ghosts = varied and jam.ghosts
+    d.hats16 = varMove ~= 'never' and jam.group ~= 'Brushes'
+        and (varMove == 'always' or activity >= 3 * style.perLayer)
+    d.accents = d.pattern.grid.AC
+end
+
+-- FILLS (J10): the run-up grows with the play level (a beat, half a bar, the whole bar); the bar
+-- before a drop is the BUILD (snare 16ths over the whole bar, getting louder); families with toms
+-- roll down them on the last beat now and then
+local function planRun(d, roll, jam, style, bar, build)
+    d.runFrom = build and 0
+        or (M.activity or 0) >= 3 * style.perLayer and 8 or 12
+    d.toms = d.fill and not d.written and not bar.gap and lib.hasToms(jam) and roll(3) == 0
+end
+
+-- LEANING IN (J10): on the bar before a chord change (not a phrase's last bar, the fill has that)
+-- the drums go with the bass: an open hat on the and-of-4, a kick pickup on its last 16th, or a
+-- one-beat snare fill, rolled per change; only a drum that's playing can lean in
+local function planLean(d, roll, jam, bar)
+    local leanMove = move('lean')
+    local nxt = jam.nextRoot
+    local changing = nxt and not nxt.linger and nxt.walk[nxt.step] ~= jam.root
+    if not bar.lastBar and changing and leanMove ~= 'never' and (leanMove == 'always' or roll(10) < 6) then
+        local can = {}
+        for _, l in ipairs(lib.LEANS) do if jam.on[l.layer] then can[#can + 1] = l.name end end
+        d.lean = #can > 0 and can[roll(#can) + 1] or nil
+    end
+end
+
 -- What the drums do this bar, decided before the first step. The rolls come in a fixed order (the
 -- written fill, the toms, the lean-in): a seed plays the same bar every time.
 local function planDrums(song, jam, style, b, inPhrase, bar)
     local roll = stream(song.seed + b * 7919, 10)
     local d = {}
-    d.fill = bar.lastBar and (jam.on.snare or jam.mode == 'break')
-    -- the family's own fill plays the whole bar, two phrase ends in three; the other third (and the build
-    -- before a drop) is the jam's own run-up or tom roll (every Funk family has a written fill: before,
-    -- Funk never rolled its toms; dreamengine-4d's spec caught it)
-    local build = bar.gap and jam.mode == 'break'
-    d.written = d.fill and not build and roll(3) ~= 0 and jam.fill or nil
-    -- VARIATIONS (J10d): a turnaround into the fill, ghost snares, the hats doubled to 16ths
-    local varMove = move('variations')
-    local activity = M.activity or 0
-    local busy = activity >= 2 * style.perLayer
-    local turnaround = varMove ~= 'never' and (varMove == 'always' or busy) and #jam.patterns > 1
-        and inPhrase == style.phraseBars - 2
-    d.pattern = d.written or jam.patterns[turnaround and jam.at % #jam.patterns + 1 or jam.at]
-    d.ghosts = varMove ~= 'never' and (varMove == 'always' or busy) and jam.ghosts
-    d.hats16 = varMove ~= 'never' and jam.group ~= 'Brushes'
-        and (varMove == 'always' or activity >= 3 * style.perLayer)
-    d.accents = d.pattern.grid.AC
-    -- FILLS (J10): the run-up grows with the play level (a beat, half a bar, the whole bar); the bar before
-    -- a drop is the BUILD (snare 16ths over the whole bar, getting louder); families with toms roll down
-    -- them on the last beat now and then
-    d.runFrom = build and 0
-        or activity >= 3 * style.perLayer and 8 or 12
-    d.toms = d.fill and not d.written and not bar.gap and lib.hasToms(jam) and roll(3) == 0
-    -- LEANING IN (J10): on the bar before a chord change (not a phrase's last bar, the fill has that) the
-    -- drums go with the bass: an open hat on the and-of-4, a kick pickup on its last 16th, or a one-beat
-    -- snare fill, rolled per change
-    local leanMove = move('lean')
-    local nxt = jam.nextRoot
-    local changing = nxt and not nxt.linger and nxt.walk[nxt.step] ~= jam.root
-    if not bar.lastBar and changing and leanMove ~= 'never' and (leanMove == 'always' or roll(10) < 6) then
-        local can = {} -- only a drum that's playing can lean in
-        for _, l in ipairs(lib.LEANS) do if jam.on[l.layer] then can[#can + 1] = l.name end end
-        d.lean = #can > 0 and can[roll(#can) + 1] or nil
-    end
+    local build = planFill(d, roll, jam, bar)
+    planVariations(d, jam, style, inPhrase)
+    planRun(d, roll, jam, style, bar, build)
+    planLean(d, roll, jam, bar)
     -- the run-up, or the lean-in's open hat, lets the hats go before the one
     d.hatsLetGo = (d.fill and not d.written) or d.lean == 'hat'
     return d
