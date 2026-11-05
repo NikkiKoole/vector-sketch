@@ -295,12 +295,15 @@ lib.patches = {
     hThump = { pool = true, wave = 'MEMBRANE', adsr = { 1, 0, 7, 300 }, harmonics = 0.8, timbre = 0.2, morph = 0.25,
                reverb = 0.3, level = 0.8, filter = { mode = 1, cutoff = 700, resonance = 1 } },
     -- the brew style (src/music-brew.lua), Mystic Brew's keys and guitar: Ronnie Foster's organ, the tonewheel
-    -- engine on a fat jazz B3 registration (organ.c's 'jimmy' drawbars, darker: the stem sits at ~520 Hz), no
-    -- percussion chip (held legato, which kills it on a real B3), a slow chorale 'Leslie' as LFOs (volume, pan,
-    -- a hair of pitch at ~0.8 Hz); and a clean, dark neck-pickup jazz guitar (the stem's ~600 Hz)
-    brewOrgan = { pool = true, wave = 'ORGAN', adsr = { 12, 0, 7, 220 }, harmonics = 0.44, timbre = 0.35, morph = 0.2,
-                  reverb = 0.3, level = 0.3, filter = { mode = 1, cutoff = 2200, resonance = 0 },
-                  lfo = { { 2, 0.8, 0.08 }, { 7, 0.8, 0.25 }, { 0, 0.8, 0.02 } } },
+    -- engine fitted to the organ stem of Mystic Brew's chop (octave bands 125 Hz..8 kHz, centroid 531 Hz): the
+    -- thin registration (0.1) through a 1.2 kHz lowpass lands at 526 Hz with the same 250 Hz..1 kHz shape (the
+    -- registrations are snapped drawbar recipes: 0.3-0.6 have nothing over 1 kHz, 0.75 a hole at 500 Hz-1 kHz).
+    -- Its held chords barely move (measured: pitch ~1.5 cents, level under 1 dB, a faint 6-7 Hz shimmer now and
+    -- then): a little scanner chorus (morph) and the real Leslie (instrument_leslie) slow and low, chorale speed,
+    -- little doppler, half mixed, for air rather than a sway. On an effect slot: the Leslie is an insert
+    brewOrgan = { fx = true, wave = 'ORGAN', adsr = { 12, 0, 7, 220 }, harmonics = 0.1, timbre = 0.6, morph = 0.25,
+                  reverb = 0.3, level = 0.3, filter = { mode = 1, cutoff = 1200, resonance = 0 },
+                  leslie = { speed = 1, drive = 0.1, balance = 0.5, doppler = 0.2, mix = 0.5 } },
     brewGuitar = { pool = true, wave = 'GUITAR', adsr = { 2, 0, 7, 900 }, harmonics = 0.4, timbre = 0.22, morph = 0.1,
                    modes = { [0] = 0.7, [1] = 0.12 }, filter = { mode = 1, cutoff = 1900, resonance = 0 },
                    reverb = 0.3, level = 0.66 },
@@ -483,6 +486,7 @@ void instrument_fx_filter(int slot, int mode, float cutoff_hz, float resonance);
 void instrument_mono(int slot, int on);
 void unschedule(int slot, double t1, double t2);
 void instrument_choke(int slot_a, int slot_b);
+void instrument_leslie(int slot, int speed, float drive, float balance, float doppler, float mix);
 ]]
 -- The structs on their own: a hot reload redeclaring one errors, which must not stop the functions.
 -- NoteOpts copied from dreamengine runtime/studio.h, FIELD ORDER AND ALL: the engine reads the whole of it,
@@ -529,6 +533,8 @@ local function pedalsFromPatch(patch)
     if patch.phaser then
         p.phaser = { patch.phaser.rate, patch.phaser.depth, patch.phaser.feedback, patch.phaser.mix }
     end
+    local les = patch.leslie
+    if les then p.leslie = { les.speed or 1, les.drive or 0, les.balance or 0.5, les.doppler or 0.5, les.mix or 1 } end
     return p
 end
 
@@ -537,6 +543,7 @@ local function clamp(x, lo, hi) return math.max(lo, math.min(hi, x)) end
 -- Send a patch's pedals to its slot, every amount scaled by the effects slider (S.effectAmount:
 -- 0 dry, 1 as designed, 2 extreme), kept inside the engine's ranges. Rates and modes don't scale.
 -- At 1 these are exactly the patch's own values. `only` sends just that pedal.
+local optionalFn -- defined below (CDEF_OPTIONAL's functions); the Leslie pedal looks itself up
 local function sendPedals(slot, name, only)
     local p, a = S.pedals[name] or {}, S.effectAmount
     local function want(kind) return p[kind] and (not only or only == kind) end
@@ -562,11 +569,16 @@ local function sendPedals(slot, name, only)
         local ph = p.phaser
         S.C.instrument_phaser(slot, ph[1], clamp(ph[2] * a, 0, 1), clamp(ph[3] * a, 0, 0.95), clamp(ph[4] * a, 0, 1), 6)
     end
+    local leslie = want('leslie') and optionalFn('instrument_leslie')
+    if leslie then -- the rotary cabinet at the chain's end: speed 0 stop, 1 chorale, 2 tremolo
+        local l = p.leslie
+        leslie(slot, l[1], clamp(l[2] * a, 0, 1), l[3], clamp(l[4] * a, 0, 1), clamp(l[5] * a, 0, 1))
+    end
 end
 
 -- one of CDEF_OPTIONAL's functions in the loaded library, or nil (a library built before it). On the
 -- web every call is written down for the page (src/synth-web.lua); the page skips one the wasm lacks
-local function optionalFn(name)
+function optionalFn(name) -- (the local declared above sendPedals)
     if not ffi then return IS_WEB and S.C and S.C[name] or nil end
     local ok, f = pcall(function() return S.C[name] end)
     return ok and f or nil
@@ -644,6 +656,8 @@ local function pedalsOff(slot)
     S.C.instrument_tape(slot, 0, 0, 0)
     S.C.instrument_tape_warble(slot, 0)
     S.C.instrument_drive(slot, 0)
+    local leslie = optionalFn('instrument_leslie')
+    if leslie then leslie(slot, 1, 0, 0.5, 0, 0) end -- mix 0: bypassed
 end
 
 local function definePatch(slot, patch, name)
