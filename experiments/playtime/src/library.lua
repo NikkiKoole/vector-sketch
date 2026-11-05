@@ -21,6 +21,7 @@ local utils = require('src.utils')
 local CharacterManager = require('src.character-manager')
 local textureNames = require('src.texture-names')
 local repoFiles = require('src.repo-files')
+local subtypes = require('src.subtypes')
 
 lib.DIR = 'library'
 
@@ -211,6 +212,50 @@ local function buildCopy(data, dx, dy)
     return things
 end
 
+-- The joints and anchors in the scene's save data that aren't in the copy: what a ribbon or a
+-- skinned mesh in the copy may still hang on.
+local function rigIdsLeftBehind(data, copy)
+    local inCopy = {}
+    for _, bodyData in ipairs(copy.bodies) do inCopy[bodyData.id] = true end
+    for _, jointData in ipairs(copy.joints) do inCopy[jointData.id] = true end
+    local left = {}
+    for _, jointData in ipairs(data.joints or {}) do
+        if jointData.id and not inCopy[jointData.id] then left[jointData.id] = true end
+    end
+    for _, bodyData in ipairs(data.bodies or {}) do
+        if not inCopy[bodyData.id] then
+            for _, fixtureData in ipairs(bodyData.fixtures or {}) do
+                local ud = fixtureData.userData
+                if ud and ud.id and ud.subtype == subtypes.ANCHOR then left[ud.id] = true end
+            end
+        end
+    end
+    return left
+end
+
+-- A clone of part of a rig stands on its own: its ribbons' and meshes' links to joints and anchors
+-- that stayed behind are emptied (the node keeps its place in the list: painted bones and weights
+-- count by it), so the original's rig doesn't bend or draw the copy. A bone without a node is left
+-- out of the blend. The mesh's picture (resourceId) is kept: that's shared, not hung on.
+local function dropLinksOutside(copy, left)
+    if not next(left) then return end
+    local function walk(t)
+        for k, v in pairs(t) do
+            if type(v) == 'table' then
+                walk(v)
+            elseif (k == 'id' or k == 'nodeId') and left[v] then
+                t[k] = nil
+            end
+        end
+    end
+    for _, bodyData in ipairs(copy.bodies) do
+        for _, fixtureData in ipairs(bodyData.fixtures or {}) do
+            local extra = fixtureData.userData and fixtureData.userData.extra
+            if extra then walk(extra) end
+        end
+    end
+end
+
 -- Copies of these things, 50 down and to the right, with the joints between them: the
 -- editor's clone. Like placing a prefab it goes through save data, so links (ribbon
 -- nodes, influences, snap points, resources) point at the copies. A Mipo comes along
@@ -243,7 +288,9 @@ function lib.clone(things)
         if mipoIds[character.id] then table.insert(copy.characters, character) end
     end
     -- save data shares some tables with the live scene (a body's behaviors): the copy gets its own
-    return buildCopy(utils.deepCopy(copy), 50, 50)
+    copy = utils.deepCopy(copy)
+    dropLinksOutside(copy, rigIdsLeftBehind(data, copy))
+    return buildCopy(copy, 50, 50)
 end
 
 -- build a copy of the prefab centred on world x, y; returns its things

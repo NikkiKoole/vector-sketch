@@ -1,7 +1,8 @@
 -- spec/clone_spec.lua
 -- Clone (the editor's copy of a selection, src/library.lua clone): copies 50 down and to
 -- the right, joints between them with their settings, links pointing at the copies,
--- a Mipo whole and in its pose with an id of its own.
+-- a Mipo whole and in its pose with an id of its own. Links to a joint or anchor that didn't come
+-- along are dropped: the copy is on its own, not bent or drawn by the original's rig.
 -- Run with: love . --specs spec/clone_spec.lua
 
 if not love then return end
@@ -96,5 +97,53 @@ describe('clone', function()
         assert.is_near(1.1, copy.parts.luarm.body:getAngle(), 1e-3)
         assert.is_near(mipo.parts.torso1.body:getX() + 50, copy.parts.torso1.body:getX(), 1e-3)
         assert.are.same(mipo.dna.creation, copy.dna.creation)
+    end)
+    it("drops a copied ribbon's link to a joint that didn't come along", function()
+        local a = objectManager.addThing('rectangle', { x = 0, y = 0, width = 40, height = 40 })
+        local b = objectManager.addThing('rectangle', { x = 100, y = 0, width = 40, height = 40 })
+        local j = joints.createJoint({ body1 = a.body, body2 = b.body, jointType = 'revolute' })
+        local ribbon = fixtures.createSFixture(a.body, 0, 0, 'connected-texture', { radius = 10 })
+        local anchor = fixtures.createSFixture(a.body, 5, 0, 'anchor', { radius = 5 })
+        ribbon:getUserData().extra.nodes = {
+            { id = joints.getJointId(j), type = 'joint' },
+            { id = anchor:getUserData().id, type = 'anchor' },
+        }
+        local copies = clone({ a })
+        local found
+        for _, f in ipairs(copies[1].body:getFixtures()) do
+            local ud = f:getUserData()
+            if ud and ud.subtype == 'connected-texture' then found = ud end
+        end
+        assert.are.equal(2, #found.extra.nodes)
+        assert.is_nil(found.extra.nodes[1].id, 'the joint between a and b was not copied')
+        assert.is_truthy(registry.getSFixtureByID(found.extra.nodes[2].id), 'its own anchor, copied')
+        assert.are_not.equal(anchor:getUserData().id, found.extra.nodes[2].id)
+    end)
+
+    it("leaves a mesh copied without its rig unbent by the original's bones", function()
+        local camera = require('src.camera')
+        sceneIO.load(love.filesystem.read('scripts/tech/hoop.playtime.json'), state.physicsWorld, camera.getInstance())
+        local mesh
+        for _, f in pairs(registry.sfixtures) do
+            if f:getUserData().subtype == 'meshusert' then mesh = f end
+        end
+        local copies = clone({ mesh:getBody():getUserData().thing })
+        assert.are.equal(1, #copies)
+        local copied
+        for _, f in ipairs(copies[1].body:getFixtures()) do
+            local ud = f:getUserData()
+            if ud and ud.subtype == 'meshusert' then copied = ud end
+        end
+        local count = 0
+        for _, list in ipairs(copied.extra.influences) do
+            for _, infl in ipairs(list) do
+                count = count + 1
+                assert.is_nil(infl.body, 'an influence still on a body of the original')
+            end
+        end
+        assert.is_true(count > 0, 'the weights are kept')
+        for _, node in ipairs(copied.extra.nodes) do assert.is_nil(node.id) end
+        -- the RESOURCE link stays: the picture is shared, not the rig
+        assert.are.equal(mesh:getUserData().extra.resourceId, copied.extra.resourceId)
     end)
 end)
