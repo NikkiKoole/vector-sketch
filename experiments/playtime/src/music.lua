@@ -191,6 +191,8 @@ local function bookBar(synth, t0, song, b)
     if style.picking == 'travis' then return parts.bookTravis(bar) end -- strum: the guitar alone
     if style.picking == 'jabs' then return parts.bookJabs(bar) end     -- rollo: bass and guitar stabs
     if style.picking == 'jingle' then return parts.bookJingle(bar) end -- jingle: its own four parts
+    -- the tune plays this bar's section (the Rhodes player's fills wait for its breaths)
+    bar.tuneOn = lib.melody and section.roles.lead and song.hasLead ~= false
     local hits, sidestepAt, pushes = keysHits(bar)
     bookKeys(bar, hits)
     local groove = style.groove == 'lofi'

@@ -21,12 +21,17 @@
 --   grace    now and then a stab's top gets a grace note crushed into it from half a step under.
 --   bell     one high note (the top an octave up) a beat after the outro's last chord, sometimes after
 --            the intro's last stab.
+--   tremolo  under the pedal, a held chord's top two notes rocked soft for about a second.
+--   fills    at a phrase's end where the tune breathes, the right hand stops comping for its last two
+--            beats and plays a few notes down the chord's pentatonic to a chord tone (or the 4th
+--            sighing to the 3rd); the answer and the picks leave that bar alone.
 -- The music panel's 'humanize' row (state.musicSettings.humanize) plays the keys plainly instead, as
--- before. Built 2026-11-05 (MUSIC-IDEAS.md, "A Rhodes player"); fills, a tremolo and other machines
--- (wah, Wurli) are left for later.
+-- before. Built 2026-11-05 (MUSIC-IDEAS.md, "A Rhodes player"); other machines (wah, Wurli) and a
+-- volume-pedal swell are left for later.
 local state = require('src.state')
 local theory = require('src.music-theory')
 local stream, stepTime, humanize = theory.stream, theory.stepTime, theory.humanize
+local qualityOf = theory.qualityOf
 
 local lib = {}
 
@@ -116,6 +121,9 @@ function lib.bar(bar, hits)
         end
     end
     local ideas = song.ideaOdds or {}
+    -- a fill (first: it takes the stabs it plays over away, before the others pick theirs)
+    local fillRnd = ideaRnd(p, 160000)
+    if (ideas.fills or 0) > 0 and fillRnd(100) < ideas.fills then p.fill = lib.planFill(p, hits, fillRnd) end
     -- a grace note: half a step under a stab's top, crushed into it
     local graceRnd = ideaRnd(p, 120000)
     if (ideas.grace or 0) > 0 and role ~= 'outro' and graceRnd(100) < ideas.grace then
@@ -140,6 +148,96 @@ function lib.bar(bar, hits)
         if #options > 0 then p.tremolo = options[tremoloRnd(#options) + 1] end
     end
     return p
+end
+
+-- The fills' rhythms, 16ths in the bar: the first is where the comp stops. sigh: the 4th to the 3rd
+local FILLS = { { 10, 11, 12, 14 }, { 12, 13, 14 }, { 8, 10, 12, 14 } }
+local SIGH = { 12, 14 }
+
+-- is the tune quiet in this bar from step `from` on (its phrase is built on the phrase's first bar)
+local function tuneRests(bar, from)
+    local song, j = bar.song, bar.j
+    if not bar.tuneOn then return true end
+    if song.phraseBar ~= bar.b - j % 4 or not song.phrase then return false end
+    local lo, hi = (j % 4) * 16 + from, (j % 4) * 16 + 16
+    for _, note in ipairs(song.phrase) do
+        if note.s < hi and note.s + (note.len or 1) > lo then return false end
+    end
+    return true
+end
+
+-- the next pitch at or under (dir -1) / over (dir 1) midi whose pitch class is in the set
+local function stepTo(set, midi, dir)
+    for d = 0, 12 do
+        local m = midi + d * dir
+        if set[m % 12] then return m end
+    end
+end
+
+-- A fill for this bar or nil: on a phrase's last bar of an A or B, comping, the tune quiet over its last
+-- two beats, one chord under them (no push, no side-step there), no riff in the style. Takes the stabs in
+-- its window away.
+function lib.planFill(p, hits, rnd)
+    local bar, song = p.bar, p.song
+    local section, j = bar.section, bar.j or 0
+    if bar.roles.keys ~= 'comp' or not section or (section.kind ~= 'A' and section.kind ~= 'B') then return end
+    if bar.style.riff then return end -- a riff plays all song long up there (island's marimba): no room
+    if not (j % 4 == 3 or j == section.bars - 1) then return end
+    local chord = bar.chords[#bar.chords]
+    local root = (song.key + chord.degree) % 12
+    local intervals = qualityOf(song, chord.quality)
+    if not intervals then return end
+    local has, tones = {}, {}
+    for _, i in ipairs(intervals) do has[i % 12], tones[(root + i) % 12] = true, true end
+    if has[6] and not has[7] then return end -- half-diminished: the pentatonic's 5th rubs
+    local sigh = has[4] and rnd(100) < 25
+    local cell = sigh and SIGH or FILLS[rnd(#FILLS) + 1]
+    local from = cell[1]
+    if chord.s > from - 2 or not tuneRests(bar, from - 1) then return end
+    for _, h in ipairs(hits) do
+        if h.s >= from - 1 and (h.pushed or h.sidestep) then return end
+    end
+    -- the notes: down the chord's pentatonic (no note a half step from a chord tone), from a little over
+    -- the comp's top, the last one on a chord tone; or the 4th falling to the major 3rd
+    local top = 72
+    if state.music.voicing then top = state.music.voicing[#state.music.voicing] end
+    local notes = {}
+    if sigh then
+        local fourth = stepTo({ [(root + 5) % 12] = true }, top + 1, 1)
+        notes = { fourth, fourth - 1 }
+    else
+        local pent, scale = has[3] and not has[4] and { 0, 3, 5, 7, 10 } or { 0, 2, 4, 7, 9 }, {}
+        for _, i in ipairs(pent) do
+            local pc = (root + i) % 12
+            if tones[pc] or not (tones[(pc + 1) % 12] or tones[(pc + 11) % 12]) then scale[pc] = true end
+        end
+        local m = stepTo(scale, top + 3 + rnd(5), 1)
+        for k = 1, #cell do
+            if k == #cell then m = stepTo(tones, m, -1) end
+            notes[k] = m
+            m = stepTo(scale, m - 1, -1)
+        end
+    end
+    if notes[1] > 86 then return end
+    for i = #hits, 1, -1 do
+        if hits[i].s >= from then table.remove(hits, i) end -- the right hand fills instead
+    end
+    bar.filled = true
+    return { cell = cell, notes = notes }
+end
+
+-- the fill's notes: a little lean on the first, softer down to the last, which rings to the bar line
+function lib.fill(p, play)
+    local f, song, t0 = p.fill, p.song, p.bar.t0
+    for k, s in ipairs(f.cell) do
+        local stop = f.cell[k + 1] or 16
+        local midi = f.notes[k]
+        local gain = (k == 1 and 0.72 or 0.62 - 0.03 * k) * (0.95 + 0.08 * p.rnd())
+        play(p.synth, 'keys', p.patch, stepTime(song, t0, s) + p.feel + humanize(0.004), midi, 5,
+             (stepTime(song, t0, stop) - stepTime(song, t0, s)) * 1000 * (k == #f.cell and 1 or 0.85), s, nil, nil,
+             { gain = gain, release = 120, cents = stream(song.seed, 7700 + midi)(9) - 4,
+               shapes = k == 1 and { { id = SH.bark, target = 'morph', scale = 0.08 } } or nil })
+    end
 end
 
 -- a stab's length under the player (a ghosted stab lets go for its chuck)

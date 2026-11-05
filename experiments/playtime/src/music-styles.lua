@@ -923,7 +923,9 @@ D.commonIdeas = { dynamics = { odds = 70, songs = 90 }, revoice = { odds = 50, s
                   -- high note closing the intro or the song), tremolo (a held chord's top two notes rocked)
                   grace = { odds = 15, songs = 70, rhodes = true },
                   bell = { odds = 70, songs = 80, rhodes = true },
-                  tremolo = { odds = 25, songs = 60, rhodes = true } }
+                  tremolo = { odds = 25, songs = 60, rhodes = true },
+                  -- fills: odds a phrase's last bar, where the tune breathes
+                  fills = { odds = 45, songs = 70, rhodes = true } }
 -- the keys patches that are an electric piano (synth.lua's EPIANO): the Rhodes player's ideas show for them
 local EPIANO_KEYS = { rhodes = true, lofiKeys = true, clav = true }
 local ideasCache = setmetatable({}, { __mode = 'k' })

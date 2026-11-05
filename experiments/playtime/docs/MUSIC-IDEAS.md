@@ -150,8 +150,12 @@ The short list after a long day of styles; the details live in the entries furth
   bars), **bell** (the top an octave up a beat after the outro's last chord, the intro's last stab at
   0.6 of the odds), **tremolo** (under the pedal, a held chord's top two notes rocked soft for about a
   second, at most an octave apart, 25% of pedalled bars; first called trill, but a trill is two
-  neighbours). Not built yet: fills (book after the tune, in its breaths, like the
-  answer), wah/Wurli per style, a volume-pedal swell. Waiting on an ear pass.
+  neighbours), **fills** (a phrase's last bar of an A or B, where the tune's built phrase has no note
+  over the last two beats: the right hand stops comping there and plays 2-4 notes down the chord's
+  pentatonic, notes a half step from a chord tone left out, the last on a chord tone, or the 4th
+  sighing to the major 3rd; the answer and the picks skip that bar; not in a style with a riff: island's
+  marimba clashed; 45% of those bars. Checked over 300 s renders of 8 styles: no tune or answer note
+  starts inside a fill). Not built yet: wah/Wurli per style, a volume-pedal swell. Waiting on an ear pass.
 - [x] **A note's own filter type** (2026-11-05: built, checked; first used the same day by the drum jam's
   'funk guitar' chord figure, DRUM-JAM.md J9d). `synth.scheduleAt(...,
   { filter = 'band' })` ('low' / 'high' / 'band' / 'notch' / 'off' or a FILTER_* number; dreamengine

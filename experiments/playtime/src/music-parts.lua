@@ -829,6 +829,7 @@ local function bookKeys(bar, hits)
             if player and player.tremolo == h then rhodes.tremolo(player, h, voicing, play) end
         end
     end
+    if player and player.fill then rhodes.fill(player, play) end
 end
 
 -- herbs and lofi: the vinyl, a hiss bed a section long and crackle ticks
@@ -1025,6 +1026,7 @@ local function bookAnswer(bar, tunePlayed, tuneInSection)
     local song, style, section, j = bar.song, bar.style, bar.section, bar.j
     local answer = style.answer
     if not bar.band or (section.kind ~= 'A' and section.kind ~= 'B') or tunePlayed > 0 then return end
+    if bar.filled then return end -- the keys fill this bar's end (src/music-rhodes.lua)
     if not tuneInSection and j % 2 == 0 then return end
     if song.horns and j % 4 == 2 then return end -- citypop's horns shout here: they are the answer
     local rnd = stream(song.seed, 8000 + bar.b)
@@ -1097,6 +1099,7 @@ end
 local function bookPicks(bar)
     local song, style, section, j = bar.song, bar.style, bar.section, bar.j
     if section.kind ~= 'A' and section.kind ~= 'B' then return end
+    if bar.filled then return end -- the keys fill this bar's end (src/music-rhodes.lua)
     local rnd = stream(song.seed, 9700 + bar.b)
     if rnd(100) >= ((song.ideaOdds or {}).picks or 0) then return end
     if not song.picks then
