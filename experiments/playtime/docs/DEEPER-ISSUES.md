@@ -60,7 +60,9 @@ This is validated by `fixtures.hasFixturesWithUserDataAtBeginning()` (fixtures.l
 
 ---
 
-## 3. Z-Ordering: Rebuild Every Frame, Unstable Sort
+## 3. ~~Z-Ordering: Rebuild Every Frame, Unstable Sort~~ — FIXED 2026-10-29
+
+Checked 2026-11-05: the draw list is kept and only rebuilt and sorted when the sfixtures change (`listStillHolds`), and equal z sorts by sfixture id, then by its place among that sfixture's drawables (`sorter`, 735c03ca), so the order is the same every frame and every session. What follows is the February state.
 
 ### The performance problem
 

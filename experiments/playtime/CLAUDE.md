@@ -230,11 +230,8 @@ Open bugs: `docs/CODE-BUGS-2026-10.md` (BUG1…, from the October 2026 review; o
 Older findings and hidden constraints: `docs/DEEPER-ISSUES.md`. Risks to keep in mind while coding:
 
 - Box2D doesn't guarantee fixture ordering — the ordering invariant can break silently
-- Z-sort uses unstable `table.sort` — same-z drawables can flicker
 - Tool modes go through `src/modes.lua` (`modes.set/clear/is/get`) but there are no enter/exit rules: any caller can switch any mode to any other
 - Image/OMP/canvas caches never cleared — memory grows over long sessions
-- Clone pipeline: influence references can become nil silently when cloning partial selections
-- Cloned OMP texfixtures aren't marked `dirty`, so the composite texture doesn't regenerate on first render
 - Backdrop/UV system: mostly fixed 2026-10-28 (imageURL + id link); what's left in `docs/UV-BACKDROP-FRAGILITY.md`
 
 ## Docs and where the work stands
