@@ -77,9 +77,13 @@ parts (music-theory, skinning's `meshusertVertices`, the polygon modules) run wi
   Lessons (2026-10-30): compare before/after in one running process (swap the files, lurker reloads
   them) when other programs load the machine (node scripts at ~170% CPU made an hour-old number look
   like a 40% regression); a render test must bake (`makeCombinedImages`) before setting its canvas.
-- [ ] **M4. Memory over a long session.** The image and OMP caches are never cleared (DEEPER-ISSUES).
+- [x] **M4. Memory over a long session.** The image and OMP caches are never cleared (DEEPER-ISSUES).
   The bake is one module now (`render/omp-bake.lua`): count what's cached, watch it over 10 minutes
   of randomizing (M3 can run that), then cap or clear it.
+  **Done 2026-11-05:** 3 Mipos randomized 600 times, a frame drawn after each. Textures level off at
+  ~64 MB once every source picture is loaded (the image caches are keyed by path: bounded), so
+  nothing to cap. Lua memory grew 2.7 -> 5.5 MB from two leaks, fixed (ear-bend's remembered ear
+  bodies, the colour cache; DEEPER-ISSUES 8): now 2.7 -> 2.9 MB.
 - [ ] **M5. Micro-benchmarks for the pure parts.** busted benches for skinning, the polygon modules
   and song planning: they run anywhere, the web build too.
 - [ ] **M8. The 17 ms.** Mostly C: the ~600 draw calls and the per-frame mesh rewrites (ribbons'
@@ -160,7 +164,8 @@ parts (music-theory, skinning's `meshusertVertices`, the polygon modules) run wi
   of asked three times a part: 0.40 -> 0.33 ms. The crowd's update ~4.0 ms on the phone.
   Seen on the way: that pile untangled 109 times in 90 s, more than once a second (the twitching
   in a crowd?). Bigger, with Box2D, if ever needed: resting Mipos asleep.
-- [ ] **M6. The potato-torso click.** The editor snapshot forces every slider to its midpoint; on a
+- [ ] **M6. The potato-torso click.** (2026-11-05: the click and the Box2D crash it led to are fixed;
+  left: the iMac run, see NEXT below.) The editor snapshot forces every slider to its midpoint; on a
   potato head's torso1 panel that makes a shape Box2D refuses (`fixtures.lua:132: Box2D assertion
   failed`), and the next click finds the Mipo half rebuilt. Same before and after the splits, so
   older. Find which slider, and keep its values to shapes Box2D takes.

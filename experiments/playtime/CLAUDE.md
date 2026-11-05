@@ -113,6 +113,9 @@ luacheck src/ main.lua --std "lua51+love"                   # full check
 ```
 
 Both should report **0 warnings / 0 errors**; keep it that way.
+`luacheck src/ main.lua --std "lua51+love" --max-cyclomatic-complexity 40 --formatter plain` reports
+nothing since 2026-11-05 (`docs/CODE-COMPLEXITY-2026-11.md`): a function growing past 40, split it
+into named steps, checked by a snapshot or the music trace before and after.
 
 ## Architecture
 

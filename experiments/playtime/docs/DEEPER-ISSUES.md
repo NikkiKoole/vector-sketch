@@ -2,6 +2,9 @@
 
 status: reference
 
+Checked against the code 2026-11-05 for sections 1, 3, 6 and 8 (`docs/CODE-COMPLEXITY-2026-11.md` lists
+the fixes); the other sections are as written in February.
+
 Issues found by digging into cross-cutting concerns, runtime behavior, and code paths we accepted at face value in the first pass.
 
 ---
