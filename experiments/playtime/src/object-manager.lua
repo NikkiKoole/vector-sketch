@@ -219,10 +219,10 @@ function lib.recreateThingFromBody(body, newSettings)
                     local new_px, new_py = mathutils.repositionPointUsingWeights(weights, newVertices)
 
                     local rel = mathutils.makePolygonRelativeToCenter(points, centerX, centerY)
-                    abs = love.physics.newPolygonShape(mathutils.makePolygonAbsolute(rel, new_px, new_py))
+                    abs = shapes.newPolygon(mathutils.makePolygonAbsolute(rel, new_px, new_py))
                 else
                     local rel = mathutils.makePolygonRelativeToCenter(points, centerX, centerY)
-                    abs = love.physics.newPolygonShape(mathutils.makePolygonAbsolute(rel, 0, 0))
+                    abs = shapes.newPolygon(mathutils.makePolygonAbsolute(rel, 0, 0))
                 end
             end
 
@@ -452,7 +452,7 @@ function lib.flipThing(thing, axis, recursive)
                     end
                 end
                 -- Create a new shape with flipped vertices
-                local success, newShape = pcall(love.physics.newPolygonShape, unpack(points))
+                local success, newShape = pcall(shapes.newPolygon, points)
                 if not success then
                     logger:error("flipThing: Failed to create new PolygonShape:", newShape)
                 else

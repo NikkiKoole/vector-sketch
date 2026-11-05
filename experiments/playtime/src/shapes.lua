@@ -258,6 +258,13 @@ function shapes.makeTrianglesFromPolygon(polygon, _internalPoints)
     return triangles
 end
 
+-- Every polygon goes to Box2D through here: points that lie in a line (or on top of each other)
+-- can crash LÖVE 11.5's Box2D outright, past any pcall (polygon.dropCollinear, MEASURING M6).
+-- Box2D's own hull drops such points anyway, so the shape is the same. Takes a flat { x, y, ... }.
+function shapes.newPolygon(points)
+    return love.physics.newPolygonShape(mathutils.dropCollinear(points))
+end
+
 -- The shapes are centred on the polygon's centroid, unless keepOrigin: a shape8 outline is
 -- already around its picture's centre (where the picture and the joints are), and centring it
 -- slid a lopsided part's collision off its drawing (hand-01's thumb: 20px, docs/SCENES.md).
@@ -281,7 +288,7 @@ local function makeShapeListFromPolygon(polygon, keepOrigin)
         -- ≈ 0.005m / ~0.15px). Scaling a shape down via slider/W+wheel can produce
         -- these. Match the pcall pattern used at lines 337 and 478 below.
         -- points in a line can crash Box2D outright, past any pcall (polygon.dropCollinear)
-        local shapeOk, shape = pcall(love.physics.newPolygonShape, mathutils.dropCollinear(localVertices))
+        local shapeOk, shape = pcall(shapes.newPolygon, localVertices)
         if shapeOk then
             table.insert(shapesList, shape)
         else
@@ -333,7 +340,7 @@ local function makeShapeListFromPolygon(polygon, keepOrigin)
                 table.insert(localVertices, y)
             end
 
-            local shapeSuccess, shape = pcall(love.physics.newPolygonShape, localVertices)
+            local shapeSuccess, shape = pcall(shapes.newPolygon, localVertices)
             if shapeSuccess then
                 table.insert(shapesList, shape)
             else
@@ -421,13 +428,13 @@ function shapes.createShape(shapeType, settings)
     elseif shapeType == ST.CAPSULE then
         local radius = math.min(settings.width / (settings.width2 or 1), settings.height / (settings.width2 or 1))
         vertices = capsuleXY(settings.width, settings.height, radius, 0, 0)
-        table.insert(shapesList, love.physics.newPolygonShape(vertices))
+        table.insert(shapesList, shapes.newPolygon(vertices))
     elseif shapeType == ST.TRAPEZIUM then
         vertices = makeTrapezium(settings.width, settings.width2 or (settings.width * 1.2), settings.height, 0, 0)
-        table.insert(shapesList, love.physics.newPolygonShape(vertices))
+        table.insert(shapesList, shapes.newPolygon(vertices))
     elseif shapeType == ST.ITRIANGLE then
         vertices = makeITriangle(settings.width, settings.height, 0, 0)
-        table.insert(shapesList, love.physics.newPolygonShape(vertices))
+        table.insert(shapesList, shapes.newPolygon(vertices))
     elseif shapeType == ST.SHAPE8 then
         vertices = settings.optionalVertices
         shapesList = makeShapeListFromPolygon(vertices, true) or {}
@@ -446,7 +453,7 @@ function shapes.createShape(shapeType, settings)
                 table.insert(localVertices, y)
             end
 
-            local shapeSuccess, shape = pcall(love.physics.newPolygonShape, localVertices)
+            local shapeSuccess, shape = pcall(shapes.newPolygon, localVertices)
             if shapeSuccess then
                 table.insert(shapesList, shape)
             else
@@ -468,7 +475,7 @@ function shapes.createShape(shapeType, settings)
             local cx, cy = mathutils.getCenterOfPoints(vertices)
             local rel = mathutils.makePolygonRelativeToCenter(vertices, cx, cy)
             vertices = mathutils.makePolygonAbsolute(rel, 0, 0)
-            table.insert(shapesList, love.physics.newPolygonShape(vertices))
+            table.insert(shapesList, shapes.newPolygon(vertices))
         elseif shapeType == ST.CUSTOM then
             if settings.optionalVertices then
                 local polygon = settings.optionalVertices

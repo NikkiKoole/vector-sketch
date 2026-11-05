@@ -122,7 +122,7 @@ local function shapeFromFile(fixtureData)
     if fixtureData.radius then
         return love.physics.newCircleShape(fixtureData.radius)
     elseif fixtureData.points then
-        local ok, shape = pcall(love.physics.newPolygonShape, unpack(fixtureData.points))
+        local ok, shape = pcall(shapes.newPolygon, fixtureData.points)
         if ok then return shape end
         logger:info('failed creating a polygonshape, will add a circle instead')
     else

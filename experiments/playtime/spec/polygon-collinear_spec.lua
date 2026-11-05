@@ -18,6 +18,13 @@ describe('polygon.dropCollinear', function()
         assert.are.same(square, polygon.dropCollinear(square))
     end)
 
+    -- a capsule whose corner is half its width has its two top points (and two bottom ones) on top
+    -- of each other: one of each pair stays, as Box2D keeps one when it welds them
+    it('keeps one of two points on top of each other', function()
+        local capsule = { -10, -10, 0, -20, 0, -20, 10, -10, 10, 10, 0, 20, 0, 20, -10, 10 }
+        assert.are.same({ -10, -10, 0, -20, 10, -10, 10, 10, 0, 20, -10, 10 }, polygon.dropCollinear(capsule))
+    end)
+
     it('gives back the input when fewer than 3 points would be left', function()
         local line = { 0, 0, 5, 0, 10, 0 }
         assert.are.equal(line, polygon.dropCollinear(line))

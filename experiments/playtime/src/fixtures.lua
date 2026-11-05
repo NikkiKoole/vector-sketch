@@ -33,7 +33,7 @@ function lib.replaceShape(fixture, points, ud)
     local density, friction = fixture:getDensity(), fixture:getFriction()
     local restitution, groupIndex = fixture:getRestitution(), fixture:getGroupIndex()
     fixture:destroy()
-    local newFixture = love.physics.newFixture(body, love.physics.newPolygonShape(points), density)
+    local newFixture = love.physics.newFixture(body, shapes.newPolygon(points), density)
     newFixture:setSensor(true)
     newFixture:setFriction(friction)
     newFixture:setRestitution(restitution)
@@ -129,7 +129,7 @@ function lib.createSFixture(body, localX, localY, subtype, cfg)
     end
 
     local w, h = ft.getSize(cfg)
-    local shape = love.physics.newPolygonShape(rect(w, h, localX, localY))
+    local shape = shapes.newPolygon(rect(w, h, localX, localY))
     local fixture = love.physics.newFixture(body, shape, ft.density or 0) -- sensors weigh nothing
     fixture:setSensor(true)
     local setId = uuid.generateID()

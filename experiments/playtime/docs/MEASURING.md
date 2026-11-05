@@ -208,5 +208,7 @@ parts (music-theory, skinning's `meshusertVertices`, the polygon modules) run wi
   torso had three points in a line down each side; LÖVE 11.5's Box2D went round the hull forever
   (at 100+ px per metre; fine at 30) writing past its array: a pcall can't catch it. Reproduced in
   a 10-line LÖVE program. FIXED: polygon.dropCollinear before shapes.lua's convex path
-  (spec/polygon-collinear_spec.lua). Other newPolygonShape callers (the decompose path, fixtures,
-  object-manager, scene-load) don't drop them yet.
+  (spec/polygon-collinear_spec.lua). Then every polygon: shapes.newPolygon is the one way to Box2D
+  (fixtures, object-manager, scene-load, the triangle / ribbon / capsule paths), spec/polygon-safety_spec.lua
+  feeds each path in-line points behind a guard that refuses them. On the way: dropCollinear dropped
+  BOTH of two points on top of each other (a capsule whose corners meet), now one stays.
