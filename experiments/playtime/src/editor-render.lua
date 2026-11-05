@@ -79,264 +79,217 @@ function lib.drawGrid(color)
     love.graphics.setColor(1, 1, 1)
 end
 
-function lib.renderActiveEditorThings()
-    if state.selection.selectedSFixture and not state.selection.selectedSFixture:isDestroyed() then
-        local body = state.selection.selectedSFixture:getBody()
-        local centroid = fixtures.getCentroidOfFixture(body, state.selection.selectedSFixture)
-        local cwx, cwy = body:getWorldPoint(centroid[1], centroid[2])
-        love.graphics.circle('line', cwx, cwy, 3)
-
-        local ud = state.selection.selectedSFixture:getUserData()
-
-        -- Render bone-segment influence capsules for MESHUSERT so the user can
-        -- see what `bindRadius` actually covers in world space. A capsule is
-        -- the set of points within `radius` of the bone segment — the
-        -- influence zone used by applySegmentWeights.
-        if ud.subtype == subtypes.MESHUSERT and ud.extra.nodes and #ud.extra.nodes >= 2 then
-            local radius = tonumber(ud.extra.bindRadius) or 80
-            local function endpointsOnSharedBody(nA, nB)
-                local function resolve(n)
-                    if n.type == NT.JOINT then
-                        local joint = registry.getJointByID(n.id)
-                        if not joint then return {} end
-                        local x1, y1, x2, y2 = joint:getAnchors()
-                        local bA, bB = joint:getBodies()
-                        return { { body = bA, wx = x1, wy = y1 }, { body = bB, wx = x2, wy = y2 } }
-                    end
-                    local f = registry.getSFixtureByID(n.id)
-                    if not f then return {} end
-                    local bp = f:getBody()
-                    local pts = { bp:getWorldPoints(f:getShape():getPoints()) }
-                    local cx, cy = mathutils.getCenterOfPoints(pts)
-                    return { { body = bp, wx = cx, wy = cy } }
-                end
-                local a, b = resolve(nA), resolve(nB)
-                for _, ai in ipairs(a) do
-                    for _, bi in ipairs(b) do
-                        if ai.body == bi.body then return ai, bi end
-                    end
-                end
-                return nil, nil
-            end
-
-            local lw = love.graphics.getLineWidth()
-            love.graphics.setLineWidth(1 / cam:getScale())
-            love.graphics.setColor(1.0, 0.7, 0.2, 0.7)
-
-            local nodes = ud.extra.nodes
-            for i = 1, #nodes - 1 do
-                local a, b = endpointsOnSharedBody(nodes[i], nodes[i + 1])
-                if a and b then
-                    local dx, dy = b.wx - a.wx, b.wy - a.wy
-                    local len = math.sqrt(dx * dx + dy * dy)
-                    if len > 1e-4 then
-                        -- Perpendicular offset, normalized.
-                        local nxp, nyp = -dy / len * radius, dx / len * radius
-                        -- Two parallel lines forming the "tube" part.
-                        love.graphics.line(a.wx + nxp, a.wy + nyp, b.wx + nxp, b.wy + nyp)
-                        love.graphics.line(a.wx - nxp, a.wy - nyp, b.wx - nxp, b.wy - nyp)
-                    end
-                    -- Rounded caps: full circles at each endpoint (simpler
-                    -- than arcs, slight overlap with tube lines is fine).
-                    love.graphics.circle('line', a.wx, a.wy, radius)
-                    love.graphics.circle('line', b.wx, b.wy, radius)
-                    -- Centerline for orientation reference.
-                    love.graphics.setColor(1.0, 0.7, 0.2, 0.35)
-                    love.graphics.line(a.wx, a.wy, b.wx, b.wy)
-                    love.graphics.setColor(1.0, 0.7, 0.2, 0.7)
-                end
-            end
-
-            love.graphics.setColor(1, 1, 1, 1)
-            love.graphics.setLineWidth(lw)
+-- A MESHUSERT node pair's endpoints on the body they share: a joint gives its two anchors (one per body),
+-- an anchor sfixture its centre. nil, nil when the two share no body.
+local function endpointsOnSharedBody(nA, nB)
+    local function resolve(n)
+        if n.type == NT.JOINT then
+            local joint = registry.getJointByID(n.id)
+            if not joint then return {} end
+            local x1, y1, x2, y2 = joint:getAnchors()
+            local bA, bB = joint:getBodies()
+            return { { body = bA, wx = x1, wy = y1 }, { body = bB, wx = x2, wy = y2 } }
+        end
+        local f = registry.getSFixtureByID(n.id)
+        if not f then return {} end
+        local bp = f:getBody()
+        local pts = { bp:getWorldPoints(f:getShape():getPoints()) }
+        local cx, cy = mathutils.getCenterOfPoints(pts)
+        return { { body = bp, wx = cx, wy = cy } }
+    end
+    local a, b = resolve(nA), resolve(nB)
+    for _, ai in ipairs(a) do
+        for _, bi in ipairs(b) do
+            if ai.body == bi.body then return ai, bi end
         end
     end
+    return nil, nil
+end
 
+-- A MESHUSERT's bone-segment influence capsules, so the user can see what `bindRadius` actually covers in
+-- world space: a capsule is the set of points within `radius` of the bone segment, the influence zone
+-- applySegmentWeights uses.
+local function drawInfluenceCapsules(ud)
+    local radius = tonumber(ud.extra.bindRadius) or 80
+    local lw = love.graphics.getLineWidth()
+    love.graphics.setLineWidth(1 / cam:getScale())
+    love.graphics.setColor(1.0, 0.7, 0.2, 0.7)
+    local nodes = ud.extra.nodes
+    for i = 1, #nodes - 1 do
+        local a, b = endpointsOnSharedBody(nodes[i], nodes[i + 1])
+        if a and b then
+            local dx, dy = b.wx - a.wx, b.wy - a.wy
+            local len = math.sqrt(dx * dx + dy * dy)
+            if len > 1e-4 then
+                -- Perpendicular offset, normalized. Two parallel lines forming the "tube" part.
+                local nxp, nyp = -dy / len * radius, dx / len * radius
+                love.graphics.line(a.wx + nxp, a.wy + nyp, b.wx + nxp, b.wy + nyp)
+                love.graphics.line(a.wx - nxp, a.wy - nyp, b.wx - nxp, b.wy - nyp)
+            end
+            -- Rounded caps: full circles at each endpoint (simpler than arcs, slight overlap with tube
+            -- lines is fine).
+            love.graphics.circle('line', a.wx, a.wy, radius)
+            love.graphics.circle('line', b.wx, b.wy, radius)
+            -- Centerline for orientation reference.
+            love.graphics.setColor(1.0, 0.7, 0.2, 0.35)
+            love.graphics.line(a.wx, a.wy, b.wx, b.wy)
+            love.graphics.setColor(1.0, 0.7, 0.2, 0.7)
+        end
+    end
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.setLineWidth(lw)
+end
+
+-- the selected sfixture: a small circle on its centroid (and a MESHUSERT's capsules)
+local function drawSelectedSFixture()
+    local fixture = state.selection.selectedSFixture
+    if not fixture or fixture:isDestroyed() then return end
+    local body = fixture:getBody()
+    local centroid = fixtures.getCentroidOfFixture(body, fixture)
+    local cwx, cwy = body:getWorldPoint(centroid[1], centroid[2])
+    love.graphics.circle('line', cwx, cwy, 3)
+    local ud = fixture:getUserData()
+    if ud.subtype == subtypes.MESHUSERT and ud.extra.nodes and #ud.extra.nodes >= 2 then
+        drawInfluenceCapsules(ud)
+    end
+end
+
+-- the mouse in world coordinates, and the size a screen pixel is there (markers stay the same size on
+-- screen: precise when zoomed in, not giant when zoomed out)
+local function mouseInWorld()
+    local mx, my = love.mouse:getPosition()
+    local cx, cy = cam:getWorldCoordinates(mx, my)
+    return cx, cy, 1 / cam:getScale()
+end
+
+-- the handles for dragging a custom or ribbon shape's vertices, while they're unlocked
+local function drawPolyEditHandles()
+    local obj = state.selection.selectedObj
+    local rightShape = obj and (obj.shapeType == ST.CUSTOM or obj.shapeType == ST.RIBBON)
+    if not (state.polyEdit.tempVerts and rightShape and state.polyEdit.lockedVerts == false) then return end
+    local verts = mathutils.getLocalVerticesForCustomSelected(state.polyEdit.tempVerts, obj,
+        state.polyEdit.centroid.x, state.polyEdit.centroid.y)
+    local cx, cy, invZoom = mouseInWorld()
+    drawVertexHandles(verts, cx, cy, invZoom, 'always')
+end
+
+-- the handles for a texfixture's vertices, while they're unlocked; meta8 also its four cross lines
+-- (1-5, 2-8, 3-7, 4-6: the numbers for src/shape8-dict.lua, 'copy dict entry' in the panel)
+local function drawTexFixtureHandles()
+    local fixture = state.selection.selectedSFixture
+    if not (state.texFixtureEdit.tempVerts and fixture and state.texFixtureEdit.lockedVerts == false) then return end
+    local thing = utils.thingOf(fixture:getBody())
+    local isMeta8 = fixture:getUserData().label == 'meta8'
+    local verts = mathutils.getLocalVerticesForCustomSelected(state.texFixtureEdit.tempVerts, thing, 0, 0)
+    local cx, cy, invZoom = mouseInWorld()
+    drawVertexHandles(verts, cx, cy, invZoom, isMeta8 and 'unhovered' or nil)
+    if isMeta8 then
+        for _, pair in ipairs({ { 1, 5 }, { 2, 8 }, { 3, 7 }, { 4, 6 } }) do
+            local i, j = pair[1], pair[2]
+            love.graphics.line(verts[i * 2 - 1], verts[i * 2], verts[j * 2 - 1], verts[j * 2])
+        end
+    end
+end
+
+-- One triangle in the painter: filled in its assigned bone's / group's colour (a hovered group brighter,
+-- its outline thicker), the selection over it in the target's colour, an unassigned one outlined green.
+local function paintTriangle(colorOf, assigned, hovered, selected, target, x1, y1, x2, y2, x3, y3)
+    if assigned then
+        local r, gn, bl = colorOf(assigned)
+        love.graphics.setColor(r, gn, bl, hovered and 0.85 or 0.6)
+        love.graphics.polygon('fill', x1, y1, x2, y2, x3, y3)
+        love.graphics.setColor(r, gn, bl, hovered and 1.0 or 0.9)
+        love.graphics.setLineWidth(hovered and 3 or 1)
+        love.graphics.polygon('line', x1, y1, x2, y2, x3, y3)
+    end
+    if selected then
+        local r, gn, bl = colorOf(target)
+        love.graphics.setColor(r, gn, bl, 0.85)
+        love.graphics.polygon('fill', x1, y1, x2, y2, x3, y3)
+    end
+    if not assigned then
+        love.graphics.setColor(0.2, 1.0, 0.4, 0.4)
+        love.graphics.setLineWidth(1)
+        love.graphics.polygon('line', x1, y1, x2, y2, x3, y3)
+    end
+end
+
+-- The triangle painter (EDIT_MESH_TRIS) on the selected MESHUSERT: its triangles (on its RESOURCE's mesh)
+-- painted by bone or by group (triangleGroups lives on the RESOURCE fixture), and the brush at the mouse.
+local function drawTrianglePainter()
+    local fixture = state.selection.selectedSFixture
+    if not (modes.is(modes.EDIT_MESH_TRIS) and fixture) then return end
+    local ud = fixture:getUserData()
+    if not (ud and subtypes.is(ud, subtypes.MESHUSERT) and ud.label) then return end
+    local mappert = resourceLink.find(ud)
+    if not mappert then return end
+    local mextra = mappert:getUserData().extra
+    local triIdx = mextra and mextra.triangles
+    local meshData = mappert:getBody():getUserData()
+    local baseVerts = (mextra and mextra.meshVertices) or meshData.thing.vertices
+    local polyCx, polyCy = mathutils.computeCentroid(baseVerts)
+    local centeredVerts = mathutils.makePolygonRelativeToCenter(baseVerts, polyCx, polyCy)
+    local worldAt = fixtures.makeMeshVertexMapper(ud.extra, centeredVerts, fixture:getBody())
+    if triIdx and #triIdx >= 3 then
+        local editor = state.triangleEditor
+        local selSet = {}
+        for _, t in ipairs(editor.selectedTriangles) do selSet[t] = true end
+        local groups = (editor.paintMode or 'bones') == 'groups'
+        local colorOf = groups and colors.groupColor or colors.boneColor
+        local assignedTo = ud.extra.triangleBones -- (not and/or: a nil triangleGroups would fall to the bones)
+        if groups then assignedTo = mextra.triangleGroups end
+        local target = groups and (editor.selectedGroup or 1) or (editor.selectedBone or 1)
+        for t = 1, math.floor(#triIdx / 3) do
+            local i1, i2, i3 = triIdx[(t - 1) * 3 + 1], triIdx[(t - 1) * 3 + 2], triIdx[(t - 1) * 3 + 3]
+            if i1 and i2 and i3 then
+                local x1, y1 = worldAt(i1)
+                local x2, y2 = worldAt(i2)
+                local x3, y3 = worldAt(i3)
+                local assigned = assignedTo and assignedTo[t]
+                local hovered = groups and assigned ~= nil and assigned == editor.hoveredGroup
+                paintTriangle(colorOf, assigned, hovered, selSet[t], target, x1, y1, x2, y2, x3, y3)
+            end
+        end
+        love.graphics.setColor(1, 1, 1, 1)
+    end
+    -- Brush radius at mouse cursor
+    local bcx, bcy = cam:getWorldCoordinates(love.mouse.getPosition())
+    love.graphics.setColor(1, 1, 0, 0.3)
+    love.graphics.circle('line', bcx, bcy, tonumber(state.triangleEditor.brushSize) or 20)
+    love.graphics.setColor(1, 1, 1, 1)
+end
+
+-- The editor's overlay, in this order (a part draws in the colour the one before left): the selected
+-- sfixture, the selected joint's anchors, the polygon being drawn, the vertex handles of a shape or a
+-- texfixture being edited, the selected bodies, the node an add-node mode would take, the shape's edited
+-- outline, the triangle painter.
+function lib.renderActiveEditorThings()
+    drawSelectedSFixture()
     if state.selection.selectedJoint and not state.selection.selectedJoint:isDestroyed() then
         box2dDraw.drawJointAnchors(state.selection.selectedJoint)
     end
-
-    -- draw to be drawn polygon
-    if modes.is(modes.DRAW_CLICK)
-        or modes.is(modes.DRAW_FREE_POLY)
-        or modes.is(modes.DRAW_FREE_PATH) then
-        if (#state.interaction.polyVerts >= 6) then
-            love.graphics.polygon('line', state.interaction.polyVerts)
-        end
+    local drawing = modes.is(modes.DRAW_CLICK) or modes.is(modes.DRAW_FREE_POLY) or modes.is(modes.DRAW_FREE_PATH)
+    if drawing and #state.interaction.polyVerts >= 6 then
+        love.graphics.polygon('line', state.interaction.polyVerts)
     end
-
-    -- draw mousehandlers for dragging vertices
-    local rightShape = state.selection.selectedObj and
-        (state.selection.selectedObj.shapeType == ST.CUSTOM or state.selection.selectedObj.shapeType == ST.RIBBON)
-    if state.polyEdit.tempVerts and rightShape and state.polyEdit.lockedVerts == false then
-        local verts = mathutils.getLocalVerticesForCustomSelected(state.polyEdit.tempVerts,
-            state.selection.selectedObj, state.polyEdit.centroid.x, state.polyEdit.centroid.y)
-
-        local mx, my = love.mouse:getPosition()
-        local cx, cy = cam:getWorldCoordinates(mx, my)
-        -- Scale marker sizes by camera zoom so they stay visually constant
-        -- (precise when zoomed in, not giant when zoomed out).
-        local invZoom = 1 / cam:getScale()
-
-        drawVertexHandles(verts, cx, cy, invZoom, 'always')
-    end
-
-    if state.texFixtureEdit.tempVerts and state.selection.selectedSFixture
-        and state.texFixtureEdit.lockedVerts == false then
-        local thing     = utils.thingOf(state.selection.selectedSFixture:getBody())
-
-        local fixtureUD = state.selection.selectedSFixture:getUserData()
-        local isMeta8   = fixtureUD.label == 'meta8'
-        local verts     = mathutils.getLocalVerticesForCustomSelected(state.texFixtureEdit.tempVerts,
-            thing, 0, 0)
-
-        local mx, my    = love.mouse:getPosition()
-        local cx, cy    = cam:getWorldCoordinates(mx, my)
-        local invZoom   = 1 / cam:getScale()
-        drawVertexHandles(verts, cx, cy, invZoom, isMeta8 and 'unhovered' or nil)
-
-        if (isMeta8) then
-            -- index 1 -> 5
-            love.graphics.line(verts[1 * 2 - 1], verts[1 * 2 - 0], verts[5 * 2 - 1], verts[5 * 2 - 0])
-            -- index 2 -> 8
-            love.graphics.line(verts[2 * 2 - 1], verts[2 * 2 - 0], verts[8 * 2 - 1], verts[8 * 2 - 0])
-            -- index 3 -> 7
-            love.graphics.line(verts[3 * 2 - 1], verts[3 * 2 - 0], verts[7 * 2 - 1], verts[7 * 2 - 0])
-            -- index 4 -> 6
-            love.graphics.line(verts[4 * 2 - 1], verts[4 * 2 - 0], verts[6 * 2 - 1], verts[6 * 2 - 0])
-            -- the numbers for src/shape8-dict.lua: 'copy dict entry' in the panel
-        end
-    end
-
-    -- Highlight selected bodies
+    drawPolyEditHandles()
+    drawTexFixtureHandles()
     if state.selection.selectedBodies then
-        local bodies = utils.map(state.selection.selectedBodies, function(thing)
-            return thing.body
-        end)
-        box2dDraw.drawBodies(bodies)
+        box2dDraw.drawBodies(utils.map(state.selection.selectedBodies, function(thing) return thing.body end))
     end
-
     if modes.is(modes.ADD_NODE_CONNECTED_TEX) or modes.is(modes.ADD_NODE_MESHUSERT) then
-        -- maybe show all possible connections on screen
-
         local node = inputmanager.showCloseNode()
-
-        if node then
-            love.graphics.rectangle('line', node[1] - 5, node[2] - 5, 10, 10)
-        end
+        if node then love.graphics.rectangle('line', node[1] - 5, node[2] - 5, 10, 10) end
     end
-
-    -- draw temp poly when changing vertices
-    if state.polyEdit.tempVerts and state.selection.selectedObj then
+    if state.polyEdit.tempVerts and state.selection.selectedObj then -- the shape's outline while it changes
         local verts = mathutils.getLocalVerticesForCustomSelected(state.polyEdit.tempVerts,
             state.selection.selectedObj, state.polyEdit.centroid.x, state.polyEdit.centroid.y)
         love.graphics.setColor(1, 0, 0)
         love.graphics.polygon('line', verts)
-        love.graphics.setColor(1, 1, 1) -- Rese
+        love.graphics.setColor(1, 1, 1)
     end
-
-    -- TRIANGLE SELECTION VISUALIZATION
-    if modes.is(modes.EDIT_MESH_TRIS) and state.selection.selectedSFixture then
-        local ud = state.selection.selectedSFixture:getUserData()
-        if ud and subtypes.is(ud, subtypes.MESHUSERT) and ud.label then
-            local mappert = resourceLink.find(ud)
-
-            if mappert then
-                local mextra = mappert:getUserData().extra
-                local triIdx = mextra and mextra.triangles
-                local mb = mappert:getBody()
-                local meshData = mb:getUserData()
-                local baseVerts = (mextra and mextra.meshVertices) or meshData.thing.vertices
-
-                local body = state.selection.selectedSFixture:getBody()
-                local polyCx, polyCy = mathutils.computeCentroid(baseVerts)
-                local centeredVerts = mathutils.makePolygonRelativeToCenter(baseVerts, polyCx, polyCy)
-
-                local worldAt = fixtures.makeMeshVertexMapper(ud.extra, centeredVerts, body)
-
-                if triIdx and #triIdx >= 3 then
-                    local selSet = {}
-                    for _, t in ipairs(state.triangleEditor.selectedTriangles) do selSet[t] = true end
-                    local groups = mextra.triangleGroups
-                    local numTris = math.floor(#triIdx / 3)
-
-                    local groupColor, boneColor = colors.groupColor, colors.boneColor
-                    local paintMode = state.triangleEditor.paintMode or 'bones'
-
-                    local targetBone     = state.triangleEditor.selectedBone or 1
-                    local triangleBones  = ud.extra.triangleBones
-                    local targetGroup    = state.triangleEditor.selectedGroup or 1
-                    local hoveredGroup   = state.triangleEditor.hoveredGroup
-                    -- triangleGroups lives on the RESOURCE fixture
-                    local triangleGroups = groups  -- already read above
-
-                    for t = 1, numTris do
-                        local i1 = triIdx[(t - 1) * 3 + 1]
-                        local i2 = triIdx[(t - 1) * 3 + 2]
-                        local i3 = triIdx[(t - 1) * 3 + 3]
-                        if i1 and i2 and i3 then
-                            local x1, y1 = worldAt(i1)
-                            local x2, y2 = worldAt(i2)
-                            local x3, y3 = worldAt(i3)
-
-                            if paintMode == 'groups' then
-                                local assignedGroup = triangleGroups and triangleGroups[t]
-                                if assignedGroup then
-                                    local isHovered = (assignedGroup == hoveredGroup)
-                                    local r, gn, bl = groupColor(assignedGroup)
-                                    love.graphics.setColor(r, gn, bl, isHovered and 0.85 or 0.6)
-                                    love.graphics.polygon('fill', x1, y1, x2, y2, x3, y3)
-                                    love.graphics.setColor(r, gn, bl, isHovered and 1.0 or 0.9)
-                                    love.graphics.setLineWidth(isHovered and 3 or 1)
-                                    love.graphics.polygon('line', x1, y1, x2, y2, x3, y3)
-                                end
-                                if selSet[t] then
-                                    local r, gn, bl = groupColor(targetGroup)
-                                    love.graphics.setColor(r, gn, bl, 0.85)
-                                    love.graphics.polygon('fill', x1, y1, x2, y2, x3, y3)
-                                end
-                                if not assignedGroup then
-                                    love.graphics.setColor(0.2, 1.0, 0.4, 0.4)
-                                    love.graphics.setLineWidth(1)
-                                    love.graphics.polygon('line', x1, y1, x2, y2, x3, y3)
-                                end
-                            else -- bones
-                                local assignedBone = triangleBones and triangleBones[t]
-                                if assignedBone then
-                                    local r, gn, bl = boneColor(assignedBone)
-                                    love.graphics.setColor(r, gn, bl, 0.6)
-                                    love.graphics.polygon('fill', x1, y1, x2, y2, x3, y3)
-                                    love.graphics.setColor(r, gn, bl, 0.9)
-                                    love.graphics.setLineWidth(1)
-                                    love.graphics.polygon('line', x1, y1, x2, y2, x3, y3)
-                                end
-                                if selSet[t] then
-                                    local r, gn, bl = boneColor(targetBone)
-                                    love.graphics.setColor(r, gn, bl, 0.85)
-                                    love.graphics.polygon('fill', x1, y1, x2, y2, x3, y3)
-                                end
-                                if not assignedBone then
-                                    love.graphics.setColor(0.2, 1.0, 0.4, 0.4)
-                                    love.graphics.setLineWidth(1)
-                                    love.graphics.polygon('line', x1, y1, x2, y2, x3, y3)
-                                end
-                            end
-                        end
-                    end
-                    love.graphics.setColor(1, 1, 1, 1)
-                end
-
-                -- Brush radius at mouse cursor
-                local msx, msy = love.mouse.getPosition()
-                local bcx, bcy = cam:getWorldCoordinates(msx, msy)
-                love.graphics.setColor(1, 1, 0, 0.3)
-                love.graphics.circle('line', bcx, bcy, tonumber(state.triangleEditor.brushSize) or 20)
-                love.graphics.setColor(1, 1, 1, 1)
-            end
-        end
-    end
-
-    love.graphics.setColor(1, 1, 1)  -- Reset color
+    drawTrianglePainter()
+    love.graphics.setColor(1, 1, 1)
 end
 
 -- Steiner-point authoring overlay. When the selected body has
