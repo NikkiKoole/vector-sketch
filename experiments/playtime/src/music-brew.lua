@@ -15,8 +15,13 @@
 --   extras   about one quiet dead note a pass off the riff; the A# drops an octave now and then.
 -- No scoops, slides or vibrato: Ronnie plays none. The music panel's 'humanize' row plays the same riff
 -- plainly (on the grid, one force, the written lengths, no shapes or extras).
+-- The keys and guitar (Mystic Brew's, measured per riff slot): Ronnie's organ holds lush chords whose top stays
+-- on an A for two bars and an Eb for the third, the guitar small open shapes hanging on an F under it, both
+-- struck with the bass's long notes and its beat-3/4 notes and held to the next; the organ a hair behind the
+-- grid, the guitar further (a down-strum, ~15 ms).
 -- The kit plays the same in both: the sampled bar is a drummer's, with its own fixed pushes.
--- The form: the bass alone for two passes, then the kit, then the bass alone again, ending on its last note.
+-- The form: the bass alone for a pass, then the organ and guitar, then the kit; the bass and organ to end,
+-- on the riff's last note.
 -- Registered as loop = 'brew' in music-plan's LOOP_PLANS and music-parts' LOOP_BARS (as music-upright.lua).
 local state = require('src.state')
 local theory = require('src.music-theory')
@@ -49,10 +54,37 @@ lib.GHOSTS = { { 1.25, -5 }, { 2.5, -5 }, { 9.25, 1 }, { 10.0, -5 }, { 11.5, -4 
 -- the harmony under each bar, roughly (for what plays along: impacts, stingers): degree over the key, quality
 lib.CHORDS = { { 0, 'm9' }, { 3, 'maj9' }, { 8, 'maj9' } }
 
+-- the organ's and the guitar's chords, in Mystic Brew's key like the riff: { beat in the riff's cycle, midi... },
+-- each held to the next. The organ's top: A4 over bars 1-2, Bb4/Eb5 over bar 3
+lib.ORGAN = {
+    { 0.5, 60, 62, 64, 69 },   -- C6/9 over C
+    { 2.0, 57, 64, 69 },       -- G13sus, open 4ths
+    { 3.0, 60, 64, 67, 69 },   -- Fmaj9
+    { 4.5, 57, 62, 69 },       -- Bbmaj7
+    { 6.0, 58, 62, 65, 69 },   -- Ebmaj9#11 (the A: Lydian)
+    { 6.5, 58, 65, 69 },       -- Gm9
+    { 7.0, 60, 65, 70 },       -- Ab6/9
+    { 8.5, 58, 63, 70 },       -- Gb6 over F#
+    { 10.0, 63, 65, 68, 70 },  -- Ab6/9 over C
+    { 11.0, 60, 63, 65, 70 },  -- Dbmaj9/13
+}
+lib.GUITAR = {
+    { 0.5, 55, 60, 65 },       -- G C F over C
+    { 2.0, 60, 65 },           -- C F over G
+    { 3.0, 57, 60, 62, 65 },   -- A C D F over F
+    { 4.5, 57, 62, 65 },       -- A D F over Bb
+    { 6.0, 57, 62, 65 },       -- A D F over Eb
+    { 7.0, 58, 63, 68, 70 },   -- Bb Eb Ab Bb over Ab
+    { 8.5, 61, 65, 68, 70 },   -- C# F G# A# over F#
+    { 10.0, 56, 61, 63, 65 },  -- G# C# D# F
+    { 11.0, 61, 65, 68, 73 },  -- C# F G# C# over C#
+}
+
 lib.FORM = {
-    { 'intro', 6, {} },
-    { 'A', 24, { drums = true } },
-    { 'outro', 6, {} },
+    { 'intro', 3, {} },
+    { 'in', 3, { band = true } },
+    { 'A', 24, { band = true, drums = true } },
+    { 'outro', 6, { organ = true } },
     { 'end', 1, { ending = true } },
 }
 
@@ -147,6 +179,37 @@ local function bookBass(play, synth, t0, song, b, roles, h)
     end
 end
 
+---------------------------------------------------------------- the organ and the guitar
+
+-- the chords of `list` struck inside this bar, each held to the next one (wrapping round the cycle)
+local function bookChords(play, synth, t0, song, b, list, part, patch, h, feel, strum, vol, gain)
+    local pass = (b - 1) % 3
+    local lo, hi = pass * 4, pass * 4 + 4
+    for i, c in ipairs(list) do
+        local pos = (c[1] + OFFSET) % 12
+        if pos >= lo and pos < hi then
+            local nextPos = list[i % #list + 1][1]
+            local held = (nextPos - c[1]) % 12
+            if held == 0 then held = 12 end
+            local s = math.floor((pos - lo) * 4 + 0.5)
+            local at = t0 + (pos - lo) * song.beat
+            local ms = held * song.beat * 1000 - 30
+            if not h then
+                for k = 2, #c do play(synth, part, patch, at, c[k] + song.brew.shift, vol, ms, s) end
+            else
+                local tt = at + feel + gauss(0.010)
+                local g = gain * dbGain(gauss(1.0))
+                for k = 2, #c do
+                    local top = k == #c
+                    play(synth, part, patch, tt + (k - 2) * strum + math.abs(gauss(0.002)), c[k] + song.brew.shift,
+                         vol, ms - (k - 2) * strum * 1000, s, nil, nil,
+                         { gain = math.min(1, g * (top and 1 or 0.85)), cents = gauss(3) })
+                end
+            end
+        end
+    end
+end
+
 ---------------------------------------------------------------- the kit
 
 -- Electric Relaxation's drum bar (Outside Love's drummer, measured on the sampler-straight grid, ms at
@@ -179,6 +242,12 @@ function lib.bookBar(play, remember, synth, t0, song, b)
     if h then defineShapes(synth) end
     local roles = song.barSection[b].roles
     bookBass(play, synth, t0, song, b, roles, h)
+    if roles.band or roles.organ then -- the organ a hair behind the grid, its keys together
+        bookChords(play, synth, t0, song, b, lib.ORGAN, 'keys', 'brewOrgan', h, 0.008, 0.002, 4, 0.7)
+    end
+    if roles.band then                -- the guitar further behind, a quick down-strum
+        bookChords(play, synth, t0, song, b, lib.GUITAR, 'guitar', 'brewGuitar', h, 0.018, 0.012, 4, 0.75)
+    end
     if roles.drums then bookDrums(play, synth, t0, song) end
 end
 

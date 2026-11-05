@@ -20,7 +20,7 @@ lib.reverbDamping = 0.5  -- 0 bright .. 1 dark tail
 -- instrument ids from dreamengine runtime/studio.h (#defines don't come through FFI)
 lib.INSTR = {
     SQUARE = 0, SAW = 1, TRI = 2, NOISE = 3, SINE = 4,
-    PLUCK = 16, MALLET = 17, FM = 18, EPIANO = 20, MEMBRANE = 22, REED = 23, PIPE = 25,
+    PLUCK = 16, MALLET = 17, FM = 18, ORGAN = 19, EPIANO = 20, MEMBRANE = 22, REED = 23, PIPE = 25,
     GUITAR = 26, PIANO = 27, BOWED = 28, BRASS = 29, SAMPLE = 30, MODAL = 31, METAL = 34, WAVESCAN = 36,
     SCRAPE = 39, -- scraped/rattled percussion from separate teeth: harmonics body, timbre rate, morph rattle
     SING = 38, -- one recorded syllable sung at any note by the same speaker (timbre = size, morph = speed)
@@ -294,6 +294,16 @@ lib.patches = {
     -- loud, then rings on ~15 dB down)
     hThump = { pool = true, wave = 'MEMBRANE', adsr = { 1, 0, 7, 300 }, harmonics = 0.8, timbre = 0.2, morph = 0.25,
                reverb = 0.3, level = 0.8, filter = { mode = 1, cutoff = 700, resonance = 1 } },
+    -- the brew style (src/music-brew.lua), Mystic Brew's keys and guitar: Ronnie Foster's organ, the tonewheel
+    -- engine on a fat jazz B3 registration (organ.c's 'jimmy' drawbars, darker: the stem sits at ~520 Hz), no
+    -- percussion chip (held legato, which kills it on a real B3), a slow chorale 'Leslie' as LFOs (volume, pan,
+    -- a hair of pitch at ~0.8 Hz); and a clean, dark neck-pickup jazz guitar (the stem's ~600 Hz)
+    brewOrgan = { pool = true, wave = 'ORGAN', adsr = { 12, 0, 7, 220 }, harmonics = 0.44, timbre = 0.35, morph = 0.2,
+                  reverb = 0.3, level = 0.3, filter = { mode = 1, cutoff = 2200, resonance = 0 },
+                  lfo = { { 2, 0.8, 0.08 }, { 7, 0.8, 0.25 }, { 0, 0.8, 0.02 } } },
+    brewGuitar = { pool = true, wave = 'GUITAR', adsr = { 2, 0, 7, 900 }, harmonics = 0.4, timbre = 0.22, morph = 0.1,
+                   modes = { [0] = 0.7, [1] = 0.12 }, filter = { mode = 1, cutoff = 1900, resonance = 0 },
+                   reverb = 0.3, level = 0.66 },
     -- drumhand's hat: metal plates that RING (so the stroke's damp and the foot's level lane are heard)
     hHat = { pool = true, wave = 'METAL', adsr = { 0, 0, 7, 60 }, harmonics = 0.7, timbre = 0.85, morph = 0.85,
              reverb = 0.12, level = 0.12, modes = { [0] = 0.66, [1] = 0.2 },
