@@ -92,16 +92,22 @@ end
 -- swept out whenever an ear is remembered (a rebuild makes new ones), so the table stays the size
 -- of the ears there are.
 local remembered = setmetatable({}, { __mode = 'k' }) -- [body] = { bones, joint, corners } or false
+-- gone: destroyed, or released by LÖVE so it can't even be asked (seen with many worlds made and
+-- thrown away one after another, claudetools/scene-damage_spec.lua)
+local function gone(object)
+    local ok, destroyed = pcall(object.isDestroyed, object)
+    return not ok or destroyed
+end
 local function forgetDestroyed()
     for body in pairs(remembered) do
-        if body:isDestroyed() then remembered[body] = nil end
+        if gone(body) then remembered[body] = nil end
     end
 end
 function lib.bonesOf(body, corners)
     if not lib.enabled then return nil end
     local r = remembered[body]
     if r == false then return nil end
-    if r and not r.joint:isDestroyed() then
+    if r and not gone(r.joint) then
         local same = #r.corners == #corners
         for i = 1, #corners do
             if not same then break end

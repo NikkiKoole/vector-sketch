@@ -23,9 +23,10 @@ end
 function lib.getFromBody(body)
     if not body or body:isDestroyed() then return nil, nil end
     local thing = utils.thingOf(body)
-    if thing and thing.mipoId then
-        return instances[thing.mipoId], thing.mipoPartName
-    end
+    -- a part of a Mipo that isn't registered (a damaged file without its entry) is no Mipo's part:
+    -- callers take a part name as the promise of an instance
+    local instance = thing and thing.mipoId and instances[thing.mipoId]
+    if instance then return instance, thing.mipoPartName end
     return nil, nil
 end
 

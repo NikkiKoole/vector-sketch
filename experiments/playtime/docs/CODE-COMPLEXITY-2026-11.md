@@ -62,6 +62,23 @@ Each with a spec that failed first:
   (DEEPER-ISSUES 8, MEASURING M4).
 - Checked and already fixed before: the z-sort flicker, cloned OMP textures (DEEPER-ISSUES 1, 3).
 
+## The damaged-scene sweep
+
+`claudetools/scene-damage_spec.lua`: every scene with one thing taken out (a body, a joint, an
+sfixture, a Mipo's entry), loaded, drawn, stepped, saved, loaded again; 1257 damaged loads. First run:
+nothing failed to load and no load lost bodies; two kinds of crash while drawing, both fixed with a
+spec failing first:
+
+- Mipo bodies without their Mipo entry (`characters`) in the file died in spine-skin's draw:
+  `mipoRegistry.getFromBody` gave a part name with no instance; it answers 'no Mipo' now
+  (spec/mipo-entry-missing_spec.lua).
+- ear-bend's sweep of destroyed bodies (the leak fix above) asked bodies LÖVE had already released
+  (with many worlds made one after another: specs, tools; the game keeps one world): it treats those
+  as gone now. The scenes snapshot had been failing on 3 scenes since the leak fix; identical again.
+
+Second run: clean, only `Failed to find bodies for joint` logged (a joint whose body was taken out:
+skipped, as it should be). Run it again after changing load, save, or anything that follows ids.
+
 ## What's left
 
 - [x] Nothing over 40.

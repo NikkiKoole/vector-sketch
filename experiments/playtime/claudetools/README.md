@@ -118,6 +118,7 @@ different arguments), `dt or 1 / 60` (ambiguity-1). Installs: `brew install lua-
 | `lint.sh` | All the static checks | `claudetools/lint.sh [--all]` |
 | `unused-functions.py` | `lib.x` / `M.x` / `ui.x` in src/ that nothing names | `python3 -I claudetools/unused-functions.py` |
 | `luals.json` | lua-language-server's settings for lint.sh | |
+| `scene-damage_spec.lua` | Every scene with one thing taken out (a body, joint, sfixture, Mipo entry; up to 25 of each), loaded, drawn, stepped, saved and loaded again; errors grouped by message with a traceback, lost bodies, and what was only logged. ~1250 loads, 5-15 minutes. Finds what a deleted part or a damaged file breaks | `DAMAGE_OUT=/tmp/d.txt love . --specs claudetools/scene-damage_spec.lua` (`DAMAGE_ONLY=<scene>`, `DAMAGE_PER_KIND=n`) |
 
 ## Project upkeep
 
