@@ -699,22 +699,16 @@ local function planSong(setKey)
     return song
 end
 
--- One phrase over four bars from bar b (the first of them): the motif stated over bars 1-2, bar 3
--- breathes, bar 4 answers. Seeded by its place (section kind + which four bars), so it comes back
--- the same every time that place does. Notes are { step 0..63, midi, vol, len in steps, grace }.
-local function buildPhrase(song, b)
-    local section, j = song.barSection[b], song.barIndex[b]
-    local slot = math.floor(j / 4)
-    local rnd = stream(song.seed, 5000 + (section.kind == 'B' and 100 or 0) + slot)
-    local style = D.styles[song.style]
-    local notes = {}
-    if slot % 2 == 1 and rnd(100) < 30 then return notes end -- a phrase of space
+local function clampIndex(ladder, i) return math.max(1, math.min(#ladder, i)) end
+
+-- The motif over bars 1-2 from ladder index `start` (in the B section turned upside down and two
+-- steps later): each group's first note on its cell's degree, the rest scale steps; on the beat,
+-- or on a note the chord avoids, snapped to a chord tone. Notes { s, li, vol }.
+local function motifNotes(song, b, section, start)
     local ladder = song.ladder
-    local function clampIndex(i) return math.max(1, math.min(#ladder, i)) end
-    local start = section.lastLadder
-    if slot == 0 or not start then start = song.hookStart[section.kind == 'B' and 'B' or 'A'] end
     local invert, shift = section.kind == 'B', section.kind == 'B' and 2 or 0
     local motif, x = song.motif, start
+    local notes = {}
     for i, step in ipairs(motif.steps) do
         local s = step + shift
         if s < 30 then
@@ -726,31 +720,32 @@ local function buildPhrase(song, b)
             else          -- inside a group: a scale step
                 x = x + (invert and -motif.dir[i] or motif.dir[i])
             end
-            x = clampIndex(x)
+            x = clampIndex(ladder, x)
             local chord = chordAtStep(song, b, s)
             if s % 8 == 0 or isAvoid(song, ladder[x], chord) then x = snapChord(song, x, chord) end
             notes[#notes + 1] = { s = s, li = x, vol = first and 5 or 4 }
         end
     end
-    local at = #notes > 0 and notes[#notes].li or start
-    if slot % 3 == 2 and at > 1 then -- now and then a pickup into the answer's bar
-        local x2 = at - 1
-        local chord = chordAtStep(song, b, 31)
-        if isAvoid(song, ladder[x2], chord) then x2 = snapChord(song, x2, chord) end
-        notes[#notes + 1] = { s = 31, li = x2, vol = 3 }
-    end
+    return notes
+end
+
+-- Bar 4 answers (bar 3 is the breath): one of D.answers' rhythms from ladder index `at`, mostly
+-- falling, mostly by step, landing on a chord tone. Draws from rnd in its order.
+local function addAnswer(song, b, rnd, notes, at)
+    local ladder = song.ladder
     local answer = D.answers[rnd(#D.answers) + 1]
     for k, step in ipairs(answer) do
-        local s = 48 + step -- bar 4: bar 3 is the breath
-        local leap = rnd(100) < 75 and 1 or 2 -- answers mostly fall, mostly by step
-        at = clampIndex(at + (rnd(100) < 60 and -leap or leap))
+        local s = 48 + step
+        local leap = rnd(100) < 75 and 1 or 2
+        at = clampIndex(ladder, at + (rnd(100) < 60 and -leap or leap))
         local chord = chordAtStep(song, b, s)
         if s % 8 == 0 or k == #answer or isAvoid(song, ladder[at], chord) then at = snapChord(song, at, chord) end
         notes[#notes + 1] = { s = s, li = at, vol = k == #answer and 4 or 3 }
     end
-    for _, note in ipairs(notes) do note.midi = ladder[note.li] end
+end
 
-    -- passing tones: a third with room gives its second half to the key's scale step between
+-- passing tones: a third with room gives its second half to the key's scale step between
+local function withPassingTones(song, b, rnd, notes)
     local out = {}
     for k, note in ipairs(notes) do
         out[#out + 1] = note
@@ -769,21 +764,28 @@ local function buildPhrase(song, b)
             end
         end
     end
-    notes = out
+    return out
+end
 
-    -- each note lasts to the next (the last rings); long notes keep off the chord's semitones;
-    -- a long note may get a quick scale neighbour flicked in just before it
+-- a long note on one of the chord's semitones moves to the nearest ladder note that doesn't rub
+local function offTheRubs(song, note, chord)
+    local ladder = song.ladder
+    for d = 1, 2 do
+        local down, up = ladder[note.li - d], ladder[note.li + d]
+        if down and not rubs(song, down, chord) then note.midi = down return end
+        if up and not rubs(song, up, chord) then note.midi = up return end
+    end
+end
+
+-- each note lasts to the next (the last rings); long notes keep off the chord's semitones;
+-- a long note may get a quick scale neighbour flicked in just before it
+local function shapeNotes(song, b, rnd, notes)
+    local style = D.styles[song.style]
     for k, note in ipairs(notes) do
         local nextS = notes[k + 1] and notes[k + 1].s or 64
         note.len = math.min(nextS - note.s, notes[k + 1] and (style.staccato or 6) or 10)
         local chord = chordAtStep(song, b, note.s)
-        if note.len >= 2 and rubs(song, note.midi, chord) then
-            for d = 1, 2 do
-                local down, up = ladder[note.li - d], ladder[note.li + d]
-                if down and not rubs(song, down, chord) then note.midi = down break end
-                if up and not rubs(song, up, chord) then note.midi = up break end
-            end
-        end
+        if note.len >= 2 and rubs(song, note.midi, chord) then offTheRubs(song, note, chord) end
         if note.len * song.beat / 4 >= 0.3 and rnd(100) < 40 then
             local dir = rnd(100) < 62 and 1 or -1
             local grace = note.midi + dir
@@ -792,6 +794,31 @@ local function buildPhrase(song, b)
             if not previous or previous.s + previous.len <= note.s - 1 then note.grace = grace end
         end
     end
+end
+
+-- One phrase over four bars from bar b (the first of them): the motif stated over bars 1-2, bar 3
+-- breathes, bar 4 answers. Seeded by its place (section kind + which four bars), so it comes back
+-- the same every time that place does. Notes are { step 0..63, midi, vol, len in steps, grace }.
+local function buildPhrase(song, b)
+    local section, j = song.barSection[b], song.barIndex[b]
+    local slot = math.floor(j / 4)
+    local rnd = stream(song.seed, 5000 + (section.kind == 'B' and 100 or 0) + slot)
+    if slot % 2 == 1 and rnd(100) < 30 then return {} end -- a phrase of space
+    local ladder = song.ladder
+    local start = section.lastLadder
+    if slot == 0 or not start then start = song.hookStart[section.kind == 'B' and 'B' or 'A'] end
+    local notes = motifNotes(song, b, section, start)
+    local at = #notes > 0 and notes[#notes].li or start
+    if slot % 3 == 2 and at > 1 then -- now and then a pickup into the answer's bar
+        local x2 = at - 1
+        local chord = chordAtStep(song, b, 31)
+        if isAvoid(song, ladder[x2], chord) then x2 = snapChord(song, x2, chord) end
+        notes[#notes + 1] = { s = 31, li = x2, vol = 3 }
+    end
+    addAnswer(song, b, rnd, notes, at)
+    for _, note in ipairs(notes) do note.midi = ladder[note.li] end
+    notes = withPassingTones(song, b, rnd, notes)
+    shapeNotes(song, b, rnd, notes)
     section.lastLadder = #notes > 0 and notes[#notes].li or section.lastLadder
     return notes
 end
