@@ -55,19 +55,29 @@ describe('the spine room', function()
         end
     end
 
-    -- (saved mid-step in the scene it came from: it lands and hops four or five times, drifting
-    -- ~150 px, and stands still from ~7 s, the torso at y -318. Measured after that: the first
-    -- version measured 2 s to 5 s, mid-hop, and passed only while two hops happened to line up;
-    -- a shape8 collision change, 8a05911c, moved them and it failed, 2026-11-05)
+    -- (saved mid-step in the scene it came from: it lands and hops a few times, drifting ~150 px,
+    -- then stands, the torso at y ~-315. How long the hops last depends on the machine: still in
+    -- the air at 7 s on the M1, down before then on the Intel iMac (floats round differently), so
+    -- a check at a fixed time passed or failed by luck (2026-11-05, twice). Instead: it has to come
+    -- to rest, its height held for 2 s, within 20 s. Sagging onto its knees and hopping back up,
+    -- what this test is for, never comes to rest; resting on its knees is too low.)
     it('has P4re5 standing on the floor', function()
         local instance = mipoRegistry.getAll().P4re5
         assert.is_truthy(instance, 'P4re5 is not in the room')
         local torso = instance.parts.torso1.body
-        simulate(7)
-        local _, y0 = torso:getPosition()
-        simulate(3)
-        local _, y1 = torso:getPosition()
-        assert.is_true(math.abs(y1 - y0) < 30, string.format('torso moved from %d to %d', y0, y1))
+        local STEP, HOLD, LIMIT = 0.25, 2, 20
+        local _, lastY = torso:getPosition()
+        local still, t = 0, 0
+        while still < HOLD and t < LIMIT do
+            simulate(STEP)
+            t = t + STEP
+            local _, y = torso:getPosition()
+            still = math.abs(y - lastY) < 8 and still + STEP or 0
+            lastY = y
+        end
+        assert.is_true(still >= HOLD, string.format('still hopping after %d s (torso at y %d)', LIMIT, lastY))
+        -- on its feet: the torso stands at ~-315 (-308..-318 seen); on its knees it would be a leg lower
+        assert.is_true(lastY < -290, string.format('torso at y %d: down on its knees?', lastY))
         local lean = (torso:getAngle() + math.pi) % (2 * math.pi) - math.pi -- wrapped: bodies spin
         assert.is_true(math.abs(lean) < math.rad(20), string.format('torso leans %.0f degrees', math.deg(lean)))
     end)
