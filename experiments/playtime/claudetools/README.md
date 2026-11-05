@@ -97,7 +97,7 @@ docs/MEASURING.md.
 | `sample-profile.lua` | Sampling profiler inside the running game (a few % overhead) | via the bridge, see its top comment |
 | `frame-profile.lua` | Where a frame goes, step by step, plus garbage and GPU stats | via the bridge, see its top comment |
 | `drawcall-bench/` | What draw calls cost on this machine (or the phone) | `love claudetools/drawcall-bench` |
-| `snapshot.sh` + `snapshots/` | Before/after snapshots of scenes (textured), Mipos, the Mipo editor and outlines (box2d-draw's drawWorld in 9 settings variants, plus a built-in world with what no scene has) for refactors | `claudetools/snapshot.sh take before`, `... diff before after` |
+| `snapshot.sh` + `snapshots/` | Before/after snapshots of scenes (textured), Mipos, the Mipo editor outlines (box2d-draw's drawWorld in 9 settings variants, plus a built-in world with what no scene has) and the editor overlay (editor-render's renderActiveEditorThings in 278 selection / mode / edit states over 5 scenes) for refactors | `claudetools/snapshot.sh take before`, `... diff before after` |
 | `flight-analyze.py`, `flight-window.py` | Summaries of a flight-recorder dump (`src/flight-recorder.lua`): grab force, joint stretch | `python3 claudetools/flight-analyze.py dump.json` |
 
 ## Checking the code
