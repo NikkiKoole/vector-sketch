@@ -238,11 +238,15 @@ lib.rows = {
             'strum', 'rollo', 'jingle', 'vibesnight', 'wave', 'sesame', 'citypop', 'buymode', 'satie', 'ambient',
             'bethena', 'gnossienne', 'gymnopedie', 'bachprelude', 'traumerei', 'carrelage', 'tapisserie', 'gershwin2',
             'ballad', 'acid', 'jam', 'parlour', 'upright' }, nil, true),
-    -- parlour and upright (src/music-parlour.lua, music-upright.lua): humanized (dreamengine's booked notes) or plain
+    -- parlour and upright (src/music-parlour.lua, music-upright.lua) and the styles whose keys are an electric
+    -- piano (the Rhodes player, src/music-rhodes.lua): humanized (dreamengine's booked notes) or plain
     { key = 'humanize', kind = 'bool', visible = function()
             local now = music().nowPlaying()
-            local style = now and now.style or music().style
-            return style == 'parlour' or style == 'upright'
+            local name = now and now.style or music().style
+            if name == 'parlour' or name == 'upright' then return true end
+            local style = music().styles[name]
+            local patch = style and style.keys and require('src.synth').patches[style.keys]
+            return patch ~= nil and patch.wave == 'EPIANO'
         end,
         get = function() return state().musicSettings.humanize ~= false end,
         set = function(_, v) state().musicSettings.humanize = v end },
