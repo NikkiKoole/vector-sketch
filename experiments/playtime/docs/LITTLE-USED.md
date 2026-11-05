@@ -42,7 +42,10 @@ first.
   nothing broke: the fill stays in 0..1, no container holds more than it can at its angle, the level
   always holds the water's amount, after a reload too (the check caught spilling switched off).
   Pictures: level when tilted, empty when tipped past its mouth or flipped upside down)
-- [ ] Tile repeat round
+- [x] Tile repeat round (2026-11-06: a tiled ground and a tiled dynamic block; 182 cases x 2 meters, the
+  tile mesh must cover its body as it is now (it's cached). Found: one dropped from the tool rail, its
+  panel then picking a texture, died on every draw (no tile size set, the panel only shows the default
+  1): drawn at the defaults now, spec/tile-repeat-new_spec.lua)
 - [x] Light round (2026-11-06: a lamp with a LIGHT sfixture lighting a plasticine and a hairs box; 502 cases, 4
   seeds x 2 meters, nothing broke, every lit body gets every light, also after a reload. Found on the way:
   the sweeps never touched a texfixture's settings, its panel builds them from texfixture-params'

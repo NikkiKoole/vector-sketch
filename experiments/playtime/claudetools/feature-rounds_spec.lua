@@ -52,6 +52,7 @@ end
 local blob = require('src.blob')
 local grass = require('src.grass')
 local liquid = require('src.liquid')
+local mathutils = require('src.math-utils')
 
 -- which body: its label, or a blob's rim
 local function nameOf(body)
@@ -172,6 +173,36 @@ local function waterHolds(p, world)
     end
 end
 
+-- every drawn tile mesh covers its body's outline as it is now (the triangles and the mesh are cached
+-- on the thing and the sfixture; a stale one keeps the old shape), after a frame has drawn them
+local function tilesCover(p, world)
+    sweep.frame(world)
+    for _, fixture in ipairs(registry.sfixturesOf(subtypes.TILE_REPEAT)) do
+        if sweep.alive(fixture) and fixture:getBody():getWorld() == world then
+            local thing = utils.thingOf(fixture:getBody())
+            local mesh = fixture:getUserData().extra._mesh
+            if thing and thing.vertices and mesh then
+                local vx0, vy0, vx1, vy1 = math.huge, math.huge, -math.huge, -math.huge
+                local cx, cy = mathutils.computeCentroid(thing.vertices)
+                for i = 1, #thing.vertices, 2 do
+                    local x, y = thing.vertices[i] - cx, thing.vertices[i + 1] - cy
+                    vx0, vy0, vx1, vy1 = math.min(vx0, x), math.min(vy0, y), math.max(vx1, x), math.max(vy1, y)
+                end
+                local mx0, my0, mx1, my1 = math.huge, math.huge, -math.huge, -math.huge
+                for i = 1, mesh:getVertexCount() do
+                    local x, y = mesh:getVertex(i)
+                    mx0, my0, mx1, my1 = math.min(mx0, x), math.min(my0, y), math.max(mx1, x), math.max(my1, y)
+                end
+                local off = math.max(math.abs(vx0 - mx0), math.abs(vy0 - my0), math.abs(vx1 - mx1), math.abs(vy1 - my1))
+                if off > 1 then
+                    p.add(string.format('a tile mesh off its body by %.0f (body %.0f x %.0f, tiles %.0f x %.0f)', off,
+                        vx1 - vx0, vy1 - vy0, mx1 - mx0, my1 - my0))
+                end
+            end
+        end
+    end
+end
+
 -- name -> { build = fn() (makes it in the fresh world, returns its host thing), check = fn(p, world) }
 local RECIPES = {
     softbody = {
@@ -224,6 +255,27 @@ local RECIPES = {
         check = function(p, world)
             sane(p, world)
             waterHolds(p, world)
+        end,
+    },
+    ['tile-repeat'] = {
+        build = function()
+            room()
+            -- tileSize nil: as the tool rail drops one and its panel picks a texture (no size set)
+            local function tiled(x, y, w, h, bodyType, label, tileSize)
+                local thing = objectManager.addThing('rectangle', { x = x, y = y, width = w, height = h,
+                    bodyType = bodyType, label = label })
+                local fixture = fixtures.createSFixture(thing.body, 0, 0, subtypes.TILE_REPEAT, { radius = 20 })
+                local extra = fixture:getUserData().extra
+                extra.main = { bgURL = 'world/grasspattern2.png' }
+                extra.tileWidthM, extra.tileHeightM = tileSize, tileSize
+                return thing
+            end
+            tiled(0, 250, 1600, 200, 'static', 'tiled ground', 0.5)
+            return tiled(300, -300, 300, 160, 'dynamic', 'tiled block', nil)
+        end,
+        check = function(p, world)
+            sane(p, world)
+            tilesCover(p, world)
         end,
     },
     light = {

@@ -657,8 +657,9 @@ local function drawTileRepeat(d)
             local centroidX, centroidY = mathutils.computeCentroid(vertices)
             local meshVertices = {}
 
-            local twm = d.extra.tileWidthM
-            local thm = d.extra.tileHeightM
+            -- the panel's defaults (src/sfixture-params.lua): one from the tool rail has none set
+            local twm = d.extra.tileWidthM or 1
+            local thm = d.extra.tileHeightM or 1
             local tr = d.extra.tileRotation
             local uvParams = {
                 tileWidth = texW * twm,  --bb.width,    -- world units per tile horizontally
