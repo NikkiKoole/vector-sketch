@@ -460,11 +460,8 @@ local function jitterRelative(value, factor)
     return math.max(value * 0.3, value + delta)
 end
 
-function lib.mutateSizes(instance)
-    if not instance then return end
-    local creation = instance.dna.creation
-
-    -- Body/head shape scales (preserve flip sign on sy)
+-- Body/head shape scales (the flip sign on sy kept)
+local function mutateTrunk(instance, creation)
     for i = 1, creation.torsoSegments do
         local dims = instance.dna.parts['torso' .. i] and instance.dna.parts['torso' .. i].dims
         if dims then
@@ -477,72 +474,74 @@ function lib.mutateSizes(instance)
         local s = jitterInRange(math.abs(hd.sx or 1), 'bodyScale')
         build.updatePart('head', { sx = s, sy = s * ((hd.sy or 1) < 0 and -1 or 1) }, instance)
     end
+end
 
-    -- Ears (always symmetric pair)
+-- feet or hands: one scale for both, the right one mirrored
+local function mutateMirroredPair(instance, left, right, rangeKey)
+    local dims = instance.dna.parts[left] and instance.dna.parts[left].dims
+    if not dims then return end
+    local s = jitterInRange(math.abs(dims.sx or 1), rangeKey)
+    build.updatePart(left, { sx = s, sy = s }, instance)
+    build.updatePart(right, { sx = -s, sy = s }, instance)
+end
+
+-- ears (always a symmetric pair, the left one mirrored), feet, hands
+local function mutateEnds(instance)
     local ed = instance.dna.parts.lear and instance.dna.parts.lear.dims
     if ed then
         local esx = jitterInRange(math.abs(ed.sx or 1), 'earScale')
         local esy = jitterInRange(math.abs(ed.sy or 1), 'earScale')
         build.updatePart('lear', { sx = -esx, sy = esy }, instance)
-        build.updatePart('rear', { sx =  esx, sy = esy }, instance)
+        build.updatePart('rear', { sx = esx, sy = esy }, instance)
     end
+    mutateMirroredPair(instance, 'lfoot', 'rfoot', 'feetScale')
+    mutateMirroredPair(instance, 'lhand', 'rhand', 'handScale')
+end
 
-    -- Feet
-    local ffd = instance.dna.parts.lfoot and instance.dna.parts.lfoot.dims
-    if ffd then
-        local fS = jitterInRange(math.abs(ffd.sx or 1), 'feetScale')
-        build.updatePart('lfoot', { sx =  fS, sy = fS }, instance)
-        build.updatePart('rfoot', { sx = -fS, sy = fS }, instance)
-    end
-
-    -- Hands
-    local fhd = instance.dna.parts.lhand and instance.dna.parts.lhand.dims
-    if fhd then
-        local hS = jitterInRange(math.abs(fhd.sx or 1), 'handScale')
-        build.updatePart('lhand', { sx =  hS, sy = hS }, instance)
-        build.updatePart('rhand', { sx = -hS, sy = hS }, instance)
-    end
-
-    -- Face sizes
+local function mutateFace(instance, creation)
     local faceOwner = creation.isPotatoHead and 'torso1' or 'head'
     local fp = instance.dna.parts[faceOwner]
-    if fp and fp.appearance and fp.appearance.face then
-        local face = fp.appearance.face
-        appearance.updateFaceOfPart(instance, faceOwner, {
-            eyeWMul          = jitterInRange(face.eye.wMul,                          'eyeWMul'),
-            eyeHMul          = jitterInRange(face.eye.hMul,                          'eyeHMul'),
-            pupilWMul        = jitterInRange(face.pupil.wMul,                        'pupilWMul'),
-            pupilHMul        = jitterInRange(face.pupil.hMul,                        'pupilHMul'),
-            browWMul         = jitterInRange(face.brow.wMul,                         'browWMul'),
-            browHMul         = jitterInRange(face.brow.hMul,                         'browHMul'),
-            noseWMul         = jitterInRange(face.nose.wMul,                         'noseWMul'),
-            noseHMul         = jitterInRange(face.nose.hMul,                         'noseHMul'),
-            mouthWMul        = jitterInRange(face.mouth.wMul,                        'mouthWMul'),
-            mouthHMul        = jitterInRange(face.mouth.hMul,                        'mouthHMul'),
-            mouthUpperLipScale = jitterInRange(face.mouth.upperLipScale or 0.15,     'mouthUpperLipScale'),
-            mouthLowerLipScale = jitterInRange(face.mouth.lowerLipScale or 0.2,      'mouthLowerLipScale'),
-        })
-    end
+    if not (fp and fp.appearance and fp.appearance.face) then return end
+    local face = fp.appearance.face
+    -- the random numbers drawn in this order (a table constructor's fields are evaluated in order)
+    appearance.updateFaceOfPart(instance, faceOwner, {
+        eyeWMul          = jitterInRange(face.eye.wMul,                          'eyeWMul'),
+        eyeHMul          = jitterInRange(face.eye.hMul,                          'eyeHMul'),
+        pupilWMul        = jitterInRange(face.pupil.wMul,                        'pupilWMul'),
+        pupilHMul        = jitterInRange(face.pupil.hMul,                        'pupilHMul'),
+        browWMul         = jitterInRange(face.brow.wMul,                         'browWMul'),
+        browHMul         = jitterInRange(face.brow.hMul,                         'browHMul'),
+        noseWMul         = jitterInRange(face.nose.wMul,                         'noseWMul'),
+        noseHMul         = jitterInRange(face.nose.hMul,                         'noseHMul'),
+        mouthWMul        = jitterInRange(face.mouth.wMul,                        'mouthWMul'),
+        mouthHMul        = jitterInRange(face.mouth.hMul,                        'mouthHMul'),
+        mouthUpperLipScale = jitterInRange(face.mouth.upperLipScale or 0.15,     'mouthUpperLipScale'),
+        mouthLowerLipScale = jitterInRange(face.mouth.lowerLipScale or 0.2,      'mouthLowerLipScale'),
+    })
+end
 
-    -- Limb lengths (arms and legs vary independently, left/right always symmetric)
-    -- Floor at 60 to prevent capsule polygons from going degenerate under Box2D
-    local legH = nil
-    local armH = nil
-    for _, pname in ipairs({'luleg', 'ruleg', 'llleg', 'rlleg'}) do
+-- one length for all of these parts (left/right symmetric), from the first that has one;
+-- floor at 60 to keep capsule polygons from going degenerate under Box2D
+local function mutateLength(instance, partNames)
+    local h
+    for _, pname in ipairs(partNames) do
         local dims = instance.dna.parts[pname] and instance.dna.parts[pname].dims
         if dims and dims.h then
-            if not legH then legH = mathutils.clamp(jitterRelative(dims.h, MUTATE_JITTER), 60, 800) end
-            build.updatePart(pname, { h = legH }, instance)
+            if not h then h = mathutils.clamp(jitterRelative(dims.h, MUTATE_JITTER), 60, 800) end
+            build.updatePart(pname, { h = h }, instance)
         end
     end
-    for _, pname in ipairs({'luarm', 'ruarm', 'llarm', 'rlarm'}) do
-        local dims = instance.dna.parts[pname] and instance.dna.parts[pname].dims
-        if dims and dims.h then
-            if not armH then armH = mathutils.clamp(jitterRelative(dims.h, MUTATE_JITTER), 60, 800) end
-            build.updatePart(pname, { h = armH }, instance)
-        end
-    end
+end
 
+function lib.mutateSizes(instance)
+    if not instance then return end
+    local creation = instance.dna.creation
+    mutateTrunk(instance, creation)
+    mutateEnds(instance)
+    mutateFace(instance, creation)
+    -- arms and legs vary independently
+    mutateLength(instance, { 'luleg', 'ruleg', 'llleg', 'rlleg' })
+    mutateLength(instance, { 'luarm', 'ruarm', 'llarm', 'rlarm' })
     textures.rebuildTextures(instance)
 end
 
