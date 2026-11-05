@@ -5,6 +5,9 @@
 --   luajit claudetools/music-trace.lua take <dir>         every scenario's calls into <dir>/<scenario>.txt
 --   luajit claudetools/music-trace.lua diff <dirA> <dirB>  identical, or the first difference per scenario
 --   luajit claudetools/music-trace.lua list               the scenarios
+--   ... take <dir> --c   also every call synth.lua makes into the C library ('C name(args)' lines, NoteOpts
+--                        field by field): for refactors inside synth.lua, which the plain trace doesn't see
+--                        (2026-11-05: definePatch / scheduleAt, 172076 calls over the scenarios)
 -- Run from experiments/playtime. Needs native/desound/libdesound.dylib (docs/SOUND-SYNTH.md): synth.lua
 -- defines its patches through it. The scenarios cover the jam (every genre, the play level rising and
 -- falling, the panel's picks) and every other style (calm with the ideas off, busy with every idea at 'some'
@@ -77,6 +80,8 @@ add('bossa-cues', { style = 'bossa', seed = 5, seconds = 120, bumps = RISE_FALL,
                     cues = { { 20, 'citypop' }, { 45, 'satie', 'bar' }, { 70, 'keep', 'cellar' }, { 95, 'jam' } } })
 
 local mode = arg[1]
+local CTRACE = false -- --c anywhere in the arguments: log the calls into the C library too
+for i = #arg, 1, -1 do if arg[i] == '--c' then CTRACE = true table.remove(arg, i) end end
 
 local function fmt(v, depth)
     local t = type(v)
@@ -104,7 +109,37 @@ local function runOne(s)
     ffi.cdef [[ int de_lua_init(void); void de_lua_render(float *out, int frames); ]]
     local C = ffi.load('native/desound/libdesound.dylib')
     C.de_lua_init()
-    package.loaded['src.state'] = { synth = { started = true, C = C } }
+    -- --c: synth.lua gets a stand-in for the library that logs each call, then passes it on
+    local function cfmt(v)
+        if type(v) == 'number' then return ('%.6g'):format(v) end
+        if type(v) ~= 'cdata' then return tostring(v) end
+        if not tostring(ffi.typeof(v)):find('NoteOpts') then return 'cdata' end
+        local f = {}
+        for _, k in ipairs({ 'glide_ms', 'accent', 'harmonics', 'timbre', 'morph', 'gain', 'cents', 'cutoff_oct',
+                             'damp', 'release_ms', 'region_start', 'region_end', 'origin_ms', 'filter' }) do
+            f[#f + 1] = k .. '=' .. ('%.6g'):format(tonumber(v[k]))
+        end
+        f[#f + 1] = ('vib=%.6g/%.6g/%d/%d/%.6g'):format(v.vib.cents, v.vib.rate_hz, v.vib.delay_ms, v.vib.fade_ms,
+                                                         v.vib.wander)
+        for i = 0, 2 do
+            local sh = v.shape[i]
+            f[#f + 1] = ('shape%d=%d/%d/%.6g/%.6g'):format(i, sh.id, sh.target, sh.scale, sh.stretch)
+        end
+        return '{' .. table.concat(f, ',') .. '}'
+    end
+    local lib = C
+    if CTRACE then
+        lib = setmetatable({}, { __index = function(_, name)
+            local f = C[name] -- errors for a function the library lacks, as the real one does
+            return function(...)
+                local parts = {}
+                for i = 1, select('#', ...) do parts[i] = cfmt((select(i, ...))) end
+                io.write('C ', name, '(', table.concat(parts, ','), ')\n')
+                return f(...)
+            end
+        end })
+    end
+    package.loaded['src.state'] = { synth = { started = true, C = lib } }
     local synth = require('src.synth')
     local music = require('src.music')
     music.style, music.rhythmSection = s.style, 'auto'
@@ -210,7 +245,8 @@ elseif mode == 'take' and arg[2] then
     os.execute('mkdir -p ' .. arg[2])
     for _, s in ipairs(SCENARIOS) do
         local file = arg[2] .. '/' .. s.name .. '.txt'
-        local ok = os.execute(('luajit %s one %s > %s 2> %s.err'):format(arg[0], s.name, file, file))
+        local ok = os.execute(('luajit %s one %s%s > %s 2> %s.err'):format(arg[0], s.name, CTRACE and ' --c' or '',
+                                                                            file, file))
         local lines = shell('wc -l < ' .. file):gsub('%s', '')
         local head = shell('grep -m1 -- "-- song" ' .. file):gsub('^%S+ %-%- ', ''):gsub('\n', '')
         local failed = not (ok == 0 or ok == true) and '  FAILED, see .err' or ''
@@ -231,5 +267,5 @@ elseif mode == 'diff' and arg[2] and arg[3] then
     print(same and 'all identical' or 'some differ')
     os.exit(same and 0 or 1)
 else
-    print('usage: luajit claudetools/music-trace.lua take <dir> | diff <dirA> <dirB> | list')
+    print('usage: luajit claudetools/music-trace.lua take <dir> [--c] | diff <dirA> <dirB> | list')
 end

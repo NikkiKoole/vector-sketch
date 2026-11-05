@@ -64,7 +64,7 @@ most take the same env switches as render-music (`IDEAS=`, `VOICES=`, ...: see i
 | `music-rubs.lua` | Half-step rubs between parts in a recorded song | `luajit claudetools/music-rubs.lua song.lua [bars]` |
 | `music-harmony.lua` | Chord changes per 8 bars, roots outside the key | `luajit claudetools/music-harmony.lua <style> [ideas] [songs]` |
 | `music-answer-check.lua` | The answer's notes outside both key and chord | `luajit claudetools/music-answer-check.lua <style> [songs]` |
-| `music-trace.lua` | Every call the music makes to the synth (plus its moments and chords) over fixed scenarios, as text: take before a refactor, take after, diff. Covers the jam today; add scenarios for other styles | `luajit claudetools/music-trace.lua take /tmp/before`, `... diff /tmp/before /tmp/after` |
+| `music-trace.lua` | Every call the music makes to the synth (plus its moments and chords) over 133 fixed scenarios (every style, the ideas, the jam's picks), as text: take before a refactor, take after, diff. `--c` also logs every call synth.lua makes into the C library (NoteOpts field by field), for changes inside synth.lua | `luajit claudetools/music-trace.lua take /tmp/before [--c]`, `... diff /tmp/before /tmp/after` |
 | `drum-audition.lua` | One WAV per drum role: old jam voice / 808 / 909 | `luajit claudetools/drum-audition.lua <outdir>` |
 | `jam-patterns.py` | Regenerates `src/music-jam-patterns.lua` from dreamengine's drum patterns | `python3 -I claudetools/jam-patterns.py` |
 | `score-analysis.py` | Analysis sheet for a score: keys, chords, form, busy-ness, lines | `python3 -I claudetools/score-analysis.py src/music-scores/x.lua` |
