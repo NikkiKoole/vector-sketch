@@ -17,9 +17,13 @@ describe('synth pool slots', function()
 
     before_each(function()
         S = state.synth
-        saved = { started = S.started, C = S.C, pool = S.pool, fx = S.fx }
+        saved = { started = S.started, C = S.C, pool = S.pool, fx = S.fx,
+                  pendingSet = S.pendingSet, pendingDefines = S.pendingDefines }
         notes, defined = {}, {}
         S.started, S.pool, S.fx = true, {}, {}
+        -- an earlier spec that started the real synth (--audio) leaves patches still waiting to be
+        -- defined (definePatches spreads them over frames): the first note would define them here
+        S.pendingSet, S.pendingDefines = nil, nil
         calls = {}
         S.C = setmetatable({
             schedule_at = function(t, midi, slot) notes[#notes + 1] = { t = t, slot = slot } end,
@@ -32,6 +36,7 @@ describe('synth pool slots', function()
 
     after_each(function()
         S.started, S.C, S.pool, S.fx = saved.started, saved.C, saved.pool, saved.fx
+        S.pendingSet, S.pendingDefines = saved.pendingSet, saved.pendingDefines
     end)
 
     local function isPoolSlot(slot)

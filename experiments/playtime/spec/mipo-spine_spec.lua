@@ -55,12 +55,15 @@ describe('the spine room', function()
         end
     end
 
-    -- (saved mid-step in the scene it came from: it lands ~110 lower and hops up once)
+    -- (saved mid-step in the scene it came from: it lands and hops four or five times, drifting
+    -- ~150 px, and stands still from ~7 s, the torso at y -318. Measured after that: the first
+    -- version measured 2 s to 5 s, mid-hop, and passed only while two hops happened to line up;
+    -- a shape8 collision change, 8a05911c, moved them and it failed, 2026-11-05)
     it('has P4re5 standing on the floor', function()
         local instance = mipoRegistry.getAll().P4re5
         assert.is_truthy(instance, 'P4re5 is not in the room')
         local torso = instance.parts.torso1.body
-        simulate(2)
+        simulate(7)
         local _, y0 = torso:getPosition()
         simulate(3)
         local _, y1 = torso:getPosition()
