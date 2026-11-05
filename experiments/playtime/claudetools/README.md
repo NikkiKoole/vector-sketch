@@ -75,6 +75,15 @@ most take the same env switches as render-music (`IDEAS=`, `VOICES=`, ...: see i
 | `chords-from-audio.py` | Tempo, key, swing and chords from a recording | `python3 -I claudetools/chords-from-audio.py song.mp3` (librosa) |
 | `stem-report.py` | Per demucs stem: when it plays, range, pitch classes, stereo | `python3 -I claudetools/stem-report.py <stem folder>` (librosa) |
 | `stem-pieces.py` | One stem cut into note events, an example WAV per kind | `python3 -I claudetools/stem-pieces.py stem.wav <outdir>` (librosa) |
+| `loop-period.py` | How long a part's loop is (a sampler's ~0.8, a live player's ~0.6) | `python3 -I claudetools/loop-period.py stem.wav start dur` (librosa) |
+| `bass-notes.py` | A bass stem note by note in NoteOpts terms (timing, gain, length, decay, scoop, tone) | `python3 -I claudetools/bass-notes.py bass.wav [start dur] [--bpm N] [--grid drums.wav]` (librosa) |
+| `loop-fold.py` | A looping bass part folded onto one cycle; writes `-notes.json` for the next two | `python3 -I claudetools/loop-fold.py bass.wav start end cycle_s beats anchor_s [--fixed]` (librosa) |
+| `loop-fit.py` | Each pass of a riff fitted to its slots: per-note feel vs jitter, accents, octaves (the humanizing numbers) | `python3 -I claudetools/loop-fit.py notes.json start beat_s transpose [--scan] [--slots f.json]` |
+| `slot-chroma.py` | What a keys / guitar part plays over each riff slot, pooled over passes | `python3 -I claudetools/slot-chroma.py stem.wav fit.json 1,2 [--slots f.json]` (librosa) |
+| `stab-voicings.py` | A chord part's onsets with their notes, on a riff grid, the bass under each | `python3 -I claudetools/stab-voicings.py stem.wav fit.json notes.json [from to]` (librosa) |
+| `drum-grid.py` | A drum stem as kick / snare / hat on the 16th grid: share of bars, timing, level | `python3 -I claudetools/drum-grid.py drums.wav start end bpm [--fixed anchor] [--min -12]` (librosa) |
+| `find-sample.py` | Where in a source record a sampled piece comes from, and at what pitch | `python3 -I claudetools/find-sample.py piece.wav start dur source.wav` (librosa, scipy) |
+| `find-drum-sample.py` | The same for a drum loop (sampler speed = pitch) | `python3 -I claudetools/find-drum-sample.py piece.wav start dur source.wav lo hi` (librosa, scipy) |
 | `hooktheory-report.py`, `chordonomicon-report.py` | Style families' chords/tunes from reference datasets in `~/music-reference/` (learning only, never in the repo) | top comment |
 
 ## Mipo voices

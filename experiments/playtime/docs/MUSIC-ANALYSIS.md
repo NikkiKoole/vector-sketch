@@ -110,7 +110,7 @@ bar 2:  C2  (1, short)   A#2 (1&, long 1.3)  D#2 (3, short)  G2 (3&, short)  G#2
 bar 3:  D#2 (1, short)   F#2 (1&, long 1.3)  C2 (3&, short)  C#2 (4, 0.8, loudest)
 ```
 
-**How Ronnie plays it** (3 live passes, measured per note against his own pulse in each pass; tools: scratchpad `bass-notes.py`, `fold.py`, `fit.py`, gone after the session):
+**How Ronnie plays it** (3 live passes, measured per note against his own pulse in each pass; tools: `claudetools/bass-notes.py`, `loop-fold.py`, `loop-fit.py`; the keys and guitar with `slot-chroma.py` and `stab-voicings.py`, the drums with `drum-grid.py`, the sources with `find-sample.py` / `find-drum-sample.py`, all in claudetools/README.md):
 
 | what | measured | NoteOpts |
 |---|---|---|
