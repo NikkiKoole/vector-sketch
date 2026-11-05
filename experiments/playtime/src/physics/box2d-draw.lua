@@ -208,228 +208,217 @@ function lib.showsBody(body, covered)
     return state.world.mipoBodies == true and ud ~= nil and ud.thing ~= nil and ud.thing.mipoId ~= nil
 end
 
+-- a fixture's id next to its body (showDebugIds); an id drawn twice in a frame is a broken scene
+local function drawDebugId(debugIds, id, x, y)
+    if debugIds[id] == true then print('id already drawn in this loop', id) end
+    debugIds[id] = true
+    love.graphics.print(id, x, y)
+end
+
+-- A polygon fixture: its fill (a connector red, a typed sfixture orange; an sfixture's only with
+-- drawFixtures) and its outline. A CUSTOM body's fill already drew the plain ones (drawCustomBodyFill).
+local function drawPolygonFixture(body, shape, ud, alpha, drawOutline, customHandled)
+    local fillColor = getBodyColor(body)
+    love.graphics.setColor(fillColor[1], fillColor[2], fillColor[3], alpha)
+    local hasSpecialFixtureData = ud and (ud.bodyType == "connector" or ud.type)
+    -- Skip default per-fixture polygon fill/outline when the CUSTOM override already drew the body.
+    -- Special fixtures (connector / typed) keep their per-fixture pass so their distinct color overlays
+    -- the body fill as before.
+    if customHandled and not hasSpecialFixtureData then return end
+    if ud then
+        if ud.bodyType == "connector" then love.graphics.setColor(1, 0, 0, alpha) end
+        if ud.type then
+            local typeColor = pal.orange
+            love.graphics.setColor(typeColor[1], typeColor[2], typeColor[3], alpha)
+        end
+        if state.world.drawFixtures then
+            love.graphics.polygon("fill", body:getWorldPoints(shape:getPoints()))
+        end
+    else
+        love.graphics.polygon("fill", body:getWorldPoints(shape:getPoints()))
+    end
+    local outlineColor = state.world.darkMode and pal.creamy or pal.dark
+    love.graphics.setColor(outlineColor[1], outlineColor[2], outlineColor[3], alpha)
+    if ud and ud.bodyType == "connector" then love.graphics.setColor(1, 0, 0, alpha) end
+    if drawOutline then love.graphics.polygon('line', body:getWorldPoints(shape:getPoints())) end
+end
+
+-- an edge or chain: its segments in cyan
+local function drawEdgeFixture(body, shape, alpha)
+    love.graphics.setColor(0, 1, 1, alpha)
+    local points = { body:getWorldPoints(shape:getPoints()) }
+    for i = 1, #points, 2 do
+        if i < #points - 2 then love.graphics.line(points[i], points[i + 1], points[i + 2], points[i + 3]) end
+    end
+end
+
+local function drawCircleFixture(body, shape, alpha, drawOutline)
+    local cx, cy = body:getWorldPoint(shape:getPoint()) -- an offset circle turns with its body
+    local radius = shape:getRadius()
+    local circleFillColor = getBodyColor(body)
+    local segments = 180
+    love.graphics.setColor(circleFillColor[1], circleFillColor[2], circleFillColor[3], alpha)
+    love.graphics.circle('fill', cx, cy, radius, segments)
+    local circleOutlineColor = pal.creamy
+    love.graphics.setColor(circleOutlineColor[1], circleOutlineColor[2], circleOutlineColor[3], alpha)
+    if drawOutline then love.graphics.circle('line', cx, cy, radius, segments) end
+end
+
+-- One body: CUSTOM bodies get a single unified fill+outline pass that honors thing.extraSteiner (Phase 3
+-- of STEINER-OWNERSHIP-PLAN.md; it kills the fan outline artifact of the per-fixture draw), then each
+-- fixture by its shape, with its id when showDebugIds.
+local function drawBody(body, alpha, drawOutline, debugIds)
+    local bodyUD = body:getUserData()
+    local bodyThing = bodyUD and bodyUD.thing
+    local customHandled = false
+    if bodyThing and bodyThing.shapeType == 'custom' then
+        customHandled = drawCustomBodyFill(body, bodyThing, getBodyColor(body), alpha, drawOutline)
+    end
+    for _, fixture in ipairs(body:getFixtures()) do
+        -- hot loop: cache the FFI-crossing getters once per fixture
+        local ud = fixture:getUserData()
+        local shape = fixture:getShape()
+        local shapeType = shape:type()
+        if shapeType == 'PolygonShape' then
+            drawPolygonFixture(body, shape, ud, alpha, drawOutline, customHandled)
+        elseif shapeType == 'EdgeShape' or shapeType == 'ChainShape' then
+            drawEdgeFixture(body, shape, alpha)
+        elseif shapeType == 'CircleShape' then
+            drawCircleFixture(body, shape, alpha, drawOutline)
+        end
+        if state.world.showDebugIds and ud and ud.id then
+            local x1, y1 = body:getPosition()
+            drawDebugId(debugIds, ud.id, x1, y1)
+        end
+    end
+end
+
+-- a pulley's ropes to its ground anchors, in yellow
+local function drawPulley(joint, x1, y1, x2, y2, alpha)
+    local gx1, gy1, gx2, gy2 = joint:getGroundAnchors()
+    love.graphics.setColor(1, 1, 0, alpha)
+    love.graphics.line(x1, y1, gx1, gy1)
+    love.graphics.line(x2, y2, gx2, gy2)
+    love.graphics.line(gx1, gy1, gx2, gy2)
+end
+
+-- a prismatic joint's axis (orange) and its limits (yellow ticks)
+local function drawPrismatic(joint)
+    local x, y = joint:getAnchors()
+    local ax, ay = joint:getAxis()
+    local length = 50
+    love.graphics.setColor(1, 0.5, 0) -- Orange
+    love.graphics.line(x, y, x + ax * length, y + ay * length)
+    if joint:areLimitsEnabled() then
+        local lower, upper = joint:getLimits()
+        love.graphics.setColor(1, 1, 0) -- Yellow
+        love.graphics.line(x + ax * lower, y + ay * lower, x + ax * lower + ax * 10, y + ay * lower + ay * 10)
+        love.graphics.line(x + ax * upper, y + ay * upper, x + ax * upper + ax * 10, y + ay * upper + ay * 10)
+    end
+    love.graphics.setColor(1, 1, 1) -- Reset
+end
+
+-- a revolute joint's limits as an arc, and the angle bodyB is at now (in the joint's reference frame)
+local function drawRevoluteLimits(joint, x1, y1, alpha)
+    local lower = joint:getLowerLimit()
+    local upper = joint:getUpperLimit()
+    local referenceAngle = joint:getReferenceAngle()
+    local bodyA, bodyB = joint:getBodies()
+    local angleA = bodyA:getAngle()
+    local angleB = bodyB:getAngle()
+    -- Use the joint's reference frame to compute world-space zero angle
+    local zeroAngle = angleA + referenceAngle
+    local startAngle = zeroAngle + lower
+    local endAngle = zeroAngle + upper
+    if endAngle < startAngle then endAngle = endAngle + 2 * math.pi end
+    love.graphics.setColor(1, 1, 1, alpha)
+    love.graphics.setLineJoin("miter")
+    love.graphics.arc('line', x1, y1, 15, startAngle, endAngle)
+    love.graphics.setLineJoin("none")
+    -- draw current angle of bodyB relative to bodyA (via reference frame)
+    local currentRelative = angleB - zeroAngle
+    local dirAngle = zeroAngle + currentRelative
+    local endX, endY = getEndpoint(x1, y1, dirAngle, 15)
+    love.graphics.setColor(0.5, 0.5, 0.5, alpha)
+    love.graphics.line(x1, y1, endX, endY)
+end
+
+-- a wheel joint's axis, in green
+local function drawWheelAxis(joint, x1, y1, alpha)
+    local axisX, axisY = joint:getAxis()
+    if x1 and y1 and axisX and axisY then
+        local axisLength = 50                   -- Scale factor for visualizing the axis
+        love.graphics.setColor(0, .5, 0, alpha) -- Green for axis
+        love.graphics.line(x1, y1, x1 + axisX * axisLength, y1 + axisY * axisLength)
+        love.graphics.setColor(1, 1, 1, alpha)
+    end
+end
+
+-- One joint: the line between its anchors, a circle at each, then what its type shows, and its id
+local function drawJoint(joint, alpha, debugIds)
+    local x1, y1, x2, y2 = joint:getAnchors()
+    if (x1 and y1 and x2 and y2) then
+        local color = pal.creamy
+        love.graphics.setColor(color[1], color[2], color[3], alpha)
+        love.graphics.line(x1, y1, x2, y2)
+    end
+    local color = pal.orange
+    love.graphics.setColor(color[1], color[2], color[3], alpha)
+    love.graphics.setLineJoin("miter")
+    if x1 and y1 then love.graphics.circle('line', x1, y1, 4) end
+    if x2 and y2 then love.graphics.circle('line', x2, y2, 4) end
+    love.graphics.setLineJoin("none")
+    local jointType = joint:getType()
+    if jointType == JT.PULLEY then drawPulley(joint, x1, y1, x2, y2, alpha) end
+    if jointType == JT.PRISMATIC then drawPrismatic(joint) end
+    if jointType == JT.REVOLUTE and joint:areLimitsEnabled() then drawRevoluteLimits(joint, x1, y1, alpha) end
+    if jointType == JT.WHEEL then drawWheelAxis(joint, x1, y1, alpha) end
+    if state.world.showDebugIds then
+        local ud = joint:getUserData()
+        if ud and ud.id then drawDebugId(debugIds, ud.id, x1, y1) end
+    end
+end
+
+-- The editor's view of the world: the bodies (their fixtures filled and outlined) and the joints, as the
+-- world settings say (debugDrawBodies / debugDrawJoints, drawOutline, debugAlpha, showDebugIds; in the
+-- 'tex/body' view and in play mode a body under its picture is left out: see showsBody).
 function lib.drawWorld(world, drawOutline)
     local debugIds = {} -- ids drawn this frame (showDebugIds): bodies and joints both use it
     if drawOutline == nil then drawOutline = true end
-    if drawOutline == true then
-        if state.world.drawOutline == false then
-            drawOutline = false
-        end
-    end
+    if drawOutline == true and state.world.drawOutline == false then drawOutline = false end
     local r, g, b, a = love.graphics.getColor()
     local alpha = .8 * state.world.debugAlpha
     love.graphics.setLineJoin("none")
     love.graphics.setColor(0, 0, 0, alpha)
-    local bodies = world:getBodies()
-    local DRAW_BODIES = state.world.debugDrawBodies
     -- 'tex/body' view: a body with a texture shows only the texture (see showsBody)
     -- (play mode always: the scene as it ships has no body shapes under its pictures, and
     -- drawing all of them under 20 Mipos was ~2 ms a frame)
     local skipTextured = state.world.showTextures and (state.world.textureOrBody or state.playMode == true)
+    local DRAW_BODIES = state.world.debugDrawBodies
     local covered = skipTextured and DRAW_BODIES and lib.coveredBodies()
-    -- skip bodies off screen (docs/MIPO-DRAWING.md L1b): their centre plus how far their fixtures
-    -- reach, against what the screen shows, before anything else is asked of them
+    -- skip bodies off screen (docs/MIPO-DRAWING.md L1b): their centre plus how far their fixtures reach,
+    -- against what the screen shows, before anything else is asked of them
     local vx1, vy1, vx2, vy2 = view.worldRect()
     local cull = lib.cull
-
     if DRAW_BODIES then
-        for _, body in ipairs(bodies) do repeat -- break = next body (no goto: the web build's Lua 5.1 has none)
-            -- a body under its picture first: in play mode that's nearly all of them, and this is
-            -- a table lookup (hasTexture remembers) where the cull asks the body twice
+        -- inline, not a function per body: it runs for every body every frame, the skipped ones too
+        for _, body in ipairs(world:getBodies()) do repeat -- break = next body (no goto in the web's Lua 5.1)
+            -- a body under its picture first: in play mode that's nearly all of them, and this is a table
+            -- lookup (hasTexture remembers) where the cull asks the body twice
             if skipTextured and not lib.showsBody(body, covered) then break end
             if cull then
                 local x, y = body:getPosition()
                 local reach = view.bodyReach(body) + OUTLINE_PAD
                 if x + reach < vx1 or x - reach > vx2 or y + reach < vy1 or y - reach > vy2 then break end
             end
-            local bodyUD = body:getUserData()
-            local bodyThing = bodyUD and bodyUD.thing
-            -- CUSTOM bodies get a single unified fill+outline pass that honors
-            -- thing.extraSteiner (Phase 3 of STEINER-OWNERSHIP-PLAN.md). Kills
-            -- the fan outline artifact from the per-fixture draw below.
-            local customHandled = false
-            if bodyThing and bodyThing.shapeType == 'custom' then
-                customHandled = drawCustomBodyFill(body, bodyThing, getBodyColor(body), alpha, drawOutline)
-            end
-
-            local fixtures = body:getFixtures()
-
-            for _, fixture in ipairs(fixtures) do
-                -- hot loop: cache the FFI-crossing getters once per fixture
-                local ud = fixture:getUserData()
-                local shape = fixture:getShape()
-                local shapeType = shape:type()
-                if shapeType == 'PolygonShape' then repeat -- break = done with this polygon
-                    local fillColor = getBodyColor(body)
-                    love.graphics.setColor(fillColor[1], fillColor[2], fillColor[3], alpha)
-                    local hasSpecialFixtureData = ud and
-                        (ud.bodyType == "connector" or ud.type)
-                    -- Skip default per-fixture polygon fill/outline when the CUSTOM
-                    -- override already drew the body. Special fixtures (connector /
-                    -- typed) keep their per-fixture pass so their distinct color
-                    -- overlays the body fill as before.
-                    if customHandled and not hasSpecialFixtureData then
-                        break
-                    end
-                    if ud then
-                        if ud.bodyType == "connector" then
-                            love.graphics.setColor(1, 0, 0, alpha)
-                        end
-                        if ud.type then
-                            local typeColor = pal.orange
-                            love.graphics.setColor(typeColor[1], typeColor[2], typeColor[3], alpha)
-                        end
-                        if state.world.drawFixtures then
-                            love.graphics.polygon("fill", body:getWorldPoints(shape:getPoints()))
-                        end
-                    else
-                        love.graphics.polygon("fill", body:getWorldPoints(shape:getPoints()))
-                    end
-
-                    local outlineColor = state.world.darkMode and pal.creamy or pal.dark
-                    love.graphics.setColor(outlineColor[1], outlineColor[2], outlineColor[3], alpha)
-                    if ud and ud.bodyType == "connector" then
-                        love.graphics.setColor(1, 0, 0, alpha)
-                    end
-                    if drawOutline then
-                        love.graphics.polygon('line', body:getWorldPoints(shape:getPoints()))
-                    end
-                    until true
-                elseif shapeType == 'EdgeShape' or shapeType == 'ChainShape' then
-                    love.graphics.setColor(0, 1, 1, alpha)
-                    local points = { body:getWorldPoints(shape:getPoints()) }
-                    for i = 1, #points, 2 do
-                        if i < #points - 2 then
-                            love.graphics.line(points[i], points[i + 1], points[i + 2], points
-                                [i + 3])
-                        end
-                    end
-                elseif shapeType == 'CircleShape' then
-                    local cx, cy = body:getWorldPoint(shape:getPoint()) -- an offset circle turns with its body
-                    local radius = shape:getRadius()
-                    local circleFillColor = getBodyColor(body)
-                    local segments = 180
-                    love.graphics.setColor(circleFillColor[1], circleFillColor[2], circleFillColor[3], alpha)
-                    love.graphics.circle('fill', cx, cy, radius, segments)
-
-                    local circleOutlineColor = pal.creamy
-                    love.graphics.setColor(circleOutlineColor[1], circleOutlineColor[2], circleOutlineColor[3], alpha)
-                    if drawOutline then
-                        love.graphics.circle('line', cx, cy, radius, segments)
-                    end
-                end
-                if state.world.showDebugIds then
-                    if ud and ud.id then
-                        local x1, y1 = body:getPosition()
-                        if debugIds[ud.id] == true then
-                            print('id already drawn in this loop', ud.id)
-                        end
-                        debugIds[ud.id] = true
-                        love.graphics.print(ud.id, x1, y1)
-                    end
-                end
-            end
+            drawBody(body, alpha, drawOutline, debugIds)
         until true end
     end
     love.graphics.setColor(1, 1, 1, alpha)
-    -- Joint debug
-
-    local DRAW_JOINTS = state.world.debugDrawJoints
-    if DRAW_JOINTS then
-        -- only when drawn: getJoints makes a table and a userdata per joint (305 with 20 Mipos),
-        -- every frame, for nothing in play mode
-        for _, joint in ipairs(world:getJoints()) do
-            local x1, y1, x2, y2 = joint:getAnchors()
-
-            if (x1 and y1 and x2 and y2) then
-                local color = pal.creamy
-                love.graphics.setColor(color[1], color[2], color[3], alpha)
-                love.graphics.line(x1, y1, x2, y2)
-            end
-            local color = pal.orange
-            love.graphics.setColor(color[1], color[2], color[3], alpha)
-
-            love.graphics.setLineJoin("miter")
-            if x1 and y1 then love.graphics.circle('line', x1, y1, 4) end
-            if x2 and y2 then love.graphics.circle('line', x2, y2, 4) end
-            love.graphics.setLineJoin("none")
-
-            local jointType = joint:getType()
-            if jointType == JT.PULLEY then
-                local gx1, gy1, gx2, gy2 = joint:getGroundAnchors()
-                love.graphics.setColor(1, 1, 0, alpha)
-                love.graphics.line(x1, y1, gx1, gy1)
-                love.graphics.line(x2, y2, gx2, gy2)
-                love.graphics.line(gx1, gy1, gx2, gy2)
-            end
-            if jointType == JT.PRISMATIC then
-                local x, y = joint:getAnchors()
-                local ax, ay = joint:getAxis()
-                local length = 50
-                love.graphics.setColor(1, 0.5, 0) -- Orange
-                love.graphics.line(x, y, x + ax * length, y + ay * length)
-                if joint:areLimitsEnabled() then
-                    local lower, upper = joint:getLimits()
-                    love.graphics.setColor(1, 1, 0) -- Yellow
-                    love.graphics.line(x + ax * lower, y + ay * lower,
-                        x + ax * lower + ax * 10, y + ay * lower + ay * 10)
-                    love.graphics.line(x + ax * upper, y + ay * upper,
-                        x + ax * upper + ax * 10, y + ay * upper + ay * 10)
-                end
-                love.graphics.setColor(1, 1, 1) -- Reset
-            end
-            if jointType == JT.REVOLUTE and joint:areLimitsEnabled() then
-                local lower = joint:getLowerLimit()
-                local upper = joint:getUpperLimit()
-                local referenceAngle = joint:getReferenceAngle()
-
-                local bodyA, bodyB = joint:getBodies()
-                local angleA = bodyA:getAngle()
-                local angleB = bodyB:getAngle()
-
-                -- Use the joint's reference frame to compute world-space zero angle
-                local zeroAngle = angleA + referenceAngle
-
-                local startAngle = zeroAngle + lower
-                local endAngle = zeroAngle + upper
-                if endAngle < startAngle then
-                    endAngle = endAngle + 2 * math.pi
-                end
-
-                love.graphics.setColor(1, 1, 1, alpha)
-                love.graphics.setLineJoin("miter")
-                love.graphics.arc('line', x1, y1, 15, startAngle, endAngle)
-                love.graphics.setLineJoin("none")
-
-                -- draw current angle of bodyB relative to bodyA (via reference frame)
-                local currentRelative = angleB - zeroAngle
-                local dirAngle = zeroAngle + currentRelative
-                local endX, endY = getEndpoint(x1, y1, dirAngle, 15)
-                love.graphics.setColor(0.5, 0.5, 0.5, alpha)
-                love.graphics.line(x1, y1, endX, endY)
-            end
-            if jointType == JT.WHEEL then
-                -- Draw wheel joint axis
-                local axisX, axisY = joint:getAxis()
-                if x1 and y1 and axisX and axisY then
-                    local axisLength = 50                   -- Scale factor for visualizing the axis
-                    love.graphics.setColor(0, .5, 0, alpha) -- Green for axis
-                    love.graphics.line(x1, y1, x1 + axisX * axisLength, y1 + axisY * axisLength)
-                    love.graphics.setColor(1, 1, 1, alpha)
-                end
-            end
-            if state.world.showDebugIds then
-                local ud = joint:getUserData()
-
-                if ud and ud.id then
-                    love.graphics.print(ud.id, x1, y1)
-                    if debugIds[ud.id] == true then
-                        print('id already drawn in this loop', ud.id)
-                    end
-                    debugIds[ud.id] = true
-                end
-            end
-        end
+    -- only when drawn: getJoints makes a table and a userdata per joint (305 with 20 Mipos), every frame,
+    -- for nothing in play mode
+    if state.world.debugDrawJoints then
+        for _, joint in ipairs(world:getJoints()) do drawJoint(joint, alpha, debugIds) end
     end
     love.graphics.setLineJoin("miter")
     love.graphics.setColor(r, g, b, a)
