@@ -191,6 +191,12 @@ local function buildBody(bodyData, world, builtSFixtures)
         mipoPartName = bodyData.mipoPartName,
     }
     shapes.copyDims(bodyData, thing, bodyData.dims) -- older files: sizes on bodyData itself
+    if type(thing.vertices) ~= 'table' then
+        -- older files saved none (false, or nothing for a circle); a rebuild (resize, flip) needs it
+        thing.vertices = nil
+        local ok, _, vertices = pcall(shapes.createShape, thing.shapeType, shapes.copyDims(thing, {}))
+        if ok then thing.vertices = vertices end
+    end
     body:setUserData({ thing = thing })
     registry.registerBody(thing.id, body)
     if thing.mipoPartName then registry.updateSFixtureMasks(body) end -- a foot keeps its contacts

@@ -79,6 +79,28 @@ spec failing first:
 Second run: clean, only `Failed to find bodies for joint` logged (a joint whose body was taken out:
 skipped, as it should be). Run it again after changing load, save, or anything that follows ids.
 
+## The editor-actions sweep
+
+`claudetools/editor-actions_spec.lua`: every scene with one editor action done through the
+inspector's own rows (body, joint and sfixture panels) or an sfixture attached from the tool rail,
+then checked for the sfixtures-first order (DEEPER-ISSUES 2) and a registry holding destroyed
+bodies or joints (DEEPER-ISSUES 7), drawn, stepped, saved and loaded again; 5381 actions. Neither
+the order nor the registry broke anywhere. Three kinds of crash, fixed with a spec failing first:
+
+- Older scenes saved bodies without their outline (`"vertices": false`, or none on a circle:
+  catapult, planets, the snap tests, 8 scenes): resizing or flipping one died in
+  `recreateThingFromBody`, and a trace-vertices strip or a snap's 'place' on one too. A body gets
+  its outline on load now, made as a new body's is (spec/old-scene-no-vertices_spec.lua).
+- A tile repeat dropped from the tool rail has no texture until one is picked: its first draw died
+  (spec/tile-repeat-new_spec.lua).
+- A texture switched to OMP before a pattern was picked: composing it died on the missing `pURL`
+  (spec/omp-no-pattern_spec.lua).
+
+Not a bug: a Mipo's limb ribbons are made again from its DNA on load, so one whose joint was
+destroyed in the editor comes back without that limb's ribbon. The sweep doesn't count a Mipo's
+own sfixtures when comparing the reload. Run it again after changing the panels, the rebuilds
+(`recreateThingFromBody`, `recreateJoint`, flip) or the draw of an sfixture kind.
+
 ## What's left
 
 - [x] Nothing over 40.

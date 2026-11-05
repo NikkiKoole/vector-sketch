@@ -13,35 +13,12 @@ local PER_KIND = tonumber(os.getenv('DAMAGE_PER_KIND') or '') or 25
 
 local json = require('vendor.dkjson')
 local state = require('src.state')
-local registry = require('src.registry')
-local mipoRegistry = require('src.mipo-registry')
 local sceneIO = require('src.io')
 local camera = require('src.camera')
-local box2dDraw = require('src.physics.box2d-draw')
-local box2dDrawTextured = require('src.physics.box2d-draw-textured')
-local logger = require('src.logger')
+local sweep = require('claudetools.sweep')
 
 love.mouse.getPosition = function() return 0, 0 end
-
-local function scenes()
-    local list = {}
-    for _, scene in ipairs(require('src.scene-catalog').list()) do
-        if scene.path and (not only or scene.path:find(only, 1, true)) then list[#list + 1] = scene.path end
-    end
-    table.sort(list)
-    return list
-end
-
--- n of the indices 1..count, spread evenly
-local function spread(count, n)
-    local list = {}
-    if count <= n then
-        for i = 1, count do list[i] = i end
-    else
-        for k = 1, n do list[k] = math.floor((k - 1) * count / n) + 1 end
-    end
-    return list
-end
+local spread = sweep.spread
 
 -- the damage cases of one scene: { label, apply(data), lostBodies }
 local function cases(data)
@@ -75,104 +52,48 @@ local function cases(data)
     return list
 end
 
-local function fresh()
-    if state.physicsWorld and not state.physicsWorld:isDestroyed() then
-        state.physicsWorld:setCallbacks()
-        state.physicsWorld:destroy()
-    end
-    registry.reset()
-    mipoRegistry.reset()
-    state.physicsWorld = love.physics.newWorld(0, 9.8 * love.physics.getMeter(), true)
-    return state.physicsWorld
-end
-
-local canvas
-local function frame(world)
-    box2dDrawTextured.makeCombinedImages()
-    love.graphics.setCanvas({ canvas, stencil = true })
-    love.graphics.clear()
-    box2dDraw.drawWorld(world)
-    box2dDrawTextured.drawTexturedWorld(world)
-    love.graphics.setCanvas()
-end
-
 -- runs one damaged scene through load / draw / step / save / reload; returns a list of problems
 local function run(text, expectBodies)
-    local problems = {}
-    local logged = {}
-    local realError = logger.error
-    logger.error = function(self, ...)
-        local parts = {}
-        for i = 1, select('#', ...) do parts[#parts + 1] = tostring((select(i, ...))) end
-        logged[#logged + 1] = table.concat(parts, ' ')
-        return realError(self, ...)
-    end
-    local function phase(name, fn)
-        local ok, err = xpcall(fn, debug.traceback)
-        if not ok then problems[#problems + 1] = name .. ': ' .. tostring(err) end
-        return ok
-    end
-    local world = fresh()
-    local loaded = phase('load', function() sceneIO.load(text, world, camera.getInstance()) end)
+    local p = sweep.problems()
+    local world = sweep.fresh()
+    local loaded = p.phase('load', function() sceneIO.load(text, world, camera.getInstance()) end)
     if loaded and expectBodies and world:getBodyCount() < expectBodies then
-        problems[#problems + 1] = 'lost bodies: ' .. world:getBodyCount() .. ' of ' .. expectBodies
+        p.add('lost bodies: ' .. world:getBodyCount() .. ' of ' .. expectBodies)
     end
     if loaded then
-        phase('draw', function() frame(world) end)
-        phase('step', function() for _ = 1, 3 do world:update(1 / 60) end end)
-        phase('draw after step', function() frame(world) end)
+        p.phase('draw', function() sweep.frame(world) end)
+        p.phase('step', function() for _ = 1, 3 do world:update(1 / 60) end end)
+        p.phase('draw after step', function() sweep.frame(world) end)
         local saved
-        if phase('save', function() saved = json.encode(sceneIO.gatherSaveData(world, camera.getInstance())) end) then
+        if p.phase('save', function() saved = json.encode(sceneIO.gatherSaveData(world, camera.getInstance())) end) then
             local count = world:getBodyCount()
-            local world2 = fresh()
-            if phase('reload', function() sceneIO.load(saved, world2, camera.getInstance()) end) then
+            local world2 = sweep.fresh()
+            if p.phase('reload', function() sceneIO.load(saved, world2, camera.getInstance()) end) then
                 if world2:getBodyCount() < count then
-                    problems[#problems + 1] = 'reload lost bodies: ' .. world2:getBodyCount() .. ' of ' .. count
+                    p.add('reload lost bodies: ' .. world2:getBodyCount() .. ' of ' .. count)
                 end
-                phase('draw reloaded', function() frame(world2) end)
+                p.phase('draw reloaded', function() sweep.frame(world2) end)
             end
         end
     end
-    logger.error = realError
-    for _, line in ipairs(logged) do problems[#problems + 1] = 'logged: ' .. line end
-    return problems
-end
-
--- every id in the scene's data (bodies, joints, sfixtures, Mipos), to blank out of messages
-local function idsOf(data)
-    local ids = {}
-    local function walk(t)
-        for k, v in pairs(t) do
-            if type(v) == 'table' then walk(v)
-            elseif (k == 'id' or k == 'mipoId') and type(v) == 'string' then ids[v] = true end
-        end
-    end
-    walk(data)
-    return ids
-end
-
--- an error's place and words without the ids and numbers that differ per case
-local function shape(problem, ids)
-    problem = problem:gsub('[%w_%-]+', function(w) if ids[w] then return '<id>' end end)
-    return (problem:gsub('%d+%.%d+', '#'):gsub('of %d+', 'of #'):gsub(': %d+ ', ': # '):sub(1, 200))
+    return p.finish()
 end
 
 describe('damaged scenes', function()
     it('load, draw, step, save and load again with one thing taken out', function()
-        canvas = love.graphics.newCanvas(400, 300)
         local file = assert(io.open(out, 'w'))
-        local groups, order = {}, {}
+        local report = sweep.report('scene-damage_spec')
         local total, failing = 0, 0
-        for _, path in ipairs(scenes()) do
+        for _, path in ipairs(sweep.scenes(only)) do
             local text = love.filesystem.read(path)
             local data = text and json.decode(text)
             if type(data) == 'table' and data.bodies then
                 -- the scene as it is: how many bodies it makes, and its own problems (not the damage's)
-                local ids = idsOf(data)
+                local ids = sweep.idsOf(data)
                 local whole = run(text, nil)
                 local baseline = state.physicsWorld:getBodyCount()
                 local own = {}
-                for _, p in ipairs(whole) do own[shape(p:match('^[^\n]*'), ids)] = true end
+                for _, p in ipairs(whole) do own[sweep.shape(p, ids)] = true end
                 for _, p in ipairs(whole) do
                     file:write('UNDAMAGED ', path, ': ', p, '\n')
                 end
@@ -184,19 +105,10 @@ describe('damaged scenes', function()
                     total = total + 1
                     local any = false
                     for _, p in ipairs(problems) do
-                        local key = shape(p:match('^[^\n]*'), ids)
+                        local key = sweep.shape(p, ids)
                         if not own[key] then
                             any = true
-                            if not groups[key] then
-                                local trace = {}
-                                for line in p:gmatch('[^\n]+') do
-                                    if #trace < 8 and not line:find('scene%-damage_spec') then trace[#trace + 1] = line end
-                                end
-                                groups[key] = { count = 0, example = path .. ' / ' .. case[1] .. ' -> '
-                                    .. table.concat(trace, '\n        ') }
-                                order[#order + 1] = key
-                            end
-                            groups[key].count = groups[key].count + 1
+                            report.add(key, p, path .. ' / ' .. case[1])
                         end
                     end
                     if any then failing = failing + 1 end
@@ -204,21 +116,7 @@ describe('damaged scenes', function()
                 file:write('scene ', path, ' done\n'); file:flush()
             end
         end
-        -- thrown errors and lost bodies first, then what was only logged
-        local function logged(key) return key:sub(1, 8) == 'logged: ' end
-        table.sort(order, function(a, b)
-            if logged(a) ~= logged(b) then return not logged(a) end
-            return groups[a].count > groups[b].count
-        end)
-        file:write(string.format('\n%d damaged loads, %d with problems, %d kinds:\n', total, failing, #order))
-        local inLogged = false
-        for _, key in ipairs(order) do
-            if logged(key) and not inLogged then
-                inLogged = true
-                file:write('\n---- only logged (handled, but worth a look) ----\n')
-            end
-            file:write(string.format('\n[%d] %s\n    e.g. %s\n', groups[key].count, key, groups[key].example))
-        end
+        report.write(file, total, failing, 'damaged loads')
         file:close()
     end)
 end)

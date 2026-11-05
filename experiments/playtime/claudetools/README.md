@@ -119,6 +119,8 @@ different arguments), `dt or 1 / 60` (ambiguity-1). Installs: `brew install lua-
 | `unused-functions.py` | `lib.x` / `M.x` / `ui.x` in src/ that nothing names | `python3 -I claudetools/unused-functions.py` |
 | `luals.json` | lua-language-server's settings for lint.sh | |
 | `scene-damage_spec.lua` | Every scene with one thing taken out (a body, joint, sfixture, Mipo entry; up to 25 of each), loaded, drawn, stepped, saved and loaded again; errors grouped by message with a traceback, lost bodies, and what was only logged. ~1250 loads, 5-15 minutes. Finds what a deleted part or a damaged file breaks | `DAMAGE_OUT=/tmp/d.txt love . --specs claudetools/scene-damage_spec.lua` (`DAMAGE_ONLY=<scene>`, `DAMAGE_PER_KIND=n`) |
+| `editor-actions_spec.lua` | Every scene with one editor action done through the inspector's own rows (resize, flip, clone, destroy, a joint's limits / motor / collide, an sfixture moved or destroyed) or an sfixture attached from the tool rail; then checked (sfixtures first on every body, the registry holding no destroyed object), drawn, stepped, saved and loaded again (as many bodies, joints, sfixtures). One case per row and kind of target per scene. ~5400 actions, ~15 minutes | `ACTIONS_OUT=/tmp/a.txt love . --specs claudetools/editor-actions_spec.lua` (`ACTIONS_ONLY=<scene>`, `ACTIONS_PER_KIND=n`) |
+| `sweep.lua` | What the two sweeps share: scene list, fresh world, a frame, catching logger.error, the grouped report | required by them |
 
 ## Project upkeep
 

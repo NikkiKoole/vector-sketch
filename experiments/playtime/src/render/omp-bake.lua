@@ -234,14 +234,20 @@ lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color
         return imageData
 end
 
+-- the picture a layer names, nil when it names none yet (a pattern not picked when OMP was switched on)
+local function layerImage(dir, url)
+    if not url or url == '' then return nil end
+    return getLoveImage(dir .. url)
+end
+
 local function makePatch(name, ud)
     local result = nil
     if ud.extra[name] and ud.extra[name].bgURL then
         local outlineImage = getLoveImage('textures/' .. ud.extra[name].bgURL)
         local olr, olg, olb, ola = color.hexToColor(ud.extra[name].bgHex)
-        local maskImage = getLoveImage('textures/' .. ud.extra[name].fgURL)
+        local maskImage = layerImage('textures/', ud.extra[name].fgURL)
         local mr, mg, mb, ma = color.hexToColor(ud.extra[name].fgHex)
-        local patternImage = getLoveImage('textures/pat/' .. ud.extra[name].pURL)
+        local patternImage = layerImage('textures/pat/', ud.extra[name].pURL)
         local pr, pg, pb, pa = color.hexToColor(ud.extra[name].pHex)
         if outlineImage then
             local imgData = lib.makeTexturedCanvas(
@@ -359,7 +365,7 @@ function lib.makeCombinedImages()
             local outlineImage = getLoveImage('textures/' .. main.bgURL)
             local hasFgURL = main.fgURL and main.fgURL ~= ''
             local maskImage = hasFgURL and getLoveImage('textures/' .. main.fgURL) or nil
-            local patternImage = getLoveImage('textures/pat/' .. main.pURL)
+            local patternImage = layerImage('textures/pat/', main.pURL)
 
             if outlineImage or line then
                 local imgData = lib.makeTexturedCanvas(

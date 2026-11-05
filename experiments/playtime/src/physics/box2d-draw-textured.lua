@@ -638,7 +638,9 @@ local function drawTileRepeat(d)
     local tris = d.thing._tris or shapes.makeTrianglesFromPolygon(vertices)
     d.thing._tris = tris
 
-    local img = getLoveImage('textures/' .. d.extra.main.bgURL)
+    -- a new one from the tool rail has no texture until the panel picks one
+    local main = d.extra.main
+    local img = main and main.bgURL and main.bgURL ~= '' and getLoveImage('textures/' .. main.bgURL)
     if img then
         if not d.extra._mesh then
             img:setWrap("repeat", "repeat")
