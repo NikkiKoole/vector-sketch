@@ -65,77 +65,116 @@ local function drawChoice(row, target, bx, y, bw)
     if ui.button(bx, y + DY, bw, text) then return opts[i % #opts + 1] end
 end
 
+-- One drawer per row kind: drawer(c) with c = { id, row, target, body, x, y, w, wx } (wx: where the
+-- widget column starts). Returns a replacement target when the row's set rebuilt it.
+local drawers = {}
+
+-- a text field; `keep` keeps spaces
+local function textField(c, x, width, placeholder, value, keep)
+    local t, dirty = ui.textinput(c.id .. c.row.key, x, c.y + 2, width, FIELD_H, placeholder, value)
+    if t and dirty then return setValue(c.row, c.target, keep and t or (t:gsub('%s', ''))) end
+end
+
+drawers.text = function(c)
+    return textField(c, c.wx, c.w - lib.labelWidth, c.row.default or '', valueOf(c.row, c.target) or '',
+        c.row.keepSpaces)
+end
+
+drawers.numberText = function(c) -- a plain number field, for values without a sensible range
+    local v = valueOf(c.row, c.target)
+    local t, dirty = ui.textinput(c.id .. c.row.key, c.wx, c.y + 2, c.w - lib.labelWidth, FIELD_H, '',
+        tostring(math.floor(v * 100 + 0.5) / 100), true)
+    if dirty and tonumber(t) then return setValue(c.row, c.target, tonumber(t)) end
+end
+
+drawers.number = function(c)
+    local row, target = c.row, c.target
+    local shown = valueOf(row, target)
+    if type(shown) == 'number' then shown = math.floor(shown * 100 + 0.5) / 100 end -- not -209.9999
+    local v = ui.sliderWithInput(c.id .. row.key, c.wx, c.y, c.w - lib.labelWidth - 90, resolve(row.min, target),
+        resolve(row.max, target), shown, nil, row.step)
+    if v then return setValue(row, target, tonumber(v)) end
+end
+
+drawers.bool = function(c)
+    local clicked, checked = ui.checkbox(c.wx, c.y + DY, valueOf(c.row, c.target) ~= false, '')
+    if clicked then return setValue(c.row, c.target, checked) end
+end
+
+drawers.choice = function(c) -- click: the next option; row.stepper: '<' and '>' either side too
+    local picked = drawChoice(c.row, c.target, c.wx, c.y, c.w - lib.labelWidth)
+    if picked ~= nil then return setValue(c.row, c.target, picked) end
+end
+
+drawers.part = function(c) -- [x] name, then '<' choice '>' (or a note): a wider label column
+    local row, target = c.row, c.target
+    local clicked, checked = ui.checkbox(c.x, c.y + DY, row.on(target), labelOf(row, target))
+    if clicked then return row.setOn(target, checked) end
+    local px = c.x + lib.labelWidth + 24
+    if row.options then
+        local picked = drawChoice(row, target, px, c.y, c.w - lib.labelWidth - 24)
+        if picked ~= nil then return setValue(row, target, picked) end
+    elseif row.note then
+        ui.alignedLabel(px, c.y + DY, row.note(target))
+    end
+end
+
+drawers.action = function(c) -- no label column: the button is the label, full width
+    if ui.button(c.x, c.y + DY, c.w - 4, labelOf(c.row, c.target)) then return c.row.run(c.body, c.target) end
+end
+
+drawers.buttons = function(c) -- one small button per option: run(body, target, option); wide: no label
+    local row = c.row
+    local bx = row.wide and c.x or c.wx
+    local bw = (row.wide and c.w - 4 or c.w - lib.labelWidth) / #row.options
+    for i, option in ipairs(row.options) do
+        if ui.button(bx + (i - 1) * bw, c.y + DY, bw - 4, option) then return row.run(c.body, c.target, option) end
+    end
+end
+
+drawers.note = function(c)
+    ui.alignedLabel(c.x, c.y + DY, labelOf(c.row, c.target), { 1, 1, 1, 0.6 })
+end
+
+drawers.color = function(c) -- swatch (opens the palette) + hex field
+    local row, target = c.row, c.target
+    local hex = valueOf(row, target)
+    local r, g, b, a = color.hexToColor(hex or 'ffffffff')
+    if ui.button(c.wx, c.y + DY, 30, '', nil, { r, g, b, a }) then
+        if state.panelVisibility.showPalette then
+            state.panelVisibility.showPalette = nil
+            state.showPaletteFunc = nil
+        else
+            state.panelVisibility.showPalette = true
+            state.showPaletteFunc = function(picked) setValue(row, target, picked) end
+        end
+    end
+    return textField(c, c.wx + 36, c.w - lib.labelWidth - 36, 'hex', hex or '')
+end
+
+drawers.file = function(c) -- '…' opens the texture browser + the file name
+    local row, target = c.row, c.target
+    if ui.button(c.wx, c.y + DY, 30, '...') then
+        fileBrowser:open('/textures', { excludes = '-mask' }, function(path)
+            setValue(row, target, path:match('/textures/(.+)$') or path) -- the renderer prepends textures/
+        end)
+    end
+    return textField(c, c.wx + 36, c.w - lib.labelWidth - 36, '', valueOf(row, target) or '')
+end
+
+-- kinds that draw their own label (or have none)
+local NO_LABEL_COLUMN = { action = true, note = true, part = true }
+
 -- Returns a replacement target when the row's set rebuilt it. labelWidth: the
 -- label column (default lib.labelWidth; a checkbox pair uses its own).
 local function drawRow(id, row, target, body, x, y, w, labelWidth)
-    local wx = x + (labelWidth or lib.labelWidth)
-    if row.kind ~= 'action' and row.kind ~= 'note' and row.kind ~= 'part' and not row.wide then
+    if not NO_LABEL_COLUMN[row.kind] and not row.wide then
         ui.alignedLabel(x, y + DY, labelOf(row, target))
     end
-    if row.kind == 'text' then
-        local t, dirty = ui.textinput(id .. row.key, wx, y + 2, w - lib.labelWidth, FIELD_H, row.default or '',
-            valueOf(row, target) or '')
-        if t and dirty then return setValue(row, target, row.keepSpaces and t or (t:gsub('%s', ''))) end
-    elseif row.kind == 'numberText' then -- a plain number field, for values without a sensible range
-        local v = valueOf(row, target)
-        local t, dirty = ui.textinput(id .. row.key, wx, y + 2, w - lib.labelWidth, FIELD_H, '',
-            tostring(math.floor(v * 100 + 0.5) / 100), true)
-        if dirty and tonumber(t) then return setValue(row, target, tonumber(t)) end
-    elseif row.kind == 'number' then
-        local shown = valueOf(row, target)
-        if type(shown) == 'number' then shown = math.floor(shown * 100 + 0.5) / 100 end -- not -209.9999
-        local v = ui.sliderWithInput(id .. row.key, wx, y, w - lib.labelWidth - 90, resolve(row.min, target),
-            resolve(row.max, target), shown, nil, row.step)
-        if v then return setValue(row, target, tonumber(v)) end
-    elseif row.kind == 'bool' then
-        local clicked, checked = ui.checkbox(wx, y + DY, valueOf(row, target) ~= false, '')
-        if clicked then return setValue(row, target, checked) end
-    elseif row.kind == 'choice' then -- click: the next option; row.stepper: '<' and '>' either side too
-        local picked = drawChoice(row, target, wx, y, w - lib.labelWidth)
-        if picked ~= nil then return setValue(row, target, picked) end
-    elseif row.kind == 'part' then -- [x] name, then '<' choice '>' (or a note): a wider label column
-        local clicked, checked = ui.checkbox(x, y + DY, row.on(target), labelOf(row, target))
-        if clicked then return row.setOn(target, checked) end
-        local px = x + lib.labelWidth + 24
-        if row.options then
-            local picked = drawChoice(row, target, px, y, w - lib.labelWidth - 24)
-            if picked ~= nil then return setValue(row, target, picked) end
-        elseif row.note then
-            ui.alignedLabel(px, y + DY, row.note(target))
-        end
-    elseif row.kind == 'action' then -- no label column: the button is the label, full width
-        if ui.button(x, y + DY, w - 4, labelOf(row, target)) then return row.run(body, target) end
-    elseif row.kind == 'buttons' then -- one small button per option: run(body, target, option); wide: no label
-        local bx = row.wide and x or wx
-        local bw = (row.wide and w - 4 or w - lib.labelWidth) / #row.options
-        for i, option in ipairs(row.options) do
-            if ui.button(bx + (i - 1) * bw, y + DY, bw - 4, option) then return row.run(body, target, option) end
-        end
-    elseif row.kind == 'note' then
-        ui.alignedLabel(x, y + DY, labelOf(row, target), { 1, 1, 1, 0.6 })
-    elseif row.kind == 'color' then -- swatch (opens the palette) + hex field
-        local hex = valueOf(row, target)
-        local r, g, b, a = color.hexToColor(hex or 'ffffffff')
-        if ui.button(wx, y + DY, 30, '', nil, { r, g, b, a }) then
-            if state.panelVisibility.showPalette then
-                state.panelVisibility.showPalette = nil
-                state.showPaletteFunc = nil
-            else
-                state.panelVisibility.showPalette = true
-                state.showPaletteFunc = function(picked) setValue(row, target, picked) end
-            end
-        end
-        local t, dirty = ui.textinput(id .. row.key, wx + 36, y + 2, w - lib.labelWidth - 36, FIELD_H, 'hex', hex or '')
-        if t and dirty then return setValue(row, target, (t:gsub('%s', ''))) end
-    elseif row.kind == 'file' then -- '…' opens the texture browser + the file name
-        if ui.button(wx, y + DY, 30, '...') then
-            fileBrowser:open('/textures', { excludes = '-mask' }, function(path)
-                setValue(row, target, path:match('/textures/(.+)$') or path) -- the renderer prepends textures/
-            end)
-        end
-        local t, dirty = ui.textinput(id .. row.key, wx + 36, y + 2, w - lib.labelWidth - 36, FIELD_H, '',
-            valueOf(row, target) or '')
-        if t and dirty then return setValue(row, target, (t:gsub('%s', ''))) end
+    local drawer = drawers[row.kind]
+    if drawer then
+        return drawer({ id = id, row = row, target = target, body = body, x = x, y = y, w = w,
+            wx = x + (labelWidth or lib.labelWidth) })
     end
 end
 
