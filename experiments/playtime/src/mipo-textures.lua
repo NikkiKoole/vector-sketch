@@ -529,5 +529,9 @@ end
 
 
 lib.applyGroupAndZ = applyGroupAndZ
+-- (body, partName, partData, faceData, instance, scale): a Mipo face's decals on a body. A scene
+-- script can put one on a body of its own (scripts/spikes/garden.playtime.lua's dog): partData
+-- needs shape8URL and dims, instance only dna.creation.isPotatoHead and dna.faceMagnitude.
+lib.addFaceDecals = addFaceDecals
 
 return lib

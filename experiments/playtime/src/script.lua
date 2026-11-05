@@ -84,6 +84,7 @@ local baseEnv = {
     mipoVoice                = mipoVoice,
     mipoActions              = mipoActions,
     mipoRaspberry            = require('src.mipo-raspberry'), -- blow(instance) (raspberry spike)
+    mipoTextures             = require('src.mipo-textures'), -- addFaceDecals: a Mipo face on a script's body (garden)
     mipoRegistry             = require('src.mipo-registry'),
     mipoFacing               = require('src.mipo-facing'), -- facing left / front / right (facing spike)
     props                    = props,
