@@ -640,6 +640,10 @@ D.styles = {
     -- basshand.c plays it (force, finger spot, length, slides, ghosts, rakes, the thump), brushes and a felt
     -- piano comping; the music panel's 'humanize' row plays it plainly (src/music-upright.lua)
     upright = { loop = 'upright', bpm = { 104, 114 }, swing = 0.6 },
+    -- brew: the 3-bar bass riff Electric Relaxation loops from Mystic Brew, played with Ronnie Foster's measured
+    -- feel (beat notes early, the long notes on the and late, damped shorts) over a rigid sampler kit; the
+    -- music panel's 'humanize' row plays it plainly (src/music-brew.lua, MUSIC-ANALYSIS.md Song 3)
+    brew = { loop = 'brew', bpm = { 96, 100 }, swing = 0.5 },
     jam = { loop = 'jam', bpm = 120, swing = 0.5,
         groups = { 'Electro', 'Hip Hop', 'Breaks', 'Disco', 'Funk', 'Brushes' },
         bpms = { Electro = { 118, 128 }, ['Hip Hop'] = { 86, 94 }, Breaks = { 96, 108 }, Disco = { 116, 124 },

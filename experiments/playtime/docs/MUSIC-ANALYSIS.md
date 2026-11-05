@@ -93,6 +93,43 @@ Source: [youtube hDkdyKOsJCg](https://www.youtube.com/watch?v=hDkdyKOsJCg), Pete
   - `figures`: one comp figure per song. `split` (the root, then the shape), `arp`, `strum` (45 ms a note, up on a stab in the bar's first half and down in its second) or `broken` (bottom, top, middle, top in 8ths). `strum` and `broken` are new and work for any style that lists them.
   - `picks`: a line made from the comp's own voicing (`bookPicks`, the patterns in `D.picks`). Per song it keeps one rhythm and one order, counted down from the voicing's top note. The voicings move to the nearest notes, so the order makes a sequence that follows the cycle, and it needs no key. Phrases are four bars, the fourth breathing after two notes.
 
+## Song 3: Electric Relaxation and its bass loop, Mystic Brew (2026-11-05)
+
+Sources: A Tribe Called Quest "Electric Relaxation" ([youtube HbPf6G1DJlY](https://www.youtube.com/watch?v=HbPf6G1DJlY)) and the record it loops, Ronnie Foster "Mystic Brew" ([youtube 5nj1HWC-dQs](https://www.youtube.com/watch?v=5nj1HWC-dQs)). The song also samples Brethren "Outside Love" (not looked at yet). The bass first; the aim is NoteOpts numbers for a humanized bass.
+
+**How the loop was made:**
+- ER's drums are a 4/4 bar of 2.44 s (98.2 BPM). The bass loop is 7.33 s, **exactly 3 bars**, so the bass line comes round only every three drum bars.
+- In Mystic Brew the same riff is 12 beats at ~112 BPM. The loop is the record **slowed ~2 semitones** (tempo and pitch together; the tuning lands on 0 cents in both). The chop starts on Ronnie's G♯ pickup, which becomes ER's beat 1.
+- Mystic Brew plays the exact riff only 3 times, in the first 20 s (the intro vamp). After that the bass goes into the tune with the same rhythmic cell: a short 8th, then a long note on the "and".
+
+**The riff** (Mystic Brew key; ER is all of it 2 semitones down: F♯ A♯1 F D♯ …). Short = an 8th, damped; long = held to just before the next note:
+
+```
+bar 1:  G#2 (1, short)   C2 (1&, long 1.4)   G2 (3, 0.8)   F2 (4, 0.9)
+bar 2:  C2  (1, short)   A#2 (1&, long 1.3)  D#2 (3, short)  G2 (3&, short)  G#2 (4, 0.7)
+bar 3:  D#2 (1, short)   F#2 (1&, long 1.3)  C2 (3&, short)  C#2 (4, 0.8, loudest)
+```
+
+**How Ronnie plays it** (3 live passes, measured per note against his own pulse in each pass; tools: scratchpad `bass-notes.py`, `fold.py`, `fit.py`, gone after the session):
+
+| what | measured | NoteOpts |
+|---|---|---|
+| feel, the same every pass | notes on the beat land **early** (−4 to −25 ms), the long notes on the "and" **late** (+13 to +30 ms). The short→long pair stretches to ~57:43, a light swing only there; other 8ths are near straight | a fixed per-slot offset, not random |
+| random timing | sd 14 ms (median 10, 90% within 25) | booking time jitter |
+| tempo | rushes: 108.6 → 109.9 → 112.2 BPM over the 3 passes, ~110 → 117 over the first 80 s | slow tempo drift up |
+| loudness | random sd ~1.4 dB a note. Accents: the long "and" notes +2 dB, the last C♯ +2.6 (it leads back round), the A♯ −3, pickups ~−1 | `gain` per slot + jitter |
+| short notes | 0.50–0.56 beats, decay −50 to −83 dB/s: **stopped by the hand**, legato into the next | `damp` ~0.5+, `dur_ms` = full 8th |
+| long notes | 1.26–1.39 beats, ring −12 to −28 dB/s, let go ~0.1 beat before the next | `release_ms` short, own ring |
+| pitch | no scoops (0±5 c), no vibrato, no slides; intonation sd ~10 c (one G♯ +23 c); one pass drops the A♯ an octave | `cents` ±10, rare octave swap |
+| tone | attack centroid 200–900 Hz, closes 0.6–1.5 octaves in 200 ms, more on higher and accented notes | SHP_CUTOFF pluck closing ~−1 oct/200 ms |
+| extras | ~1 quiet note a pass (−5 dB) off the riff | rare ghost, `damp` 1, low gain |
+
+- ER's loop is rigid, so its per-note spread (±40 ms) is the **measuring noise** on a busy-mix stem; its per-slot means agree with Mystic Brew's feel above (beat notes early, "and" notes late).
+- **Engine race** (C2 long note): FM 0.29, PIPE 0.38, SQUARE 0.40 … GUITAR and PLUCK last, as with King Rollo's bass: a low-passed demucs stem favours sustained engines. Upright or electric is for the ear, not the tool.
+- **Nikki listened** to the long C2: "has a bass".
+- **The drums are Brethren's "Outside Love"** ([youtube c1kqX1WnULc](https://www.youtube.com/watch?v=c1kqX1WnULc)): ER's drum bar against Outside Love's drum stem scores 0.80 by mel-spectrogram cross-correlation (Mystic Brew's drums, the control, 0.52), at several places in the record (1, 4, 13, 28, 88 s), so it's the band's steady groove, not one break. Outside Love is at ~79.5 BPM; Q-Tip **sped it up ×1.235, about +3.7 semitones**, to 98.2. So the beat is two records pulled to meet in the middle: the 80 BPM drums pushed up, the 112 BPM riff pulled down 2 semitones.
+- **In Playtime: the style `brew`** (`src/music-brew.lua`): the riff on `hUpright` with the table above, over a rigid sampler kit (the bass alone two passes, the kit, the bass alone to end); the panel's humanize row plays it on the grid. The riff moves to the song's key always downwards (Nikki: in Ab, 3 up, it sat too high; F as Mystic Brew, Eb as ER, Bb 7 down, Ab 9 down). Checked by running a render back through the same tools: the feel per note comes back within ~10 ms of Ronnie's (G♯ −30, C +32, A♯ +35, D♯ −28, F♯ +16), jitter 11 ms, loudness 1.1 dB, the tone closing 0.6–1.0 oct. `damp` is steep on this patch: 0.35–0.5 hardly stops a note (−20 dB/s), 0.6 gives −30, 0.75+ −70 to −140; 0.7–0.8 lands on Ronnie's −40 to −65.
+
 ## The score pieces next to our styles (2026-11-02)
 
 Why does Gershwin's Prelude II (`gershwin2`) sound so much richer than our own styles? To answer that, the notes themselves get analysed, not a recording.
@@ -239,6 +276,9 @@ measured are in the sections above. The concepts by name are in `MUSIC-CONCEPTS.
 - [ ] A finer CQT or basic-pitch for real note names and voicings of the jabs
 - [ ] Section map with chords for the whole song (where the key moves)
 - [ ] Vocals: narration or melody?
+- [x] Electric Relaxation's bass as a humanized part: the style `brew` (2026-11-05)
+- [ ] Nikki listens to `brew`, humanized against plain; then the Outside Love sample and the keys loop
+
 - [x] Turn the 1:53 jab pattern into a picking mode (`picking = 'jabs'`) on the electric guitar, kept sparse, as background. Built 2026-10-30 as the style **rollo**:
   - `jabGuitar`: the guitar, choked, with the tape on
   - `pickBass`: a picked electric bass, as Nikki heard it
