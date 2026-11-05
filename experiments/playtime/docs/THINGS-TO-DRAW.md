@@ -61,6 +61,43 @@ and what's there already. Pick a few, draw them, drop them in `textures/`, tick 
     (sunflower), a small one for bushes, a curled or folded one. A vein down the middle is welcome.
   - Also handy: petals in a few shapes (round, pointed, ragged), buds, a seed head, a sprout or two
     more (`sprout-*` has three).
+  - Now really A13: the wild plants want their own parts, all at one scale.
+
+- [ ] **A13. Plant parts, lots, all at the same scale** (Nikki, 2026-11-05: "so linework more or
+  less stays consistent"). The `plants` spike has 19 Dutch wild plants now (`PLANTS.md`), made from
+  a handful of borrowed pictures stretched to every size, so the crayon line changes thickness from
+  part to part: the Mipo eye rings used as tiny florets draw at ~0.2× (hairline), the ovals stretched
+  into iris and bulrush leaves at ~2.5× long and 0.15× wide (fat ends, thin sides), the canopy ovals
+  at ~3×. Squashing (narrow leaves made from fat ovals) thickens the line one way and thins it the
+  other.
+  - **The rule:** draw every part at about the size it shows in the game, with the same crayon,
+    on the same sheet, scanned at one resolution. Then the code draws them at ~1× (only the plant's
+    own size, ±30 %), and the line is the same everywhere. Narrow things are drawn narrow, not
+    squashed from wide ones. Outline + mask, white on transparent, as always; leaves and petals
+    pointing **up with the stalk end at the bottom**; a few variants of each.
+  - **Sizes**, roughly, in game pixels (= picture pixels at 1×), longest side:
+    - **Florets / tiny flowers**, ~30 px, a dozen variants (marjoram, thyme, mint, loosestrife,
+      yarrow, the spore beads): small round blobs, some a bit open. These are drawn the most.
+    - **Flower heads**, ~90–140: a devil's-bit ball, a scabious pincushion (bigger outer florets),
+      a dandelion head and a **dandelion clock**, a foxglove **bell** (~100, open mouth), a
+      Solomon's seal bell (~45), a bulrush **cigar** (~120) and its thin spike.
+    - **Petals**, ~55–180: poppy (broad, crumpled, ~120), anemone (~55), marsh marigold (round,
+      cup-shaped, ~60), iris **fall** (~180, hanging) and **standard** (~100, narrow, upright).
+    - **Buds and seed heads**: a nodding hairy poppy bud (~70), a poppy capsule with its crown,
+      a closed iris bud, round berries (~40, the Solomon's seal ones blue-black).
+    - **Small leaves**, ~25–90: thyme (tiny oval), marjoram (oval), water mint (oval, toothed).
+    - **Middle leaves**, ~130–190: loosestrife (narrow, pointed), scabious (deeply lobed),
+      yarrow (feathery, narrow), Solomon's seal (broad oval, veins along it), marsh marigold
+      (round, heart-shaped base), a royal fern leaflet (oblong, ~145).
+    - **Rosette leaves**, ~250–350: dandelion (toothed, lying low), devil's-bit (long, whole),
+      foxglove (big, soft, wrinkled).
+    - **Long leaves**, drawn long and narrow at full length: hart's-tongue (strap, ~400, wavy
+      edge), male fern frond (~700, lance-shaped, two-sided), iris sword (~950), bulrush (~1100,
+      very thin; maybe in two pieces that join, if a sheet can't take it).
+    - **Forest**: canopy leaf clumps (~1000, big, but drawn that big so the line stays crayon),
+      a trunk stroke or two (bark), leaf litter for the forest floor.
+  - Have: `textures/plants/` (ovals, petals, daisy, heart, sprouts, tufts, two fronds), the eye
+    rings copied as `berry-0n`; all fine to keep as fallbacks until the new ones are in.
 
 ## Worth doing in the same sessions
 

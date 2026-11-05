@@ -61,6 +61,7 @@ local baseEnv = {
     mathutils                = mathutils,
     getPJAttachedTo          = box2dPointerJoints.getPointerJointAttachedTo,
     getInteractedWithPointer = box2dPointerJoints.getInteractedWithPointer,
+    pointerGrab              = box2dPointerJoints.grab, -- (id, body, wx, wy): the pointer carries a body a script made
     polygonClip              = mathutils.polygonClip,
     pairs                    = pairs,
     ipairs                   = ipairs,

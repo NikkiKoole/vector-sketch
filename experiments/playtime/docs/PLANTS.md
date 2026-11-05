@@ -73,3 +73,83 @@ Plants fight for light: wars are fought in the canopy. Not sure this is the plac
 - The spike already has what it needs to start: each plant's turtle knows where its leaves are,
   so a shade map along x (or a coarse grid) and a growth rate per segment would do.
 
+
+## Wild plants in three biomes (2026-11-05)
+
+Nikki: "can you research what they look like and grow; we have 3 biomes: normal, shaded forest,
+waterside". The scene now sows these instead of the first row (the old kinds stay in `TYPES`);
+`p` plants a kind of the biome under the mouse. Meadow left (x < -1100), forest in the middle
+(trunks out of view, a canopy of drawn ovals, shafts of light, dark soil), waterside right (shallow
+see-through water over the plants' feet from x 1500, a sloping bank). The colours blend over 300 px.
+Small flowers are dots of Nikki's drawn crayon rings (the Mipo eye outlines, `berry-0n`): green buds
+that colour as they open. Berries use them too (2026-11-05, "I don't like your berries").
+
+What each one is and how it's built:
+- **Wilde marjolein** (*Origanum vulgare*): a bushy clump of upright reddish stems, small opposite
+  leaves, at the top a branched flat-topped corymb of tiny pink flowers on dark purple bracts.
+  Five stems, opposite leaves (`O`), three tufts each (`M`, a flattened ball of pink/purple dots).
+- **Grote tijm** (*Thymus pulegioides*): a low mat (to ~25 cm) of thin stems from a woody base,
+  tiny oval leaves, every stem a short erect spike of lilac-pink flowers. Seven short stems, `S`.
+- **Blauwe knoop** (*Succisa pratensis*): a rosette of long whole leaves, a tall thin stem (60 cm–1 m)
+  with a pair of narrow leaves, forking at the top into long stalks; the heads blue-violet balls,
+  half-round as they start. A low fan (`R`), the stem, three `K` knobs.
+- **Beemdkroon** (*Knautia arvensis*): hairy stem, opposite leaves deeply pinnately lobed (the lowest
+  often whole), flat lilac pincushions with the outer florets bigger than the middle ones. Opposite
+  leaves from Nikki's drawn fronds, `Q`: a ring of petals round a small ball of dots.
+- **Tongvaren** (*Asplenium scolopendrium*): a tuft of whole, strap-shaped, glossy leaves arching out.
+  Two rings of narrow ovals.
+- **Mannetjesvaren** (*Dryopteris filix-mas*): a shuttlecock of long lance-shaped fronds out of one
+  crown. Nikki's drawn fronds in two rings.
+- **Koningsvaren** (*Osmunda regalis*): big (to 2 m) fronds of oblong leaflets, like an ash's; some
+  topped by fertile tips, clusters of spore beads green, then rust-brown ("flowering fern"). An
+  L-system frond with oval leaflet pairs (`V`), about half the tips a rust spike (`Z`).
+- **Grote kattenstaart** (*Lythrum salicaria*): stiff upright stems to 1.5 m, opposite narrow leaves,
+  long dense magenta spikes. Three stems, `P` spikes that open from the bottom up.
+- **Gele lis** (*Iris pseudacorus*): a fan of sword leaves out of the mud, flower stems among them,
+  yellow irises with three big falls and small standards. A tall narrow fan (`Y`), two stems, `I`
+  (a closed bud, then the falls swing out).
+- **Watermunt** (*Mentha aquatica*): square, often reddish stems, opposite oval toothed leaves, a round
+  lilac head at the top and whorls lower down (the top cluster the biggest). Two stems, `W` and `w`.
+
+Sources: Thijsse's Hof (blauwe knoop), BSBI and Minnesota Wildflowers (Knautia), Wikipedia and
+Minnesota Wildflowers (Osmunda), first-nature and naturespot (Mentha aquatica), Kew Grow Wild and
+the Victorian flora (Origanum), RHS (Thymus pulegioides).
+
+### More kinds, and no two the same (2026-11-05)
+
+Nikki: "how do we make the plants look realistic but not all identical?" Added paardenbloem (yellow
+heads or white clocks), klaproos (nodding bud, four petals, seed capsule), duizendblad (white umbel,
+sometimes pink), vingerhoedskruid (one-sided bells, sometimes white), salomonszegel (arching stems,
+bells hanging in pairs, blue-black berries), bosanemoon (a carpet), lisdodde (cigar + spike, in the
+water, bursting into fluff), dotterbloem (round leaves, golden cups).
+
+What makes them differ:
+- **Each plant its own recipe** (`vary`): the kind's numbers nudged, angles ±25 %, internodes and
+  stems ±15 %, leaves ±20 %, heads ±15 %, fan leaf counts ±2; leaf colours shifted together, the
+  flowers on their own, a rare white or pink form. In the forest's shade: longer stems, bigger leaves.
+- **Genes the recipe doesn't have**: how many stems and at what angles (`stems = {min, max, spread}`,
+  `^` in the L-system), a lean, a bend as it grows, some leaves missing, some heads late (still buds
+  when the plant is grown), some gone over (faded, or their own seed head: clocks, capsules, berries,
+  fluff).
+- **Sowing like a real patch**: uneven gaps, the same kind often next to itself (a smaller one, it
+  spread there; at most three in a row), iris and bulrush only in the water.
+Next, if wanted: age as its own gene (a young plant isn't just a small old one), plants answering
+each other (the light idea above), seasons.
+
+### Picking flowers and fruit (2026-11-05)
+
+Nikki: "gameplay wise we want to be able to pick flowers and fruit". Tap a flower head or a fruit and
+it comes off: a small light body (a stalk, the head drawn on top, label `picked-flower` /
+`picked-fruit`) that the pointer carries; a snap point at the stalk's end, so a Mipo's hand takes it
+when you bring it there (snaps only form while the pointer holds one of the two). On the plant a bud
+comes back after ~6 s and opens over ~14 s. At most 25 picked lie about (the oldest go). A press
+on stems and leaves still bends the plant; a press on a head picks. Fern spores and the mint's
+lower whorl stay on. The engine side: `box2dPointerJoints.grab(id, body, wx, wy)`, in scene scripts
+as `pointerGrab`.
+- Fruit plants for it: **wilde aardbei** (three-part leaves, white flowers, strawberries hanging,
+  green, white, red) in the meadow and the forest; **braam** (arching canes, berry clusters, each
+  drupelet ripening at its own pace, green, red, black) in the forest.
+- Next, if wanted: Mipos reacting to what they're given (sniff, a happy squeak, eat a berry: a
+  munch and it's gone), a bouquet (several flowers in one hand), a basket, only ripe fruit
+  comes off (an unripe one wobbles back), touch on the phone (untested: LÖVE turns touches into
+  mouse presses, so it may just work).

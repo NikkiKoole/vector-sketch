@@ -179,6 +179,15 @@ function lib.getPointerJoints()
     return pointerJoints
 end
 
+-- Hand the pointer `id` a body it isn't on (a scene script made it under the pointer: a flower
+-- picked off a plant, scripts/spikes/plants). Pulls with dragStrength weights of the body, like a
+-- press on it would; the pointer's release lets go of it as usual.
+function lib.grab(id, body, wx, wy)
+    lib.killMouseJointIfPossible(id)
+    local force = units.toReferenceForce(state.world.dragStrength * units.weight(body:getMass()))
+    table.insert(pointerJoints, lib.makePointerJoint(id, body, wx, wy, force, state.world.mouseDamping))
+end
+
 function lib.handlePointerReleased(_x, _y, id)
     local released = {}
     if pointerJoints then
