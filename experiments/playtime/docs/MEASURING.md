@@ -203,3 +203,10 @@ parts (music-theory, skinning's `meshusertVertices`, the polygon modules) run wi
   per click (setCanvas() / present / setCanvas back; hashes unchanged). NEXT on the iMac:
   `claudetools/snapshot.sh take a editor`. Runs through: the endless frame was it. Still aborts: the
   old AMD GL driver; take reference snapshots on the M1.
+  Same day, a third Mipo in the editor snapshot (spine, 3 torso segments, 2 neck) crashed the game
+  on the M1 too, but in Box2D, not the GPU: SIGBUS in newPolygonShape at spine lear click 58. Its
+  torso had three points in a line down each side; LÖVE 11.5's Box2D went round the hull forever
+  (at 100+ px per metre; fine at 30) writing past its array: a pcall can't catch it. Reproduced in
+  a 10-line LÖVE program. FIXED: polygon.dropCollinear before shapes.lua's convex path
+  (spec/polygon-collinear_spec.lua). Other newPolygonShape callers (the decompose path, fixtures,
+  object-manager, scene-load) don't drop them yet.
