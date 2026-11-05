@@ -96,29 +96,30 @@ local function tensionsOf(song, chord, sets)
     return out
 end
 
--- The 4-bar phrase starting at bar b
-function lib.buildPhrase(song, b)
-    local section, j = song.barSection[b], song.barIndex[b]
-    local slot = math.floor(j / 4)
-    local rnd = stream(song.seed, 7000 + (section.kind == 'B' and 100 or 0) + slot)
-    local style = D.styles[song.style]
-    if slot % 2 == 1 and rnd(100) < 30 then return {} end -- a phrase of space
+-- The phrase's range and where it starts: where the last phrase left off; a section starts mid-range, B
+-- higher. range (the idea 'range'): a peak phrase, in B or a section's second, climbs: its range up to 5
+-- semitones higher, it starts higher (the style report measured our songs spanning 3-4 octaves against
+-- 4-6.6 in the pieces: docs/MUSIC-ANALYSIS.md). Its own stream.
+local function phraseRange(song, style, section, slot)
     local range = style.range or { 67, 86 }
     local lo, hi = range[1], range[2]
-    local at = section.guideLast -- where the last phrase left off; a section starts mid-range, B higher
+    local at = section.guideLast
     if slot == 0 or not at then at = math.floor((lo + hi) / 2) + (section.kind == 'B' and 4 or -2) end
-    -- range (the idea 'range'): a peak phrase, in B or a section's second, climbs: its range up to 5
-    -- semitones higher, it starts higher (the style report measured our songs spanning 3-4 octaves
-    -- against 4-6.6 in the pieces: docs/MUSIC-ANALYSIS.md). Its own stream
     local rangeOdds = (song.ideaOdds or {}).range or 0
     if rangeOdds > 0 and (section.kind == 'B' or slot == 1)
         and stream(song.seed, 7600 + (section.kind == 'B' and 100 or 0) + slot)(100) < rangeOdds then
         local lift = math.min(5, 91 - hi)
         hi, at = hi + lift, math.min(hi + lift, at + lift)
     end
+    return lo, hi, at
+end
 
+-- The motif's notes: the call in bars 1-2, the answer (the same motif over the next chords) in 3-4. A
+-- group starts on the nearest other guide tone, its notes walk the chord's scale, beats 1 and 3 are chord
+-- tones.
+local function motifNotes(song, b, rnd, lo, hi, at)
     local motif, notes = song.motif, {}
-    for half = 0, 1 do -- the call in bars 1-2, the answer (the same motif over the next chords) in 3-4
+    for half = 0, 1 do
         local last = #motif.steps
         if half == 1 and rnd(100) < 40 then -- the answer leaves out its last group: room to breathe
             local group = motif.groups[last]
@@ -129,21 +130,27 @@ function lib.buildPhrase(song, b)
             local chord = chordAtStep(song, b, s)
             local sets = chordSets(song, chord)
             local first = i == 1 or motif.groups[i] ~= motif.groups[i - 1]
-            if first then at = nearest(sets.guides, at, lo, hi, at) -- the nearest other guide tone
+            if first then at = nearest(sets.guides, at, lo, hi, at)
             else at = step(sets.scale, at, motif.dir[i], lo, hi) end
-            if s % 8 == 0 then at = nearest(sets.lands, at, lo, hi) end -- beats 1 and 3: a chord tone
+            if s % 8 == 0 then at = nearest(sets.lands, at, lo, hi) end
             notes[#notes + 1] = { s = s, midi = at, vol = first and 5 or 4, chord = chord, sets = sets }
         end
     end
+    return notes
+end
 
-    -- each note lasts to the next (the last rings); a long note is a chord tone
+-- each note lasts to the next (the last rings); a long note is a chord tone
+local function noteLengths(notes, style, lo, hi)
     for k, note in ipairs(notes) do
         local nextNote = notes[k + 1]
         note.len = math.min((nextNote and nextNote.s or 64) - note.s, nextNote and (style.staccato or 6) or 10)
         if note.len >= 4 then note.midi = nearest(note.sets.lands, note.midi, lo, hi) end
     end
-    -- a new chord is arrived at by step: the note before the change, if it's short and not a group's
-    -- start, becomes a scale step above the arrival or a half step below it
+end
+
+-- a new chord is arrived at by step: the note before the change, if it's short and not a group's start,
+-- becomes a scale step above the arrival or a half step below it
+local function arriveByStep(notes, rnd, lo, hi)
     for k = 1, #notes - 1 do
         local note, arrival = notes[k], notes[k + 1]
         if note.vol < 5 and arrival.s - note.s <= 4 and not sameChord(note.chord, arrival.chord) then
@@ -154,29 +161,46 @@ function lib.buildPhrase(song, b)
             note.vol = 3
         end
     end
-    -- colour (the idea 'colour', song.ideaOdds): a long note may rest on a tension instead of its chord
-    -- tone, or lean on the whole step above first and resolve to it an 8th later (an appoggiatura). Our
-    -- tunes sat on chord tones 80-95% of the time against 70-79% in real songs (HookTheory,
-    -- docs/MUSIC-ANALYSIS.md). Its own stream: without it the tune is note for note the same
+end
+
+-- colour (the idea 'colour', song.ideaOdds): a long note may rest on a tension instead of its chord tone,
+-- or lean on the whole step above first and resolve to it an 8th later (an appoggiatura). Our tunes sat on
+-- chord tones 80-95% of the time against 70-79% in real songs (HookTheory, docs/MUSIC-ANALYSIS.md). Its
+-- own stream: without it the tune is note for note the same. Returns the notes (new ones in between).
+local function colour(song, notes, section, slot, lo, hi)
     local colourOdds = (song.ideaOdds or {}).colour or 0
-    if colourOdds > 0 then
-        local crnd = stream(song.seed, 7500 + (section.kind == 'B' and 100 or 0) + slot)
-        local out = {}
-        for _, note in ipairs(notes) do
-            if note.len >= 4 and crnd(100) < colourOdds then
-                local tensions = tensionsOf(song, note.chord, note.sets)
-                local above = note.midi + 2
-                if crnd(100) < 50 and next(tensions) then
-                    note.midi = nearest(tensions, note.midi, lo, hi)
-                elseif above <= hi and song.scale[(above - song.key) % 12] and not note.sets.tones[above % 12] then
-                    out[#out + 1] = { s = note.s, midi = above, vol = note.vol, len = 2 }
-                    note.s, note.len, note.vol = note.s + 2, note.len - 2, math.max(3, note.vol - 1)
-                end
+    if colourOdds <= 0 then return notes end
+    local crnd = stream(song.seed, 7500 + (section.kind == 'B' and 100 or 0) + slot)
+    local out = {}
+    for _, note in ipairs(notes) do
+        if note.len >= 4 and crnd(100) < colourOdds then
+            local tensions = tensionsOf(song, note.chord, note.sets)
+            local above = note.midi + 2
+            if crnd(100) < 50 and next(tensions) then
+                note.midi = nearest(tensions, note.midi, lo, hi)
+            elseif above <= hi and song.scale[(above - song.key) % 12] and not note.sets.tones[above % 12] then
+                out[#out + 1] = { s = note.s, midi = above, vol = note.vol, len = 2 }
+                note.s, note.len, note.vol = note.s + 2, note.len - 2, math.max(3, note.vol - 1)
             end
-            out[#out + 1] = note
         end
-        notes = out
+        out[#out + 1] = note
     end
+    return out
+end
+
+-- The 4-bar phrase starting at bar b. The motif's notes and the arrivals share the phrase's stream (in
+-- that order); range and colour have their own.
+function lib.buildPhrase(song, b)
+    local section, j = song.barSection[b], song.barIndex[b]
+    local slot = math.floor(j / 4)
+    local rnd = stream(song.seed, 7000 + (section.kind == 'B' and 100 or 0) + slot)
+    local style = D.styles[song.style]
+    if slot % 2 == 1 and rnd(100) < 30 then return {} end -- a phrase of space
+    local lo, hi, at = phraseRange(song, style, section, slot)
+    local notes = motifNotes(song, b, rnd, lo, hi, at)
+    noteLengths(notes, style, lo, hi)
+    arriveByStep(notes, rnd, lo, hi)
+    notes = colour(song, notes, section, slot, lo, hi)
     for _, note in ipairs(notes) do note.chord, note.sets = nil, nil end
     section.guideLast = #notes > 0 and notes[#notes].midi or section.guideLast
     return notes
