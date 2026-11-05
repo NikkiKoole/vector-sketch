@@ -104,7 +104,8 @@ end
 
 -- A loaded scene's influences get their bodies back (from the joint or anchor they name), and
 -- dist; files from before DQS get a bindAngle from the loaded pose (saved at rest, so that is the
--- bind pose).
+-- bind pose). A joint or anchor that isn't there (deleted after the mesh was bound) gives no body:
+-- skinning leaves that bone out, as it does one whose body was destroyed.
 function lib.restoreBodies(influences)
     for i = 1, #influences do
         local inflList = influences[i]
@@ -112,11 +113,13 @@ function lib.restoreBodies(influences)
             local infl = inflList[j]
             if infl.nodeType == NT.JOINT then
                 local joint = registry.getJointByID(infl.nodeId)
-                local bodyA, bodyB = joint:getBodies()
-                infl.body = (infl.side == SIDES.A) and bodyA or bodyB
+                if joint then
+                    local bodyA, bodyB = joint:getBodies()
+                    infl.body = (infl.side == SIDES.A) and bodyA or bodyB
+                end
             elseif infl.nodeType == NT.ANCHOR then
                 local anchor = registry.getSFixtureByID(infl.nodeId)
-                infl.body = anchor:getBody()
+                if anchor then infl.body = anchor:getBody() end
             end
             if infl.bindAngle == nil and infl.body then
                 infl.bindAngle = infl.body:getAngle()

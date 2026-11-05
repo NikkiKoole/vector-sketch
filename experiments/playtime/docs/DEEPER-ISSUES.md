@@ -12,8 +12,11 @@ Issues found by digging into cross-cutting concerns, runtime behavior, and code 
 
 Changed to `if not doneJoints[ud.id] then`.
 
-### Bug: Cloned OMP fixtures not marked dirty (io.lua cloneSelection)
+### ~~Bug: Cloned OMP fixtures not marked dirty (io.lua cloneSelection)~~ — FIXED
 
+Checked 2026-11-05: clone is `library.clone` now (CL17) and goes through save data + `buildWorld`; the save (`scene-save.lua`) and the load (`scene-load.lua`) both set `extra.dirty` on OMP fixtures.
+
+Was: 
 When cloning bodies with OMP texfixtures, the `extra.dirty` flag is not set to `true` on the cloned fixture. The OMP composite image (`ompImage`) is a runtime cache that gets stripped during serialization, but during cloning the old reference may be copied or lost. Without `dirty = true`, the cloned fixture won't regenerate its composite texture on first render.
 
 ### ~~Bug: noseChain topology reads from current part instead of parent~~ — FIXED
@@ -150,8 +153,11 @@ This brings the **total global leak count to ~40** (up from the ~30 we counted b
 
 `io.cloneSelection` (lines 718-988) is one of the most complex operations in the codebase. Issues found:
 
-### Influence references can become nil silently
+### Influence references can become nil silently — load crash FIXED, link question open
 
+Checked 2026-11-05 (clone is `library.clone` now, through save data): ids not in the copy aren't renamed, so a mesh cloned without its rig keeps pointing at the *original's* joints/anchors (all its influences), and a ribbon cloned without its joint at the original joint. Deleting that rig and saving left a scene that didn't load (`influences.lua: attempt to index local 'anchor'`); `restoreBodies` now gives such a bone no body, which skinning leaves out (`spec/influences-missing-node_spec.lua`). Open: should a partial clone keep those links to the original, or drop them?
+
+Was: 
 When cloning, `remapAndRestoreInfluences` remaps node IDs through `idMapping`. If a connected-texture or meshusert references a node (anchor/joint) that's NOT in the cloned selection, `idMapping[originalId]` returns `nil`. The influence entry then has `nodeId = nil`, and the next `restoreInfluenceBodies` call will crash when trying to look up `nil` in the registry.
 
 ### Joints only clone if both bodies are selected
