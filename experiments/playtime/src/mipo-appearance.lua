@@ -130,71 +130,48 @@ function lib.updateHaircutOfPart(instance, partName, values)
     end
 end
 
--- Update face appearance (eye/pupil/brow/nose/mouth shape, colors, positions).
--- values can contain: eyeShape, eyeBgHex, eyeFgHex, eyeWMul, eyeHMul,
--- eyeR, eyeLookAtMouse,
--- pupilShape, pupilBgHex, pupilFgHex, pupilWMul, pupilHMul, eyeX, eyeY,
--- browShape, browBgHex, browWMul, browHMul, browBend, browY,
--- noseShape, noseBgHex, noseFgHex, noseWMul, noseHMul, noseY,
--- mouthShape, mouthUpperLipShape, mouthLowerLipShape, mouthLipHex,
--- mouthBackdropHex, mouthUpperLipScale, mouthLowerLipScale, mouthWMul, mouthHMul, mouthY,
--- teethShape, teethWMul, teethHMul, teethStickOut, teethBgHex, teethFgHex, teethGum, teethGumHex,
--- teethGumDepth
+-- [value name] = { where in the face (a table, or positioners.<feature>), field, set when false too }
+local FACE_FIELDS = {}
+for _, row in ipairs({
+    { 'eyeShape', 'eye', 'shape' }, { 'eyeBgHex', 'eye', 'bgHex' }, { 'eyeFgHex', 'eye', 'fgHex' },
+    { 'eyeWMul', 'eye', 'wMul' }, { 'eyeHMul', 'eye', 'hMul' },
+    { 'pupilShape', 'pupil', 'shape' }, { 'pupilBgHex', 'pupil', 'bgHex' }, { 'pupilFgHex', 'pupil', 'fgHex' },
+    { 'pupilWMul', 'pupil', 'wMul' }, { 'pupilHMul', 'pupil', 'hMul' },
+    { 'eyeX', 'positioners.eye', 'x' }, { 'eyeY', 'positioners.eye', 'y' }, { 'eyeR', 'positioners.eye', 'r' },
+    { 'eyeLookAtMouse', 'eye', 'lookAtMouse', true },
+    { 'browShape', 'brow', 'shape' }, { 'browBgHex', 'brow', 'bgHex' }, { 'browWMul', 'brow', 'wMul' },
+    { 'browHMul', 'brow', 'hMul' }, { 'browBend', 'brow', 'bend' }, { 'browY', 'positioners.brow', 'y' },
+    { 'noseShape', 'nose', 'shape' }, { 'noseBgHex', 'nose', 'bgHex' }, { 'noseFgHex', 'nose', 'fgHex' },
+    { 'noseWMul', 'nose', 'wMul' }, { 'noseHMul', 'nose', 'hMul' }, { 'noseY', 'positioners.nose', 'y' },
+    { 'mouthShape', 'mouth', 'shape' }, { 'mouthUpperLipShape', 'mouth', 'upperLipShape' },
+    { 'mouthLowerLipShape', 'mouth', 'lowerLipShape' }, { 'mouthLipHex', 'mouth', 'lipHex' },
+    { 'mouthBackdropHex', 'mouth', 'backdropHex' }, { 'mouthUpperLipScale', 'mouth', 'upperLipScale' },
+    { 'mouthLowerLipScale', 'mouth', 'lowerLipScale' }, { 'mouthWMul', 'mouth', 'wMul' },
+    { 'mouthHMul', 'mouth', 'hMul' }, { 'mouthY', 'positioners.mouth', 'y' },
+    { 'teethShape', 'teeth', 'shape' }, { 'teethWMul', 'teeth', 'wMul' }, { 'teethHMul', 'teeth', 'hMul' },
+    { 'teethStickOut', 'teeth', 'stickOut', true }, { 'teethBgHex', 'teeth', 'bgHex' },
+    { 'teethFgHex', 'teeth', 'fgHex' }, { 'teethGum', 'teeth', 'gum', true },
+    { 'teethGumHex', 'teeth', 'gumHex' }, { 'teethGumDepth', 'teeth', 'gumDepth' },
+}) do
+    local feature = row[2]:match('^positioners%.(.+)$')
+    FACE_FIELDS[row[1]] = { feature = feature or row[2], positioner = feature ~= nil, field = row[3],
+        evenFalse = row[4] or false }
+end
+
+-- Update face appearance (eye/pupil/brow/nose/mouth/teeth shape, colors, positions): the
+-- values named in FACE_FIELDS; a value that's nil (or false, but for the on/off ones) is left as is.
 function lib.updateFaceOfPart(instance, partName, values)
     local p = instance.dna.parts[partName]
     if not p or not p.appearance or not p.appearance['face'] then return end
     local face = p.appearance['face']
     D.ensureDefaults(face, D.face)
-
-    if values.eyeShape then face.eye.shape = values.eyeShape end
-    if values.eyeBgHex then face.eye.bgHex = values.eyeBgHex end
-    if values.eyeFgHex then face.eye.fgHex = values.eyeFgHex end
-    if values.eyeWMul then face.eye.wMul = values.eyeWMul end
-    if values.eyeHMul then face.eye.hMul = values.eyeHMul end
-    if values.pupilShape then face.pupil.shape = values.pupilShape end
-    if values.pupilBgHex then face.pupil.bgHex = values.pupilBgHex end
-    if values.pupilFgHex then face.pupil.fgHex = values.pupilFgHex end
-    if values.pupilWMul then face.pupil.wMul = values.pupilWMul end
-    if values.pupilHMul then face.pupil.hMul = values.pupilHMul end
-    if values.eyeX then face.positioners.eye.x = values.eyeX end
-    if values.eyeY then face.positioners.eye.y = values.eyeY end
-    if values.eyeR then face.positioners.eye.r = values.eyeR end
-    if values.eyeLookAtMouse ~= nil then face.eye.lookAtMouse = values.eyeLookAtMouse end
-
-    if values.browShape then face.brow.shape = values.browShape end
-    if values.browBgHex then face.brow.bgHex = values.browBgHex end
-    if values.browWMul then face.brow.wMul = values.browWMul end
-    if values.browHMul then face.brow.hMul = values.browHMul end
-    if values.browBend then face.brow.bend = values.browBend end
-    if values.browY then face.positioners.brow.y = values.browY end
-
-    if values.noseShape then face.nose.shape = values.noseShape end
-    if values.noseBgHex then face.nose.bgHex = values.noseBgHex end
-    if values.noseFgHex then face.nose.fgHex = values.noseFgHex end
-    if values.noseWMul then face.nose.wMul = values.noseWMul end
-    if values.noseHMul then face.nose.hMul = values.noseHMul end
-    if values.noseY then face.positioners.nose.y = values.noseY end
-
-    if values.mouthShape then face.mouth.shape = values.mouthShape end
-    if values.mouthUpperLipShape then face.mouth.upperLipShape = values.mouthUpperLipShape end
-    if values.mouthLowerLipShape then face.mouth.lowerLipShape = values.mouthLowerLipShape end
-    if values.mouthLipHex then face.mouth.lipHex = values.mouthLipHex end
-    if values.mouthBackdropHex then face.mouth.backdropHex = values.mouthBackdropHex end
-    if values.mouthUpperLipScale then face.mouth.upperLipScale = values.mouthUpperLipScale end
-    if values.mouthLowerLipScale then face.mouth.lowerLipScale = values.mouthLowerLipScale end
-    if values.mouthWMul then face.mouth.wMul = values.mouthWMul end
-    if values.mouthHMul then face.mouth.hMul = values.mouthHMul end
-    if values.mouthY then face.positioners.mouth.y = values.mouthY end
-
-    if values.teethShape then face.teeth.shape = values.teethShape end
-    if values.teethWMul then face.teeth.wMul = values.teethWMul end
-    if values.teethHMul then face.teeth.hMul = values.teethHMul end
-    if values.teethStickOut ~= nil then face.teeth.stickOut = values.teethStickOut end
-    if values.teethBgHex then face.teeth.bgHex = values.teethBgHex end
-    if values.teethFgHex then face.teeth.fgHex = values.teethFgHex end
-    if values.teethGum ~= nil then face.teeth.gum = values.teethGum end
-    if values.teethGumHex then face.teeth.gumHex = values.teethGumHex end
-    if values.teethGumDepth then face.teeth.gumDepth = values.teethGumDepth end
+    for name, value in pairs(values) do
+        local to = FACE_FIELDS[name]
+        if to and (value or (to.evenFalse and value == false)) then
+            local where = to.positioner and face.positioners[to.feature] or face[to.feature]
+            where[to.field] = value
+        end
+    end
 end
 
 -- Update top-level positioners (leg.x, ear.y, nose.t) and faceMagnitude.
