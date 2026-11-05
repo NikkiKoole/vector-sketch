@@ -108,6 +108,11 @@ describe('editor snapshot', function()
                         forceAt = nil
                         lines[#lines + 1] = '# click ' .. part .. ' ' .. k .. ' ' .. tostring(ok2) .. ' ' .. tostring(err2)
                             .. ' ' .. dump(instance.dna, {}, 0)
+                        -- end a frame per click, like the game: without it the whole run was one
+                        -- frame, and the iMac's AMD GL driver aborted in it (docs/MEASURING.md M6)
+                        love.graphics.setCanvas()
+                        love.graphics.present()
+                        love.graphics.setCanvas({ canvas, stencil = true })
                     end
                     love.graphics.setCanvas()
                 end

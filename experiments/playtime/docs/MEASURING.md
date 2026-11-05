@@ -194,3 +194,12 @@ parts (music-theory, skinning's `meshusertVertices`, the polygon modules) run wi
   run the panels in halves (editor_spec's part list) to find which earlier panel sets it up, and count
   live images / canvases (love.graphics.getStats: images, canvases, texturememory) per panel.
   Seen on the way: `mipos` snapshot repeats fine on this machine; `outlines` and `overlay` too.
+  2026-11-05, the M1 Mac mini: the editor snapshot runs through and repeats (two takes identical), so
+  the abort is the iMac's. Two of the open suspects are near impossible in LÖVE 11: a Mesh holds its
+  texture, a Shader the images sent to it, and Lua's `release()` only drops Lua's reference. And GL
+  runs behind: the driver notices a bad command at a later submission, so the call it dies in
+  (printf) needn't be the culprit. Counted in the run: 1 canvas made (no OMP bakes: the editor spec
+  draws no world) and 0 `present()`s: the whole ~20 s run was ONE frame. Now the spec ends a frame
+  per click (setCanvas() / present / setCanvas back; hashes unchanged). NEXT on the iMac:
+  `claudetools/snapshot.sh take a editor`. Runs through: the endless frame was it. Still aborts: the
+  old AMD GL driver; take reference snapshots on the M1.
