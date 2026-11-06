@@ -284,6 +284,23 @@ fade, a sun: the panel's `fades` switch, LS4).
   lit + clay + contact + 3D 44-48 fps (13.0 / 6.8: over a frame, so two physics steps a frame); no clay
   the same. So 20 lit Mipos fit at 60; the 3D shadows' outline pass (~6 ms with 20 Mipos) is what's
   left to win back for 60 with shadows.
+  Shadows every other frame (state.shadowEveryOther, src/shadow-silhouettes.lua: the outlines drawn
+  every second frame and kept in between; a moved or zoomed camera redraws them at once; the panel's
+  'shadows every other frame', on in light-grass-check): 20 lit Mipos + 3D, each twice, draw 29.7 / 28.6
+  ms every frame -> 25.0 / 24.2 every other, ~4.5 ms back. (That run's Mipos were still moving, 312 of
+  322 bodies awake, update ~11 ms, so its totals are higher than the at-rest run's.)
+- [ ] **LS24. Draw once for the screen and the shadows.** The outlines for the shadows are the world
+  drawn a second time (~6 ms with 20 lit Mipos on the phone; every other frame halves it, LS23). The GPU
+  can write two pictures in one pass (several canvases at once, `love.graphics.setCanvas` with a list;
+  a shader writes `love_Canvases[1]`): the scene to the screen and its alpha to the silhouettes, so the
+  second pass costs ~nothing. Every shader the textured world uses (plasticine, hairs, the materials,
+  the default one) would write the second output, and the world would be drawn into a canvas, not
+  straight to the screen. Try first on a small test that LÖVE 11 does it on the phone (GLES), then
+  only if shadows go into real rooms (LS13). Idea, Nikki 2026-11-06: 'note it down'.
+- [ ] **LS25. Only what shows in a shadow.** The outline pass draws every drawable: faces, decals,
+  grass, mouths, small bits that barely change a shadow. Drawing only the bodies, heads and limbs
+  (a filter on the drawable's type in drawTexturedWorld's `only`, or a list per Mipo) makes it cheaper;
+  measure what it saves with 20 Mipos. Idea, Nikki 2026-11-06: 'note it down'.
 - [ ] **LS15. Small ones:** should a new directional light be a sun (not fade) by default; the back
   light on a drawn stone lands on its black outline (reach past it, as the contact shadow does);
   grass on a moving body rebuilds its blades every frame (LITTLE-USED, the grass round).

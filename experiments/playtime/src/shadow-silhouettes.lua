@@ -32,7 +32,14 @@ local function canvasFor(w, h)
     return canvas
 end
 
+-- state.shadowEveryOther: the silhouettes drawn every other frame, kept in between (half their cost,
+-- ~3 ms with 20 lit Mipos on an iPhone SE 2, LIGHT-AND-SHADOW LS23); a thing moving fast trails its
+-- shadow by a frame. A moved or zoomed camera redraws them anyway (the transform is part of the key).
+local frames = 0
 function lib.newFrame()
+    frames = frames + 1
+    local state = require('src.state')
+    if state.shadowEveryOther and frames % 2 == 0 then return end
     key, frameToken = {}, {}
 end
 

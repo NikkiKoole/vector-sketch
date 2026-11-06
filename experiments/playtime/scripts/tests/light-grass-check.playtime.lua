@@ -823,6 +823,7 @@ function s.onUnload()
     state.backdropShadows = nil
     state.projectedShadows = nil
     state.drawSplits = nil
+    state.shadowEveryOther = nil
     local c = look()
     if c.original then
         love.graphics.newSpriteBatch = c.original
@@ -913,6 +914,7 @@ local function everyFrame()
     local lights = c.solid and solidLights(L.wallShadows) or {}
     state.drawSplits = c.solid and GROUND_SPLITS or nil
     local boards = c.solid and c.boardsOn
+    state.shadowEveryOther = not c.shadowsEveryFrame -- half the shadows' cost (LS23), the panel's switch
     placeStones(c)
     local layers = (c.lanes and c.solid)
         and { { z = STONE_DEPTH, only = isStone }, { z = SOLID_DEPTH, only = notStone } } or nil
@@ -1252,6 +1254,8 @@ local function drawPanel(c)
         row()
         local depth = slider('lamp', x, y, -380, 3000, c.lampDepth or LAMP_DEPTH, 'lamp distance', 1)
         if depth then c.lampDepth = depth end
+        row()
+        c.shadowsEveryFrame = not toggle(x, y, not c.shadowsEveryFrame, 'shadows every other frame (cheaper)')
         row()
         local out = slider('sun', x, y, -0.6, 0.6, c.sunOut or SUN_TOWARDS[c.sunTowards or 1], 'sun out of wall')
         if out then c.sunOut = out end
