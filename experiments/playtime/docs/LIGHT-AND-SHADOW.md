@@ -57,7 +57,7 @@ fade, a sun, but the panel can't set 0).
   collision shapes (shape8-dict), so things stand on the drawn stone (spec/contact-shadows_spec.lua).
   Nikki: "its nice" (2026-11-06); it fades out as a thing rises (by design, it's about touching),
   where you still want a shadow: that one belongs on the backdrop, LS7.
-- [ ] **LS7. Cast shadows.** Bodies throwing 2D shadows away from a lamp onto what's behind them.
+- [x] **LS7. Cast shadows.** Bodies throwing 2D shadows away from a lamp onto what's behind them.
   Nikki (2026-11-06): the shadow you still want when the contact shadow has faded (a thing lifted or
   jumping) is this one, on the vertical plane behind: the backdrop.
   Built 2026-11-06, for Nikki to judge: `src/backdrop-shadows.lua`, on while a scene sets
@@ -68,3 +68,4 @@ fade, a sun, but the panel can't set 0).
   throws them down-left (spec/backdrop-shadows_spec.lua). Not yet: a lamp in the middle throwing
   shadows both ways (one direction for the whole scene), and it costs a second textured pass a frame
   (measure on the phone before a real scene uses it).
+  Nikki: "looks nice" (2026-11-06).
