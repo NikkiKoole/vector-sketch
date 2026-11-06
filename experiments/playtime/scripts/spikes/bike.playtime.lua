@@ -7,7 +7,7 @@
 -- The Mipo faces right (src/mipo-facing.lua: facing a side, hips swing forward and knees bend
 -- back), held at the saddle, hands on the bars, torso kept upright on the bike. At the bottom
 -- it's put back at the top for now (a lift is the next step).
--- keys: r: a new Mipo on the bike   p: pause
+-- keys: r: a new Mipo on the bike   w: the next tire picture   p: pause
 
 local s = {}
 
@@ -28,11 +28,13 @@ local function alive(body) return body and not body:isDestroyed() end
 -- ─── The course: a long hill with humps, then flat ───
 
 local function courseHeight(x)
-    -- the end: a short rise to run out on, then flat
-    if x > END_X - 1500 then
-        local base = courseHeight(END_X - 1500)
-        local u = math.min(x - (END_X - 1500), 900)
-        return base - u * u / 900 * 0.35
+    -- the end: flat (the lift's tray waits there), then a short rise to run out on
+    local flatFrom, riseFrom = END_X - 2200, END_X - 700
+    if x > flatFrom then
+        local base = courseHeight(flatFrom)
+        if x <= riseFrom then return base end
+        local u = math.min(x - riseFrom, 700)
+        return base - u * u / 700 * 0.35
     end
     local t = math.max(0, x - START_X)
     -- downhill from the start (a knikkerbaan: it rolls off by itself), humps along the way;
@@ -212,11 +214,11 @@ local function makeBike(inst, x, y)
     local function wheel(wx)
         local w = love.physics.newBody(world, x + wx, y, 'dynamic')
         fixture(w, love.physics.newCircleShape(r), BIKE_DENSITY / 2)
-        love.physics.newRevoluteJoint(bike.frame, w, x + wx, y, false)
-        return w
+        local j = love.physics.newRevoluteJoint(bike.frame, w, x + wx, y, false)
+        return w, j
     end
-    bike.back = wheel(-base / 2)
-    bike.front = wheel(base / 2)
+    bike.back, bike.backJoint = wheel(-base / 2)
+    bike.front, bike.frontJoint = wheel(base / 2)
     return bike
 end
 
@@ -278,8 +280,173 @@ local function placeCrank(inst, bike)
     bike.crankX, bike.crankY = lx + leg * 0.3, ly + leg * 0.72
 end
 
+-- ─── The lift: a tray at the bottom carries bike and rider back up to the start ───
+-- A cable car: the bike rolls onto the tray lying at the bottom and comes to rest; low edges
+-- come up at both ends; the tray (a moving platform, kinematic) rides up, back over the hill and
+-- down to the start, tips forward with its front edge open so the bike rolls off down the hill
+-- again, and goes back the same way.
+
+local LIFT_SPEED = 900          -- along its way, a second
+local HOME_SPEED = 2700         -- empty, back to the bottom: there before the bike rides down
+local LIFT_ACCEL = 1.2          -- how quickly it gets up to speed (1/s): no jerk to tip the rider
+local LIFT_TOP = START_Y - 1100 -- the height it travels back at
+local DOCK_X = END_X - 1450     -- where the tray waits, on the flat at the bottom
+local TIP = 0.2                 -- radians the tray tips forward at the start
+local SETTLE = 0.8              -- seconds the bike rests on the tray before it goes
+local CATCH_SPEED = 400         -- slower than this, fully on the tray, its edges come up
+
+local function destroyLift()
+    local c = check()
+    if c.lift and alive(c.lift.body) then c.lift.body:destroy() end
+    c.lift = nil
+end
+
+-- the tray, as long as the bike plus room; its body's origin is the middle of its top
+local function makeLift(bike)
+    destroyLift()
+    local L = bike.base + bike.r * 2 + bike.r * 1.5
+    local T, H = bike.r * 0.25, bike.r * 0.9 -- plate thickness, edge height
+    local body = love.physics.newBody(world, DOCK_X, courseHeight(DOCK_X), 'kinematic')
+    local plate = love.physics.newFixture(body, love.physics.newRectangleShape(0, T / 2, L, T), 1)
+    plate:setFriction(FRICTION)
+    local function lip(x)
+        local f = love.physics.newFixture(body, love.physics.newRectangleShape(x, -H / 2, T, H), 1)
+        f:setSensor(true) -- open while waiting
+        return f
+    end
+    local startX = START_X - L / 2 - 80
+    local lift = { body = body, L = L, T = T, H = H, phase = 'wait', back = lip(-L / 2), front = lip(L / 2),
+        vx = 0, vy = 0,
+        carry = { { DOCK_X, LIFT_TOP }, { startX, LIFT_TOP }, { startX, courseHeight(startX) } },
+        home = { { startX, LIFT_TOP }, { DOCK_X, LIFT_TOP }, { DOCK_X, courseHeight(DOCK_X) } } }
+    check().lift = lift
+    return lift
+end
+
+-- the wheels held (a joint motor at zero speed), as a lift clamps a bike: free wheels rolled
+-- against the tray's edge when it started sideways and hopped over it
+local function brake(bike, on)
+    for _, joint in ipairs({ bike.backJoint, bike.frontJoint }) do
+        if joint and not joint:isDestroyed() then
+            joint:setMotorEnabled(on)
+            joint:setMotorSpeed(0)
+            joint:setMaxMotorTorque(on and 1e9 or 0)
+        end
+    end
+end
+
+-- Nothing solid where the tray's edges come up? An edge turned solid through a wheel or the
+-- rider's foot shoved them apart with a jolt: the bike flew back up the hill, the rider dazed.
+local function lipsClear(lift)
+    local clear = true
+    for _, lip in ipairs({ lift.back, lift.front }) do
+        local x1, y1, x2, y2 = lip:getBoundingBox()
+        world:queryBoundingBox(x1, y1, x2, y2, function(fixture)
+            if fixture:getBody() ~= lift.body and not fixture:isSensor()
+                and fixture:getBody():getType() ~= 'static' then
+                clear = false
+                return false
+            end
+            return true
+        end)
+    end
+    return clear
+end
+
+local function setLips(lift, closed)
+    lift.back:setSensor(not closed)
+    lift.front:setSensor(not closed)
+end
+
+-- along the path a little each frame; true once at its end
+local function follow(lift, path, dt, topSpeed)
+    local body = lift.body
+    local target = path[lift.step]
+    if not target then return true end
+    local x, y = body:getPosition()
+    local dx, dy = target[1] - x, target[2] - y
+    local d = math.sqrt(dx * dx + dy * dy)
+    -- slow down near the end of the path, so it arrives gently
+    local last = lift.step == #path
+    topSpeed = topSpeed or LIFT_SPEED
+    local speed = last and math.min(topSpeed, d * 2) or topSpeed
+    local wantX, wantY = 0, 0
+    if d > 1 then wantX, wantY = dx / d * speed, dy / d * speed end
+    local k = math.min(1, dt * LIFT_ACCEL)
+    lift.vx, lift.vy = lift.vx + (wantX - lift.vx) * k, lift.vy + (wantY - lift.vy) * k
+    body:setLinearVelocity(lift.vx, lift.vy)
+    if d < (last and 3 or 60) then lift.step = lift.step + 1 end
+    if lift.step > #path then
+        body:setLinearVelocity(0, 0)
+        lift.vx, lift.vy = 0, 0
+        return true
+    end
+    return false
+end
+
+-- both wheels between the tray's edges (the middle alone wasn't enough: a front wheel stood on
+-- the front edge as it came up, and the bike fell off on the way)
+local function bikeOnTray(lift, bike)
+    local lx = lift.body:getPosition()
+    local fx = bike.frame:getPosition()
+    return math.abs(fx - lx) < lift.L / 2 - bike.base / 2 - bike.r - lift.T
+end
+
+local function updateLift(lift, bike, dt)
+    local body = lift.body
+    if lift.phase == 'wait' then
+        -- fully on and slow-ish: the edges come up and catch it rolling back and forth
+        local vx = bike.frame:getLinearVelocity()
+        if bikeOnTray(lift, bike) and math.abs(vx) < CATCH_SPEED and lipsClear(lift) then
+            setLips(lift, true)
+            lift.phase, lift.still = 'catch', 0
+        end
+    elseif lift.phase == 'catch' then
+        -- at rest a moment: off it goes
+        local vx = bike.frame:getLinearVelocity()
+        lift.still = math.abs(vx) < 40 and lift.still + dt or 0
+        if lift.still > SETTLE then
+            brake(bike, true)
+            lift.phase, lift.step, lift.still = 'carry', 1, 0
+        end
+    elseif lift.phase == 'carry' then
+        if follow(lift, lift.carry, dt) then lift.phase = 'tip' end
+    elseif lift.phase == 'tip' then
+        -- forward (clockwise), its front edge open, the wheels free: the bike rolls off downhill
+        lift.front:setSensor(true)
+        brake(bike, false)
+        if body:getAngle() < TIP then
+            body:setAngularVelocity(0.6)
+        else
+            body:setAngularVelocity(0)
+            local lx = body:getPosition()
+            if bike.frame:getPosition() > lx + lift.L / 2 + bike.base then lift.phase = 'level' end
+        end
+    elseif lift.phase == 'level' then
+        if body:getAngle() > 0 then
+            body:setAngularVelocity(-0.6)
+        else
+            body:setAngularVelocity(0)
+            body:setAngle(0)
+            setLips(lift, false)
+            lift.phase, lift.step = 'home', 1
+        end
+    elseif lift.phase == 'home' then
+        -- not down onto the bike: if it's at the bottom already, wait above till it rolls clear
+        local fx = bike.frame:getPosition()
+        local bikeBelow = math.abs(fx - DOCK_X) < lift.L / 2 + bike.base
+        if lift.step == #lift.home and bikeBelow then
+            lift.vx, lift.vy = 0, 0
+            body:setLinearVelocity(0, 0)
+        elseif follow(lift, lift.home, dt, HOME_SPEED) then
+            lift.phase = 'wait'
+        end
+    end
+end
+
 local function removeRide()
     local c = check()
+    destroyLift()
     for _, j in ipairs(c.joints or {}) do
         if not j:isDestroyed() then j:destroy() end
     end
@@ -314,6 +481,7 @@ local function newRide()
     legsPedal(inst)
     c.mipo, c.bike = inst, bike
     c.joints = holdOn(inst, bike)
+    makeLift(bike)
 end
 
 -- back to the top: the bike and its rider moved as one (the lift comes next)
@@ -355,6 +523,77 @@ local function legPicture(inst)
             if e and e.ompImage and e.main and not tostring(e.main.bgURL):find('hair') then return e.ompImage end
         end
     end
+end
+
+-- ─── The wheel, baked once into a picture that's drawn turning ───
+-- The tire: a Mipo leg picture baked as an OMP (outline, mask) in rubber colours, laid round as
+-- a ribbon (leg-05's ladder rungs read as tread, as the garden worm's rings); w cycles the six.
+-- The spokes and hub: Nikki's crayon strokes (drawn-stroke.lua).
+
+local STROKE = love.filesystem.load('scripts/spikes/drawn-stroke.lua')()
+local RUBBER = { 0.26, 0.24, 0.23 }
+local INK = { 0.09, 0.08, 0.08 }
+local SPOKE_COUNT = 12
+local LEG_PICTURES = 6
+
+local function bakeTirePicture(n)
+    local url = string.format('textures/mipo/leg/leg-%02d', n)
+    local blank = love.graphics.newImage(love.image.newImageData(1, 1))
+    local imageData = ompBake.makeTexturedCanvas(love.graphics.newImage(url .. '.png'),
+        love.graphics.newImage(url .. '-mask.png'), RUBBER, 1, blank, INK, 0, 0, 1, 1, 0, 0, INK, 1, 1, 1)
+    local image = love.graphics.newImage(imageData)
+    imageData:release()
+    return image
+end
+
+-- tire, spokes and hub on one canvas, the wheel's middle at its middle
+local function bakeWheel(r, tirePicture)
+    local size = math.ceil(r * 2 + 8)
+    local canvas = love.graphics.newCanvas(size, size)
+    local m = size / 2
+    love.graphics.push('all')
+    love.graphics.setCanvas(canvas)
+    love.graphics.clear(0, 0, 0, 0)
+    love.graphics.origin()
+    local inner = r * (1 - TIRE)
+    -- spokes and the hub's rim, crayon
+    local lines = {}
+    for i = 1, SPOKE_COUNT do
+        local a = i / SPOKE_COUNT * math.pi * 2 + (i % 2) * 0.05 -- a little uneven, hand-made
+        lines[#lines + 1] = { pts = { { m + math.cos(a) * r * 0.1, m + math.sin(a) * r * 0.1 },
+            { m + math.cos(a) * inner, m + math.sin(a) * inner } }, loop = false, width = math.max(3, r * 0.035) }
+    end
+    local hub = {}
+    for i = 0, 9 do
+        local a = i / 10 * math.pi * 2
+        hub[#hub + 1] = { m + math.cos(a) * r * 0.11, m + math.sin(a) * r * 0.11 }
+    end
+    lines[#lines + 1] = { pts = hub, loop = true, width = math.max(3, r * 0.05) }
+    love.graphics.setColor(INK[1], INK[2], INK[3], 0.85)
+    for _, mesh in ipairs(STROKE.meshes(lines, 0.6, 0, true)) do love.graphics.draw(mesh) end
+    -- the tire
+    local verts = {}
+    for i = 0, TIRE_STEPS do
+        local a = i / TIRE_STEPS * math.pi * 2
+        local cs, sn = math.cos(a), math.sin(a)
+        local t = (i / TIRE_STEPS * TIRE_REPEAT) % 2
+        local v = TIRE_MIDDLE[1] + (TIRE_MIDDLE[2] - TIRE_MIDDLE[1]) * (t < 1 and t or 2 - t)
+        verts[#verts + 1] = { m + cs * r, m + sn * r, 0, v }
+        verts[#verts + 1] = { m + cs * inner, m + sn * inner, 1, v }
+    end
+    local mesh = love.graphics.newMesh(verts, 'strip', 'static')
+    mesh:setTexture(tirePicture)
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.draw(mesh)
+    love.graphics.pop()
+    return canvas
+end
+
+local function drawWheel(wheel, image)
+    local x, y = wheel:getPosition()
+    local w, h = image:getDimensions()
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.draw(image, x, y, wheel:getAngle(), 1, 1, w / 2, h / 2)
 end
 
 local tireMesh
@@ -428,6 +667,25 @@ local function drawCourse(ground)
     end
 end
 
+-- the cable overhead, the rope down to the tray, the tray and its edges
+local function drawLift(lift)
+    local body = lift.body
+    local x, y = body:getPosition()
+    local cableY = LIFT_TOP - 900
+    love.graphics.setColor(0.2, 0.18, 0.16, 0.8)
+    love.graphics.setLineWidth(6)
+    love.graphics.line(START_X - 800, cableY, END_X - 1000, cableY)
+    love.graphics.line(x, cableY, x, y - lift.H)
+    love.graphics.setColor(0.45, 0.6, 0.75)
+    for _, fixture in ipairs(body:getFixtures()) do
+        if not (fixture:isSensor() and fixture ~= lift.back and fixture ~= lift.front) then
+            local alpha = fixture:isSensor() and 0.35 or 1
+            love.graphics.setColor(0.45, 0.6, 0.75, alpha)
+            love.graphics.polygon('fill', body:getWorldPoints(fixture:getShape():getPoints()))
+        end
+    end
+end
+
 -- the crank arm and the two pedals
 local function drawCrank(bike)
     if not bike.crankX then return end
@@ -453,10 +711,16 @@ function s.drawBelow()
         state.world.debugDrawBodies = false
     end
     if alive(c.ground) then drawCourse(c.ground) end
+    if c.lift and alive(c.lift.body) then drawLift(c.lift) end
     if c.bike and alive(c.bike.frame) then
         local picture = c.mipo and legPicture(c.mipo)
-        drawTire(c.bike.back, c.bike.r, picture)
-        drawTire(c.bike.front, c.bike.r, picture)
+        if c.wheelImage then
+            drawWheel(c.bike.back, c.wheelImage)
+            drawWheel(c.bike.front, c.wheelImage)
+        else
+            drawTire(c.bike.back, c.bike.r, picture)
+            drawTire(c.bike.front, c.bike.r, picture)
+        end
         drawFrame(c.bike)
         drawCrank(c.bike)
     end
@@ -485,6 +749,7 @@ function s.onUnload()
     local c = state.bikeSpike
     if not c then return end
     removeRide()
+    destroyLift()
     if alive(c.ground) then c.ground:destroy() end
     c.ground = nil
 end
@@ -501,16 +766,25 @@ function s.update()
     local torsoKeep = mipoActions.getKeepAngle(c.mipo.parts.torso1)
     if torsoKeep then torsoKeep.angle = math.deg(frame:getAngle()) end
     -- the camera rides along (until you touch, drag or zoom)
-    if not (love.mouse.isDown(1, 2, 3) or #love.touch.getTouches() > 0) then
+    if not (c.noCam or love.mouse.isDown(1, 2, 3) or #love.touch.getTouches() > 0) then
         cam:setScale(0.35)
         local tx, ty = cam:getTranslation()
         cam:setTranslation(tx + (fx - tx) * 0.1, ty + (fy - 250 - ty) * 0.1)
     end
-    -- at the bottom and nearly stopped: up to the top again
-    local vx = frame:getLinearVelocity()
-    if fx > END_X - 1200 and math.abs(vx) < 30 then
-        c.stillFor = (c.stillFor or 0) + love.timer.getDelta()
-        if c.stillFor > 1 then
+    -- the wheel picture, baked once per bike size and tire picture (a bake draws to canvases)
+    local key = math.floor(c.bike.r) .. ':' .. (c.tirePicture or 5)
+    if c.wheelFor ~= key then
+        c.wheelImage = bakeWheel(c.bike.r, bakeTirePicture(c.tirePicture or 5))
+        c.wheelFor = key
+    end
+    local dt = math.min(love.timer.getDelta(), 0.05)
+    if c.lift and alive(c.lift.body) then updateLift(c.lift, c.bike, dt) end
+    -- rescue: stuck somewhere off the lift for long (fallen over, wedged): back to the top
+    local vx, vy = frame:getLinearVelocity()
+    local riding = c.lift and c.lift.phase ~= 'wait'
+    if not riding and vx * vx + vy * vy < 30 * 30 and not (c.lift and bikeOnTray(c.lift, c.bike)) then
+        c.stillFor = (c.stillFor or 0) + dt
+        if c.stillFor > 8 then
             c.stillFor = 0
             backToTop()
         end
@@ -521,6 +795,11 @@ end
 
 function s.onKeyPress(key)
     if key == 'r' then newRide() end
+    if key == 'w' then -- the next leg picture as the tire
+        local c = check()
+        c.tirePicture = (c.tirePicture or 5) % LEG_PICTURES + 1
+        c.wheelImage, c.wheelFor = nil, nil
+    end
     if key == 'p' then worldState.paused = not worldState.paused end
 end
 

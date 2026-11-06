@@ -1,6 +1,6 @@
 # Bike — a Mipo riding down a hill, a knikkerbaan to watch
 
-status: idea
+status: parked — Nikki 2026-11-06: "still don't like it" (nor the original downhill); other vehicles suit Mipos better: the soapbox next (SOAPBOX.md). The course, the lift and the rider code are reusable
 
 A Mipo on a bike rolling down a hill by itself: the child just watches it go, like a
 knikkerbaan (marble run). No buttons in the game (Nikki 2026-11-06: "def no in game buttons
@@ -22,8 +22,15 @@ After physics-testbed's downhill (`experiments/physics-testbed`, `docs/REBUILD-I
   room behind. The legs follow within ~3 degrees.
 - **Drawn**: tires as a ribbon of the rider's own composed leg picture (its middle part,
   mirrored back and forth: the rounded ends left gaps), spokes, a tube frame, the course line.
-- **The course**: one long downhill with humps, a rise at the end to run out on; at the bottom
-  the bike is put back at the top (for now).
+- **The course**: one long downhill with humps, a flat at the bottom, a rise to run out on.
+- **The lift** (K1): a cable car. The bike rolls onto a tray lying on the flat; fully on and
+  slow-ish, the tray's edges come up and catch it (only when nothing overlaps them: an edge
+  turned solid through a wheel or foot shoved them apart, the bike flew back up the hill); at
+  rest the wheels are braked (free wheels rolled against the edge when it started sideways and
+  hopped over), the tray rides up, back over the hill and down at the start (gentle starts),
+  tips forward with its front edge open and the brakes off: the bike rolls off downhill. Empty,
+  it hurries home (3x) and waits above the bottom if the bike is already there. A bike stuck
+  off the lift for 8 s is put back at the top (rescue).
 
 ## Tried
 
@@ -35,7 +42,7 @@ After physics-testbed's downhill (`experiments/physics-testbed`, `docs/REBUILD-I
 
 ## Next
 
-- [ ] **K1. The lift.** At the bottom a lift carries bike and rider up to the start again, so the
-  knikkerbaan runs on its own (instead of being put back).
+- [x] **K1. The lift.** At the bottom a lift carries bike and rider up to the start again, so the
+  knikkerbaan runs on its own: two loops in a row in the test window, 2026-11-06.
 - [ ] **K2. The course as a knikkerbaan**: pieces, drops, a jump; more than one rider.
 - [ ] **K3. The look**: a drawn bike (Nikki's drawing), the ground and sky (WORLD-BUILDING).
