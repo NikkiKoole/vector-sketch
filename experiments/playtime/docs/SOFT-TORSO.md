@@ -57,6 +57,7 @@ ears) only springs in rotation. Two distance joints in a V are real springs in b
   Editor: a softness slider over the spring and damping ones. A scene round trip (save data,
   load) keeps the lobes on their bands, their springs and the softness.
 
-Open: on a hard landing the lobes go as far as the rope lets them (~24 px at scale 0.3); more
-slack if that reads as a stop. The drawn jiggle doesn't combine with a spine. Placements judged by
+Made subtler (Nikki, 2026-11-06, "happy for now"): firm 8 Hz / 0.6, jelly 3 Hz / 0.15, softness
+0.5 = 5.5 Hz / 0.38, rope slack 0.3 lobe radii; a drop swings ~14 px (was ~25) and settles in ~0.5 s.
+Open: The drawn jiggle doesn't combine with a spine. Placements judged by
 numbers only for shapes 2 and 16.

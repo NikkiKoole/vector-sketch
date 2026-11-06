@@ -30,7 +30,7 @@ lib.columns = 8        -- the torso picture's grid with lobes: finer across than
 lib.rows = 12
 lib.inner = 1.0        -- grid points within this many lobe radii follow the lobe fully
 lib.outer = 2.2        -- ... and from here on not at all
-lib.slack = 0.5        -- the rope: how far (lobe radii) a lobe can go from its rest place
+lib.slack = 0.3        -- the rope: how far (lobe radii) a lobe can go from its rest place
 lib.springLength = 1.5 -- the V's springs, in lobe radii
 lib.splitAt = 0.45     -- an end is wide (two lobes) when its corners are this much of the width apart
 lib.cornerOff = 0.15   -- a corner is at least this much of the width off the middle
@@ -243,8 +243,8 @@ function lib.makeSprings(instance, partName, torsoBody, lobeBody)
             collideConnected = false,
             offsetA = { x = x + sign * 0.6 * length, y = y + (part.inward or -1) * 0.8 * length },
             offsetB = { x = 0, y = 0 },
-            frequency = units.rate(creation.lobeSpring or 2.5),
-            dampingRatio = creation.lobeDamping or 0.2,
+            frequency = units.rate(creation.lobeSpring or 5.5),
+            dampingRatio = creation.lobeDamping or 0.38,
             label = 'lobe-spring',
         })
     end
@@ -253,8 +253,8 @@ end
 -- Softness (creation.softness, 0 firm .. 1 jelly) as the springs: firm is quick and settles at
 -- once, jelly slow and wobbling on. Written into lobeSpring and lobeDamping (what the springs
 -- read; the editor can still fine-tune those).
-lib.firm = { spring = 6, damping = 0.5 }
-lib.jelly = { spring = 1.5, damping = 0.08 }
+lib.firm = { spring = 8, damping = 0.6 }
+lib.jelly = { spring = 3, damping = 0.15 }
 function lib.applySoftness(creation, softness)
     softness = math.max(0, math.min(1, softness or creation.softness or 0.5))
     creation.softness = softness
@@ -271,8 +271,8 @@ function lib.setSprings(instance)
         if part and part.body and not part.body:isDestroyed() then
             for _, joint in ipairs(part.body:getJoints()) do
                 if joint:getType() == 'distance' then
-                    joint:setFrequency(units.rate(creation.lobeSpring or 2.5))
-                    joint:setDampingRatio(creation.lobeDamping or 0.2)
+                    joint:setFrequency(units.rate(creation.lobeSpring or 5.5))
+                    joint:setDampingRatio(creation.lobeDamping or 0.38)
                 end
             end
         end

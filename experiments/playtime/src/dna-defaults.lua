@@ -98,8 +98,8 @@ lib.creation = {
     -- lobes (src/torso-lobes.lua): soft round bodies at the torso's ends, found from its shape
     torsoLobes = false,
     lobeDepth = 0.35,  -- part of the torso's height each end's lobes take
-    lobeSpring = 2.5,  -- Hz of their springs
-    lobeDamping = 0.2, -- of their springs
+    lobeSpring = 5.5,  -- Hz of their springs (softness 0.5)
+    lobeDamping = 0.38, -- of their springs
     softness = 0.5,    -- 0 firm .. 1 jelly: sets lobeSpring and lobeDamping (torsoLobes.applySoftness)
     -- jiggle (src/torso-jiggle.lua): the torso picture soft, drawn only
     torsoJiggle = false,

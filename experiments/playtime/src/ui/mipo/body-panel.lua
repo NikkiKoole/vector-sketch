@@ -102,9 +102,9 @@ local function drawTorsoRows(instance, creation, x, y, ROW)
             torsoLobes.setSprings(instance)
         end
         y = y + ROW
-        local spring = ui.sliderWithInput('mipo_lobeSpring', x, y, 120, 0.5, 8, creation.lobeSpring or 2.5)
+        local spring = ui.sliderWithInput('mipo_lobeSpring', x, y, 120, 0.5, 10, creation.lobeSpring or 5.5)
         ui.alignedLabel(x, y, '  lobe spring (Hz)')
-        local damping = ui.sliderWithInput('mipo_lobeDamping', x, y + ROW, 120, 0, 1, creation.lobeDamping or 0.2)
+        local damping = ui.sliderWithInput('mipo_lobeDamping', x, y + ROW, 120, 0, 1, creation.lobeDamping or 0.38)
         ui.alignedLabel(x, y + ROW, '  lobe damping')
         if (spring and spring ~= creation.lobeSpring) or (damping and damping ~= creation.lobeDamping) then
             creation.lobeSpring = spring or creation.lobeSpring
