@@ -258,6 +258,11 @@ fade, a sun: the panel's `fades` switch, LS4).
   light turns from the moon's way to the sun's by their shares through 'from above', its strength from
   their sum. The moon is up 17:00-7:00 (overlapping the sun), both fade over ~1.5 h near the horizon,
   the sun's 3D shadows fade below 0.3 of its height. ; and ' step five minutes.
+  Then extra dark around dusk and dawn (Nikki): the panel's sky light strength and the sun and moon's
+  light for the wall shared one name (c.skyStrength), so the sky light went out with the sun: the total
+  light (sun + moon + sky) fell to 0.04 at 18:15 and 0.29 at 6:00, between the day's 1.9 and the night's
+  0.45. Own name now (c.skyLightStrength): the total slides from 1.98 by day to 0.74 at night, never
+  below, the sky light carrying the twilight.
   Not yet: within a lane one depth (a Mipo's own parts, LS20) (per-thing depth,
   LS16/LS18), nothing on the floor in front of the things, the same cost as the wall shadows (LS12).
   Nikki: "I like where we are with the light" (2026-11-06).

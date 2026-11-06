@@ -794,7 +794,7 @@ local function applyTime()
     end
     setLight('turning lamp', c.circling and CIRCLING_COLOUR or 'fff2d9ff', c.circling and 1.4 or 0)
     -- the panel's 'sky light strength' (1.3 to start: the Mipos were dark by day)
-    setLight('sky light', L.skyLight[1] .. 'ff', c.skyOff and 0 or L.skyLight[3] * (c.skyStrength or SKY_STRENGTH))
+    setLight('sky light', L.skyLight[1] .. 'ff', c.skyOff and 0 or L.skyLight[3] * (c.skyLightStrength or SKY_STRENGTH))
     local _, skyExtra = lightOf('sky light')
     if skyExtra then skyExtra.groundHex = L.skyLight[2] .. 'ff' end
     -- The back light and the wall's relief come from the sun and the moon together, each by how strong
@@ -1236,8 +1236,10 @@ local function drawPanel(c)
         local ms = slider('mipoSwing', x, y, 0, 0.6, c.mipoSwing or MIPO_SWING, 'Mipos: swing')
         if ms then c.mipoSwing = ms end
         row()
-        local sk = slider('sky', x, y, 0, 2.5, c.skyStrength or SKY_STRENGTH, 'sky light strength')
-        if sk then c.skyStrength = sk end
+        -- (its own name: it shared c.skyStrength with the sun and moon's light for the wall, so the sky light
+        -- went out with the sun at dusk and dawn, Nikki: "extra dark around dusk and dawn")
+        local sk = slider('sky', x, y, 0, 2.5, c.skyLightStrength or SKY_STRENGTH, 'sky light strength')
+        if sk then c.skyLightStrength = sk end
         row()
         if stepper(x, y, COL_W - 30, 'wall: ' .. GRITS[c.grit or 2].name) then c.grit = (c.grit or 2) % #GRITS + 1 end
         row()
