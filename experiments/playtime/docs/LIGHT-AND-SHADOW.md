@@ -194,7 +194,15 @@ fade, a sun: the panel's `fades` switch, LS4).
   One floor per scene: the dollhouse (storeys) leaves it unset and full there is shadows + clay. Seen in
   the kitchen: clay, contact shadows, the Mipo's 3D shadow along the floor and up the wall.
   Not moved in (scene-specific, left in light-grass-check): lanes, boards, the lamps' glow, the day's
-  clock. Next: measure each level on the phone (`./playtime.sh bench device`, a room of ~20 Mipos);
+  clock.
+  **Measured (2026-11-06, iPhone SE 2, the kitchen with 20 Mipos, floor under them, draw p50 over three
+  runs, ±1.5 ms between runs):** off 3.7 ms (frame 16.7, 60 fps); lit 8.5-10 (frame 16.7-17.2, about 60);
+  shadows 11-13 (frame 19-22, ~46-50 fps); full ~11 (frame 18-20, ~50). The first lit run is dearer
+  (14 ms: every Mipo picture's roundness baked the first time). So the steps aren't priced evenly: off ->
+  lit is the big one (+5-6 ms, ~100 parts lit one by one), the shadows +1-3 (every other frame), full
+  ~nothing more (clay is cheap, the 3D shadows share the outline pass). With 20 Mipos only off and lit
+  hold 60. Slow frames also make the physics catch up (1.4 -> 2 steps a frame). The lever: lighting a
+  part for less (its settings sent once, not every frame: setSurfaceShader's per-part sends). Next: measure each level on the phone (`./playtime.sh bench device`, a room of ~20 Mipos);
   then the details behind the button's arrow (time of day, which wall, a floor picker drawn on stage).
 - [x] **LS14. A lamp's wall shadows both ways.** Now one direction per scene (from the sun or moon): a
   lamp in a room's middle should throw shadows away from it on both sides, which needs a pass per
