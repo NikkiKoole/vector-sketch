@@ -49,6 +49,10 @@ local STILL_FOR = 6       -- seconds stopped outside the hoist: nudged along the
 local DEPTH_SHRINK = 0.16
 local DEPTH_HAZE = 0.4
 local VANISH_X, VANISH_Y = 950, 1000
+-- the cart drawn as a box in 3D: depth 1 is this far back (px), which makes the shrink a
+-- perspective with the eye at VANISH, DEPTH_Z / DEPTH_SHRINK in front of the screen
+local DEPTH_Z = 600
+local CART_WIDTH = 110    -- across, into the screen (Box2D has only its length and height)
 
 local COLORS = {
     { 0.85, 0.25, 0.2 }, { 0.2, 0.45, 0.85 }, { 0.95, 0.75, 0.2 }, { 0.25, 0.65, 0.35 },
@@ -86,7 +90,7 @@ local WAYPOINTS = {
     { 1900, 1900, 'B', r = 300 }, -- and down, behind the run-in
     { 1900, 2700, 'B', drive = 'brake' }, -- the run-out, braked
     { 1000, 2700, 'B', drive = 'hoist' }, -- the riser, behind the zigzag, crossing it
-    { 1000, -800, 'B' },      -- over the top, back to the left, behind
+    { 1000, -800, 'B', roll = 1 }, -- over the top, back to the left, behind: a corkscrew
     { -300, -650, 'B' },
     { -300, -325, 'A' },      -- halfway down the drop: to the front again
 }
@@ -99,7 +103,9 @@ local WAYPOINTS = {
 local function cornerPoints()
     local pts = {}
     local n = #WAYPOINTS
-    local function add(x, y, w, drive) pts[#pts + 1] = { x = x, y = y, layer = w[3], drive = drive } end
+    local function add(x, y, w, drive, roll)
+        pts[#pts + 1] = { x = x, y = y, layer = w[3], drive = drive, roll = roll or 0 }
+    end
     -- each corner's arc: from where it leaves the stretch before to where it joins the next
     local arcs = {}
     for i = 1, n do
@@ -144,7 +150,10 @@ local function cornerPoints()
         local nextArc = arcs[i % n + 1]
         local dx, dy = nextArc.x0 - arc.x1, nextArc.y0 - arc.y1
         local count = math.max(1, math.floor(math.sqrt(dx * dx + dy * dy) / 5))
-        for k = 1, count - 1 do add(arc.x1 + dx * k / count, arc.y1 + dy * k / count, w, w.drive) end
+        for k = 1, count - 1 do
+            -- a stretch with roll = n turns the cart round n times along it (drawn only: a corkscrew)
+            add(arc.x1 + dx * k / count, arc.y1 + dy * k / count, w, w.drive, (w.roll or 0) * 2 * math.pi * k / count)
+        end
     end
     return pts
 end
@@ -168,7 +177,7 @@ local function resample(pts, step)
         local a, b = pts[j], pts[j % n + 1]
         local t = (d - cum[j]) / math.max(1e-9, cum[j + 1] - cum[j])
         out[#out + 1] = { x = a.x + (b.x - a.x) * t, y = a.y + (b.y - a.y) * t, s = d,
-            layer = a.layer, drive = a.drive }
+            layer = a.layer, drive = a.drive, roll = a.roll } -- roll not blended: it wraps at 2 pi
     end
     -- tangents (central difference) and normals (to the right of travel: y down, so (-ty, tx))
     local m = #out
@@ -578,35 +587,143 @@ local function drawMarble(m, depth)
     love.graphics.circle('fill', x - r * 0.35, y - r * 0.35, r * 0.18)
 end
 
--- the cart flat for now (TR5 turns it into a box in 3D): wheels, then the body over them
-local function drawCart(m, depth)
-    local k = 1 - DEPTH_SHRINK * depth
-    for _, wheel in ipairs(m.wheels) do
-        local wx, wy = wheel:getPosition()
-        local x, y = project(wx, wy, depth)
-        love.graphics.setColor(hazed({ 0.22, 0.2, 0.2 }, depth, 1))
-        love.graphics.circle('fill', x, y, WHEEL_R * k)
-        local a = wheel:getAngle()
-        love.graphics.setColor(hazed({ 0.7, 0.7, 0.7 }, depth, 1))
-        love.graphics.setLineWidth(3 * k)
-        love.graphics.line(x, y, x + math.cos(a) * WHEEL_R * 0.8 * k, y + math.sin(a) * WHEEL_R * 0.8 * k)
+-- the cart as a box in 3D (TR5). Its frame: forward from the body's angle plus how fast the
+-- track's depth changes there (it turns into the screen where the layer changes), up from the
+-- body's up with the forward part taken out, then the track's roll about forward (corkscrew).
+-- Corners projected like the layers (smaller toward the vanishing point); only the faces turned
+-- toward the eye are drawn (a convex box: they never overlap), shaded from the light. Box2D's box
+-- stays flat: drawn turned it's shorter, physics doesn't notice (TRACKS.md).
+local EYE_Z = -DEPTH_Z / DEPTH_SHRINK
+local LIGHT3 = { -0.45, -0.75, -0.5 } -- toward the light: up, left, toward us
+do
+    local l = math.sqrt(LIGHT3[1] ^ 2 + LIGHT3[2] ^ 2 + LIGHT3[3] ^ 2)
+    LIGHT3 = { LIGHT3[1] / l, LIGHT3[2] / l, LIGHT3[3] / l }
+end
+
+local function project3(x, y, z)
+    local k = 1 - DEPTH_SHRINK * z / DEPTH_Z
+    return VANISH_X + (x - VANISH_X) * k, VANISH_Y + (y - VANISH_Y) * k
+end
+
+local function norm3(x, y, z)
+    local l = math.sqrt(x * x + y * y + z * z)
+    return x / l, y / l, z / l
+end
+
+-- the cart's frame: centre, forward, up and side (side = forward x up)
+local function cartFrame(c, m)
+    local line, n = c.track.line, #c.track.line
+    local i = m.index
+    local p = line[i]
+    local ahead, behind = line[(i + 2) % n + 1], line[(i - 4) % n + 1]
+    local dDepth = (ahead.depth - behind.depth) / (6 * STEP) -- per px along the track
+    local x, y = m.body:getPosition()
+    local a = m.body:getAngle()
+    local fx, fy = math.cos(a), math.sin(a)
+    -- the track's depth change, the way the cart points
+    local dz = dDepth * DEPTH_Z * ((fx * p.tx + fy * p.ty) >= 0 and 1 or -1)
+    fx, fy, dz = norm3(fx, fy, dz)
+    local ux, uy, uz = math.sin(a), -math.cos(a), 0
+    local d = ux * fx + uy * fy + uz * dz
+    ux, uy, uz = norm3(ux - d * fx, uy - d * fy, uz - d * dz)
+    local sx, sy, sz = fy * uz - dz * uy, dz * ux - fx * uz, fx * uy - fy * ux
+    local cr, sr = math.cos(p.roll or 0), math.sin(p.roll or 0)
+    ux, uy, uz, sx, sy, sz =
+        ux * cr + sx * sr, uy * cr + sy * sr, uz * cr + sz * sr,
+        sx * cr - ux * sr, sy * cr - uy * sr, sz * cr - uz * sr
+    return { x = x, y = y, z = p.depth * DEPTH_Z, f = { fx, fy, dz }, u = { ux, uy, uz }, s = { sx, sy, sz },
+        depth = p.depth }
+end
+
+-- a point at (along, up, side) in the cart's frame, in the world
+local function at(fr, a, b, cc)
+    return fr.x + a * fr.f[1] + b * fr.u[1] + cc * fr.s[1],
+        fr.y + a * fr.f[2] + b * fr.u[2] + cc * fr.s[2],
+        fr.z + a * fr.f[3] + b * fr.u[3] + cc * fr.s[3]
+end
+
+-- does the side of the frame with this normal face the eye, at this point?
+local function facing(nx, ny, nz, px, py, pz)
+    return nx * (px - VANISH_X) + ny * (py - VANISH_Y) + nz * (pz - EYE_Z) < 0
+end
+
+-- a flat shape in the cart's frame: points as {along, up, side}, filled with a colour shaded by n
+local function quad3(fr, pts, col, n)
+    local flat = {}
+    for _, q in ipairs(pts) do
+        local x, y, z = at(fr, q[1], q[2], q[3])
+        flat[#flat + 1], flat[#flat + 2] = project3(x, y, z)
     end
-    local body = m.body
-    local wx, wy = body:getPosition()
-    local x, y = project(wx, wy, depth)
-    love.graphics.push()
-    love.graphics.translate(x, y)
-    love.graphics.rotate(body:getAngle())
-    love.graphics.scale(k)
-    local hw, hh = CART_LENGTH / 2, CART_HALF_HEIGHT + 6
-    love.graphics.setColor(hazed(CART_WOOD, depth, 1))
-    love.graphics.rectangle('fill', -hw, -hh, 2 * hw, 2 * hh, 10, 10)
-    love.graphics.setColor(hazed(m.color, depth, 1))
-    love.graphics.rectangle('fill', -hw, -hh * 0.25, 2 * hw, hh * 0.5)
-    love.graphics.setColor(hazed(CART_DARK, depth, 1))
-    love.graphics.setLineWidth(5)
-    love.graphics.rectangle('line', -hw, -hh, 2 * hw, 2 * hh, 10, 10)
-    love.graphics.pop()
+    local light = math.max(0, n[1] * LIGHT3[1] + n[2] * LIGHT3[2] + n[3] * LIGHT3[3])
+    local shade = 0.5 + 0.5 * light
+    love.graphics.setColor(hazed({ col[1] * shade, col[2] * shade, col[3] * shade }, fr.depth, 1))
+    love.graphics.polygon('fill', flat)
+    return flat
+end
+
+local WHEEL_SIDES = 14
+local function drawWheel3(fr, wheel, body, side)
+    local lx, ly = body:getLocalPoint(wheel:getPosition())
+    -- body local y is down: up is -y
+    local spin = wheel:getAngle()
+    local pts = {}
+    for k = 0, WHEEL_SIDES - 1 do
+        local t = k / WHEEL_SIDES * 2 * math.pi
+        pts[#pts + 1] = { lx + math.cos(t) * WHEEL_R, -ly + math.sin(t) * WHEEL_R, side }
+    end
+    local n = side > 0 and fr.s or { -fr.s[1], -fr.s[2], -fr.s[3] }
+    quad3(fr, pts, { 0.25, 0.23, 0.22 }, n)
+    -- a spoke, to see it turn
+    local x0, y0 = project3(at(fr, lx, -ly, side))
+    local x1, y1 = project3(at(fr, lx + math.cos(spin) * WHEEL_R * 0.8, -ly - math.sin(spin) * WHEEL_R * 0.8, side))
+    love.graphics.setColor(hazed({ 0.75, 0.75, 0.72 }, fr.depth, 1))
+    love.graphics.setLineWidth(3)
+    love.graphics.line(x0, y0, x1, y1)
+end
+
+local function drawCart(c, m)
+    local fr = cartFrame(c, m)
+    local hl, hh, hw = CART_LENGTH / 2, CART_HALF_HEIGHT + 6, CART_WIDTH / 2
+    -- which side is toward the eye: the wheels there go over the box, the far ones under it
+    local near = facing(fr.s[1], fr.s[2], fr.s[3], fr.x, fr.y, fr.z) and hw or -hw
+    for _, wheel in ipairs(m.wheels) do drawWheel3(fr, wheel, m.body, -near) end
+    -- the six faces: normal in the frame (along, up, side) and corners (signs of hl, hh, hw)
+    local function makeFace(n, col, side, signs)
+        local pts = {}
+        for _, q in ipairs(signs) do pts[#pts + 1] = { q[1] * hl, q[2] * hh, q[3] * hw } end
+        return { n = n, col = col, side = side, pts = pts }
+    end
+    local faces = {
+        makeFace({ 0, 1, 0 }, CART_WOOD, false, { { -1, 1, -1 }, { 1, 1, -1 }, { 1, 1, 1 }, { -1, 1, 1 } }),
+        makeFace({ 0, -1, 0 }, CART_DARK, false, { { -1, -1, -1 }, { 1, -1, -1 }, { 1, -1, 1 }, { -1, -1, 1 } }),
+        makeFace({ 1, 0, 0 }, CART_WOOD, false, { { 1, -1, -1 }, { 1, 1, -1 }, { 1, 1, 1 }, { 1, -1, 1 } }),
+        makeFace({ -1, 0, 0 }, CART_WOOD, false, { { -1, -1, -1 }, { -1, 1, -1 }, { -1, 1, 1 }, { -1, -1, 1 } }),
+        makeFace({ 0, 0, 1 }, CART_WOOD, true, { { -1, -1, 1 }, { 1, -1, 1 }, { 1, 1, 1 }, { -1, 1, 1 } }),
+        makeFace({ 0, 0, -1 }, CART_WOOD, true, { { -1, -1, -1 }, { 1, -1, -1 }, { 1, 1, -1 }, { -1, 1, -1 } }),
+    }
+    love.graphics.setLineJoin('bevel')
+    for _, face in ipairs(faces) do
+        local a, b, cc = face.n[1], face.n[2], face.n[3]
+        local n = {
+            a * fr.f[1] + b * fr.u[1] + cc * fr.s[1],
+            a * fr.f[2] + b * fr.u[2] + cc * fr.s[2],
+            a * fr.f[3] + b * fr.u[3] + cc * fr.s[3],
+        }
+        local mid = face.pts[1]
+        local px, py, pz = at(fr, a * hl, b * hh, cc * hw)
+        if facing(n[1], n[2], n[3], px, py, pz) then
+            local flat = quad3(fr, face.pts, face.col, n)
+            if face.side then -- the stripe along the side, in the cart's colour
+                local z = mid[3]
+                local h = hh * 0.25
+                quad3(fr, { { -hl, -h, z }, { hl, -h, z }, { hl, h, z }, { -hl, h, z } }, m.color, n)
+            end
+            love.graphics.setColor(hazed(CART_DARK, fr.depth, 1))
+            love.graphics.setLineWidth(3)
+            love.graphics.polygon('line', flat)
+        end
+    end
+    for _, wheel in ipairs(m.wheels) do drawWheel3(fr, wheel, m.body, near) end
 end
 
 -- one layer: its glass, the movers in it, its rims and glint over them
@@ -619,7 +736,7 @@ local function drawLayer(c, layer)
     for _, m in ipairs(c.movers) do
         if alive(m.body) and m.layer == layer then
             local depth = c.track.line[m.index].depth
-            if m.kind == 'cart' then drawCart(m, depth) else drawMarble(m, depth) end
+            if m.kind == 'cart' then drawCart(c, m) else drawMarble(m, depth) end
         end
     end
     love.graphics.setLineJoin('bevel')

@@ -140,6 +140,18 @@ The talk assumed Box2D v3 (`b2Shape_SetFilter`, `b2Body_SetBullet`, one-sided ch
 - [ ] **TR5. The cart in 3D.** The box drawn from the body's angle, the track's depth change and a
   roll per point; faces back to front, shaded from the scene light; the rider anchored to the
   projected seat. A banked turn and one corkscrew.
+  The box is drawn, 2026-11-06 (done ahead of TR4, Nikki asked): a frame from the body's angle
+  (forward), the track's depth change per px times `DEPTH_Z` (600 px a layer: forward tips into
+  the screen where the layer changes), up made square to that, then the stretch's roll about
+  forward (a waypoint's `roll = n` turns n times along its stretch: the way back over the top is
+  a corkscrew, drawn only). The 8 corners go through the same shrink as the layers, read as a
+  perspective with the eye `DEPTH_Z / DEPTH_SHRINK` in front of the vanishing point; a face is
+  drawn when its normal faces the eye (a convex box, so the drawn faces never overlap), shaded
+  by a light up-left and toward us; a stripe in the cart's colour on the sides; the wheels as
+  discs on the far side under the box and the near side over it. Seen: flat on A the side and
+  one end; over the loop's top it turns end-on into the screen; in the corkscrew the top and
+  then the dark underside come round. Still open: a banked turn, the scene light (it uses its
+  own), and the rider on the projected seat (after TR4).
 - [ ] **TR6. In and out.** Drop a Mipo near a seat: it's seated. Pull hard: the joint breaks and the
   Mipo is back in the world with its own filter (flies off if the cart is fast).
 - [ ] **TR7. Nikki plays with it**: keep, change or park? Then which contraption first
