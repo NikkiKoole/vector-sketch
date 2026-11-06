@@ -4,7 +4,8 @@ status: active
 
 **Picking up (2026-11-06, end of the day):** everything below is built and judged; it all lives in one
 test scene's script so far. Next is LS12 (measure it on the phone), then LS13 (make it a scene setting
-so any room can have it). To see where it stands: `./playtime.sh start`, open the scene
+so any room can have it). Nikki also wants more cast shadow work: LS14 and LS16-LS21 (on things, on the
+floor, softness by distance, coloured, parts on parts, clouds); LS19 (coloured) is the cheapest. To see where it stands: `./playtime.sh start`, open the scene
 `light-grass-check` (scenes tab), press **o** (everything on at the liked settings: lights and
 shadows on, Mipos lit with clay, smooth clay wall, the day-night cycle from 9:00). Its keys are in the
 script's top comment (`scripts/tests/light-grass-check.playtime.lua`) and on its status line.
@@ -136,6 +137,22 @@ fade, a sun: the panel's `fades` switch, LS4).
 - [ ] **LS14. A lamp's wall shadows both ways.** Now one direction per scene (from the sun or moon): a
   lamp in a room's middle should throw shadows away from it on both sides, which needs a pass per
   thing (or per side). Only if a real room wants it (after LS12).
+- [ ] **LS16. Shadows on things, not only the wall.** A Mipo's shadow falling across the stone or fence
+  beside it, or on another Mipo: the shifted silhouettes (the wall shadow's canvas) cut to what's
+  behind each thing, not to the wall; needs an order of what's in front (z, or DEPTH-LAYERS).
+- [ ] **LS17. Shadows on the floor.** In a side view the ground strip catches a long, squashed shadow
+  stretching away from a low sun: between the contact shadow (touching) and the wall shadow (behind).
+  The silhouette flattened onto the ground's top band, its length from the sun's height.
+- [ ] **LS18. Softness by distance.** Close to the wall a sharp shadow, far from it soft and wide: the
+  blur (and shift) per thing by how far in front of the wall it stands, so the Mipos in front of the
+  stones throw softer ones than the stones. Needs a per-thing depth, like LS16.
+- [ ] **LS19. Coloured shadows.** Not plain black: tinted with the sky's colour (blue under a warm sun,
+  warm under the cool moon), the painterly look of the mood pictures (MATERIALS.md: no hard black).
+  Cheap: the shadow's colour from the sky light, in both shadow modules.
+- [ ] **LS20. Parts shadowing each other.** A Mipo's arm darkening its torso where it lies over it
+  (soft occlusion between a Mipo's own parts, by their z order).
+- [ ] **LS21. Cloud shadows.** Clouds drifting over the ground and the wall (CLOUDS.md's spike: "near
+  clouds cast shadows on the grass"), with the day-night light.
 - [ ] **LS15. Small ones:** should a new directional light be a sun (not fade) by default; the back
   light on a drawn stone lands on its black outline (reach past it, as the contact shadow does);
   grass on a moving body rebuilds its blades every frame (LITTLE-USED, the grass round).
