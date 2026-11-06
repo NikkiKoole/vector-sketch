@@ -2,19 +2,25 @@
 
 status: active
 
-**Picking up (2026-11-06, end of the day):** everything below is built and judged; it all lives in one
-test scene's script so far. Next is LS12 (measure it on the phone), then LS13 (make it a scene setting
-so any room can have it). Nikki also wants more cast shadow work: LS14 and LS16-LS21 (on things, on the
-floor, softness by distance, coloured, parts on parts, clouds); LS19 (coloured) is the cheapest. To see where it stands: `./playtime.sh start`, open the scene
-`light-grass-check` (scenes tab), press **o** (everything on at the liked settings: lights and
-shadows on, Mipos lit with clay, smooth clay wall, the day-night cycle from 9:00). Its keys are in the
-script's top comment (`scripts/tests/light-grass-check.playtime.lua`) and on its status line.
+**Picking up (2026-11-06, after lunch):** Nikki: "I like where we are with the light". Everything up to
+LS22 is built and judged in one test scene, `light-grass-check`; it runs at 60 fps on the iPhone SE 2
+(LS12). Open: LS13 (light as a scene setting, so a real room gets it), LS20 (a Mipo's parts shadowing
+each other), LS21 (cloud shadows), LS15 (small ones), LS23 (what lit Mipos cost in a full room).
+To see it: `./playtime.sh start light-grass-check`; the panel (top left; – folds it, p hides it) has
+everything: 'back to the liked settings' for the lights, then '3D shadows (and the ground)', 'backdrops
+at depths', 'stones further back', 'from …' (which lights), 'a lamp circling round', 'night'. The keys
+still work (the script's top comment).
 Where the code is: `src/render/shaders.lua` (lights, sky / back types, adding up, baked form),
-`src/render/form-bake.lua`, `src/contact-shadows.lua`, `src/backdrop-shadows.lua` (both called around
-the textured world in main.lua, off unless a scene sets `state.contactShadows` /
-`state.backdropShadows`), the panel rows in `src/texfixture-params.lua` and `src/sfixture-params.lua`.
-The scene script does the rest: the day-night clock and its five looks, the sun and moon on their arc,
-lighting the Mipos' parts every frame, the plaster wall's shader, the wall shadows' length.
+`src/render/form-bake.lua`, `src/contact-shadows.lua`, `src/backdrop-shadows.lua` (the soft wall
+shadows), `src/projected-shadows.lua` (the 3D ones: wall, floor, boards, the ground in front, lanes,
+a lamp's glow), `src/shadow-silhouettes.lua` (the world drawn once a frame for the shadows; one lane at a
+time with `drawTexturedWorld(world, only)`), all off unless a scene sets `state.contactShadows` /
+`backdropShadows` / `projectedShadows`, hooked around the textured world in main.lua; the panel rows in
+`src/texfixture-params.lua` and `src/sfixture-params.lua`. The scene script does the rest: the clock and
+its five looks, the sun and moon (sun from in front, moon from behind), the circling lamps, lighting the
+Mipos' parts (their own frontal light and swing), the wall, floor, ground and boards, the panel.
+Parallel sessions: one game window each, its own port (8001 this one, others on 8002+); check the port
+is held by your own pid (`lsof -nP -iTCP -sTCP:LISTEN`) before sending anything.
 
 Started 2026-11-06 from the light round in `LITTLE-USED.md`. The workbench is the scene
 `light-grass-check` (scripts/tests): a sun and a moon, a warm and a cool lamp to carry about in play
@@ -123,7 +129,7 @@ fade, a sun: the panel's `fades` switch, LS4).
 
 ## Next (written down 2026-11-06, to pick up)
 
-- [ ] **LS12. Measure it on the phone.** Before building on it: the iPhone SE 2 is the floor, ~20 Mipos
+- [x] **LS12. Measure it on the phone.** Before building on it: the iPhone SE 2 is the floor, ~20 Mipos
   a room the design limit (MEASURING M10). What costs: the wall shadows draw every picture a second
   time a frame; every lit part runs the plasticine shader with up to 8 lights (and the baked form's
   texture); the contact shadows cast three rays per caster (5 per Mipo); the plaster wall's noise is
@@ -147,6 +153,9 @@ fade, a sun: the panel's `fades` switch, LS4).
   far worse, a hot or busy phone: measure twice). Then the soft and the 3D shadows share one silhouette
   canvas (`src/shadow-silhouettes.lua`, drawn once a frame; the soft one shifts it as it lays it down):
   contact + 3D + soft wall 13.8 -> 10.7 ms, the same as one of them alone (10.6-10.7 that run).
+  Not measured yet: lanes (each drawn on its own, and the soft wall shadow then draws the world once
+  more), the lamps' glow, the circling lamps. The materials session measured a lit Mipo at ~0.47 ms a
+  frame on the phone (MATERIALS.md 'What the Mipo shaders cost'): LS23.
 - [ ] **LS13. Light as a scene setting.** So any room gets it without a script: a light section in the
   world settings, saved with the scene: the sky (a colour, or a time of day with the cycle; G5's open
   question in WORLD-BUILDING, a sky per scene), sun and moon, sky light, back light, contact and wall
@@ -154,26 +163,34 @@ fade, a sun: the panel's `fades` switch, LS4).
   "Mipos take the light" (with or without clay). What the scene script does now (the clock, the
   looks, the arc, lighting the Mipos' parts, the wall's shader, the shadows' length) moves into src.
   Then try it in a real room (the dollhouse, the overworld).
-- [ ] **LS14. A lamp's wall shadows both ways.** Now one direction per scene (from the sun or moon): a
+- [x] **LS14. A lamp's wall shadows both ways.** Now one direction per scene (from the sun or moon): a
   lamp in a room's middle should throw shadows away from it on both sides, which needs a pass per
   thing (or per side). Only if a real room wants it (after LS12).
-- [ ] **LS16. Shadows on things, not only the wall.** A Mipo's shadow falling across the stone or fence
+  Done another way (2026-11-06): the 3D shadows (LS22) project from a lamp's point, so a lamp in the
+  middle throws them away from it on every side.
+- [x] **LS16. Shadows on things, not only the wall.** A Mipo's shadow falling across the stone or fence
   beside it, or on another Mipo: the shifted silhouettes (the wall shadow's canvas) cut to what's
   behind each thing, not to the wall; needs an order of what's in front (z, or DEPTH-LAYERS).
-- [ ] **LS17. Shadows on the floor.** In a side view the ground strip catches a long, squashed shadow
+  Done 2026-11-06 in LS22: lanes at depths, drawOnThings (a Mipo's shadow on the stones behind it).
+- [x] **LS17. Shadows on the floor.** In a side view the ground strip catches a long, squashed shadow
   stretching away from a low sun: between the contact shadow (touching) and the wall shadow (behind).
   The silhouette flattened onto the ground's top band, its length from the sun's height.
-- [ ] **LS18. Softness by distance.** Close to the wall a sharp shadow, far from it soft and wide: the
+  Done 2026-11-06 in LS22: the floor behind the things and the ground in front of them.
+- [x] **LS18. Softness by distance.** Close to the wall a sharp shadow, far from it soft and wide: the
   blur (and shift) per thing by how far in front of the wall it stands, so the Mipos in front of the
   stones throw softer ones than the stones. Needs a per-thing depth, like LS16.
-- [ ] **LS19. Coloured shadows.** Not plain black: tinted with the sky's colour (blue under a warm sun,
+  Done 2026-11-06 in LS22: a lamp of a size (the 'edges' setting) softens a shadow more the further it
+  lands from its thing, per lane, and the boards at depths show it.
+- [x] **LS19. Coloured shadows.** Not plain black: tinted with the sky's colour (blue under a warm sun,
   warm under the cool moon), the painterly look of the mood pictures (MATERIALS.md: no hard black).
   Cheap: the shadow's colour from the sky light, in both shadow modules.
+  Done 2026-11-06 for the 3D shadows (LS22): each takes the other lights' and the sky's colour, darkened
+  (x / the panel's 'coloured shadows'). The soft wall shadows are still black.
 - [ ] **LS20. Parts shadowing each other.** A Mipo's arm darkening its torso where it lies over it
   (soft occlusion between a Mipo's own parts, by their z order).
 - [ ] **LS21. Cloud shadows.** Clouds drifting over the ground and the wall (CLOUDS.md's spike: "near
   clouds cast shadows on the grass"), with the day-night light.
-- [ ] **LS22. 3D shadows: along the floor and up the wall, hard.** Nikki (2026-11-06): "the next level of
+- [x] **LS22. 3D shadows: along the floor and up the wall, hard.** Nikki (2026-11-06): "the next level of
   shadow casting, a sort of 3D shadow that grows and shrinks and is cast hard"; the long floor shadow
   first, the torch on the wall too; the edges she has to see. Built 2026-11-06, to judge:
   `src/projected-shadows.lua`, on while a scene sets `state.projectedShadows`. The things stand at a depth
@@ -235,6 +252,11 @@ fade, a sun: the panel's `fades` switch, LS4).
   16:00 drawn 133, before 128, now 131. p hides the panel.
   Not yet: within a lane one depth (a Mipo's own parts, LS20) (per-thing depth,
   LS16/LS18), nothing on the floor in front of the things, the same cost as the wall shadows (LS12).
+  Nikki: "I like where we are with the light" (2026-11-06).
+- [ ] **LS23. Lit Mipos in a full room.** A lit Mipo costs ~0.47 ms a frame on the phone (the materials
+  session's measure), so 20 of them ~9-10 ms on top of the shadows' ~5: tight at 60 fps. Measure a room
+  of 20 lit Mipos with the 3D shadows; if it's too much, fewer lights per part, no clay by default, or
+  lighting only the near ones. Decide before LS13 makes it a scene setting.
 - [ ] **LS15. Small ones:** should a new directional light be a sun (not fade) by default; the back
   light on a drawn stone lands on its black outline (reach past it, as the contact shadow does);
   grass on a moving body rebuilds its blades every frame (LITTLE-USED, the grass round).
