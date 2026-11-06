@@ -136,6 +136,8 @@ Kinds of material, by what the shader does differently:
   read from screenshots: strongest metal, glaze, plastic, candy, wood, leather, felt, plush fur,
   the backlit leaves; weakest stone / wet stone (cell pattern), shaggy fur (more hair than fur),
   smoke (pale clumps more than smoke), paper and plaster washed out in full sun.
+  Next, before MT6 (ENGINE-MERGE.md, 2026-11-06): Nikki goes through them in material-check (keep /
+  change / drop each); only the kept ones go into the engine. Postponed by Nikki 2026-11-06: another time.
 - [~] **MT3a. Two materials by the pattern** (2026-11-06, Nikki: "a ropey leg with that strip pattern:
   dark velvet, light metal"): in material-check, u picks a second material (brass, gold, tin, velvet,
   glass, felt), i the pattern (bee stripes, spots, the Mipo patterns), y its size. Each cell's own
@@ -173,6 +175,8 @@ Kinds of material, by what the shader does differently:
   flipped (main.fx), so both are lit from the same side.
 - [ ] **MT6. Into the engine**: a material as a texfixture setting, next to plasticine (SHADER-LOOKS'
   "looks on shapes"), if any of it earns a place.
+  Already drawn by the engine since MT6a-c (`extra.material` on a texfixture, limb, torso, decal);
+  what's left is setting it in the editor, for the materials MT2 keeps. After MT2 (ENGINE-MERGE.md).
 
 ## Fur (Nikki's follow-up talk, 2026-11-06)
 

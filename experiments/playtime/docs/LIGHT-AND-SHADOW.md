@@ -167,6 +167,8 @@ fade, a sun: the panel's `fades` switch, LS4).
   "Mipos take the light" (with or without clay). What the scene script does now (the clock, the
   looks, the arc, lighting the Mipos' parts, the wall's shader, the shadows' length) moves into src.
   Then try it in a real room (the dollhouse, the overworld).
+  Before it (ENGINE-MERGE.md, 2026-11-06): MATERIALS MT2 (which materials stay), then LS23 and LS15
+  (a full room's defaults: clay or not, which Mipos are lit, a new lamp a sun or not).
 - [x] **LS14. A lamp's wall shadows both ways.** Now one direction per scene (from the sun or moon): a
   lamp in a room's middle should throw shadows away from it on both sides, which needs a pass per
   thing (or per side). Only if a real room wants it (after LS12).
