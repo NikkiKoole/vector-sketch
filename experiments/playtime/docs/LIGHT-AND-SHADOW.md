@@ -279,6 +279,11 @@ fade, a sun: the panel's `fades` switch, LS4).
   the update is ~12 ms with 20 Mipos (physics, as drawn too), lighting ~9 ms (~0.45 ms a Mipo: the
   per-part uniforms), the shadows' outline pass ~8 ms (every part drawn again). Next levers: send a
   body's lights once for all its parts, the outline pass for the casters only, or less often.
+  Measured again with the Mipos at rest (that run's 12 ms update was the 17 new ones still falling;
+  each setting twice, the same): as drawn 60 fps (draw 4.3, update 3.3); lit + clay 60 fps (7.1 / 3.6);
+  lit + clay + contact + 3D 44-48 fps (13.0 / 6.8: over a frame, so two physics steps a frame); no clay
+  the same. So 20 lit Mipos fit at 60; the 3D shadows' outline pass (~6 ms with 20 Mipos) is what's
+  left to win back for 60 with shadows.
 - [ ] **LS15. Small ones:** should a new directional light be a sun (not fade) by default; the back
   light on a drawn stone lands on its black outline (reach past it, as the contact shadow does);
   grass on a moving body rebuilds its blades every frame (LITTLE-USED, the grass round).
