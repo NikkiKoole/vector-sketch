@@ -8,7 +8,7 @@
 -- keys:
 --   1 day   2 evening   3 night   4 only the turning lamp (its range: r 5000 / 500)
 --   m the Mipos lit like the shapes / as drawn (their picture parts, limbs and torso; not the face)
---   c the Mipos' clay (grain, dents, sheen) on / off: off, they get the light and roundness only
+--   c the Mipos' clay (grain, dents, sheen) off / on (on to start): off, the light and roundness only
 --   k the sky light off / on (light from all of above in the sky's colour, from below in the ground's)
 --   g light swing   z how much the light comes from the front   f the quick form's depth
 --   b baked form / the shader's quick guess   n baked rise (1 a dome, 0.5, 0.2 a pebble)
@@ -164,13 +164,13 @@ function s.onUnload()
     end
 end
 
--- the clay a plasticine surface also gets: grain, dents, sheen. Off on the Mipos by default: the light
--- and the roundness only, the drawing's own strokes left as they are
+-- the clay a plasticine surface also gets: grain, dents, sheen. On for the Mipos in this scene (Nikki
+-- 2026-11-06); c takes it off: the light and the roundness only, the drawing's own strokes as they are
 local CLAY_OFF = { plasticineStrength = 0, plasticineBump = 0, plasticineSpecStrength = 0, plasticineSSSstrength = 0 }
 
 -- the Mipos lit like the shapes (a Mipo rebuilt from its DNA has new parts: set every frame)
 local function lightMipos()
-    local on, clay = not look().mipoLightOff, look().mipoClay
+    local on, clay = not look().mipoLightOff, not look().mipoClayOff
     for _, extra in ipairs(mipoExtras()) do
         extra.plasticine = on or nil
         for _, k in ipairs(TRY_ORDER) do
@@ -202,7 +202,7 @@ function s.onKeyPress(key)
     elseif key == 'm' then
         look().mipoLightOff = not look().mipoLightOff
     elseif key == 'c' then
-        look().mipoClay = not look().mipoClay
+        look().mipoClayOff = not look().mipoClayOff
     elseif key == 'k' then
         look().skyOff = not look().skyOff
         setMood(look().mood)
@@ -268,7 +268,7 @@ function s.drawUI()
     local lines = {
         '1 day  2 evening  3 night  4 turning lamp (r)  k sky light  m Mipos lit  c clay  tab: play, lamps  s turf',
         'now: ' .. c.mood .. (c.skyOff and ', sky light off' or ', sky light on')
-            .. (c.mipoLightOff and ', Mipos as drawn' or (c.mipoClay and ', Mipos lit, clay' or ', Mipos lit'))
+            .. (c.mipoLightOff and ', Mipos as drawn' or (c.mipoClayOff and ', Mipos lit, no clay' or ', Mipos lit, clay'))
             .. '      shapes: ' .. table.concat(tries, '   ') .. '   (0 as elsewhere)',
         string.format('grass: SpriteBatches made in the last second: %d', c.perSecond),
     }
