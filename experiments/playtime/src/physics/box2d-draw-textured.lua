@@ -975,7 +975,10 @@ local drawers = {
 -- src/render/mouth.lua reaches them (a copy kept drawing the old ones)
 for kind in pairs(mouth.drawers) do drawers[kind] = function(d) return mouth.drawers[kind](d) end end
 
-function lib.drawTexturedWorld(_world) -- draws what's registered (createDrawables)
+-- draws what's registered (createDrawables). `only` (optional): a function of a drawable's body, false
+-- skips it; the scene's splits aren't drawn then (the 3D shadows draw each depth on its own,
+-- src/shadow-silhouettes.lua)
+function lib.drawTexturedWorld(_world, only)
 
     -- state.drawTimes = { frames = 0, ms = {}, count = {} } (from the bridge) adds up the time
     -- per drawable kind; nil (the default) costs nothing. On state: a hot swap gives this
@@ -998,8 +1001,9 @@ function lib.drawTexturedWorld(_world) -- draws what's registered (createDrawabl
     -- state.drawSplits = { { z = n, fn = f }, ... } (sorted by z): a scene draws its own layer
     -- between the drawables, f called before the first one at z or higher (the depth spike draws
     -- its house between the back lane's Mipos and the front lane's). Set per frame by the scene.
-    local splits, nextSplit = state.drawSplits, 1
-    for i = 1, #drawables do
+    local splits, nextSplit = (not only) and state.drawSplits or nil, 1
+    for i = 1, #drawables do repeat -- break = the next drawable
+        if only and not only(drawables[i].body) then break end
         if splits then
             local z = drawables[i].z
             while splits[nextSplit] and splits[nextSplit].z <= z do
@@ -1028,7 +1032,7 @@ function lib.drawTexturedWorld(_world) -- draws what's registered (createDrawabl
                 counts[kind] = (counts[kind] or 0) + 1
             end
         end
-    end
+    until true end
     if splits then
         for k = nextSplit, #splits do splits[k].fn() end
     end

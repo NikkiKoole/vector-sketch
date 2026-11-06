@@ -106,6 +106,40 @@ describe('projected shadows', function()
         assert.is_true(at(img, 15, -40) < 0.6, 'the wall left of the board still dark')
     end)
 
+    it('things at two depths: the front box throws its shadow onto the back one', function()
+        -- a second box further back (z 20: standing on y 70), to the right; the lamp on the left
+        local back = objectManager.addThing('rectangle', { x = 110, y = 30, width = 80, height = 80, bodyType = 'static' })
+        local fixture = fixtures.createSFixture(back.body, 0, 0, subtypes.TEXFIXTURE, { width = 80, height = 80 })
+        local e = fixture:getUserData().extra
+        e.OMP, e.dirty = true, true
+        e.main = { bgURL = 'mipo/body/body-03.png', fgURL = 'mipo/body/body-03-mask.png', pURL = 'type0.png',
+            bgHex = '000000ff', fgHex = 'ccccccff', pHex = 'ccccccff' }
+        local backBody = back.body
+        state.projectedShadows.light = { kind = 'point', x = -60, h = 40, z = 80 }
+        state.projectedShadows.layers = {
+            { z = 20, only = function(body) return body == backBody end },
+            { z = DEPTH, only = function(body) return body ~= backBody end },
+        }
+        local function shot(withThings)
+            box2dDrawTextured.makeCombinedImages()
+            local canvas = love.graphics.newCanvas(W, H)
+            love.graphics.setCanvas({ canvas, stencil = true })
+            love.graphics.clear(1, 1, 1, 1)
+            love.graphics.push()
+            love.graphics.translate(W / 2, H / 2)
+            if withThings then projectedShadows.drawOnThings(state.physicsWorld) end
+            love.graphics.pop()
+            love.graphics.setCanvas()
+            return canvas:newImageData()
+        end
+        local img = shot(true)
+        -- the back box at x 70..150: from the lamp at x -60 the front box (x -40..40) falls on it up to x ~90
+        local darkest = 1
+        for x = 80, 120, 4 do darkest = math.min(darkest, at(img, x, 30)) end
+        assert.is_true(darkest < 0.7, 'a shadow on the back box: ' .. darkest)
+        assert.is_true(at(img, -100, 0) > 0.99, 'none where nothing is')
+    end)
+
     it('only on the area, and off draws nothing', function()
         state.projectedShadows.light = { kind = 'point', x = 0, h = 40, z = 50 } -- a huge shadow
         local img = render(state.physicsWorld)

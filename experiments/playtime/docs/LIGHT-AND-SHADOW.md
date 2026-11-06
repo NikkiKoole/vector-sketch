@@ -201,7 +201,14 @@ fade, a sun: the panel's `fades` switch, LS4).
   their size and crisp, further back bigger and softer. light-grass-check: three plaster boards at 90,
   210 and 330 in front of the wall (the panel's 'backdrops at depths'); the soft wall shadows skip them
   (backdropShadows.notOn).
-  Not yet: one depth for everything (per-thing depth,
+  Things at depths (LS16, LS18): layers = { { z, only = function(body) } } back to front; each lane throws
+  from its own depth (each drawn on its own: drawTexturedWorld(world, only)), and drawOnThings (after
+  the textured world) paints the shadows landing on things further back, only where that thing is the
+  front-most drawn (a depth picture of the lanes). Further back means higher up the floor, so
+  light-grass-check lifts the six stones onto a back lane (230 in front of the wall, the Mipos and the
+  fence at 400; their shapes sensors meanwhile, so Mipos walk past): panel 'stones further back', with
+  3D on. The boards moved to 50, 110, 170 to stay behind the stones.
+  Not yet: within a lane one depth (a Mipo's own parts, LS20) (per-thing depth,
   LS16/LS18), nothing on the floor in front of the things, the same cost as the wall shadows (LS12).
 - [ ] **LS15. Small ones:** should a new directional light be a sun (not fade) by default; the back
   light on a drawn stone lands on its black outline (reach past it, as the contact shadow does);

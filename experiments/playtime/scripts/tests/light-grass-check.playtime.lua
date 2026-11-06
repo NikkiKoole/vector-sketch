@@ -320,10 +320,16 @@ local GROUND_SPLITS = { { z = -math.huge, fn = drawGroundFront } }
 -- shadows where it stands: close behind the things a shadow near their size and crisp, further back
 -- bigger and softer, the wall furthest. { x0, x1, z (in front of the wall), height, colour }
 local BOARDS = {
-    { -1500, -820, 90, 700, { 0.86, 0.78, 0.64 } },
-    { -700, 120, 210, 620, { 0.80, 0.84, 0.78 } },
-    { 260, 1080, 330, 600, { 0.88, 0.80, 0.72 } },
+    { -1500, -820, 50, 700, { 0.86, 0.78, 0.64 } },
+    { -700, 120, 110, 640, { 0.80, 0.84, 0.78 } },
+    { 260, 1080, 170, 600, { 0.88, 0.80, 0.72 } },
 }
+
+-- Things at depths (LS16/LS18): the stones on a back lane STONE_DEPTH in front of the wall (further back
+-- means higher up the floor, so they're lifted), the Mipos and the fence at the front; each lane throws
+-- its shadows from where it stands, and a Mipo's shadow falls on the stones behind it. The stones let
+-- the Mipos through while they're back there (their shapes sensors).
+local STONE_DEPTH = 230
 local BOARD_EDGES = { 0.3, 0.22, 0.16 }
 local function boardList()
     local list = {}
@@ -367,6 +373,7 @@ local function freshen()
     local count = world:getBodyCount()
     if count ~= found.bodyCount or found.frames > 60 then
         found.lights, found.shapes, found.parts, found.bodyCount, found.frames = {}, nil, nil, count, 0
+        found.stoneSet = nil
     end
 end
 
@@ -402,6 +409,40 @@ local function shapeExtras()
     end
     found.shapes = { list = list, bodies = bodies }
     return list
+end
+
+-- the stones' bodies (the 'lit box' ones), as a set
+local function stoneSet()
+    shapeExtras()
+    if not found.stoneSet then
+        found.stoneSet = {}
+        for _, body in ipairs(found.shapes.bodies) do found.stoneSet[body] = true end
+    end
+    return found.stoneSet
+end
+local function isStone(body) return body ~= nil and stoneSet()[body] == true end
+local function notStone(body) return not isStone(body) end
+
+-- the stones to the back lane and home again (c.lanes, with the 3D shadows on: without them there's no
+-- floor to stand further back on): lifted by how much further back they stand
+local function placeStones(c)
+    local back = (c.lanes and c.solid) and true or false
+    if back == (c.lanesPlaced or false) then return end
+    c.stoneHome = c.stoneHome or {}
+    local lift = back and (SOLID_DEPTH - STONE_DEPTH) or 0
+    for _, thing in ipairs(getObjectsByLabel('lit box')) do
+        local home = c.stoneHome[thing.id]
+        if not home then
+            local x, y = thing.body:getPosition()
+            home = { x, y }
+            c.stoneHome[thing.id] = home
+        end
+        thing.body:setPosition(home[1], home[2] - lift)
+        for _, fixture in ipairs(thing.body:getFixtures()) do
+            if not fixture:getUserData() then fixture:setSensor(back) end
+        end
+    end
+    c.lanesPlaced = back
 end
 
 -- every Mipo part that takes the light: its picture parts, limb ribbons and torso skin (not the face's
@@ -708,6 +749,9 @@ function s.onStart()
 end
 
 function s.onUnload()
+    local lab = look()
+    lab.lanes = false
+    placeStones(lab) -- the stones home, so the scene saves as it was
     state.contactShadows = nil -- only in this scene
     state.backdropShadows = nil
     state.projectedShadows = nil
@@ -767,8 +811,11 @@ local function everyFrame()
     local lights = c.solid and solidLights(L.wallShadows) or {}
     state.drawSplits = c.solid and GROUND_SPLITS or nil
     local boards = c.solid and c.boardsOn
+    placeStones(c)
+    local layers = (c.lanes and c.solid)
+        and { { z = STONE_DEPTH, only = isStone }, { z = SOLID_DEPTH, only = notStone } } or nil
     state.projectedShadows = #lights > 0 and { area = solidArea, floorY = FLOOR_Y, depth = SOLID_DEPTH,
-        lights = lights, boards = boards and boardList() or nil } or nil
+        lights = lights, boards = boards and boardList() or nil, layers = layers } or nil
     if state.backdropShadows then state.backdropShadows.notOn = boards and boardShapes or nil end
 end
 
@@ -961,7 +1008,7 @@ end
 -- sliders and buttons; the keys still work. Folds away with its – button.
 local PANEL = '•• light and shadow ••'
 local ROW, COL_W = 34, 380
-local PANEL_ROWS = 13
+local PANEL_ROWS = 14
 
 local function check(x, y, on, label)
     local clicked, now = ui.checkbox(x, y, on, label)
@@ -1043,6 +1090,8 @@ local function drawPanel(c)
         c.solid = toggle(x, y, c.solid, '3D shadows (and the ground)')
         row()
         c.boardsOn = toggle(x, y, c.boardsOn, 'backdrops at depths (with 3D)')
+        row()
+        c.lanes = toggle(x, y, c.lanes, 'stones further back (depths)')
         row()
         if stepper(x, y, COL_W - 30, 'from ' .. lightSet().name) then s.onKeyPress('e') end
         row()
