@@ -570,22 +570,53 @@ local function riderUp(c, m)
     return m.body:getAngle() + (p.upright or 0)
 end
 
--- muscles every frame: torso along the cart's drawn up, legs forward from it, facing the way the
--- cart goes on screen (a Mipo facing right in a cart going left rode backwards)
+-- Facing (docs/MIPO-FACING.md), from the same 3D forward the cart is drawn with: how much the
+-- cart's forward points to the rider's right on screen, cos(upright) / |(1, dz)| (the rider's right
+-- is the cart's forward turned by upright; dz the track's depth change). 1: going its right, -1:
+-- its left, 0: end-on, into or out of the screen (a layer change, the middle of a U-turn: the
+-- turn on the ground it stands for). The face turns with it continuously (mipoFacing.applyFace,
+-- instance._turnAngle), the body switches in place at the thresholds (switchFacing), front where
+-- it's end-on (a Mipo facing front can't sit: its legs hang straight down, in the box).
+local FACE_SIDE, FACE_FRONT = 0.55, 0.3 -- side above this, front below that (between: as it was)
+
+local function riderSide(c, m)
+    local line, n = c.track.line, #c.track.line
+    local i = m.index
+    local p = line[i]
+    local ahead, behind = line[(i + 2) % n + 1], line[(i - 4) % n + 1]
+    local a = m.body:getAngle()
+    local along = (math.cos(a) * p.tx + math.sin(a) * p.ty) >= 0 and 1 or -1
+    local dz = (ahead.depth - behind.depth) / (6 * STEP) * DEPTH_Z * along
+    return math.cos(p.upright or 0) / math.sqrt(1 + dz * dz)
+end
+
+local function riderFacing(c, m)
+    local inst = m.rider
+    local side = riderSide(c, m)
+    local want = side > FACE_SIDE and 'right' or side < -FACE_SIDE and 'left'
+        or math.abs(side) < FACE_FRONT and 'front' or nil
+    if want and want ~= m.riderFacing then
+        characterManager.switchFacing(inst, want)
+        m.riderFacing = want
+        maskTrack(inst) -- a facing switch may remake a foot or an ear
+        m.faceTurn = nil -- its textures were redrawn: turn the face again
+    end
+    local turn = mipoFacing.faceTurn * math.max(-1, math.min(1, side / FACE_SIDE))
+    if not m.faceTurn or math.abs(turn - m.faceTurn) > 0.01 then
+        inst._turnAngle = turn
+        mipoFacing.applyFace(inst)
+        m.faceTurn = turn
+    end
+end
+
+-- muscles every frame: torso along the cart's drawn up (the pivot's servo), legs forward from it
+-- (straight down facing front), head and neck along it, arms loose
 local function riderMuscles(c, m)
     local inst = m.rider
     local up = math.deg(riderUp(c, m))
     local p = c.track.line[m.index]
-    -- forward on screen: the track's tangent, turned over with the cart when upright is past half
-    local fx = p.tx * (math.cos(p.upright or 0) >= 0 and 1 or -1)
-    -- which way it travels: the body's +x along the track's direction of travel (it can't turn round)
-    local want = fx > 0.3 and 'right' or fx < -0.3 and 'left' or nil
-    if want and want ~= m.riderFacing then
-        characterManager.switchFacing(inst, want)
-        m.riderFacing = want
-        maskTrack(inst) -- a facing switch may rebuild shapes
-    end
-    local mirror = m.riderFacing == 'left' and -1 or 1
+    riderFacing(c, m)
+    local mirror = m.riderFacing == 'left' and -1 or m.riderFacing == 'front' and 0 or 1
     -- the pivot's servo: the torso, relative to the cart, to the track's upright
     local rel = inst.parts.torso1.body:getAngle() - m.body:getAngle()
     local err = ((p.upright or 0) - rel + math.pi) % (2 * math.pi) - math.pi

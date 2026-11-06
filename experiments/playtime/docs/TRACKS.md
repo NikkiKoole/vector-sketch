@@ -219,6 +219,19 @@ The talk assumed Box2D v3 (`b2Shape_SetFilter`, `b2Body_SetBullet`, one-sided ch
   line per run as thick as its deepest point, a notch where layers meet: now short pieces, each as
   thick as its own depth (the see-through glint stays one line per run: its pieces' overlaps showed
   as dots).
+- [x] **TR4b. The rider faces the way the cart goes** (2026-11-06, Nikki: the facing experiment,
+  docs/MIPO-FACING.md, "seems relevant here"). From the same 3D forward the cart is drawn with:
+  how much it points to the rider's right on screen, cos(upright) / |(1, dz)|. Right or left going
+  sideways on screen, **front** where the cart is end-on: the layer changes, the middle of a U-turn
+  (reads as the turn on the ground it stands for), straight up the marble run's riser (a lift
+  coming toward you). The face turns with it continuously (`instance._turnAngle`,
+  `mipoFacing.applyFace`), the body switches in place at the thresholds (`switchFacing`, side above
+  0.55, front below 0.3); facing front the legs hang straight down in the box (a front-on Mipo
+  can't sit, MIPO-FACING). Headless, two minutes: marble run right 25% / front 25% / left 45% of
+  the time, 23 switches in 3 laps; coaster 14 switches in 8 laps; leaning within ~10 degrees most of
+  the time (front-on the legs no longer lever the torso). Not used: the facing spike's leaning foot,
+  hop, autowalk and arm timing (feet in the box, arms loose); with MF6 the riders could use the
+  promoted turning (head slower than the body).
 - [ ] **TR6. In and out.** Drop a Mipo near a seat: it's seated. Pull hard: the joint breaks and the
   Mipo is back in the world with its own filter (flies off if the cart is fast).
 - [ ] **TR7. Nikki plays with it**: keep, change or park? Then which contraption first

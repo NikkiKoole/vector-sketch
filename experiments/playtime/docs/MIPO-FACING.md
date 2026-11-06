@@ -93,3 +93,5 @@ already folded; swinging straight legs forward in the air pushed it off the back
   feet on the floor: a broom by its handle), next try pulling at the hips while walking; out of
   the spike into the Mipos everywhere,
   and walking held by a foot (that foot can't step).
+- Used by the tracks spike's riders (TRACKS.md TR4b): facing and the face's turn taken from their
+  cart's 3D direction, front where the cart is end-on (2026-11-06).
