@@ -6,23 +6,30 @@ status: active
 the light*: the picture's mask, its roundness baked from the mask, one shader with a mode or a row of
 numbers per material, her outline on top. The workbench is the scene `material-check`
 (scripts/tests; its keys in the script's top comment and on its status line): 36 materials on one
-shape, leaves, smoke, a striped shape sliding behind for the see-through ones, the light at the mouse
-(b behind), x measures what each costs. Nothing is in the engine yet (MT6); it all lives in that
+shape (n: hearts, ears, a snout, a foot, legs…), leaves, smoke, a striped shape sliding behind for the
+see-through ones, the light at the mouse (b behind), k creases from the inner lines, u/i/y a second
+material in the pattern, x measures what each costs. To open it next to the shared game: a second
+LÖVE with `PLAYTIME_BRIDGE_PORT=8002`, then load material-check there. Nothing is in the engine yet (MT6); it all lives in that
 scene. What we found:
 - **Drawn beats generated.** The first spike (noise only) read as "computer"; on her pictures the
   same tricks read as made: metal, glaze, candy, velvet, wood, leather. The weakest are the cell
   grains (stone and wet stone look like a turtle shell) and the pale ones in full sun (paper, plaster).
 - **The roundness only knows the outline**: every shape is a dome or a cushion. A brushy mask
-  (body-04's streaks) shows in shiny materials as ridges, like hammered tin. Inner shape needs
-  creases from her inner lines (MT10) or a painted height picture (MT11).
+  (body-04's streaks) shows in shiny materials as ridges, like hammered tin. Her inner lines now dent
+  it (MT10, k: best on the snout's nostrils; on ears with thick close lines the drawn line hides it);
+  more inner shape needs a painted height picture (MT11).
+- **Two materials on one part come cheap from its pattern** (MT3a): the pattern a Mipo part already
+  wears says where the second material goes (velvet with brass stripes on a leg). A drawn material
+  map (MT3, A16) only for splits that don't follow the pattern (a sole on a foot).
 - **See-through works** (glass, ice, bubble, clear candy, amber): what's behind, bent by the roundness.
   It needs what's behind drawn into a canvas first, so in a real scene it rides on SH3's effects stack.
 - **The phone can afford most of it** (iPhone SE 2, MT18 below): lights, metal, gloss, see-through,
   velvet anywhere; noise grains and fur on things, not on walls and ground; the cell grains (stucco,
   stone, leather, tin, mud, ice) baked into a picture once, or only on small things.
-- **Next**: Nikki judges which read as hers (MT2); she draws hatching sheets, height pictures, a
-  material map and smoke puffs (THINGS-TO-DRAW A14-A17); then the liked ones become a texfixture
-  setting (MT6).
+- **Next**: Nikki judges which read as hers (MT2), the creases (MT10) and the pattern pairs (MT3a)
+  too; she draws hatching sheets, height pictures, a material map and smoke puffs (THINGS-TO-DRAW
+  A14-A17); then the liked ones become a texfixture setting (MT6), with the pattern pair as its
+  second material.
 
 Nikki's AI pictures, made for mood and **not to be used in the game** (not drawn by us, not shipped):
 `docs/inspiration/ai-materials/` (16, 2026-11-04). They show Mipo's world as a handmade
