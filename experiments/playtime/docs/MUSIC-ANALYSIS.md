@@ -169,6 +169,17 @@ bar 3:  D#2 (1, short)   F#2 (1&, long 1.3)  C2 (3&, short)  C#2 (4, 0.8, loudes
 - `brew` plays ER's bar as a fixed table (`lib.KIT`, the pushes the same every bar, as a sampled bar is) and starts the riff a beat into the bar, ending on the riff's last note ringing.
 - **In Playtime: the style `brew`** (`src/music-brew.lua`): the riff on `hUpright` with the table above, over a rigid sampler kit (the bass alone two passes, the kit, the bass alone to end); the panel's humanize row plays it on the grid. Always in Eb, ER's pitch (Nikki: moved through the set's keys, in Ab 3 up, it sat too high; pinned 2026-11-05). Checked by running a render back through the same tools: the feel per note comes back within ~10 ms of Ronnie's (G♯ −30, C +32, A♯ +35, D♯ −28, F♯ +16), jitter 11 ms, loudness 1.1 dB, the tone closing 0.6–1.0 oct. `damp` is steep on this patch: 0.35–0.5 hardly stops a note (−20 dB/s), 0.6 gives −30, 0.75+ −70 to −140; 0.7–0.8 lands on Ronnie's −40 to −65.
 
+## Song 4: Domenique Dumont — La bataille de neige (2026-11-06)
+
+Source: [youtube jOOYHG2csHA](https://www.youtube.com/watch?v=jOOYHG2csHA) (Comme Ça, 2015, 3:55; the record behind the `dumont` style, which was made from an impression of the album). Nikki: "the groove a bit dubby, bass sounds low upright, drums sound like old rhythm boxes, other is the vibe". Built faithfully as the style **`neige`** (`src/music-neige.lua`).
+
+- **The cycle**: 133 BPM, straight (off-beat 0.51), a 4-bar cycle of exactly 7.22 s, sequenced-steady (every cycle the same length). The chord tool read A minor ↔ A♭maj7; with basic-pitch and the bass it's **Am | Dm | G | C**, vi–ii–V–I in C, the bass's G♯ sliding back up to A (the "A♭" was that G♯).
+- **The bass** (folded over 20 cycles, timing spread ~12 ms): A1 (held, the loudest) A1 E2 E2 | D2 D2 D2 A2 | G2 (ghost) G2 A2 G2 E2-sagging | C3 C3 G2 C3 G♯2 (scooped). Short notes stopped dead (−90 to −360 dB/s), the held ones ring.
+- **"Other", the vibe** (basic-pitch over 20 cycles, notes kept that recur in ≥35%): one soft analog synth (engine race SAW first on chord and melody; the stab drops to ~40% in 100 ms and holds, ~600–700 Hz). **Skank chords on 2 and 4** (the off-beats at half time): C4 C5 / E4 / A3 C4 C5 | F4 (loud, long) | G3 B3 B4 D5 | G3 C4 C5; and **a sparse high melody** drifting down: C5 B4 | A5/F6 blips | G5 F5 F5 E5 | G5. No feedback echo: the repeats come back at the same level (an off-beat accent pattern, the half-beat repeats ~1.5 dB softer).
+- **The box**: a 4-bar rhythm-box pattern: kicks over the beats and ands, the snare band on 2 and 2& every bar plus a ghost on the swung "a" of 2 and of 4 (85–90% of bars), soft hats on 2, 2&, 4, 4&. Everything sits a steady ~30 ms ahead of the bass: **the bass and synth lay back against the box** (chords +10 to +30 ms, the melody ~+40 at the bar starts). In `neige`: the 808's kick, rim (2, 2&), maracas (the "a"s), clap (two loud 4&s), closed hat.
+- **Levels** (stems over 20–160 s): the synth level with the bass, the drums 9.4 dB under; matched on renders (synth −1, box −8.6). The synth's tone fitted by octave bands (centroid 716 Hz): a 700 Hz lowpass.
+- **Tools**: `claudetools/transcribe-notes.py` (basic-pitch, installed 2026-11-06; it downgraded numpy to 1.26, the other audio tools still run).
+
 ## The score pieces next to our styles (2026-11-02)
 
 Why does Gershwin's Prelude II (`gershwin2`) sound so much richer than our own styles? To answer that, the notes themselves get analysed, not a recording.

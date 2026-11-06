@@ -647,6 +647,9 @@ D.styles = {
     -- brewjam: improvisations on brew, a new riff and its chords each song by the rules Mystic Brew works by
     -- (the push, the held top note, colour voicings), played by brew's player (src/music-brewjam.lua)
     brewjam = { loop = 'brewjam', bpm = { 94, 102 }, swing = 0.5 },
+    -- neige: Domenique Dumont's 'La bataille de neige' as measured: the dubby groove, the muted bass, the skank
+    -- synth and its melody over an old rhythm box (src/music-neige.lua)
+    neige = { loop = 'neige', bpm = 133, swing = 0.5 },
     jam = { loop = 'jam', bpm = 120, swing = 0.5,
         groups = { 'Electro', 'Hip Hop', 'Breaks', 'Disco', 'Funk', 'Brushes' },
         bpms = { Electro = { 118, 128 }, ['Hip Hop'] = { 86, 94 }, Breaks = { 96, 108 }, Disco = { 116, 124 },

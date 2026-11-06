@@ -84,6 +84,7 @@ most take the same env switches as render-music (`IDEAS=`, `VOICES=`, ...: see i
 | `drum-grid.py` | A drum stem as kick / snare / hat on the 16th grid: share of bars, timing, level | `python3 -I claudetools/drum-grid.py drums.wav start end bpm [--fixed anchor] [--min -12]` (librosa) |
 | `find-sample.py` | Where in a source record a sampled piece comes from, and at what pitch | `python3 -I claudetools/find-sample.py piece.wav start dur source.wav` (librosa, scipy) |
 | `find-drum-sample.py` | The same for a drum loop (sampler speed = pitch) | `python3 -I claudetools/find-drum-sample.py piece.wav start dur source.wav lo hi` (librosa, scipy) |
+| `transcribe-notes.py` | A clip's notes, chords too (basic-pitch, ONNX), as JSON + MIDI | `python3 -I claudetools/transcribe-notes.py clip.wav out.json` (basic-pitch) |
 | `hooktheory-report.py`, `chordonomicon-report.py` | Style families' chords/tunes from reference datasets in `~/music-reference/` (learning only, never in the repo) | top comment |
 
 ## Mipo voices

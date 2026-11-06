@@ -308,6 +308,12 @@ lib.patches = {
     -- drums): a pair of bells, ~150 ms rings, inharmonic (the mallet's bell material makes the overtones)
     brewBell = { pool = true, wave = 'MALLET', adsr = { 0, 160, 0, 80 }, harmonics = 0.85, timbre = 0.7, morph = 0.2,
                  reverb = 0.25, level = 0.3 },
+    -- the neige style (src/music-neige.lua), Domenique Dumont's synth: one soft analog synth for the skank chords
+    -- and the melody (the engine race: SAW first on both); the stab drops to ~40% in 100 ms and holds. Fitted to
+    -- the record's 'other' stem by octave bands (centroid 716 Hz): a 700 Hz lowpass; level from the stems (the
+    -- synth sits level with the bass)
+    neigeSynth = { pool = true, wave = 'SAW', adsr = { 4, 100, 3, 140 }, reverb = 0.35, level = 0.95, analog = 1,
+                   filter = { mode = 1, cutoff = 700, resonance = 1 } },
     brewGuitar = { pool = true, wave = 'GUITAR', adsr = { 2, 0, 7, 900 }, harmonics = 0.4, timbre = 0.22, morph = 0.1,
                    modes = { [0] = 0.7, [1] = 0.12 }, filter = { mode = 1, cutoff = 1900, resonance = 0 },
                    reverb = 0.3, level = 0.66 },
