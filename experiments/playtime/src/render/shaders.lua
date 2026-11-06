@@ -150,6 +150,21 @@ local plasticineShader = love.graphics.newShader([[
             } else {
                 for (int i = 0; i < MAX_LIGHTS; ++i) {
                     if (i >= lightCount) break;
+                    if (lightType[i] == 3) {
+                        // a back light: from behind, towards you. The shape's edges glow in its colour,
+                        // most those facing where it comes from (lightDir: towards it); the middle,
+                        // facing you, not at all. Added on top, like the sheen
+                        float facing = length(n.xy) > 0.001
+                            ? max(dot(normalize(n.xy), normalize(lightDir[i])), 0.0) : 0.0;
+                        // its own narrow edge: the picture's alpha just around (the form's measure
+                        // reaches far in), small see-through gaps (fur) not counted
+                        float rr = 0.045;
+                        float near = (Texel(tex, uv + vec2(rr, 0.0)).a + Texel(tex, uv - vec2(rr, 0.0)).a
+                            + Texel(tex, uv + vec2(0.0, rr)).a + Texel(tex, uv - vec2(0.0, rr)).a) * 0.25;
+                        float edge = smoothstep(0.15, 0.6, 1.0 - near);
+                        totalSpec += lightColor[i] * edge * facing * lightIntensity[i] * 0.3;
+                        continue;
+                    }
                     if (lightType[i] == 2) {
                         // a sky light: its colour from all of above, its ground colour from all of
                         // below (lightDir: up, body-local), wherever it is; no falloff, no sheen
@@ -371,6 +386,21 @@ local hairsShader = love.graphics.newShader([[
             } else {
                 for (int i = 0; i < MAX_LIGHTS; ++i) {
                     if (i >= lightCount) break;
+                    if (lightType[i] == 3) {
+                        // a back light: from behind, towards you. The shape's edges glow in its colour,
+                        // most those facing where it comes from (lightDir: towards it); the middle,
+                        // facing you, not at all. Added on top, like the sheen
+                        float facing = length(n.xy) > 0.001
+                            ? max(dot(normalize(n.xy), normalize(lightDir[i])), 0.0) : 0.0;
+                        // its own narrow edge: the picture's alpha just around (the form's measure
+                        // reaches far in), small see-through gaps (fur) not counted
+                        float rr = 0.045;
+                        float near = (Texel(tex, uv + vec2(rr, 0.0)).a + Texel(tex, uv - vec2(rr, 0.0)).a
+                            + Texel(tex, uv + vec2(0.0, rr)).a + Texel(tex, uv - vec2(0.0, rr)).a) * 0.25;
+                        float edge = smoothstep(0.15, 0.6, 1.0 - near);
+                        totalSpec += lightColor[i] * edge * facing * lightIntensity[i] * 0.3;
+                        continue;
+                    }
                     if (lightType[i] == 2) {
                         // a sky light: its colour from all of above, its ground colour from all of
                         // below (lightDir: up, body-local), wherever it is; no falloff, no sheen
@@ -443,7 +473,8 @@ lib.hairsFuzz     = 0.15
 lib.hairsBush     = 0.0
 
 -- Reused per-draw buffers so we don't churn tables each frame.
--- One slot per light the shaders take (MAX_LIGHTS); lightTypeBuf 0 = directional, 1 = point, 2 = sky.
+-- One slot per light the shaders take (MAX_LIGHTS); lightTypeBuf 0 = directional, 1 = point, 2 = sky,
+-- 3 = back (a rim from behind; its direction as a directional light's).
 local lightDirBuf, lightColorBuf, lightInBuf, lightTypeBuf, lightPosBuf, lightRangeBuf = {}, {}, {}, {}, {}, {}
 for i = 1, MAX_LIGHTS do
     lightDirBuf[i], lightColorBuf[i], lightInBuf[i] = { 0, 0 }, { 1, 1, 1 }, 0
@@ -451,7 +482,7 @@ for i = 1, MAX_LIGHTS do
 end
 local lightGroundBuf = {}
 for i = 1, MAX_LIGHTS do lightGroundBuf[i] = { 0, 0, 0 } end
-local LIGHT_TYPES = { directional = 0, point = 1, sky = 2 }
+local LIGHT_TYPES = { directional = 0, point = 1, sky = 2, back = 3 }
 
 -- Send light arrays to any shader that exposes the standard light uniforms.
 -- Honors the legacy per-fixture `extra.plasticineLight` override.

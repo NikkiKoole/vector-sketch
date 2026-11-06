@@ -12,6 +12,7 @@
 --   h contact shadows off / on (src/contact-shadows.lua; how dark goes with the time of day)
 --   w shadows on the back wall off / on (src/backdrop-shadows.lua: shifted the way the sun or moon
 --     shines, soft; only on the wall, none on the open sky)
+--   l the back light off / on (from behind: the edges glow; evening orange, night the moon's blue)
 --   k the sky light off / on (light from all of above in the sky's colour, from below in the ground's)
 --   g light swing   z how much the light comes from the front   f the quick form's depth
 --   b baked form / the shader's quick guess   n baked rise (1 a dome, 0.5, 0.2 a pebble)
@@ -26,19 +27,23 @@ local MOODS = {
     day = { sky = { 0.62, 0.78, 0.92 },
         sun = { 'fff2d9ff', 1.2, math.rad(60), -1250, -650 }, ['warm lamp'] = { 'ffb060ff', 0 },
         ['cool lamp'] = { '80a8ffff', 0 }, ['turning lamp'] = { 'ffffffff', 0 },
-        ['sky light'] = { '9cc8ffff', 0.6, nil, nil, nil, '8a7a50ff' } },
+        ['sky light'] = { '9cc8ffff', 0.6, nil, nil, nil, '8a7a50ff' },
+        ['back light'] = { 'ffffffff', 0.6, math.rad(135) } },
     evening = { sky = { 0.93, 0.62, 0.45 },
         sun = { 'ff8a3cff', 0.9, math.rad(12), -1450, -100 }, ['warm lamp'] = { 'ffb060ff', 1.2 },
         ['cool lamp'] = { '80a8ffff', 0 }, ['turning lamp'] = { 'ffffffff', 0 },
-        ['sky light'] = { 'ffa080ff', 0.5, nil, nil, nil, '5a3848ff' } },
+        ['sky light'] = { 'ffa080ff', 0.5, nil, nil, nil, '5a3848ff' },
+        ['back light'] = { 'ffa050ff', 2.4, math.rad(10) } },
     night = { sky = { 0.08, 0.1, 0.22 },
         sun = { 'a8c0ffff', 0.35, math.rad(120), 600, -650 }, ['warm lamp'] = { 'ffb060ff', 2.0 },
         ['cool lamp'] = { '80a8ffff', 1.6 }, ['turning lamp'] = { 'ffffffff', 0 },
-        ['sky light'] = { '3a4a80ff', 0.3, nil, nil, nil, '141420ff' } },
+        ['sky light'] = { '3a4a80ff', 0.3, nil, nil, nil, '141420ff' },
+        ['back light'] = { 'a8c0ffff', 1.8, math.rad(120) } },
     lamp = { sky = nil,
         sun = { 'fff2d9ff', 0, math.rad(60) }, ['warm lamp'] = { 'ffb060ff', 0 },
         ['cool lamp'] = { '80a8ffff', 0 }, ['turning lamp'] = { 'fff2d9ff', 1.0 },
-        ['sky light'] = { '9cc8ffff', 0, nil, nil, nil, '8a7a50ff' } },
+        ['sky light'] = { '9cc8ffff', 0, nil, nil, nil, '8a7a50ff' },
+        ['back light'] = { 'ffffffff', 0 } },
 }
 local MOOD_KEYS = { ['1'] = 'day', ['2'] = 'evening', ['3'] = 'night', ['4'] = 'lamp' }
 -- contact shadows (src/contact-shadows.lua) per time of day: how dark
@@ -49,7 +54,7 @@ local WALL = { x = -1550, y = -700, w = 2200, h = 1150, colour = { 0.91, 0.86, 0
 local WALL_BEHIND = 90
 local BACKDROP_SHADOWS = { day = 0.35, evening = 0.3, night = 0.2, lamp = 0.3 }
 local function wallShape() love.graphics.rectangle('fill', WALL.x, WALL.y, WALL.w, WALL.h) end
-local LIGHTS = { 'sun', 'warm lamp', 'cool lamp', 'turning lamp', 'sky light' }
+local LIGHTS = { 'sun', 'warm lamp', 'cool lamp', 'turning lamp', 'sky light', 'back light' }
 
 -- each key steps through these on every shape; the first is how other scenes draw them
 local TRIES = {
@@ -148,6 +153,7 @@ local function setMood(name)
         if extra and m then
             extra.colorHex, extra.intensity = m[1], m[2]
             if label == 'sky light' and look().skyOff then extra.intensity = 0 end
+            if label == 'back light' and look().backOff then extra.intensity = 0 end
             if m[6] then extra.groundHex = m[6] end
             if m[3] and body then body:setAngle(m[3]) end
             if m[4] and body then body:setPosition(m[4], m[5]) end
@@ -235,6 +241,9 @@ function s.onKeyPress(key)
         look().mipoLightOff = not look().mipoLightOff
     elseif key == 'c' then
         look().mipoClayOff = not look().mipoClayOff
+    elseif key == 'l' then
+        look().backOff = not look().backOff
+        setMood(look().mood)
     elseif key == 'k' then
         look().skyOff = not look().skyOff
         setMood(look().mood)
@@ -276,7 +285,7 @@ end
 function s.draw()
     for _, label in ipairs(LIGHTS) do
         local body, extra = lightOf(label)
-        if body and (extra.intensity or 1) > 0 and extra.lightType ~= 'sky' then
+        if body and (extra.intensity or 1) > 0 and extra.lightType ~= 'sky' and extra.lightType ~= 'back' then
             local x, y = body:getPosition()
             local r, g, b = hexColor(extra.colorHex or 'ffffffff')
             for k = 4, 1, -1 do
@@ -303,10 +312,11 @@ function s.drawUI()
         tries[#tries + 1] = string.format('%s %s %s', k, TRIES[k].name, tostring(current(TRIES[k])))
     end
     local lines = {
-        '1 day 2 evening 3 night 4 lamp (r)  k sky  h shadows  w wall shadows  m Mipos lit  c clay  tab: play  s turf',
+        '1 day 2 evening 3 night 4 lamp (r)  k sky  l back  h shadows  w wall  m Mipos lit  c clay  tab: play  s turf',
         'now: ' .. c.mood .. (c.skyOff and ', sky light off' or ', sky light on')
             .. (c.shadowsOff and ', no shadows' or ', shadows')
             .. (c.wallShadowsOff and ', none on the wall' or ', on the wall')
+            .. (c.backOff and ', no back light' or ', back light')
             .. (c.mipoLightOff and ', Mipos as drawn'
                 or (c.mipoClayOff and ', Mipos lit, no clay' or ', Mipos lit, clay'))
             .. '      shapes: ' .. table.concat(tries, '   ') .. '   (0 as elsewhere)',

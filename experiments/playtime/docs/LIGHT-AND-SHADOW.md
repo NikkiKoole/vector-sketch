@@ -8,7 +8,7 @@ turning lamp, six plasticine shapes; 1 day, 2 evening, 3 night, 4 the turning la
 shapes' light settings, 0 shows them as every other scene draws them (the keys are in its script's top
 comment).
 
-What there is (`src/render/shaders.lua`): LIGHT sfixtures (directional, point or sky) reach the plasticine
+What there is (`src/render/shaders.lua`): LIGHT sfixtures (directional, point, sky or back) reach the plasticine
 and hairs shaders, up to 8 at once. A light's colour tints a shape (the lights' colours averaged by how
 much each reaches); its intensity and nearness decide how lit the shape is. The shapes' own settings,
 all off by default (the defaults draw byte for byte as before):
@@ -29,6 +29,14 @@ fade, a sun, but the panel can't set 0).
   colour (`groundHex`, a row on the light's panel) from all of below, wherever the light is; above is
   the world's above (spec/light-sky_spec.lua). In the scene per time of day, k off / on: it fills the
   sun's dark sides with the sky's blue (2026-11-06).
+- [ ] **LS9. Back light (rim).** A light type `back`: from behind a shape, towards you; its edges glow in
+  the light's colour, most those facing where it comes from (body +X the way it shines), the middle not
+  at all; added on top like the sheen. Its own narrow edge measure (the picture's alpha just around),
+  so fur's small gaps don't sparkle (the form's wide measure lit half a stone). Built 2026-11-06, to
+  judge: light-grass-check, l off / on; evening orange from the low sun, night the moon's blue, day a
+  faint white (spec/light-back_spec.lua). On a drawn stone it mostly lands on the black outline; on
+  the Mipos' fur strokes it shows best. It's also the parked claymation plan's "rim tinting from the
+  opposing light".
 - [x] **LS3. Light that adds up.** How lit a shape was stopped at 1 (colours averaged): a second lamp
   near a lit shape added little, and a shape no light reached kept a middling brightness. A shape's
   `plasticineLightAdd`: the sky lights the base, every other light adds its colour and strength, a soft

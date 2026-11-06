@@ -231,18 +231,22 @@ lib.bySubtype = {
           get = function(fixture) return extraOf(fixture).colorHex or 'fff2d9ff' end,
           set = function(fixture, v) extraOf(fixture).colorHex = v end },
         extraNumber('intensity', 'intensity', 0, 3, 1),
-        { key = 'type', kind = 'choice', options = { 'directional', 'point', 'sky' },
+        { key = 'type', kind = 'choice', options = { 'directional', 'point', 'sky', 'back' },
           get = function(fixture) return extraOf(fixture).lightType or 'directional' end,
           set = function(fixture, v) extraOf(fixture).lightType = v end },
         -- a sky light: its colour from above, this one from below (docs/LIGHT-AND-SHADOW.md)
         { key = 'ground', kind = 'color', visible = isSkyLight,
           get = function(fixture) return extraOf(fixture).groundHex or '6b5a40ff' end,
           set = function(fixture, v) extraOf(fixture).groundHex = v end },
-        extraNumber('range', 'range', 10, 2000, 500, nil, { visible = function(f) return not isSkyLight(f) end }),
+        extraNumber('range', 'range', 10, 2000, 500, nil, { visible = function(f)
+            local lightType = extraOf(f).lightType
+            return lightType ~= 'sky' and lightType ~= 'back'
+        end }),
         { kind = 'note',
           label = function(fixture)
               local lightType = extraOf(fixture).lightType
               if lightType == 'sky' then return 'from all of above and below, wherever it is' end
+              if lightType == 'back' then return 'from behind: the edges glow; body +X = the way it shines' end
               return (lightType == 'point') and 'origin: this body\'s position'
                   or 'aim: rotate the body (body +X = light dir)'
           end },
