@@ -127,6 +127,13 @@ Kinds of material, by what the shader does differently:
   read from screenshots: strongest metal, glaze, plastic, candy, wood, leather, felt, plush fur,
   the backlit leaves; weakest stone / wet stone (cell pattern), shaggy fur (more hair than fur),
   smoke (pale clumps more than smoke), paper and plaster washed out in full sun.
+- [~] **MT3a. Two materials by the pattern** (2026-11-06, Nikki: "a ropey leg with that strip pattern:
+  dark velvet, light metal"): in material-check, u picks a second material (brass, gold, tin, velvet,
+  glass, felt), i the pattern (bee stripes, spots, the Mipo patterns), y its size. Each cell's own
+  material fills the pattern's dark parts, the second its light parts: the picture drawn twice, the
+  second time cut by the pattern (its alpha times its brightness). Legs added to n (leg-02, leg-05 with
+  its rungs, leg-03). On a real Mipo the pattern already sits on the part (OMP), so this is the
+  cheapest way to two materials there; costs the two materials added up.
 - [ ] **MT3. A material map per picture** (the sneaker idea; drawing it: THINGS-TO-DRAW A16): one more picture next to outline + mask
   saying which part is which material (leather / rubber / cloth), so one Mipo part can be two materials.
 - [x] **MT4. The next ones**: leather, rubber, stucco, glazed pottery (MT1b), wet (MT12).
