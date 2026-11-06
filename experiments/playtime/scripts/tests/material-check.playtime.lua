@@ -3,20 +3,23 @@
 -- alone and read as "computer"; here every material is one of the drawn pictures (outline + mask),
 -- its roundness baked from the mask (src/render/form-bake.lua), and the material is only how that
 -- roundness takes the light. Each row is the same picture, so the material is the only difference.
---   rows 1-2: a Mipo body shape as drawn | brass | tin | copper | velvet plum | velvet moss
---   row 3:    leaves (as drawn, then lit: from the front waxy, from behind the light comes through)
---   right:    smoke puffs (the body shapes as puffs), rising, growing, wearing away at the edges
+-- One screen: the palette (every material on one shape, n another), a row of leaves under it (as drawn,
+-- then lit: from the front waxy, from behind the light comes through, swaying), smoke on the right,
+-- and a big striped shape sliding behind everything, so the see-through materials (glass, ice, a
+-- soap bubble, clear candy, amber) show it, bent by their roundness.
 -- The light is where the mouse is: in front of the pictures, or behind them (b).
--- Two pages (v): the palette (every material on one shape, n another) and the rows above.
 -- The palette's materials are mostly one 'surface' model with settings (PALETTE): how far the light
 -- wraps round, a shine (its size, strength, white or the colour's own), a clear coat (glaze, varnish,
 -- wet), a sheen at the edges (cloth), the edges darkened (glaze pooling, worn leather), light coming
--- through (wax, jade, candy), a grain (sand, fibre, pebble, wood, crackle) and a rainbow (pearl).
+-- through (wax, jade, candy), a grain (sand, fibre, pebble, wood, crackle), a rainbow (pearl) and how
+-- see-through it is (clear: how much, how far it bends, tinted, frosted).
 -- keys:
---   v palette / rows, leaves and smoke
+--   x measure what each material costs the GPU (src/render/shader-cost.lua): under each name its cost
+--     against 'as drawn', the status line the cheapest and dearest in ms per million pixels
+--   j the shape behind slides / stays   hold h: the shape behind follows the mouse (the light stays)
 --   b light in front / behind   f the light stays put / follows the mouse   c light: sun / candle / moon
 --   p painted (the light in a few steps, like poster paint) / smooth   o outlines on / off
---   n another shape for rows 1-2   l other leaves   s smoke: steam / smoke / soot   w wind
+--   n another shape   l other leaves   s smoke: steam / smoke / soot   w wind
 --   m the bake's rise: dome / cushion / pebble (how round the shapes are)
 --   r a shower: everything gets wet (darker, a sharp shine, drops), then dries again
 --   g what the shader sees: off / height / normals / the light alone (on white)
@@ -25,23 +28,13 @@
 
 local s = {}
 
-local COLUMNS = { -1200, -750, -300, 150, 600, 1050 }
-local ROWS = { -700, -230 }
-local LEAF_ROW = 290
-local CELL = 380 -- a picture's longer side, in world units
-local SMOKE = { x = 1560, y = 760 }
-
--- what a cell is: the shader's mode and its colour
-local MATERIALS = {
-    { name = 'as drawn', mode = 0, base = { 0.86, 0.55, 0.42 } },
-    { name = 'brass', mode = 1, base = { 0.95, 0.72, 0.3 } },
-    { name = 'tin', mode = 1, base = { 0.78, 0.8, 0.85 } },
-    { name = 'copper', mode = 1, base = { 0.93, 0.5, 0.32 } },
-    { name = 'velvet plum', mode = 2, base = { 0.45, 0.12, 0.3 } },
-    { name = 'velvet moss', mode = 2, base = { 0.22, 0.36, 0.14 } },
-}
-local SHAPES = { 'mipo/body/body-12', 'mipo/body/body-04', 'mipo/body/body-01', 'mipo/body/body-06',
-    'mipo/body/body-15', 'mipo/body/body-17', 'mipo/patch/patch-01', 'mipo/patch/patch-03' }
+-- the layout, in world units: the palette's top left cell, the leaves' row (their stems), the smoke's
+-- chimney, the shape behind (its middle, how far it slides)
+local GRID = { x = -1450, y = -1050, step = 340, rowStep = 330, cell = 250, columns = 6 }
+local LEAF_ROW = 1130
+local SMOKE = { x = 800, y = 1250 }
+local BEHIND = { pic = 'mipo/body/body-13', x = -600, y = 250, size = 1250, slide = 700,
+    colour = { 0.36, 0.42, 0.7 }, stripe = { 0.98, 0.84, 0.3 } }
 local LEAF_SETS = {
     { 'plants/oval-02', 'plants/oval-04', 'plants/frond-01', 'plants/oval-03', 'plants/oval-01', 'plants/oval-05' },
     { 'plants/oval-03', 'plants/petal-02', 'plants/oval-02', 'plants/petal-05', 'plants/sprout-01', 'plants/oval-04' },
@@ -70,6 +63,7 @@ local LIGHT_DEPTH = 420
 --   rainbow, rough (metal: 0 polished .. 1 dull)
 local SAND, FIBRE, PEBBLE, WOOD, CRACKLE = 1, 2, 3, 4, 5
 local PALETTE = {
+    { name = 'as drawn', mode = 0, base = { 0.86, 0.55, 0.42 } },
     -- matte
     { name = 'clay', base = { 0.82, 0.5, 0.36 }, spec = { 0.08, 6 }, surf = { 0.35 }, grain = { SAND, 14, 0.25, 0.1 } },
     { name = 'plaster', base = { 0.92, 0.88, 0.8 }, surf = { 0.25, 0, 0.15 }, grain = { SAND, 40, 0.6, 0.25 } },
@@ -108,11 +102,17 @@ local PALETTE = {
         fur = { 70, 0.1, 0.5 } },
     { name = 'shaggy fur', mode = 6, base = { 0.5, 0.36, 0.26 }, spec = { 0.5, 40 }, surf = { 0, 0.8 },
         fur = { 50, 0.8, 0.8 } },
+    -- see-through: clear = { how much, how far it bends (px), tinted by its colour, frosted (px) }
+    { name = 'glass', base = { 0.85, 0.93, 0.96 }, spec = { 0.7, 90 }, surf = { 0.1 }, clear = { 0.85, 30, 0.15 } },
+    { name = 'ice', base = { 0.8, 0.9, 1.0 }, spec = { 0.4, 60 }, surf = { 0.3, 0.2 }, clear = { 0.7, 40, 0.3, 4 },
+        grain = { CRACKLE, 4, 0.25, 0.1 } },
+    { name = 'soap bubble', base = { 1, 1, 1 }, spec = { 0.9, 120 }, clear = { 0.95, 6 }, rainbow = 1.2 },
+    { name = 'clear candy', base = { 0.95, 0.25, 0.45 }, spec = { 0.3, 40, 0, 1.0 }, surf = { 0.3, 0, 0, 0.4 },
+        clear = { 0.6, 25, 0.9 } },
+    { name = 'amber', base = { 0.95, 0.6, 0.15 }, spec = { 0.3, 50, 0, 0.8 }, surf = { 0.3, 0, 0, 0.5 },
+        clear = { 0.55, 20, 0.95 } },
     { name = 'iron', mode = 1, base = { 0.45, 0.45, 0.48 }, spec = { 0.6, 14 }, rough = 0.8, grain = { SAND, 30, 0.3, 0.2 } },
 }
-local PALETTE_COLUMNS = 6
-local PALETTE_STEP = 400
-local PALETTE_CELL = 280
 local PALETTE_SHAPES = { 'mipo/body/body-12', 'mipo/body/body-06', 'mipo/body/body-15', 'mipo/body/body-17',
     'mipo/body/body-03', 'mipo/patch/patch-01' } -- how far in front of (or behind) the pictures the light is
 
@@ -121,7 +121,10 @@ local function lab()
         back = false, frozen = false, light = 1, painted = false, outlines = true, shape = 1, leaves = 1,
         smoke = 1, wind = 0, rise = 1, puffs = {}, spawn = 0, lx = 0, ly = -900,
     }
-    state.materialCheck.page = state.materialCheck.page or 1 -- added later: a live state lacks it
+    -- added later: a live state lacks them
+    state.materialCheck.slide = state.materialCheck.slide == nil and true or state.materialCheck.slide
+    state.materialCheck.behindX = state.materialCheck.behindX or BEHIND.x
+    state.materialCheck.behindY = state.materialCheck.behindY or BEHIND.y
     state.materialCheck.paletteShape = state.materialCheck.paletteShape or 1
     return state.materialCheck
 end
@@ -148,6 +151,9 @@ local function materialShader()
         uniform vec4 fur;        // strands per picture, length (0 short .. 1 long), clumping, -
         uniform float wet;       // 0 dry .. 1 just rained on
         uniform float debug;     // 0 off, 1 height, 2 normals, 3 the light alone
+        uniform vec4 clear;      // see-through: how much, how far it bends (px), tinted, frosted (px)
+        uniform Image behind;    // what's behind everything (the wall and the striped shape)
+        uniform vec2 screenSize; // its size in pixels
 
         float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
         float vnoise(vec2 p) {
@@ -279,16 +285,36 @@ local function materialShader()
                 col += surf.w * base * lightColour * (0.3 * d + 1.3 * back * thin);
                 vec3 H = normalize(L + vec3(0.0, 0.0, 1.0));
                 float nh = max(dot(n, H), 0.0);
-                if (spec.x > 0.0) col += st(pow(nh, max(spec.y, 1.0))) * spec.x * mix(vec3(1.0), base * 1.4, spec.z) * lightColour;
+                vec3 glints = vec3(0.0);
+                if (spec.x > 0.0) glints += st(pow(nh, max(spec.y, 1.0))) * spec.x * mix(vec3(1.0), base * 1.4, spec.z) * lightColour;
                 if (spec.w > 0.0) {
                     vec3 R = vec3(2.0 * n.z * n.x, 2.0 * n.z * n.y, 2.0 * n.z * n.z - 1.0);
                     float room = smoothstep(-0.05, 0.4, -R.y) * rim;
-                    col += spec.w * (st(pow(nh, 240.0)) * 1.6 + room * 0.35) * lightColour;
+                    glints += spec.w * (st(pow(nh, 240.0)) * 1.6 + room * 0.35) * lightColour;
                 }
                 if (more.x > 0.0) {
                     vec3 bow = 0.5 + 0.5 * cos(6.283 * ((1.0 - n.z) * 1.3 + vec3(0.0, 0.33, 0.67)));
-                    col += more.x * bow * 0.3 * lightColour * (0.4 + 0.6 * d);
+                    glints += more.x * bow * 0.3 * lightColour * (0.4 + 0.6 * d);
                 }
+                if (clear.x > 0.0) {
+                    // see-through: what's behind, bent toward where it's thicker, more so at the
+                    // edges (where it's seen through slantwise, less clear: a rim), tinted by its
+                    // colour, blurred when frosted
+                    float edge = pow(1.0 - n.z, 2.0);
+                    float t = clear.x * (1.0 - edge * 0.75);
+                    vec2 px = sc - n.xy * clear.y * (0.4 + h);
+                    vec3 seen = Texel(behind, px / screenSize).rgb;
+                    if (clear.w > 0.0) {
+                        seen += Texel(behind, (px + vec2(clear.w, 0.0)) / screenSize).rgb;
+                        seen += Texel(behind, (px - vec2(clear.w, 0.0)) / screenSize).rgb;
+                        seen += Texel(behind, (px + vec2(0.0, clear.w)) / screenSize).rgb;
+                        seen += Texel(behind, (px - vec2(0.0, clear.w)) / screenSize).rgb;
+                        seen /= 5.0;
+                    }
+                    seen *= mix(vec3(1.0), base * 1.3, clear.z);
+                    col = mix(col, seen, t);
+                }
+                col += glints;
             } else if (mode > 5.5) {
                 // fur: strands running down the picture in clumps, dark at the root, light at the
                 // tips; the shine a streak across the strands (not a spot), a soft strong rim, and
@@ -412,12 +438,17 @@ local function drawPicture(name, mode, base, x, y, size, opts)
     sh:send('fur', four(p.fur, { 40, 0.3, 0.6, 0 }))
     sh:send('wet', c.wet or 0)
     sh:send('debug', c.debug or 0)
+    sh:send('clear', four(p.clear, { 0, 0, 0, 0 }))
+    if c.behind then
+        sh:send('behind', c.behind)
+        sh:send('screenSize', { c.behind:getPixelDimensions() })
+    end
     love.graphics.setColor(1, 1, 1, opts.alpha or 1)
     -- a pivot at the bottom (a leaf swaying from its stem)
     local oy = opts.pivotBottom and h or h / 2
     love.graphics.draw(look.mask, x, y, rot, scale, scale, w / 2, oy)
     love.graphics.setShader()
-    if c.outlines and (c.debug or 0) == 0 then
+    if c.outlines and (c.debug or 0) == 0 and not opts.noOutline then
         local ink = opts.ink or { 0.12, 0.09, 0.08 }
         love.graphics.setColor(ink[1], ink[2], ink[3], (opts.alpha or 1) * (opts.inkAlpha or 1))
         love.graphics.draw(look.line, x, y, rot, scale, scale, w / 2, oy)
@@ -474,8 +505,8 @@ end
 
 function s.onStart()
     worldState.paused = false
-    cam:setScale(0.27)
-    cam:setTranslation(40, -130)
+    cam:setScale(0.255)
+    cam:setTranslation(-330, 60)
 end
 
 function s.onUnload()
@@ -485,7 +516,14 @@ end
 function s.update(dt)
     local c = lab()
     dt = dt or 0
-    if not c.frozen then c.lx, c.ly = mouseWorldPos() end
+    -- hold h: the shape behind follows the mouse, the light stays; else it slides (j) or stays
+    c.slideTime = (c.slideTime or 0) + (c.slide and dt or 0)
+    if love.keyboard.isDown('h') then
+        c.behindX, c.behindY = mouseWorldPos()
+    else
+        if c.slide then c.behindX = BEHIND.x + math.sin(c.slideTime * 0.3) * BEHIND.slide end
+        if not c.frozen then c.lx, c.ly = mouseWorldPos() end
+    end
     updateSmoke(dt)
     -- a shower: wet in two seconds, dry again over twenty
     if c.shower then
@@ -513,10 +551,8 @@ function s.onKeyPress(key)
         c.painted = not c.painted
     elseif key == 'o' then
         c.outlines = not c.outlines
-    elseif key == 'n' and c.page == 1 then
-        c.paletteShape = c.paletteShape % #PALETTE_SHAPES + 1
     elseif key == 'n' then
-        c.shape = c.shape % #SHAPES + 1
+        c.paletteShape = c.paletteShape % #PALETTE_SHAPES + 1
     elseif key == 'l' then
         c.leaves = c.leaves % #LEAF_SETS + 1
     elseif key == 's' then
@@ -525,8 +561,10 @@ function s.onKeyPress(key)
         c.wind = (c.wind == 0 and 1) or (c.wind == 1 and -1) or 0
     elseif key == 'm' then
         c.rise = c.rise % #RISES + 1
-    elseif key == 'v' then
-        c.page = c.page % 2 + 1
+    elseif key == 'x' then
+        c.measureNext = true
+    elseif key == 'j' then
+        c.slide = not c.slide
     elseif key == 'r' then
         c.shower = 0
     elseif key == 'g' then
@@ -575,18 +613,90 @@ local function drawLight()
     love.graphics.setColor(1, 1, 1, 1)
 end
 
--- every material on one shape, in rows of PALETTE_COLUMNS
+-- every material on one shape, in rows of GRID.columns; under each, its cost once measured (x)
+local function cellAt(i)
+    local col, row = (i - 1) % GRID.columns, math.floor((i - 1) / GRID.columns)
+    return GRID.x + col * GRID.step, GRID.y + row * GRID.rowStep
+end
+
 local function drawPalette()
     local c = lab()
     local shape = PALETTE_SHAPES[c.paletteShape]
-    local x0 = -(PALETTE_COLUMNS - 1) / 2 * PALETTE_STEP + 150
     for i, mat in ipairs(PALETTE) do
-        local col, row = (i - 1) % PALETTE_COLUMNS, math.floor((i - 1) / PALETTE_COLUMNS)
-        local x, y = x0 + col * PALETTE_STEP, -700 + row * 380
-        drawPicture(shape, mat.mode or 5, mat.base, x, y, PALETTE_CELL,
-            { params = mat, inkAlpha = mat.mode == 6 and 0.35 or 1, seed = i * 3.1 })
-        label(mat.name, x, y - PALETTE_CELL / 2 - 60)
+        local x, y = cellAt(i)
+        drawPicture(shape, mat.mode or 5, mat.base, x, y, GRID.cell, {
+            params = mat, seed = i * 3.1,
+            inkAlpha = (mat.mode == 6 and 0.35) or (mat.clear and 0.55) or 1,
+        })
+        label(mat.name, x, y - GRID.cell / 2 - 55)
+        local cost = c.costs and c.costs[mat.name]
+        if cost then
+            local text = string.format('x%.1f', cost.relative)
+            love.graphics.setColor(0.15, 0.1, 0.08, 0.85)
+            love.graphics.print(text, x + GRID.cell / 2 - 10, y + GRID.cell / 2 - 50, 0, 1.8, 1.8)
+            love.graphics.setColor(1, 1, 1, 1)
+        end
     end
+end
+
+-- the big striped shape behind everything: what the see-through materials show
+local behindShader
+local function drawBehindShape()
+    local c = lab()
+    local look = lookOf(BEHIND.pic)
+    if not look then return end
+    behindShader = behindShader or love.graphics.newShader([[
+        uniform Image pattern;
+        uniform vec3 stripe;
+        vec4 effect(vec4 colour, Image tex, vec2 uv, vec2 sc) {
+            vec4 m = Texel(tex, uv);
+            float p = Texel(pattern, uv * 7.0).a;
+            return vec4(mix(colour.rgb, stripe, p), m.r * m.a);
+        }
+    ]])
+    c.pattern = c.pattern or love.graphics.newImage('textures/pat/bee-stripes.png')
+    c.pattern:setWrap('repeat', 'repeat')
+    local w, h = look.mask:getDimensions()
+    local scale = BEHIND.size / math.max(w, h)
+    love.graphics.setShader(behindShader)
+    behindShader:send('pattern', c.pattern)
+    behindShader:send('stripe', BEHIND.stripe)
+    love.graphics.setColor(BEHIND.colour[1], BEHIND.colour[2], BEHIND.colour[3], 1)
+    love.graphics.draw(look.mask, c.behindX, c.behindY, -0.15, scale, scale, w / 2, h / 2)
+    love.graphics.setShader()
+    love.graphics.setColor(0.12, 0.09, 0.08, 1)
+    love.graphics.draw(look.line, c.behindX, c.behindY, -0.15, scale, scale, w / 2, h / 2)
+    love.graphics.setColor(1, 1, 1, 1)
+end
+
+-- what each material costs: drawn over a square canvas, against 'as drawn' (the cheapest: no light)
+local function measureCosts()
+    local c = lab()
+    local shape = PALETTE_SHAPES[c.paletteShape]
+    local entries = {}
+    for _, mat in ipairs(PALETTE) do
+        entries[#entries + 1] = { name = mat.name, draw = function(size)
+            drawPicture(shape, mat.mode or 5, mat.base, size / 2, size / 2, size, { params = mat, noOutline = true })
+        end }
+    end
+    entries[#entries + 1] = { name = 'leaf', draw = function(size)
+        drawPicture(LEAF_SETS[1][1], 3, LEAF_COLOURS[1], size / 2, size / 2, size, { noOutline = true })
+    end }
+    entries[#entries + 1] = { name = 'smoke', draw = function(size)
+        drawPicture(PUFFS[1], 4, SMOKES[1].colour, size / 2, size / 2, size, { noOutline = true, dissolve = 0.5 })
+    end }
+    local results = shaderCost.measure(entries, { baseline = 'as drawn' })
+    c.costs = {}
+    local lines = {}
+    for _, r in ipairs(results) do
+        c.costs[r.name] = r
+        lines[#lines + 1] = string.format('%s %.2f (x%.1f)', r.name, r.msPerMP, r.relative)
+    end
+    table.sort(results, function(a, b) return a.msPerMP < b.msPerMP end)
+    c.costLine = string.format('cost in ms per million pixels: cheapest %s %.2f, dearest %s %.2f, as drawn %.2f',
+        results[1].name, results[1].msPerMP, results[#results].name, results[#results].msPerMP,
+        c.costs['as drawn'].msPerMP)
+    print('[material-check] ' .. table.concat(lines, ', '))
 end
 
 -- the picture pass, over the whole picture: a soft glow from the bright parts, a grade by the light
@@ -621,24 +731,37 @@ local function picturePass()
 end
 local GRADES = { { 1.04, 1.0, 0.92 }, { 1.1, 0.96, 0.82 }, { 0.86, 0.94, 1.1 } }
 
+-- Everything goes through two canvases: what's behind (the wall and the striped shape), which the
+-- see-through materials read, and the picture, which the picture pass (e) draws, and which is only
+-- redrawn 12 times a second when stepped (t).
 local drawPage
 
--- the page straight, or into a canvas first: for the picture pass, or to hold it 12 frames a second
 function s.draw()
     local c = lab()
-    if not c.post and not c.stepped then return drawPage() end
+    if c.measureNext then
+        c.measureNext = false
+        measureCosts()
+    end
     local outer = love.graphics.getCanvas()
     local W, H = love.graphics.getDimensions()
     if outer then W, H = outer:getDimensions() end
     if not c.canvas or c.canvas:getWidth() ~= W or c.canvas:getHeight() ~= H then
         c.canvas = love.graphics.newCanvas(W, H)
+        c.behind = love.graphics.newCanvas(W, H)
         c.sinceFrame = 1
     end
     if not c.stepped or c.sinceFrame >= 1 / 12 then
         c.sinceFrame = 0
-        love.graphics.setCanvas(c.canvas)
         local wall = lightColour().wall
+        love.graphics.setCanvas(c.behind)
         love.graphics.clear(wall[1], wall[2], wall[3], 1)
+        drawBehindShape()
+        love.graphics.setCanvas(c.canvas)
+        love.graphics.push()
+        love.graphics.origin()
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.draw(c.behind, 0, 0)
+        love.graphics.pop()
         drawPage()
         love.graphics.setCanvas(outer)
     end
@@ -659,30 +782,18 @@ end
 
 drawPage = function()
     local c = lab()
-    if c.page == 1 then
-        drawPalette()
-        drawLight()
-        return
-    end
-    local shape = SHAPES[c.shape]
-    local second = SHAPES[c.shape % #SHAPES + 1]
-    for i, x in ipairs(COLUMNS) do
-        local mat = MATERIALS[i]
-        drawPicture(shape, mat.mode, mat.base, x, ROWS[1], CELL)
-        drawPicture(second, mat.mode, mat.base, x, ROWS[2], CELL)
-        label(mat.name, x, ROWS[1] - CELL / 2 - 70)
-    end
-    for i, x in ipairs(COLUMNS) do
+    drawPalette()
+    for i = 1, GRID.columns do
+        local x = GRID.x + (i - 1) * GRID.step
         local leaf = LEAF_SETS[c.leaves][i]
         -- a slow sway and a small quick flutter, from the stem
         local t = c.stepped and math.floor(c.time * 12) / 12 or c.time
         local push = 0.05 + 0.08 * math.abs(c.wind)
         local sway = math.sin(t * 1.1 + i * 1.7) * push + math.sin(t * 4.3 + i * 2.9) * push * 0.25 + c.wind * 0.12
-        drawPicture(leaf, i == 1 and 0 or 3, LEAF_COLOURS[i], x, LEAF_ROW + CELL * 0.575, CELL * 1.15,
-            { rot = sway, pivotBottom = true })
+        drawPicture(leaf, i == 1 and 0 or 3, LEAF_COLOURS[i], x, LEAF_ROW, 330, { rot = sway, pivotBottom = true })
     end
-    label('leaf, as drawn', COLUMNS[1], LEAF_ROW + CELL * 0.6 + 20)
-    label('leaf, lit (b: from behind)', (COLUMNS[2] + COLUMNS[6]) / 2, LEAF_ROW + CELL * 0.6 + 20)
+    label('leaf, as drawn', GRID.x, LEAF_ROW + 15)
+    label('leaves lit (b: from behind)', GRID.x + 3 * GRID.step, LEAF_ROW + 15)
     drawSmoke()
     label(SMOKES[c.smoke].name, SMOKE.x, SMOKE.y + 20)
     drawLight()
@@ -691,7 +802,7 @@ end
 function s.drawUI()
     local c = lab()
     local lines = {
-        'v page   b light in front / behind   f light stays / follows the mouse   c sun / candle / moon   p painted   o outlines'
+        'x cost   j slide   h hold: move the shape behind   b light in front / behind   f light stays / follows the mouse   c sun / candle / moon   p painted   o outlines'
             .. '   n shape   l leaves   s steam / smoke / soot   w wind   m rise   r shower   g sees   e pass   t 12 fps',
         string.format('light: %s, %s%s   %s   rise: %s   smoke: %s, wind %s   outlines %s',
             LIGHTS[c.light].name, c.back and 'behind' or 'in front', c.frozen and ' (stays)' or '',
@@ -700,6 +811,7 @@ function s.drawUI()
             .. string.format('   wet %.1f   sees: %s   pass %s   %s', c.wet or 0,
                 ({ 'off', 'height', 'normals', 'light alone' })[(c.debug or 0) + 1], c.post and 'on' or 'off',
                 c.stepped and '12 fps' or 'smooth'),
+        c.costLine or 'x: measure what each material costs',
     }
     for i, line in ipairs(lines) do
         local y = love.graphics.getHeight() - 20 - (#lines - i + 1) * 20

@@ -101,6 +101,7 @@ local baseEnv = {
     pcall                    = pcall,
     ompBake                  = require('src.render.omp-bake'), -- the outline + mask + pattern bake (scan-test)
     formBake                 = require('src.render.form-bake'), -- a picture's roundness from its mask (material-check)
+    shaderCost               = require('src.render.shader-cost'), -- what a shader costs the GPU, per MP (material-check)
     fixtures                 = fixtures, -- sfixtures on a script's own bodies (burrow's OMP rocks)
     liquid                   = require('src.liquid'), -- water in cups: spill, water, mouthPoint (seaside)
     -- Add global utilities like NeedManager, etc.

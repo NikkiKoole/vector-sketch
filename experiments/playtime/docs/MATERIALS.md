@@ -167,3 +167,19 @@ Other ways, in our pipeline:
 - Still in the lists, not built: a material map per picture (MT3), varied gloss and per-plant colour
   and size, ambient occlusion at a plant's base and in clumps, front leaves blurred and back layers
   darker (DEPTH-LAYERS), pollen and falling leaves, plants that react when brushed through.
+
+## One screen, see-through, and what each costs (2026-11-06)
+
+- [x] **MT16. One screen**: palette (36, with 'as drawn' first), leaves under it, smoke on the right.
+- [x] **MT17. See-through** (Nikki: "I like to see transparency too"): a big striped shape slides behind
+  everything (j stops it, hold h to carry it); glass, ice (frosted), soap bubble, clear candy and amber
+  show it bent toward where they're thicker, less clear at the edges, tinted by their colour. Everything
+  is drawn through a canvas of what's behind, which the shader reads.
+- [x] **MT18. What each costs** (x): `src/render/shader-cost.lua` (`shaderCost` in the script sandbox)
+  draws each over a 512 canvas 80 times a round, waits for the GPU with a one-pixel read, keeps the
+  fastest of 7 rounds: ms per million pixels (a phone screen is ~1 MP). Repeats to a few hundredths.
+  On the Mac (2026-11-06): as drawn ~0.19, metals and glossy ~0.2-0.3 (x1-1.5), clay, rubber, jade,
+  wood ~0.45 (x2), fibres and fur ~0.5 (x2.5), the cell grains (stucco, stone, leather, tin, mud, wet
+  stone, ice) ~0.9-1.0 (x4-5: nine cell points looked up three times for the relief). All of it is cheap
+  here; the phone is what counts (LS12): measure there before choosing, and if the cell grains are too
+  dear, bake the grain once into a picture.
