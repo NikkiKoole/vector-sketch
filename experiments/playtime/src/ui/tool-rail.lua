@@ -457,6 +457,35 @@ local function drawFlyout(group, x, y)
     end)
 end
 
+-- Sound off / on for every scene (Nikki, 2026-11-06): love.audio's master volume, which the synth's
+-- music goes through too. Kept on state, so it stays off across scene loads until clicked again.
+function lib.toggleSound()
+    if state.soundMuted then
+        love.audio.setVolume(state.soundVolumeBefore or 1)
+        state.soundMuted = nil
+    else
+        state.soundVolumeBefore = love.audio.getVolume()
+        love.audio.setVolume(0)
+        state.soundMuted = true
+    end
+end
+
+-- a speaker, with waves when on and a cross when off
+local function drawSpeaker(cx, cy, r, muted)
+    local lg = love.graphics
+    lg.setColor(ui.theme.button.text_default)
+    lg.setLineWidth(3)
+    lg.polygon('fill', cx - r, cy - r * 0.35, cx - r * 0.55, cy - r * 0.35, cx - r * 0.05, cy - r * 0.8,
+        cx - r * 0.05, cy + r * 0.8, cx - r * 0.55, cy + r * 0.35, cx - r, cy + r * 0.35)
+    if muted then
+        lg.line(cx + r * 0.25, cy - r * 0.4, cx + r * 0.95, cy + r * 0.4)
+        lg.line(cx + r * 0.25, cy + r * 0.4, cx + r * 0.95, cy - r * 0.4)
+    else
+        lg.arc('line', 'open', cx, cy, r * 0.5, -0.8, 0.8)
+        lg.arc('line', 'open', cx, cy, r * 0.95, -0.8, 0.8)
+    end
+end
+
 function lib.draw()
     local rs = railState()
     local gap = ui.theme.spacing
@@ -509,6 +538,18 @@ function lib.draw()
             end
         end
     end)
+
+    -- the sound button, in its own box under the rail
+    local soundY = RAIL_TOP + railH + gap
+    local soundW = gap * 2 + BUTTON
+    ui.panel(RAIL_X, soundY, soundW, BUTTON + gap * 2, nil, function()
+        local x, y = RAIL_X + gap, soundY + gap
+        if ui.button(x, y, BUTTON, '', BUTTON, state.soundMuted and ui.theme.header.active or nil) then
+            lib.toggleSound()
+        end
+        drawSpeaker(x + BUTTON / 2, y + BUTTON / 2, BUTTON * 0.3, state.soundMuted)
+    end)
+    railRect.h = railH + gap + BUTTON + gap * 2
 
     if openGroup then
         drawFlyout(openGroup, RAIL_X + railW + gap, openY)
