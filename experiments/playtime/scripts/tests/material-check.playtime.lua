@@ -25,7 +25,8 @@
 --   b light in front / behind   f the light stays put / follows the mouse   c light: sun / candle / moon
 --   p painted (the light in a few steps, like poster paint) / smooth   o outlines on / off
 --   n another shape   l other leaves   s smoke: steam / smoke / soot   w wind
---   m the bake's rise: dome / cushion / pebble (how round the shapes are)
+--   m the bake's rise: dome / cushion / pebble / bevel (how round the shapes are; bevel a coin's slope)
+--   the panel's last rows: lumpy (hand-pressed bumps), ink shadow (sinking into the outline)
 --   r a shower: everything gets wet (darker, a soft sheen), then dries again
 --   g what the shader sees: off / height / normals / the light alone (on white)
 --   e the picture pass: grain, vignette, a soft glow and a grade by the light / off
@@ -65,7 +66,8 @@ local PATTERNS = { 'bee-stripes', 'type2t', 'ladybird-spots', 'type1', 'pattern4
 local PATTERN_NAMES = { 'stripes', 'dashes', 'spots', 'loops', 'zigzag', 'hatch', 'knit' } -- short, for the panel
 local PATTERN_SIZES = { 3, 6, 1.5 } -- repeats over the picture's height
 local CREASES = { { 'off', 0 }, { 'on', 1 }, { 'deep', 2.5 } }
-local RISES = { { 'dome', 1 }, { 'cushion', 0.5 }, { 'pebble', 0.2 } }
+-- bevel: a straight slope from the edge, then flat (a coin, a badge, a cut-out piece)
+local RISES = { { 'dome', 1 }, { 'cushion', 0.5 }, { 'pebble', 0.2 }, { 'bevel', 0.25, 'bevel' } }
 local LIGHT_DEPTH = 420
 
 -- The palette: one shape in every material. Fields (all optional, 0 when left out):
@@ -138,6 +140,8 @@ local function lab()
     state.materialCheck.time = state.materialCheck.time or 0
     state.materialCheck.sinceFrame = state.materialCheck.sinceFrame or 0
     state.materialCheck.wet = state.materialCheck.wet or 0
+    state.materialCheck.lumpy = state.materialCheck.lumpy or 0
+    state.materialCheck.inkShadow = state.materialCheck.inkShadow or 0
     state.materialCheck.crease = state.materialCheck.crease or 2
     -- the panel's sliders: continuous values the keys step through
     local c = state.materialCheck
@@ -186,6 +190,7 @@ local function materialShader()
         uniform Image pattern;   // a second material's pattern: only where it's light (patternOn)
         uniform float patternOn;
         uniform float patternRepeat;
+        uniform vec4 craft;      // lumpy (how much), ink shadow (how dark), -, -
 
         float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
         float vnoise(vec2 p) {
@@ -244,6 +249,18 @@ local function materialShader()
             float h = f.r;
             vec2 nxy = (f.gb - 0.5) * 2.0;
             vec3 n = normalize(vec3(nxy, sqrt(max(0.0, 1.0 - dot(nxy, nxy)))));
+            if (craft.x > 0.0) {
+                // lumpy: a few soft bumps, different per thing, as if pressed by hand; none at the
+                // very edge (the outline keeps its roundness)
+                vec2 q = uv * vec2(more.y, 1.0) * 2.4 + seed * 1.7 + dot(baseColour, vec3(13.1, 7.7, 3.3));
+                float e = 0.05;
+                float l0 = vnoise(q) + 0.5 * vnoise(q * 2.3 + 5.0);
+                float lx = vnoise(q + vec2(e, 0.0)) + 0.5 * vnoise((q + vec2(e, 0.0)) * 2.3 + 5.0);
+                float ly = vnoise(q + vec2(0.0, e)) + 0.5 * vnoise((q + vec2(0.0, e)) * 2.3 + 5.0);
+                float inner = smoothstep(0.02, 0.35, h);
+                n = normalize(n - vec3(lx - l0, ly - l0, 0.0) / e * craft.x * 0.22 * inner);
+                h = clamp(h + (l0 - 0.75) * craft.x * 0.2 * inner, 0.0, 1.0);
+            }
             // creases: the strokes inside the shape (not its outline: only where the blurred mask is
             // well inside) are valleys; the blurred line is how deep, its slope tilts the normal
             float creaseShade = 0.0;
@@ -404,6 +421,12 @@ local function materialShader()
                 vec3 H = normalize(L + vec3(0.0, 0.0, 1.0));
                 col += wet * st(pow(max(dot(n, H), 0.0), 40.0)) * 0.55 * lightColour;
             }
+            if (craft.y > 0.0) {
+                // sitting in the ink: a soft shadow just inside the outline (the bake's inside, blurred
+                // by a coarser mip)
+                float wide = Texel(form, uv, 2.5).a;
+                col *= 1.0 - craft.y * 0.55 * (1.0 - smoothstep(0.55, 1.0, wide));
+            }
             return vec4(col, alpha) * colour;
         }
     ]])
@@ -414,8 +437,8 @@ end
 
 local looks = {}
 local function lookOf(name)
-    local rise = RISES[lab().rise][2]
-    local key = name .. '|' .. rise
+    local rise, profile = RISES[lab().rise][2], RISES[lab().rise][3]
+    local key = name .. '|' .. rise .. '|' .. (profile or '')
     if looks[key] == nil then
         local base = 'textures/' .. name
         if love.filesystem.getInfo(base .. '-mask.png', 'file') then
@@ -426,7 +449,7 @@ local function lookOf(name)
             line:setMipmapFilter('linear')
             mask:setMipmapFilter('linear')
             -- mipmapped: drawn smaller than the map, it skipped cells and its steps showed
-            local form = love.graphics.newImage(formBake.bakeData(love.image.newImageData(base .. '-mask.png'), rise),
+            local form = love.graphics.newImage(formBake.bakeData(love.image.newImageData(base .. '-mask.png'), rise, profile),
                 { mipmaps = true })
             form:setFilter('linear', 'linear')
             form:setMipmapFilter('linear')
@@ -491,6 +514,7 @@ local function drawPicture(name, mode, base, x, y, size, opts)
     sh:send('lines', look.line)
     sh:send('lineTexel', { 1 / look.line:getWidth(), 1 / look.line:getHeight() })
     sh:send('crease', c.creaseDepth)
+    sh:send('craft', { c.lumpy or 0, c.inkShadow or 0, 0, 0 })
     sh:send('patternOn', opts.pattern and 1 or 0)
     if opts.pattern then
         sh:send('pattern', opts.pattern)
@@ -911,7 +935,7 @@ function s.drawUI()
     local c = lab()
     ui.startFrame()
     local sw, sh = love.graphics.getDimensions()
-    local rows = 16
+    local rows = 18
     local w, h = PANEL.w, PANEL.row * rows + 34
     local x0, y0 = sw - w - 12, math.max(12, sh - h - 12)
     c.panelRect = { x0, y0, w, h, folded = ui.isPanelFolded('•• materials ••') }
@@ -974,6 +998,8 @@ function s.drawUI()
         slider('wind', 'wind', -1, 1)
         x, y = row()
         check(x, y, 'slide', 'back shape slides')
+        slider('lumpy', 'lumpy', 0, 2)
+        slider('inkShadow', 'ink shadow', 0, 1)
     end)
     if c.costLine then
         local ty = sh - 34

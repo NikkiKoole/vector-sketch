@@ -93,7 +93,8 @@ local function chamfer(inside, dist, gw, gh)
 end
 
 -- The map as ImageData from a mask's ImageData (white inside, black or see-through outside).
-function lib.bakeData(data, rise)
+-- profile: nil a round rise; 'bevel' a straight slope, then flat (a coin's edge)
+function lib.bakeData(data, rise, profile)
     local iw, ih = data:getDimensions()
     rise = rise or 1
     -- a low rise (a pebble) turns from edge to flat top in a few cells: its rim followed the grid's
@@ -135,7 +136,8 @@ function lib.bakeData(data, rise)
     local height = {}
     for k = 0, gw * gh - 1 do
         local t = math.min(1, dist[k] / riseTexels)
-        height[k] = inside[k] and math.sqrt(1 - (1 - t) * (1 - t)) or 0
+        local up = profile == 'bevel' and t or math.sqrt(1 - (1 - t) * (1 - t))
+        height[k] = inside[k] and up or 0
     end
     local function h(gx, gy)
         gx = math.max(0, math.min(gw - 1, gx)); gy = math.max(0, math.min(gh - 1, gy))

@@ -197,6 +197,11 @@ noise and pushed a little outward.
 Pencil, charcoal, watercolour, gouache, oil: how the whole picture is drawn, more than what a thing
 is made of. Nikki (2026-11-06): don't worry much about generated strokes vs drawn ones; what we want
 is **hatching sheets** of her own, so the shading can be her lines.
+- **CMYK offsets** (idea, Nikki 2026-11-06: "not here yet"): the cyan, magenta and yellow plates
+  each printed a little off, the drawn outline (the black plate) in place: coloured fringes, old
+  offset print, Childcraft. Tried in material-check the same day (each plate's mask sampled off by
+  ~1-3% of the picture; at 1% the outline hides most of it) and taken out again: a drawing style,
+  for later, maybe as a picture pass. Burrow's drawn outline has the simpler misregistration (2026-10-30).
 - [ ] **MT8. Hatching sheets** (drawing them: THINGS-TO-DRAW A14): Nikki draws hatching at four or five densities (light .. cross-hatched),
   a few versions of each; through scan2tex; in material-check a mode where the darkness after lighting
   picks her hatching (tonal art maps), swapping versions ~12 times a second.
@@ -237,6 +242,10 @@ Other ways, in our pipeline:
   hardly), a sharp wet shine, drops (dark, a bright spot toward the light).
   Changed 2026-11-06 (Nikki: "the little white pixels feel ugly"): no drops, and a soft sheen instead of
   the sharp shine (exponent 160 -> 40), here and in the engine's wet (src/render/shaders.lua). "Better".
+- [x] **MT19. Lumpy, bevel, ink shadow** (2026-11-06, Nikki: "good options"): in material-check's panel.
+  Lumpy: a few soft bumps per thing, as if pressed by hand (0-2; ~0.5 on metals, 1 on felt/clay).
+  Bevel: a fourth rise, a straight slope then flat (a coin; `formBake.bakeData(data, rise, 'bevel')`).
+  Ink shadow: a soft dark band just inside the outline, so the shape sits in the line.
 - [x] **MT13. What the shader sees** (g): the height, the normals, the light alone on white. For when a
   material looks off.
 - [x] **MT14. The picture pass** (e): a soft glow from the bright parts, a grade by the light (warm sun,
