@@ -1,5 +1,5 @@
 -- light-grass-check: working on light — a sun, a warm and a cool lamp to carry about, a turning lamp, over
--- six plasticine shapes; and grass on a spinning turf (its blades rebuilt every frame: the counter).
+-- six plasticine shapes and three Mipos; and grass on a spinning turf (its blades rebuilt every frame: the counter).
 -- From the LITTLE-USED rounds (docs/LITTLE-USED.md, 2026-11-06). Up to 8 lights reach a shape
 -- (src/render/shaders.lua MAX_LIGHTS); a light's colour tints, its intensity and nearness light.
 -- The shapes start lit strongly and baked round (their settings, src/render/shaders.lua and
@@ -7,6 +7,8 @@
 -- play mode (tab): drag the warm and the cool lamp about.
 -- keys:
 --   1 day   2 evening   3 night   4 only the turning lamp (its range: r 5000 / 500)
+--   m the Mipos lit like the shapes / as drawn (their picture parts, limbs and torso; not the face)
+--   c the Mipos' clay (grain, dents, sheen) on / off: off, they get the light and roundness only
 --   k the sky light off / on (light from all of above in the sky's colour, from below in the ground's)
 --   g light swing   z how much the light comes from the front   f the quick form's depth
 --   b baked form / the shader's quick guess   n baked rise (1 a dome, 0.5, 0.2 a pebble)
@@ -64,6 +66,23 @@ local function shapeExtras()
         for _, fixture in ipairs(thing.body:getFixtures()) do
             local ud = fixture:getUserData()
             if ud and ud.subtype == 'texfixture' then list[#list + 1] = ud.extra end
+        end
+    end
+    return list
+end
+
+-- every Mipo part that takes the light: its picture parts, limb ribbons and torso skin (not the face's
+-- decals: a face stays as drawn)
+local LIT_PARTS = { texfixture = true, ['connected-texture'] = true, ['trace-vertices'] = true }
+local function mipoExtras()
+    local list = {}
+    for _, body in ipairs(world:getBodies()) do
+        local thing = body:getUserData() and body:getUserData().thing
+        if thing and thing.mipoId then
+            for _, fixture in ipairs(body:getFixtures()) do
+                local ud = fixture:getUserData()
+                if ud and LIT_PARTS[ud.subtype] and ud.extra and ud.extra.main then list[#list + 1] = ud.extra end
+            end
         end
     end
     return list
@@ -145,7 +164,27 @@ function s.onUnload()
     end
 end
 
+-- the clay a plasticine surface also gets: grain, dents, sheen. Off on the Mipos by default: the light
+-- and the roundness only, the drawing's own strokes left as they are
+local CLAY_OFF = { plasticineStrength = 0, plasticineBump = 0, plasticineSpecStrength = 0, plasticineSSSstrength = 0 }
+
+-- the Mipos lit like the shapes (a Mipo rebuilt from its DNA has new parts: set every frame)
+local function lightMipos()
+    local on, clay = not look().mipoLightOff, look().mipoClay
+    for _, extra in ipairs(mipoExtras()) do
+        extra.plasticine = on or nil
+        for _, k in ipairs(TRY_ORDER) do
+            local try = TRIES[k]
+            if on then extra[try.key] = current(try) else extra[try.key] = nil end
+        end
+        for key, v in pairs(CLAY_OFF) do
+            if on and not clay then extra[key] = v else extra[key] = nil end
+        end
+    end
+end
+
 function s.update(dt)
+    lightMipos()
     local c = look()
     c.time = c.time + (dt or 0)
     if c.time >= 1 then
@@ -160,6 +199,10 @@ function s.onKeyPress(key)
         step(TRIES[key])
     elseif key == '0' then
         for _, k in ipairs(TRY_ORDER) do setAll(TRIES[k], TRIES[k].values[1]) end
+    elseif key == 'm' then
+        look().mipoLightOff = not look().mipoLightOff
+    elseif key == 'c' then
+        look().mipoClay = not look().mipoClay
     elseif key == 'k' then
         look().skyOff = not look().skyOff
         setMood(look().mood)
@@ -223,8 +266,9 @@ function s.drawUI()
         tries[#tries + 1] = string.format('%s %s %s', k, TRIES[k].name, tostring(current(TRIES[k])))
     end
     local lines = {
-        'light   1 day  2 evening  3 night  4 turning lamp (r range)  k sky light  tab: play, drag the lamps  s turf',
+        '1 day  2 evening  3 night  4 turning lamp (r)  k sky light  m Mipos lit  c clay  tab: play, lamps  s turf',
         'now: ' .. c.mood .. (c.skyOff and ', sky light off' or ', sky light on')
+            .. (c.mipoLightOff and ', Mipos as drawn' or (c.mipoClay and ', Mipos lit, clay' or ', Mipos lit'))
             .. '      shapes: ' .. table.concat(tries, '   ') .. '   (0 as elsewhere)',
         string.format('grass: SpriteBatches made in the last second: %d', c.perSecond),
     }
