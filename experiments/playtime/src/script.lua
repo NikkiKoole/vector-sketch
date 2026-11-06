@@ -107,6 +107,7 @@ local baseEnv = {
     wet                      = require('src.wet'), -- wet spots and a waterline that dry (mipo-materials)
     fixtures                 = fixtures, -- sfixtures on a script's own bodies (burrow's OMP rocks)
     liquid                   = require('src.liquid'), -- water in cups: spill, water, mouthPoint (seaside)
+    cloth                    = require('src.cloth'), -- curtains, flags, sheets: a verlet grid drawn as a mesh (cloth)
     -- Add global utilities like NeedManager, etc.
     --broadcastEvent = function(eventName, data)
     -- Implementation for event broadcasting

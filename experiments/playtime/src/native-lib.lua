@@ -1,5 +1,5 @@
 -- native-lib.lua
--- Playtime's own C, in the synth's library (native/desound: ribbon.c, grid.c): load(cdef, name)
+-- Playtime's own C, in the synth's library (native/desound: ribbon.c, grid.c, cloth.c): load(cdef, name)
 -- declares the functions and gives the library when `name` is in it, else false. On iOS the
 -- library is linked into the app (ffi.C, native/ios/device.sh), on a desktop it's the dylib
 -- native/desound/build.sh makes; on the web and in pure specs there is none, and the callers
