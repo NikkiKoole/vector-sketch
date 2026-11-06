@@ -598,6 +598,38 @@ local function send(shader, name, v)
     shader:send(name, v)
 end
 
+-- Number uniforms read from the part's extra (else lib's default of the same name), in one loop: the
+-- same as a send() each, without a call per uniform (with ~100 lit Mipo parts that was ~25 calls a
+-- part, 7,800 a frame, on the interpreter: LIGHT-AND-SHADOW LS13's measuring). { uniform, key }.
+local SHARED_SCALARS = {
+    { 'specPow', 'plasticineSpecPow' }, { 'specStrength', 'plasticineSpecStrength' },
+    { 'sssPow', 'plasticineSSSpow' }, { 'sssStrength', 'plasticineSSSstrength' },
+    { 'terminatorPow', 'plasticineTerminator' }, { 'lightZ', 'plasticineLightZ' },
+    { 'lightGain', 'plasticineLightGain' },
+}
+local PLASTICINE_SCALARS = {
+    { 'strength', 'plasticineStrength' }, { 'scale', 'plasticineScale' }, { 'edgeDark', 'plasticineEdge' },
+    { 'bumpAmp', 'plasticineBump' }, { 'formStrength', 'plasticineFormStrength' },
+    { 'formRadius', 'plasticineFormRadius' }, { 'mottleStrength', 'plasticineMottleStrength' },
+    { 'mottleScale', 'plasticineMottleScale' },
+}
+local function sendScalars(shader, list, extra)
+    local sent = sentTo[shader]
+    if not sent then
+        sent = {}
+        sentTo[shader] = sent
+    end
+    for i = 1, #list do
+        local u = list[i]
+        local name, key = u[1], u[2]
+        local v = extra[key] or lib[key]
+        if sent[name] ~= v then
+            sent[name] = v
+            shader:send(name, v)
+        end
+    end
+end
+
 -- a colour string's numbers, parsed once
 local hexColours = {}
 local function hexColour(hex)
@@ -656,13 +688,7 @@ local function sendSharedLighting(shader, body, extra)
     local useLit = (extra.plasticineUseLighting ~= false) and
                    (lib.plasticineUseLighting ~= false)
     send(shader, 'useLighting',   useLit and 1 or 0)
-    send(shader, 'specPow',       extra.plasticineSpecPow      or lib.plasticineSpecPow)
-    send(shader, 'specStrength',  extra.plasticineSpecStrength or lib.plasticineSpecStrength)
-    send(shader, 'sssPow',        extra.plasticineSSSpow       or lib.plasticineSSSpow)
-    send(shader, 'sssStrength',   extra.plasticineSSSstrength  or lib.plasticineSSSstrength)
-    send(shader, 'terminatorPow', extra.plasticineTerminator   or lib.plasticineTerminator)
-    send(shader, 'lightZ',        extra.plasticineLightZ       or lib.plasticineLightZ)
-    send(shader, 'lightGain',     extra.plasticineLightGain    or lib.plasticineLightGain)
+    sendScalars(shader, SHARED_SCALARS, extra)
     send(shader, 'lightAdd',      extra.plasticineLightAdd and 1 or 0)
     send(shader, 'warmColor', hexColour(extra.plasticineWarmHex or lib.plasticineWarmHex))
     send(shader, 'coolColor', hexColour(extra.plasticineCoolHex or lib.plasticineCoolHex))
@@ -710,14 +736,7 @@ local function setSurfaceShader(extra, body)
         local formMap = extra.plasticineFormBaked and formBake.map(extra, extra.plasticineFormRise)
         if formMap then send(sh, 'formMap', formMap) end
         send(sh, 'useFormMap', formMap and 1 or 0)
-        send(sh, 'strength',       extra.plasticineStrength       or lib.plasticineStrength)
-        send(sh, 'scale',          extra.plasticineScale          or lib.plasticineScale)
-        send(sh, 'edgeDark',       extra.plasticineEdge           or lib.plasticineEdge)
-        send(sh, 'bumpAmp',        extra.plasticineBump           or lib.plasticineBump)
-        send(sh, 'formStrength',   extra.plasticineFormStrength   or lib.plasticineFormStrength)
-        send(sh, 'formRadius',     extra.plasticineFormRadius     or lib.plasticineFormRadius)
-        send(sh, 'mottleStrength', extra.plasticineMottleStrength or lib.plasticineMottleStrength)
-        send(sh, 'mottleScale',    extra.plasticineMottleScale    or lib.plasticineMottleScale)
+        sendScalars(sh, PLASTICINE_SCALARS, extra)
         send(sh, 'useForm',        (extra.plasticineForm ~= false) and 1 or 0)
         send(sh, 'rimStyle',       rimStyles[extra.plasticineRimStyle or 'silhouette'])
         sendSharedLighting(sh, body, extra)

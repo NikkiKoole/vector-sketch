@@ -15,6 +15,7 @@ local lib = {}
 
 local state = require('src.state')
 local mipoRegistry = require('src.mipo-registry')
+local registry = require('src.registry')
 local camera = require('src.camera')
 
 -- the Mipo parts that take the light: picture parts, limb ribbons, torso skin (not the face's decals: a
@@ -220,6 +221,7 @@ end
 function lib.unapply()
     for extra, before in pairs(litParts()) do restore(extra, before) end
     state.sceneLitParts = setmetatable({}, { __mode = 'k' })
+    state.sceneLightScan = nil
     for key, v in pairs(owned()) do
         if state[key] == v then state[key] = nil end
     end
@@ -255,7 +257,15 @@ function lib.apply()
     end
     local lit = litParts()
     local values = level.mipoParts
-    if values then
+    -- look for parts again only when an sfixture came or went (a Mipo added or rerolled: lit in that
+    -- frame), or once a second (a part's picture remade on the same fixture); walking every Mipo's
+    -- fixtures each frame was ~4% of a lit frame on the phone with 20 Mipos
+    local now = love.timer.getTime()
+    local version = registry.sfixtureVersion
+    local due = state.sceneLightScan == nil or state.sceneLightScan.version ~= version
+        or now - state.sceneLightScan.at > 1 or state.sceneLightScan.level ~= level.name
+    if values and due then
+        state.sceneLightScan = { version = version, at = now, level = level.name }
         eachMipoPartExtra(function(extra)
             if lit[extra] then return end
             local before = {}
