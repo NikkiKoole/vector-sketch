@@ -147,6 +147,17 @@ Kinds of material, by what the shader does differently:
   saying which part is which material (leather / rubber / cloth), so one Mipo part can be two materials.
 - [x] **MT4. The next ones**: leather, rubber, stucco, glazed pottery (MT1b), wet (MT12).
 - [ ] **MT5. Leaves for real**: translucency on the plants and garden spikes' leaves, with their sway.
+- [~] **MT6a. A material per Mipo part, and wet** (2026-11-06, Nikki: "one Mipo with metal legs and a
+  velvet body, part of his face wet"): `extra.material = 'brass'` on a part (texfixture, limb ribbon,
+  torso skin) is drawn by the plasticine shader (src/render/shaders.lua) instead of clay, the part's
+  own colours and pattern kept; presets in `src/render/materials.lua` (metal, brass, gold, copper, tin,
+  velvet, satin, felt, leather, rubber, wax, plastic, glaze, candy: the ones without a grain). Wet:
+  `src/wet.lua`, spots that stick to the body they land on and dry from the edge in (25 s), a
+  waterline that soaks what's under it; porous things darken most, all get a sharp shine. No material
+  and nothing wet: drawn as before (full suite 1521 pass). Scene `mipo-materials` (scripts/tests,
+  light-grass-check's lights and Mipos at a fixed day): a panel with a material per part (all Mipos
+  or one), the water's height, rain, dry; w a wet spot at the mouse. Not yet: saved in a Mipo's DNA
+  (breeds), the editor's part panel, the face (its decals and the mouth don't take the light).
 - [ ] **MT6. Into the engine**: a material as a texfixture setting, next to plasticine (SHADER-LOOKS'
   "looks on shapes"), if any of it earns a place.
 

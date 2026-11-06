@@ -4,6 +4,8 @@ local registry = require('src.registry')
 local subtypes = require('src.subtypes')
 local color = require('src.color')
 local formBake = require('src.render.form-bake')
+local materials = require('src.render.materials')
+local wet = require('src.wet')
 
 
 -- Plasticine POC: procedural grain + soft edge darkening.
@@ -44,6 +46,16 @@ local plasticineShader = love.graphics.newShader([[
     uniform vec2  lightLocalPos[MAX_LIGHTS];  // same coord space as vertex positions
     uniform float lightRange[MAX_LIGHTS];     // falloff distance (world or body-local units)
     uniform vec3  lightGround[MAX_LIGHTS];    // a sky light's ground colour (lightType 2)
+    // A material instead of clay (src/render/materials.lua; 0 = clay, as always): 1 metal, 2 velvet,
+    // 5 a surface. The part's own colours and pattern stay; the material is how they take the light.
+    uniform float matKind;
+    uniform vec4  matSpec;       // shine strength, size, tint by its colour, clear coat
+    uniform vec4  matSurf;       // light wrap, sheen at the edges, edges darkened, rough (metal)
+    uniform vec4  matTint;       // rgb: a metal's own colour (brass, gold); a: how much of it
+    // Wet (src/wet.lua): spots in screen pixels (x, y, radius, how wet), up to MAX_WET
+    #define MAX_WET 12
+    uniform int   wetCount;
+    uniform vec4  wetSpot[MAX_WET];
 
     // Passed from vertex shader: vertex position BEFORE the love.graphics transform.
     // For bodies drawn with draw(mesh, bx, by, ba) this is body-local space.
@@ -127,7 +139,10 @@ local plasticineShader = love.graphics.newShader([[
             macroTilt = nxy / nz * formStrength * 0.5;
         }
 
+        if (matKind > 0.5) microTilt = vec2(0.0); // thumb dents are clay's, not metal's or velvet's
         vec3 n = normalize(vec3(microTilt + macroTilt, 1.0));
+        // the lights' main way, for a material's shine (weighted by how much each reaches it)
+        vec3 Lmain = vec3(0.0);
 
         // --- Multi-light accumulation ---
         vec3  totalSpec  = vec3(0.0);
@@ -191,6 +206,7 @@ local plasticineShader = love.graphics.newShader([[
                     }
                     float lambert = pow(dot(n, L) * 0.5 + 0.5, terminatorPow);
                     float w = lambert * lightIntensity[i] * atten;
+                    Lmain += L * lightIntensity[i] * atten;
                     totalLight += lightColor[i] * w;
                     weightSum  += w;
                     vec3  H    = normalize(L + V);
@@ -227,8 +243,69 @@ local plasticineShader = love.graphics.newShader([[
         }
         float ao = mix(1.0, 1.0 - edgeDark, rim);
 
-        base.rgb *= shade * pit * ao * tint;
-        base.rgb += (totalSpec + totalSSS) * base.a;
+        // how wet here: the spots (screen pixels), each drying from its edge in
+        float wet = 0.0;
+        for (int i = 0; i < MAX_WET; ++i) {
+            if (i >= wetCount) break;
+            vec4 sp = wetSpot[i];
+            float r = sp.z * sqrt(max(sp.w, 0.0));
+            wet = max(wet, (1.0 - smoothstep(r * 0.7, r, length(fc - sp.xy))) * min(1.0, sp.w * 3.0));
+        }
+        vec3 Ld = length(Lmain) > 0.001 ? normalize(Lmain) : normalize(vec3(-0.7, -0.7, lightZ));
+        vec3 Lc = (useLighting > 0.5 && lightCount > 0) ? tint : vec3(1.0);
+
+        if (matKind > 0.5) {
+            vec3 c0 = base.rgb;
+            if (matTint.a > 0.0) {
+                // a metal's own colour, the part's light and dark (its pattern) kept
+                float lum = dot(c0, vec3(0.3, 0.59, 0.11));
+                c0 = mix(c0, matTint.rgb * (0.45 + 0.75 * lum), matTint.a);
+            }
+            // wet: porous things darken most, metal and glaze hardly
+            if (wet > 0.0) c0 *= 1.0 - 0.42 * wet * (matKind < 1.5 ? 0.15 : 1.0 - min(matSpec.w, 1.0) * 0.7);
+            vec3 lit = shade * tint;
+            float rimN = pow(1.0 - n.z, 2.0);
+            float side = 0.35 + 0.65 * max(0.0, dot(normalize(n.xy + 1e-4), normalize(Ld.xy + 1e-4)));
+            vec3 H = normalize(Ld + vec3(0.0, 0.0, 1.0));
+            float nh = max(dot(n, H), 0.0);
+            vec3 col;
+            if (matKind < 1.5) {
+                // metal: the room reflected (bright above, a dark band at the horizon, the warm floor),
+                // lit by the lights, its highlight in its own colour
+                vec3 R = vec3(2.0 * n.z * n.x, 2.0 * n.z * n.y, 2.0 * n.z * n.z - 1.0);
+                float up = -R.y;
+                float env = mix(0.42, 1.0, smoothstep(-0.05, 0.25, up));
+                env -= 0.32 * (1.0 - smoothstep(0.0, 0.12, abs(up + 0.02)));
+                env = mix(env, 0.6, 0.35 * n.z * n.z);
+                env = mix(env, 0.62, matSurf.w * 0.75);
+                float rl = max(dot(R, Ld), 0.0);
+                float shine = pow(rl, max(matSpec.y, 1.0)) * matSpec.x + pow(rl, 6.0) * 0.25;
+                col = c0 * env * (lit * 0.85 + 0.2) + shine * mix(c0, vec3(1.0), 0.45) * Lc;
+            } else if (matKind < 2.5) {
+                // velvet: the middle soaks up the light, the edges where the pile lies over shine
+                col = c0 * 0.6 * lit + rimN * side * mix(c0, vec3(1.0), 0.45) * Lc * 0.9;
+            } else {
+                // a surface: the light, edges darkened, a sheen, a shine, a clear coat
+                col = c0 * lit * (1.0 - matSurf.z * pow(1.0 - n.z, 1.5));
+                col += rimN * side * matSurf.y * mix(c0, vec3(1.0), 0.5) * Lc;
+                if (matSpec.x > 0.0)
+                    col += pow(nh, max(matSpec.y, 1.0)) * matSpec.x * mix(vec3(1.0), c0 * 1.4, matSpec.z) * Lc;
+                if (matSpec.w > 0.0) {
+                    vec3 R = vec3(2.0 * n.z * n.x, 2.0 * n.z * n.y, 2.0 * n.z * n.z - 1.0);
+                    col += matSpec.w * (pow(nh, 240.0) * 1.6 + smoothstep(-0.05, 0.4, -R.y) * rimN * 0.35) * Lc;
+                }
+            }
+            base.rgb = col;
+        } else {
+            if (wet > 0.0) base.rgb *= 1.0 - 0.42 * wet;
+            base.rgb *= shade * pit * ao * tint;
+            base.rgb += (totalSpec + totalSSS) * base.a;
+        }
+        if (wet > 0.0) {
+            // wet: a sharp shine where the light catches it
+            vec3 H = normalize(Ld + vec3(0.0, 0.0, 1.0));
+            base.rgb += wet * pow(max(dot(n, H), 0.0), 160.0) * 1.1 * Lc * base.a;
+        }
         return base;
     }
     #endif
@@ -555,8 +632,19 @@ local function setSurfaceShader(extra, body)
         sendSharedLighting(hairsShader, body, extra)
         return true
     end
-    if extra.plasticine then
+    if extra.plasticine or extra.material then
         love.graphics.setShader(plasticineShader)
+        -- a material instead of clay (src/render/materials.lua), and what's wet (src/wet.lua)
+        local m = materials.uniforms(extra.material)
+        plasticineShader:send('matKind', m and m.kind or 0)
+        if m then
+            plasticineShader:send('matSpec', m.spec)
+            plasticineShader:send('matSurf', m.surf)
+            plasticineShader:send('matTint', m.tint)
+        end
+        local wetCount, wetSpots = wet.shaderSpots()
+        plasticineShader:send('wetCount', wetCount)
+        if wetCount > 0 then plasticineShader:send('wetSpot', unpack(wetSpots)) end
         local formMap = extra.plasticineFormBaked and formBake.map(extra, extra.plasticineFormRise)
         if formMap then plasticineShader:send('formMap', formMap) end
         plasticineShader:send('useFormMap', formMap and 1 or 0)

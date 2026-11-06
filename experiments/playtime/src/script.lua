@@ -102,6 +102,9 @@ local baseEnv = {
     ompBake                  = require('src.render.omp-bake'), -- the outline + mask + pattern bake (scan-test)
     formBake                 = require('src.render.form-bake'), -- a picture's roundness from its mask (material-check)
     shaderCost               = require('src.render.shader-cost'), -- a shader's GPU cost per MP (material-check)
+    projectedShadows         = require('src.projected-shadows'), -- drawFront: 3D shadows on a ground drawn late
+    materials                = require('src.render.materials'), -- material presets for parts (mipo-materials)
+    wet                      = require('src.wet'), -- wet spots and a waterline that dry (mipo-materials)
     fixtures                 = fixtures, -- sfixtures on a script's own bodies (burrow's OMP rocks)
     liquid                   = require('src.liquid'), -- water in cups: spill, water, mouthPoint (seaside)
     -- Add global utilities like NeedManager, etc.
