@@ -36,8 +36,14 @@ ears) only springs in rotation. Two distance joints in a V are real springs in b
   collision is cut, an end's lobes take at most about one band; the picture bends with the spine
   first, then the lobes push (their offset measured from where their band carries their rest).
   Heart on 2 and 3 bands: stands, bends ~17° on a landing, straight again.
-- [ ] **ST3. Phone cost.** 20 Mipos with lobes (~80 more bodies, ~240 joints) on the iPhone SE 2,
-  `./playtime.sh bench device`. Too much: crowds use the drawn jiggle.
+- [x] **ST3. Phone cost.** The crowd (20 Mipos) with lobes on all of them, iPhone SE 2 (2026-11-06):
+  62 more bodies, 186 more joints; 60 fps, no frame over 20 ms. Update 3.9 -> 4.2 ms, draw
+  5.3 -> 7.4 ms. First try was draw 11.4 (4.4% of frames over 20 ms); ProFi on the phone showed
+  why, and the fixes: the lobe bodies were drawn by the plain physics draw (no picture of their
+  own; `box2d-draw` showsBody now skips them), every face part asked `torsoBones` again (~400 a
+  frame; kept for the frame, `spineSkin.newFrame`, lobes measured once), and the lobed grid
+  went through Lua tables (C lays it now, the pushes added into its buffer, weights kept per
+  grid). Physics itself costs ~0.3 ms.
 - [ ] **ST4. DNA traits.** Softness in randomize and as a breed trait (MIPO-BREEDS.md): a jelly
   breed and a firm one.
 

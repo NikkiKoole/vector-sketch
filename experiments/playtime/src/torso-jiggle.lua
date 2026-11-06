@@ -110,7 +110,8 @@ function lib.bonesOf(body)
     if partName ~= 'torso1' or not lib.enabled(instance.dna and instance.dna.creation) then return nil end
     local s = pointsFor(instance)
     if not s then return nil end
-    local bones = bonesCache[instance] or { deform = deform, cols = lib.columns, rows = lib.rows }
+    local bones = bonesCache[instance] or { deform = deform, cols = lib.columns, rows = lib.rows,
+        soft = function(b) return b.points end }
     bonesCache[instance] = bones
     bones.points = s.points
     return bones

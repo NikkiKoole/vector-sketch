@@ -201,8 +201,15 @@ end
 -- In the 'tex/body' view: does this body still draw as a body? Untextured ones
 -- do; textured (or covered, see coveredBodies) ones don't, except Mipo parts while
 -- 'mipo body' is on.
+-- A Mipo's torso lobes (src/torso-lobes.lua) have no picture of their own: the torso's covers them.
+local function isLobe(body)
+    local ud = body:getUserData()
+    local name = ud and ud.thing and ud.thing.mipoPartName
+    return name ~= nil and name:match('^lobe%d$') ~= nil
+end
+
 function lib.showsBody(body, covered)
-    if not lib.hasTexture(body) and not (covered and covered[body]) then return true end
+    if not lib.hasTexture(body) and not (covered and covered[body]) and not isLobe(body) then return true end
     if state.world.mipoBodies ~= true then return false end
     local ud = body:getUserData()
     return state.world.mipoBodies == true and ud ~= nil and ud.thing ~= nil and ud.thing.mipoId ~= nil

@@ -61,10 +61,34 @@ local function bendThenPush(points, bones, out)
     torsoLobes.measure(bones.lobes)
     return torsoLobes.pushPoints(points, bones.lobes.lobes, out, bent)
 end
+-- Within a frame the answer is kept (lib.newFrame, from love.draw): every face part asks for
+-- it, ~400 asks a frame with 20 Mipos on the phone. Without newFrame (specs) nothing is kept.
+local frameBones = setmetatable({}, { __mode = 'k' }) -- [body] = bones, or false for none
+local caching = false
+function lib.newFrame()
+    caching = true
+    for body in pairs(frameBones) do frameBones[body] = nil end
+    torsoLobes.newFrame()
+end
+
+local findTorsoBones
 function lib.torsoBones(body)
+    if not caching then return findTorsoBones(body) end
+    local bones = frameBones[body]
+    if bones == nil then
+        bones = findTorsoBones(body) or false
+        frameBones[body] = bones
+    end
+    return bones or nil
+end
+
+findTorsoBones = function(body)
     local spine, lobes = lib.bonesOf(body), torsoLobes.bonesOf(body)
     if spine and lobes then
-        local bones = together[body] or { deform = bendThenPush, bent = {} }
+        local bones = together[body] or { deform = bendThenPush, bent = {}, soft = function(b)
+            torsoLobes.measure(b.lobes)
+            return b.lobes.lobes
+        end }
         together[body] = bones
         bones.spine, bones.lobes, bones.cols, bones.rows = spine, lobes, lobes.cols, lobes.rows
         return bones
@@ -264,11 +288,53 @@ function lib.bentGridC(corners, bones)
     return out
 end
 
+-- The rest grid over the rectangle (bilinear between its corners), into `rest`.
+local function restGrid(corners, cols, rows, rest)
+    local x1, y1, x2, y2, x3, y3, x4, y4 = unpack(corners)
+    for r = 0, rows do
+        local v = r / rows
+        for c = 0, cols do
+            local u = c / cols
+            local k = (r * (cols + 1) + c) * 2 + 1
+            local tx, ty = x1 + (x2 - x1) * u, y1 + (y2 - y1) * u
+            local bx, by = x4 + (x3 - x4) * u, y4 + (y3 - y4) * u
+            rest[k], rest[k + 1] = tx + (bx - tx) * v, ty + (by - ty) * v
+        end
+    end
+    return rest
+end
+
+-- Soft points (lobes, the drawn jiggle: bones.soft) on the C grid: C lays it (bent by a spine,
+-- or straight on torso1 alone) and their pushes are added into its buffer here. Building a Lua
+-- table a vertex for setVertices was most of the lobes' draw on the phone.
+local oneBone = { bodies = {}, middles = { 0 } }
+local function softInC(corners, bones, body, cols, rows, cache)
+    local soft = bones.soft(bones)
+    local spine = bones.spine
+    if not spine then
+        oneBone.bodies[1] = body
+        spine = oneBone
+    end
+    local n = bendInC(corners, spine, cols, rows)
+    if not (n and n > 0) then return nil end
+    local same = cache.corners
+    for k = 1, 8 do
+        if not same or same[k] ~= corners[k] then same = nil break end
+    end
+    if not same then
+        restGrid(corners, cols, rows, cache.rest)
+        cache.corners = { unpack(corners) }
+    end
+    torsoLobes.pushBuffer(cache.rest, soft, gridOut, n)
+    return n
+end
+
 function lib.drawGrid(img, corners, bones, body, extra)
     local cols, rows = bones.cols or lib.columns, bones.rows or lib.rows
     if C == nil then C = nativeLib.load(CDEF, 'grid_spine') end
-    -- an ear's bones or a spine's (no deform of their own); anything else bends in Lua
-    local useNative = lib.useNative and C and (bones.ear ~= nil or not bones.deform) and #corners == 8
+    -- an ear's bones, a spine's (no deform of their own) or soft points'; the rest bends in Lua
+    local useNative = lib.useNative and C and (bones.ear ~= nil or not bones.deform or bones.soft ~= nil)
+        and #corners == 8
     local count = (cols + 1) * (rows + 1)
     local cache = meshes[extra]
     if not cache or cache.img ~= img or cache.native ~= useNative or cache.count ~= count then
@@ -291,26 +357,17 @@ function lib.drawGrid(img, corners, bones, body, extra)
     end
     if useNative then
         ensureGridData(count)
-        local n = bendInC(corners, bones, cols, rows)
+        local n
+        if bones.soft then n = softInC(corners, bones, body, cols, rows, cache)
+        else n = bendInC(corners, bones, cols, rows) end
         if n and n > 0 then
             cache.mesh:setVertices(gridData, 1, n)
             love.graphics.draw(cache.mesh, body:getX(), body:getY(), body:getAngle())
             return
         end
     end
-    -- rest grid over the rectangle (bilinear between its corners)
-    local x1, y1, x2, y2, x3, y3, x4, y4 = unpack(corners)
-    local rest = cache.rest
-    for r = 0, rows do
-        local v = r / rows
-        for c = 0, cols do
-            local u = c / cols
-            local k = (r * (cols + 1) + c) * 2 + 1
-            local tx, ty = x1 + (x2 - x1) * u, y1 + (y2 - y1) * u
-            local bx, by = x4 + (x3 - x4) * u, y4 + (y3 - y4) * u
-            rest[k], rest[k + 1] = tx + (bx - tx) * v, ty + (by - ty) * v
-        end
-    end
+    local rest = restGrid(corners, cols, rows, cache.rest)
+    cache.corners = nil
     local bent = (bones.deform or lib.deform)(rest, bones, cache.bent)
     local verts = cache.verts
     for r = 0, rows do

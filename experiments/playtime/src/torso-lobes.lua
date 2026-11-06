@@ -266,27 +266,93 @@ end
 -- Push a flat list of torso1-local rest points by soft points' offsets ({ x, y, r, ox, oy }
 -- in torso1's frame), each weighted by how near the rest point is to it; added to `base`
 -- (the points already bent by a spine) when given. Shared with the drawn jiggle.
+-- The weights only change with the rest points or the soft points' rest places, so a grid
+-- (the same `points` table every frame) keeps them: [points] = { sig, w = { per point, per
+-- soft point, already divided by the sum when over 1 } }. Measured on the iPhone SE 2: working
+-- them out every frame was most of the lobes' draw cost (20 Mipos, draw 4.9 -> 11.4 ms).
+local weightCache = setmetatable({}, { __mode = 'k' })
+
+local function weightsFor(points, soft)
+    local n = #soft
+    local sig = #points + n + points[1] + 3 * points[2] + 7 * points[#points]
+    for i = 1, n do
+        local p = soft[i]
+        sig = sig + i * (p.x * 1.31 + p.y * 1.77 + p.r * 0.91)
+    end
+    local cache = #points > 8 and weightCache[points]
+    if cache and cache.sig == sig then return cache.w end
+    local inner, span = lib.inner, lib.outer - lib.inner
+    local w = {}
+    for k = 1, #points - 1, 2 do
+        local x, y = points[k], points[k + 1]
+        local base, sum = (k - 1) / 2 * n, 0
+        for i = 1, n do
+            local p = soft[i]
+            local d = math.sqrt((x - p.x) ^ 2 + (y - p.y) ^ 2) / p.r
+            local wi = 1 - smoothstep((d - inner) / span)
+            w[base + i], sum = wi, sum + wi
+        end
+        if sum > 1 then
+            for i = 1, n do w[base + i] = w[base + i] / sum end
+        end
+    end
+    if #points > 8 then weightCache[points] = { sig = sig, w = w } end
+    return w
+end
+
 function lib.pushPoints(points, soft, out, base)
     out = out or {}
     base = base or points
-    local inner, span = lib.inner, lib.outer - lib.inner
+    local n = #soft
+    local w = weightsFor(points, soft)
     for k = 1, #points - 1, 2 do
-        local x, y = points[k], points[k + 1]
-        local sum, ox, oy = 0, 0, 0
-        for i = 1, #soft do
-            local p = soft[i]
-            local d = math.sqrt((x - p.x) ^ 2 + (y - p.y) ^ 2) / p.r
-            local w = 1 - smoothstep((d - inner) / span)
-            sum, ox, oy = sum + w, ox + w * p.ox, oy + w * p.oy
+        local at = (k - 1) / 2 * n
+        local ox, oy = 0, 0
+        for i = 1, n do
+            local wi = w[at + i]
+            if wi > 0 then
+                local p = soft[i]
+                ox, oy = ox + wi * p.ox, oy + wi * p.oy
+            end
         end
-        if sum > 1 then ox, oy = ox / sum, oy / sum end
         out[k], out[k + 1] = base[k] + ox, base[k + 1] + oy
     end
     return out
 end
 
+-- The same pushes added into a C grid buffer (spineSkin.drawGrid: 4 floats a vertex, x and y
+-- first), `count` vertices laid like `points`.
+function lib.pushBuffer(points, soft, buf, count)
+    local n = #soft
+    local w = weightsFor(points, soft)
+    for v = 0, count - 1 do
+        local at = v * n
+        local ox, oy = 0, 0
+        for i = 1, n do
+            local wi = w[at + i]
+            if wi > 0 then
+                local p = soft[i]
+                ox, oy = ox + wi * p.ox, oy + wi * p.oy
+            end
+        end
+        if ox ~= 0 or oy ~= 0 then
+            buf[v * 4], buf[v * 4 + 1] = buf[v * 4] + ox, buf[v * 4 + 1] + oy
+        end
+    end
+end
+
+-- A frame starts (spineSkin.newFrame): each torso's lobes are measured once in it.
+local frame, caching = 0, false
+function lib.newFrame()
+    frame, caching = frame + 1, true
+end
+
 -- Each lobe's offset from where its band carries its rest place, in torso1's frame.
 function lib.measure(bones)
+    if caching then
+        if bones.measured == frame then return end
+        bones.measured = frame
+    end
     local torso = bones.torso
     for i = 1, #bones.lobes do
         local lobe = bones.lobes[i]
@@ -308,7 +374,11 @@ function lib.bonesOf(body)
     local instance, partName = mipoRegistry.getFromBody(body)
     if partName ~= 'torso1' or not lib.enabled(instance.dna and instance.dna.creation) then return nil end
     local scale = instance.scale or 1
-    local bones = bonesCache[instance] or { deform = deform, cols = lib.columns, rows = lib.rows, lobes = {} }
+    local bones = bonesCache[instance] or { deform = deform, cols = lib.columns, rows = lib.rows, lobes = {},
+        soft = function(b)
+            lib.measure(b)
+            return b.lobes
+        end }
     bonesCache[instance] = bones
     bones.torso = body
     local count = 0
