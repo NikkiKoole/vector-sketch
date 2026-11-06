@@ -151,6 +151,22 @@ end
 
 function s.onUnload()
     wet.clear()
+    -- the sound back as it was (the button below only mutes this scene)
+    local c = mm()
+    if c.muted then love.audio.setVolume(c.volumeBefore or 1) end
+    c.muted = nil
+end
+
+-- sound off / on: everything (the music's synth plays through love.audio too)
+local function setMuted(muted)
+    local c = mm()
+    if muted and not c.muted then
+        c.volumeBefore = love.audio.getVolume()
+        love.audio.setVolume(0)
+    elseif not muted and c.muted then
+        love.audio.setVolume(c.volumeBefore or 1)
+    end
+    c.muted = muted or nil
 end
 
 local function waterY()
@@ -210,7 +226,7 @@ function s.drawUI()
     ui.startFrame()
     local sw, sh = love.graphics.getDimensions()
     local ids = mipoIds()
-    local rows = #GROUPS + #MOUTH_GROUPS + 6
+    local rows = #GROUPS + #MOUTH_GROUPS + 7
     local w, h = PANEL.w, PANEL.row * rows + 34
     local x0, y0 = sw - w - 12, math.max(12, sh - h - 12)
     local half = (w - PANEL.pad * 3) / 2
@@ -218,8 +234,12 @@ function s.drawUI()
         local layout = ui.createLayout({ type = 'columns', spacing = 0, startX = x0 + PANEL.pad, startY = y0 + 28 })
         local function row() return ui.nextLayoutPosition(layout, w - PANEL.pad * 2, PANEL.row) end
         local function button(x, y, text, width) return ui.button(x, y, width or half, text, PANEL.row - 6) end
-        -- which Mipo the part buttons change (0: all of them)
         local x, y = row()
+        if button(x, y, c.muted and 'sound: off (click: on)' or 'sound: on (click: off)', w - PANEL.pad * 2) then
+            setMuted(not c.muted)
+        end
+        -- which Mipo the part buttons change (0: all of them)
+        x, y = row()
         local whichName = c.which == 0 and 'all Mipos' or ('Mipo ' .. c.which)
         if button(x, y, whichName) then c.which = (c.which + 1) % (#ids + 1) end
         if button(x + half + PANEL.pad, y, 'all clay') then
