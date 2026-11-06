@@ -118,27 +118,21 @@ crisp outline (tufts along the edge, fade or dither); a strong soft rim; darker 
 at the tips; denser and darker in creases; flutter at the tips from the plants' wind; wet fur clumps,
 darkens and gets sharper highlights. For close-ups, shell layers: a few copies, each thinned by
 noise and pushed a little outward.
-- [ ] **MT7. Fur on the palette**: one or two furs (short plush, long shaggy) next to velvet, using
-  the hairs shader's strand noise along a direction, root-to-tip colour, the rim.
+- [x] **MT7. Fur on the palette** (2026-11-06, to judge): plush and shaggy, strands down the picture in
+  clumps, dark toward the skin and lighter where tips gather, the shine a streak across the strands,
+  a soft strong rim (stronger from behind), a frayed edge, the outline faint. Not yet: tufts past the
+  outline, shell layers, the direction following the body.
 
-## Drawing styles: the dry signal and the live one
+## Drawing styles
 
-Less what a thing is made of, more how the whole picture is drawn: pencil, charcoal, watercolour
-(washes, pigment gathering at the edges, white paper in the highlights), gouache (flat, opaque,
-brush edges), oil (thick strokes along the form).
-- **Dry**: strokes in the drawing itself: her outlines, the crayon strokes (`textures/strokes/`, the
-  burrow rim, BURROW.md), anything through scan2tex. The most real, but it doesn't follow the light.
-- **Live**: the shader turns the lit picture into strokes, e.g. cross-hatching where it's dark.
-  Follows the light and the day-night cycle, but alone it looks made by a machine.
-- **Both (the one to try)**: tonal art maps. Nikki draws hatching at four or five densities (light,
-  medium, dense, cross-hatched), a few versions of each; the shader picks and blends them by how dark
-  each spot is after lighting, swapping versions at ~12 fps (the burrow's line boil is 10 Hz). Real
-  lines that still answer the light. One paper grain under both.
-  Materials can steer it: a shiny thing gets a bright dab, see-through a lighter wash, wet darker.
-- [ ] **MT8. Hatching from a scanned sheet**: Nikki's hatching sheet through scan2tex, tried in
-  material-check as a mode where the light becomes her hatching instead of shading.
-- [ ] **MT9. One style over a whole scene** (watercolour or gouache): needs SH3's effects stack
-  (SHADER-LOOKS.md); per thing too, like a pencil 'memory'.
+Pencil, charcoal, watercolour, gouache, oil: how the whole picture is drawn, more than what a thing
+is made of. Nikki (2026-11-06): don't worry much about generated strokes vs drawn ones; what we want
+is **hatching sheets** of her own, so the shading can be her lines.
+- [ ] **MT8. Hatching sheets**: Nikki draws hatching at four or five densities (light .. cross-hatched),
+  a few versions of each; through scan2tex; in material-check a mode where the darkness after lighting
+  picks her hatching (tonal art maps), swapping versions ~12 times a second.
+- A style over a whole scene (watercolour, gouache) waits for SH3's effects stack (SHADER-LOOKS.md);
+  the picture pass below is a small start.
 
 ## Normal and depth maps: where ours come from
 
@@ -159,3 +153,17 @@ Other ways, in our pipeline:
   Anything) only for a painted backdrop, if ever.
 - [ ] **MT10. Creases from the outline** into the bake, compared in material-check.
 - [ ] **MT11. A painted height picture** as an option on a part (outline + mask + height).
+
+## More from the lists (2026-11-06, in material-check)
+
+- [x] **MT12. Wet** (r: a shower, wet in 2 s, dry over 20): porous things darken most (metal and glaze
+  hardly), a sharp wet shine, drops (dark, a bright spot toward the light).
+- [x] **MT13. What the shader sees** (g): the height, the normals, the light alone on white. For when a
+  material looks off.
+- [x] **MT14. The picture pass** (e): a soft glow from the bright parts, a grade by the light (warm sun,
+  warmer candle, cool moon), a vignette, film grain at 12 fps. **t**: the whole picture at 12 frames a
+  second (stop-motion), the leaves' sway too.
+- [x] **MT15. Leaves sway** (page 2): a slow sway and a quick flutter from the stem, more with wind (w).
+- Still in the lists, not built: a material map per picture (MT3), varied gloss and per-plant colour
+  and size, ambient occlusion at a plant's base and in clumps, front leaves blurred and back layers
+  darker (DEPTH-LAYERS), pollen and falling leaves, plants that react when brushed through.

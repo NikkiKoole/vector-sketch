@@ -18,6 +18,10 @@
 --   p painted (the light in a few steps, like poster paint) / smooth   o outlines on / off
 --   n another shape for rows 1-2   l other leaves   s smoke: steam / smoke / soot   w wind
 --   m the bake's rise: dome / cushion / pebble (how round the shapes are)
+--   r a shower: everything gets wet (darker, a sharp shine, drops), then dries again
+--   g what the shader sees: off / height / normals / the light alone (on white)
+--   e the picture pass: grain, vignette, a soft glow and a grade by the light / off
+--   t 12 frames a second for the whole picture (stop-motion), the leaves' sway too / smooth
 
 local s = {}
 
@@ -100,11 +104,15 @@ local PALETTE = {
     { name = 'gold', mode = 1, base = { 1.0, 0.8, 0.28 }, spec = { 1.8, 90 } },
     { name = 'copper', mode = 1, base = { 0.93, 0.5, 0.32 }, rough = 0.2 },
     { name = 'tin', mode = 1, base = { 0.78, 0.8, 0.85 }, grain = { PEBBLE, 9, 0.35, 0 } },
+    { name = 'plush fur', mode = 6, base = { 0.78, 0.6, 0.4 }, spec = { 0.35, 30 }, surf = { 0, 0.7 },
+        fur = { 70, 0.1, 0.5 } },
+    { name = 'shaggy fur', mode = 6, base = { 0.5, 0.36, 0.26 }, spec = { 0.5, 40 }, surf = { 0, 0.8 },
+        fur = { 50, 0.8, 0.8 } },
     { name = 'iron', mode = 1, base = { 0.45, 0.45, 0.48 }, spec = { 0.6, 14 }, rough = 0.8, grain = { SAND, 30, 0.3, 0.2 } },
 }
-local PALETTE_COLUMNS = 7
-local PALETTE_STEP = 390
-local PALETTE_CELL = 300
+local PALETTE_COLUMNS = 6
+local PALETTE_STEP = 400
+local PALETTE_CELL = 280
 local PALETTE_SHAPES = { 'mipo/body/body-12', 'mipo/body/body-06', 'mipo/body/body-15', 'mipo/body/body-17',
     'mipo/body/body-03', 'mipo/patch/patch-01' } -- how far in front of (or behind) the pictures the light is
 
@@ -128,7 +136,7 @@ local function materialShader()
         uniform vec3 lightColour;
         uniform vec3 ambient;
         uniform vec3 baseColour;
-        uniform float mode;      // 0 flat, 1 metal, 2 velvet, 3 leaf, 4 smoke
+        uniform float mode;      // 0 flat, 1 metal, 2 velvet, 3 leaf, 4 smoke, 5 surface, 6 fur
         uniform float bands;     // 0 smooth, else the light in this many steps
         uniform float seed;
         uniform float dissolve;  // smoke: 0 new, 1 gone
@@ -137,6 +145,9 @@ local function materialShader()
         uniform vec4 surf;       // wrap, sheen, edges darkened, light through
         uniform vec4 grain;      // kind (1 sand 2 fibre 3 pebble 4 wood 5 crackle), scale, depth, tone
         uniform vec4 more;       // rainbow, the picture's aspect, metal roughness, -
+        uniform vec4 fur;        // strands per picture, length (0 short .. 1 long), clumping, -
+        uniform float wet;       // 0 dry .. 1 just rained on
+        uniform float debug;     // 0 off, 1 height, 2 normals, 3 the light alone
 
         float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
         float vnoise(vec2 p) {
@@ -207,9 +218,17 @@ local function materialShader()
             }
             vec3 L = normalize(toLight);
             float ndl = dot(n, L);
-            vec3 base = baseColour * (1.0 + (g - 0.5) * grain.w * 2.0);
-            vec3 col = base;
             float alpha = m;
+            vec3 base = baseColour * (1.0 + (g - 0.5) * grain.w * 2.0);
+            // wet: porous things darken most, metal and glaze hardly
+            float porous = mode > 0.5 && mode < 1.5 ? 0.15 : 1.0 - min(spec.w, 1.0) * 0.7;
+            if (mode > 0.5 && mode != 4.0) base *= 1.0 - 0.42 * wet * porous;
+            vec3 col = base;
+            if (debug > 0.5) {
+                if (debug < 1.5) return vec4(vec3(h), alpha) * colour;
+                if (debug < 2.5) return vec4(n * 0.5 + 0.5, alpha) * colour;
+                return vec4(ambient + max(ndl, 0.0) * lightColour, alpha) * colour;
+            }
 
             if (mode < 0.5) {
                 col = base;
@@ -246,7 +265,7 @@ local function materialShader()
                 vec3 glow = mix(base * 1.6, vec3(0.86, 0.95, 0.32), 0.45) * lightColour * st(thin);
                 vec3 behind = base * ambient * 0.6 + glow;
                 col = mix(front, behind, back);
-            } else if (mode > 4.5) {
+            } else if (mode > 4.5 && mode < 5.5) {
                 // the surface: wrapped light, edges darkened, a sheen, light coming through,
                 // a shine, a clear coat, a rainbow
                 float back = clamp(-L.z * 2.0, 0.0, 1.0);
@@ -270,6 +289,30 @@ local function materialShader()
                     vec3 bow = 0.5 + 0.5 * cos(6.283 * ((1.0 - n.z) * 1.3 + vec3(0.0, 0.33, 0.67)));
                     col += more.x * bow * 0.3 * lightColour * (0.4 + 0.6 * d);
                 }
+            } else if (mode > 5.5) {
+                // fur: strands running down the picture in clumps, dark at the root, light at the
+                // tips; the shine a streak across the strands (not a spot), a soft strong rim, and
+                // a frayed edge instead of a cut one
+                vec2 q = uv * vec2(more.y, 1.0);
+                float clump = vnoise(q * 5.0) * fur.z;
+                float across = (q.x + clump * 0.1 + vnoise(q * vec2(2.0, 0.7)) * 0.04) * fur.x;
+                float along = q.y * fur.x / (5.0 + 25.0 * fur.y);
+                float strand = vnoise(vec2(across, along)) * 0.6 + vnoise(vec2(across * 2.3 + 5.0, along * 1.7)) * 0.4;
+                strand = smoothstep(0.2, 0.8, strand);
+                // clumps lighter where their tips gather, darker toward the skin between them
+                float tip = smoothstep(0.3, 0.8, vnoise(q * vec2(fur.x * 0.25, fur.x * 0.06) + 11.0));
+                float depth = mix(0.35, 1.2, strand * 0.65 + tip * 0.35);
+                vec3 T = normalize(vec3(clump * 0.5 - 0.25, 1.0, 0.25 - h * 0.3));
+                vec3 H = normalize(L + vec3(0.0, 0.0, 1.0));
+                float th = dot(T, H);
+                float streak = st(pow(sqrt(max(0.0, 1.0 - th * th)), spec.y)) * spec.x * (0.5 + strand);
+                float wrap = st(max(0.0, (ndl + 0.5) / 1.5));
+                float rim = pow(1.0 - n.z, 1.6);
+                float side = 0.35 + 0.65 * max(0.0, dot(normalize(n.xy + 1e-4), normalize(L.xy + 1e-4)));
+                float back = clamp(-L.z * 2.0, 0.0, 1.0);
+                col = base * depth * (ambient + wrap * lightColour) + streak * mix(base, vec3(1.0), 0.5) * lightColour
+                    + st(rim * side * surf.y * (1.0 + 1.5 * back)) * mix(base, vec3(1.0), 0.6) * lightColour;
+                alpha = m * smoothstep(0.0, 0.35, h * 3.0 + strand * 0.6 - 0.35);
             } else {
                 // smoke: soft, light wrapped far round, wearing away from its edges as it goes;
                 // from behind, its thin edges glow
@@ -279,6 +322,17 @@ local function materialShader()
                 float wrap = st(0.55 + 0.45 * ndl);
                 float glow = st((1.0 - h) * back);
                 col = base * (ambient * 0.8 + wrap * lightColour * (1.0 - 0.5 * back)) + glow * lightColour * 0.7;
+            }
+            if (wet > 0.0 && mode > 0.5 && mode != 4.0) {
+                // just rained on: a sharp wet shine and drops, each drop dark with a bright spot
+                // toward the light
+                vec3 H = normalize(L + vec3(0.0, 0.0, 1.0));
+                col += wet * st(pow(max(dot(n, H), 0.0), 160.0)) * 1.1 * lightColour;
+                vec2 dp = uv * vec2(more.y, 1.0) * 11.0 + seed;
+                float drop = 1.0 - smoothstep(0.07, 0.11, cells(dp).x);
+                float spark = 1.0 - smoothstep(0.015, 0.04, cells(dp - L.xy * 0.05).x);
+                float keep = step(0.55, hash(floor(dp) + 7.0)) * smoothstep(0.3, 0.7, wet);
+                col = mix(col, col * 0.72, drop * keep) + spark * keep * lightColour * 0.9;
             }
             return vec4(col, alpha) * colour;
         }
@@ -355,13 +409,18 @@ local function drawPicture(name, mode, base, x, y, size, opts)
     sh:send('surf', four(p.surf, { 0, 0, 0, 0 }))
     sh:send('grain', four(p.grain, { 0, 1, 0, 0 }))
     sh:send('more', { p.rainbow or 0, w / h, p.rough or 0, 0 })
+    sh:send('fur', four(p.fur, { 40, 0.3, 0.6, 0 }))
+    sh:send('wet', c.wet or 0)
+    sh:send('debug', c.debug or 0)
     love.graphics.setColor(1, 1, 1, opts.alpha or 1)
-    love.graphics.draw(look.mask, x, y, rot, scale, scale, w / 2, h / 2)
+    -- a pivot at the bottom (a leaf swaying from its stem)
+    local oy = opts.pivotBottom and h or h / 2
+    love.graphics.draw(look.mask, x, y, rot, scale, scale, w / 2, oy)
     love.graphics.setShader()
-    if c.outlines then
+    if c.outlines and (c.debug or 0) == 0 then
         local ink = opts.ink or { 0.12, 0.09, 0.08 }
         love.graphics.setColor(ink[1], ink[2], ink[3], (opts.alpha or 1) * (opts.inkAlpha or 1))
-        love.graphics.draw(look.line, x, y, rot, scale, scale, w / 2, h / 2)
+        love.graphics.draw(look.line, x, y, rot, scale, scale, w / 2, oy)
     end
     love.graphics.setColor(1, 1, 1, 1)
 end
@@ -425,8 +484,21 @@ end
 
 function s.update(dt)
     local c = lab()
+    dt = dt or 0
     if not c.frozen then c.lx, c.ly = mouseWorldPos() end
-    updateSmoke(dt or 0)
+    updateSmoke(dt)
+    -- a shower: wet in two seconds, dry again over twenty
+    if c.shower then
+        c.shower = c.shower + dt
+        if c.shower < 2 then
+            c.wet = math.max(c.wet or 0, c.shower / 2)
+        else
+            c.wet = math.max(0, 1 - (c.shower - 2) / 20)
+            if c.wet == 0 then c.shower = nil end
+        end
+    end
+    c.time = (c.time or 0) + dt
+    c.sinceFrame = (c.sinceFrame or 0) + dt
 end
 
 function s.onKeyPress(key)
@@ -455,6 +527,14 @@ function s.onKeyPress(key)
         c.rise = c.rise % #RISES + 1
     elseif key == 'v' then
         c.page = c.page % 2 + 1
+    elseif key == 'r' then
+        c.shower = 0
+    elseif key == 'g' then
+        c.debug = ((c.debug or 0) + 1) % 4
+    elseif key == 'e' then
+        c.post = not c.post
+    elseif key == 't' then
+        c.stepped = not c.stepped
     end
 end
 
@@ -502,13 +582,82 @@ local function drawPalette()
     local x0 = -(PALETTE_COLUMNS - 1) / 2 * PALETTE_STEP + 150
     for i, mat in ipairs(PALETTE) do
         local col, row = (i - 1) % PALETTE_COLUMNS, math.floor((i - 1) / PALETTE_COLUMNS)
-        local x, y = x0 + col * PALETTE_STEP, -640 + row * 470
-        drawPicture(shape, mat.mode or 5, mat.base, x, y, PALETTE_CELL, { params = mat })
+        local x, y = x0 + col * PALETTE_STEP, -700 + row * 380
+        drawPicture(shape, mat.mode or 5, mat.base, x, y, PALETTE_CELL,
+            { params = mat, inkAlpha = mat.mode == 6 and 0.35 or 1, seed = i * 3.1 })
         label(mat.name, x, y - PALETTE_CELL / 2 - 60)
     end
 end
 
+-- the picture pass, over the whole picture: a soft glow from the bright parts, a grade by the light
+-- (warm by the candle, cool by the moon), a vignette and a film grain that changes 12 times a second
+local postShader
+local function picturePass()
+    postShader = postShader or love.graphics.newShader([[
+        uniform vec2 texel;
+        uniform vec3 grade;
+        uniform float frame;
+        float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+        vec4 effect(vec4 colour, Image tex, vec2 uv, vec2 sc) {
+            vec3 c = Texel(tex, uv).rgb;
+            vec3 glow = vec3(0.0);
+            for (int i = 0; i < 12; i++) {
+                float a = float(i) * 0.5236;
+                for (int r = 1; r <= 2; r++) {
+                    vec3 s = Texel(tex, uv + vec2(cos(a), sin(a)) * texel * float(r) * 9.0).rgb;
+                    glow += max(s - 0.78, 0.0);
+                }
+            }
+            c += glow / 24.0 * 1.6;
+            c = mix(c, c * grade, 0.6);
+            c = mix(vec3(dot(c, vec3(0.3, 0.59, 0.11))), c, 1.08); // a little more colour
+            vec2 d = uv - 0.5;
+            c *= 1.0 - dot(d, d) * 0.7;
+            c += (hash(floor(sc / 1.5) + frame) - 0.5) * 0.06;
+            return vec4(c, 1.0) * colour;
+        }
+    ]])
+    return postShader
+end
+local GRADES = { { 1.04, 1.0, 0.92 }, { 1.1, 0.96, 0.82 }, { 0.86, 0.94, 1.1 } }
+
+local drawPage
+
+-- the page straight, or into a canvas first: for the picture pass, or to hold it 12 frames a second
 function s.draw()
+    local c = lab()
+    if not c.post and not c.stepped then return drawPage() end
+    local outer = love.graphics.getCanvas()
+    local W, H = love.graphics.getDimensions()
+    if outer then W, H = outer:getDimensions() end
+    if not c.canvas or c.canvas:getWidth() ~= W or c.canvas:getHeight() ~= H then
+        c.canvas = love.graphics.newCanvas(W, H)
+        c.sinceFrame = 1
+    end
+    if not c.stepped or c.sinceFrame >= 1 / 12 then
+        c.sinceFrame = 0
+        love.graphics.setCanvas(c.canvas)
+        local wall = lightColour().wall
+        love.graphics.clear(wall[1], wall[2], wall[3], 1)
+        drawPage()
+        love.graphics.setCanvas(outer)
+    end
+    love.graphics.push()
+    love.graphics.origin()
+    if c.post then
+        local sh = picturePass()
+        love.graphics.setShader(sh)
+        sh:send('texel', { 1 / W, 1 / H })
+        sh:send('grade', GRADES[c.light])
+        sh:send('frame', math.floor(c.time * 12) % 97)
+    end
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.draw(c.canvas, 0, 0)
+    love.graphics.setShader()
+    love.graphics.pop()
+end
+
+drawPage = function()
     local c = lab()
     if c.page == 1 then
         drawPalette()
@@ -525,7 +674,12 @@ function s.draw()
     end
     for i, x in ipairs(COLUMNS) do
         local leaf = LEAF_SETS[c.leaves][i]
-        drawPicture(leaf, i == 1 and 0 or 3, LEAF_COLOURS[i], x, LEAF_ROW, CELL * 1.15)
+        -- a slow sway and a small quick flutter, from the stem
+        local t = c.stepped and math.floor(c.time * 12) / 12 or c.time
+        local push = 0.05 + 0.08 * math.abs(c.wind)
+        local sway = math.sin(t * 1.1 + i * 1.7) * push + math.sin(t * 4.3 + i * 2.9) * push * 0.25 + c.wind * 0.12
+        drawPicture(leaf, i == 1 and 0 or 3, LEAF_COLOURS[i], x, LEAF_ROW + CELL * 0.575, CELL * 1.15,
+            { rot = sway, pivotBottom = true })
     end
     label('leaf, as drawn', COLUMNS[1], LEAF_ROW + CELL * 0.6 + 20)
     label('leaf, lit (b: from behind)', (COLUMNS[2] + COLUMNS[6]) / 2, LEAF_ROW + CELL * 0.6 + 20)
@@ -538,11 +692,14 @@ function s.drawUI()
     local c = lab()
     local lines = {
         'v page   b light in front / behind   f light stays / follows the mouse   c sun / candle / moon   p painted   o outlines'
-            .. '   n shape   l leaves   s steam / smoke / soot   w wind   m rise',
+            .. '   n shape   l leaves   s steam / smoke / soot   w wind   m rise   r shower   g sees   e pass   t 12 fps',
         string.format('light: %s, %s%s   %s   rise: %s   smoke: %s, wind %s   outlines %s',
             LIGHTS[c.light].name, c.back and 'behind' or 'in front', c.frozen and ' (stays)' or '',
             c.painted and 'painted in 4 steps' or 'smooth', RISES[c.rise][1], SMOKES[c.smoke].name,
-            c.wind == 0 and 'still' or (c.wind > 0 and 'to the right' or 'to the left'), c.outlines and 'on' or 'off'),
+            c.wind == 0 and 'still' or (c.wind > 0 and 'to the right' or 'to the left'), c.outlines and 'on' or 'off')
+            .. string.format('   wet %.1f   sees: %s   pass %s   %s', c.wet or 0,
+                ({ 'off', 'height', 'normals', 'light alone' })[(c.debug or 0) + 1], c.post and 'on' or 'off',
+                c.stepped and '12 fps' or 'smooth'),
     }
     for i, line in ipairs(lines) do
         local y = love.graphics.getHeight() - 20 - (#lines - i + 1) * 20
