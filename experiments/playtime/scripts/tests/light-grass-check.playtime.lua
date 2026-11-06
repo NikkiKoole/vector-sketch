@@ -24,6 +24,7 @@
 --   b baked form / the shader's quick guess   n baked rise (1 a dome, 0.5, 0.2 a pebble)
 --   a lights add up (the sky lights the base, every lamp adds; LS3) / as before (how lit stops at full)
 --   0 the shapes as other scenes draw them   s turf spinning or not
+--   o everything back to the settings liked so far (all on, smooth clay wall, the cycle from 9:00)
 
 local s = {}
 
@@ -133,6 +134,8 @@ local TRIES = {
     a = { key = 'plasticineLightAdd', name = 'adding up', values = { false, true } },
 }
 local TRY_ORDER = { 'a', 'g', 'z', 'f', 'b', 'n' }
+-- o: the shapes' settings liked so far (and everything on, smooth clay wall, the cycle from 9:00)
+local OPTIMAL_SHAPES = { a = true, g = 0.5, z = 0.35, f = 0.35, b = true, n = 1 }
 
 local function lightOf(label)
     for _, thing in ipairs(getObjectsByLabel(label)) do
@@ -401,8 +404,14 @@ function s.onKeyPress(key)
         step(TRIES[key])
     elseif key == '0' then
         for _, k in ipairs(TRY_ORDER) do setAll(TRIES[k], TRIES[k].values[1]) end
+    elseif key == 'o' then
+        -- everything built on, at the settings liked so far
+        for _, k in ipairs({ 'lampOnly', 'skyOff', 'backOff', 'shadowsOff', 'wallShadowsOff', 'mipoLightOff',
+            'mipoClayOff' }) do c[k] = nil end
+        c.grit, c.hour, c.cycle = 2, 9, true
+        for k, v in pairs(OPTIMAL_SHAPES) do setAll(TRIES[k], v) end
     elseif key == 'q' then
-        look().grit = (look().grit or 3) % #GRITS + 1
+        look().grit = (look().grit or 2) % #GRITS + 1
     elseif key == 'w' then
         look().wallShadowsOff = not look().wallShadowsOff
     elseif key == 'h' then
@@ -439,7 +448,7 @@ function s.drawBelow()
     local c = WALL.colour
     love.graphics.setColor(c[1] * math.min(1, 0.2 + sky[1] * 0.9), c[2] * math.min(1, 0.2 + sky[2] * 0.9),
         c[3] * math.min(1, 0.2 + sky[3] * 0.9), 1)
-    local grit = GRITS[look().grit or 3]
+    local grit = GRITS[look().grit or 2]
     if grit.grit then
         -- lit from wherever the sun or moon is (the way to it: against the way it shines)
         local body = strongest({ 'sun', 'moon' }) or strongest({ 'turning lamp' })
@@ -523,7 +532,7 @@ function s.drawUI()
             .. (c.skyOff and ', sky light off' or ', sky light on')
             .. (c.shadowsOff and ', no shadows' or ', shadows')
             .. (c.wallShadowsOff and ', none on the wall' or ', on the wall')
-            .. ', wall ' .. GRITS[c.grit or 3].name
+            .. ', wall ' .. GRITS[c.grit or 2].name
             .. (c.backOff and ', no back light' or ', back light')
             .. (c.mipoLightOff and ', Mipos as drawn'
                 or (c.mipoClayOff and ', Mipos lit, no clay' or ', Mipos lit, clay'))
