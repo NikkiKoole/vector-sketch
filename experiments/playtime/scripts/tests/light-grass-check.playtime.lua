@@ -642,6 +642,7 @@ local function lampLight(label, inFront)
     return { kind = 'point', x = x, h = math.max(4, FLOOR_Y + z - y), z = z }
 end
 
+local SUN_FADE_HEIGHT = 0.15 -- below this height (as the sine of the sun's angle) its 3D shadows fade out
 -- The sun or the moon as a 3D light (whichever leads, as the wall shadows; its way towards it on the arc, a
 -- little out of the wall), and how much of the shadow's darkness is left.
 local function sunLight()
@@ -651,9 +652,13 @@ local function sunLight()
     local sun, moon = sunExtra and sunExtra.intensity or 0, moonExtra and moonExtra.intensity or 0
     local theta = (sun >= moon) and (c.hour - 6) / 12 * math.pi or ((c.hour - 18) % 24) / 12 * math.pi
     local high = math.sin(theta)
-    if high <= 0.02 then return nil end
+    if high <= 0.005 then return nil end
     local towards = c.sunOut or SUN_TOWARDS[c.sunTowards or 1]
-    return { kind = 'sun', x = -math.cos(theta), h = high, z = towards }, math.min(1, math.abs(sun - moon) / 0.6)
+    -- fading out as it nears the horizon: cut off at the horizon they vanished at once just before 18:00
+    -- while still dark (Nikki: "around 1800 something flips")
+    local low = math.min(1, high / SUN_FADE_HEIGHT)
+    low = low * low * (3 - 2 * low)
+    return { kind = 'sun', x = -math.cos(theta), h = high, z = towards }, math.min(1, math.abs(sun - moon) / 0.6) * low
 end
 
 -- how dark the hour is: 0 by day, 1 at night (from the sky's brightness)
