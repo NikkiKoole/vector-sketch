@@ -1,27 +1,20 @@
 -- backdrop-shadows.lua — what stands in front of a back wall throws a soft shadow onto it
 -- (docs/LIGHT-AND-SHADOW.md LS7). The contact shadow (src/contact-shadows.lua) is about touching and fades
 -- as a thing rises; this one stays, on the vertical plane behind, and moves with it.
--- Each frame the textured world is drawn once more into a canvas, shifted the way the light shines (how far
--- the wall is behind sets how far); that canvas, blurred, goes onto the wall as soft black, cut with a
+-- Each frame the textured world is drawn once more into a canvas (src/shadow-silhouettes.lua, shared with
+-- the 3D shadows); that canvas, shifted the way the light shines (how far the wall is behind sets how
+-- far) and blurred, goes onto the wall as soft black, cut with a
 -- stencil to the wall: no shadow over nothing (open sky behind: none). Drawn after the scene's backdrop
 -- (its drawBelow), before the bodies.
 -- Off unless state.backdropShadows is set: { wall = function() (draws the wall's shape, world space),
 -- offset = { x, y } (world units the shadow is shifted), blur = world units (8), strength = 0..1 (0.4) }.
 -- A scene works out the offset from its light (the way its sun shines). One direction for the whole scene: a lamp
 -- in the middle throwing shadows both ways would need a pass per thing (not yet).
--- Costs a second pass of the textured drawing per frame.
+-- Costs a second pass of the textured drawing per frame (shared with the 3D shadows: one pass for both).
 local lib = {}
 
 local state = require('src.state')
-
-local canvas
-local function canvasFor(w, h)
-    if not canvas or canvas:getWidth() ~= w or canvas:getHeight() ~= h then
-        if canvas then canvas:release() end
-        canvas = love.graphics.newCanvas(w, h)
-    end
-    return canvas
-end
+local silhouettesOf = require('src.shadow-silhouettes')
 
 -- the silhouettes' alpha, blurred over a small disk, as black
 local composite
@@ -56,20 +49,10 @@ end
 function lib.draw(world)
     local settings = state.backdropShadows
     if not settings or not settings.wall or not settings.offset or not world then return end
-    local textured = require('src.physics.box2d-draw-textured')
-    local target = love.graphics.getCanvas()
-    local w, h
-    if target then w, h = target:getDimensions() else w, h = love.graphics.getDimensions() end
-    local shadowCanvas = canvasFor(w, h)
-
-    -- the silhouettes, shifted the way the light shines (the current transform: world space)
-    love.graphics.setCanvas({ shadowCanvas, stencil = true })
-    love.graphics.clear(0, 0, 0, 0)
-    love.graphics.push()
-    love.graphics.translate(settings.offset[1], settings.offset[2])
-    textured.drawTexturedWorld(world)
-    love.graphics.pop()
-    if target then love.graphics.setCanvas({ target, stencil = true }) else love.graphics.setCanvas() end
+    -- the silhouettes, as they are; shifted the way the light shines when laid down (screen pixels)
+    local shadowCanvas, w, h = silhouettesOf.get(world)
+    local ox, oy = love.graphics.transformPoint(0, 0)
+    local sx, sy = love.graphics.transformPoint(settings.offset[1], settings.offset[2])
 
     -- onto the wall only
     local scale = pixelsPerUnit()
@@ -84,7 +67,7 @@ function lib.draw(world)
     shader:send('radius', (settings.blur or 8) * scale)
     shader:send('strength', settings.strength or 0.4)
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.draw(shadowCanvas, 0, 0)
+    love.graphics.draw(shadowCanvas, sx - ox, sy - oy)
     love.graphics.setShader()
     love.graphics.pop()
     if compare then love.graphics.setStencilTest(compare, value) else love.graphics.setStencilTest() end

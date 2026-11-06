@@ -7,7 +7,8 @@
 --   A point lamp (x, h above the floor, z in front of the wall) or a sun (the way to it) throws a thing's
 --   shadow along that floor and up the wall. A low sun stretches it long over the floor; a lamp close to a
 --   thing throws a big one on the wall, further back it shrinks to the thing's size (a torch, shadow puppets).
--- Each frame the textured world is drawn once more into a canvas, as it is (the things' own plane); then,
+-- Each frame the textured world is drawn once more into a canvas, as it is (the things' own plane:
+-- src/shadow-silhouettes.lua, shared with the soft wall shadows, drawn once for both); then,
 -- per pixel of the wall and floor, a ray goes from that spot to the light, and where it crosses the
 -- things' plane the canvas says whether something's there: in shadow. Hard edges; `softness` > 0 samples a
 -- lamp that size (or a sun that wide), the penumbra wider the further a shadow lands from its thing.
@@ -19,19 +20,12 @@
 -- falls back to the settings' own strength, softness and colour); each throws its own shadow, one pass each
 -- over the same silhouettes, so where two shadows cross it's darker.
 -- The lamp's z must be in front of the things (z > depth), else no shadow falls behind them.
--- Costs a second pass of the textured drawing per frame (as the wall shadow does), and a per-pixel loop.
+-- Costs a second pass of the textured drawing per frame (one for this and the wall shadow together), and a
+-- per-pixel loop.
 local lib = {}
 
 local state = require('src.state')
-
-local canvas
-local function canvasFor(w, h)
-    if not canvas or canvas:getWidth() ~= w or canvas:getHeight() ~= h then
-        if canvas then canvas:release() end
-        canvas = love.graphics.newCanvas(w, h)
-    end
-    return canvas
-end
+local silhouettesOf = require('src.shadow-silhouettes')
 
 local projector
 local function projectorShader()
@@ -103,17 +97,8 @@ end
 function lib.draw(world)
     local settings = state.projectedShadows
     if not settings or not settings.area or not (settings.light or settings.lights) or not world then return end
-    local textured = require('src.physics.box2d-draw-textured')
-    local target = love.graphics.getCanvas()
-    local w, h
-    if target then w, h = target:getDimensions() else w, h = love.graphics.getDimensions() end
-    local silhouettes = canvasFor(w, h)
-
     -- the things as they are (the current transform: world space)
-    love.graphics.setCanvas({ silhouettes, stencil = true })
-    love.graphics.clear(0, 0, 0, 0)
-    textured.drawTexturedWorld(world)
-    if target then love.graphics.setCanvas({ target, stencil = true }) else love.graphics.setCanvas() end
+    local silhouettes, w, h = silhouettesOf.get(world)
 
     local ox, oy = love.graphics.inverseTransformPoint(0, 0)
     local scale = pixelsPerUnit()

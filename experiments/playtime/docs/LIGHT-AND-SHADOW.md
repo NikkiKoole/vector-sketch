@@ -144,7 +144,9 @@ fade, a sun: the panel's `fades` switch, LS4).
   drawBelow) instead of every physics step: 0.1 ms a frame (on the status line). Measured again: the
   update 0.5 ms, 60 fps steady with every shadow setting; draw p50 no shadows 5.1, contact 5.1,
   + soft wall 9.7, contact + 3D 9.7, contact + 3D + soft wall 13.8 (the first run after the fix read
-  far worse, a hot or busy phone: measure twice). Left: the shared silhouette canvas (~4 ms with both).
+  far worse, a hot or busy phone: measure twice). Then the soft and the 3D shadows share one silhouette
+  canvas (`src/shadow-silhouettes.lua`, drawn once a frame; the soft one shifts it as it lays it down):
+  contact + 3D + soft wall 13.8 -> 10.7 ms, the same as one of them alone (10.6-10.7 that run).
 - [ ] **LS13. Light as a scene setting.** So any room gets it without a script: a light section in the
   world settings, saved with the scene: the sky (a colour, or a time of day with the cycle; G5's open
   question in WORLD-BUILDING, a sky per scene), sun and moon, sky light, back light, contact and wall
