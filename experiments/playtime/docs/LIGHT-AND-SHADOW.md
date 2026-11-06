@@ -195,6 +195,12 @@ fade, a sun: the panel's `fades` switch, LS4).
   sun or moon / the warm lamp / sun and warm lamp / sun and both lamps; w's soft wall shadow can be on too.
   Coloured (LS19 for these shadows; x black / coloured): in one light's shadow the other lights and the
   sky still reach, so it takes their colour, darkened (SHADOW_TINT 0.4).
+  Backdrops at depths (Nikki: "a few backdrops at different depths to see how shadow affects"): boards
+  = { {x0, x1, z, height} } on projectedShadows, flat boards standing on the floor between the wall and
+  the things; a shadow lands on the nearest one covering the spot, so close behind the things it's near
+  their size and crisp, further back bigger and softer. light-grass-check: three plaster boards at 90,
+  210 and 330 in front of the wall (the panel's 'backdrops at depths'); the soft wall shadows skip them
+  (backdropShadows.notOn).
   Not yet: one depth for everything (per-thing depth,
   LS16/LS18), nothing on the floor in front of the things, the same cost as the wall shadows (LS12).
 - [ ] **LS15. Small ones:** should a new directional light be a sun (not fade) by default; the back

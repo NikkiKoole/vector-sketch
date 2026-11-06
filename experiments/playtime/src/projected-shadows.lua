@@ -20,6 +20,11 @@
 -- falls back to the settings' own strength, softness and colour); each throws its own shadow, one pass each
 -- over the same silhouettes, so where two shadows cross it's darker.
 -- The lamp's z must be in front of the things (z > depth), else no shadow falls behind them.
+-- Boards: boards = { { x0, x1, z, height }, ... } (up to 4): flat backdrops standing on the floor
+-- z in front of the wall (0 < z < depth), from x0 to x1, height tall; on screen from y = floorY + z up.
+-- A shadow landing on one is cut short there, so a board close behind the things catches a shadow near
+-- their size and crisp, the wall far behind a bigger, softer one. The scene draws the boards (before the
+-- shadows); they don't throw shadows themselves.
 -- Costs a second pass of the textured drawing per frame (one for this and the wall shadow together), and a
 -- per-pixel loop.
 local lib = {}
@@ -39,6 +44,8 @@ local function projectorShader()
         uniform float softness;
         uniform float strength;
         uniform vec3 colour;
+        uniform vec4 boards[4]; // x0, x1, z, height
+        uniform float boardCount;
         const int TAPS = 13;
 
         // how much of the light reaches a spot S (x, h, z) past the things' plane: 1 lit, 0 in shadow
@@ -63,6 +70,18 @@ local function projectorShader()
             else {
                 S = vec3(w.x, 0.0, w.y - floorY);                // on the floor behind the things
                 if (S.z >= depth) return vec4(0.0);
+            }
+            // on a board: the one nearest you that covers this spot on screen
+            float nearest = -1.0;
+            for (int i = 0; i < 4; ++i) {
+                if (float(i) < boardCount) {
+                    vec4 b = boards[i];
+                    float foot = floorY + b.z;
+                    if (w.x >= b.x && w.x <= b.y && w.y <= foot && w.y >= foot - b.w && b.z > nearest) {
+                        nearest = b.z;
+                        S = vec3(w.x, foot - w.y, b.z);
+                    }
+                }
             }
             float dark;
             if (softness <= 0.0) {
@@ -113,6 +132,14 @@ function lib.draw(world)
     shader:send('screen', { w / scale, h / scale })
     shader:send('floorY', settings.floorY)
     shader:send('depth', settings.depth)
+    local boards = settings.boards or {}
+    local packed = {}
+    for i = 1, 4 do
+        local b = boards[i]
+        packed[i] = b and { b[1], b[2], b[3], b[4] } or { 0, 0, 0, 0 }
+    end
+    shader:send('boards', unpack(packed))
+    shader:send('boardCount', math.min(4, #boards))
     love.graphics.setColor(1, 1, 1, 1)
     for _, one in ipairs(settings.lights or { { light = settings.light } }) do
         local light = one.light

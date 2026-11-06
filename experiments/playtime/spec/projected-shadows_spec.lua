@@ -96,6 +96,16 @@ describe('projected shadows', function()
         assert.is_true(at(img, -110, 10) > at(img, 110, 10), 'each its own strength')
     end)
 
+    it('a board close behind the box catches a smaller shadow than the wall', function()
+        -- the lamp at z 80, the box at 40: on the wall (z 0) twice the box, on a board at z 30 5/4 of it
+        state.projectedShadows.boards = { { 25, 140, 30, 150 } } -- x 25..140, its foot at y 80, 150 tall
+        local img = render(state.physicsWorld)
+        -- on the wall the shadow reaches x 80, on the board only 40 * 5/4 = 50 (x 30 is the box's x 24)
+        assert.is_true(at(img, 30, 30) < 0.6, 'the board at x 30: ' .. at(img, 30, 30))
+        assert.is_true(at(img, 70, 30) > 0.99, 'the board at x 70 is past it (on the wall it was dark)')
+        assert.is_true(at(img, 15, -40) < 0.6, 'the wall left of the board still dark')
+    end)
+
     it('only on the area, and off draws nothing', function()
         state.projectedShadows.light = { kind = 'point', x = 0, h = 40, z = 50 } -- a huge shadow
         local img = render(state.physicsWorld)

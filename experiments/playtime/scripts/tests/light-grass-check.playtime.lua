@@ -314,6 +314,28 @@ local function drawGroundFront()
     love.graphics.setColor(1, 1, 1, 1)
 end
 local GROUND_SPLITS = { { z = -math.huge, fn = drawGroundFront } }
+
+-- Backdrops at different depths (Nikki 2026-11-06: "a few backdrops at different depths to see how shadow
+-- affects"): flat boards standing on the floor between the wall and the things, each catching the 3D
+-- shadows where it stands: close behind the things a shadow near their size and crisp, further back
+-- bigger and softer, the wall furthest. { x0, x1, z (in front of the wall), height, colour }
+local BOARDS = {
+    { -1500, -820, 90, 700, { 0.86, 0.78, 0.64 } },
+    { -700, 120, 210, 620, { 0.80, 0.84, 0.78 } },
+    { 260, 1080, 330, 600, { 0.88, 0.80, 0.72 } },
+}
+local BOARD_EDGES = { 0.3, 0.22, 0.16 }
+local function boardList()
+    local list = {}
+    for i, b in ipairs(BOARDS) do list[i] = { b[1], b[2], b[3], b[4] } end
+    return list
+end
+local function boardShapes()
+    for _, b in ipairs(BOARDS) do
+        local foot = FLOOR_Y + b[3]
+        love.graphics.rectangle('fill', b[1], foot - b[4], b[2] - b[1], b[4])
+    end
+end
 local LIGHTS = { 'sun', 'moon', 'warm lamp', 'cool lamp', 'turning lamp', 'sky light', 'back light' }
 
 -- each key steps through these on every shape; the first is how other scenes draw them
@@ -744,8 +766,10 @@ local function everyFrame()
         offset = offset, blur = blur, strength = L.wallShadows * fade * (c.solid and 0.7 or 1) } or nil
     local lights = c.solid and solidLights(L.wallShadows) or {}
     state.drawSplits = c.solid and GROUND_SPLITS or nil
+    local boards = c.solid and c.boardsOn
     state.projectedShadows = #lights > 0 and { area = solidArea, floorY = FLOOR_Y, depth = SOLID_DEPTH,
-        lights = lights } or nil
+        lights = lights, boards = boards and boardList() or nil } or nil
+    if state.backdropShadows then state.backdropShadows.notOn = boards and boardShapes or nil end
 end
 
 function s.onKeyPress(key)
@@ -815,6 +839,7 @@ function s.onKeyPress(key)
 end
 
 -- the sky behind everything, in the hour's colour
+local plaster -- below: a shape in plaster
 function s.drawBelow()
     -- how long the once-a-frame work takes (ms, smoothed; on the status line)
     local t0 = love.timer.getTime()
@@ -829,10 +854,37 @@ function s.drawBelow()
     love.graphics.setColor(sky[1], sky[2], sky[3], 1)
     love.graphics.rectangle('fill', x0, y0, x1 - x0, y1 - y0)
     -- the back wall, the sky's light on it
-    local c = WALL.colour
+    plaster(wallShape, WALL.colour, sky, GRITS[look().grit or 2])
+    if look().solid then
+        -- the floor behind the things, in the same light as the wall (the shadows land on it)
+        local tint = groundTint()
+        drawEarth(FLOOR_Y, GROUND_TOP, tint)
+        drawRims('corner', tint)
+        if look().boardsOn then
+            -- the backdrops, back to front: fine plaster, a darker edge each side, a drawn line on top
+            for _, b in ipairs(BOARDS) do
+                local foot = FLOOR_Y + b[3]
+                plaster(function() love.graphics.rectangle('fill', b[1], foot - b[4], b[2] - b[1], b[4]) end,
+                    b[5], sky, GRITS[3])
+                local e = BOARD_EDGES
+                love.graphics.setColor(e[1] * tint[1], e[2] * tint[2], e[3] * tint[3], 1)
+                love.graphics.rectangle('fill', b[1], foot - b[4], 8, b[4])
+                love.graphics.rectangle('fill', b[2] - 8, foot - b[4], 8, b[4])
+                b.rim = b.rim or strokeLine(foot - b[4], b[1], b[2], 16, 20 + b[3])
+                for _, mesh in ipairs(b.rim) do love.graphics.draw(mesh) end
+                -- where it stands on the floor
+                love.graphics.setColor(0, 0, 0, 0.25)
+                love.graphics.rectangle('fill', b[1] - 10, foot - 3, b[2] - b[1] + 20, 8)
+            end
+        end
+    end
+    love.graphics.setColor(1, 1, 1, 1)
+end
+
+-- a shape in plaster (or flat), its colour in the sky's light, its relief lit from the sun and moon
+plaster = function(drawShape, c, sky, grit)
     love.graphics.setColor(c[1] * math.min(1, 0.2 + sky[1] * 0.9), c[2] * math.min(1, 0.2 + sky[2] * 0.9),
         c[3] * math.min(1, 0.2 + sky[3] * 0.9), 1)
-    local grit = GRITS[look().grit or 2]
     if grit.grit then
         -- lit from the sun and moon together (applyTime), or the turning lamp (the way to it: against the
         -- way it shines)
@@ -855,15 +907,8 @@ function s.drawBelow()
         shader:send('origin', { ox, oy })
         shader:send('zoom', 1 / (oneRight - ox))
     end
-    wallShape()
+    drawShape()
     love.graphics.setShader()
-    if look().solid then
-        -- the floor behind the things, in the same light as the wall (the shadows land on it)
-        local tint = groundTint()
-        drawEarth(FLOOR_Y, GROUND_TOP, tint)
-        drawRims('corner', tint)
-    end
-    love.graphics.setColor(1, 1, 1, 1)
 end
 
 local function hexColor(text)
@@ -916,6 +961,7 @@ end
 -- sliders and buttons; the keys still work. Folds away with its – button.
 local PANEL = '•• light and shadow ••'
 local ROW, COL_W = 34, 380
+local PANEL_ROWS = 13
 
 local function check(x, y, on, label)
     local clicked, now = ui.checkbox(x, y, on, label)
@@ -940,7 +986,7 @@ end
 
 local function drawPanel(c)
     local x0, y0 = state.playMode and 20 or 90, 20
-    local w, h = COL_W * 2 + 20, ROW * 12 + 50
+    local w, h = COL_W * 2 + 20, ROW * PANEL_ROWS + 50
     ui.panel(x0, y0, w, h, PANEL, function()
         local x, y = x0 + 12, y0 + 40
         local function row() y = y + ROW end
@@ -996,6 +1042,8 @@ local function drawPanel(c)
         row()
         c.solid = toggle(x, y, c.solid, '3D shadows (and the ground)')
         row()
+        c.boardsOn = toggle(x, y, c.boardsOn, 'backdrops at depths (with 3D)')
+        row()
         if stepper(x, y, COL_W - 30, 'from ' .. lightSet().name) then s.onKeyPress('e') end
         row()
         on = toggle(x, y, not c.blackShadows, 'coloured shadows')
@@ -1025,6 +1073,9 @@ end
 
 function s.drawUI()
     local c = look()
+    -- play mode draws no editor UI, so nothing else starts the UI's frame: without it the panel's clicks
+    -- only worked in the editor (Nikki)
+    if state.playMode then ui.startFrame() end
     drawPanel(c)
     local line = 'now: ' .. (c.lampOnly and 'the turning lamp'
         or string.format('%02d:%02d', math.floor(c.hour), math.floor(c.hour % 1 * 60)))

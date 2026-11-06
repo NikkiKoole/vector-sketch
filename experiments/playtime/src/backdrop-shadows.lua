@@ -7,6 +7,7 @@
 -- stencil to the wall: no shadow over nothing (open sky behind: none). Drawn after the scene's backdrop
 -- (its drawBelow), before the bodies.
 -- Off unless state.backdropShadows is set: { wall = function() (draws the wall's shape, world space),
+-- notOn = function() (optional: what stands in front of the wall and hides it, cut out),
 -- offset = { x, y } (world units the shadow is shifted), blur = world units (8), strength = 0..1 (0.4) }.
 -- A scene works out the offset from its light (the way its sun shines). One direction for the whole scene: a lamp
 -- in the middle throwing shadows both ways would need a pass per thing (not yet).
@@ -58,6 +59,7 @@ function lib.draw(world)
     local scale = pixelsPerUnit()
     local compare, value = love.graphics.getStencilTest()
     love.graphics.stencil(settings.wall, 'replace', 1)
+    if settings.notOn then love.graphics.stencil(settings.notOn, 'replace', 0, true) end
     love.graphics.setStencilTest('greater', 0)
     love.graphics.push()
     love.graphics.origin()
