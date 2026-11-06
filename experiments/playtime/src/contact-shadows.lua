@@ -169,21 +169,42 @@ local function stencilBody(body)
     end
 end
 
-function lib.drawShadow(s)
+-- The shadows on one receiver: its stencil drawn once, then every oval on it. (One stencil per shadow
+-- drew the floor ~85 times a frame with 20 Mipos: ~3 ms on an iPhone SE 2, LIGHT-AND-SHADOW LS13.)
+local function drawOn(receiver, shadows)
     local image = blobImage()
     local compare, value = love.graphics.getStencilTest()
-    love.graphics.stencil(function() stencilBody(s.receiver) end, 'replace', 1)
+    love.graphics.stencil(function() stencilBody(receiver) end, 'replace', 1)
     love.graphics.setStencilTest('greater', 0)
-    love.graphics.setColor(0, 0, 0, s.alpha)
     local iw, ih = image:getDimensions()
-    love.graphics.draw(image, s.x, s.y, 0, s.hw * 2 / iw, s.hh * 2 / ih, iw / 2, ih / 2)
+    for _, s in ipairs(shadows) do
+        love.graphics.setColor(0, 0, 0, s.alpha)
+        love.graphics.draw(image, s.x, s.y, 0, s.hw * 2 / iw, s.hh * 2 / ih, iw / 2, ih / 2)
+    end
     love.graphics.setColor(1, 1, 1, 1)
     if compare then love.graphics.setStencilTest(compare, value) else love.graphics.setStencilTest() end
 end
 
+function lib.drawShadow(s) drawOn(s.receiver, { s }) end
+
+-- the shadows grouped by what they land on, in the order the receivers first come
+local function byReceiver(list)
+    local groups, order = {}, {}
+    for _, s in ipairs(list) do
+        local g = groups[s.receiver]
+        if not g then
+            g = { receiver = s.receiver, z = s.z, shadows = {} }
+            groups[s.receiver] = g
+            order[#order + 1] = g
+        end
+        g.shadows[#g.shadows + 1] = s
+    end
+    return order
+end
+
 -- every shadow now, whatever its depth (specs, a scene without pictures)
 function lib.drawAll(world)
-    for _, s in ipairs(lib.compute(world)) do lib.drawShadow(s) end
+    for _, g in ipairs(byReceiver(lib.compute(world))) do drawOn(g.receiver, g.shadows) end
 end
 
 -- Before the textured world: the shadows on surfaces without pictures drawn now, the others handed to
@@ -193,11 +214,11 @@ local sceneSplits
 function lib.beforeTextured(world)
     if not state.contactShadows then return end
     local splits = {}
-    for _, s in ipairs(lib.compute(world)) do
-        if s.z then
-            splits[#splits + 1] = { z = s.z + 0.0005, fn = function() lib.drawShadow(s) end }
+    for _, g in ipairs(byReceiver(lib.compute(world))) do
+        if g.z then
+            splits[#splits + 1] = { z = g.z + 0.0005, fn = function() drawOn(g.receiver, g.shadows) end }
         else
-            lib.drawShadow(s)
+            drawOn(g.receiver, g.shadows)
         end
     end
     if #splits == 0 then return end

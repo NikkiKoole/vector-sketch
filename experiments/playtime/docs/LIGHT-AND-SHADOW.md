@@ -208,7 +208,13 @@ fade, a sun: the panel's `fades` switch, LS4).
   profile): no measurable change, kept as it's simpler. And scene-light looks for parts only when an
   sfixture comes or goes (registry.sfixtureVersion) or once a second, not every frame.
   **The lever now: contact shadows** (~85 for 20 Mipos: rays per caster in compute, a stencil per shadow
-  drawn). Then the lit parts (~28 us a part). Next: measure each level on the phone (`./playtime.sh bench device`, a room of ~20 Mipos);
+  drawn). Then the lit parts (~28 us a part).
+  Done: contact shadows grouped by what they land on, one stencil per receiver (the kitchen floor was
+  drawn into the stencil ~85 times a frame), the same picture. Measured after: contact shadows add
+  +1.9..+2.4 ms over off (was +2.9), near the noise: that install's off was 8.8-9.6 ms (4.6 before; fresh
+  random Mipos each install, and the phone warm after an hour of runs).
+  **Before measuring more:** the same 20 Mipos every time (a seed: createCharacter +
+  randomizeMipoConstrained after love.math.setRandomSeed), and a cool phone; else a ~1 ms win drowns. Next: measure each level on the phone (`./playtime.sh bench device`, a room of ~20 Mipos);
   then the details behind the button's arrow (time of day, which wall, a floor picker drawn on stage).
 - [x] **LS14. A lamp's wall shadows both ways.** Now one direction per scene (from the sun or moon): a
   lamp in a room's middle should throw shadows away from it on both sides, which needs a pass per
