@@ -8,7 +8,7 @@ turning lamp, six plasticine shapes; 1 day, 2 evening, 3 night, 4 the turning la
 shapes' light settings, 0 shows them as every other scene draws them (the keys are in its script's top
 comment).
 
-What there is (`src/render/shaders.lua`): LIGHT sfixtures (directional or point) reach the plasticine
+What there is (`src/render/shaders.lua`): LIGHT sfixtures (directional, point or sky) reach the plasticine
 and hairs shaders, up to 8 at once. A light's colour tints a shape (the lights' colours averaged by how
 much each reaches); its intensity and nearness decide how lit the shape is. The shapes' own settings,
 all off by default (the defaults draw byte for byte as before):
@@ -24,6 +24,10 @@ fade, a sun, but the panel can't set 0).
 
 - [x] **LS1. More lamps and colour.** 8 lights, the scene's lamps and times of day (2026-11-06).
 - [x] **LS2. Roundness baked from the mask**, next to the quick guess, switchable (2026-11-06).
+- [x] **LS8. Sky and ground light.** A light type `sky`: its colour from all of above, its ground
+  colour (`groundHex`, a row on the light's panel) from all of below, wherever the light is; above is
+  the world's above (spec/light-sky_spec.lua). In the scene per time of day, k off / on: it fills the
+  sun's dark sides with the sky's blue (2026-11-06).
 - [ ] **LS3. Light that adds up.** How lit a shape is stops at 1: a second lamp near a lit shape adds
   nothing, so night is only dark away from the lamps. Decide: lights that add (and can over-light),
   or an ambient level per scene that the lights add to.

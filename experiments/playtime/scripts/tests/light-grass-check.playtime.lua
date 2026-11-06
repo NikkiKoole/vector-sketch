@@ -7,30 +7,35 @@
 -- play mode (tab): drag the warm and the cool lamp about.
 -- keys:
 --   1 day   2 evening   3 night   4 only the turning lamp (its range: r 5000 / 500)
+--   k the sky light off / on (light from all of above in the sky's colour, from below in the ground's)
 --   g light swing   z how much the light comes from the front   f the quick form's depth
 --   b baked form / the shader's quick guess   n baked rise (1 a dome, 0.5, 0.2 a pebble)
 --   0 the shapes as other scenes draw them   s turf spinning or not
 
 local s = {}
 
--- the times of day: the sky, then per light its colour, intensity and (the sun) where it shines to and
--- where it is
+-- the times of day: the sky, then per light its colour, intensity, (the sun) where it shines to and
+-- where it is, (the sky light) its ground colour
 local MOODS = {
     day = { sky = { 0.62, 0.78, 0.92 },
         sun = { 'fff2d9ff', 1.0, math.rad(60), -1250, -650 }, ['warm lamp'] = { 'ffb060ff', 0 },
-        ['cool lamp'] = { '80a8ffff', 0 }, ['turning lamp'] = { 'ffffffff', 0 } },
+        ['cool lamp'] = { '80a8ffff', 0 }, ['turning lamp'] = { 'ffffffff', 0 },
+        ['sky light'] = { '9cc8ffff', 0.6, nil, nil, nil, '8a7a50ff' } },
     evening = { sky = { 0.93, 0.62, 0.45 },
         sun = { 'ff8a3cff', 0.9, math.rad(12), -1450, -100 }, ['warm lamp'] = { 'ffb060ff', 0.8 },
-        ['cool lamp'] = { '80a8ffff', 0 }, ['turning lamp'] = { 'ffffffff', 0 } },
+        ['cool lamp'] = { '80a8ffff', 0 }, ['turning lamp'] = { 'ffffffff', 0 },
+        ['sky light'] = { 'ffa080ff', 0.5, nil, nil, nil, '5a3848ff' } },
     night = { sky = { 0.08, 0.1, 0.22 },
         sun = { 'a8c0ffff', 0.35, math.rad(120), 600, -650 }, ['warm lamp'] = { 'ffb060ff', 1.0 },
-        ['cool lamp'] = { '80a8ffff', 0.8 }, ['turning lamp'] = { 'ffffffff', 0 } },
+        ['cool lamp'] = { '80a8ffff', 0.8 }, ['turning lamp'] = { 'ffffffff', 0 },
+        ['sky light'] = { '3a4a80ff', 0.3, nil, nil, nil, '141420ff' } },
     lamp = { sky = nil,
         sun = { 'fff2d9ff', 0, math.rad(60) }, ['warm lamp'] = { 'ffb060ff', 0 },
-        ['cool lamp'] = { '80a8ffff', 0 }, ['turning lamp'] = { 'fff2d9ff', 1.0 } },
+        ['cool lamp'] = { '80a8ffff', 0 }, ['turning lamp'] = { 'fff2d9ff', 1.0 },
+        ['sky light'] = { '9cc8ffff', 0, nil, nil, nil, '8a7a50ff' } },
 }
 local MOOD_KEYS = { ['1'] = 'day', ['2'] = 'evening', ['3'] = 'night', ['4'] = 'lamp' }
-local LIGHTS = { 'sun', 'warm lamp', 'cool lamp', 'turning lamp' }
+local LIGHTS = { 'sun', 'warm lamp', 'cool lamp', 'turning lamp', 'sky light' }
 
 -- each key steps through these on every shape; the first is how other scenes draw them
 local TRIES = {
@@ -99,6 +104,8 @@ local function setMood(name)
         local m = mood[label]
         if extra and m then
             extra.colorHex, extra.intensity = m[1], m[2]
+            if label == 'sky light' and look().skyOff then extra.intensity = 0 end
+            if m[6] then extra.groundHex = m[6] end
             if m[3] and body then body:setAngle(m[3]) end
             if m[4] and body then body:setPosition(m[4], m[5]) end
         end
@@ -151,6 +158,9 @@ function s.onKeyPress(key)
         step(TRIES[key])
     elseif key == '0' then
         for _, k in ipairs(TRY_ORDER) do setAll(TRIES[k], TRIES[k].values[1]) end
+    elseif key == 'k' then
+        look().skyOff = not look().skyOff
+        setMood(look().mood)
     elseif key == 'r' then
         local _, extra = lightOf('turning lamp')
         if extra then extra.range = (extra.range or 500) == 500 and 5000 or 500 end
@@ -184,7 +194,7 @@ end
 function s.draw()
     for _, label in ipairs(LIGHTS) do
         local body, extra = lightOf(label)
-        if body and (extra.intensity or 1) > 0 then
+        if body and (extra.intensity or 1) > 0 and extra.lightType ~= 'sky' then
             local x, y = body:getPosition()
             local r, g, b = hexColor(extra.colorHex or 'ffffffff')
             for k = 4, 1, -1 do
@@ -211,8 +221,9 @@ function s.drawUI()
         tries[#tries + 1] = string.format('%s %s %s', k, TRIES[k].name, tostring(current(TRIES[k])))
     end
     local lines = {
-        'light   1 day  2 evening  3 night  4 turning lamp (r range)   tab: play, drag the lamps   s turf',
-        'now: ' .. c.mood .. '      shapes: ' .. table.concat(tries, '   ') .. '   (0 as elsewhere)',
+        'light   1 day  2 evening  3 night  4 turning lamp (r range)  k sky light  tab: play, drag the lamps  s turf',
+        'now: ' .. c.mood .. (c.skyOff and ', sky light off' or ', sky light on')
+            .. '      shapes: ' .. table.concat(tries, '   ') .. '   (0 as elsewhere)',
         string.format('grass: SpriteBatches made in the last second: %d', c.perSecond),
     }
     for i, line in ipairs(lines) do

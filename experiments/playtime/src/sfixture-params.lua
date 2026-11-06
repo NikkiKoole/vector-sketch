@@ -99,6 +99,8 @@ local function extraNumber(key, label, min, max, default, changed, extra)
     return row
 end
 
+local function isSkyLight(fixture) return extraOf(fixture).lightType == 'sky' end
+
 local function mainOf(fixture)
     local e = extraOf(fixture)
     e.main = e.main or {}
@@ -229,13 +231,19 @@ lib.bySubtype = {
           get = function(fixture) return extraOf(fixture).colorHex or 'fff2d9ff' end,
           set = function(fixture, v) extraOf(fixture).colorHex = v end },
         extraNumber('intensity', 'intensity', 0, 3, 1),
-        { key = 'type', kind = 'choice', options = { 'directional', 'point' },
+        { key = 'type', kind = 'choice', options = { 'directional', 'point', 'sky' },
           get = function(fixture) return extraOf(fixture).lightType or 'directional' end,
           set = function(fixture, v) extraOf(fixture).lightType = v end },
-        extraNumber('range', 'range', 10, 2000, 500),
+        -- a sky light: its colour from above, this one from below (docs/LIGHT-AND-SHADOW.md)
+        { key = 'ground', kind = 'color', visible = isSkyLight,
+          get = function(fixture) return extraOf(fixture).groundHex or '6b5a40ff' end,
+          set = function(fixture, v) extraOf(fixture).groundHex = v end },
+        extraNumber('range', 'range', 10, 2000, 500, nil, { visible = function(f) return not isSkyLight(f) end }),
         { kind = 'note',
           label = function(fixture)
-              return (extraOf(fixture).lightType == 'point') and 'origin: this body\'s position'
+              local lightType = extraOf(fixture).lightType
+              if lightType == 'sky' then return 'from all of above and below, wherever it is' end
+              return (lightType == 'point') and 'origin: this body\'s position'
                   or 'aim: rotate the body (body +X = light dir)'
           end },
     }, position),

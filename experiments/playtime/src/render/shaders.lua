@@ -42,6 +42,7 @@ local plasticineShader = love.graphics.newShader([[
     uniform int   lightType[MAX_LIGHTS];      // 0 = directional, 1 = point
     uniform vec2  lightLocalPos[MAX_LIGHTS];  // same coord space as vertex positions
     uniform float lightRange[MAX_LIGHTS];     // falloff distance (world or body-local units)
+    uniform vec3  lightGround[MAX_LIGHTS];    // a sky light's ground colour (lightType 2)
 
     // Passed from vertex shader: vertex position BEFORE the love.graphics transform.
     // For bodies drawn with draw(mesh, bx, by, ba) this is body-local space.
@@ -142,6 +143,15 @@ local plasticineShader = love.graphics.newShader([[
             } else {
                 for (int i = 0; i < MAX_LIGHTS; ++i) {
                     if (i >= lightCount) break;
+                    if (lightType[i] == 2) {
+                        // a sky light: its colour from all of above, its ground colour from all of
+                        // below (lightDir: up, body-local), wherever it is; no falloff, no sheen
+                        float up = dot(n, normalize(vec3(lightDir[i], 0.0))) * 0.5 + 0.5;
+                        float w = lightIntensity[i];
+                        totalLight += mix(lightGround[i], lightColor[i], up) * w;
+                        weightSum  += w;
+                        continue;
+                    }
                     vec3  L;
                     float atten = 1.0;
                     if (lightType[i] == 1) {
@@ -250,6 +260,7 @@ local hairsShader = love.graphics.newShader([[
     uniform int   lightType[MAX_LIGHTS];
     uniform vec2  lightLocalPos[MAX_LIGHTS];
     uniform float lightRange[MAX_LIGHTS];
+    uniform vec3  lightGround[MAX_LIGHTS];
 
     varying vec2 varVertexPos;
 
@@ -341,6 +352,15 @@ local hairsShader = love.graphics.newShader([[
             } else {
                 for (int i = 0; i < MAX_LIGHTS; ++i) {
                     if (i >= lightCount) break;
+                    if (lightType[i] == 2) {
+                        // a sky light: its colour from all of above, its ground colour from all of
+                        // below (lightDir: up, body-local), wherever it is; no falloff, no sheen
+                        float up = dot(n, normalize(vec3(lightDir[i], 0.0))) * 0.5 + 0.5;
+                        float w = lightIntensity[i];
+                        totalLight += mix(lightGround[i], lightColor[i], up) * w;
+                        weightSum  += w;
+                        continue;
+                    }
                     vec3  L;
                     float atten = 1.0;
                     if (lightType[i] == 1) {
@@ -400,12 +420,15 @@ lib.hairsFuzz     = 0.15
 lib.hairsBush     = 0.0
 
 -- Reused per-draw buffers so we don't churn tables each frame.
--- One slot per light the shaders take (MAX_LIGHTS); lightTypeBuf 0 = directional, 1 = point.
+-- One slot per light the shaders take (MAX_LIGHTS); lightTypeBuf 0 = directional, 1 = point, 2 = sky.
 local lightDirBuf, lightColorBuf, lightInBuf, lightTypeBuf, lightPosBuf, lightRangeBuf = {}, {}, {}, {}, {}, {}
 for i = 1, MAX_LIGHTS do
     lightDirBuf[i], lightColorBuf[i], lightInBuf[i] = { 0, 0 }, { 1, 1, 1 }, 0
     lightTypeBuf[i], lightPosBuf[i], lightRangeBuf[i] = 0, { 0, 0 }, 1
 end
+local lightGroundBuf = {}
+for i = 1, MAX_LIGHTS do lightGroundBuf[i] = { 0, 0, 0 } end
+local LIGHT_TYPES = { directional = 0, point = 1, sky = 2 }
 
 -- Send light arrays to any shader that exposes the standard light uniforms.
 -- Honors the legacy per-fixture `extra.plasticineLight` override.
@@ -434,6 +457,7 @@ local function sendLightsToShader(shader, body, extra)
     shader:send('lightType',      unpack(lightTypeBuf))
     shader:send('lightLocalPos',  unpack(lightPosBuf))
     shader:send('lightRange',     unpack(lightRangeBuf))
+    shader:send('lightGround',    unpack(lightGroundBuf))
 end
 
 -- Send all lighting+material uniforms shared by plasticine and hairs shaders.
@@ -521,6 +545,7 @@ function lib.gatherLightsForBody(body, fx, fy)
                 -- the body's +X is the way the light shines (its panel: aim); the shader's lambert wants
                 -- the way to the light, so the other way round (spec/light-aim_spec.lua)
                 local wdx, wdy = -math.cos(la), -math.sin(la)
+                if ud.extra.lightType == 'sky' then wdx, wdy = 0, -1 end -- the way to a sky: the world's up
                 local ldx = (wdx * cosA - wdy * sinA) * fx
                 local ldy = (wdx * sinA + wdy * cosA) * fy
                 count = count + 1
@@ -534,8 +559,9 @@ function lib.gatherLightsForBody(body, fx, fy)
 
                 -- Light position in the target body's local space (or world space for CTs).
                 -- Used for distance falloff by both point and directional lights.
-                local isPoint = (ud.extra.lightType == 'point') and 1 or 0
-                lightTypeBuf[count] = isPoint
+                lightTypeBuf[count] = LIGHT_TYPES[ud.extra.lightType] or 0
+                local gr, gg, gb = color.hexToColor(ud.extra.groundHex or '6b5a40ff')
+                lightGroundBuf[count][1], lightGroundBuf[count][2], lightGroundBuf[count][3] = gr, gg, gb
                 -- Both point and directional lights send their body-local position
                 -- so the shader can compute distance-based attenuation for both.
                 local lwx, lwy = lb:getPosition()

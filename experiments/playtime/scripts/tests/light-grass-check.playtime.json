@@ -1,1152 +1,699 @@
 {
-  "backdrops": [],
-  "version": "1.0",
-  "bodies": [
-    {
-      "label": "spinning turf",
-      "bodyType": "kinematic",
-      "mirrorY": 1,
-      "vertices": [
-        -180,
-        -100,
-        180,
-        -100,
-        180,
-        100,
-        -180,
-        100
-      ],
-      "shapeType": "rectangle",
-      "fixtures": [
-        {
-          "points": [
-            10,
-            -10,
-            10,
-            10,
-            -10,
-            10,
-            -10,
-            -10
-          ],
-          "sensor": true,
-          "userData": {
-            "subtype": "grass",
-            "label": "",
-            "type": "sfixture",
-            "id": "1OT4tL",
-            "extra": {
-              "seed": 0,
-              "width": 1,
-              "height": 90,
-              "heightVariation": 0.5,
-              "frontShare": 0.25,
-              "maxSlope": 50,
-              "sway": 1,
-              "colorBack": "2a5b3eff",
-              "colorFront": "86a542ff",
-              "zOffset": 0,
-              "density": 8,
-              "zGroupOffset": 0
-            }
+  "bodies":[{
+      "sharedFixtureData":{
+        "sensor":false,
+        "density":1,
+        "shapeType":"polygon",
+        "friction":0.2,
+        "restitution":0.3,
+        "groupIndex":0
+      },
+      "label":"sky light",
+      "mirrorX":1,
+      "mirrorY":1,
+      "vertices":[-35,-35,35,-35,35,35,-35,35],
+      "dims":{
+        "height":70,
+        "width":70
+      },
+      "fixtures":[{
+          "sensor":true,
+          "points":[5,-5,5,5,-5,5,-5,-5],
+          "userData":{
+            "subtype":"light",
+            "extra":{
+              "intensity":0.6,
+              "groundHex":"8a7a50ff",
+              "lightType":"sky",
+              "colorHex":"9cc8ffff",
+              "range":500
+            },
+            "type":"sfixture",
+            "id":"CbfWE",
+            "label":""
           }
-        },
-        {
-          "points": [
-            -180,
-            -100,
-            180,
-            -100,
-            180,
-            100,
-            -180,
-            100
-          ]
-        }
-      ],
-      "dims": {
-        "width": 360,
-        "height": 200
+        },{
+          "points":[-35,-35,35,-35,35,35,-35,35]
+        }],
+      "shapeType":"rectangle",
+      "bodyType":"static",
+      "id":"1Xy8no",
+      "position":[300,-650],
+      "angle":0,
+      "linearVelocity":[0,0],
+      "angularVelocity":0,
+      "fixedRotation":false,
+      "linearDamping":0,
+      "angularDamping":0
+    },{
+      "sharedFixtureData":{
+        "sensor":false,
+        "density":1,
+        "shapeType":"polygon",
+        "friction":0.2,
+        "restitution":0.3,
+        "groupIndex":0
       },
-      "sharedFixtureData": {
-        "friction": 0.2,
-        "restitution": 0.3,
-        "groupIndex": 0,
-        "sensor": false,
-        "shapeType": "polygon",
-        "density": 1
+      "label":"sun",
+      "mirrorX":1,
+      "mirrorY":1,
+      "vertices":[-35,-35,35,-35,35,35,-35,35],
+      "dims":{
+        "height":70,
+        "width":70
       },
-      "position": [
-        1000,
-        -200
-      ],
-      "angle": 0,
-      "linearVelocity": [
-        0,
-        0
-      ],
-      "angularVelocity": 0.8,
-      "fixedRotation": false,
-      "linearDamping": 0,
-      "angularDamping": 0,
-      "id": "2U70gI",
-      "mirrorX": 1
-    },
-    {
-      "label": "still grassy ground",
-      "bodyType": "static",
-      "mirrorY": 1,
-      "vertices": [
-        -2100,
-        -80,
-        2100,
-        -80,
-        2100,
-        80,
-        -2100,
-        80
-      ],
-      "shapeType": "rectangle",
-      "fixtures": [
-        {
-          "points": [
-            10,
-            -10,
-            10,
-            10,
-            -10,
-            10,
-            -10,
-            -10
-          ],
-          "sensor": true,
-          "userData": {
-            "subtype": "grass",
-            "label": "",
-            "type": "sfixture",
-            "id": "2ix8EQ",
-            "extra": {
-              "seed": 0,
-              "width": 1,
-              "height": 90,
-              "heightVariation": 0.5,
-              "frontShare": 0.25,
-              "maxSlope": 50,
-              "sway": 1,
-              "colorBack": "2a5b3eff",
-              "colorFront": "86a542ff",
-              "zOffset": 0,
-              "density": 8,
-              "zGroupOffset": 0
-            }
+      "fixtures":[{
+          "sensor":true,
+          "points":[5,-5,5,5,-5,5,-5,-5],
+          "userData":{
+            "subtype":"light",
+            "extra":{
+              "intensity":1,
+              "lightType":"directional",
+              "colorHex":"fff2d9ff",
+              "range":0
+            },
+            "type":"sfixture",
+            "id":"4mPOxS",
+            "label":""
           }
-        },
-        {
-          "points": [
-            -2100,
-            -80,
-            2100,
-            -80,
-            2100,
-            80,
-            -2100,
-            80
-          ]
-        }
-      ],
-      "dims": {
-        "width": 4200,
-        "height": 160
+        },{
+          "points":[35,-35,35,35,-35,35,-35,-35]
+        }],
+      "shapeType":"rectangle",
+      "bodyType":"static",
+      "id":"CUVzT",
+      "position":[-1250,-650],
+      "angle":0,
+      "linearVelocity":[0,0],
+      "angularVelocity":0,
+      "fixedRotation":false,
+      "linearDamping":0,
+      "angularDamping":0
+    },{
+      "sharedFixtureData":{
+        "sensor":false,
+        "density":1,
+        "shapeType":"polygon",
+        "friction":0.2,
+        "restitution":0.3,
+        "groupIndex":0
       },
-      "sharedFixtureData": {
-        "friction": 0.2,
-        "restitution": 0.3,
-        "groupIndex": 0,
-        "sensor": false,
-        "shapeType": "polygon",
-        "density": 1
+      "label":"warm lamp",
+      "mirrorX":1,
+      "mirrorY":1,
+      "vertices":[-35,-35,35,-35,35,35,-35,35],
+      "dims":{
+        "height":70,
+        "width":70
       },
-      "position": [
-        0,
-        530
-      ],
-      "angle": 0,
-      "linearVelocity": [
-        0,
-        0
-      ],
-      "angularVelocity": 0,
-      "fixedRotation": false,
-      "linearDamping": 0,
-      "angularDamping": 0,
-      "id": "2C4xeB",
-      "mirrorX": 1
-    },
-    {
-      "label": "lit box",
-      "bodyType": "static",
-      "mirrorY": 1,
-      "vertices": [
-        -150,
-        -150,
-        150,
-        -150,
-        150,
-        150,
-        -150,
-        150
-      ],
-      "shapeType": "rectangle",
-      "fixtures": [
-        {
-          "points": [
-            150,
-            -150,
-            150,
-            150,
-            -150,
-            150,
-            -150,
-            -150
-          ],
-          "sensor": true,
-          "userData": {
-            "subtype": "texfixture",
-            "label": "",
-            "type": "sfixture",
-            "id": "3p8UJH",
-            "extra": {
-              "main": {
-                "pHex": "a89880ff",
-                "fgURL": "mipo/body/body-04-mask.png",
-                "pURL": "type0.png",
-                "bgHex": "000000ff",
-                "bgURL": "mipo/body/body-04.png",
-                "fgHex": "c8b8a0ff"
+      "fixtures":[{
+          "sensor":true,
+          "points":[5,-5,5,5,-5,5,-5,-5],
+          "userData":{
+            "subtype":"light",
+            "extra":{
+              "intensity":0,
+              "lightType":"point",
+              "colorHex":"ffb060ff",
+              "range":700
+            },
+            "type":"sfixture",
+            "id":"e8J4b",
+            "label":""
+          }
+        },{
+          "points":[35,-35,35,35,-35,35,-35,-35]
+        }],
+      "shapeType":"rectangle",
+      "bodyType":"dynamic",
+      "id":"4dvezX",
+      "position":[-700,-120],
+      "angle":0,
+      "linearVelocity":[0,0],
+      "angularVelocity":0,
+      "fixedRotation":false,
+      "linearDamping":0,
+      "angularDamping":0
+    },{
+      "sharedFixtureData":{
+        "sensor":false,
+        "density":1,
+        "shapeType":"polygon",
+        "friction":0.2,
+        "restitution":0.3,
+        "groupIndex":0
+      },
+      "label":"cool lamp",
+      "mirrorX":1,
+      "mirrorY":1,
+      "vertices":[-35,-35,35,-35,35,35,-35,35],
+      "dims":{
+        "height":70,
+        "width":70
+      },
+      "fixtures":[{
+          "sensor":true,
+          "points":[5,-5,5,5,-5,5,-5,-5],
+          "userData":{
+            "subtype":"light",
+            "extra":{
+              "intensity":0,
+              "lightType":"point",
+              "colorHex":"80a8ffff",
+              "range":700
+            },
+            "type":"sfixture",
+            "id":"CYvHT",
+            "label":""
+          }
+        },{
+          "points":[35,-35,35,35,-35,35,-35,-35]
+        }],
+      "shapeType":"rectangle",
+      "bodyType":"dynamic",
+      "id":"3MUbLE",
+      "position":[150,-120],
+      "angle":0,
+      "linearVelocity":[0,0],
+      "angularVelocity":0,
+      "fixedRotation":false,
+      "linearDamping":0,
+      "angularDamping":0
+    },{
+      "sharedFixtureData":{
+        "sensor":false,
+        "density":1,
+        "shapeType":"polygon",
+        "friction":0.2,
+        "restitution":0.3,
+        "groupIndex":0
+      },
+      "label":"turning lamp",
+      "mirrorX":1,
+      "mirrorY":1,
+      "vertices":[-35,-35,35,-35,35,35,-35,35],
+      "dims":{
+        "height":70,
+        "width":70
+      },
+      "fixtures":[{
+          "sensor":true,
+          "points":[5,-5,5,5,-5,5,-5,-5],
+          "userData":{
+            "subtype":"light",
+            "extra":{
+              "intensity":0,
+              "lightType":"directional",
+              "colorHex":"fff2d9ff",
+              "range":5000
+            },
+            "type":"sfixture",
+            "id":"42g9Lb",
+            "label":""
+          }
+        },{
+          "points":[35,-35,35,35,-35,35,-35,-35]
+        }],
+      "shapeType":"rectangle",
+      "bodyType":"kinematic",
+      "id":"2V7Sp4",
+      "position":[-300,-450],
+      "angle":0,
+      "linearVelocity":[0,0],
+      "angularVelocity":0.5,
+      "fixedRotation":false,
+      "linearDamping":0,
+      "angularDamping":0
+    },{
+      "sharedFixtureData":{
+        "sensor":false,
+        "density":1,
+        "shapeType":"polygon",
+        "friction":0.2,
+        "restitution":0.3,
+        "groupIndex":0
+      },
+      "label":"lit box",
+      "mirrorX":1,
+      "mirrorY":1,
+      "vertices":[-125,-125,125,-125,125,125,-125,125],
+      "dims":{
+        "height":250,
+        "width":250
+      },
+      "fixtures":[{
+          "sensor":true,
+          "points":[125,-125,125,125,-125,125,-125,-125],
+          "userData":{
+            "subtype":"texfixture",
+            "extra":{
+              "plasticineLightZ":0.35,
+              "plasticineLightGain":0.5,
+              "vertexCount":4,
+              "OMP":true,
+              "dirty":true,
+              "plasticine":true,
+              "plasticineFormBaked":true,
+              "main":{
+                "pURL":"type0.png",
+                "fgURL":"mipo/body/body-01-mask.png",
+                "bgHex":"000000ff",
+                "fgHex":"b8a48cff",
+                "bgURL":"mipo/body/body-01.png",
+                "pHex":"a08c74ff"
               },
-              "vertexCount": 4,
-              "OMP": true,
-              "dirty": true,
-              "plasticine": true,
-              "plasticineLightGain": 0.5,
-              "plasticineLightZ": 0.35,
-              "plasticineFormRadius": 0.35,
-              "plasticineFormBaked": true,
-              "plasticineFormRise": 1,
-              "vertices": [
-                -150,
-                -150,
-                150,
-                -150,
-                150,
-                150,
-                -150,
-                150
-              ]
-            }
+              "vertices":[-125,-125,125,-125,125,125,-125,125],
+              "plasticineFormRadius":0.35,
+              "plasticineFormRise":1
+            },
+            "type":"sfixture",
+            "id":"2MgeMW",
+            "label":""
           }
-        },
-        {
-          "points": [
-            -150,
-            -150,
-            150,
-            -150,
-            150,
-            150,
-            -150,
-            150
-          ]
-        }
-      ],
-      "dims": {
-        "width": 300,
-        "height": 300
+        },{
+          "points":[125,-125,125,125,-125,125,-125,-125]
+        }],
+      "shapeType":"rectangle",
+      "bodyType":"static",
+      "id":"1aJq6c",
+      "position":[-1350,305],
+      "angle":0,
+      "linearVelocity":[0,0],
+      "angularVelocity":0,
+      "fixedRotation":false,
+      "linearDamping":0,
+      "angularDamping":0
+    },{
+      "sharedFixtureData":{
+        "sensor":false,
+        "density":1,
+        "shapeType":"polygon",
+        "friction":0.2,
+        "restitution":0.3,
+        "groupIndex":0
       },
-      "sharedFixtureData": {
-        "friction": 0.2,
-        "restitution": 0.3,
-        "groupIndex": 0,
-        "sensor": false,
-        "shapeType": "polygon",
-        "density": 1
+      "label":"lit box",
+      "mirrorX":1,
+      "mirrorY":1,
+      "vertices":[-150,-150,150,-150,150,150,-150,150],
+      "dims":{
+        "height":300,
+        "width":300
       },
-      "position": [
-        300,
-        280
-      ],
-      "angle": 0,
-      "linearVelocity": [
-        0,
-        0
-      ],
-      "angularVelocity": 0,
-      "fixedRotation": false,
-      "linearDamping": 0,
-      "angularDamping": 0,
-      "id": "3izjAz",
-      "mirrorX": 1
-    },
-    {
-      "label": "lit box",
-      "bodyType": "static",
-      "mirrorY": 1,
-      "vertices": [
-        -125,
-        -125,
-        125,
-        -125,
-        125,
-        125,
-        -125,
-        125
-      ],
-      "shapeType": "rectangle",
-      "fixtures": [
-        {
-          "points": [
-            125,
-            -125,
-            125,
-            125,
-            -125,
-            125,
-            -125,
-            -125
-          ],
-          "sensor": true,
-          "userData": {
-            "subtype": "texfixture",
-            "label": "",
-            "type": "sfixture",
-            "id": "1llrnW",
-            "extra": {
-              "main": {
-                "pHex": "8484b8ff",
-                "fgURL": "mipo/body/body-09-mask.png",
-                "pURL": "type6.png",
-                "bgHex": "000000ff",
-                "bgURL": "mipo/body/body-09.png",
-                "fgHex": "a8a8d8ff"
+      "fixtures":[{
+          "sensor":true,
+          "points":[150,-150,150,150,-150,150,-150,-150],
+          "userData":{
+            "subtype":"texfixture",
+            "extra":{
+              "plasticineLightZ":0.35,
+              "plasticineLightGain":0.5,
+              "vertexCount":4,
+              "OMP":true,
+              "dirty":true,
+              "plasticine":true,
+              "plasticineFormBaked":true,
+              "main":{
+                "pURL":"type1.png",
+                "fgURL":"mipo/body/body-03-mask.png",
+                "bgHex":"000000ff",
+                "fgHex":"e0a090ff",
+                "bgURL":"mipo/body/body-03.png",
+                "pHex":"c07868ff"
               },
-              "vertexCount": 4,
-              "OMP": true,
-              "dirty": true,
-              "plasticine": true,
-              "plasticineLightGain": 0.5,
-              "plasticineLightZ": 0.35,
-              "plasticineFormRadius": 0.35,
-              "plasticineFormBaked": true,
-              "plasticineFormRise": 1,
-              "vertices": [
-                -125,
-                -125,
-                125,
-                -125,
-                125,
-                125,
-                -125,
-                125
-              ]
-            }
+              "vertices":[-150,-150,150,-150,150,150,-150,150],
+              "plasticineFormRadius":0.35,
+              "plasticineFormRise":1
+            },
+            "type":"sfixture",
+            "id":"3ifZVp",
+            "label":""
           }
-        },
-        {
-          "points": [
-            -125,
-            -125,
-            125,
-            -125,
-            125,
-            125,
-            -125,
-            125
-          ]
-        }
-      ],
-      "dims": {
-        "width": 250,
-        "height": 250
+        },{
+          "points":[150,-150,150,150,-150,150,-150,-150]
+        }],
+      "shapeType":"rectangle",
+      "bodyType":"static",
+      "id":"3eQQEu",
+      "position":[-1020,280],
+      "angle":0,
+      "linearVelocity":[0,0],
+      "angularVelocity":0,
+      "fixedRotation":false,
+      "linearDamping":0,
+      "angularDamping":0
+    },{
+      "sharedFixtureData":{
+        "sensor":false,
+        "density":1,
+        "shapeType":"polygon",
+        "friction":0.2,
+        "restitution":0.3,
+        "groupIndex":0
       },
-      "sharedFixtureData": {
-        "friction": 0.2,
-        "restitution": 0.3,
-        "groupIndex": 0,
-        "sensor": false,
-        "shapeType": "polygon",
-        "density": 1
+      "label":"lit box",
+      "mirrorX":1,
+      "mirrorY":1,
+      "vertices":[-125,-125,125,-125,125,125,-125,125],
+      "dims":{
+        "height":250,
+        "width":250
       },
-      "position": [
-        -30,
-        305
-      ],
-      "angle": 0,
-      "linearVelocity": [
-        0,
-        0
-      ],
-      "angularVelocity": 0,
-      "fixedRotation": false,
-      "linearDamping": 0,
-      "angularDamping": 0,
-      "id": "3cqAPn",
-      "mirrorX": 1
-    },
-    {
-      "label": "lit box",
-      "bodyType": "static",
-      "mirrorY": 1,
-      "vertices": [
-        -150,
-        -150,
-        150,
-        -150,
-        150,
-        150,
-        -150,
-        150
-      ],
-      "shapeType": "rectangle",
-      "fixtures": [
-        {
-          "points": [
-            150,
-            -150,
-            150,
-            150,
-            -150,
-            150,
-            -150,
-            -150
-          ],
-          "sensor": true,
-          "userData": {
-            "subtype": "texfixture",
-            "label": "",
-            "type": "sfixture",
-            "id": "327WDP",
-            "extra": {
-              "main": {
-                "pHex": "b89c48ff",
-                "fgURL": "mipo/body/body-07-mask.png",
-                "pURL": "type3_.png",
-                "bgHex": "000000ff",
-                "bgURL": "mipo/body/body-07.png",
-                "fgHex": "d8c070ff"
+      "fixtures":[{
+          "sensor":true,
+          "points":[125,-125,125,125,-125,125,-125,-125],
+          "userData":{
+            "subtype":"texfixture",
+            "extra":{
+              "plasticineLightZ":0.35,
+              "plasticineLightGain":0.5,
+              "vertexCount":4,
+              "OMP":true,
+              "dirty":true,
+              "plasticine":true,
+              "plasticineFormBaked":true,
+              "main":{
+                "pURL":"type2t.png",
+                "fgURL":"mipo/body/body-05-mask.png",
+                "bgHex":"000000ff",
+                "fgHex":"9cc0a0ff",
+                "bgURL":"mipo/body/body-05.png",
+                "pHex":"78a07cff"
               },
-              "vertexCount": 4,
-              "OMP": true,
-              "dirty": true,
-              "plasticine": true,
-              "plasticineLightGain": 0.5,
-              "plasticineLightZ": 0.35,
-              "plasticineFormRadius": 0.35,
-              "plasticineFormBaked": true,
-              "plasticineFormRise": 1,
-              "vertices": [
-                -150,
-                -150,
-                150,
-                -150,
-                150,
-                150,
-                -150,
-                150
-              ]
-            }
+              "vertices":[-125,-125,125,-125,125,125,-125,125],
+              "plasticineFormRadius":0.35,
+              "plasticineFormRise":1
+            },
+            "type":"sfixture",
+            "id":"M4POt",
+            "label":""
           }
-        },
-        {
-          "points": [
-            -150,
-            -150,
-            150,
-            -150,
-            150,
-            150,
-            -150,
-            150
-          ]
-        }
-      ],
-      "dims": {
-        "width": 300,
-        "height": 300
+        },{
+          "points":[125,-125,125,125,-125,125,-125,-125]
+        }],
+      "shapeType":"rectangle",
+      "bodyType":"static",
+      "id":"2YMtF2",
+      "position":[-690,305],
+      "angle":0,
+      "linearVelocity":[0,0],
+      "angularVelocity":0,
+      "fixedRotation":false,
+      "linearDamping":0,
+      "angularDamping":0
+    },{
+      "sharedFixtureData":{
+        "sensor":false,
+        "density":1,
+        "shapeType":"polygon",
+        "friction":0.2,
+        "restitution":0.3,
+        "groupIndex":0
       },
-      "sharedFixtureData": {
-        "friction": 0.2,
-        "restitution": 0.3,
-        "groupIndex": 0,
-        "sensor": false,
-        "shapeType": "polygon",
-        "density": 1
+      "label":"lit box",
+      "mirrorX":1,
+      "mirrorY":1,
+      "vertices":[-150,-150,150,-150,150,150,-150,150],
+      "dims":{
+        "height":300,
+        "width":300
       },
-      "position": [
-        -360,
-        280
-      ],
-      "angle": 0,
-      "linearVelocity": [
-        0,
-        0
-      ],
-      "angularVelocity": 0,
-      "fixedRotation": false,
-      "linearDamping": 0,
-      "angularDamping": 0,
-      "id": "31kDbB",
-      "mirrorX": 1
-    },
-    {
-      "label": "lit box",
-      "bodyType": "static",
-      "mirrorY": 1,
-      "vertices": [
-        -125,
-        -125,
-        125,
-        -125,
-        125,
-        125,
-        -125,
-        125
-      ],
-      "shapeType": "rectangle",
-      "fixtures": [
-        {
-          "points": [
-            125,
-            -125,
-            125,
-            125,
-            -125,
-            125,
-            -125,
-            -125
-          ],
-          "sensor": true,
-          "userData": {
-            "subtype": "texfixture",
-            "label": "",
-            "type": "sfixture",
-            "id": "M4POt",
-            "extra": {
-              "main": {
-                "pHex": "78a07cff",
-                "fgURL": "mipo/body/body-05-mask.png",
-                "pURL": "type2t.png",
-                "bgHex": "000000ff",
-                "bgURL": "mipo/body/body-05.png",
-                "fgHex": "9cc0a0ff"
+      "fixtures":[{
+          "sensor":true,
+          "points":[150,-150,150,150,-150,150,-150,-150],
+          "userData":{
+            "subtype":"texfixture",
+            "extra":{
+              "plasticineLightZ":0.35,
+              "plasticineLightGain":0.5,
+              "vertexCount":4,
+              "OMP":true,
+              "dirty":true,
+              "plasticine":true,
+              "plasticineFormBaked":true,
+              "main":{
+                "pURL":"type3_.png",
+                "fgURL":"mipo/body/body-07-mask.png",
+                "bgHex":"000000ff",
+                "fgHex":"d8c070ff",
+                "bgURL":"mipo/body/body-07.png",
+                "pHex":"b89c48ff"
               },
-              "vertexCount": 4,
-              "OMP": true,
-              "dirty": true,
-              "plasticine": true,
-              "plasticineLightGain": 0.5,
-              "plasticineLightZ": 0.35,
-              "plasticineFormRadius": 0.35,
-              "plasticineFormBaked": true,
-              "plasticineFormRise": 1,
-              "vertices": [
-                -125,
-                -125,
-                125,
-                -125,
-                125,
-                125,
-                -125,
-                125
-              ]
-            }
+              "vertices":[-150,-150,150,-150,150,150,-150,150],
+              "plasticineFormRadius":0.35,
+              "plasticineFormRise":1
+            },
+            "type":"sfixture",
+            "id":"327WDP",
+            "label":""
           }
-        },
-        {
-          "points": [
-            -125,
-            -125,
-            125,
-            -125,
-            125,
-            125,
-            -125,
-            125
-          ]
-        }
-      ],
-      "dims": {
-        "width": 250,
-        "height": 250
+        },{
+          "points":[150,-150,150,150,-150,150,-150,-150]
+        }],
+      "shapeType":"rectangle",
+      "bodyType":"static",
+      "id":"31kDbB",
+      "position":[-360,280],
+      "angle":0,
+      "linearVelocity":[0,0],
+      "angularVelocity":0,
+      "fixedRotation":false,
+      "linearDamping":0,
+      "angularDamping":0
+    },{
+      "sharedFixtureData":{
+        "sensor":false,
+        "density":1,
+        "shapeType":"polygon",
+        "friction":0.2,
+        "restitution":0.3,
+        "groupIndex":0
       },
-      "sharedFixtureData": {
-        "friction": 0.2,
-        "restitution": 0.3,
-        "groupIndex": 0,
-        "sensor": false,
-        "shapeType": "polygon",
-        "density": 1
+      "label":"lit box",
+      "mirrorX":1,
+      "mirrorY":1,
+      "vertices":[-125,-125,125,-125,125,125,-125,125],
+      "dims":{
+        "height":250,
+        "width":250
       },
-      "position": [
-        -690,
-        305
-      ],
-      "angle": 0,
-      "linearVelocity": [
-        0,
-        0
-      ],
-      "angularVelocity": 0,
-      "fixedRotation": false,
-      "linearDamping": 0,
-      "angularDamping": 0,
-      "id": "2YMtF2",
-      "mirrorX": 1
-    },
-    {
-      "label": "lit box",
-      "bodyType": "static",
-      "mirrorY": 1,
-      "vertices": [
-        -150,
-        -150,
-        150,
-        -150,
-        150,
-        150,
-        -150,
-        150
-      ],
-      "shapeType": "rectangle",
-      "fixtures": [
-        {
-          "points": [
-            150,
-            -150,
-            150,
-            150,
-            -150,
-            150,
-            -150,
-            -150
-          ],
-          "sensor": true,
-          "userData": {
-            "subtype": "texfixture",
-            "label": "",
-            "type": "sfixture",
-            "id": "3ifZVp",
-            "extra": {
-              "main": {
-                "pHex": "c07868ff",
-                "fgURL": "mipo/body/body-03-mask.png",
-                "pURL": "type1.png",
-                "bgHex": "000000ff",
-                "bgURL": "mipo/body/body-03.png",
-                "fgHex": "e0a090ff"
+      "fixtures":[{
+          "sensor":true,
+          "points":[125,-125,125,125,-125,125,-125,-125],
+          "userData":{
+            "subtype":"texfixture",
+            "extra":{
+              "plasticineLightZ":0.35,
+              "plasticineLightGain":0.5,
+              "vertexCount":4,
+              "OMP":true,
+              "dirty":true,
+              "plasticine":true,
+              "plasticineFormBaked":true,
+              "main":{
+                "pURL":"type6.png",
+                "fgURL":"mipo/body/body-09-mask.png",
+                "bgHex":"000000ff",
+                "fgHex":"a8a8d8ff",
+                "bgURL":"mipo/body/body-09.png",
+                "pHex":"8484b8ff"
               },
-              "vertexCount": 4,
-              "OMP": true,
-              "dirty": true,
-              "plasticine": true,
-              "plasticineLightGain": 0.5,
-              "plasticineLightZ": 0.35,
-              "plasticineFormRadius": 0.35,
-              "plasticineFormBaked": true,
-              "plasticineFormRise": 1,
-              "vertices": [
-                -150,
-                -150,
-                150,
-                -150,
-                150,
-                150,
-                -150,
-                150
-              ]
-            }
+              "vertices":[-125,-125,125,-125,125,125,-125,125],
+              "plasticineFormRadius":0.35,
+              "plasticineFormRise":1
+            },
+            "type":"sfixture",
+            "id":"1llrnW",
+            "label":""
           }
-        },
-        {
-          "points": [
-            -150,
-            -150,
-            150,
-            -150,
-            150,
-            150,
-            -150,
-            150
-          ]
-        }
-      ],
-      "dims": {
-        "width": 300,
-        "height": 300
+        },{
+          "points":[125,-125,125,125,-125,125,-125,-125]
+        }],
+      "shapeType":"rectangle",
+      "bodyType":"static",
+      "id":"3cqAPn",
+      "position":[-30,305],
+      "angle":0,
+      "linearVelocity":[0,0],
+      "angularVelocity":0,
+      "fixedRotation":false,
+      "linearDamping":0,
+      "angularDamping":0
+    },{
+      "sharedFixtureData":{
+        "sensor":false,
+        "density":1,
+        "shapeType":"polygon",
+        "friction":0.2,
+        "restitution":0.3,
+        "groupIndex":0
       },
-      "sharedFixtureData": {
-        "friction": 0.2,
-        "restitution": 0.3,
-        "groupIndex": 0,
-        "sensor": false,
-        "shapeType": "polygon",
-        "density": 1
+      "label":"lit box",
+      "mirrorX":1,
+      "mirrorY":1,
+      "vertices":[-150,-150,150,-150,150,150,-150,150],
+      "dims":{
+        "height":300,
+        "width":300
       },
-      "position": [
-        -1020,
-        280
-      ],
-      "angle": 0,
-      "linearVelocity": [
-        0,
-        0
-      ],
-      "angularVelocity": 0,
-      "fixedRotation": false,
-      "linearDamping": 0,
-      "angularDamping": 0,
-      "id": "3eQQEu",
-      "mirrorX": 1
-    },
-    {
-      "label": "lit box",
-      "bodyType": "static",
-      "mirrorY": 1,
-      "vertices": [
-        -125,
-        -125,
-        125,
-        -125,
-        125,
-        125,
-        -125,
-        125
-      ],
-      "shapeType": "rectangle",
-      "fixtures": [
-        {
-          "points": [
-            125,
-            -125,
-            125,
-            125,
-            -125,
-            125,
-            -125,
-            -125
-          ],
-          "sensor": true,
-          "userData": {
-            "subtype": "texfixture",
-            "label": "",
-            "type": "sfixture",
-            "id": "2MgeMW",
-            "extra": {
-              "main": {
-                "pHex": "a08c74ff",
-                "fgURL": "mipo/body/body-01-mask.png",
-                "pURL": "type0.png",
-                "bgHex": "000000ff",
-                "bgURL": "mipo/body/body-01.png",
-                "fgHex": "b8a48cff"
+      "fixtures":[{
+          "sensor":true,
+          "points":[150,-150,150,150,-150,150,-150,-150],
+          "userData":{
+            "subtype":"texfixture",
+            "extra":{
+              "plasticineLightZ":0.35,
+              "plasticineLightGain":0.5,
+              "vertexCount":4,
+              "OMP":true,
+              "dirty":true,
+              "plasticine":true,
+              "plasticineFormBaked":true,
+              "main":{
+                "pURL":"type0.png",
+                "fgURL":"mipo/body/body-04-mask.png",
+                "bgHex":"000000ff",
+                "fgHex":"c8b8a0ff",
+                "bgURL":"mipo/body/body-04.png",
+                "pHex":"a89880ff"
               },
-              "vertexCount": 4,
-              "OMP": true,
-              "dirty": true,
-              "plasticine": true,
-              "plasticineLightGain": 0.5,
-              "plasticineLightZ": 0.35,
-              "plasticineFormRadius": 0.35,
-              "plasticineFormBaked": true,
-              "plasticineFormRise": 1,
-              "vertices": [
-                -125,
-                -125,
-                125,
-                -125,
-                125,
-                125,
-                -125,
-                125
-              ]
-            }
+              "vertices":[-150,-150,150,-150,150,150,-150,150],
+              "plasticineFormRadius":0.35,
+              "plasticineFormRise":1
+            },
+            "type":"sfixture",
+            "id":"3p8UJH",
+            "label":""
           }
-        },
-        {
-          "points": [
-            -125,
-            -125,
-            125,
-            -125,
-            125,
-            125,
-            -125,
-            125
-          ]
-        }
-      ],
-      "dims": {
-        "width": 250,
-        "height": 250
+        },{
+          "points":[150,-150,150,150,-150,150,-150,-150]
+        }],
+      "shapeType":"rectangle",
+      "bodyType":"static",
+      "id":"3izjAz",
+      "position":[300,280],
+      "angle":0,
+      "linearVelocity":[0,0],
+      "angularVelocity":0,
+      "fixedRotation":false,
+      "linearDamping":0,
+      "angularDamping":0
+    },{
+      "sharedFixtureData":{
+        "sensor":false,
+        "density":1,
+        "shapeType":"polygon",
+        "friction":0.2,
+        "restitution":0.3,
+        "groupIndex":0
       },
-      "sharedFixtureData": {
-        "friction": 0.2,
-        "restitution": 0.3,
-        "groupIndex": 0,
-        "sensor": false,
-        "shapeType": "polygon",
-        "density": 1
+      "label":"still grassy ground",
+      "mirrorX":1,
+      "mirrorY":1,
+      "vertices":[-2100,-80,2100,-80,2100,80,-2100,80],
+      "dims":{
+        "height":160,
+        "width":4200
       },
-      "position": [
-        -1350,
-        305
-      ],
-      "angle": 0,
-      "linearVelocity": [
-        0,
-        0
-      ],
-      "angularVelocity": 0,
-      "fixedRotation": false,
-      "linearDamping": 0,
-      "angularDamping": 0,
-      "id": "1aJq6c",
-      "mirrorX": 1
-    },
-    {
-      "label": "turning lamp",
-      "bodyType": "kinematic",
-      "mirrorY": 1,
-      "vertices": [
-        -35,
-        -35,
-        35,
-        -35,
-        35,
-        35,
-        -35,
-        35
-      ],
-      "shapeType": "rectangle",
-      "fixtures": [
-        {
-          "points": [
-            5,
-            -5,
-            5,
-            5,
-            -5,
-            5,
-            -5,
-            -5
-          ],
-          "sensor": true,
-          "userData": {
-            "subtype": "light",
-            "label": "",
-            "type": "sfixture",
-            "id": "42g9Lb",
-            "extra": {
-              "lightType": "directional",
-              "colorHex": "fff2d9ff",
-              "range": 5000,
-              "intensity": 0
-            }
+      "fixtures":[{
+          "sensor":true,
+          "points":[10,-10,10,10,-10,10,-10,-10],
+          "userData":{
+            "subtype":"grass",
+            "extra":{
+              "density":8,
+              "seed":0,
+              "width":1,
+              "heightVariation":0.5,
+              "frontShare":0.25,
+              "maxSlope":50,
+              "sway":1,
+              "colorBack":"2a5b3eff",
+              "colorFront":"86a542ff",
+              "zGroupOffset":0,
+              "height":90,
+              "zOffset":0
+            },
+            "type":"sfixture",
+            "id":"2ix8EQ",
+            "label":""
           }
-        },
-        {
-          "points": [
-            -35,
-            -35,
-            35,
-            -35,
-            35,
-            35,
-            -35,
-            35
-          ]
-        }
-      ],
-      "dims": {
-        "width": 70,
-        "height": 70
+        },{
+          "points":[2100,-80,2100,80,-2100,80,-2100,-80]
+        }],
+      "shapeType":"rectangle",
+      "bodyType":"static",
+      "id":"2C4xeB",
+      "position":[0,530],
+      "angle":0,
+      "linearVelocity":[0,0],
+      "angularVelocity":0,
+      "fixedRotation":false,
+      "linearDamping":0,
+      "angularDamping":0
+    },{
+      "sharedFixtureData":{
+        "sensor":false,
+        "density":1,
+        "shapeType":"polygon",
+        "friction":0.2,
+        "restitution":0.3,
+        "groupIndex":0
       },
-      "sharedFixtureData": {
-        "friction": 0.2,
-        "restitution": 0.3,
-        "groupIndex": 0,
-        "sensor": false,
-        "shapeType": "polygon",
-        "density": 1
+      "label":"spinning turf",
+      "mirrorX":1,
+      "mirrorY":1,
+      "vertices":[-180,-100,180,-100,180,100,-180,100],
+      "dims":{
+        "height":200,
+        "width":360
       },
-      "position": [
-        -300,
-        -450
-      ],
-      "angle": 0,
-      "linearVelocity": [
-        0,
-        0
-      ],
-      "angularVelocity": 0.5,
-      "fixedRotation": false,
-      "linearDamping": 0,
-      "angularDamping": 0,
-      "id": "2V7Sp4",
-      "mirrorX": 1
-    },
-    {
-      "label": "cool lamp",
-      "bodyType": "dynamic",
-      "mirrorY": 1,
-      "vertices": [
-        -35,
-        -35,
-        35,
-        -35,
-        35,
-        35,
-        -35,
-        35
-      ],
-      "shapeType": "rectangle",
-      "fixtures": [
-        {
-          "points": [
-            5,
-            -5,
-            5,
-            5,
-            -5,
-            5,
-            -5,
-            -5
-          ],
-          "sensor": true,
-          "userData": {
-            "subtype": "light",
-            "label": "",
-            "type": "sfixture",
-            "id": "CYvHT",
-            "extra": {
-              "lightType": "point",
-              "colorHex": "80a8ffff",
-              "range": 700,
-              "intensity": 0
-            }
+      "fixtures":[{
+          "sensor":true,
+          "points":[10,-10,10,10,-10,10,-10,-10],
+          "userData":{
+            "subtype":"grass",
+            "extra":{
+              "density":8,
+              "seed":0,
+              "width":1,
+              "heightVariation":0.5,
+              "frontShare":0.25,
+              "maxSlope":50,
+              "sway":1,
+              "colorBack":"2a5b3eff",
+              "colorFront":"86a542ff",
+              "zGroupOffset":0,
+              "height":90,
+              "zOffset":0
+            },
+            "type":"sfixture",
+            "id":"1OT4tL",
+            "label":""
           }
-        },
-        {
-          "points": [
-            -35,
-            -35,
-            35,
-            -35,
-            35,
-            35,
-            -35,
-            35
-          ]
-        }
-      ],
-      "dims": {
-        "width": 70,
-        "height": 70
-      },
-      "sharedFixtureData": {
-        "friction": 0.2,
-        "restitution": 0.3,
-        "groupIndex": 0,
-        "sensor": false,
-        "shapeType": "polygon",
-        "density": 1
-      },
-      "position": [
-        150,
-        -120
-      ],
-      "angle": 0,
-      "linearVelocity": [
-        0,
-        0
-      ],
-      "angularVelocity": 0,
-      "fixedRotation": false,
-      "linearDamping": 0,
-      "angularDamping": 0,
-      "id": "3MUbLE",
-      "mirrorX": 1
-    },
-    {
-      "label": "warm lamp",
-      "bodyType": "dynamic",
-      "mirrorY": 1,
-      "vertices": [
-        -35,
-        -35,
-        35,
-        -35,
-        35,
-        35,
-        -35,
-        35
-      ],
-      "shapeType": "rectangle",
-      "fixtures": [
-        {
-          "points": [
-            5,
-            -5,
-            5,
-            5,
-            -5,
-            5,
-            -5,
-            -5
-          ],
-          "sensor": true,
-          "userData": {
-            "subtype": "light",
-            "label": "",
-            "type": "sfixture",
-            "id": "e8J4b",
-            "extra": {
-              "lightType": "point",
-              "colorHex": "ffb060ff",
-              "range": 700,
-              "intensity": 0
-            }
-          }
-        },
-        {
-          "points": [
-            -35,
-            -35,
-            35,
-            -35,
-            35,
-            35,
-            -35,
-            35
-          ]
-        }
-      ],
-      "dims": {
-        "width": 70,
-        "height": 70
-      },
-      "sharedFixtureData": {
-        "friction": 0.2,
-        "restitution": 0.3,
-        "groupIndex": 0,
-        "sensor": false,
-        "shapeType": "polygon",
-        "density": 1
-      },
-      "position": [
-        -700,
-        -120
-      ],
-      "angle": 0,
-      "linearVelocity": [
-        0,
-        0
-      ],
-      "angularVelocity": 0,
-      "fixedRotation": false,
-      "linearDamping": 0,
-      "angularDamping": 0,
-      "id": "4dvezX",
-      "mirrorX": 1
-    },
-    {
-      "label": "sun",
-      "bodyType": "static",
-      "mirrorY": 1,
-      "vertices": [
-        -35,
-        -35,
-        35,
-        -35,
-        35,
-        35,
-        -35,
-        35
-      ],
-      "shapeType": "rectangle",
-      "fixtures": [
-        {
-          "points": [
-            5,
-            -5,
-            5,
-            5,
-            -5,
-            5,
-            -5,
-            -5
-          ],
-          "sensor": true,
-          "userData": {
-            "subtype": "light",
-            "label": "",
-            "type": "sfixture",
-            "id": "4mPOxS",
-            "extra": {
-              "lightType": "directional",
-              "colorHex": "fff2d9ff",
-              "range": 0,
-              "intensity": 1
-            }
-          }
-        },
-        {
-          "points": [
-            -35,
-            -35,
-            35,
-            -35,
-            35,
-            35,
-            -35,
-            35
-          ]
-        }
-      ],
-      "dims": {
-        "width": 70,
-        "height": 70
-      },
-      "sharedFixtureData": {
-        "friction": 0.2,
-        "restitution": 0.3,
-        "groupIndex": 0,
-        "sensor": false,
-        "shapeType": "polygon",
-        "density": 1
-      },
-      "position": [
-        -1250,
-        -650
-      ],
-      "angle": 0,
-      "linearVelocity": [
-        0,
-        0
-      ],
-      "angularVelocity": 0,
-      "fixedRotation": false,
-      "linearDamping": 0,
-      "angularDamping": 0,
-      "id": "CUVzT",
-      "mirrorX": 1
-    }
-  ],
-  "camera": {
-    "x": -150,
-    "y": 0,
-    "scale": 0.36,
-    "rotation": 0
+        },{
+          "points":[180,-100,180,100,-180,100,-180,-100]
+        }],
+      "shapeType":"rectangle",
+      "bodyType":"kinematic",
+      "id":"2U70gI",
+      "position":[1000,-200],
+      "angle":0,
+      "linearVelocity":[0,0],
+      "angularVelocity":0.8,
+      "fixedRotation":false,
+      "linearDamping":0,
+      "angularDamping":0
+    }],
+  "backdrops":[],
+  "camera":{
+    "y":0,
+    "rotation":0,
+    "scale":0.36,
+    "x":-150
   },
-  "characters": [],
-  "joints": []
+  "characters":[],
+  "joints":[],
+  "version":"1.0"
 }
