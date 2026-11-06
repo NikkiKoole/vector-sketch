@@ -329,23 +329,56 @@ local TRY_ORDER = { 'a', 'g', 'z', 'f', 'b', 'n' }
 -- o: the shapes' settings liked so far (and everything on, smooth clay wall, the cycle from 9:00)
 local OPTIMAL_SHAPES = { a = true, g = 0.5, z = 0.35, f = 0.35, b = true, n = 1 }
 
+-- The lookups below are kept (LS12: the script's update was 17.7 ms a frame on the phone, most of it
+-- finding the same lights and parts again, every physics step): found once, looked for again only when a
+-- body they were on is gone, the number of bodies changes (a Mipo added or rebuilt), or once a second
+-- (a part's picture remade on the same body).
+local found = { lights = {}, frames = 0 }
+local function stillThere(list)
+    for _, body in ipairs(list) do
+        if body:isDestroyed() then return false end
+    end
+    return true
+end
+local function freshen()
+    found.frames = found.frames + 1
+    local count = world:getBodyCount()
+    if count ~= found.bodyCount or found.frames > 60 then
+        found.lights, found.shapes, found.parts, found.bodyCount, found.frames = {}, nil, nil, count, 0
+    end
+end
+
 local function lightOf(label)
+    local hit = found.lights[label]
+    if hit and (hit == false or not hit[1]:isDestroyed()) then
+        if hit == false then return nil end
+        return hit[1], hit[2]
+    end
+    found.lights[label] = false
     for _, thing in ipairs(getObjectsByLabel(label)) do
         for _, fixture in ipairs(thing.body:getFixtures()) do
             local ud = fixture:getUserData()
-            if ud and ud.subtype == 'light' then return thing.body, ud.extra end
+            if ud and ud.subtype == 'light' then
+                found.lights[label] = { thing.body, ud.extra }
+                return thing.body, ud.extra
+            end
         end
     end
 end
 
 local function shapeExtras()
-    local list = {}
+    if found.shapes and stillThere(found.shapes.bodies) then return found.shapes.list end
+    local list, bodies = {}, {}
     for _, thing in ipairs(getObjectsByLabel('lit box')) do
         for _, fixture in ipairs(thing.body:getFixtures()) do
             local ud = fixture:getUserData()
-            if ud and ud.subtype == 'texfixture' then list[#list + 1] = ud.extra end
+            if ud and ud.subtype == 'texfixture' then
+                list[#list + 1] = ud.extra
+                bodies[#bodies + 1] = thing.body
+            end
         end
     end
+    found.shapes = { list = list, bodies = bodies }
     return list
 end
 
@@ -353,16 +386,19 @@ end
 -- decals: a face stays as drawn)
 local LIT_PARTS = { texfixture = true, ['connected-texture'] = true, ['trace-vertices'] = true }
 local function mipoExtras()
-    local list = {}
+    if found.parts and stillThere(found.parts.bodies) then return found.parts.list end
+    local list, bodies = {}, {}
     for _, body in ipairs(world:getBodies()) do
         local thing = body:getUserData() and body:getUserData().thing
         if thing and thing.mipoId then
+            bodies[#bodies + 1] = body
             for _, fixture in ipairs(body:getFixtures()) do
                 local ud = fixture:getUserData()
                 if ud and LIT_PARTS[ud.subtype] and ud.extra and ud.extra.main then list[#list + 1] = ud.extra end
             end
         end
     end
+    found.parts = { list = list, bodies = bodies }
     return list
 end
 
@@ -586,6 +622,7 @@ local function solidArea()
 end
 
 -- everything at the clock's hour (or only the turning lamp)
+local BACK_FULL = 0.5 -- the sun and moon (added up) this share of the hour's strongest: the back light full
 local function applyTime()
     local c = look()
     if c.lampOnly then
@@ -608,9 +645,21 @@ local function applyTime()
     setLight('sky light', L.skyLight[1] .. 'ff', c.skyOff and 0 or L.skyLight[3])
     local _, skyExtra = lightOf('sky light')
     if skyExtra then skyExtra.groundHex = L.skyLight[2] .. 'ff' end
-    -- the back light comes from wherever the sun or the moon is (the stronger)
-    local backAngle = (L.sun[2] * sunUp >= L.moon[2] * moonUp) and sa or ma
-    setLight('back light', L.back[1] .. 'ff', c.backOff and 0 or L.back[2], nil, nil, backAngle)
+    -- The back light and the wall's relief come from the sun and the moon together, each by how strong
+    -- it is: the way they shine added up. Taking the stronger flipped them from one side to the other in a
+    -- frame at the handover (Nikki saw a jump around 18:00). Just after sunset the sun has gone and the
+    -- moon is still faint: the way they shine swings round while there's hardly any of it, so the back
+    -- light fades with how much there is (full from BACK_FULL of the hour's strongest sun or moon up), out
+    -- and in again through the handover, over half an hour or so of the clock.
+    local sunI, moonI = L.sun[2] * sunUp, L.moon[2] * moonUp
+    local vx = math.cos(sa) * sunI + math.cos(ma) * moonI
+    local vy = math.sin(sa) * sunI + math.sin(ma) * moonI
+    local strength = math.sqrt(vx * vx + vy * vy)
+    local peak = math.max(L.sun[2], L.moon[2], 0.01)
+    local there = math.min(1, strength / (BACK_FULL * peak))
+    there = there * there * (3 - 2 * there)
+    c.skyAngle, c.skyStrength = math.atan2(vy, vx), strength
+    setLight('back light', L.back[1] .. 'ff', c.backOff and 0 or L.back[2] * there, nil, nil, c.skyAngle)
 end
 
 function s.onStart()
@@ -655,11 +704,13 @@ local CLAY_OFF = { plasticineStrength = 0, plasticineBump = 0, plasticineSpecStr
 -- the Mipos lit like the shapes (a Mipo rebuilt from its DNA has new parts: set every frame)
 local function lightMipos()
     local on, clay = not look().mipoLightOff, not look().mipoClayOff
+    -- the shapes' settings once, not once per part
+    local values = {}
+    for _, k in ipairs(TRY_ORDER) do values[k] = on and current(TRIES[k]) or nil end
     for _, extra in ipairs(mipoExtras()) do
         extra.plasticine = on or nil
         for _, k in ipairs(TRY_ORDER) do
-            local try = TRIES[k]
-            if on then extra[try.key] = current(try) else extra[try.key] = nil end
+            extra[TRIES[k].key] = values[k]
         end
         for key, v in pairs(CLAY_OFF) do
             if on and not clay then extra[key] = v else extra[key] = nil end
@@ -667,10 +718,21 @@ local function lightMipos()
     end
 end
 
+-- The clock runs with the physics steps (s.update); the lights, the Mipos' parts and the shadows are set
+-- once a frame, before anything is drawn (from drawBelow): a frame has ~2 physics steps on the phone.
 function s.update(dt)
     local c = look()
     local daySeconds = DAY_SPEEDS[c.daySpeed or 1] or DAY_SECONDS
     if c.cycle and not c.lampOnly then c.hour = (c.hour + (dt or 0) * 24 / daySeconds) % 24 end
+    c.time = c.time + (dt or 0)
+    if c.time >= 1 then
+        c.perSecond, c.made, c.time = c.made, 0, c.time - 1
+    end
+end
+
+local function everyFrame()
+    local c = look()
+    freshen()
     applyTime()
     lightMipos()
     local L = c.now or LAMP_ONLY
@@ -684,10 +746,6 @@ function s.update(dt)
     state.drawSplits = c.solid and GROUND_SPLITS or nil
     state.projectedShadows = #lights > 0 and { area = solidArea, floorY = FLOOR_Y, depth = SOLID_DEPTH,
         lights = lights } or nil
-    c.time = c.time + (dt or 0)
-    if c.time >= 1 then
-        c.perSecond, c.made, c.time = c.made, 0, c.time - 1
-    end
 end
 
 function s.onKeyPress(key)
@@ -757,6 +815,11 @@ end
 
 -- the sky behind everything, in the hour's colour
 function s.drawBelow()
+    -- how long the once-a-frame work takes (ms, smoothed; on the status line)
+    local t0 = love.timer.getTime()
+    everyFrame()
+    local c0 = look()
+    c0.frameWorkMs = (c0.frameWorkMs or 0) * 0.95 + (love.timer.getTime() - t0) * 1000 * 0.05
     local now = look().now
     if not now then return end
     local sky = now.sky
@@ -770,10 +833,14 @@ function s.drawBelow()
         c[3] * math.min(1, 0.2 + sky[3] * 0.9), 1)
     local grit = GRITS[look().grit or 2]
     if grit.grit then
-        -- lit from wherever the sun or moon is (the way to it: against the way it shines)
-        local body = strongest({ 'sun', 'moon' }) or strongest({ 'turning lamp' })
-        local a = body and body:getAngle() or math.rad(60)
-        local _, extra = lightOf((body and body:getUserData().thing or {}).label)
+        -- lit from the sun and moon together (applyTime), or the turning lamp (the way to it: against the
+        -- way it shines)
+        local a, lit = look().skyAngle, look().skyStrength
+        if look().lampOnly or not a then
+            local body = strongest({ 'turning lamp' })
+            local _, extra = lightOf('turning lamp')
+            a, lit = body and body:getAngle() or math.rad(60), extra and extra.intensity or 0
+        end
         local shader = plasterShader()
         love.graphics.setShader(shader)
         shader:send('grit', grit.grit)
@@ -781,7 +848,7 @@ function s.drawBelow()
         shader:send('relief', grit.relief)
         shader:send('sheen', grit.sheen)
         shader:send('toLight', { -math.cos(a), -math.sin(a) })
-        shader:send('lit', math.min(1, extra and extra.intensity or 0))
+        shader:send('lit', math.min(1, lit))
         local ox, oy = cam:getWorldCoordinates(0, 0)
         local oneRight = cam:getWorldCoordinates(1, 0)
         shader:send('origin', { ox, oy })
@@ -868,7 +935,8 @@ function s.drawUI()
             .. (lightSet().sun and string.format(', sun %.2f out of the wall', SUN_TOWARDS[c.sunTowards or 1]) or '')
             .. ', ' .. SOFTNESS[c.softness or 1].name .. (c.blackShadows and ', black' or ', coloured')) or 'off')
             .. '   (e which lights  x colour  y sun out of the wall  [ ] lamp depth  j edges)',
-        string.format('grass: SpriteBatches made in the last second: %d', c.perSecond),
+        string.format('grass: SpriteBatches made in the last second: %d   lights and parts: %.2f ms a frame',
+            c.perSecond, c.frameWorkMs or 0),
     }
     for i, line in ipairs(lines) do
         local y = love.graphics.getHeight() - 20 - (#lines - i + 1) * 20

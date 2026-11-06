@@ -71,6 +71,9 @@ fade, a sun: the panel's `fades` switch, LS4).
   light is stronger than the other, so the moon's fade out and the sun's in, swapping sides while
   faint (Nikki saw a jump around 07:00: they flipped sides at 6:00, and taken from where the sun
   aimed, their length stuck at its longest until 6:50; now from its height on the arc).
+  The back light and the wall's relief jumped sides just after 18:00 (Nikki), taken from the stronger of
+  sun and moon: now the way both shine added up by strength, the back light fading while there's little
+  of it, so it swings round almost off (out by 18:05, back by ~19:40; dawn quicker).
   Nikki: "nice" (2026-11-06). Scene-only for now: a real scene would want it as a world setting
   (G5's open question: the sky per scene, with a time of day).
 - [x] **LS3. Light that adds up.** How lit a shape was stopped at 1 (colours averaged): a second lamp
@@ -134,7 +137,14 @@ fade, a sun: the panel's `fades` switch, LS4).
   and soft edges are lost in the noise. Soft and 3D together draw it twice more: sharing one silhouette
   canvas between them would save ~4-5 ms. The bigger cost isn't the shadows: the scene script's update
   is 17.7 ms a frame (~9 ms a physics step: lighting every Mipo part, looking lights up by label, every
-  step), the frame 30-35 ms, ~30 fps. LS13 (moving it into src, once a frame, cached) is where that goes.
+  step), the frame 30-35 ms, ~30 fps.
+  Fixed in the script itself (Nikki: in the spike first): the lights, the shapes' and the Mipos' parts
+  found once and kept (looked for again when a body's gone, the body count changes, or once a second),
+  the shapes' settings read once instead of once per part, and the light work done once a frame (from
+  drawBelow) instead of every physics step: 0.1 ms a frame (on the status line). Measured again: the
+  update 0.5 ms, 60 fps steady with every shadow setting; draw p50 no shadows 5.1, contact 5.1,
+  + soft wall 9.7, contact + 3D 9.7, contact + 3D + soft wall 13.8 (the first run after the fix read
+  far worse, a hot or busy phone: measure twice). Left: the shared silhouette canvas (~4 ms with both).
 - [ ] **LS13. Light as a scene setting.** So any room gets it without a script: a light section in the
   world settings, saved with the scene: the sky (a colour, or a time of day with the cycle; G5's open
   question in WORLD-BUILDING, a sky per scene), sun and moon, sky light, back light, contact and wall
