@@ -27,7 +27,8 @@
 --   0 the shapes as other scenes draw them   s turf spinning or not
 --   o everything back to the settings liked so far (all on, smooth clay wall, the cycle from 9:00)
 --   v 3D shadows on / off (src/projected-shadows.lua, LS22): a floor appears between the wall and the
---     things, and the shadows are thrown from the light along it and up the wall, hard; in place of w's
+--     things, and the shadows are thrown from the light along it and up the wall, hard; with w's on too,
+--     both (the soft ones on the wall only, a little lighter)
 --   e the 3D shadows' light: the sun or moon (a low sun stretches them long over the floor) / the warm
 --     lamp (drag it in play mode; a torch: close to the things a big shadow on the wall, back it shrinks)
 --   y how much the sun shines out of the wall: some / a little (shadows run far along the floor) / much
@@ -506,6 +507,10 @@ local function solidLight()
     return { kind = 'sun', x = -math.cos(theta), h = high, z = towards }, math.min(1, math.abs(sun - moon) / 0.6)
 end
 
+local function wallAboveFloor()
+    love.graphics.rectangle('fill', WALL.x, WALL.y, WALL.w, FLOOR_Y - WALL.y)
+end
+
 local function solidArea()
     love.graphics.rectangle('fill', WALL.x, WALL.y, WALL.w, GROUND_TOP - WALL.y)
 end
@@ -600,8 +605,10 @@ function s.update(dt)
     local L = c.now or LAMP_ONLY
     state.contactShadows = not c.shadowsOff and { strength = L.shadows } or nil
     local offset, blur, fade = wallShadow()
-    state.backdropShadows = (not c.wallShadowsOff and offset and not c.solid) and { wall = wallShape,
-        offset = offset, blur = blur, strength = L.wallShadows * fade } or nil
+    -- with the 3D shadows on too, the soft ones only on the wall above the floor, a little lighter:
+    -- the two together (Nikki 2026-11-06: "combine multiple shadows")
+    state.backdropShadows = (not c.wallShadowsOff and offset) and { wall = c.solid and wallAboveFloor or wallShape,
+        offset = offset, blur = blur, strength = L.wallShadows * fade * (c.solid and 0.7 or 1) } or nil
     local light, lightFade = nil, 0
     if c.solid then light, lightFade = solidLight() end
     local soft = SOFTNESS[c.softness or 1]
