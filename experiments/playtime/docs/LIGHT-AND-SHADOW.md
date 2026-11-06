@@ -276,6 +276,12 @@ fade, a sun: the panel's `fades` switch, LS4).
   session's measure), so 20 of them ~9-10 ms on top of the shadows' ~5: tight at 60 fps. Measure a room
   of 20 lit Mipos with the 3D shadows; if it's too much, fewer lights per part, no clay by default, or
   lighting only the near ones. Decide before LS13 makes it a scene setting.
+  **Direction (Nikki 2026-11-06):** "I basically want it all, but not always, in cost-efficient steps." So
+  not one default but a light **level** per scene, LS13's main setting, each step adding the next cheapest:
+  0 as drawn (no light) / 1 lit (Mipos lit without clay, contact shadows, ~6 ms for 20 Mipos) / 2 shadows
+  (+ wall and 3D, one shared canvas, ~+4 ms) / 3 full (+ clay, lanes, lamp glow, ~+4-5 ms). A busy room
+  1-2, a quiet one 3. Maybe later: step down by itself when frames run slow. The levels' exact contents
+  are tuned when LS13 is built.
   Measured 2026-11-06 (iPhone SE 2, 3 Mipos, 60 fps throughout, draw p50 = the CPU's time; GPU-heavy
   pixel work only shows once a frame misses 60): no shadows 5.2; contact 5.3; + soft wall 8.1;
   contact + 3D + ground 8.2 (6.4 another run); + soft wall 8.2 (shared); + lanes 8.4, lanes + soft wall
