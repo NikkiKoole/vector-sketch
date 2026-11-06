@@ -33,6 +33,7 @@ local plasticineShader = love.graphics.newShader([[
     uniform float terminatorPow; // lambert falloff exponent: higher = tighter shadow edge
     uniform float lightZ;        // how much the lights come from the front (0.9: mostly; lower: more from the side)
     uniform float lightGain;     // light's brightness swing, darkest 1-gain to brightest 1+gain (0: from strength)
+    uniform float lightAdd;      // 1: lights add up (sky lights the base), a soft shoulder past full
     uniform vec3  warmColor;     // lit-side chromatic tint (e.g. amber)
     uniform vec3  coolColor;     // shadow-side chromatic tint = environment/ambient color
     uniform int   lightCount;    // number of active lights (0 → baked default)
@@ -78,6 +79,12 @@ local plasticineShader = love.graphics.newShader([[
         f += 0.25  * vnoise(p * 2.13 + vec2(3.7, 1.1));
         f += 0.125 * vnoise(p * 4.71 + vec2(1.3, 5.2));
         return f;
+    }
+
+    // light past full rounds off instead of clipping: as it is up to 0.8, then towards 1.35
+    vec3 shoulder(vec3 x) {
+        vec3 over = max(x - 0.8, 0.0);
+        return min(x, vec3(0.8)) + over / (1.0 + over / 0.55);
     }
 
     vec4 effect(vec4 color, Image tex, vec2 uv, vec2 fc) {
@@ -184,6 +191,11 @@ local plasticineShader = love.graphics.newShader([[
             tint  = mix(coolColor, rawTint * warmColor, attenBlend);
             shade = (lightGain > 0.0) ? mix(1.0 - lightGain, 1.0 + lightGain, attenBlend)
                                       : mix(1.0 - strength, 1.0 + strength * 0.5, attenBlend);
+            if (lightAdd > 0.5) {
+                // every light's colour and strength added (the sky lights the base), not averaged
+                tint  = shoulder(totalLight);
+                shade = 1.0;
+            }
         }
 
         float pit = mix(1.0 - strength * 0.25, 1.0, smoothstep(0.15, 0.55, h));
@@ -251,6 +263,7 @@ local hairsShader = love.graphics.newShader([[
     uniform float terminatorPow;
     uniform float lightZ;
     uniform float lightGain;
+    uniform float lightAdd;
     uniform vec3  warmColor;
     uniform vec3  coolColor;
     uniform int   lightCount;
@@ -285,6 +298,12 @@ local hairsShader = love.graphics.newShader([[
         float c = hash(i + vec2(0.0, 1.0));
         float d = hash(i + vec2(1.0, 1.0));
         return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+    }
+
+    // light past full rounds off instead of clipping: as it is up to 0.8, then towards 1.35
+    vec3 shoulder(vec3 x) {
+        vec3 over = max(x - 0.8, 0.0);
+        return min(x, vec3(0.8)) + over / (1.0 + over / 0.55);
     }
 
     vec4 effect(vec4 color, Image tex, vec2 uv, vec2 fc) {
@@ -391,6 +410,10 @@ local hairsShader = love.graphics.newShader([[
             tint       = mix(coolColor, rawTint * warmColor, attenBlend);
             lightShade = (lightGain > 0.0) ? mix(1.0 - lightGain, 1.0 + lightGain, attenBlend)
                                            : mix(1.0 - strength, 1.0 + strength * 0.5, attenBlend);
+            if (lightAdd > 0.5) {
+                tint       = shoulder(totalLight);
+                lightShade = 1.0;
+            }
         }
 
         // Rim darkening from alpha gradient
@@ -472,6 +495,7 @@ local function sendSharedLighting(shader, body, extra)
     shader:send('terminatorPow', extra.plasticineTerminator   or lib.plasticineTerminator)
     shader:send('lightZ',        extra.plasticineLightZ       or lib.plasticineLightZ)
     shader:send('lightGain',     extra.plasticineLightGain    or lib.plasticineLightGain)
+    shader:send('lightAdd',      extra.plasticineLightAdd and 1 or 0)
     local wr, wg, wb = color.hexToColor(extra.plasticineWarmHex or lib.plasticineWarmHex)
     local cr, cg, cb = color.hexToColor(extra.plasticineCoolHex or lib.plasticineCoolHex)
     shader:send('warmColor', {wr, wg, wb})

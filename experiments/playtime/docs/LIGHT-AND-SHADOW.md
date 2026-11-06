@@ -14,6 +14,7 @@ much each reaches); its intensity and nearness decide how lit the shape is. The 
 all off by default (the defaults draw byte for byte as before):
 `plasticineLightGain` (how far the light brightens and darkens: 0 = x0.82..x1.09, else x(1-g)..x(1+g)),
 `plasticineLightZ` (0.9: the light mostly from the front; lower and its side shows more),
+`plasticineLightAdd` (lights add up, the sky the base: LS3),
 `plasticineFormBaked` + `plasticineFormRise` (the roundness baked from the picture's mask,
 `src/render/form-bake.lua`, after the glass bead spike: 1 a dome, 0.2 a pebble; the shader's own guess
 rounds only the outer edge).
@@ -28,9 +29,12 @@ fade, a sun, but the panel can't set 0).
   colour (`groundHex`, a row on the light's panel) from all of below, wherever the light is; above is
   the world's above (spec/light-sky_spec.lua). In the scene per time of day, k off / on: it fills the
   sun's dark sides with the sky's blue (2026-11-06).
-- [ ] **LS3. Light that adds up.** How lit a shape is stops at 1: a second lamp near a lit shape adds
-  nothing, so night is only dark away from the lamps. Decide: lights that add (and can over-light),
-  or an ambient level per scene that the lights add to.
+- [x] **LS3. Light that adds up.** How lit a shape was stopped at 1 (colours averaged): a second lamp
+  near a lit shape added little, and a shape no light reached kept a middling brightness. A shape's
+  `plasticineLightAdd`: the sky lights the base, every other light adds its colour and strength, a soft
+  shoulder past full (as is up to 0.8, then towards 1.35); nothing reaching it, it's dark
+  (spec/light-add_spec.lua). Off by default. In the scene on, a switches; the moods' intensities tuned
+  for it (night lamps 2.0 and 1.6) (2026-11-06).
 - [ ] **LS4. The settings in the panel.** Swing, front, baked and rise as rows in the texfixture's
   plasticine section; a sun (range 0) settable on the light's panel.
 - [ ] **LS5. Mipos under the light.** The same light on a Mipo's parts, to judge it on what it's for

@@ -10,6 +10,7 @@
 --   k the sky light off / on (light from all of above in the sky's colour, from below in the ground's)
 --   g light swing   z how much the light comes from the front   f the quick form's depth
 --   b baked form / the shader's quick guess   n baked rise (1 a dome, 0.5, 0.2 a pebble)
+--   a lights add up (the sky lights the base, every lamp adds; LS3) / as before (how lit stops at full)
 --   0 the shapes as other scenes draw them   s turf spinning or not
 
 local s = {}
@@ -18,16 +19,16 @@ local s = {}
 -- where it is, (the sky light) its ground colour
 local MOODS = {
     day = { sky = { 0.62, 0.78, 0.92 },
-        sun = { 'fff2d9ff', 1.0, math.rad(60), -1250, -650 }, ['warm lamp'] = { 'ffb060ff', 0 },
+        sun = { 'fff2d9ff', 1.2, math.rad(60), -1250, -650 }, ['warm lamp'] = { 'ffb060ff', 0 },
         ['cool lamp'] = { '80a8ffff', 0 }, ['turning lamp'] = { 'ffffffff', 0 },
         ['sky light'] = { '9cc8ffff', 0.6, nil, nil, nil, '8a7a50ff' } },
     evening = { sky = { 0.93, 0.62, 0.45 },
-        sun = { 'ff8a3cff', 0.9, math.rad(12), -1450, -100 }, ['warm lamp'] = { 'ffb060ff', 0.8 },
+        sun = { 'ff8a3cff', 0.9, math.rad(12), -1450, -100 }, ['warm lamp'] = { 'ffb060ff', 1.2 },
         ['cool lamp'] = { '80a8ffff', 0 }, ['turning lamp'] = { 'ffffffff', 0 },
         ['sky light'] = { 'ffa080ff', 0.5, nil, nil, nil, '5a3848ff' } },
     night = { sky = { 0.08, 0.1, 0.22 },
-        sun = { 'a8c0ffff', 0.35, math.rad(120), 600, -650 }, ['warm lamp'] = { 'ffb060ff', 1.0 },
-        ['cool lamp'] = { '80a8ffff', 0.8 }, ['turning lamp'] = { 'ffffffff', 0 },
+        sun = { 'a8c0ffff', 0.35, math.rad(120), 600, -650 }, ['warm lamp'] = { 'ffb060ff', 2.0 },
+        ['cool lamp'] = { '80a8ffff', 1.6 }, ['turning lamp'] = { 'ffffffff', 0 },
         ['sky light'] = { '3a4a80ff', 0.3, nil, nil, nil, '141420ff' } },
     lamp = { sky = nil,
         sun = { 'fff2d9ff', 0, math.rad(60) }, ['warm lamp'] = { 'ffb060ff', 0 },
@@ -44,8 +45,9 @@ local TRIES = {
     f = { key = 'plasticineFormRadius', name = 'quick form', values = { 0.08, 0.2, 0.35 } },
     b = { key = 'plasticineFormBaked', name = 'baked', values = { false, true } },
     n = { key = 'plasticineFormRise', name = 'rise', values = { 1, 0.5, 0.2 } },
+    a = { key = 'plasticineLightAdd', name = 'adding up', values = { false, true } },
 }
-local TRY_ORDER = { 'g', 'z', 'f', 'b', 'n' }
+local TRY_ORDER = { 'a', 'g', 'z', 'f', 'b', 'n' }
 
 local function lightOf(label)
     for _, thing in ipairs(getObjectsByLabel(label)) do
