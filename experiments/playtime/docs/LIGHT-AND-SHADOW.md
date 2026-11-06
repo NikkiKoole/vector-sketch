@@ -223,6 +223,11 @@ fade, a sun: the panel's `fades` switch, LS4).
   front; on screen an ellipse, drawn behind the things while it's behind them, bigger nearer you. 'warm
   and cool lamps circle too' puts those on the ring a third of the way round at other heights;
   'circling speed'; the light set 'both lamps'.
+  Sun in front, moon behind (Nikki: "a sun that during the day cast shadow backward and a moon that cast
+  forward"): with 3D on, the moon shines from behind the things, its shadows forward onto the ground in
+  front, and throws no soft shadow back onto the wall; they swap at the handover, both faint then (the
+  panel's 'moon from behind'). The sun's 3D shadows fade out near the horizon (they vanished at once just
+  before 18:00).
   Not yet: within a lane one depth (a Mipo's own parts, LS20) (per-thing depth,
   LS16/LS18), nothing on the floor in front of the things, the same cost as the wall shadows (LS12).
 - [ ] **LS15. Small ones:** should a new directional light be a sun (not fade) by default; the back

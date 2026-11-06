@@ -654,6 +654,10 @@ local function sunLight()
     local high = math.sin(theta)
     if high <= 0.005 then return nil end
     local towards = c.sunOut or SUN_TOWARDS[c.sunTowards or 1]
+    -- the moon from behind the things (Nikki 2026-11-06: the sun casting backward by day, the moon forward
+    -- at night): its shadows fall forward onto the ground in front. They swap at the handover, when both
+    -- are faint ('moon from behind' in the panel; off, the moon shines from in front like the sun)
+    if sun < moon and not c.moonInFront then towards = -math.abs(towards) end
     -- fading out as it nears the horizon: cut off at the horizon they vanished at once just before 18:00
     -- while still dark (Nikki: "around 1800 something flips")
     local low = math.min(1, high / SUN_FADE_HEIGHT)
@@ -886,6 +890,11 @@ local function everyFrame()
     local offset, blur, fade = wallShadow()
     -- with the 3D shadows on too, the soft ones only on the wall above the floor, a little lighter:
     -- the two together (Nikki 2026-11-06: "combine multiple shadows")
+    -- a moon behind the things throws nothing back onto the wall
+    local _, sunE = lightOf('sun')
+    local _, moonE = lightOf('moon')
+    local moonLeads = (moonE and moonE.intensity or 0) > (sunE and sunE.intensity or 0)
+    if c.solid and moonLeads and not c.moonInFront then offset = nil end
     state.backdropShadows = (not c.wallShadowsOff and offset) and { wall = c.solid and wallAboveFloor or wallShape,
         offset = offset, blur = blur, strength = L.wallShadows * fade * (c.solid and 0.7 or 1) } or nil
     local lights = c.solid and solidLights(L.wallShadows) or {}
@@ -1103,7 +1112,7 @@ end
 -- sliders and buttons; the keys still work. Folds away with its – button.
 local PANEL = '•• light and shadow ••'
 local ROW, COL_W = 34, 380
-local PANEL_ROWS = 15
+local PANEL_ROWS = 16
 
 local function check(x, y, on, label)
     local clicked, now = ui.checkbox(x, y, on, label)
@@ -1178,6 +1187,9 @@ local function drawPanel(c)
         row()
         local speed = slider('circle', x, y, 0, 1.5, c.circleSpeed or 0.35, 'circling speed')
         if speed then c.circleSpeed = speed end
+        row()
+        local behind = toggle(x, y, not c.moonInFront, 'moon from behind (3D)')
+        c.moonInFront = not behind
         row()
         if stepper(x, y, COL_W - 30, 'back to the liked settings') then s.onKeyPress('o') end
 
