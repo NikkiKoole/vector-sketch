@@ -140,22 +140,6 @@ local function strongest(labels)
     return bestBody
 end
 
--- the backdrop shadows from the sun or moon (the stronger), else the turning lamp: the way it shines, and
--- by how high it is: a high sun throws short shadows, almost straight down, crisp; a low one long and
--- sideways, softer; and as its light fades at the horizon, so does the shadow. Returns the offset, the
--- blur and how much of the shadow's darkness is left (0..1).
-local function wallShadow()
-    local body = strongest({ 'sun', 'moon' }) or strongest({ 'turning lamp' })
-    if not body then return nil end
-    local _, extra = lightOf((body:getUserData().thing or {}).label)
-    local a = body:getAngle()
-    local down = math.max(0, math.sin(a)) -- 1: shining straight down (high), 0: sideways (on the horizon)
-    local length = WALL_BEHIND * math.min(4, 1 / (down + 0.25))
-    local fade = math.min(1, (extra and extra.intensity or 1) / 0.6)
-    -- never up the wall: a low sun aimed at the scene's middle shines a little upward
-    return { math.cos(a) * length, down * length }, 5 + length * 0.06, fade
-end
-
 local function look()
     state.lightLab = state.lightLab or { hour = 12, made = 0, perSecond = 0, time = 0 }
     local c = state.lightLab
@@ -216,6 +200,30 @@ local function setLight(label, colour, intensity, x, y, angle)
     extra.intensity = intensity
     if x and body then body:setPosition(x, y) end
     if angle and body then body:setAngle(angle) end
+end
+
+-- The backdrop shadows: from the sun or the moon (whichever is stronger), else the turning lamp. By how
+-- high it is on its arc: high, short and almost straight down, crisp; low, long and sideways, softer
+-- (never up the wall). As strong as the leading light is stronger than the other, so the moon's fade out
+-- and the sun's fade in at the handover, swapping sides while there's nothing to see (it jumped at 6:00;
+-- and taken from where it aimed, the length stuck at its longest until 6:50). Returns the offset, the
+-- blur and how much of the shadow's darkness is left (0..1).
+local function wallShadow()
+    local c = look()
+    if c.lampOnly then
+        local body = strongest({ 'turning lamp' })
+        if not body then return nil end
+        local a = body:getAngle()
+        return { math.cos(a) * WALL_BEHIND, math.max(0, math.sin(a)) * WALL_BEHIND }, 10, 1
+    end
+    local _, sunExtra = lightOf('sun')
+    local _, moonExtra = lightOf('moon')
+    local sun, moon = sunExtra and sunExtra.intensity or 0, moonExtra and moonExtra.intensity or 0
+    local theta = (sun >= moon) and (c.hour - 6) / 12 * math.pi or ((c.hour - 18) % 24) / 12 * math.pi
+    local high = math.max(0, math.sin(theta))
+    local length = WALL_BEHIND * math.min(4, 1 / (high + 0.25))
+    local fade = math.min(1, math.abs(sun - moon) / 0.6)
+    return { math.cos(theta) * length, high * length }, 5 + length * 0.06, fade
 end
 
 -- everything at the clock's hour (or only the turning lamp)

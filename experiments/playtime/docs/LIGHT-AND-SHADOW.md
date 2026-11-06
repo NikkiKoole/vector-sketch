@@ -46,8 +46,10 @@ fade, a sun, but the panel can't set 0).
   horizon; the moon the other way round the night; the wall shadows swing with them, the back light
   comes from the stronger. The wall shadows by the sun's height too (Nikki: they should depend on the
   time of day): a high sun throws them short, almost straight down and crisp, a low one long and
-  sideways and softer (never up the wall), and they fade with the light at the horizon, so the sun's
-  hand over to the moon's without a jump. Scene-only for now: a real scene would want it as a world setting
+  sideways and softer (never up the wall), and they fade at the handover: as strong as the leading
+  light is stronger than the other, so the moon's fade out and the sun's in, swapping sides while
+  faint (Nikki saw a jump around 07:00: they flipped sides at 6:00, and taken from where the sun
+  aimed, their length stuck at its longest until 6:50; now from its height on the arc). Scene-only for now: a real scene would want it as a world setting
   (G5's open question: the sky per scene, with a time of day).
 - [x] **LS3. Light that adds up.** How lit a shape was stopped at 1 (colours averaged): a second lamp
   near a lit shape added little, and a shape no light reached kept a middling brightness. A shape's
