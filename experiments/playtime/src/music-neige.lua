@@ -52,18 +52,17 @@ lib.CHORDS = {
     { 13.5, 0.38, 105, 30, 60, 72 },
     { 15, 0.42, 160, 55, 60, 72 },
 }
--- the melody: { beat, midi, velocity, length ms, ms late }
+-- the melody: { beat, midi, velocity, length ms, ms late }. Not in it: what basic-pitch heard as F6 (5.5), A5
+-- (7.5) and G5 (13), the 4th harmonic of the F4 and the 12ths of the D4 and the C4 struck with them (the synth's
+-- brightness, not notes; played, they stuck out: Nikki 'the notes are off')
 lib.MELODY = {
     { 0, 72, 0.57, 110, 72 },    -- C5
     { 0.5, 71, 0.44, 190, 74 },  -- B4
     { 3.5, 72, 0.36, 95, -7 },   -- C5
-    { 5.5, 89, 0.32, 65, 64 },   -- F6, a high blip
-    { 7.5, 81, 0.35, 66, 50 },   -- A5
     { 8.5, 79, 0.46, 170, 65 },  -- G5
     { 9.5, 77, 0.50, 130, 34 },  -- F5
     { 10, 77, 0.39, 120, 25 },
     { 10.5, 76, 0.45, 105, 33 }, -- E5
-    { 13, 79, 0.31, 65, 41 },    -- G5
 }
 -- the rhythm box, 4 bars: { beat, patch, midi, vol }. Kicks where the kick band hit in >55% of the cycles (vol
 -- from its level), the rim on 2 and 2&, maracas on the swung 'a's (a 16th + ~50 ms: 0.87 of the beat), claps
