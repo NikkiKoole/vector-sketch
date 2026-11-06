@@ -873,6 +873,7 @@ local function drawDecal(d)
 end
 
     -- Brow: bezier curve with bend pattern
+local browLit = setmetatable({}, { __mode = 'k' }) -- a brow's settings with its mirror, for the lights
 local function drawBrow(d)
     local extra = d.extra
     local body = d.body
@@ -922,7 +923,19 @@ local function drawBrow(d)
             love.graphics.setColor(r, g, b, a)
             -- Mirror right brow via sx=-1, matching puppet-maker2 approach
             local mirrorSx = extra.browMirror and -1 or 1
+            -- in a material (MT6c): lit like the head; the mirrored brow tells the lights it's flipped
+            local shaded = false
+            if extra.material then
+                local lit = browLit[extra]
+                if not lit then
+                    lit = setmetatable({ main = { fx = 1, fy = 1 } }, { __index = extra })
+                    browLit[extra] = lit
+                end
+                lit.main.fx = mirrorSx
+                shaded = setSurfaceShader(lit, body)
+            end
             love.graphics.draw(mesh, ox, oy, 0, mirrorSx, 1)
+            if shaded then love.graphics.setShader() end
         end
 
         love.graphics.pop()

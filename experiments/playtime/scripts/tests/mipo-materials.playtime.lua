@@ -23,9 +23,10 @@ local GROUPS = {
     { name = 'feet', labels = { lfoot = true, rfoot = true } },
 }
 -- the mouth's parts (on the head, by their mouthCurve): the lips, the teeth, the inside
-local MOUTH_GROUPS = { 'eyes', 'pupils', 'nose', 'lips', 'teeth', 'inside' }
+local MOUTH_GROUPS = { 'eyes', 'pupils', 'brows', 'nose', 'lips', 'teeth', 'inside' }
 -- the face's stickers (decals) by their label
-local DECAL_PART = { leye = 'eyes', reye = 'eyes', lpupil = 'pupils', rpupil = 'pupils', nose = 'nose' }
+local DECAL_PART = { leye = 'eyes', reye = 'eyes', lpupil = 'pupils', rpupil = 'pupils', nose = 'nose',
+    lbrow = 'brows', rbrow = 'brows' }
 local MOUTH_PART = { upper = 'lips', lower = 'lips', teeth = 'teeth' }
 -- the inside's colour: as the Mipo has it, then a few
 local INSIDE_COLOURS = { false, '000000cc', '5a1e2acc', 'b5546acc', '2a3a6acc' }

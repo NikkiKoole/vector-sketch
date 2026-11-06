@@ -168,8 +168,9 @@ Kinds of material, by what the shader does differently:
 - [~] **MT6c. Eyes, pupils, nose** (2026-11-06, Nikki: "eyes too"): a face decal with `extra.material`
   is drawn as a quad in the head's own frame (src/physics/box2d-draw-textured.lua drawDecalLit), so
   the lights reach it as they reach the head; without a material, the plain image draw as before.
-  mipo-materials: eyes, pupils, nose rows (glazed eyes, plastic pupils, a gold nose). The brows not
-  yet (a bent strip, like the lips).
+  mipo-materials: eyes, pupils, brows, nose rows (glazed eyes, plastic pupils, a gold nose). The
+  brows are a bent strip in the head's frame: lit directly, the mirrored one telling the lights it's
+  flipped (main.fx), so both are lit from the same side.
 - [ ] **MT6. Into the engine**: a material as a texfixture setting, next to plasticine (SHADER-LOOKS'
   "looks on shapes"), if any of it earns a place.
 
