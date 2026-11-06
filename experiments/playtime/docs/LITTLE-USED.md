@@ -52,5 +52,9 @@ first.
   accordions, not sfixture-params' bySubtype; `claudetools/actions.lua` adds them now. To look at, not a
   bug: a *directional* light also fades with the distance from its lamp (`range`, 500), so one 300 px
   away only gives about a third, and turning the lamp round changed a box's halves by ~1%; see it in
-  the scene `light-grass-check`)
+  the scene `light-grass-check`. Also found there: a directional light lit the side facing *away*
+  from where it's aimed, fixed (spec/light-aim_spec.lua). And the light only moved brightness by
+  x0.82..x1.09 with a flat middle (no normal map: the shape rounds only in its outer 8%): the scene's
+  g / z / f keys try more swing, a lower light and a rounder form (shader settings plasticineLightGain,
+  plasticineLightZ, plasticineFormRadius; their defaults draw as before), for Nikki to judge)
 - [ ] Recorder round
