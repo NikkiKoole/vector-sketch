@@ -67,9 +67,14 @@ local GRITS = {
 local wallShader
 local function plasterShader()
     wallShader = wallShader or love.graphics.newShader([[
+        // LÖVE applies the camera to a rectangle's corners before the shader sees them (they're batched),
+        // so the shader gets screen positions: back to the world with the camera's corner and zoom, or
+        // the grit sticks to the screen while you drag the view
+        uniform vec2 origin;
+        uniform float zoom;
         varying vec2 wpos;
         #ifdef VERTEX
-        vec4 position(mat4 t, vec4 v) { wpos = v.xy; return t * v; }
+        vec4 position(mat4 t, vec4 v) { wpos = origin + v.xy / zoom; return t * v; }
         #endif
         #ifdef PIXEL
         uniform float grit;
@@ -443,6 +448,10 @@ function s.drawBelow()
         shader:send('relief', grit.relief)
         shader:send('toLight', { -math.cos(a), -math.sin(a) })
         shader:send('lit', math.min(1, extra and extra.intensity or 0))
+        local ox, oy = cam:getWorldCoordinates(0, 0)
+        local oneRight = cam:getWorldCoordinates(1, 0)
+        shader:send('origin', { ox, oy })
+        shader:send('zoom', 1 / (oneRight - ox))
     end
     wallShape()
     love.graphics.setShader()
