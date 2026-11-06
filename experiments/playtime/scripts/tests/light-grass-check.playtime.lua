@@ -135,7 +135,6 @@ local function wallShape() love.graphics.rectangle('fill', WALL.x, WALL.y, WALL.
 local GROUND_TOP = 450 -- where everything stands (the grassy ground's top)
 local SOLID_DEPTH = 400
 local FLOOR_Y = GROUND_TOP - SOLID_DEPTH
-local FLOOR_COLOUR = { 0.72, 0.6, 0.46 }
 -- y steps it: low, the shadows run far along the floor before they reach the wall; high, they climb it soon
 local SUN_TOWARDS = { 0.2, 0.08, 0.5 }
 local LAMP_DEPTH = 300
@@ -143,6 +142,172 @@ local LAMP_DEPTHS = { 40, 100, 200, 300, 500, 900, 1600, 3000 }
 -- j: hard, a small lamp, a big one (world units; for the sun how wide, as a slope)
 local SOFTNESS = { { name = 'hard', lamp = 0, sun = 0 }, { name = 'small lamp', lamp = 14, sun = 0.03 },
     { name = 'big lamp', lamp = 45, sun = 0.1 } }
+
+-- The ground with 3D shadows on (after scripts/spikes/burrow's earth, Nikki 2026-11-06: "a sort of ground
+-- to cast on too"): packed earth seen from a little above, from the wall's foot to the ground's front edge,
+-- then the earth cut open below that edge (topsoil, clay, grain, fine roots), a drawn crayon rim along the
+-- edge and a thinner one in the corner with the wall. The floor behind the things is drawn under the
+-- shadows (drawBelow); the rest over the ground's plain shape, under the things (a draw split).
+local GROUND_FRONT = 610 -- the grassy ground's front edge
+local CUT_DEPTH = 240    -- how far the cut-open earth goes down
+local GROUND_X0, GROUND_X1 = -2100, 2100 -- the grassy ground's ends
+local RIM_COLOUR = { 0.25, 0.17, 0.11 }
+local groundShader
+local function earthShader()
+    groundShader = groundShader or love.graphics.newShader([[
+        uniform vec2 origin;
+        uniform float zoom;
+        varying vec2 wpos;
+        #ifdef VERTEX
+        vec4 position(mat4 t, vec4 v) { wpos = origin + v.xy / zoom; return t * v; }
+        #endif
+        #ifdef PIXEL
+        uniform float floorY;  // the wall's foot: the floor goes from here
+        uniform float frontY;  // the ground's front edge: the cut earth below it
+        float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+        float vnoise(vec2 p) {
+            vec2 i = floor(p); vec2 f = fract(p); f = f * f * (3.0 - 2.0 * f);
+            return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x),
+                mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
+        }
+        vec3 floorTop(vec2 w) {
+            // seen from a little above: the ground's grain squashed in depth
+            vec2 p = vec2(w.x, (w.y - floorY) * 2.5);
+            vec3 col = vec3(0.56, 0.42, 0.29);
+            col *= 0.86 + hash(floor(p / 7.0)) * 0.12 + vnoise(p * 0.012) * 0.12 + vnoise(p * 0.003) * 0.1;
+            // worn paths and damp patches
+            col = mix(col, vec3(0.42, 0.31, 0.21), smoothstep(0.55, 0.75, vnoise(p * 0.0015 + 9.0)) * 0.5);
+            // pebbles: a few cells get a small stone, lit on top
+            vec2 cell = floor(p / 46.0);
+            float h = hash(cell);
+            if (h > 0.86) {
+                vec2 c = (cell + 0.25 + 0.5 * vec2(hash(cell + 3.1), hash(cell + 7.7))) * 46.0;
+                vec2 d = (p - c) / vec2(9.0 + 8.0 * h, 6.0 + 6.0 * h);
+                float r = dot(d, d);
+                if (r < 1.0) col = mix(col, vec3(0.62, 0.55, 0.47) * (1.05 - 0.35 * d.y), 0.85);
+            }
+            // darker into the corner with the wall
+            return col * mix(0.72, 1.0, smoothstep(0.0, 90.0, w.y - floorY));
+        }
+        vec3 cut(vec2 w) {
+            float depth = w.y - frontY;
+            float y = depth + (vnoise(vec2(w.x * 0.002, 3.0)) - 0.5) * 60.0;
+            vec3 col = mix(vec3(0.36, 0.25, 0.16), vec3(0.62, 0.44, 0.28), smoothstep(40.0, 180.0, y));
+            col *= 0.94 + 0.10 * smoothstep(0.45, 0.6, vnoise(vec2(w.x * 0.0015, w.y * 0.015)));
+            col *= 0.86 + hash(floor(w / 7.0)) * 0.12 + vnoise(w * 0.012) * 0.12 + vnoise(w * 0.003) * 0.08;
+            float rn = vnoise(vec2(w.x * 0.008, w.y * 0.004)) + vnoise(w * 0.03) * 0.15;
+            float root = (1.0 - smoothstep(0.0, 0.025, abs(rn - 0.5))) * (1.0 - smoothstep(60.0, 200.0, depth));
+            col = mix(col, vec3(0.22, 0.15, 0.10), root * 0.7);
+            // the edge's overhang: darker just under it
+            return col * mix(0.7, 1.0, smoothstep(0.0, 40.0, depth));
+        }
+        vec4 effect(vec4 color, Image tex, vec2 uv, vec2 sc) {
+            vec3 col = wpos.y < frontY ? floorTop(wpos) : cut(wpos);
+            return vec4(col, 1.0) * color;
+        }
+        #endif
+    ]])
+    return groundShader
+end
+
+-- the crayon strokes (textures/strokes, as burrow's rim): line pictures run down the image, track pictures
+-- across it; `from`..`to` is the part of the picture the stroke uses
+local STROKE_KINDS = { line = { alongX = false, from = 0.1, to = 0.9 },
+    track = { alongX = true, from = 0.02, to = 0.98 } }
+local strokePictures
+local function strokes()
+    if strokePictures then return strokePictures end
+    strokePictures = {}
+    local files = love.filesystem.getDirectoryItems('textures/strokes')
+    table.sort(files)
+    for _, file in ipairs(files) do
+        local kind = STROKE_KINDS[file:match('^(%a+)%d*%.png$') or '']
+        if kind then
+            local image = love.graphics.newImage('textures/strokes/' .. file, { mipmaps = true })
+            image:setMipmapFilter('linear')
+            strokePictures[#strokePictures + 1] = { image = image, alongX = kind.alongX, from = kind.from,
+                to = kind.to }
+        end
+    end
+    return strokePictures
+end
+
+-- a straight drawn line along y from x0 to x1, `width` wide: the pictures one after another, each mirrored
+-- or backwards by chance, the line wobbling and its width breathing (a mesh per picture laid)
+local function strokeLine(y, x0, x1, width, seed)
+    local pictures = strokes()
+    if #pictures == 0 then return {} end
+    local meshes, x, k = {}, x0, 0
+    local half = width / 2
+    while x < x1 do
+        local rng = love.math.newRandomGenerator(seed * 1000 + k)
+        local pic = pictures[rng:random(#pictures)]
+        local iw, ih = pic.image:getDimensions()
+        local thick, long = pic.alongX and ih or iw, pic.alongX and iw or ih
+        local length = long * (pic.to - pic.from) * (width / thick)
+        local mirror, backwards = rng:random() < 0.5, rng:random() < 0.5
+        local verts = {}
+        local steps = math.max(2, math.ceil(length / 12))
+        for i = 0, steps do
+            local t = i / steps
+            local px = x + length * t
+            local wob = (love.math.noise(seed, px * 0.004) - 0.5) * half * 1.6
+                + (love.math.noise(seed + 50, px * 0.02) - 0.5) * half * 0.5
+            local w = half * (0.8 + love.math.noise(seed + 100, px * 0.004) * 0.4)
+            local along = pic.from + (pic.to - pic.from) * (backwards and 1 - t or t)
+            for side = 0, 1 do
+                local across = mirror and 1 - side or side
+                local u, v = across, along
+                if pic.alongX then u, v = along, across end
+                verts[#verts + 1] = { px, y + wob + (side == 0 and -w or w), u, v }
+            end
+        end
+        local mesh = love.graphics.newMesh(verts, 'strip', 'static')
+        mesh:setTexture(pic.image)
+        meshes[#meshes + 1] = mesh
+        x, k = x + length * 0.97, k + 1
+    end
+    return meshes
+end
+
+local rims
+local function drawRims(which, tint)
+    rims = rims or { front = strokeLine(GROUND_FRONT, GROUND_X0, GROUND_X1, 26, 3),
+        corner = strokeLine(FLOOR_Y, WALL.x, WALL.x + WALL.w, 14, 11) }
+    love.graphics.setColor(RIM_COLOUR[1] * tint[1], RIM_COLOUR[2] * tint[2], RIM_COLOUR[3] * tint[3], 1)
+    for _, mesh in ipairs(rims[which]) do love.graphics.draw(mesh) end
+end
+
+-- the sky's light on the ground, as on the wall
+local function groundTint()
+    local now = state.lightLab and state.lightLab.now
+    local sky = now and now.sky or { 0.4, 0.4, 0.45 }
+    return { math.min(1, 0.2 + sky[1] * 0.9), math.min(1, 0.2 + sky[2] * 0.9), math.min(1, 0.2 + sky[3] * 0.9) }
+end
+
+-- the earth from y0 to y1 (floor above the front edge, cut earth below), the ground's width
+local function drawEarth(y0, y1, tint)
+    local shader = earthShader()
+    love.graphics.setShader(shader)
+    local ox, oy = cam:getWorldCoordinates(0, 0)
+    local oneRight = cam:getWorldCoordinates(1, 0)
+    shader:send('origin', { ox, oy })
+    shader:send('zoom', 1 / (oneRight - ox))
+    shader:send('floorY', FLOOR_Y)
+    shader:send('frontY', GROUND_FRONT)
+    love.graphics.setColor(tint[1], tint[2], tint[3], 1)
+    love.graphics.rectangle('fill', GROUND_X0, y0, GROUND_X1 - GROUND_X0, y1 - y0)
+    love.graphics.setShader()
+end
+
+-- over the ground's plain shape, under everything drawn on it (the textured world's first split)
+local function drawGroundFront()
+    local tint = groundTint()
+    drawEarth(GROUND_TOP, GROUND_FRONT + CUT_DEPTH, tint)
+    drawRims('front', tint)
+    love.graphics.setColor(1, 1, 1, 1)
+end
+local GROUND_SPLITS = { { z = -math.huge, fn = drawGroundFront } }
 local LIGHTS = { 'sun', 'moon', 'warm lamp', 'cool lamp', 'turning lamp', 'sky light', 'back light' }
 
 -- each key steps through these on every shape; the first is how other scenes draw them
@@ -396,6 +561,7 @@ function s.onUnload()
     state.contactShadows = nil -- only in this scene
     state.backdropShadows = nil
     state.projectedShadows = nil
+    state.drawSplits = nil
     local c = look()
     if c.original then
         love.graphics.newSpriteBatch = c.original
@@ -435,6 +601,7 @@ function s.update(dt)
     local light, lightFade = nil, 0
     if c.solid then light, lightFade = solidLight() end
     local soft = SOFTNESS[c.softness or 1]
+    state.drawSplits = c.solid and GROUND_SPLITS or nil
     state.projectedShadows = light and { area = solidArea, floorY = FLOOR_Y, depth = SOLID_DEPTH, light = light,
         strength = c.solidLamp and 0.55 or math.min(0.7, L.wallShadows * 1.5) * lightFade,
         softness = light.kind == 'sun' and soft.sun or soft.lamp } or nil
@@ -539,16 +706,10 @@ function s.drawBelow()
     wallShape()
     love.graphics.setShader()
     if look().solid then
-        -- the floor behind the things, in the same light as the wall, a little darker towards the corner
-        local f = FLOOR_COLOUR
-        local r, g, b = f[1] * math.min(1, 0.2 + sky[1] * 0.9), f[2] * math.min(1, 0.2 + sky[2] * 0.9),
-            f[3] * math.min(1, 0.2 + sky[3] * 0.9)
-        local bands = 6
-        for i = 0, bands - 1 do
-            local k = 0.86 + 0.14 * i / (bands - 1)
-            love.graphics.setColor(r * k, g * k, b * k, 1)
-            love.graphics.rectangle('fill', WALL.x, FLOOR_Y + SOLID_DEPTH * i / bands, WALL.w, SOLID_DEPTH / bands + 1)
-        end
+        -- the floor behind the things, in the same light as the wall (the shadows land on it)
+        local tint = groundTint()
+        drawEarth(FLOOR_Y, GROUND_TOP, tint)
+        drawRims('corner', tint)
     end
     love.graphics.setColor(1, 1, 1, 1)
 end

@@ -165,7 +165,12 @@ fade, a sun: the panel's `fades` switch, LS4).
   a lamp in the middle throws both ways). Edges: hard, or a small or big lamp (the penumbra wider the
   further the shadow lands, LS18's look for free). In light-grass-check: v on (in place of w's), e the
   sun or moon / the warm lamp (drag it in play mode), [ ] the lamp's depth, y the sun's way out of the
-  wall, j edges (spec/projected-shadows_spec.lua). Not yet: one depth for everything (per-thing depth,
+  wall, j edges (spec/projected-shadows_spec.lua). The ground (Nikki: "a sort of ground to cast on too ...
+  what we did over at burrow"): with v on, packed earth seen from a little above from the wall's foot to
+  the ground's front edge (grain, worn patches, pebbles, darker into the corner), the earth cut open below
+  the edge (burrow's topsoil to clay, grain, fine roots), burrow's crayon strokes along the edge and in
+  the corner; the floor behind the things under the shadows, the rest under the things (a draw split).
+  Not yet: one depth for everything (per-thing depth,
   LS16/LS18), nothing on the floor in front of the things, the same cost as the wall shadows (LS12).
 - [ ] **LS15. Small ones:** should a new directional light be a sun (not fade) by default; the back
   light on a drawn stone lands on its black outline (reach past it, as the contact shadow does);
