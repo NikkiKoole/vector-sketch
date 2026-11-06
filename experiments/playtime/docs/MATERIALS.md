@@ -95,6 +95,12 @@ Kinds of material, by what the shader does differently:
   lit from the front (waxy) or behind (glowing), smoke as steam / smoke / soot from the body pictures
   as puffs. p paints the light in four steps (poster paint) instead of smooth. Found: a brushy mask
   (body-04's streaks) shows as ridges in metal, like hammered tin: kept, it's the drawing.
+- [x] **MT1b. The palette** (2026-11-06, to judge): page 1 of `material-check` (v), 28 materials on one shape
+  (n another): clay, plaster, stucco, stone, paper, felt, cotton; velvet ×2, satin, suede, leather,
+  rubber, wax; toy plastic, glazed pot, candy, jade, pearl, wet stone, mud; wood, varnished, brass,
+  gold, copper, tin, iron. Most are one 'surface' model with settings (PALETTE in the script: wrap,
+  shine, clear coat, sheen, edges darkened, light through, grain: sand / fibre / pebble / wood /
+  crackle, rainbow), so a new material is a row of numbers.
 - [ ] **MT2. Judge and tune** with Nikki: which read as made by hand, which as "computer".
 - [ ] **MT3. A material map per picture** (the sneaker idea): one more picture next to outline + mask
   saying which part is which material (leather / rubber / cloth), so one Mipo part can be two materials.

@@ -7,7 +7,13 @@
 --   row 3:    leaves (as drawn, then lit: from the front waxy, from behind the light comes through)
 --   right:    smoke puffs (the body shapes as puffs), rising, growing, wearing away at the edges
 -- The light is where the mouse is: in front of the pictures, or behind them (b).
+-- Two pages (v): the palette (every material on one shape, n another) and the rows above.
+-- The palette's materials are mostly one 'surface' model with settings (PALETTE): how far the light
+-- wraps round, a shine (its size, strength, white or the colour's own), a clear coat (glaze, varnish,
+-- wet), a sheen at the edges (cloth), the edges darkened (glaze pooling, worn leather), light coming
+-- through (wax, jade, candy), a grain (sand, fibre, pebble, wood, crackle) and a rainbow (pearl).
 -- keys:
+--   v palette / rows, leaves and smoke
 --   b light in front / behind   f the light stays put / follows the mouse   c light: sun / candle / moon
 --   p painted (the light in a few steps, like poster paint) / smooth   o outlines on / off
 --   n another shape for rows 1-2   l other leaves   s smoke: steam / smoke / soot   w wind
@@ -51,13 +57,64 @@ local SMOKES = {
 local PUFFS = { 'mipo/body/body-01', 'mipo/body/body-03', 'mipo/body/body-05', 'mipo/body/body-11',
     'mipo/body/body-13', 'mipo/body/body-16' }
 local RISES = { { 'dome', 1 }, { 'cushion', 0.5 }, { 'pebble', 0.2 } }
-local LIGHT_DEPTH = 420 -- how far in front of (or behind) the pictures the light is
+local LIGHT_DEPTH = 420
+
+-- The palette: one shape in every material. Fields (all optional, 0 when left out):
+--   spec = { strength, size (higher: smaller, sharper), tint (0 white .. 1 the colour's own), clear coat }
+--   surf = { wrap, sheen, edges darkened, light through }
+--   grain = { kind, scale, depth, tone }  kind: 1 sand, 2 fibre, 3 pebble, 4 wood, 5 crackle
+--   rainbow, rough (metal: 0 polished .. 1 dull)
+local SAND, FIBRE, PEBBLE, WOOD, CRACKLE = 1, 2, 3, 4, 5
+local PALETTE = {
+    -- matte
+    { name = 'clay', base = { 0.82, 0.5, 0.36 }, spec = { 0.08, 6 }, surf = { 0.35 }, grain = { SAND, 14, 0.25, 0.1 } },
+    { name = 'plaster', base = { 0.92, 0.88, 0.8 }, surf = { 0.25, 0, 0.15 }, grain = { SAND, 40, 0.6, 0.25 } },
+    { name = 'stucco', base = { 0.95, 0.78, 0.6 }, surf = { 0.2, 0, 0.2 }, grain = { PEBBLE, 22, 0.9, 0.35 } },
+    { name = 'stone', base = { 0.62, 0.62, 0.6 }, surf = { 0.15, 0, 0.25 }, grain = { CRACKLE, 5, 0.6, 0.5 } },
+    { name = 'paper', base = { 0.95, 0.93, 0.86 }, surf = { 0.6, 0, 0, 0.2 }, grain = { FIBRE, 30, 0.15, 0.12 } },
+    { name = 'felt', base = { 0.86, 0.32, 0.3 }, surf = { 0.5, 0.25 }, grain = { FIBRE, 22, 0.5, 0.3 } },
+    { name = 'cotton', base = { 0.42, 0.55, 0.78 }, surf = { 0.45, 0.2 }, grain = { FIBRE, 60, 0.35, 0.18 } },
+    -- cloth and soft
+    { name = 'velvet plum', mode = 2, base = { 0.45, 0.12, 0.3 } },
+    { name = 'velvet moss', mode = 2, base = { 0.22, 0.36, 0.14 } },
+    { name = 'satin', base = { 0.85, 0.66, 0.72 }, spec = { 0.5, 10 }, surf = { 0.3, 0.6 } },
+    { name = 'suede', base = { 0.66, 0.46, 0.28 }, surf = { 0.4, 0.35, 0.1 }, grain = { FIBRE, 90, 0.2, 0.1 } },
+    { name = 'leather', base = { 0.46, 0.25, 0.14 }, spec = { 0.35, 16, 0.2 }, surf = { 0.15, 0, 0.45 },
+        grain = { PEBBLE, 45, 0.5, 0.15 } },
+    { name = 'rubber', base = { 0.24, 0.24, 0.26 }, spec = { 0.18, 4 }, surf = { 0.2, 0.25 }, grain = { SAND, 50, 0.15, 0.05 } },
+    { name = 'wax', base = { 0.96, 0.86, 0.62 }, spec = { 0.2, 12 }, surf = { 0.7, 0, 0, 0.55 } },
+    -- shiny
+    { name = 'toy plastic', base = { 0.92, 0.22, 0.2 }, spec = { 1.0, 70 }, surf = { 0.15 } },
+    { name = 'glazed pot', base = { 0.2, 0.42, 0.55 }, spec = { 0.3, 20, 0.5, 1.0 }, surf = { 0.1, 0, 0.45 } },
+    { name = 'candy', base = { 0.95, 0.35, 0.55 }, spec = { 0.2, 30, 0, 1.0 }, surf = { 0.4, 0, 0, 0.6 } },
+    { name = 'jade', base = { 0.42, 0.7, 0.5 }, spec = { 0.2, 25, 0, 0.6 }, surf = { 0.5, 0, 0, 0.45 },
+        grain = { SAND, 6, 0.1, 0.2 } },
+    { name = 'pearl', base = { 0.93, 0.9, 0.86 }, spec = { 0.4, 30 }, surf = { 0.4, 0.3 }, rainbow = 0.8 },
+    { name = 'wet stone', base = { 0.3, 0.3, 0.32 }, spec = { 0.2, 20, 0, 1.2 }, surf = { 0.15, 0, 0.2 },
+        grain = { CRACKLE, 5, 0.4, 0.4 } },
+    { name = 'mud', base = { 0.36, 0.25, 0.16 }, spec = { 0.1, 30, 0, 0.7 }, surf = { 0.2 }, grain = { PEBBLE, 12, 0.7, 0.25 } },
+    -- wood and metal
+    { name = 'wood', base = { 0.74, 0.52, 0.3 }, spec = { 0.1, 8 }, surf = { 0.3 }, grain = { WOOD, 7, 0.25, 0.35 } },
+    { name = 'varnished', base = { 0.55, 0.3, 0.15 }, spec = { 0.15, 12, 0, 0.9 }, surf = { 0.2 }, grain = { WOOD, 7, 0.1, 0.4 } },
+    { name = 'brass', mode = 1, base = { 0.95, 0.72, 0.3 } },
+    { name = 'gold', mode = 1, base = { 1.0, 0.8, 0.28 }, spec = { 1.8, 90 } },
+    { name = 'copper', mode = 1, base = { 0.93, 0.5, 0.32 }, rough = 0.2 },
+    { name = 'tin', mode = 1, base = { 0.78, 0.8, 0.85 }, grain = { PEBBLE, 9, 0.35, 0 } },
+    { name = 'iron', mode = 1, base = { 0.45, 0.45, 0.48 }, spec = { 0.6, 14 }, rough = 0.8, grain = { SAND, 30, 0.3, 0.2 } },
+}
+local PALETTE_COLUMNS = 7
+local PALETTE_STEP = 390
+local PALETTE_CELL = 300
+local PALETTE_SHAPES = { 'mipo/body/body-12', 'mipo/body/body-06', 'mipo/body/body-15', 'mipo/body/body-17',
+    'mipo/body/body-03', 'mipo/patch/patch-01' } -- how far in front of (or behind) the pictures the light is
 
 local function lab()
     state.materialCheck = state.materialCheck or {
         back = false, frozen = false, light = 1, painted = false, outlines = true, shape = 1, leaves = 1,
         smoke = 1, wind = 0, rise = 1, puffs = {}, spawn = 0, lx = 0, ly = -900,
     }
+    state.materialCheck.page = state.materialCheck.page or 1 -- added later: a live state lacks it
+    state.materialCheck.paletteShape = state.materialCheck.paletteShape or 1
     return state.materialCheck
 end
 
@@ -70,12 +127,16 @@ local function materialShader()
         uniform vec3 toLight;    // in the picture's own frame (y down), normalised
         uniform vec3 lightColour;
         uniform vec3 ambient;
-        uniform vec3 base;
+        uniform vec3 baseColour;
         uniform float mode;      // 0 flat, 1 metal, 2 velvet, 3 leaf, 4 smoke
         uniform float bands;     // 0 smooth, else the light in this many steps
         uniform float seed;
         uniform float dissolve;  // smoke: 0 new, 1 gone
         uniform vec2 formTexel;  // one texel of the form map
+        uniform vec4 spec;       // strength, size, tint (0 white .. 1 its colour), clear coat
+        uniform vec4 surf;       // wrap, sheen, edges darkened, light through
+        uniform vec4 grain;      // kind (1 sand 2 fibre 3 pebble 4 wood 5 crackle), scale, depth, tone
+        uniform vec4 more;       // rainbow, the picture's aspect, metal roughness, -
 
         float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
         float vnoise(vec2 p) {
@@ -84,6 +145,39 @@ local function materialShader()
             f = f * f * (3.0 - 2.0 * f);
             return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x),
                 mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
+        }
+        // the nearest and second nearest cell point
+        vec2 cells(vec2 p) {
+            vec2 i = floor(p);
+            vec2 f = fract(p);
+            float d1 = 8.0;
+            float d2 = 8.0;
+            for (int y = -1; y <= 1; y++) {
+                for (int x = -1; x <= 1; x++) {
+                    vec2 o = vec2(float(x), float(y));
+                    vec2 r = o + vec2(hash(i + o), hash(i + o + 17.0)) - f;
+                    float d = dot(r, r);
+                    if (d < d1) { d2 = d1; d1 = d; } else if (d < d2) { d2 = d; }
+                }
+            }
+            return sqrt(vec2(d1, d2));
+        }
+        float grainAt(vec2 p) {
+            float kind = grain.x;
+            if (kind < 1.5) return hash(floor(p * 3.0)) * 0.45 + vnoise(p) * 0.55;
+            if (kind < 2.5) {
+                // fibres: noise stretched two ways, turned off the axes
+                vec2 a = mat2(0.8, 0.6, -0.6, 0.8) * p;
+                vec2 b = mat2(0.6, -0.8, 0.8, 0.6) * p;
+                return vnoise(a * vec2(1.0, 7.0)) * 0.5 + vnoise(b * vec2(7.0, 1.0)) * 0.5;
+            }
+            if (kind < 3.5) { float d = cells(p).x; return 1.0 - d * d; }
+            if (kind < 4.5) {
+                float r = p.y * 0.7 + vnoise(p * vec2(0.25, 1.2)) * 2.2;
+                return 0.5 + 0.5 * sin(r * 6.283);
+            }
+            vec2 e = cells(p);
+            return smoothstep(0.0, 0.1, e.y - e.x);
         }
         float st(float x) { return bands > 0.5 ? floor(x * bands + 0.5) / bands : x; }
 
@@ -101,8 +195,19 @@ local function materialShader()
             float h = f.r;
             vec2 nxy = (f.gb - 0.5) * 2.0;
             vec3 n = normalize(vec3(nxy, sqrt(max(0.0, 1.0 - dot(nxy, nxy)))));
+            // the grain: a small relief on the roundness, and a little in the colour
+            float g = 0.5;
+            if (grain.x > 0.5) {
+                vec2 gp = uv * vec2(more.y, 1.0) * grain.y;
+                g = grainAt(gp);
+                float e = 0.15;
+                float gx = grainAt(gp + vec2(e, 0.0)) - g;
+                float gy = grainAt(gp + vec2(0.0, e)) - g;
+                n = normalize(n - vec3(gx, gy, 0.0) / e * grain.z * 0.12);
+            }
             vec3 L = normalize(toLight);
             float ndl = dot(n, L);
+            vec3 base = baseColour * (1.0 + (g - 0.5) * grain.w * 2.0);
             vec3 col = base;
             float alpha = m;
 
@@ -116,9 +221,10 @@ local function materialShader()
                 float env = mix(0.42, 1.0, smoothstep(-0.05, 0.25, up));
                 env -= 0.32 * (1.0 - smoothstep(0.0, 0.12, abs(up + 0.02)));
                 env = mix(env, 0.6, 0.35 * n.z * n.z);
+                env = mix(env, 0.62, more.z * 0.75);
                 float lit = st(clamp(0.45 + 0.55 * ndl, 0.0, 1.0));
-                float spec = st(pow(max(dot(R, L), 0.0), 70.0)) * 1.5 + pow(max(dot(R, L), 0.0), 6.0) * 0.25;
-                col = base * st(env) * (ambient * 0.6 + lightColour * lit) + spec * mix(base, vec3(1.0), 0.45) * lightColour;
+                float shine = st(pow(max(dot(R, L), 0.0), spec.y)) * spec.x + pow(max(dot(R, L), 0.0), 6.0) * 0.25;
+                col = base * st(env) * (ambient * 0.6 + lightColour * lit) + shine * mix(base, vec3(1.0), 0.45) * lightColour;
             } else if (mode < 2.5) {
                 // velvet: the middle soaks up the light, the edges where the pile lies over shine
                 float wrap = max(0.0, (ndl + 0.4) / 1.4);
@@ -140,6 +246,30 @@ local function materialShader()
                 vec3 glow = mix(base * 1.6, vec3(0.86, 0.95, 0.32), 0.45) * lightColour * st(thin);
                 vec3 behind = base * ambient * 0.6 + glow;
                 col = mix(front, behind, back);
+            } else if (mode > 4.5) {
+                // the surface: wrapped light, edges darkened, a sheen, light coming through,
+                // a shine, a clear coat, a rainbow
+                float back = clamp(-L.z * 2.0, 0.0, 1.0);
+                float d = st(max(0.0, (ndl + surf.x) / (1.0 + surf.x)));
+                col = base * (ambient + d * lightColour);
+                col *= 1.0 - surf.z * pow(1.0 - n.z, 1.5);
+                float rim = pow(1.0 - n.z, 2.0);
+                float side = 0.35 + 0.65 * max(0.0, dot(normalize(n.xy + 1e-4), normalize(L.xy + 1e-4)));
+                col += st(rim * side * surf.y * (1.0 + back)) * mix(base, vec3(1.0), 0.5) * lightColour;
+                float thin = 1.0 - 0.6 * h;
+                col += surf.w * base * lightColour * (0.3 * d + 1.3 * back * thin);
+                vec3 H = normalize(L + vec3(0.0, 0.0, 1.0));
+                float nh = max(dot(n, H), 0.0);
+                if (spec.x > 0.0) col += st(pow(nh, max(spec.y, 1.0))) * spec.x * mix(vec3(1.0), base * 1.4, spec.z) * lightColour;
+                if (spec.w > 0.0) {
+                    vec3 R = vec3(2.0 * n.z * n.x, 2.0 * n.z * n.y, 2.0 * n.z * n.z - 1.0);
+                    float room = smoothstep(-0.05, 0.4, -R.y) * rim;
+                    col += spec.w * (st(pow(nh, 240.0)) * 1.6 + room * 0.35) * lightColour;
+                }
+                if (more.x > 0.0) {
+                    vec3 bow = 0.5 + 0.5 * cos(6.283 * ((1.0 - n.z) * 1.3 + vec3(0.0, 0.33, 0.67)));
+                    col += more.x * bow * 0.3 * lightColour * (0.4 + 0.6 * d);
+                }
             } else {
                 // smoke: soft, light wrapped far round, wearing away from its edges as it goes;
                 // from behind, its thin edges glow
@@ -211,11 +341,20 @@ local function drawPicture(name, mode, base, x, y, size, opts)
     sh:send('toLight', toLightFrom(x, y, rot))
     sh:send('lightColour', L.colour)
     sh:send('ambient', L.ambient)
-    sh:send('base', base)
+    sh:send('baseColour', base)
     sh:send('mode', mode)
     sh:send('bands', c.painted and 4 or 0)
     sh:send('seed', opts.seed or 0)
     sh:send('dissolve', opts.dissolve or 0)
+    local p = opts.params or {}
+    local function four(t, d)
+        t = t or {}
+        return { t[1] or d[1], t[2] or d[2], t[3] or d[3], t[4] or d[4] }
+    end
+    sh:send('spec', four(p.spec, mode == 1 and { 1.5, 70, 0, 0 } or { 0, 1, 0, 0 }))
+    sh:send('surf', four(p.surf, { 0, 0, 0, 0 }))
+    sh:send('grain', four(p.grain, { 0, 1, 0, 0 }))
+    sh:send('more', { p.rainbow or 0, w / h, p.rough or 0, 0 })
     love.graphics.setColor(1, 1, 1, opts.alpha or 1)
     love.graphics.draw(look.mask, x, y, rot, scale, scale, w / 2, h / 2)
     love.graphics.setShader()
@@ -302,6 +441,8 @@ function s.onKeyPress(key)
         c.painted = not c.painted
     elseif key == 'o' then
         c.outlines = not c.outlines
+    elseif key == 'n' and c.page == 1 then
+        c.paletteShape = c.paletteShape % #PALETTE_SHAPES + 1
     elseif key == 'n' then
         c.shape = c.shape % #SHAPES + 1
     elseif key == 'l' then
@@ -312,6 +453,8 @@ function s.onKeyPress(key)
         c.wind = (c.wind == 0 and 1) or (c.wind == 1 and -1) or 0
     elseif key == 'm' then
         c.rise = c.rise % #RISES + 1
+    elseif key == 'v' then
+        c.page = c.page % 2 + 1
     end
 end
 
@@ -352,8 +495,26 @@ local function drawLight()
     love.graphics.setColor(1, 1, 1, 1)
 end
 
+-- every material on one shape, in rows of PALETTE_COLUMNS
+local function drawPalette()
+    local c = lab()
+    local shape = PALETTE_SHAPES[c.paletteShape]
+    local x0 = -(PALETTE_COLUMNS - 1) / 2 * PALETTE_STEP + 150
+    for i, mat in ipairs(PALETTE) do
+        local col, row = (i - 1) % PALETTE_COLUMNS, math.floor((i - 1) / PALETTE_COLUMNS)
+        local x, y = x0 + col * PALETTE_STEP, -640 + row * 470
+        drawPicture(shape, mat.mode or 5, mat.base, x, y, PALETTE_CELL, { params = mat })
+        label(mat.name, x, y - PALETTE_CELL / 2 - 60)
+    end
+end
+
 function s.draw()
     local c = lab()
+    if c.page == 1 then
+        drawPalette()
+        drawLight()
+        return
+    end
     local shape = SHAPES[c.shape]
     local second = SHAPES[c.shape % #SHAPES + 1]
     for i, x in ipairs(COLUMNS) do
@@ -376,7 +537,7 @@ end
 function s.drawUI()
     local c = lab()
     local lines = {
-        'b light in front / behind   f light stays / follows the mouse   c sun / candle / moon   p painted   o outlines'
+        'v page   b light in front / behind   f light stays / follows the mouse   c sun / candle / moon   p painted   o outlines'
             .. '   n shape   l leaves   s steam / smoke / soot   w wind   m rise',
         string.format('light: %s, %s%s   %s   rise: %s   smoke: %s, wind %s   outlines %s',
             LIGHTS[c.light].name, c.back and 'behind' or 'in front', c.frozen and ' (stays)' or '',
