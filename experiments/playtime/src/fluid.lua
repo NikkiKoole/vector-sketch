@@ -39,6 +39,8 @@ typedef struct {
     int hasTank;
     float tx, ty, tcos, tsin, thw, tdepth, trest, tfric;
     float mass;
+    int hasFloor;
+    float floorY;
 } FluidSim;
 int fluid_step(FluidSim *f, const float *shapes, int nshapes, float *impulses);
 float fluid_rest_density(FluidSim *f, int mode);
@@ -100,6 +102,8 @@ function lib.new(opts)
     f.shapes = array(f, 'float', MAX_SHAPES * SHAPE_STRIDE)
     f.impulses = array(f, 'float', MAX_SHAPES * 3)
     f.bodies = {}
+    f.data = {}
+    for _, name in ipairs(f.dataNames or {}) do f.data[name] = {} end
     f.rho0 = 1
     f.acc = 0
     if f.native then
@@ -230,6 +234,18 @@ local function keepInTank(p, i)
     p.px[i], p.py[i] = tankWorld(p, px, py)
 end
 
+local function keepAboveFloor(p, i)
+    if p.hasFloor == 0 then return end
+    local y1 = p.floorY - p.pr
+    if p.y[i] > y1 then
+        local v = p.y[i] - p.py[i]
+        p.y[i] = y1
+        p.py[i] = y1 + v * p.trest
+        local vx = p.x[i] - p.px[i]
+        p.px[i] = p.x[i] - vx * p.tfric
+    end
+end
+
 local function collideShapes(p, i, S, ns, J)
     local r = p.pr
     for s = 0, ns - 1 do
@@ -349,6 +365,7 @@ local function stepLua(p, S, ns, J)
             X[i], Y[i] = X[i] + dpx[i], Y[i] + dpy[i]
             collideShapes(p, i, S, ns, J)
             keepInTank(p, i)
+            keepAboveFloor(p, i)
         end
     end
     local vlx, vly = p.vlx, p.vly
@@ -408,10 +425,12 @@ local function params(f)
         local a = tank:getAngle()
         p.tcos, p.tsin = math.cos(a), math.sin(a)
         p.thw, p.tdepth = f.tankHalfWidth, f.tankDepth
-        p.trest, p.tfric = 0.2, 0.92
     else
         p.hasTank = 0
     end
+    p.trest, p.tfric = 0.2, 0.92
+    p.hasFloor = f.floorY and 1 or 0
+    p.floorY = f.floorY or 0
     return p
 end
 
@@ -432,7 +451,7 @@ end
 
 local function gatherShapes(f)
     local world = state.physicsWorld
-    if not world or f.n == 0 then return 0 end
+    if not world or f.n == 0 or f.noShapes then return 0 end
     local minx, miny, maxx, maxy = bounds(f)
     local pad = f.h
     local S, bodies, count = f.shapes, f.bodies, 0
@@ -484,13 +503,25 @@ end
 
 ---------------------------------------------------------------- using it
 
+-- a point at (x, y) moving (vx, vy) px/s; returns its index, or nil when full. Per-point data of
+-- the caller's goes in f.data[name][i] (opts.data = { 'from', 'age' }): lib.remove keeps it in step.
 function lib.add(f, x, y, vx, vy)
-    if f.n >= f.maxn then return false end
+    if f.n >= f.maxn then return nil end
     local i = f.n
     f.x[i], f.y[i] = x, y
     f.px[i], f.py[i] = x - (vx or 0) * FRAME, y - (vy or 0) * FRAME
     f.n = i + 1
-    return true
+    for _, t in pairs(f.data) do t[i] = nil end
+    return i
+end
+
+-- take point i out (the last one takes its place)
+function lib.remove(f, i)
+    local last = f.n - 1
+    if i < 0 or i > last then return end
+    f.x[i], f.y[i], f.px[i], f.py[i] = f.x[last], f.y[last], f.px[last], f.py[last]
+    for _, t in pairs(f.data) do t[i], t[last] = t[last], nil end
+    f.n = last
 end
 
 local function step(f)
@@ -533,21 +564,35 @@ function lib.fill(f, x0, y0, x1, y1, maxCount)
     for i = 0, f.n - 1 do f.px[i], f.py[i] = f.x[i], f.y[i] end
 end
 
+-- For water that starts as nothing (poured): the rest density of a block of this size of point
+-- settled on a floor, with no bodies around. Kept per h and step.
+local restCache = {}
+function lib.calibrate(f)
+    local key = f.h .. (f.native and 'C' or 'Lua')
+    if not restCache[key] then
+        local was = lib.useNative
+        lib.useNative = f.native
+        local t = lib.new({ h = f.h, floorY = 0, noShapes = true, maxPoints = 300, maxPointsLua = 300 })
+        lib.useNative = was
+        local w = f.h * 0.62 * 14
+        lib.fill(t, -w / 2, -w, w / 2, 0)
+        restCache[key] = t.rho0
+    end
+    f.rho0 = restCache[key]
+end
+
 -- drop the points that fell off the world
 function lib.cull(f, minx, miny, maxx, maxy)
-    if f.native then
+    if f.native and not next(f.data) then
         f.fs.n = f.n
         f.n = native().fluid_cull(f.fs, minx, miny, maxx, maxy)
         return
     end
-    local n = f.n
-    for i = n - 1, 0, -1 do
+    for i = f.n - 1, 0, -1 do
         if f.x[i] < minx or f.x[i] > maxx or f.y[i] < miny or f.y[i] > maxy then
-            n = n - 1
-            f.x[i], f.y[i], f.px[i], f.py[i] = f.x[n], f.y[n], f.px[n], f.py[n]
+            lib.remove(f, i)
         end
     end
-    f.n = n
 end
 
 -- push the points near (x, y) along (dx, dy) px: a hand stirring

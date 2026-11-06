@@ -39,12 +39,14 @@ A second game next to a running one: `PLAYTIME_BRIDGE_PORT=8004 love . --bridge 
       Drawn as one stream: soft blobs stretched along their flight added up in a field canvas, the
       stream shader shows water where the field is over a line, its slope bending what's behind
       (the glass spike's roundness), a bright edge and a highlight. The sea's splash drops too.
+      Since WATERJAR WJ4 (2026-11-06) the poured water is particle water (`src/fluid.lua`): it
+      splashes, puddles on the table and the sand and soaks away, instead of drops that splat.
 - [ ] **SS3. Dipping.** A cup held under the sea fills up to its mouth.
 - [ ] **SS4. Floating in cups and the bath** (WATER.md W4), from the sea's `float`.
 - [ ] **SS5. Glass touches** from `glass` (GLASS-BEADS.md): a bright line where the water meets
       the wall, the light gathered at the bottom. Only if the plain shader looks short in a cup.
 
-Open: no puddles on the sand yet (drops just splat); the stream has a thin dark fringe where its
+Open: the stream has a thin dark fringe where its
 edge bends an ink line in.
 
 Known: water is drawn after the world, so a Mipo standing in front of a cup is seen through

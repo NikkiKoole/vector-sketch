@@ -25,6 +25,8 @@ typedef struct {
     int hasTank;
     float tx, ty, tcos, tsin, thw, tdepth, trest, tfric;
     float mass;
+    int hasFloor;
+    float floorY;
 } FluidSim;
 
 #define SHAPE_STRIDE 24 // type, vx, vy, w, cx, cy, flags, nv | circle x, y, r | poly verts (8 max)
@@ -132,6 +134,19 @@ static void markInTank(FluidSim *f) {
         float lx, ly;
         tankLocal(f, f->px[i], f->py[i], &lx, &ly);
         f->inTank[i] = (fabsf(lx) < f->thw && ly > -f->tdepth) ? 1 : 0;
+    }
+}
+
+// a flat floor (a beach): kept above it, rubbing off speed along it like the tank's floor
+static void keepAboveFloor(FluidSim *f, int i) {
+    if (!f->hasFloor) return;
+    float y1 = f->floorY - f->pr;
+    if (f->y[i] > y1) {
+        float v = f->y[i] - f->py[i];
+        f->y[i] = y1;
+        f->py[i] = y1 + v * f->trest;
+        float vx = f->x[i] - f->px[i];
+        f->px[i] = f->x[i] - vx * f->tfric;
     }
 }
 
@@ -263,6 +278,7 @@ int fluid_step(FluidSim *f, const float *shapes, int nshapes, float *impulses) {
             f->x[i] += f->dpx[i]; f->y[i] += f->dpy[i];
             collideShapes(f, i, shapes, nshapes, impulses);
             keepInTank(f, i);
+            keepAboveFloor(f, i);
         }
     }
     // 4) XSPH viscosity

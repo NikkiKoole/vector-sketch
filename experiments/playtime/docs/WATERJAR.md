@@ -1,6 +1,6 @@
 # Waterjar — particle water you tip and slosh
 
-status: parked — kept as a spike: "pretty good experiment!" (tried 2026-11-06, scene `waterjar`); next would be the phone cost (WJ3) and points only while water pours (WJ4)
+status: parked — kept as a spike: "pretty good experiment!" (tried 2026-11-06, scene `waterjar`); its pouring went into `seaside` (WJ4); the phone cost (WJ3) is left
 
 A spike (2026-11-06): dreamengine's `waterjar` cart (`~/Projects/dreamengine/tools/carts/waterjar.c`)
 brought over. Water as ~1000 points that push each other apart (Position-Based Fluids, Macklin &
@@ -40,6 +40,9 @@ Measured (`spec/fluid_spec.lua`, the Mac): C 1088 points 0.5 ms a frame; Lua 350
   Mipos feel in the water (light ones get thrown far by a wave).
 - [ ] **WJ3. Cost on the phone** (`./playtime.sh bench device`): the step, and the blob canvas
   (a full-screen float canvas + 1000 sprites).
-- [ ] **WJ4. Points only while water moves** (option 2): level LIQUID water at rest; what pours
-  out of a cup (SEASIDE SS2's spill hook) becomes points that fall and splash, and turns back into
-  level water in the next cup or the bath.
+- [x] **WJ4. Points only while water moves** (2026-11-06, in `seaside`): cups and the bath stay
+  level LIQUID water; what pours out (SEASIDE SS2's spill hook) leaves the rim as fluid points
+  (`h` 30, one fluid for the scene, `fluid.calibrate` since there's no tank to settle in). They fall,
+  splash and puddle on the table and the sand (a flat `floorY` for the beach, which is a chain
+  shape the step can't see), join a cup or the bath they land in, join the sea, and a still point
+  soaks away after ~2.5 s. Drawn by seaside's own see-through stream shader. Nikki to judge.

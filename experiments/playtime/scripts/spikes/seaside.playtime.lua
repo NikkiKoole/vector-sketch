@@ -601,6 +601,9 @@ end
 local function resetWater(b)
     for i = 0, COLS do b.h[i], b.v[i], b.foam[i] = 0, 0, 0 end
     b.drops, b.bubbles = {}, {}
+    if b.pour then
+        for i = b.pour.n - 1, 0, -1 do fluid.remove(b.pour, i) end
+    end
 end
 
 ---------------------------------------------------------------- floating
@@ -800,8 +803,19 @@ end
 ---------------------------------------------------------------- pouring
 
 local FLOW = 40000      -- area units a second through a rim at most
-local DROP_AREA = 700   -- the water one poured drop carries
-local DROP_R = 15
+local POUR_H = 30       -- poured water is points of particle water (src/fluid.lua, WATERJAR WJ4)
+local POINT_AREA = (0.62 * POUR_H) ^ 2 -- the water one point carries (they sit 0.62 h apart)
+local POINT_R = 21      -- a point drawn as a drop this big (overlapping its neighbours: one stream)
+local SOAK = 2.5        -- s a still point lies on the sand or the table before it soaks away
+
+-- the poured water: one fluid for all the cups, made when first needed (kept on state)
+local function pourWater(b)
+    if not b.pour then
+        b.pour = fluid.new({ h = POUR_H, floorY = BEACH_Y, dataNames = { 'from', 'age', 'still' } })
+        fluid.calibrate(b.pour)
+    end
+    return b.pour
+end
 
 -- the vessels' water this frame: world hull, level, how much a full one holds
 local function vesselWater(b)
@@ -853,39 +867,59 @@ function s.onSpill(extra, body, spilled)
     local len = math.max(math.sqrt(ox * ox + oy * oy), 1)
     local vx, vy = body:getLinearVelocityFromWorldPoint(mx, my)
     local push = 90 + 260 * math.min(out / (FLOW * dt), 1)
-    while p.carry >= DROP_AREA do
-        p.carry = p.carry - DROP_AREA
+    local f = pourWater(b)
+    local sp = 0.62 * POUR_H
+    while p.carry >= POINT_AREA do
+        p.carry = p.carry - POINT_AREA
         local j = love.math.random() - 0.5
-        b.drops[#b.drops + 1] = {
-            x = mx + ox / len * DROP_R + j * 10, y = my + j * 6,
-            vx = vx + ox / len * push + j * 30, vy = vy + oy / len * push * 0.3,
-            r = DROP_R * (0.8 + love.math.random() * 0.4), life = 6,
-            amount = DROP_AREA, from = body, age = 0,
-        }
+        local i = fluid.add(f, mx + ox / len * sp + j * sp, my + j * sp * 0.5,
+            vx + ox / len * push + j * 30, vy + oy / len * push * 0.3)
+        if not i then -- no room for more points: it stays in the cup
+            extra.fill = extra.fill + (p.carry + POINT_AREA) / full
+            p.carry = 0
+            break
+        end
+        f.data.from[i], f.data.age[i], f.data.still[i] = body, 0, 0
     end
 end
 
--- something solid at (x, y), other than `skip`
-local function solidAt(x, y, skip)
-    local hit = false
-    world:queryBoundingBox(x - 1, y - 1, x + 1, y + 1, function(fixture)
-        if fixture:isSensor() or fixture:getBody() == skip then return true end
-        if fixture:testPoint(x, y) then hit = true; return false end
-        return true
-    end)
-    return hit
+-- The poured points: into a cup or the bath they join its water, into the sea they join it; on
+-- the sand or the table they puddle, and a puddle soaks away.
+local function pourPoints(b, dt, vessels)
+    local f = b.pour
+    if not f or f.n == 0 then return end
+    fluid.update(f, dt)
+    local from, age, still = f.data.from, f.data.age, f.data.still
+    for i = f.n - 1, 0, -1 do repeat
+        local x, y = f.x[i], f.y[i]
+        local vx, vy = x - f.px[i], y - f.py[i]
+        age[i] = (age[i] or 0) + dt
+        local gone = false
+        if vy >= 0 then
+            for _, v in ipairs(vessels) do
+                if v.full > 0 and (v.p.body ~= from[i] or age[i] > 0.4) and insideConvex(v.hull, x, y)
+                    and (not v.level or y > v.level - POINT_R) then
+                    v.p.extra.fill = math.min(1, v.p.extra.fill + POINT_AREA / v.full)
+                    gone = true
+                    break
+                end
+            end
+        end
+        if not gone and x < LAND_X and y > surfaceAt(b, x) then
+            pushColumns(b, x, x, POINT_R * 1.5) -- into the sea
+            gone = true
+        end
+        if not gone and vx * vx + vy * vy < 1 then
+            still[i] = (still[i] or 0) + dt
+            gone = still[i] > SOAK + (i % 7) * 0.3
+        elseif not gone then
+            still[i] = 0
+        end
+        if gone or y > SEA_Y + DEEP + 600 then fluid.remove(f, i) end
+    until true end
 end
 
-local function splat(b, d)
-    for _ = 1, 2 do
-        b.drops[#b.drops + 1] = {
-            x = d.x, y = d.y - d.r, vx = d.vx * 0.3 + (love.math.random() - 0.5) * 260,
-            vy = -math.abs(d.vy) * (0.1 + love.math.random() * 0.15), r = d.r * 0.5, life = 0.35,
-        }
-    end
-end
-
-local function particles(b, dt, vessels)
+local function particles(b, dt)
     local _, gy = world:getGravity()
     local keep = {}
     local drops = b.drops
@@ -894,32 +928,14 @@ local function particles(b, dt, vessels)
         d.vy = d.vy + gy * dt
         d.x, d.y = d.x + d.vx * dt, d.y + d.vy * dt
         d.life = d.life - dt
-        d.age = (d.age or 0) + dt
         if d.life <= 0 then break end
-        -- into a cup or the bath: it joins that water
-        local caught = false
-        if d.amount and d.vy > 0 then
-            for _, v in ipairs(vessels) do
-                if v.full > 0 and (v.p.body ~= d.from or d.age > 0.4) and insideConvex(v.hull, d.x, d.y)
-                    and (not v.level or d.y > v.level - d.r) then
-                    v.p.extra.fill = math.min(1, v.p.extra.fill + d.amount / v.full)
-                    caught = true
-                    break
-                end
-            end
-        end
-        if caught then break end
         if d.vy > 0 and d.x < LAND_X and d.y > surfaceAt(b, d.x) then
             pushColumns(b, d.x, d.x, d.r * 1.5) -- into the sea
             break
         end
-        if d.y > floorAt(d.x) or (d.amount and solidAt(d.x, d.y, d.age < 0.25 and d.from or nil)) then
-            if d.amount then splat(b, d) end -- on the sand, the table, a Mipo
-            break
-        end
+        if d.y > floorAt(d.x) then break end
         keep[#keep + 1] = d
     until true end
-    for _, d in ipairs(b.drops) do keep[#keep + 1] = d end -- the splats just made
     b.drops = keep
     keep = {}
     for _, bb in ipairs(b.bubbles) do
@@ -1008,7 +1024,8 @@ function s.update(dt)
     end
     waves(b, dt)
     float(b, dt)
-    particles(b, dt, vesselWater(b))
+    particles(b, dt)
+    pourPoints(b, dt, vesselWater(b))
 end
 
 ---------------------------------------------------------------- drawing
@@ -1197,7 +1214,9 @@ end
 
 -- the drops (poured and splashed) as one water: blobs into the field, then the stream shader
 local function drawStream(b)
-    if #b.drops == 0 then return end
+    local f = b.pour
+    local points = f and f.n or 0
+    if #b.drops == 0 and points == 0 then return end
     local canvas = love.graphics.getCanvas()
     love.graphics.setCanvas(fieldCanvas)
     love.graphics.clear(0, 0, 0, 0)
@@ -1209,6 +1228,13 @@ local function drawStream(b)
         local stretch = 1 + math.min(speed / 1400, 1.2)
         local sc = d.r * BLOB / half * math.min(d.life * 3, 1)
         love.graphics.draw(blobImage, d.x, d.y, math.atan2(d.vy, d.vx), sc * stretch, sc / math.sqrt(stretch), half, half)
+    end
+    -- the poured points (px a frame: their speed is 60 times that)
+    local sc = POINT_R * BLOB / half
+    for i = 0, points - 1 do
+        local vx, vy = (f.x[i] - f.px[i]) * 60, (f.y[i] - f.py[i]) * 60
+        local stretch = 1 + math.min(math.sqrt(vx * vx + vy * vy) / 1400, 1.2)
+        love.graphics.draw(blobImage, f.x[i], f.y[i], math.atan2(vy, vx), sc * stretch, sc / math.sqrt(stretch), half, half)
     end
     love.graphics.setBlendMode('alpha')
     if canvas then love.graphics.setCanvas({ canvas, stencil = true }) else love.graphics.setCanvas() end
