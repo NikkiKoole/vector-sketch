@@ -114,8 +114,26 @@ The talk assumed Box2D v3 (`b2Shape_SetFilter`, `b2Body_SetBullet`, one-sided ch
   switches, none out, top ~1460 px/s.
   A stretch must be longer than its corners take (~200 each for a right angle), or the arcs
   overlap and the walls fold (a Box2D chain assertion).
-- [ ] **TR3. The cart.** A box in the channel (wheels on both walls or a rounded slider), bullet,
+- [x] **TR3. The cart.** A box in the channel (wheels on both walls or a rounded slider), bullet,
   ballast, switching layers like the marble. Loops and a drop. Hoist, booster and brake as forces.
+  Built 2026-11-06 (`c` a cart): a box on four wheels on revolute joints, two on each wall with 3 px
+  of play (a bend widens the pipe along the cart's normal, so it never jams; the box never
+  touches a wall). All its fixtures switch layer together. The pipe is wider (half 70). The
+  course gets a drop and a **loop** at the bottom: it crosses its own way in, which only works
+  with layers. The way in is A, the loop turns to B over its top, and the way out passes behind.
+  Drives per stretch (forces at the mover's mass): `hoist` (cancels gravity, holds 700 both ways),
+  `pace` (holds 2000 both ways, a coaster's tyre drive: on the run-in and up the loop's climb),
+  `brake` (slows only, to 500, on the run-out). Waypoints can have their own corner radius.
+  Measured headless (three simulated minutes): one cart and four marbles, 11 loops by the
+  cart (a lap every ~16 s), none out, top ~2000 px/s; one cart and 13 marbles, 10 loops, none
+  out, traffic queues at the loop but clears.
+  Tried on the way: 200 px corners on the loop at ~2000 px/s (~10 g): the cart wedged sideways
+  and everything piled up behind it (the loop is now a circle of 300). Light wheels under a heavy
+  box let the joints stretch (wheels now near the box's weight). Marbles of radius 30 in the wider
+  pipe wedged across it in pairs (now 40). A pace of 1750 only on the run-in: rolling marbles need
+  ~1800 for the loop (spin takes some), rolled back and blocked the cart, and a bunched train
+  stalled halfway up (now 2000, and up the climb too). The loop is drawn as a pear (its back half
+  shrinks toward the vanishing point): TR5's depth should fix it.
 - [ ] **TR4. A rider.** A Mipo seated on the soapbox's wheel-joint seat, the track masked out,
   one negative group with the cart, drawn at the cart's depth and size. Loose shoulders; does
   the seat hold in a loop (stiffen at speed if it stretches)?

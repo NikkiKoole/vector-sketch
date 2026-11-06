@@ -1,14 +1,17 @@
--- tracks: marbles rolling through a glass pipe on two depth layers, a knikkerbaan to watch (docs/TRACKS.md)
+-- tracks: marbles and carts rolling through a glass pipe on two depth layers, a knikkerbaan to watch (docs/TRACKS.md)
 -- The pipe is a closed loop: a centre line (waypoints with rounded corners, resampled to an even
 -- step: arc length, nearest point), its walls as chains offset either side. Every stretch is in a
--- track layer, a collision category: the zigzag down is layer A (front), the riser up through the
--- middle and the way back over the top are layer B (behind), so the riser crosses the zigzag three
--- times and the marbles pass behind each other. Where the layer changes, both layers' walls run
--- side by side for a stretch; a marble's filter switches at its middle by arc position (rolling
--- back switches it back), and only the drawn depth eases across: smaller toward a vanishing point,
--- hazier. The riser is a hoist stretch (achtbaan's hoist flag, here a force along the pipe):
--- it pulls the marbles up and over the top, like a buizenpost. No buttons: it runs on its own.
--- keys: m another marble   r start over   p pause
+-- track layer, a collision category: the zigzag down is layer A (front); a loop at the bottom
+-- turns to layer B over its top, so its way out passes behind its way in; the riser up through
+-- the middle and the way back over the top are B too, crossing the zigzag three times. Where the
+-- layer changes, both layers' walls run side by side for a stretch; a mover's filter switches at
+-- its middle by arc position (rolling back switches it back), and only the drawn depth eases
+-- across: smaller toward a vanishing point, hazier. Stretches can drive (achtbaan's flags, here
+-- forces along the pipe, not set speeds): a tyre drive holding the speed into the loop, a brake after it, and the
+-- riser a hoist that pulls everything up and over the top, like a buizenpost.
+-- A cart: a box on four wheels, two on each wall of the pipe, so a loop can't drop it; only its
+-- wheels touch the walls. No buttons: it runs on its own.
+-- keys: m a marble   c a cart   r start over   p pause
 
 local s = {}
 
@@ -16,29 +19,46 @@ local s = {}
 local TRACK_LAYERS = { A = 2, B = 3, C = 4, D = 5, E = 6 }
 local LAYER_DEPTH = { A = 0, B = 1, C = 2, D = 3, E = 4 } -- drawn depth: 0 in front
 
-local MARBLE_R = 30
-local HALF = 46           -- the pipe's inside half width: a marble has 16 px to spare a side
+local HALF = 70           -- the pipe's inside half width
 local CORNER = 200        -- corner radius (well over HALF, or the inner wall folds)
 local STEP = 15           -- centre line sample spacing (px of arc length)
 local TRANSITION = 600    -- length of a layer change, both layers' walls side by side (360 showed a jog)
 local WALL = 8            -- drawn wall thickness
+local MARBLE_R = 40        -- two side by side would need 160: more than the pipe (30 wedged across it in pairs)
 local MARBLES = 4         -- at the start
-local MAX_MARBLES = 12
-local HOIST_SPEED = 700   -- px a second up the riser
-local HOIST_GAIN = 4      -- 1/s: how quickly it gets a marble to that speed
+local CARTS = 1
+local MAX_MOVERS = 14
+-- the cart: wheels at both ends, on both walls, with a little play across (a bend widens the
+-- pipe along the cart's normal, so it never jams; the box stays clear of the walls)
+local CART_LENGTH = 160
+local CART_HALF_HEIGHT = 30
+local WHEEL_R = 20
+local AXLE_ALONG = 55     -- axles this far before and behind the middle
+local AXLE_ACROSS = HALF - WHEEL_R - 3 -- 3 px of play on each wall
+local CART_DENSITY = 3
+local WHEEL_DENSITY = 4   -- near the box's mass: light wheels under a heavy box let the joints stretch
+-- driving stretches: { speed, gain (1/s) }; hoist cancels gravity along the pipe and holds the
+-- speed both ways, pace holds it both ways (a coaster's tyre drive), a brake only slows down to it
+local DRIVES = {
+    hoist = { speed = 700, gain = 4 },
+    pace = { speed = 2000, gain = 3 }, -- a rolling marble needs ~1800 for the loop (1750 and they rolled back)
+    brake = { speed = 500, gain = 3 },
+}
 local STILL_FOR = 6       -- seconds stopped outside the hoist: nudged along the pipe
 -- drawn depth: a layer one deeper is drawn this much smaller toward the vanishing point, hazier
 local DEPTH_SHRINK = 0.16
 local DEPTH_HAZE = 0.4
-local VANISH_X, VANISH_Y = 950, 900
+local VANISH_X, VANISH_Y = 950, 1000
 
 local COLORS = {
     { 0.85, 0.25, 0.2 }, { 0.2, 0.45, 0.85 }, { 0.95, 0.75, 0.2 }, { 0.25, 0.65, 0.35 },
     { 0.6, 0.35, 0.75 }, { 0.95, 0.5, 0.2 }, { 0.3, 0.75, 0.8 }, { 0.9, 0.45, 0.6 },
 }
 
-local function check() -- on state: a script hot reload keeps the marbles rolling
-    state.tracksSpike = state.tracksSpike or { marbles = {}, stats = { escapes = 0, topSpeed = 0, switches = 0 } }
+local function newStats() return { escapes = 0, topSpeed = 0, switches = 0, cartTop = 0, loops = 0 } end
+
+local function check() -- on state: a script hot reload keeps them rolling
+    state.tracksSpike = state.tracksSpike or { movers = {}, stats = newStats() }
     return state.tracksSpike
 end
 
@@ -47,7 +67,7 @@ local function alive(body) return body and not body:isDestroyed() end
 -- ─── The track: waypoints → centre line → walls per layer ───
 
 -- the course, in the direction of travel, y down. Each waypoint starts a straight stretch to the
--- next one, in a layer, maybe a hoist. Waypoints on a straight line split a stretch (a layer
+-- next one, in a layer, maybe driving. Waypoints on a straight line split a stretch (a layer
 -- change in the middle of one).
 local WAYPOINTS = {
     { -300, 0, 'A' },
@@ -55,10 +75,17 @@ local WAYPOINTS = {
     { 2200, 750, 'A' },
     { 100, 1000, 'A' },
     { 100, 1450, 'A' },
-    { 2200, 1700, 'A' },
-    { 2200, 2150, 'A' },
-    { 1600, 2225, 'B' },      -- halfway along the bottom run: into the back layer
-    { 1000, 2300, 'B', hoist = true }, -- the riser, behind the zigzag, crossing it
+    { 2200, 1700, 'A' },      -- then a drop
+    { 2200, 2500, 'A', drive = 'pace' }, -- the run-in to the loop, held at its speed
+    -- the loop: a square with corners as big as can be, so a circle (with 200 px corners at
+    -- ~2000 px/s the cart took ~10 g, wedged sideways and everything piled up behind it)
+    -- up, driven too: a train of bunched movers stalled halfway up, and what rolled back blocked the rest
+    { 1300, 2500, 'A', r = 300, drive = 'pace' },
+    { 1300, 1900, 'A', r = 300 }, -- over the top (turning to the back layer),
+    { 1600, 1900, 'B' },
+    { 1900, 1900, 'B', r = 300 }, -- and down, behind the run-in
+    { 1900, 2700, 'B', drive = 'brake' }, -- the run-out, braked
+    { 1000, 2700, 'B', drive = 'hoist' }, -- the riser, behind the zigzag, crossing it
     { 1000, -800, 'B' },      -- over the top, back to the left, behind
     { -300, -650, 'B' },
     { -300, -325, 'A' },      -- halfway down the drop: to the front again
@@ -67,11 +94,12 @@ local WAYPOINTS = {
 -- or the arcs overlap and the walls fold: a Box2D chain assertion)
 
 -- the centre line, dense: straight stretches with arcs at the corners; each point knows its
--- stretch's layer and hoist (an arc belongs to the stretch after it, and is hoist when either is)
+-- stretch's layer and drive (an arc belongs to the stretch after it; a hoist carries on through
+-- the corner after it, over the top)
 local function cornerPoints()
     local pts = {}
     local n = #WAYPOINTS
-    local function add(x, y, w, hoist) pts[#pts + 1] = { x = x, y = y, layer = w[3], hoist = hoist } end
+    local function add(x, y, w, drive) pts[#pts + 1] = { x = x, y = y, layer = w[3], drive = drive } end
     -- each corner's arc: from where it leaves the stretch before to where it joins the next
     local arcs = {}
     for i = 1, n do
@@ -83,16 +111,17 @@ local function cornerPoints()
         local vl = math.sqrt(vx * vx + vy * vy)
         vx, vy = vx / vl, vy / vl
         local turn = math.acos(math.max(-1, math.min(1, ux * vx + uy * vy)))
+        local radius = p.r or CORNER
         if turn < 1e-3 then
             arcs[i] = { x0 = p[1], y0 = p[2], x1 = p[1], y1 = p[2] }
         else
-            local t = CORNER * math.tan(turn / 2)
+            local t = radius * math.tan(turn / 2)
             local cross = ux * vy - uy * vx
             local nx, ny = -uy, ux
             if cross < 0 then nx, ny = uy, -ux end
             local x0, y0 = p[1] - ux * t, p[2] - uy * t
-            local cx, cy = x0 + nx * CORNER, y0 + ny * CORNER
-            arcs[i] = {
+            local cx, cy = x0 + nx * radius, y0 + ny * radius
+            arcs[i] = { r = radius,
                 x0 = x0, y0 = y0, x1 = p[1] + vx * t, y1 = p[2] + vy * t,
                 cx = cx, cy = cy, a0 = math.atan2(y0 - cy, x0 - cx), sweep = cross < 0 and -turn or turn,
             }
@@ -102,25 +131,25 @@ local function cornerPoints()
         local w, prev = WAYPOINTS[i], WAYPOINTS[(i - 2) % n + 1]
         local arc = arcs[i]
         if arc.cx then
-            local hoist = w.hoist or prev.hoist
-            local count = math.max(2, math.floor(math.abs(arc.sweep) * CORNER / 5))
+            local drive = prev.drive == 'hoist' and 'hoist' or w.drive
+            local count = math.max(2, math.floor(math.abs(arc.sweep) * arc.r / 5))
             for k = 0, count do
                 local ang = arc.a0 + arc.sweep * k / count
-                add(arc.cx + math.cos(ang) * CORNER, arc.cy + math.sin(ang) * CORNER, w, hoist)
+                add(arc.cx + math.cos(ang) * arc.r, arc.cy + math.sin(ang) * arc.r, w, drive)
             end
         else
-            add(arc.x0, arc.y0, w, w.hoist)
+            add(arc.x0, arc.y0, w, w.drive)
         end
         -- the straight stretch to the next corner's arc
         local nextArc = arcs[i % n + 1]
         local dx, dy = nextArc.x0 - arc.x1, nextArc.y0 - arc.y1
         local count = math.max(1, math.floor(math.sqrt(dx * dx + dy * dy) / 5))
-        for k = 1, count - 1 do add(arc.x1 + dx * k / count, arc.y1 + dy * k / count, w, w.hoist) end
+        for k = 1, count - 1 do add(arc.x1 + dx * k / count, arc.y1 + dy * k / count, w, w.drive) end
     end
     return pts
 end
 
--- resample a closed line at an even step: { x, y, s, tx, ty, nx, ny, layer, hoist }
+-- resample a closed line at an even step: { x, y, s, tx, ty, nx, ny, layer, drive }
 local function resample(pts, step)
     local n = #pts
     local total = 0
@@ -139,7 +168,7 @@ local function resample(pts, step)
         local a, b = pts[j], pts[j % n + 1]
         local t = (d - cum[j]) / math.max(1e-9, cum[j + 1] - cum[j])
         out[#out + 1] = { x = a.x + (b.x - a.x) * t, y = a.y + (b.y - a.y) * t, s = d,
-            layer = a.layer, hoist = a.hoist }
+            layer = a.layer, drive = a.drive }
     end
     -- tangents (central difference) and normals (to the right of travel: y down, so (-ty, tx))
     local m = #out
@@ -268,78 +297,168 @@ local function nearest(track, x, y, hint)
     return best, math.sqrt(bestD)
 end
 
--- ─── Marbles ───
+-- ─── Movers: marbles and carts ───
+-- { kind, body (the one followed), bodies, fixtures, mass, out (off the line further than this:
+-- through a wall), index, layer, still, color }
 
--- a marble in a layer: its own category, every other track layer masked out
+-- a mover in a layer: its own category, every other track layer masked out
 local function setLayer(m, layer)
     if m.layer == layer then return end
     local others = {}
     for name, category in pairs(TRACK_LAYERS) do
         if name ~= layer then others[#others + 1] = category end
     end
-    m.fixture:setCategory(TRACK_LAYERS[layer])
-    m.fixture:setMask(unpack(others))
+    for _, f in ipairs(m.fixtures) do
+        f:setCategory(TRACK_LAYERS[layer])
+        f:setMask(unpack(others))
+    end
     m.layer = layer
+end
+
+-- a free spot near the start: behind whatever is there already
+local function startIndex(c, room)
+    local line = c.track.line
+    local i = 1
+    for _ = 1, 40 do
+        local free = true
+        for _, m in ipairs(c.movers) do
+            if alive(m.body) then
+                local x, y = m.body:getPosition()
+                local dx, dy = x - line[i].x, y - line[i].y
+                if dx * dx + dy * dy < (room + (m.kind == 'cart' and CART_LENGTH / 2 or MARBLE_R) + 10) ^ 2 then
+                    free = false
+                end
+            end
+        end
+        if free then return i end
+        i = (i - 4 - 1) % #line + 1
+    end
+    return nil
+end
+
+local function addMover(c, m, i)
+    m.index, m.still = i, 0
+    m.mass = 0
+    for _, b in ipairs(m.bodies) do
+        b:setBullet(true)
+        m.mass = m.mass + b:getMass()
+    end
+    setLayer(m, c.track.line[i].layer)
+    c.movers[#c.movers + 1] = m
 end
 
 local function addMarble()
     local c = check()
-    if #c.marbles >= MAX_MARBLES then return end
-    local line = c.track.line
-    -- at the start, behind any marble already there
-    local i = 1
-    for _, m in ipairs(c.marbles) do
-        if alive(m.body) then
-            local x, y = m.body:getPosition()
-            local dx, dy = x - line[i].x, y - line[i].y
-            if dx * dx + dy * dy < (MARBLE_R * 2.2) ^ 2 then i = (i - 6 - 1) % #line + 1 end
-        end
-    end
-    local p = line[i]
+    if #c.movers >= MAX_MOVERS then return end
+    local i = startIndex(c, MARBLE_R)
+    if not i then return end
+    local p = c.track.line[i]
     local body = love.physics.newBody(world, p.x, p.y, 'dynamic')
     local f = love.physics.newFixture(body, love.physics.newCircleShape(MARBLE_R), 1)
     f:setFriction(0.6)
     f:setRestitution(0.2)
-    body:setBullet(true)
-    local m = { body = body, fixture = f, index = i, still = 0, color = COLORS[(#c.marbles) % #COLORS + 1] }
-    setLayer(m, p.layer)
-    c.marbles[#c.marbles + 1] = m
+    addMover(c, {
+        kind = 'marble', body = body, bodies = { body }, fixtures = { f },
+        out = HALF + MARBLE_R, color = COLORS[#c.movers % #COLORS + 1],
+    }, i)
 end
 
-local function removeMarbles()
+local function addCart()
     local c = check()
-    for _, m in ipairs(c.marbles) do
-        if alive(m.body) then m.body:destroy() end
+    if #c.movers >= MAX_MOVERS then return end
+    local i = startIndex(c, CART_LENGTH / 2)
+    if not i then return end
+    local p = c.track.line[i]
+    local angle = math.atan2(p.ty, p.tx)
+    local body = love.physics.newBody(world, p.x, p.y, 'dynamic')
+    body:setAngle(angle)
+    local box = love.physics.newFixture(body,
+        love.physics.newRectangleShape(CART_LENGTH - 2 * WHEEL_R, 2 * CART_HALF_HEIGHT), CART_DENSITY)
+    box:setFriction(0.3)
+    local bodies, fixtures, wheels = { body }, { box }, {}
+    for _, along in ipairs({ -AXLE_ALONG, AXLE_ALONG }) do
+        for _, across in ipairs({ -AXLE_ACROSS, AXLE_ACROSS }) do
+            local wx = p.x + p.tx * along + p.nx * across
+            local wy = p.y + p.ty * along + p.ny * across
+            local wheel = love.physics.newBody(world, wx, wy, 'dynamic')
+            local wf = love.physics.newFixture(wheel, love.physics.newCircleShape(WHEEL_R), WHEEL_DENSITY)
+            wf:setFriction(0.8)
+            love.physics.newRevoluteJoint(body, wheel, wx, wy, false)
+            bodies[#bodies + 1], fixtures[#fixtures + 1] = wheel, wf
+            wheels[#wheels + 1] = wheel
+        end
     end
-    c.marbles = {}
+    addMover(c, {
+        kind = 'cart', body = body, bodies = bodies, fixtures = fixtures, wheels = wheels,
+        out = HALF, color = COLORS[#c.movers % #COLORS + 1],
+    }, i)
+end
+
+local function removeMovers()
+    local c = check()
+    for _, m in ipairs(c.movers) do
+        for _, b in ipairs(m.bodies) do
+            if alive(b) then b:destroy() end -- its joints go with it
+        end
+    end
+    c.movers = {}
 end
 
 local function startOver()
     local c = check()
-    removeMarbles()
-    c.stats = { escapes = 0, topSpeed = 0, switches = 0 }
+    removeMovers()
+    c.stats = newStats()
+    for _ = 1, CARTS do addCart() end
     for _ = 1, MARBLES do addMarble() end
 end
 
-local function updateMarble(c, m, dt, gy)
+-- every body of a mover to (x, y), lined up with the pipe there, at rest
+local function putBack(m, p)
+    local x0, y0 = m.body:getPosition()
+    local a0 = m.body:getAngle()
+    local a1 = math.atan2(p.ty, p.tx)
+    local cs, sn = math.cos(a1 - a0), math.sin(a1 - a0)
+    for _, b in ipairs(m.bodies) do
+        local bx, by = b:getPosition()
+        local dx, dy = bx - x0, by - y0
+        b:setPosition(p.x + dx * cs - dy * sn, p.y + dx * sn + dy * cs)
+        b:setAngle(b:getAngle() + a1 - a0)
+        b:setLinearVelocity(0, 0)
+        b:setAngularVelocity(0)
+    end
+end
+
+-- along the pipe: drive to a speed (DRIVES), the whole mover's mass at its main body
+local function drive(m, p, vt, gy)
+    local d = DRIVES[p.drive]
+    local a = d.gain * (d.speed - vt)
+    if p.drive == 'hoist' then
+        a = a - gy * p.ty
+    elseif p.drive == 'brake' then
+        a = math.min(0, a)
+    end
+    m.body:applyForce(p.tx * a * m.mass, p.ty * a * m.mass)
+end
+
+local function updateMover(c, m, dt, gy)
     local body = m.body
     local x, y = body:getPosition()
     local i, dist = nearest(c.track, x, y, m.index)
+    local before = m.index
     m.index = i
     local p = c.track.line[i]
     m.s = p.s
     local vx, vy = body:getLinearVelocity()
     local speed = math.sqrt(vx * vx + vy * vy)
     if speed > c.stats.topSpeed then c.stats.topSpeed = speed end
-    -- out of the pipe (tunnelled through a wall): counted, put back at the start
-    if dist > HALF + MARBLE_R then
+    if m.kind == 'cart' and speed > c.stats.cartTop then c.stats.cartTop = speed end
+    -- out of the pipe (through a wall): counted, put back at the start
+    if dist > m.out then
         c.stats.escapes = c.stats.escapes + 1
-        print(('tracks: a marble got out at s=%d, %d px off the line, %d px/s'):format(p.s, dist, speed))
-        local start = c.track.line[1]
-        body:setPosition(start.x, start.y)
-        body:setLinearVelocity(0, 0)
+        print(('tracks: a %s got out at s=%d, %d px off the line, %d px/s'):format(m.kind, p.s, dist, speed))
+        putBack(m, c.track.line[1])
         m.index = 1
-        setLayer(m, start.layer)
+        setLayer(m, c.track.line[1].layer)
         return
     end
     -- the layer by arc position: the point's own layer changes at a transition's middle, where
@@ -347,18 +466,21 @@ local function updateMarble(c, m, dt, gy)
     if p.layer ~= m.layer then
         setLayer(m, p.layer)
         c.stats.switches = c.stats.switches + 1
+        -- a cart that made it over the loop's top (A to B there)
+        if m.kind == 'cart' and p.layer == 'B' and math.abs(p.y - 1900) < 100 and i > before then
+            c.stats.loops = c.stats.loops + 1
+        end
     end
     local vt = vx * p.tx + vy * p.ty
-    local mass = body:getMass()
-    if p.hoist then
-        -- the hoist: cancel gravity along the pipe, then pull up to speed
-        local a = -gy * p.ty + HOIST_GAIN * (HOIST_SPEED - vt)
-        body:applyForce(p.tx * a * mass, p.ty * a * mass)
+    if p.drive then
+        drive(m, p, vt, gy)
+    end
+    if p.drive == 'hoist' then
         m.still = 0
     elseif speed < 5 then
         m.still = m.still + dt
         if m.still > STILL_FOR then -- stuck on a flat: a push along
-            body:applyLinearImpulse(p.tx * 200 * mass, p.ty * 200 * mass)
+            body:applyLinearImpulse(p.tx * 200 * m.mass, p.ty * 200 * m.mass)
             m.still = 0
         end
     else
@@ -369,10 +491,16 @@ end
 -- ─── Drawing ───
 
 local GLASS = { 0.75, 0.88, 0.95, 0.35 }
-local GLASS_HOIST = { 0.95, 0.85, 0.6, 0.4 }
+local GLASS_DRIVE = {
+    hoist = { 0.95, 0.85, 0.6, 0.4 },
+    pace = { 0.65, 0.95, 0.6, 0.4 },
+    brake = { 0.95, 0.6, 0.55, 0.4 },
+}
 local RIM = { 0.35, 0.5, 0.6 }
 local HAZE = { 0.1, 0.18, 0.12 } -- toward the background
 local LIGHT_X, LIGHT_Y = -0.6, -0.8 -- toward the light
+local CART_WOOD = { 0.78, 0.58, 0.36 }
+local CART_DARK = { 0.45, 0.32, 0.2 }
 
 -- a world point at a drawn depth: smaller toward the vanishing point
 local function project(x, y, depth)
@@ -396,7 +524,7 @@ local function layerLook(track, layer)
     local verts = {}
     local function vert(p, x, y)
         local px, py = project(x, y, p.depth)
-        local r, g, b, a = hazed(p.hoist and GLASS_HOIST or GLASS, p.depth)
+        local r, g, b, a = hazed(p.drive and GLASS_DRIVE[p.drive] or GLASS, p.depth)
         verts[#verts + 1] = { px, py, 0, 0, r, g, b, a }
     end
     local look = { rims = {} }
@@ -450,16 +578,48 @@ local function drawMarble(m, depth)
     love.graphics.circle('fill', x - r * 0.35, y - r * 0.35, r * 0.18)
 end
 
--- one layer: its glass, the marbles in it, its rims and glint over them
+-- the cart flat for now (TR5 turns it into a box in 3D): wheels, then the body over them
+local function drawCart(m, depth)
+    local k = 1 - DEPTH_SHRINK * depth
+    for _, wheel in ipairs(m.wheels) do
+        local wx, wy = wheel:getPosition()
+        local x, y = project(wx, wy, depth)
+        love.graphics.setColor(hazed({ 0.22, 0.2, 0.2 }, depth, 1))
+        love.graphics.circle('fill', x, y, WHEEL_R * k)
+        local a = wheel:getAngle()
+        love.graphics.setColor(hazed({ 0.7, 0.7, 0.7 }, depth, 1))
+        love.graphics.setLineWidth(3 * k)
+        love.graphics.line(x, y, x + math.cos(a) * WHEEL_R * 0.8 * k, y + math.sin(a) * WHEEL_R * 0.8 * k)
+    end
+    local body = m.body
+    local wx, wy = body:getPosition()
+    local x, y = project(wx, wy, depth)
+    love.graphics.push()
+    love.graphics.translate(x, y)
+    love.graphics.rotate(body:getAngle())
+    love.graphics.scale(k)
+    local hw, hh = CART_LENGTH / 2, CART_HALF_HEIGHT + 6
+    love.graphics.setColor(hazed(CART_WOOD, depth, 1))
+    love.graphics.rectangle('fill', -hw, -hh, 2 * hw, 2 * hh, 10, 10)
+    love.graphics.setColor(hazed(m.color, depth, 1))
+    love.graphics.rectangle('fill', -hw, -hh * 0.25, 2 * hw, hh * 0.5)
+    love.graphics.setColor(hazed(CART_DARK, depth, 1))
+    love.graphics.setLineWidth(5)
+    love.graphics.rectangle('line', -hw, -hh, 2 * hw, 2 * hh, 10, 10)
+    love.graphics.pop()
+end
+
+-- one layer: its glass, the movers in it, its rims and glint over them
 local function drawLayer(c, layer)
     local look = layerLook(c.track, layer)
     if look.mesh then
         love.graphics.setColor(1, 1, 1, 1)
         love.graphics.draw(look.mesh)
     end
-    for _, m in ipairs(c.marbles) do
+    for _, m in ipairs(c.movers) do
         if alive(m.body) and m.layer == layer then
-            drawMarble(m, c.track.line[m.index].depth)
+            local depth = c.track.line[m.index].depth
+            if m.kind == 'cart' then drawCart(m, depth) else drawMarble(m, depth) end
         end
     end
     love.graphics.setLineJoin('bevel')
@@ -479,7 +639,7 @@ end
 
 function s.drawBelow()
     local c = check()
-    if state.playMode then -- in play the script draws the pipe and marbles itself
+    if state.playMode then -- in play the script draws the pipe and movers itself
         c.savedDrawBodies = state.world.debugDrawBodies
         state.world.debugDrawBodies = false
     end
@@ -507,20 +667,26 @@ end
 function s.onStart()
     worldState.paused = false
     local c = check()
-    -- a track from before this script changed shape: built again
-    if c.track and alive(c.track.body) and not c.track.layers then
-        removeMarbles()
-        c.track.body:destroy()
-        c.track = nil
+    -- a track from an older version of this script (other course, marbles only): built again
+    if not c.movers or (c.track and c.track.half ~= HALF) then
+        for _, m in ipairs(c.movers or c.marbles or {}) do
+            for _, b in ipairs(m.bodies or { m.body }) do
+                if alive(b) then b:destroy() end
+            end
+        end
+        if c.track and alive(c.track.body) then c.track.body:destroy() end
+        state.tracksSpike = nil
+        c = check()
     end
     makeTrack()
-    if #c.marbles == 0 then startOver() end
+    c.track.half = HALF
+    if #c.movers == 0 then startOver() end
 end
 
 function s.onUnload()
     local c = state.tracksSpike
     if not c then return end
-    removeMarbles()
+    removeMovers()
     if c.track and alive(c.track.body) then c.track.body:destroy() end
     state.tracksSpike = nil
 end
@@ -531,13 +697,14 @@ function s.update()
     if worldState.paused then return end
     local dt = math.min(love.timer.getDelta(), 0.05)
     local _, gy = world:getGravity()
-    for _, m in ipairs(c.marbles) do
-        if alive(m.body) then updateMarble(c, m, dt, gy) end
+    for _, m in ipairs(c.movers) do
+        if alive(m.body) then updateMover(c, m, dt, gy) end
     end
 end
 
 function s.onKeyPress(key)
     if key == 'm' then addMarble() end
+    if key == 'c' then addCart() end
     if key == 'r' then startOver() end
     if key == 'p' then worldState.paused = not worldState.paused end
 end
