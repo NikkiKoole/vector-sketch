@@ -175,8 +175,11 @@ function lib.map(extra, rise)
     if cache[key] == nil then
         local path = 'textures/' .. url
         if love.filesystem.getInfo(path, 'file') then
-            local image = love.graphics.newImage(lib.bakeData(love.image.newImageData(path), rise))
+            -- mipmapped: drawn smaller than the map (a zoomed-out view), it skipped cells and its
+            -- steps showed on shiny parts (Nikki 2026-11-06)
+            local image = love.graphics.newImage(lib.bakeData(love.image.newImageData(path), rise), { mipmaps = true })
             image:setFilter('linear', 'linear')
+            image:setMipmapFilter('linear')
             cache[key] = image
         else
             cache[key] = false

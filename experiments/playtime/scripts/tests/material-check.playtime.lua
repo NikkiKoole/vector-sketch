@@ -425,8 +425,11 @@ local function lookOf(name)
             mask:setFilter('linear', 'linear')
             line:setMipmapFilter('linear')
             mask:setMipmapFilter('linear')
-            local form = love.graphics.newImage(formBake.bakeData(love.image.newImageData(base .. '-mask.png'), rise))
+            -- mipmapped: drawn smaller than the map, it skipped cells and its steps showed
+            local form = love.graphics.newImage(formBake.bakeData(love.image.newImageData(base .. '-mask.png'), rise),
+                { mipmaps = true })
             form:setFilter('linear', 'linear')
+            form:setMipmapFilter('linear')
             looks[key] = { line = line, mask = mask, form = form }
         else
             looks[key] = false
