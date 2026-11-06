@@ -1,6 +1,6 @@
 # Materials — felt, moss, cardboard, cellophane: the craft-table look at runtime
 
-status: idea
+status: active
 
 Nikki's AI pictures, made for mood and **not to be used in the game** (not drawn by us, not shipped):
 `docs/inspiration/ai-materials/` (16, 2026-11-04). They show Mipo's world as a handmade
@@ -71,3 +71,34 @@ block, collage box, bells, candies, jellybeans, cellophane water). Parked as a s
 - The cellophane (Voronoi cells, each tilted) looked like broken glass / stained glass: round
   cells all one size, a smooth top edge, one flat layer. Take two: `CELLOPHANE-WATER.md`.
 - Real photos or scans of real felt, moss and torn paper would beat the noise (not the AI pictures).
+
+## Take two: materials on the drawings (2026-11-06)
+
+What changed since the spike: the light on Nikki's own pictures (LIGHT-AND-SHADOW LS5, the plaster
+wall) was liked, the noise-made materials were not. So now a material is only *how a drawn picture
+takes the light*: the picture's mask, its roundness baked from the mask (`src/render/form-bake.lua`,
+now in the script sandbox as `formBake`), one shader with a mode per material. Her outline stays on
+top. Workbench: scene `material-check` (scripts/tests), each row the same picture, so the material is
+the only difference; the light is the mouse, in front or behind (b). Keys in the script's top comment.
+
+Kinds of material, by what the shader does differently:
+- **matte grain**: clay, plaster (LS11), felt, rubber, stucco
+- **gloss**: leather, glazed pottery, plastic, wet
+- **metal**: the room reflected (bright above, a dark band at the horizon, the warm floor) plus a
+  highlight in the metal's colour; no matcap picture needed
+- **sheen**: velvet, cotton, satin: the middle soaks up the light, the edges shine
+- **see-through**: leaves, ears, wax, candy: from behind the light comes through, most at the thin edges
+- **smoke**: not a surface; drawn puffs as particles that rise, grow and wear away at the edges, lit by
+  the same light
+
+- [x] **MT1. The first four** (2026-11-06, to judge): brass / tin / copper, velvet plum / moss, leaves
+  lit from the front (waxy) or behind (glowing), smoke as steam / smoke / soot from the body pictures
+  as puffs. p paints the light in four steps (poster paint) instead of smooth. Found: a brushy mask
+  (body-04's streaks) shows as ridges in metal, like hammered tin: kept, it's the drawing.
+- [ ] **MT2. Judge and tune** with Nikki: which read as made by hand, which as "computer".
+- [ ] **MT3. A material map per picture** (the sneaker idea): one more picture next to outline + mask
+  saying which part is which material (leather / rubber / cloth), so one Mipo part can be two materials.
+- [ ] **MT4. The next ones**: leather, rubber, stucco, glazed pottery, wet (a wetness that comes and goes).
+- [ ] **MT5. Leaves for real**: translucency on the plants and garden spikes' leaves, with their sway.
+- [ ] **MT6. Into the engine**: a material as a texfixture setting, next to plasticine (SHADER-LOOKS'
+  "looks on shapes"), if any of it earns a place.
