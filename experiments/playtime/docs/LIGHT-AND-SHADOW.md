@@ -153,6 +153,20 @@ fade, a sun: the panel's `fades` switch, LS4).
   (soft occlusion between a Mipo's own parts, by their z order).
 - [ ] **LS21. Cloud shadows.** Clouds drifting over the ground and the wall (CLOUDS.md's spike: "near
   clouds cast shadows on the grass"), with the day-night light.
+- [ ] **LS22. 3D shadows: along the floor and up the wall, hard.** Nikki (2026-11-06): "the next level of
+  shadow casting, a sort of 3D shadow that grows and shrinks and is cast hard"; the long floor shadow
+  first, the torch on the wall too; the edges she has to see. Built 2026-11-06, to judge:
+  `src/projected-shadows.lua`, on while a scene sets `state.projectedShadows`. The things stand at a depth
+  in front of the wall, so the wall's foot moves up and the band between is the floor behind them; a
+  point lamp (x, height, depth) or a sun (the way to it) throws each silhouette along that floor and up
+  the wall: per pixel a ray to the light, where it crosses the things' plane the textured world (drawn
+  once more into a canvas) says shadow or not. A low sun stretches them long over the floor and up at the
+  corner; a lamp close to the things throws a giant one on the wall, further off it shrinks (also LS14:
+  a lamp in the middle throws both ways). Edges: hard, or a small or big lamp (the penumbra wider the
+  further the shadow lands, LS18's look for free). In light-grass-check: v on (in place of w's), e the
+  sun or moon / the warm lamp (drag it in play mode), [ ] the lamp's depth, y the sun's way out of the
+  wall, j edges (spec/projected-shadows_spec.lua). Not yet: one depth for everything (per-thing depth,
+  LS16/LS18), nothing on the floor in front of the things, the same cost as the wall shadows (LS12).
 - [ ] **LS15. Small ones:** should a new directional light be a sun (not fade) by default; the back
   light on a drawn stone lands on its black outline (reach past it, as the contact shadow does);
   grass on a moving body rebuilds its blades every frame (LITTLE-USED, the grass round).

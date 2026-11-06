@@ -124,6 +124,7 @@ local sceneCatalog = require('src.scene-catalog')
 local blobs = require('src.blob') -- blob rims (SOFTBODY sfixtures)
 local contactShadows = require('src.contact-shadows') -- off unless a scene sets state.contactShadows
 local backdropShadows = require('src.backdrop-shadows') -- off unless a scene sets state.backdropShadows
+local projectedShadows = require('src.projected-shadows') -- off unless a scene sets state.projectedShadows
 local liquid = require('src.liquid')
 local signals = require('src.signals')
 local doors = require('src.doors')
@@ -343,6 +344,7 @@ function love.draw()
     script.call('drawBelow') -- a scene script's ground, under the bodies (scripts/spikes/burrow.playtime.lua)
     if state.world.showTextures then
         backdropShadows.draw(state.physicsWorld) -- on the scene's back wall (src/backdrop-shadows.lua)
+        projectedShadows.draw(state.physicsWorld) -- along the floor and up the wall (src/projected-shadows.lua)
     end
 
     prof.push('drawworld')

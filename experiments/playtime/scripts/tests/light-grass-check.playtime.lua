@@ -25,6 +25,12 @@
 --   a lights add up (the sky lights the base, every lamp adds; LS3) / as before (how lit stops at full)
 --   0 the shapes as other scenes draw them   s turf spinning or not
 --   o everything back to the settings liked so far (all on, smooth clay wall, the cycle from 9:00)
+--   v 3D shadows on / off (src/projected-shadows.lua, LS22): a floor appears between the wall and the
+--     things, and the shadows are thrown from the light along it and up the wall, hard; in place of w's
+--   e the 3D shadows' light: the sun or moon (a low sun stretches them long over the floor) / the warm
+--     lamp (drag it in play mode; a torch: close to the things a big shadow on the wall, back it shrinks)
+--   y how much the sun shines out of the wall: some / a little (shadows run far along the floor) / much
+--   [ ] the lamp nearer the things / further towards you   j edges: hard / a small lamp / a big lamp
 
 local s = {}
 
@@ -122,6 +128,21 @@ local function plasterShader()
 end
 local WALL_BEHIND = 90
 local function wallShape() love.graphics.rectangle('fill', WALL.x, WALL.y, WALL.w, WALL.h) end
+
+-- 3D shadows (v): the things stand SOLID_DEPTH in front of the wall, so its foot moves up that much and
+-- the band between is the floor behind them (src/projected-shadows.lua). The sun's way towards it comes
+-- SUN_TOWARDS out of the wall; the lamp starts LAMP_DEPTH in front of the things ([ ] move it).
+local GROUND_TOP = 450 -- where everything stands (the grassy ground's top)
+local SOLID_DEPTH = 400
+local FLOOR_Y = GROUND_TOP - SOLID_DEPTH
+local FLOOR_COLOUR = { 0.72, 0.6, 0.46 }
+-- y steps it: low, the shadows run far along the floor before they reach the wall; high, they climb it soon
+local SUN_TOWARDS = { 0.2, 0.08, 0.5 }
+local LAMP_DEPTH = 300
+local LAMP_DEPTHS = { 40, 100, 200, 300, 500, 900, 1600, 3000 }
+-- j: hard, a small lamp, a big one (world units; for the sun how wide, as a slope)
+local SOFTNESS = { { name = 'hard', lamp = 0, sun = 0 }, { name = 'small lamp', lamp = 14, sun = 0.03 },
+    { name = 'big lamp', lamp = 45, sun = 0.1 } }
 local LIGHTS = { 'sun', 'moon', 'warm lamp', 'cool lamp', 'turning lamp', 'sky light', 'back light' }
 
 -- each key steps through these on every shape; the first is how other scenes draw them
@@ -294,6 +315,33 @@ local function wallShadow()
     return { math.cos(theta) * length, high * length }, 5 + length * 0.06, fade
 end
 
+-- The 3D shadows' light: the sun or the moon (whichever leads, as the wall shadows; its way towards it on
+-- the arc, a little out of the wall), or the warm lamp where it is, at the lamp's depth. Returns the light
+-- and how much of the shadow's darkness is left.
+local function solidLight()
+    local c = look()
+    if c.solidLamp then
+        local body = lightOf('warm lamp')
+        if not body then return nil end
+        local x, y = body:getPosition()
+        local z = SOLID_DEPTH + (c.lampDepth or LAMP_DEPTH)
+        -- on screen the lamp sits at y = FLOOR_Y + z - h
+        return { kind = 'point', x = x, h = math.max(4, FLOOR_Y + z - y), z = z }, 1
+    end
+    local _, sunExtra = lightOf('sun')
+    local _, moonExtra = lightOf('moon')
+    local sun, moon = sunExtra and sunExtra.intensity or 0, moonExtra and moonExtra.intensity or 0
+    local theta = (sun >= moon) and (c.hour - 6) / 12 * math.pi or ((c.hour - 18) % 24) / 12 * math.pi
+    local high = math.sin(theta)
+    if high <= 0.02 then return nil end
+    local towards = SUN_TOWARDS[c.sunTowards or 1]
+    return { kind = 'sun', x = -math.cos(theta), h = high, z = towards }, math.min(1, math.abs(sun - moon) / 0.6)
+end
+
+local function solidArea()
+    love.graphics.rectangle('fill', WALL.x, WALL.y, WALL.w, GROUND_TOP - WALL.y)
+end
+
 -- everything at the clock's hour (or only the turning lamp)
 local function applyTime()
     local c = look()
@@ -309,7 +357,8 @@ local function applyTime()
     local mx, my, ma, moonUp = onArc(((c.hour - 18) % 24) / 12 * math.pi)
     setLight('sun', L.sun[1] .. 'ff', L.sun[2] * sunUp, sx, sy, sa)
     setLight('moon', L.moon[1] .. 'ff', L.moon[2] * moonUp, mx, my, ma)
-    setLight('warm lamp', nil, L.warm)
+    -- the warm lamp throwing the 3D shadows is on, whatever the hour
+    setLight('warm lamp', nil, (c.solid and c.solidLamp) and math.max(1.4, L.warm) or L.warm)
     setLight('cool lamp', nil, L.cool)
     setLight('turning lamp', nil, 0)
     setLight('sky light', L.skyLight[1] .. 'ff', c.skyOff and 0 or L.skyLight[3])
@@ -346,6 +395,7 @@ end
 function s.onUnload()
     state.contactShadows = nil -- only in this scene
     state.backdropShadows = nil
+    state.projectedShadows = nil
     local c = look()
     if c.original then
         love.graphics.newSpriteBatch = c.original
@@ -380,8 +430,14 @@ function s.update(dt)
     local L = c.now or LAMP_ONLY
     state.contactShadows = not c.shadowsOff and { strength = L.shadows } or nil
     local offset, blur, fade = wallShadow()
-    state.backdropShadows = (not c.wallShadowsOff and offset) and { wall = wallShape, offset = offset,
-        blur = blur, strength = L.wallShadows * fade } or nil
+    state.backdropShadows = (not c.wallShadowsOff and offset and not c.solid) and { wall = wallShape,
+        offset = offset, blur = blur, strength = L.wallShadows * fade } or nil
+    local light, lightFade = nil, 0
+    if c.solid then light, lightFade = solidLight() end
+    local soft = SOFTNESS[c.softness or 1]
+    state.projectedShadows = light and { area = solidArea, floorY = FLOOR_Y, depth = SOLID_DEPTH, light = light,
+        strength = c.solidLamp and 0.55 or math.min(0.7, L.wallShadows * 1.5) * lightFade,
+        softness = light.kind == 'sun' and soft.sun or soft.lamp } or nil
     c.time = c.time + (dt or 0)
     if c.time >= 1 then
         c.perSecond, c.made, c.time = c.made, 0, c.time - 1
@@ -410,6 +466,19 @@ function s.onKeyPress(key)
             'mipoClayOff' }) do c[k] = nil end
         c.grit, c.hour, c.cycle = 2, 9, true
         for k, v in pairs(OPTIMAL_SHAPES) do setAll(TRIES[k], v) end
+    elseif key == 'v' then
+        c.solid = not c.solid
+    elseif key == 'e' then
+        c.solidLamp = not c.solidLamp
+    elseif key == '[' or key == ']' then
+        local now, at = c.lampDepth or LAMP_DEPTH, 1
+        for i, d in ipairs(LAMP_DEPTHS) do if d <= now then at = i end end
+        at = math.max(1, math.min(#LAMP_DEPTHS, at + (key == ']' and 1 or -1)))
+        c.lampDepth = LAMP_DEPTHS[at]
+    elseif key == 'y' then
+        c.sunTowards = (c.sunTowards or 1) % #SUN_TOWARDS + 1
+    elseif key == 'j' then
+        c.softness = (c.softness or 1) % #SOFTNESS + 1
     elseif key == 'q' then
         look().grit = (look().grit or 2) % #GRITS + 1
     elseif key == 'w' then
@@ -469,6 +538,18 @@ function s.drawBelow()
     end
     wallShape()
     love.graphics.setShader()
+    if look().solid then
+        -- the floor behind the things, in the same light as the wall, a little darker towards the corner
+        local f = FLOOR_COLOUR
+        local r, g, b = f[1] * math.min(1, 0.2 + sky[1] * 0.9), f[2] * math.min(1, 0.2 + sky[2] * 0.9),
+            f[3] * math.min(1, 0.2 + sky[3] * 0.9)
+        local bands = 6
+        for i = 0, bands - 1 do
+            local k = 0.86 + 0.14 * i / (bands - 1)
+            love.graphics.setColor(r * k, g * k, b * k, 1)
+            love.graphics.rectangle('fill', WALL.x, FLOOR_Y + SOLID_DEPTH * i / bands, WALL.w, SOLID_DEPTH / bands + 1)
+        end
+    end
     love.graphics.setColor(1, 1, 1, 1)
 end
 
@@ -537,6 +618,11 @@ function s.drawUI()
             .. (c.mipoLightOff and ', Mipos as drawn'
                 or (c.mipoClayOff and ', Mipos lit, no clay' or ', Mipos lit, clay'))
             .. '      shapes: ' .. table.concat(tries, '   ') .. '   (0 as elsewhere)',
+        'v 3D shadows: ' .. (c.solid and ('on, from ' .. (c.solidLamp
+            and string.format('the warm lamp, %d in front of the things', c.lampDepth or LAMP_DEPTH)
+            or string.format('the sun or moon, %.2f out of the wall', SUN_TOWARDS[c.sunTowards or 1]))
+            .. ', ' .. SOFTNESS[c.softness or 1].name) or 'off')
+            .. '   (e sun / lamp  y sun out of the wall  [ ] lamp depth  j edges)',
         string.format('grass: SpriteBatches made in the last second: %d', c.perSecond),
     }
     for i, line in ipairs(lines) do
