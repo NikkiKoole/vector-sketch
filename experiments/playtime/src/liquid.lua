@@ -255,6 +255,20 @@ local function mouthY(c, hull)
     return y
 end
 
+-- Where water runs out: the mouth's lowest corner (world x, y), nil for a closed container.
+function lib.mouthPoint(extra, body)
+    local c = lib.container(extra, body)
+    local hull = toWorld(body, c.hull)
+    local n = #hull
+    local bx, by = nil, -math.huge
+    for _, i in ipairs(c.open) do
+        local j = (i + 2 > n) and 1 or i + 2
+        if hull[i + 1] > by then bx, by = hull[i], hull[i + 1] end
+        if hull[j + 1] > by then bx, by = hull[j], hull[j + 1] end
+    end
+    return bx, by
+end
+
 -- The water right now: level, the hull below it, the hull and holes (all world).
 -- nil level when empty.
 function lib.water(extra, body)
@@ -369,6 +383,7 @@ end
 
 local hexColor = require('src.color').hexToColor
 local registry = require('src.registry')
+local state = require('src.state')
 local subtypes = require('src.subtypes')
 
 -- The two ends of the surface: the water polygon's points on the level line.
@@ -425,8 +440,17 @@ function lib.draw(extra, body)
         line[#line + 1] = mathutils.lerp(minX, maxX, t)
         line[#line + 1] = shown - h[i]
     end
-    love.graphics.setColor(hexColor(setting(extra, 'color')))
     local bottom = maxY + 1
+    -- a scene can draw the water itself (the seaside spike, with its sea shader): it gets the
+    -- wavy surface line and the hollow (hull less holes), and draws when and how it likes
+    local hook = state.liquidDrawHook
+    if hook then
+        if compare then love.graphics.setStencilTest(compare, value) else love.graphics.setStencilTest() end
+        hook({ extra = extra, body = body, line = line, hull = hull, holes = holes, bottom = bottom,
+            level = shown, minX = minX, maxX = maxX, minY = minY, maxY = maxY })
+        return
+    end
+    love.graphics.setColor(hexColor(setting(extra, 'color')))
     for i = 1, n - 1 do
         local ax, ay, bx, by = line[i * 2 - 1], line[i * 2], line[i * 2 + 1], line[i * 2 + 2]
         love.graphics.polygon('fill', ax, ay, bx, by, bx, bottom, ax, bottom)
@@ -461,7 +485,10 @@ function lib.update(paused)
         if not fixture:isDestroyed() then
             local ud = fixture:getUserData()
             if type(ud) == 'table' and subtypes.is(ud, subtypes.LIQUID) then
-                lib.spill(ud.extra, fixture:getBody())
+                local spilled = lib.spill(ud.extra, fixture:getBody())
+                -- a scene can catch what spills (the seaside spike pours it out as drops)
+                local hook = state.liquidSpillHook
+                if spilled > 0 and hook then hook(ud.extra, fixture:getBody(), spilled) end
             end
         end
     end

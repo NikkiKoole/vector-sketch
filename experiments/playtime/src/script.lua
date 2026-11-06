@@ -101,6 +101,7 @@ local baseEnv = {
     pcall                    = pcall,
     ompBake                  = require('src.render.omp-bake'), -- the outline + mask + pattern bake (scan-test)
     fixtures                 = fixtures, -- sfixtures on a script's own bodies (burrow's OMP rocks)
+    liquid                   = require('src.liquid'), -- water in cups: spill, water, mouthPoint (seaside)
     -- Add global utilities like NeedManager, etc.
     --broadcastEvent = function(eventName, data)
     -- Implementation for event broadcasting
