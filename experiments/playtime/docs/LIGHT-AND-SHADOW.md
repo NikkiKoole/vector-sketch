@@ -2,11 +2,23 @@
 
 status: active
 
+**Picking up (2026-11-06, end of the day):** everything below is built and judged; it all lives in one
+test scene's script so far. Next is LS12 (measure it on the phone), then LS13 (make it a scene setting
+so any room can have it). To see where it stands: `./playtime.sh start`, open the scene
+`light-grass-check` (scenes tab), press **o** (everything on at the liked settings: lights and
+shadows on, Mipos lit with clay, smooth clay wall, the day-night cycle from 9:00). Its keys are in the
+script's top comment (`scripts/tests/light-grass-check.playtime.lua`) and on its status line.
+Where the code is: `src/render/shaders.lua` (lights, sky / back types, adding up, baked form),
+`src/render/form-bake.lua`, `src/contact-shadows.lua`, `src/backdrop-shadows.lua` (both called around
+the textured world in main.lua, off unless a scene sets `state.contactShadows` /
+`state.backdropShadows`), the panel rows in `src/texfixture-params.lua` and `src/sfixture-params.lua`.
+The scene script does the rest: the day-night clock and its five looks, the sun and moon on their arc,
+lighting the Mipos' parts every frame, the plaster wall's shader, the wall shadows' length.
+
 Started 2026-11-06 from the light round in `LITTLE-USED.md`. The workbench is the scene
-`light-grass-check` (scripts/tests): a sun, a warm and a cool lamp to carry about in play mode, a
-turning lamp, six plasticine shapes; 1 day, 2 evening, 3 night, 4 the turning lamp; g z f b n step the
-shapes' light settings, 0 shows them as every other scene draws them (the keys are in its script's top
-comment).
+`light-grass-check` (scripts/tests): a sun and a moon, a warm and a cool lamp to carry about in play
+mode, a turning lamp, a sky light and a back light, six plasticine stones (smooth clay to rough
+render), a plaster fence, three Mipos, a plaster back wall.
 
 What there is (`src/render/shaders.lua`): LIGHT sfixtures (directional, point, sky or back) reach the plasticine
 and hairs shaders, up to 8 at once. A light's colour tints a shape (the lights' colours averaged by how
@@ -21,7 +33,7 @@ rounds only the outer edge).
 
 Things found on the way: a directional light lit the side facing away from where it's aimed (fixed,
 spec/light-aim_spec.lua); a directional light fades with its lamp's distance (`range`; 0 means no
-fade, a sun, but the panel can't set 0).
+fade, a sun: the panel's `fades` switch, LS4).
 
 - [x] **LS11. Plaster and clay.** In light-grass-check (2026-11-06, Nikki: "grit to the background ... fences
   or obstacles with different roughness ... plaster or clay"): the back wall gets a plaster shader of
@@ -104,3 +116,29 @@ fade, a sun, but the panel can't set 0).
   shadows both ways (one direction for the whole scene), and it costs a second textured pass a frame
   (measure on the phone before a real scene uses it).
   Nikki: "looks nice" (2026-11-06).
+
+## Next (written down 2026-11-06, to pick up)
+
+- [ ] **LS12. Measure it on the phone.** Before building on it: the iPhone SE 2 is the floor, ~20 Mipos
+  a room the design limit (MEASURING M10). What costs: the wall shadows draw every picture a second
+  time a frame; every lit part runs the plasticine shader with up to 8 lights (and the baked form's
+  texture); the contact shadows cast three rays per caster (5 per Mipo); the plaster wall's noise is
+  per pixel. `./playtime.sh device` and `./playtime.sh bench device` (`--parts` for love.update), with
+  light-grass-check and a room of ~20 lit Mipos; each part switched off in turn (its keys) to see
+  what it costs. Write the numbers here; decide what a real scene can afford.
+- [ ] **LS13. Light as a scene setting.** So any room gets it without a script: a light section in the
+  world settings, saved with the scene: the sky (a colour, or a time of day with the cycle; G5's open
+  question in WORLD-BUILDING, a sky per scene), sun and moon, sky light, back light, contact and wall
+  shadows on/off, which body is the back wall (and its surface: flat, smooth clay, plaster), and
+  "Mipos take the light" (with or without clay). What the scene script does now (the clock, the
+  looks, the arc, lighting the Mipos' parts, the wall's shader, the shadows' length) moves into src.
+  Then try it in a real room (the dollhouse, the overworld).
+- [ ] **LS14. A lamp's wall shadows both ways.** Now one direction per scene (from the sun or moon): a
+  lamp in a room's middle should throw shadows away from it on both sides, which needs a pass per
+  thing (or per side). Only if a real room wants it (after LS12).
+- [ ] **LS15. Small ones:** should a new directional light be a sun (not fade) by default; the back
+  light on a drawn stone lands on its black outline (reach past it, as the contact shadow does);
+  grass on a moving body rebuilds its blades every frame (LITTLE-USED, the grass round).
+
+Not light, but where this started (`LITTLE-USED.md`): three rounds left there, skinned mesh, UV mesh,
+the recorder (the feature-rounds sweep, `claudetools/feature-rounds_spec.lua`, takes a recipe each).
