@@ -1,26 +1,36 @@
--- tracks: marbles rolling through a glass pipe, a knikkerbaan to watch (docs/TRACKS.md TR1)
--- The pipe is a closed loop: a centre line (pieces of lines and arcs, smoothed, resampled to an
--- even step: arc length, nearest point), its two walls as closed chains offset either side, in
--- track layer A's collision category. Marbles zigzag down by gravity; at the bottom a hoist
--- stretch (achtbaan's hoist flag, here a force along the pipe, not a set speed) pulls them up the
--- riser and over the top, like a buizenpost. No buttons: it runs on its own.
+-- tracks: marbles rolling through a glass pipe on two depth layers, a knikkerbaan to watch (docs/TRACKS.md)
+-- The pipe is a closed loop: a centre line (waypoints with rounded corners, resampled to an even
+-- step: arc length, nearest point), its walls as chains offset either side. Every stretch is in a
+-- track layer, a collision category: the zigzag down is layer A (front), the riser up through the
+-- middle and the way back over the top are layer B (behind), so the riser crosses the zigzag three
+-- times and the marbles pass behind each other. Where the layer changes, both layers' walls run
+-- side by side for a stretch; a marble's filter switches at its middle by arc position (rolling
+-- back switches it back), and only the drawn depth eases across: smaller toward a vanishing point,
+-- hazier. The riser is a hoist stretch (achtbaan's hoist flag, here a force along the pipe):
+-- it pulls the marbles up and over the top, like a buizenpost. No buttons: it runs on its own.
 -- keys: m another marble   r start over   p pause
 
 local s = {}
 
 -- Track layers are collision categories (TRACKS.md): 2..6 reserved for them (16: hair tufts).
 local TRACK_LAYERS = { A = 2, B = 3, C = 4, D = 5, E = 6 }
+local LAYER_DEPTH = { A = 0, B = 1, C = 2, D = 3, E = 4 } -- drawn depth: 0 in front
 
 local MARBLE_R = 30
 local HALF = 46           -- the pipe's inside half width: a marble has 16 px to spare a side
+local CORNER = 200        -- corner radius (well over HALF, or the inner wall folds)
 local STEP = 15           -- centre line sample spacing (px of arc length)
-local SMOOTH = 4          -- smoothing passes over the centre line (rounds the line/arc joins)
+local TRANSITION = 600    -- length of a layer change, both layers' walls side by side (360 showed a jog)
 local WALL = 8            -- drawn wall thickness
 local MARBLES = 4         -- at the start
 local MAX_MARBLES = 12
 local HOIST_SPEED = 700   -- px a second up the riser
 local HOIST_GAIN = 4      -- 1/s: how quickly it gets a marble to that speed
 local STILL_FOR = 6       -- seconds stopped outside the hoist: nudged along the pipe
+-- drawn depth: a layer one deeper is drawn this much smaller toward the vanishing point, hazier
+local DEPTH_SHRINK = 0.16
+local DEPTH_HAZE = 0.4
+local VANISH_X, VANISH_Y = 950, 900
 
 local COLORS = {
     { 0.85, 0.25, 0.2 }, { 0.2, 0.45, 0.85 }, { 0.95, 0.75, 0.2 }, { 0.25, 0.65, 0.35 },
@@ -28,74 +38,89 @@ local COLORS = {
 }
 
 local function check() -- on state: a script hot reload keeps the marbles rolling
-    state.tracksSpike = state.tracksSpike or { marbles = {}, stats = { escapes = 0, topSpeed = 0 } }
+    state.tracksSpike = state.tracksSpike or { marbles = {}, stats = { escapes = 0, topSpeed = 0, switches = 0 } }
     return state.tracksSpike
 end
 
 local function alive(body) return body and not body:isDestroyed() end
 
--- ─── The track: pieces → centre line → walls ───
+-- ─── The track: waypoints → centre line → walls per layer ───
 
--- the course, in the direction of travel. y down. Runs zigzag down, U-turns of radius 200 (well
--- over HALF, or the inner wall folds), the bottom bend into the riser, the riser and the top bend
--- are the hoist.
-local PIECES = {
-    { 'line', -400, 0 },
-    { 'line', 0, 0 },
-    { 'line', 2000, 300 },
-    { 'arc', 2000, 500, -math.pi / 2, math.pi / 2 },      -- centre, from angle, to angle
-    { 'line', 300, 1000 },
-    { 'arc', 300, 1200, -math.pi / 2, -3 * math.pi / 2 },
-    { 'line', 2000, 1700 },
-    { 'arc', 2000, 1900, -math.pi / 2, math.pi / 2 },
-    { 'line', -400, 2400 },
-    { 'arc', -400, 2200, math.pi / 2, math.pi, hoist = true },
-    { 'line', -600, 200, hoist = true },
-    { 'arc', -400, 200, math.pi, 3 * math.pi / 2, hoist = true },
+-- the course, in the direction of travel, y down. Each waypoint starts a straight stretch to the
+-- next one, in a layer, maybe a hoist. Waypoints on a straight line split a stretch (a layer
+-- change in the middle of one).
+local WAYPOINTS = {
+    { -300, 0, 'A' },
+    { 2200, 300, 'A' },       -- the zigzag down, in front
+    { 2200, 750, 'A' },
+    { 100, 1000, 'A' },
+    { 100, 1450, 'A' },
+    { 2200, 1700, 'A' },
+    { 2200, 2150, 'A' },
+    { 1600, 2225, 'B' },      -- halfway along the bottom run: into the back layer
+    { 1000, 2300, 'B', hoist = true }, -- the riser, behind the zigzag, crossing it
+    { 1000, -800, 'B' },      -- over the top, back to the left, behind
+    { -300, -650, 'B' },
+    { -300, -325, 'A' },      -- halfway down the drop: to the front again
 }
+-- (a stretch must be longer than the corners at its ends take, ~CORNER each for a right angle,
+-- or the arcs overlap and the walls fold: a Box2D chain assertion)
 
--- the pieces as dense points, each with its piece's hoist flag
-local function piecePoints()
+-- the centre line, dense: straight stretches with arcs at the corners; each point knows its
+-- stretch's layer and hoist (an arc belongs to the stretch after it, and is hoist when either is)
+local function cornerPoints()
     local pts = {}
-    local function add(x, y, hoist) pts[#pts + 1] = { x = x, y = y, hoist = hoist } end
-    for _, p in ipairs(PIECES) do
-        if p[1] == 'line' then
-            local last = pts[#pts]
-            if last then -- the points between the last one and here
-                local dx, dy = p[2] - last.x, p[3] - last.y
-                local n = math.max(1, math.floor(math.sqrt(dx * dx + dy * dy) / 5))
-                for i = 1, n do add(last.x + dx * i / n, last.y + dy * i / n, p.hoist) end
-            else
-                add(p[2], p[3], p.hoist)
+    local n = #WAYPOINTS
+    local function add(x, y, w, hoist) pts[#pts + 1] = { x = x, y = y, layer = w[3], hoist = hoist } end
+    -- each corner's arc: from where it leaves the stretch before to where it joins the next
+    local arcs = {}
+    for i = 1, n do
+        local a, p, b = WAYPOINTS[(i - 2) % n + 1], WAYPOINTS[i], WAYPOINTS[i % n + 1]
+        local ux, uy = p[1] - a[1], p[2] - a[2]
+        local ul = math.sqrt(ux * ux + uy * uy)
+        ux, uy = ux / ul, uy / ul
+        local vx, vy = b[1] - p[1], b[2] - p[2]
+        local vl = math.sqrt(vx * vx + vy * vy)
+        vx, vy = vx / vl, vy / vl
+        local turn = math.acos(math.max(-1, math.min(1, ux * vx + uy * vy)))
+        if turn < 1e-3 then
+            arcs[i] = { x0 = p[1], y0 = p[2], x1 = p[1], y1 = p[2] }
+        else
+            local t = CORNER * math.tan(turn / 2)
+            local cross = ux * vy - uy * vx
+            local nx, ny = -uy, ux
+            if cross < 0 then nx, ny = uy, -ux end
+            local x0, y0 = p[1] - ux * t, p[2] - uy * t
+            local cx, cy = x0 + nx * CORNER, y0 + ny * CORNER
+            arcs[i] = {
+                x0 = x0, y0 = y0, x1 = p[1] + vx * t, y1 = p[2] + vy * t,
+                cx = cx, cy = cy, a0 = math.atan2(y0 - cy, x0 - cx), sweep = cross < 0 and -turn or turn,
+            }
+        end
+    end
+    for i = 1, n do
+        local w, prev = WAYPOINTS[i], WAYPOINTS[(i - 2) % n + 1]
+        local arc = arcs[i]
+        if arc.cx then
+            local hoist = w.hoist or prev.hoist
+            local count = math.max(2, math.floor(math.abs(arc.sweep) * CORNER / 5))
+            for k = 0, count do
+                local ang = arc.a0 + arc.sweep * k / count
+                add(arc.cx + math.cos(ang) * CORNER, arc.cy + math.sin(ang) * CORNER, w, hoist)
             end
         else
-            local cx, cy, a0, a1 = p[2], p[3], p[4], p[5]
-            local r = 200
-            local n = math.max(2, math.floor(math.abs(a1 - a0) * r / 5))
-            for i = 1, n do
-                local a = a0 + (a1 - a0) * i / n
-                add(cx + math.cos(a) * r, cy + math.sin(a) * r, p.hoist)
-            end
+            add(arc.x0, arc.y0, w, w.hoist)
         end
+        -- the straight stretch to the next corner's arc
+        local nextArc = arcs[i % n + 1]
+        local dx, dy = nextArc.x0 - arc.x1, nextArc.y0 - arc.y1
+        local count = math.max(1, math.floor(math.sqrt(dx * dx + dy * dy) / 5))
+        for k = 1, count - 1 do add(arc.x1 + dx * k / count, arc.y1 + dy * k / count, w, w.hoist) end
     end
     return pts
 end
 
--- Laplacian smoothing on a closed line (rounds the kinks where lines meet arcs)
-local function smooth(pts, passes)
-    local n = #pts
-    for _ = 1, passes do
-        local out = {}
-        for i = 1, n do
-            local a, b, c = pts[(i - 2) % n + 1], pts[i], pts[i % n + 1]
-            out[i] = { x = (a.x + 2 * b.x + c.x) / 4, y = (a.y + 2 * b.y + c.y) / 4, hoist = b.hoist }
-        end
-        pts = out
-    end
-    return pts
-end
-
--- resample a closed line at an even step: { x, y, s, tx, ty, nx, ny, hoist }
+-- resample a closed line at an even step: { x, y, s, tx, ty, nx, ny, layer, hoist }
 local function resample(pts, step)
     local n = #pts
     local total = 0
@@ -113,7 +138,8 @@ local function resample(pts, step)
         while cum[j + 1] < d do j = j + 1 end
         local a, b = pts[j], pts[j % n + 1]
         local t = (d - cum[j]) / math.max(1e-9, cum[j + 1] - cum[j])
-        out[#out + 1] = { x = a.x + (b.x - a.x) * t, y = a.y + (b.y - a.y) * t, s = d, hoist = a.hoist }
+        out[#out + 1] = { x = a.x + (b.x - a.x) * t, y = a.y + (b.y - a.y) * t, s = d,
+            layer = a.layer, hoist = a.hoist }
     end
     -- tangents (central difference) and normals (to the right of travel: y down, so (-ty, tx))
     local m = #out
@@ -127,16 +153,73 @@ local function resample(pts, step)
     return out, total
 end
 
-local function buildTrack()
-    local line, length = resample(smooth(piecePoints(), SMOOTH), STEP)
-    local left, right = {}, {}
-    for _, p in ipairs(line) do
-        left[#left + 1] = p.x - p.nx * HALF
-        left[#left + 1] = p.y - p.ny * HALF
-        right[#right + 1] = p.x + p.nx * HALF
-        right[#right + 1] = p.y + p.ny * HALF
+local function smoothstep(t)
+    t = math.max(0, math.min(1, t))
+    return t * t * (3 - 2 * t)
+end
+
+-- the layer changes: which layers' walls each point has, and its drawn depth (eased across)
+local function transitions(line, length)
+    local n = #line
+    local changes = {}
+    for i = 1, n do
+        local a, b = line[i], line[i % n + 1]
+        if a.layer ~= b.layer then
+            changes[#changes + 1] = { s = b.s ~= 0 and b.s or length, from = a.layer, to = b.layer }
+        end
     end
-    return { line = line, length = length, left = left, right = right, layer = 'A' }
+    for _, p in ipairs(line) do
+        p.walls = { [p.layer] = true }
+        p.depth = LAYER_DEPTH[p.layer]
+        for _, ch in ipairs(changes) do
+            local d = p.s - ch.s -- signed, around the loop
+            if d > length / 2 then d = d - length elseif d < -length / 2 then d = d + length end
+            if math.abs(d) <= TRANSITION / 2 then
+                p.walls[ch.from], p.walls[ch.to] = true, true
+                local t = smoothstep(d / TRANSITION + 0.5)
+                p.depth = LAYER_DEPTH[ch.from] + (LAYER_DEPTH[ch.to] - LAYER_DEPTH[ch.from]) * t
+            end
+        end
+    end
+end
+
+-- runs of consecutive indices where keep(i), around a closed loop: { {i, i+1, ...}, ... }
+local function runs(n, keep)
+    local start
+    for i = 1, n do
+        if not keep(i) then start = i break end
+    end
+    if not start then -- all of it
+        local all = {}
+        for i = 1, n do all[i] = i end
+        all[#all + 1] = 1
+        return { all }
+    end
+    local out, cur = {}, nil
+    for k = 1, n do
+        local i = (start + k - 1) % n + 1
+        if keep(i) then
+            cur = cur or {}
+            cur[#cur + 1] = i
+        elseif cur then
+            out[#out + 1] = cur
+            cur = nil
+        end
+    end
+    if cur then out[#out + 1] = cur end
+    return out
+end
+
+local function buildTrack()
+    local line, length = resample(cornerPoints(), STEP)
+    transitions(line, length)
+    for _, p in ipairs(line) do
+        p.lx, p.ly = p.x - p.nx * HALF, p.y - p.ny * HALF
+        p.rx, p.ry = p.x + p.nx * HALF, p.y + p.ny * HALF
+    end
+    local layers = {}
+    for _, p in ipairs(line) do layers[p.layer] = true end
+    return { line = line, length = length, layers = layers }
 end
 
 local function makeTrack()
@@ -144,16 +227,29 @@ local function makeTrack()
     if c.track and alive(c.track.body) then return end
     local track = buildTrack()
     track.body = love.physics.newBody(world, 0, 0, 'static')
-    for _, points in ipairs({ track.left, track.right }) do
-        -- Box2D 2.3 chains collide on both sides: no winding to get right (TRACKS.md)
-        local f = love.physics.newFixture(track.body, love.physics.newChainShape(true, points))
-        f:setFriction(0.6)
-        f:setCategory(TRACK_LAYERS[track.layer])
+    local line = track.line
+    for layer in pairs(track.layers) do
+        for _, run in ipairs(runs(#line, function(i) return line[i].walls[layer] end)) do
+            if #run >= 2 then
+                for _, side in ipairs({ 'l', 'r' }) do
+                    local points = {}
+                    for _, i in ipairs(run) do
+                        points[#points + 1] = line[i][side .. 'x']
+                        points[#points + 1] = line[i][side .. 'y']
+                    end
+                    -- Box2D 2.3 chains collide on both sides: no winding to get right (TRACKS.md)
+                    local f = love.physics.newFixture(track.body, love.physics.newChainShape(false, points))
+                    f:setFriction(0.6)
+                    f:setCategory(TRACK_LAYERS[layer])
+                end
+            end
+        end
     end
     c.track = track
 end
 
--- the nearest centre line point to (x, y): a search around the last one, all of it when lost
+-- the nearest centre line point to (x, y): a search around the last one (so at a crossing it
+-- stays on its own stretch), all of it when lost
 local function nearest(track, x, y, hint)
     local line = track.line
     local n = #line
@@ -174,12 +270,24 @@ end
 
 -- ─── Marbles ───
 
-local function addMarble(at)
+-- a marble in a layer: its own category, every other track layer masked out
+local function setLayer(m, layer)
+    if m.layer == layer then return end
+    local others = {}
+    for name, category in pairs(TRACK_LAYERS) do
+        if name ~= layer then others[#others + 1] = category end
+    end
+    m.fixture:setCategory(TRACK_LAYERS[layer])
+    m.fixture:setMask(unpack(others))
+    m.layer = layer
+end
+
+local function addMarble()
     local c = check()
     if #c.marbles >= MAX_MARBLES then return end
     local line = c.track.line
     -- at the start, behind any marble already there
-    local i = at or 1
+    local i = 1
     for _, m in ipairs(c.marbles) do
         if alive(m.body) then
             local x, y = m.body:getPosition()
@@ -192,12 +300,10 @@ local function addMarble(at)
     local f = love.physics.newFixture(body, love.physics.newCircleShape(MARBLE_R), 1)
     f:setFriction(0.6)
     f:setRestitution(0.2)
-    f:setCategory(TRACK_LAYERS[c.track.layer])
     body:setBullet(true)
-    c.marbles[#c.marbles + 1] = {
-        body = body, index = i, still = 0,
-        color = COLORS[(#c.marbles) % #COLORS + 1],
-    }
+    local m = { body = body, fixture = f, index = i, still = 0, color = COLORS[(#c.marbles) % #COLORS + 1] }
+    setLayer(m, p.layer)
+    c.marbles[#c.marbles + 1] = m
 end
 
 local function removeMarbles()
@@ -211,7 +317,7 @@ end
 local function startOver()
     local c = check()
     removeMarbles()
-    c.stats = { escapes = 0, topSpeed = 0 }
+    c.stats = { escapes = 0, topSpeed = 0, switches = 0 }
     for _ = 1, MARBLES do addMarble() end
 end
 
@@ -229,10 +335,18 @@ local function updateMarble(c, m, dt, gy)
     if dist > HALF + MARBLE_R then
         c.stats.escapes = c.stats.escapes + 1
         print(('tracks: a marble got out at s=%d, %d px off the line, %d px/s'):format(p.s, dist, speed))
-        body:setPosition(c.track.line[1].x, c.track.line[1].y)
+        local start = c.track.line[1]
+        body:setPosition(start.x, start.y)
         body:setLinearVelocity(0, 0)
         m.index = 1
+        setLayer(m, start.layer)
         return
+    end
+    -- the layer by arc position: the point's own layer changes at a transition's middle, where
+    -- both layers' walls are; done here after the step, not in a contact callback (world locked)
+    if p.layer ~= m.layer then
+        setLayer(m, p.layer)
+        c.stats.switches = c.stats.switches + 1
     end
     local vt = vx * p.tx + vy * p.ty
     local mass = body:getMass()
@@ -257,65 +371,110 @@ end
 local GLASS = { 0.75, 0.88, 0.95, 0.35 }
 local GLASS_HOIST = { 0.95, 0.85, 0.6, 0.4 }
 local RIM = { 0.35, 0.5, 0.6 }
+local HAZE = { 0.1, 0.18, 0.12 } -- toward the background
 local LIGHT_X, LIGHT_Y = -0.6, -0.8 -- toward the light
 
--- the pipe's inside as a strip mesh, built once per track
-local function pipeMesh(track)
-    if track.mesh then return track.mesh end
-    local verts = {}
+-- a world point at a drawn depth: smaller toward the vanishing point
+local function project(x, y, depth)
+    local k = 1 - DEPTH_SHRINK * depth
+    return VANISH_X + (x - VANISH_X) * k, VANISH_Y + (y - VANISH_Y) * k, k
+end
+
+local function hazed(col, depth, alpha)
+    local h = math.min(1, DEPTH_HAZE * depth)
+    return col[1] + (HAZE[1] - col[1]) * h, col[2] + (HAZE[2] - col[2]) * h, col[3] + (HAZE[3] - col[3]) * h,
+        alpha or col[4] or 1
+end
+
+-- per layer: the glass as a triangle mesh (each segment drawn in its first point's layer) and the
+-- rims and highlight as runs of lines; built once per track
+local function layerLook(track, layer)
+    track.looks = track.looks or {}
+    if track.looks[layer] then return track.looks[layer] end
     local line = track.line
-    for i = 1, #line + 1 do
-        local k = (i - 1) % #line + 1
-        local p = line[k]
-        local col = p.hoist and GLASS_HOIST or GLASS
-        verts[#verts + 1] = { track.left[2 * k - 1], track.left[2 * k], 0, 0, col[1], col[2], col[3], col[4] }
-        verts[#verts + 1] = { track.right[2 * k - 1], track.right[2 * k], 0, 0, col[1], col[2], col[3], col[4] }
+    local n = #line
+    local verts = {}
+    local function vert(p, x, y)
+        local px, py = project(x, y, p.depth)
+        local r, g, b, a = hazed(p.hoist and GLASS_HOIST or GLASS, p.depth)
+        verts[#verts + 1] = { px, py, 0, 0, r, g, b, a }
     end
-    track.mesh = love.graphics.newMesh(verts, 'strip', 'static')
-    return track.mesh
-end
-
-local function drawPipeBack(track)
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.draw(pipeMesh(track))
-end
-
-local function drawPipeFront(track)
-    -- the walls, and a highlight along the upper part of the glass
-    love.graphics.setColor(RIM)
-    love.graphics.setLineWidth(WALL)
-    love.graphics.setLineJoin('bevel')
-    love.graphics.polygon('line', track.left)
-    love.graphics.polygon('line', track.right)
-    love.graphics.setColor(1, 1, 1, 0.35)
-    love.graphics.setLineWidth(4)
-    local hl = {}
-    for _, p in ipairs(track.line) do
-        -- toward the light (up-left), smoothly: through the middle where the pipe points at it
-        local side = p.nx * LIGHT_X + p.ny * LIGHT_Y
-        hl[#hl + 1] = p.x + p.nx * HALF * 0.6 * side
-        hl[#hl + 1] = p.y + p.ny * HALF * 0.6 * side
+    local look = { rims = {} }
+    for i = 1, n do
+        local p, q = line[i], line[i % n + 1]
+        if p.layer == layer then
+            vert(p, p.lx, p.ly); vert(p, p.rx, p.ry); vert(q, q.lx, q.ly)
+            vert(q, q.lx, q.ly); vert(p, p.rx, p.ry); vert(q, q.rx, q.ry)
+        end
     end
-    love.graphics.polygon('line', hl)
+    if #verts > 0 then look.mesh = love.graphics.newMesh(verts, 'triangles', 'static') end
+    for _, run in ipairs(runs(n, function(i) return line[i].layer == layer end)) do
+        run[#run + 1] = run[#run] % n + 1 -- on to the next point: no gap where the layer changes
+        local left, right, glint, depth = {}, {}, {}, 0
+        for _, i in ipairs(run) do
+            local p = line[i]
+            local x, y = project(p.lx, p.ly, p.depth)
+            left[#left + 1], left[#left + 2] = x, y
+            x, y = project(p.rx, p.ry, p.depth)
+            right[#right + 1], right[#right + 2] = x, y
+            -- the glint toward the light, smoothly: through the middle where the pipe points at it
+            local side = p.nx * LIGHT_X + p.ny * LIGHT_Y
+            x, y = project(p.x + p.nx * HALF * 0.6 * side, p.y + p.ny * HALF * 0.6 * side, p.depth)
+            glint[#glint + 1], glint[#glint + 2] = x, y
+            depth = math.max(depth, p.depth)
+        end
+        look.rims[#look.rims + 1] = { left = left, right = right, glint = glint, depth = depth }
+    end
+    track.looks[layer] = look
+    return look
 end
 
-local function drawMarble(m)
+local function drawMarble(m, depth)
     local body = m.body
-    local x, y = body:getPosition()
+    local wx, wy = body:getPosition()
+    local x, y, k = project(wx, wy, depth)
+    local r = MARBLE_R * k
     local a = body:getAngle()
     local col = m.color
-    love.graphics.setColor(col[1], col[2], col[3], 1)
-    love.graphics.circle('fill', x, y, MARBLE_R)
+    love.graphics.setColor(hazed(col, depth, 1))
+    love.graphics.circle('fill', x, y, r)
     -- a swirl inside that turns with the marble (to see it roll)
-    love.graphics.setColor(1, 1, 1, 0.6)
-    love.graphics.setLineWidth(5)
-    love.graphics.arc('line', 'open', x, y, MARBLE_R * 0.55, a, a + 2.2)
-    love.graphics.setColor(col[1] * 0.5, col[2] * 0.5, col[3] * 0.5, 1)
-    love.graphics.setLineWidth(3)
-    love.graphics.circle('line', x, y, MARBLE_R)
+    love.graphics.setColor(1, 1, 1, 0.6 * (1 - 0.5 * math.min(1, depth)))
+    love.graphics.setLineWidth(5 * k)
+    love.graphics.arc('line', 'open', x, y, r * 0.55, a, a + 2.2)
+    love.graphics.setColor(hazed({ col[1] * 0.5, col[2] * 0.5, col[3] * 0.5 }, depth, 1))
+    love.graphics.setLineWidth(3 * k)
+    love.graphics.circle('line', x, y, r)
     -- the glint stays up-left (the light)
-    love.graphics.setColor(1, 1, 1, 0.85)
-    love.graphics.circle('fill', x - MARBLE_R * 0.35, y - MARBLE_R * 0.35, MARBLE_R * 0.18)
+    love.graphics.setColor(1, 1, 1, 0.85 * (1 - 0.4 * math.min(1, depth)))
+    love.graphics.circle('fill', x - r * 0.35, y - r * 0.35, r * 0.18)
+end
+
+-- one layer: its glass, the marbles in it, its rims and glint over them
+local function drawLayer(c, layer)
+    local look = layerLook(c.track, layer)
+    if look.mesh then
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.draw(look.mesh)
+    end
+    for _, m in ipairs(c.marbles) do
+        if alive(m.body) and m.layer == layer then
+            drawMarble(m, c.track.line[m.index].depth)
+        end
+    end
+    love.graphics.setLineJoin('bevel')
+    for _, rim in ipairs(look.rims) do
+        local k = 1 - DEPTH_SHRINK * rim.depth
+        love.graphics.setColor(hazed(RIM, rim.depth, 1))
+        love.graphics.setLineWidth(WALL * k)
+        if #rim.left >= 4 then
+            love.graphics.line(rim.left)
+            love.graphics.line(rim.right)
+        end
+        love.graphics.setColor(1, 1, 1, 0.35 * (1 - 0.5 * math.min(1, rim.depth)))
+        love.graphics.setLineWidth(4 * k)
+        if #rim.glint >= 4 then love.graphics.line(rim.glint) end
+    end
 end
 
 function s.drawBelow()
@@ -324,16 +483,17 @@ function s.drawBelow()
         c.savedDrawBodies = state.world.debugDrawBodies
         state.world.debugDrawBodies = false
     end
-    if c.track and alive(c.track.body) then drawPipeBack(c.track) end
-    love.graphics.setColor(1, 1, 1, 1)
 end
 
 function s.draw()
     local c = check()
-    for _, m in ipairs(c.marbles) do
-        if alive(m.body) then drawMarble(m) end
+    if c.track and alive(c.track.body) then
+        -- back to front
+        local order = {}
+        for layer in pairs(c.track.layers) do order[#order + 1] = layer end
+        table.sort(order, function(a, b) return LAYER_DEPTH[a] > LAYER_DEPTH[b] end)
+        for _, layer in ipairs(order) do drawLayer(c, layer) end
     end
-    if c.track and alive(c.track.body) then drawPipeFront(c.track) end
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.setLineWidth(1)
     if c.savedDrawBodies ~= nil then
@@ -346,8 +506,14 @@ end
 
 function s.onStart()
     worldState.paused = false
-    makeTrack()
     local c = check()
+    -- a track from before this script changed shape: built again
+    if c.track and alive(c.track.body) and not c.track.layers then
+        removeMarbles()
+        c.track.body:destroy()
+        c.track = nil
+    end
+    makeTrack()
     if #c.marbles == 0 then startOver() end
 end
 

@@ -96,10 +96,24 @@ The talk assumed Box2D v3 (`b2Shape_SetFilter`, `b2Body_SetBullet`, one-sided ch
   (a buizenpost). A marble stopped for 6 s outside it gets a push. Measured: 12 marbles for a
   minute, top speed ~1350 px/s, none out; all 12 thrown at 5000 px/s into a wall, none out
   (an escape is counted in `state.tracksSpike.stats` and printed). Not measured on the phone yet.
-- [ ] **TR2. Two layers and a crossing.** The track goes behind itself: layer B's stretch crosses
+- [x] **TR2. Two layers and a crossing.** The track goes behind itself: layer B's stretch crosses
   layer A's on screen. A transition stretch with both layers' walls; the filter switches at its
   middle by arc position; the drawn depth (order, size, a little haze) eases across it. Check:
   rolling back through a transition, two marbles at once.
+  Built 2026-11-06: the course is waypoints with rounded corners (radius 200; each stretch has a
+  layer and maybe a hoist; a waypoint in the middle of a straight stretch changes layer there).
+  The zigzag is layer A; the riser up through the middle (the hoist) and the way back over the
+  top are layer B, so the riser crosses the zigzag three times. Walls are open chains, per layer,
+  over every point that layer covers (its own stretches plus the transitions, 600 long). A marble
+  takes its nearest point's layer after the step: its own category, every other track layer
+  masked out. Drawn back to front per layer, B shrunk 16% toward a vanishing point and hazed;
+  across a transition the pipe visibly bends away into the back (at 360 long it showed as a jog).
+  12 marbles for 45 s: 73 layer switches, none out, top ~1390 px/s. Headless (a throwaway spec,
+  `love . --specs`): a marble sent back up the bottom run at 900 px/s turned from B to A right at
+  the transition's middle and rolled on in A; 12 marbles for two simulated minutes: 190
+  switches, none out, top ~1460 px/s.
+  A stretch must be longer than its corners take (~200 each for a right angle), or the arcs
+  overlap and the walls fold (a Box2D chain assertion).
 - [ ] **TR3. The cart.** A box in the channel (wheels on both walls or a rounded slider), bullet,
   ballast, switching layers like the marble. Loops and a drop. Hoist, booster and brake as forces.
 - [ ] **TR4. A rider.** A Mipo seated on the soapbox's wheel-joint seat, the track masked out,
