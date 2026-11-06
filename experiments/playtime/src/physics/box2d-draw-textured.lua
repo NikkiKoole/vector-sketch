@@ -1025,9 +1025,9 @@ local drawers = {
 -- src/render/mouth.lua reaches them (a copy kept drawing the old ones)
 for kind in pairs(mouth.drawers) do drawers[kind] = function(d) return mouth.drawers[kind](d) end end
 
--- draws what's registered (createDrawables). `only` (optional): a function of a drawable's body, false
--- skips it; the scene's splits aren't drawn then (the 3D shadows draw each depth on its own,
--- src/shadow-silhouettes.lua)
+-- draws what's registered (createDrawables). `only` (optional): a function of a drawable's body (and the
+-- drawable itself: its type), false skips it; the scene's splits aren't drawn then (the 3D shadows draw
+-- each depth on its own and leave out what doesn't show in a shadow, src/shadow-silhouettes.lua)
 function lib.drawTexturedWorld(_world, only)
 
     -- state.drawTimes = { frames = 0, ms = {}, count = {} } (from the bridge) adds up the time
@@ -1053,7 +1053,7 @@ function lib.drawTexturedWorld(_world, only)
     -- its house between the back lane's Mipos and the front lane's). Set per frame by the scene.
     local splits, nextSplit = (not only) and state.drawSplits or nil, 1
     for i = 1, #drawables do repeat -- break = the next drawable
-        if only and not only(drawables[i].body) then break end
+        if only and not only(drawables[i].body, drawables[i]) then break end
         if splits then
             local z = drawables[i].z
             while splits[nextSplit] and splits[nextSplit].z <= z do

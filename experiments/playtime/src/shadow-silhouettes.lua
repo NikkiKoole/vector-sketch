@@ -8,8 +8,17 @@ local lib = {}
 local canvas
 local key = {}
 local frameToken = {} -- a new one each frame (newFrame): what was drawn in an older frame is redrawn
--- every body: a filter makes the textured drawing leave out the scene's splits (a ground drawn in one,
--- which may itself draw shadows from these silhouettes)
+-- What doesn't show in a shadow is left out of the outlines (LS25): a face's decals, brows and mouth sit
+-- inside the head's outline, grass and water are too thin or see-through to cast one. Any filter also makes
+-- the textured drawing leave out the scene's splits (a ground drawn in one, which may itself draw shadows
+-- from these silhouettes).
+local NO_SHADOW = { decal = true, brow = true, grass = true, liquid = true, ['mouth-backdrop'] = true,
+    ['mouth-lower'] = true, ['mouth-upper'] = true, ['mouth-teeth'] = true, ['mouth-tongue'] = true }
+-- (state.shadowAllParts puts everything back: to compare)
+local function castsShadow(drawable)
+    if require('src.state').shadowAllParts then return true end
+    return not (drawable and NO_SHADOW[drawable.type])
+end
 local function everything() return true end
 
 -- the textured world as plain outlines: no light or clay shaders (state.drawingOutlines, read by
@@ -18,7 +27,8 @@ local function drawOutlines(world, only)
     local textured = require('src.physics.box2d-draw-textured')
     local state = require('src.state')
     state.drawingOutlines = true
-    local ok, err = pcall(textured.drawTexturedWorld, world, only)
+    local function shows(body, drawable) return castsShadow(drawable) and only(body, drawable) end
+    local ok, err = pcall(textured.drawTexturedWorld, world, shows)
     state.drawingOutlines = false
     if not ok then error(err, 0) end
 end

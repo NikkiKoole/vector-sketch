@@ -310,10 +310,14 @@ fade, a sun: the panel's `fades` switch, LS4).
   the default one) would write the second output, and the world would be drawn into a canvas, not
   straight to the screen. Try first on a small test that LÖVE 11 does it on the phone (GLES), then
   only if shadows go into real rooms (LS13). Idea, Nikki 2026-11-06: 'note it down'.
-- [ ] **LS25. Only what shows in a shadow.** The outline pass draws every drawable: faces, decals,
+- [x] **LS25. Only what shows in a shadow.** The outline pass draws every drawable: faces, decals,
   grass, mouths, small bits that barely change a shadow. Drawing only the bodies, heads and limbs
   (a filter on the drawable's type in drawTexturedWorld's `only`, or a list per Mipo) makes it cheaper;
   measure what it saves with 20 Mipos. Idea, Nikki 2026-11-06: 'note it down'.
+  Done 2026-11-06: src/shadow-silhouettes.lua leaves out decals, brows, the mouth's parts, grass and
+  water (drawTexturedWorld's `only` now gets the drawable too; state.shadowAllParts puts them back, to
+  compare). iPhone SE 2, one install, 20 lit Mipos, paused, 3D every frame, each twice: all parts 24.1 /
+  24.3 ms draw (38 fps), without them 20.7 / 20.9 (41-42 fps); every other frame 18.8.
 - [ ] **LS15. Small ones:** should a new directional light be a sun (not fade) by default; the back
   light on a drawn stone lands on its black outline (reach past it, as the contact shadow does);
   grass on a moving body rebuilds its blades every frame (LITTLE-USED, the grass round).
