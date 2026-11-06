@@ -1,42 +1,92 @@
 -- scene-light.lua — the scene's light level, saved with the scene (LIGHT-AND-SHADOW LS13, ENGINE-MERGE EM1).
 -- Nikki 2026-11-06: "I basically want it all, but not always, in cost-efficient steps": a level per scene,
 -- stepped through with the light button under the sound button (src/ui/tool-rail.lua), each level adding
--- the next cheapest: off (as drawn) / lit (Mipos lit without clay, contact shadows). Shadows and full
--- come later, as the rest of light-grass-check's script moves in.
+-- the next cheapest: off (as drawn) / lit (Mipos lit without clay, contact shadows) / shadows (+ soft
+-- shadows on the wall behind). Full comes later, as the rest of light-grass-check's script moves in.
 -- A level is a table of settings (lib.LEVELS), so tuning one is editing data here.
--- Off touches nothing: scenes that light themselves (light-grass-check, mipo-materials) work as before.
+-- Off touches nothing: scenes that light themselves (light-grass-check, mipo-materials) work as before;
+-- a level only sets what the scene hasn't set itself (lib.SHARED), and takes off only what it set.
 -- The settings put on a part are taken off again (the part's own values back) when the level drops and
 -- before a save (lib.unapply), so they never end up in a scene file.
 local lib = {}
 
 local state = require('src.state')
 local mipoRegistry = require('src.mipo-registry')
+local camera = require('src.camera')
 
 -- the Mipo parts that take the light: picture parts, limb ribbons, torso skin (not the face's decals: a
 -- face stays as drawn)
 local LIT_PARTS = { texfixture = true, ['connected-texture'] = true, ['trace-vertices'] = true }
 
--- Each level in order; `mipoParts` goes on every lit Mipo part's extra (the plasticine shader's settings,
--- src/render/shaders.lua), `contactShadows` becomes state.contactShadows (src/contact-shadows.lua).
--- The lit values: light-grass-check's liked ones (its o), the Mipos' own frontal light and softer swing,
--- clay off (LS23: ~5.6 ms for 20 Mipos on the phone instead of ~9.5).
-lib.LEVELS = {
-    { name = 'off' },
-    { name = 'lit',
-        mipoParts = {
-            plasticine = true, plasticineLightAdd = true, plasticineLightGain = 0.3, plasticineLightZ = 0.75,
-            plasticineFormRadius = 0.35, plasticineFormBaked = true, plasticineFormRise = 1,
-            -- clay off: light and roundness only
-            plasticineStrength = 0, plasticineBump = 0, plasticineSpecStrength = 0, plasticineSSSstrength = 0,
-        },
+-- What the wall shadows land on. 'everything': all of what's behind the things (Nikki 2026-11-06: right
+-- for rooms; be flexible, other choices later: the backdrops only, bodies marked as wall).
+local WALLS = {
+    everything = function()
+        local cam = camera.getInstance()
+        local w, h = love.graphics.getDimensions()
+        local x1, y1 = cam:getWorldCoordinates(0, 0)
+        local x2, y2 = cam:getWorldCoordinates(w, h)
+        local pad = 200
+        love.graphics.rectangle('fill', math.min(x1, x2) - pad, math.min(y1, y2) - pad,
+            math.abs(x2 - x1) + 2 * pad, math.abs(y2 - y1) + 2 * pad)
+    end,
+}
+lib.WALLS = WALLS
+
+-- the soft wall shadow from a sun (the way to it, world): away from it, longer the lower it is (as
+-- light-grass-check's wallShadow), `behind` how far the wall is behind the things
+local function wallShadowFrom(toLight, behind, strength, wall)
+    local tx, ty = toLight[1], toLight[2]
+    local len = math.sqrt(tx * tx + ty * ty)
+    tx, ty = tx / len, ty / len
+    local high = math.max(0, -ty)
+    local length = behind * math.min(4, 1 / (high + 0.25))
+    return { wall = WALLS[wall], offset = { -tx * length, high * length }, blur = 5 + length * 0.06,
+        strength = strength }
+end
+
+-- the day's sun (light-grass-check's, high on the left)
+local SUN = { -0.5, -0.85 }
+
+local function extend(base, more)
+    local t = {}
+    for k, v in pairs(base) do t[k] = v end
+    for k, v in pairs(more) do t[k] = v end
+    return t
+end
+
+-- `mipoParts` goes on every lit Mipo part's extra (the plasticine shader's settings, src/render/shaders.lua);
+-- `shared` are state fields the engine reads (src/contact-shadows.lua, src/backdrop-shadows.lua,
+-- src/shadow-silhouettes.lua; sceneDefaultLights: src/render/shaders.lua, only in a scene without lights
+-- of its own). The lit values: light-grass-check's liked ones (its o), the Mipos' own frontal light and
+-- softer swing, clay off (LS23: ~5.6 ms for 20 Mipos on the phone instead of ~9.5).
+local LIT = {
+    name = 'lit',
+    mipoParts = {
+        plasticine = true, plasticineLightAdd = true, plasticineLightGain = 0.3, plasticineLightZ = 0.75,
+        plasticineFormRadius = 0.35, plasticineFormBaked = true, plasticineFormRise = 1,
+        -- clay off: light and roundness only
+        plasticineStrength = 0, plasticineBump = 0, plasticineSpecStrength = 0, plasticineSSSstrength = 0,
+    },
+    shared = {
         contactShadows = { strength = 0.45 },
-        -- a scene without lights of its own gets these (src/render/shaders.lua): light-grass-check's day,
-        -- the sun high on the left, the sky light at its 1.3 strength
-        lights = {
-            { lightType = 'directional', toLight = { -0.5, -0.85 }, colorHex = 'fff2d9ff', intensity = 1.2 },
+        sceneDefaultLights = {
+            { lightType = 'directional', toLight = SUN, colorHex = 'fff2d9ff', intensity = 1.2 },
+            -- the sky light at light-grass-check's 1.3 strength
             { lightType = 'sky', toLight = { 0, -1 }, colorHex = '9cc8ffff', groundHex = '8a7a50ff', intensity = 0.78 },
         },
     },
+}
+
+lib.LEVELS = {
+    { name = 'off' },
+    LIT,
+    -- + soft shadows on the wall behind (~4 ms on the phone; every other frame, half that: LS25)
+    { name = 'shadows', mipoParts = LIT.mipoParts,
+        shared = extend(LIT.shared, {
+            backdropShadows = wallShadowFrom(SUN, 90, 0.35, 'everything'),
+            shadowEveryOther = true,
+        }) },
 }
 
 local function levelIndex(name)
@@ -74,11 +124,17 @@ function lib.save()
     return { level = s.level }
 end
 
--- the parts lit now: extra -> the values it had before (false for none), kept on state (hot reload)
+-- the parts lit now: extra -> the values it had before (false for none), kept on state (hot reload);
 -- weak keys: a rerolled Mipo's old parts go
 local function litParts()
     state.sceneLitParts = state.sceneLitParts or setmetatable({}, { __mode = 'k' })
     return state.sceneLitParts
+end
+
+-- the state fields this level set: name -> the value it set
+local function owned()
+    state.sceneLightOwned = state.sceneLightOwned or {}
+    return state.sceneLightOwned
 end
 
 local function restore(extra, before)
@@ -87,16 +143,15 @@ local function restore(extra, before)
     end
 end
 
--- every part back to its own values (the level dropped, or a save is coming)
+-- every part back to its own values and the shared fields this level set cleared (the level dropped,
+-- or a save is coming)
 function lib.unapply()
-    local lit = litParts()
-    for extra, before in pairs(lit) do restore(extra, before) end
+    for extra, before in pairs(litParts()) do restore(extra, before) end
     state.sceneLitParts = setmetatable({}, { __mode = 'k' })
-    if state.contactShadows and state.contactShadows == state.sceneLightContact then
-        state.contactShadows = nil
+    for key, v in pairs(owned()) do
+        if state[key] == v then state[key] = nil end
     end
-    state.sceneLightContact = nil
-    state.sceneDefaultLights = nil
+    state.sceneLightOwned = {}
 end
 
 local function eachMipoPartExtra(fn)
@@ -117,16 +172,16 @@ end
 -- rebuilt or added has new parts; one already lit is skipped)
 function lib.apply()
     local level = lib.level()
-    local lit = litParts()
     if level.name == 'off' then
-        if next(lit) or state.sceneLightContact then lib.unapply() end
+        if next(litParts()) or next(owned()) then lib.unapply() end
+        state.sceneLightApplied = nil
         return
     end
     if state.sceneLightApplied ~= level.name then
         lib.unapply() -- another level: its settings off first
-        lit = litParts()
         state.sceneLightApplied = level.name
     end
+    local lit = litParts()
     local values = level.mipoParts
     if values then
         eachMipoPartExtra(function(extra)
@@ -139,10 +194,13 @@ function lib.apply()
             lit[extra] = before
         end)
     end
-    state.sceneDefaultLights = level.lights
-    if level.contactShadows and (state.contactShadows == nil or state.contactShadows == state.sceneLightContact) then
-        state.contactShadows = level.contactShadows
-        state.sceneLightContact = level.contactShadows
+    local mine = owned()
+    for key, v in pairs(level.shared or {}) do
+        -- only what the scene hasn't set itself
+        if state[key] == nil or state[key] == mine[key] then
+            state[key] = v
+            mine[key] = v
+        end
     end
 end
 

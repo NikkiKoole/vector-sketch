@@ -180,8 +180,15 @@ fade, a sun: the panel's `fades` switch, LS4).
   sky light (its day values; `state.sceneDefaultLights`, read in `src/render/shaders.lua`). The settings
   come off again when the level drops and before a save (the part's own values back). Off touches
   nothing, so light-grass-check and mipo-materials work as before. spec/scene-light_spec.lua.
-  Next: shadows (the wall and 3D shadows need a wall and a floor: which body is the wall, per scene),
-  then full (clay, lanes, lamp glow), then the details behind the button's arrow (time of day, ...).
+  **Slice 2 (2026-11-06): shadows** = lit + the soft wall shadows (src/backdrop-shadows.lua), away from
+  the default sun, every other frame (LS25). What they land on: 'everything' behind the things for now
+  (Nikki: rooms want that; "be a bit flexible, can this be changed later, with an option"): the level's
+  `wall` names one of `scene-light.WALLS`, so 'backdrops only' or 'bodies marked as wall' slot in as other
+  choices. The dollhouse at 60 fps on the Mac. A level only sets the shared state fields the scene hasn't
+  set itself, and clears only those (`state.sceneLightOwned`).
+  Next: full (the 3D shadows need a floor line and depth per scene, so a setting; clay; lanes; lamp
+  glow), then the details behind the button's arrow (time of day, which wall, ...). Measure each level
+  on the phone (`./playtime.sh bench device`) once full is in.
 - [x] **LS14. A lamp's wall shadows both ways.** Now one direction per scene (from the sun or moon): a
   lamp in a room's middle should throw shadows away from it on both sides, which needs a pass per
   thing (or per side). Only if a real room wants it (after LS12).

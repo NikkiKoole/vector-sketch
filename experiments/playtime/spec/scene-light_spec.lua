@@ -26,6 +26,8 @@ describe('the scene light level', function()
     before_each(function()
         mipoRegistry.reset()
         state.contactShadows = nil
+        state.backdropShadows = nil
+        state.shadowEveryOther = nil
         sceneLight.load(nil)
     end)
 
@@ -41,9 +43,10 @@ describe('the scene light level', function()
         assert.is_nil(sceneLight.save())
     end)
 
-    it('steps off -> lit -> off and saves the level', function()
+    it('steps off -> lit -> shadows -> off and saves the level', function()
         assert.are.equal('lit', sceneLight.step())
         assert.are.same({ level = 'lit' }, sceneLight.save())
+        assert.are.equal('shadows', sceneLight.step())
         assert.are.equal('off', sceneLight.step())
         sceneLight.load({ level = 'lit' })
         assert.are.equal('lit', sceneLight.level().name)
@@ -67,10 +70,25 @@ describe('the scene light level', function()
 
         sceneLight.apply() -- the next frame: on again
         assert.is_true(extra.plasticine)
-        sceneLight.step() -- off
+        sceneLight.settings().level = 'off'
         sceneLight.apply()
         assert.is_nil(extra.plasticine)
         assert.are.equal(0.2, extra.plasticineLightZ)
+    end)
+
+    it('shadows adds wall shadows on everything behind, and takes them off again', function()
+        sceneLight.load({ level = 'shadows' })
+        sceneLight.apply()
+        assert.is_truthy(state.backdropShadows)
+        assert.are.equal('function', type(state.backdropShadows.wall))
+        assert.is_true(state.backdropShadows.offset[1] > 0 and state.backdropShadows.offset[2] > 0,
+            'away from a sun high on the left')
+        assert.is_truthy(state.contactShadows)
+        sceneLight.step() -- off (after the last level)
+        sceneLight.apply()
+        assert.is_nil(state.backdropShadows)
+        assert.is_nil(state.shadowEveryOther)
+        assert.is_nil(state.contactShadows)
     end)
 
     it("leaves a scene's own contact shadows alone", function()
