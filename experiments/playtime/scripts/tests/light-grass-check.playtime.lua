@@ -10,6 +10,8 @@
 --   m the Mipos lit like the shapes / as drawn (their picture parts, limbs and torso; not the face)
 --   c the Mipos' clay (grain, dents, sheen) off / on (on to start): off, the light and roundness only
 --   h contact shadows off / on (src/contact-shadows.lua; how dark goes with the time of day)
+--   w shadows on the back wall off / on (src/backdrop-shadows.lua: shifted the way the sun or moon
+--     shines, soft; only on the wall, none on the open sky)
 --   k the sky light off / on (light from all of above in the sky's colour, from below in the ground's)
 --   g light swing   z how much the light comes from the front   f the quick form's depth
 --   b baked form / the shader's quick guess   n baked rise (1 a dome, 0.5, 0.2 a pebble)
@@ -41,6 +43,12 @@ local MOODS = {
 local MOOD_KEYS = { ['1'] = 'day', ['2'] = 'evening', ['3'] = 'night', ['4'] = 'lamp' }
 -- contact shadows (src/contact-shadows.lua) per time of day: how dark
 local SHADOWS = { day = 0.5, evening = 0.4, night = 0.3, lamp = 0.45 }
+-- the back wall (backdrop shadows fall on it, src/backdrop-shadows.lua; not on the open sky), and how
+-- far it is behind the things in front of it (how far their shadows shift), per time of day how dark
+local WALL = { x = -1550, y = -700, w = 2200, h = 1150, colour = { 0.91, 0.86, 0.75 } }
+local WALL_BEHIND = 90
+local BACKDROP_SHADOWS = { day = 0.35, evening = 0.3, night = 0.2, lamp = 0.3 }
+local function wallShape() love.graphics.rectangle('fill', WALL.x, WALL.y, WALL.w, WALL.h) end
 local LIGHTS = { 'sun', 'warm lamp', 'cool lamp', 'turning lamp', 'sky light' }
 
 -- each key steps through these on every shape; the first is how other scenes draw them
@@ -115,6 +123,17 @@ local function step(try)
     setAll(try, nextValue)
 end
 
+-- the backdrop shadows' shift: the way the sun (or moon) shines, else the turning lamp's, WALL_BEHIND far
+local function wallShadowOffset()
+    for _, label in ipairs({ 'sun', 'turning lamp' }) do
+        local body, extra = lightOf(label)
+        if body and (extra.intensity or 1) > 0 then
+            local a = body:getAngle()
+            return { math.cos(a) * WALL_BEHIND, math.sin(a) * WALL_BEHIND }
+        end
+    end
+end
+
 local function look()
     state.lightLab = state.lightLab or { mood = 'day', made = 0, perSecond = 0, time = 0 }
     return state.lightLab
@@ -161,6 +180,7 @@ end
 
 function s.onUnload()
     state.contactShadows = nil -- only in this scene
+    state.backdropShadows = nil
     local c = look()
     if c.original then
         love.graphics.newSpriteBatch = c.original
@@ -190,6 +210,9 @@ end
 function s.update(dt)
     lightMipos()
     state.contactShadows = not look().shadowsOff and { strength = SHADOWS[look().mood] or 0.45 } or nil
+    local offset = wallShadowOffset()
+    state.backdropShadows = (not look().wallShadowsOff and offset) and { wall = wallShape, offset = offset,
+        blur = 10, strength = BACKDROP_SHADOWS[look().mood] or 0.3 } or nil
     local c = look()
     c.time = c.time + (dt or 0)
     if c.time >= 1 then
@@ -204,6 +227,8 @@ function s.onKeyPress(key)
         step(TRIES[key])
     elseif key == '0' then
         for _, k in ipairs(TRY_ORDER) do setAll(TRIES[k], TRIES[k].values[1]) end
+    elseif key == 'w' then
+        look().wallShadowsOff = not look().wallShadowsOff
     elseif key == 'h' then
         look().shadowsOff = not look().shadowsOff
     elseif key == 'm' then
@@ -232,6 +257,11 @@ function s.drawBelow()
     local x1, y1 = cam:getWorldCoordinates(love.graphics.getWidth(), love.graphics.getHeight())
     love.graphics.setColor(sky[1], sky[2], sky[3], 1)
     love.graphics.rectangle('fill', x0, y0, x1 - x0, y1 - y0)
+    -- the back wall, the sky's light on it
+    local c = WALL.colour
+    love.graphics.setColor(c[1] * math.min(1, 0.2 + sky[1] * 0.9), c[2] * math.min(1, 0.2 + sky[2] * 0.9),
+        c[3] * math.min(1, 0.2 + sky[3] * 0.9), 1)
+    wallShape()
     love.graphics.setColor(1, 1, 1, 1)
 end
 
@@ -273,9 +303,10 @@ function s.drawUI()
         tries[#tries + 1] = string.format('%s %s %s', k, TRIES[k].name, tostring(current(TRIES[k])))
     end
     local lines = {
-        '1 day 2 evening 3 night 4 turning lamp (r)  k sky  h shadows  m Mipos lit  c clay  tab: play  s turf',
+        '1 day 2 evening 3 night 4 lamp (r)  k sky  h shadows  w wall shadows  m Mipos lit  c clay  tab: play  s turf',
         'now: ' .. c.mood .. (c.skyOff and ', sky light off' or ', sky light on')
             .. (c.shadowsOff and ', no shadows' or ', shadows')
+            .. (c.wallShadowsOff and ', none on the wall' or ', on the wall')
             .. (c.mipoLightOff and ', Mipos as drawn'
                 or (c.mipoClayOff and ', Mipos lit, no clay' or ', Mipos lit, clay'))
             .. '      shapes: ' .. table.concat(tries, '   ') .. '   (0 as elsewhere)',

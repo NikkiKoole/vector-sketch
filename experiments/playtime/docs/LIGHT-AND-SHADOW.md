@@ -60,3 +60,11 @@ fade, a sun, but the panel can't set 0).
 - [ ] **LS7. Cast shadows.** Bodies throwing 2D shadows away from a lamp onto what's behind them.
   Nikki (2026-11-06): the shadow you still want when the contact shadow has faded (a thing lifted or
   jumping) is this one, on the vertical plane behind: the backdrop.
+  Built 2026-11-06, for Nikki to judge: `src/backdrop-shadows.lua`, on while a scene sets
+  `state.backdropShadows` (a wall shape, the shift, blur, how dark). The textured world drawn once more
+  into a canvas, shifted the way the sun or moon shines (how far the wall is behind), blurred, laid on
+  the wall as soft black and cut to it with a stencil: none on the open sky. light-grass-check paints a
+  plaster back wall behind the stones (w off / on); evening's low sun throws long shadows, the moon
+  throws them down-left (spec/backdrop-shadows_spec.lua). Not yet: a lamp in the middle throwing
+  shadows both ways (one direction for the whole scene), and it costs a second textured pass a frame
+  (measure on the phone before a real scene uses it).
