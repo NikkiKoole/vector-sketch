@@ -2,10 +2,14 @@
 
 status: active
 
-**Picking up (2026-11-06, after lunch):** Nikki: "I like where we are with the light". Everything up to
-LS22 is built and judged in one test scene, `light-grass-check`; it runs at 60 fps on the iPhone SE 2
-(LS12). Open: LS13 (light as a scene setting, so a real room gets it), LS20 (a Mipo's parts shadowing
-each other), LS21 (cloud shadows), LS15 (small ones), LS23 (what lit Mipos cost in a full room).
+**Picking up (2026-11-06, end of the day):** Nikki: "I like where we are with the light"; the shadows
+are done until they move into the engine (LS13). Everything up to LS22 is built and judged in one test
+scene, `light-grass-check`. Since lunch: 20 lit Mipos run at 60 fps on the iPhone SE 2 (LS23: the light
+search and per-part sends fixed, ~9.8 -> ~1.8 ms), shadows every other frame and only what shows in a
+shadow (LS25), so lit + 3D is ~41-53 fps; dawn and dusk smooth and not too dark (sun and moon blended,
+no picking; the sky light's own strength). Open: LS13 (light as a scene setting, so a real room gets
+it; decide LS23's costs there), LS24 (draw once for screen and shadows, probed, wait for a real room),
+LS20 (a Mipo's parts shadowing each other), LS21 (cloud shadows), LS15 (small ones).
 To see it: `./playtime.sh start light-grass-check`; the panel (top left; – folds it, p hides it) has
 everything: 'back to the liked settings' for the lights, then '3D shadows (and the ground)', 'backdrops
 at depths', 'stones further back', 'from …' (which lights), 'a lamp circling round', 'night'. The keys
