@@ -2,7 +2,10 @@
 -- Nikki 2026-11-06: "I basically want it all, but not always, in cost-efficient steps": a level per scene,
 -- stepped through with the light button under the sound button (src/ui/tool-rail.lua), each level adding
 -- the next cheapest: off (as drawn) / lit (Mipos lit without clay, contact shadows) / shadows (+ soft
--- shadows on the wall behind). Full comes later, as the rest of light-grass-check's script moves in.
+-- shadows on the wall behind) / full (+ clay; with a floor set, 3D shadows along it and up the wall).
+-- The floor is a scene setting (the settings panel's light section: src/light-params.lua): where things
+-- stand (standY) and how far in front of the wall (depth), as light-grass-check's GROUND_TOP and SOLID_DEPTH.
+-- One floor per scene: a room with storeys (the dollhouse) leaves it unset.
 -- A level is a table of settings (lib.LEVELS), so tuning one is editing data here.
 -- Off touches nothing: scenes that light themselves (light-grass-check, mipo-materials) work as before;
 -- a level only sets what the scene hasn't set itself (lib.SHARED), and takes off only what it set.
@@ -20,15 +23,20 @@ local LIT_PARTS = { texfixture = true, ['connected-texture'] = true, ['trace-ver
 
 -- What the wall shadows land on. 'everything': all of what's behind the things (Nikki 2026-11-06: right
 -- for rooms; be flexible, other choices later: the backdrops only, bodies marked as wall).
+-- the screen's world rectangle, with room around
+local function view()
+    local cam = camera.getInstance()
+    local w, h = love.graphics.getDimensions()
+    local x1, y1 = cam:getWorldCoordinates(0, 0)
+    local x2, y2 = cam:getWorldCoordinates(w, h)
+    local pad = 200
+    return math.min(x1, x2) - pad, math.min(y1, y2) - pad, math.max(x1, x2) + pad, math.max(y1, y2) + pad
+end
+
 local WALLS = {
     everything = function()
-        local cam = camera.getInstance()
-        local w, h = love.graphics.getDimensions()
-        local x1, y1 = cam:getWorldCoordinates(0, 0)
-        local x2, y2 = cam:getWorldCoordinates(w, h)
-        local pad = 200
-        love.graphics.rectangle('fill', math.min(x1, x2) - pad, math.min(y1, y2) - pad,
-            math.abs(x2 - x1) + 2 * pad, math.abs(y2 - y1) + 2 * pad)
+        local x1, y1, x2, y2 = view()
+        love.graphics.rectangle('fill', x1, y1, x2 - x1, y2 - y1)
     end,
 }
 lib.WALLS = WALLS
@@ -78,15 +86,56 @@ local LIT = {
     },
 }
 
+-- + soft shadows on the wall behind (~4 ms on the phone; every other frame, half that: LS25)
+local SHADOWS = { name = 'shadows', mipoParts = LIT.mipoParts,
+    shared = extend(LIT.shared, {
+        backdropShadows = wallShadowFrom(SUN, 90, 0.35, 'everything'),
+        shadowEveryOther = true,
+    }) }
+
+-- full: the Mipos in clay (their own clay values: the clay-off ones left out)
+local CLAY = {}
+for k, v in pairs(LIT.mipoParts) do CLAY[k] = v end
+CLAY.plasticineStrength, CLAY.plasticineBump, CLAY.plasticineSpecStrength, CLAY.plasticineSSSstrength =
+    nil, nil, nil, nil
+
+-- with a floor: the 3D shadows (src/projected-shadows.lua) from the sun, a little out of the wall (as
+-- light-grass-check's SUN_TOWARDS), and the soft ones only on the wall above the floor, lighter (the two
+-- together, Nikki 2026-11-06). Made once per floor (the same tables while it stays: what apply compares).
+local fullCache = {}
+local function fullShared(settings)
+    local floor = settings.floor
+    if not floor then return SHADOWS.shared end
+    local key = floor.standY .. '|' .. floor.depth
+    if fullCache.key == key then return fullCache.shared end
+    local floorY = floor.standY - floor.depth
+    local function aboveFloor()
+        local x1, y1, x2 = view()
+        love.graphics.rectangle('fill', x1, y1, x2 - x1, floorY - y1)
+    end
+    local function wallAndFloor()
+        local x1, y1, x2 = view()
+        love.graphics.rectangle('fill', x1, y1, x2 - x1, floor.standY - y1)
+    end
+    local soft = wallShadowFrom(SUN, 90, 0.35 * 0.7, 'everything')
+    soft.wall = aboveFloor
+    local high = -SUN[2] / math.sqrt(SUN[1] * SUN[1] + SUN[2] * SUN[2])
+    fullCache.key = key
+    fullCache.shared = extend(LIT.shared, {
+        backdropShadows = soft,
+        shadowEveryOther = true,
+        projectedShadows = { area = wallAndFloor, floorY = floorY, depth = floor.depth, lights = {
+            { light = { kind = 'sun', x = SUN[1], h = high, z = 0.5 }, strength = 0.5, softness = 0.03 },
+        } },
+    })
+    return fullCache.shared
+end
+
 lib.LEVELS = {
     { name = 'off' },
     LIT,
-    -- + soft shadows on the wall behind (~4 ms on the phone; every other frame, half that: LS25)
-    { name = 'shadows', mipoParts = LIT.mipoParts,
-        shared = extend(LIT.shared, {
-            backdropShadows = wallShadowFrom(SUN, 90, 0.35, 'everything'),
-            shadowEveryOther = true,
-        }) },
+    SHADOWS,
+    { name = 'full', mipoParts = CLAY, shared = fullShared },
 }
 
 local function levelIndex(name)
@@ -113,15 +162,38 @@ end
 -- from a scene file (nil: off)
 function lib.load(saved)
     lib.unapply()
-    state.sceneLight = { level = saved and saved.level or 'off' }
+    state.sceneLight = { level = saved and saved.level or 'off',
+        floor = saved and saved.floor and { standY = saved.floor.standY, depth = saved.floor.depth } or nil }
     return state.sceneLight
 end
 
--- for a scene file (off: nothing, the file stays as it was)
+-- for a scene file (off and no floor: nothing, the file stays as it was)
 function lib.save()
     local s = lib.settings()
-    if s.level == 'off' then return nil end
-    return { level = s.level }
+    if s.level == 'off' and not s.floor then return nil end
+    return { level = s.level, floor = s.floor and { standY = s.floor.standY, depth = s.floor.depth } or nil }
+end
+
+-- the floor where the Mipos stand: the lowest point of their feet (a scene without Mipos: none)
+lib.DEFAULT_DEPTH = 400
+function lib.floorUnderMipos()
+    local lowest
+    for _, instance in pairs(mipoRegistry.getAll()) do
+        for _, name in ipairs({ 'lfoot', 'rfoot' }) do
+            local part = instance.parts and instance.parts[name]
+            local body = part and part.body
+            if body and not body:isDestroyed() then
+                for _, fixture in ipairs(body:getFixtures()) do
+                    local _, _, _, y2 = fixture:getBoundingBox()
+                    lowest = math.max(lowest or y2, y2)
+                end
+            end
+        end
+    end
+    if not lowest then return nil end
+    local s = lib.settings()
+    s.floor = { standY = math.floor(lowest + 0.5), depth = s.floor and s.floor.depth or lib.DEFAULT_DEPTH }
+    return s.floor
 end
 
 -- the parts lit now: extra -> the values it had before (false for none), kept on state (hot reload);
@@ -195,7 +267,13 @@ function lib.apply()
         end)
     end
     local mine = owned()
-    for key, v in pairs(level.shared or {}) do
+    local shared = level.shared
+    if type(shared) == 'function' then shared = shared(lib.settings()) end
+    -- a field the level had and doesn't now (full without a floor after with one): cleared
+    for key, v in pairs(mine) do
+        if not (shared and shared[key]) and state[key] == v then state[key] = nil; mine[key] = nil end
+    end
+    for key, v in pairs(shared or {}) do
         -- only what the scene hasn't set itself
         if state[key] == nil or state[key] == mine[key] then
             state[key] = v

@@ -186,9 +186,16 @@ fade, a sun: the panel's `fades` switch, LS4).
   `wall` names one of `scene-light.WALLS`, so 'backdrops only' or 'bodies marked as wall' slot in as other
   choices. The dollhouse at 60 fps on the Mac. A level only sets the shared state fields the scene hasn't
   set itself, and clears only those (`state.sceneLightOwned`).
-  Next: full (the 3D shadows need a floor line and depth per scene, so a setting; clay; lanes; lamp
-  glow), then the details behind the button's arrow (time of day, which wall, ...). Measure each level
-  on the phone (`./playtime.sh bench device`) once full is in.
+  **Slice 3 (2026-11-06): full** = shadows + the Mipos in clay, and with a floor set the 3D shadows
+  (src/projected-shadows.lua, from the sun a little out of the wall, strength 0.5) with the soft wall
+  shadows only above the floor and lighter. The floor is a scene setting, `light.floor = { standY, depth }`
+  (light-grass-check's GROUND_TOP and SOLID_DEPTH), set in the settings panel's new light section
+  (src/light-params.lua: the level, 'floor = under the Mipos' from their feet, stand y, depth, 'no floor').
+  One floor per scene: the dollhouse (storeys) leaves it unset and full there is shadows + clay. Seen in
+  the kitchen: clay, contact shadows, the Mipo's 3D shadow along the floor and up the wall.
+  Not moved in (scene-specific, left in light-grass-check): lanes, boards, the lamps' glow, the day's
+  clock. Next: measure each level on the phone (`./playtime.sh bench device`, a room of ~20 Mipos);
+  then the details behind the button's arrow (time of day, which wall, a floor picker drawn on stage).
 - [x] **LS14. A lamp's wall shadows both ways.** Now one direction per scene (from the sun or moon): a
   lamp in a room's middle should throw shadows away from it on both sides, which needs a pass per
   thing (or per side). Only if a real room wants it (after LS12).

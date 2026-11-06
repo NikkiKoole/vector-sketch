@@ -1,5 +1,6 @@
 -- world-settings.lua — the settings panel, opened from the tool rail's settings
--- button. Folding sections: world (src/world-params.lua), camera (src/camera-params.lua), backdrops (the
+-- button. Folding sections: world (src/world-params.lua), camera (src/camera-params.lua), light
+-- (src/light-params.lua), backdrops (the
 -- list + the selected one's params; while open, dragging moves the selected
 -- backdrop, main.lua), music (src/music-params.lua) and the voice lab (src/voice-lab-params.lua).
 local lib = {}
@@ -10,6 +11,7 @@ local inspector = require('src.ui.inspector')
 local worldParams = require('src.world-params')
 local musicParams = require('src.music-params')
 local cameraParams = require('src.camera-params')
+local lightParams = require('src.light-params')
 local roomMusicParams = require('src.room-music-params')
 local voiceLabParams = require('src.voice-lab-params')
 local hairBounce = require('src.hair-bounce')
@@ -83,6 +85,13 @@ function lib.drawWorldSettingsUI()
             if clicked then f.camera = not f.camera end
             if f.camera then
                 y = y + inspector.drawParams('camera', cameraParams.rows, cameraParams.target(), nil, x, y, w)
+            end
+
+            -- the scene's light level and floor (src/scene-light.lua; the bulb under the sound button)
+            clicked, y = sectionHeader(x, y, w, 'light', f.light)
+            if clicked then f.light = not f.light end
+            if f.light then
+                y = y + inspector.drawParams('light', lightParams.rows, lightParams.target(), nil, x, y, w)
             end
 
             local pv = state.panelVisibility

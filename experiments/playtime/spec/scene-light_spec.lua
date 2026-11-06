@@ -28,6 +28,7 @@ describe('the scene light level', function()
         state.contactShadows = nil
         state.backdropShadows = nil
         state.shadowEveryOther = nil
+        state.projectedShadows = nil
         sceneLight.load(nil)
     end)
 
@@ -43,10 +44,11 @@ describe('the scene light level', function()
         assert.is_nil(sceneLight.save())
     end)
 
-    it('steps off -> lit -> shadows -> off and saves the level', function()
+    it('steps off -> lit -> shadows -> full -> off and saves the level', function()
         assert.are.equal('lit', sceneLight.step())
         assert.are.same({ level = 'lit' }, sceneLight.save())
         assert.are.equal('shadows', sceneLight.step())
+        assert.are.equal('full', sceneLight.step())
         assert.are.equal('off', sceneLight.step())
         sceneLight.load({ level = 'lit' })
         assert.are.equal('lit', sceneLight.level().name)
@@ -84,11 +86,36 @@ describe('the scene light level', function()
         assert.is_true(state.backdropShadows.offset[1] > 0 and state.backdropShadows.offset[2] > 0,
             'away from a sun high on the left')
         assert.is_truthy(state.contactShadows)
-        sceneLight.step() -- off (after the last level)
+        sceneLight.settings().level = 'off'
         sceneLight.apply()
         assert.is_nil(state.backdropShadows)
         assert.is_nil(state.shadowEveryOther)
         assert.is_nil(state.contactShadows)
+    end)
+
+    it('full: clay on the parts; 3D shadows only with a floor, saved with the scene', function()
+        local extra = { main = { fgURL = 'x.png' } }
+        world = fakeMipo(extra)
+        sceneLight.load({ level = 'full' })
+        sceneLight.apply()
+        assert.is_true(extra.plasticine)
+        assert.is_nil(extra.plasticineStrength, 'clay: its own strength, not 0')
+        assert.is_nil(state.projectedShadows, 'no floor, no 3D shadows')
+        assert.is_truthy(state.backdropShadows)
+
+        sceneLight.settings().floor = { standY = 450, depth = 400 }
+        sceneLight.apply()
+        assert.is_truthy(state.projectedShadows)
+        assert.are.equal(50, state.projectedShadows.floorY)
+        assert.are.same({ level = 'full', floor = { standY = 450, depth = 400 } }, sceneLight.save())
+
+        sceneLight.settings().floor = nil
+        sceneLight.apply()
+        assert.is_nil(state.projectedShadows, 'the floor gone: its shadows too')
+
+        sceneLight.load({ level = 'off', floor = { standY = 10, depth = 100 } })
+        assert.are.same({ level = 'off', floor = { standY = 10, depth = 100 } }, sceneLight.save(),
+            'a floor is kept with the level off')
     end)
 
     it("leaves a scene's own contact shadows alone", function()
