@@ -112,22 +112,26 @@ local COASTER = {
     { 600, 0, 'A', drive = 'hoist', speed = 450, r = 300 }, -- the lift hill, a chain lift
     { 2000, -1400, 'A', r = 400 },                       -- the crest, then the first drop
     -- (r 400 here lost the most of the whole ride: ~600 px of height at ~2500 px/s)
-    { 3000, 600, 'A', r = 700 },                         -- into the loop: up,
-    { 3800, 600, 'A', r = 300, loop = true },
+    -- into the loop, held at its speed by tyres up the climb too (a rider soaks up speed: with one
+    -- the carts no longer cleared the camelback after the loop)
+    { 3000, 600, 'A', r = 700, drive = 'pace' },
+    { 3800, 600, 'A', r = 300, loop = true, drive = 'pace' }, -- up,
     { 3800, 0, 'A', r = 300, loop = true },                           -- over the top (to the back layer),
     { 3450, 0, 'B', loop = true },
     { 3100, 0, 'B', r = 300, loop = true },                           -- and down, behind the way in
     { 3100, 800, 'B', r = 300 },
     { 4300, 800, 'A' },                                  -- clear of the loop: to the front again
     { 4800, 800, 'A', r = 400 },
-    { 5700, 0, 'A', r = 600 },                           -- the camelback
+    { 5700, 200, 'A', r = 600 },                         -- the camelback (crests kept low: a rider soaks up speed)
     { 6700, 700, 'A', r = 450 },
-    { 7500, 200, 'A', r = 600 },                         -- an airtime hill
+    { 7500, 400, 'A', r = 600 },                         -- an airtime hill
     { 8300, 700, 'A', r = 400 },
     -- the turnaround and the way home kept low: by here a cart has lost ~1000 px of height to the
     -- bends (an 800 px climb up a turnaround stopped it, rocking in the valley before it)
-    { 9300, 700, 'A', r = 200 },                         -- the turnaround: up,
-    { 9300, 500, 'C' },                                  -- into the furthest layer,
+    -- the turnaround: tyres pull it up and round (a cart with a rider that didn't make the climb
+    -- rolled back into the next one and they wedged there)
+    { 9300, 700, 'A', r = 200, drive = 'hoist', speed = 600 }, -- up,
+    { 9300, 500, 'C', drive = 'hoist', speed = 600 },    -- into the furthest layer,
     { 9300, 300, 'C', r = 180 },                         -- and home, behind everything:
     { 7500, 400, 'C', r = 700 },                         -- bunny hops
     { 6000, 650, 'C', r = 700 },
@@ -376,6 +380,9 @@ local function makeTrack()
         end
     end
     c.track = track
+    -- riders pass through the pipe (masked): the Mipo joint guard would take the pipe for a wall a
+    -- limb is stuck through and ghost limbs (src/mipo-joint-guard.lua)
+    state.passableBodies = { [track.body] = true }
 end
 
 -- the nearest centre line point to (x, y): a search around the last one (so at a crossing it
@@ -495,9 +502,183 @@ local function addCart()
     }, i)
 end
 
+-- ─── Riders: a Mipo in a cart (TR4) ───
+-- Only the cart touches the track: a rider's fixtures mask out every track layer (walls, marbles,
+-- carts), so it never catches on a pipe and doesn't need to switch layers. In Box2D every U-turn
+-- of this side view turns the cart over (TR5d), so a seat on one side of it would hang the Mipo
+-- under the cart after one. Instead the hips sit on a pivot at the cart's middle whose motor turns
+-- the torso to the cart's drawn up (the body's up turned by the track's `upright`): screen-up on
+-- ordinary track, toward the centre in a loop, rolled round in a U-turn. A servo at the pivot, not
+-- the torso's KEEP_ANGLE: that spins a part about its own centre, and on a pivot at its hip the
+-- joint took ~3/4 of it away each step (the torso lay flat, spinning flat out, never getting
+-- there). Legs forward along the cart, head and neck along the up, arms loose (they flap).
+-- Drawn by the scene at the cart's depth.
+local RIDER_SCALE = 0.15     -- standing about the cart's length (0.3: twice it, hanging off)
+local RIDER_KP = 30          -- legs, head, neck: a U-turn turns the cart at ~10 rad/s
+local PIVOT_GAIN = 12        -- 1/s: the pivot's motor speed per radian off
+local PIVOT_MAX_SPEED = 25   -- rad/s
+-- the motor's most torque, per unit of rider mass, in LÖVE's units (px: it divides by the meter
+-- twice). 4000 was ~0.08 N m against ~1.5 for gravity on the torso alone, and a bend adds ~10 g
+local PIVOT_TORQUE = 2e6
+local RIDER_MAX_OMEGA = 15
+local RIDER_THIGH = -82      -- degrees from the torso: thighs forward, nearly level (the soapbox's)
+local RIDER_KNEE = 12
+local RIDER_FEET = -150
+local RIDER_BALLAST = 4      -- the cart weighs this many riders (a rider at 3/4 of the cart's weight,
+                             -- then 1/2 as on the soapbox, flailed the speed away: the coaster stalled)
+local TRACK_MASK = { 2, 3, 4, 5, 6 }
+
+local function riderJointPoint(inst, parentName, partName)
+    local part, parent = inst.parts[partName], inst.parts[parentName]
+    if not (part and parent) then return nil end
+    for _, joint in ipairs(part.body:getJoints()) do
+        local a, b = joint:getBodies()
+        if a == parent.body and b == part.body then
+            local x, y = joint:getAnchors()
+            return x, y
+        end
+    end
+end
+
+local function riderBodies(inst)
+    local out = {}
+    for _, part in pairs(inst and inst.parts or {}) do
+        if alive(part.body) then out[#out + 1] = part.body end
+    end
+    return out
+end
+
+-- the rider's solid shapes ignore the track layers (added to whatever they already skip)
+local function maskTrack(inst)
+    for _, body in ipairs(riderBodies(inst)) do
+        for _, f in ipairs(body:getFixtures()) do
+            if not f:isSensor() then
+                local mask, has = { f:getMask() }, {}
+                for _, cat in ipairs(mask) do has[cat] = true end
+                for _, cat in ipairs(TRACK_MASK) do
+                    if not has[cat] then mask[#mask + 1] = cat end
+                end
+                f:setMask(unpack(mask))
+            end
+        end
+    end
+end
+
+-- the angle (radians) the rider's torso aims at: the cart's up turned by the track's upright
+local function riderUp(c, m)
+    local p = c.track.line[m.index]
+    return m.body:getAngle() + (p.upright or 0)
+end
+
+-- muscles every frame: torso along the cart's drawn up, legs forward from it, facing the way the
+-- cart goes on screen (a Mipo facing right in a cart going left rode backwards)
+local function riderMuscles(c, m)
+    local inst = m.rider
+    local up = math.deg(riderUp(c, m))
+    local p = c.track.line[m.index]
+    -- forward on screen: the track's tangent, turned over with the cart when upright is past half
+    local fx = p.tx * (math.cos(p.upright or 0) >= 0 and 1 or -1)
+    -- which way it travels: the body's +x along the track's direction of travel (it can't turn round)
+    local want = fx > 0.3 and 'right' or fx < -0.3 and 'left' or nil
+    if want and want ~= m.riderFacing then
+        characterManager.switchFacing(inst, want)
+        m.riderFacing = want
+        maskTrack(inst) -- a facing switch may rebuild shapes
+    end
+    local mirror = m.riderFacing == 'left' and -1 or 1
+    -- the pivot's servo: the torso, relative to the cart, to the track's upright
+    local rel = inst.parts.torso1.body:getAngle() - m.body:getAngle()
+    local err = ((p.upright or 0) - rel + math.pi) % (2 * math.pi) - math.pi
+    m.pivot:setMotorSpeed(math.max(-PIVOT_MAX_SPEED, math.min(PIVOT_MAX_SPEED, PIVOT_GAIN * err)))
+    local pose = { luleg = RIDER_THIGH, ruleg = RIDER_THIGH,
+        llleg = RIDER_THIGH + RIDER_KNEE, rlleg = RIDER_THIGH + RIDER_KNEE, lfoot = RIDER_FEET, rfoot = RIDER_FEET }
+    for name, angle in pairs(pose) do
+        local keep = mipoActions.ensureKeepAngle(inst.parts[name], up + angle * mirror, RIDER_KP)
+        if keep then
+            keep.angle, keep.enabled, keep.kp, keep.maxOmega = up + angle * mirror, nil, RIDER_KP, RIDER_MAX_OMEGA
+        end
+    end
+    -- every other muscle aims along the rider's up too: a standing Mipo's head and neck hold
+    -- world-upright, and in a loop or a U-turn they pulled the torso back (it lay flat in the cart,
+    -- spinning at full speed and never getting there); arms loose, to flap
+    for name, part in pairs(inst.parts) do
+        if not pose[name] then
+            local keep = mipoActions.getKeepAngle(part)
+            if keep then
+                if name == 'torso1' or name:find('arm') or name:find('hand') then
+                    keep.enabled = false
+                else
+                    keep.angle, keep.enabled, keep.kp, keep.maxOmega = up, nil, RIDER_KP, RIDER_MAX_OMEGA
+                end
+            end
+        end
+    end
+end
+
+local function addRider(c, m)
+    local x, y = m.body:getPosition()
+    local inst = characterManager.createCharacter('humanoid', x, y - 600, RIDER_SCALE)
+    if not inst then return end
+    characterManager.randomizeMipo(inst)
+    characterManager.switchFacing(inst, 'right')
+    m.riderFacing = 'right'
+    -- legs forward (turned at the hips and knees), then the hips onto the cart's middle
+    for _, side in ipairs({ 'l', 'r' }) do
+        local u, l, f = side .. 'uleg', side .. 'lleg', side .. 'foot'
+        local hx, hy = riderJointPoint(inst, 'torso1', u)
+        if hx then
+            local bodies = { inst.parts[u].body, inst.parts[l].body, inst.parts[f].body }
+            local delta = math.rad(RIDER_THIGH) - inst.parts[u].body:getAngle()
+            for _, b in ipairs(bodies) do
+                local bx, by = b:getPosition()
+                local cs, sn = math.cos(delta), math.sin(delta)
+                b:setPosition(hx + (bx - hx) * cs - (by - hy) * sn, hy + (bx - hx) * sn + (by - hy) * cs)
+                b:setAngle(b:getAngle() + delta)
+            end
+        end
+    end
+    local hx, hy = riderJointPoint(inst, 'torso1', 'luleg')
+    for _, b in ipairs(riderBodies(inst)) do
+        local bx, by = b:getPosition()
+        b:setPosition(bx + x - hx, by + y - hy)
+        b:setLinearVelocity(m.body:getLinearVelocity())
+    end
+    maskTrack(inst)
+    local pivot = love.physics.newRevoluteJoint(m.body, inst.parts.torso1.body, x, y, false)
+    local riderMass = mipoRegistry.totalMass(inst)
+    pivot:setMotorEnabled(true)
+    pivot:setMaxMotorTorque(PIVOT_TORQUE * riderMass)
+    -- ballast: the cart's bodies heavier, all by the same factor
+    local cartMass = 0
+    for _, b in ipairs(m.bodies) do cartMass = cartMass + b:getMass() end
+    local k = RIDER_BALLAST * riderMass / cartMass
+    if k > 1 then
+        for _, b in ipairs(m.bodies) do
+            for _, f in ipairs(b:getFixtures()) do f:setDensity(f:getDensity() * k) end
+            b:resetMassData()
+        end
+        cartMass = cartMass * k
+    end
+    m.rider, m.riderMass, m.pivot = inst, riderMass, pivot
+    m.mass = cartMass + riderMass -- the drives push the whole train
+    state.sceneDrawnMipos = state.sceneDrawnMipos or {}
+    state.sceneDrawnMipos[inst.id] = true
+    riderMuscles(c, m)
+end
+
+local function removeRider(m)
+    if not m.rider then return end
+    if state.sceneDrawnMipos then state.sceneDrawnMipos[m.rider.id] = nil end
+    if m.rider.parts and m.rider.parts.torso1 and alive(m.rider.parts.torso1.body) then
+        characterManager.removeCharacter(m.rider)
+    end
+    m.rider, m.pivot = nil, nil
+end
+
 local function removeMovers()
     local c = check()
     for _, m in ipairs(c.movers) do
+        removeRider(m)
         for _, b in ipairs(m.bodies) do
             if alive(b) then b:destroy() end -- its joints go with it
         end
@@ -510,7 +691,11 @@ local function startOver()
     removeMovers()
     c.stats = newStats()
     local course = COURSES[c.course] or COURSES.knikkerbaan
-    for _ = 1, course.carts do addCart() end
+    for _ = 1, course.carts do
+        addCart()
+        local m = c.movers[#c.movers]
+        if course.riders ~= false and m and m.kind == 'cart' and not m.rider then addRider(c, m) end
+    end
     for _ = 1, course.marbles do addMarble() end
 end
 
@@ -520,7 +705,10 @@ local function putBack(m, p)
     local a0 = m.body:getAngle()
     local a1 = math.atan2(p.ty, p.tx)
     local cs, sn = math.cos(a1 - a0), math.sin(a1 - a0)
-    for _, b in ipairs(m.bodies) do
+    local bodies = {}
+    for _, b in ipairs(m.bodies) do bodies[#bodies + 1] = b end
+    for _, b in ipairs(riderBodies(m.rider)) do bodies[#bodies + 1] = b end
+    for _, b in ipairs(bodies) do
         local bx, by = b:getPosition()
         local dx, dy = bx - x0, by - y0
         b:setPosition(p.x + dx * cs - dy * sn, p.y + dx * sn + dy * cs)
@@ -575,6 +763,7 @@ local function updateMover(c, m, dt, gy)
             c.stats.loops = c.stats.loops + 1
         end
     end
+    if m.rider then riderMuscles(c, m) end
     local vt = vx * p.tx + vy * p.ty
     if p.drive then
         drive(m, p, vt, gy)
@@ -871,6 +1060,23 @@ local function drawCart(c, m)
 end
 
 -- one layer: its glass, the movers in it, its rims and glint over them
+-- the rider through the engine's textured pass (it skips the riders in its own pass:
+-- state.sceneDrawnMipos), moved and sized like its cart: around the cart's middle, to where and how
+-- big project() draws the cart
+local function drawRider(c, m)
+    if not (m.rider and m.rider.id) then return end
+    local x, y = m.body:getPosition()
+    local sx, sy, k = project(x, y, c.track.line[m.index].depth)
+    local id = m.rider.id
+    love.graphics.push()
+    love.graphics.translate(sx, sy)
+    love.graphics.scale(k)
+    love.graphics.translate(-x, -y)
+    love.graphics.setColor(1, 1, 1, 1)
+    drawTexturedWorld(world, function(_, d) return d.mipoThing and d.mipoThing.mipoId == id end)
+    love.graphics.pop()
+end
+
 local function drawLayer(c, layer)
     local look = layerLook(c.track, layer)
     if look.mesh then
@@ -880,7 +1086,12 @@ local function drawLayer(c, layer)
     for _, m in ipairs(c.movers) do
         if alive(m.body) and m.layer == layer then
             local depth = c.track.line[m.index].depth
-            if m.kind == 'cart' then drawCart(c, m) else drawMarble(m, depth) end
+            if m.kind == 'cart' then
+                drawCart(c, m)
+                drawRider(c, m)
+            else
+                drawMarble(m, depth)
+            end
         end
     end
     love.graphics.setLineJoin('bevel')
@@ -945,6 +1156,7 @@ end
 
 local function destroyAll(c)
     for _, m in ipairs(c.movers or c.marbles or {}) do
+        removeRider(m)
         for _, b in ipairs(m.bodies or { m.body }) do
             if alive(b) then b:destroy() end
         end
@@ -973,6 +1185,8 @@ function s.onUnload()
     local c = state.tracksSpike
     if not c then return end
     removeMovers()
+    state.sceneDrawnMipos = nil
+    state.passableBodies = nil
     if c.track and alive(c.track.body) then c.track.body:destroy() end
     state.tracksSpike = nil
 end
@@ -1007,7 +1221,11 @@ end
 function s.onKeyPress(key)
     local c = check()
     if key == 'm' then addMarble() end
-    if key == 'c' then addCart() end
+    if key == 'c' then
+        addCart()
+        local m = c.movers[#c.movers]
+        if m and m.kind == 'cart' and not m.rider then addRider(c, m) end
+    end
     if key == 'r' then startOver() end
     if key == 'p' then worldState.paused = not worldState.paused end
     if key == 'f' then

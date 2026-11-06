@@ -1052,8 +1052,12 @@ function lib.drawTexturedWorld(_world, only)
     -- between the drawables, f called before the first one at z or higher (the depth spike draws
     -- its house between the back lane's Mipos and the front lane's). Set per frame by the scene.
     local splits, nextSplit = (not only) and state.drawSplits or nil, 1
+    -- state.sceneDrawnMipos = { [instance.id] = true }: Mipos a scene draws itself (with `only`, in
+    -- its own transform: the tracks spike's riders, at their cart's depth); the world pass skips them
+    local sceneDrawn = (not only) and state.sceneDrawnMipos or nil
     for i = 1, #drawables do repeat -- break = the next drawable
         if only and not only(drawables[i].body, drawables[i]) then break end
+        if sceneDrawn and drawables[i].mipoThing and sceneDrawn[drawables[i].mipoThing.mipoId] then break end
         if splits then
             local z = drawables[i].z
             while splits[nextSplit] and splits[nextSplit].z <= z do

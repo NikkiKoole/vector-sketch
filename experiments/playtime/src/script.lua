@@ -108,6 +108,11 @@ local baseEnv = {
     fixtures                 = fixtures, -- sfixtures on a script's own bodies (burrow's OMP rocks)
     liquid                   = require('src.liquid'), -- water in cups: spill, water, mouthPoint (seaside)
     cloth                    = require('src.cloth'), -- curtains, flags, sheets: a verlet grid drawn as a mesh (cloth)
+    -- the textured world pass with `only` (a scene drawing some Mipos itself, in its own transform:
+    -- tracks); looked up at the call (box2d-draw-textured loads after this file)
+    drawTexturedWorld        = function(...)
+        return require('src.physics.box2d-draw-textured').drawTexturedWorld(...)
+    end,
     fluid                    = require('src.fluid'), -- particle water: tip a tank, a wave folds over (waterjar)
     -- Add global utilities like NeedManager, etc.
     --broadcastEvent = function(eventName, data)

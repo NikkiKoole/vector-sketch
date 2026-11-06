@@ -134,9 +134,35 @@ The talk assumed Box2D v3 (`b2Shape_SetFilter`, `b2Body_SetBullet`, one-sided ch
   ~1800 for the loop (spin takes some), rolled back and blocked the cart, and a bunched train
   stalled halfway up (now 2000, and up the climb too). The loop is drawn as a pear (its back half
   shrinks toward the vanishing point): TR5's depth should fix it.
-- [ ] **TR4. A rider.** A Mipo seated on the soapbox's wheel-joint seat, the track masked out,
+- [x] **TR4. A rider.** A Mipo seated on the soapbox's wheel-joint seat, the track masked out,
   one negative group with the cart, drawn at the cart's depth and size. Loose shoulders; does
   the seat hold in a loop (stiffen at speed if it stretches)?
+  Built 2026-11-06: every cart gets a Mipo (scale 0.15: about the cart's length standing, head and
+  shoulders above the box sitting; 0.3 was twice the cart and hung off it). Its solid shapes add
+  the track layers (2..6) to their mask: no pipe, marble or cart touches it, so it never switches
+  layer. Not the soapbox's seat: in Box2D every U-turn turns the cart over (TR5d), so a seat on one
+  side hung the Mipo under the cart after one. The hips sit on a **pivot at the cart's middle whose
+  motor is a servo**: the torso, relative to the cart, to the track's `upright` (screen-up on
+  ordinary track, toward the centre in a loop, rolled round in a U-turn). Legs forward from it
+  (mirrored, and the Mipo turned to face the way the cart goes on screen), head and neck along it,
+  arms loose. The cart weighs 4 riders (ballast).
+  Drawn by the scene at the cart's depth: `state.sceneDrawnMipos` (an engine change in
+  `src/physics/box2d-draw-textured.lua`) keeps them out of the world pass, and the scene draws each
+  with `drawTexturedWorld(world, only)` (now in the script env) inside the cart's move and size.
+  The pipe is in `state.passableBodies`, or the Mipo joint guard took it for a wall a limb was
+  stuck through and ghosted limbs ([unstick] every few frames).
+  Measured headless (with the joint guard, actions and muscles stepped as main.lua does): the
+  torso within ~20 degrees of its aim most of the time, swinging further in the quick roll of a
+  U-turn; two minutes, marble run 3 loops, coaster 8 (two carts), none out.
+  Tried on the way: the torso's KEEP_ANGLE aimed at the up (on a pivot at its hip the joint took
+  ~3/4 of each step's spin away: the torso lay flat in the cart); a standing Mipo's head and neck
+  holding world-up pulled the torso back in loops; the servo at 4000 per unit of mass (LÖVE takes
+  torque in px, divided by the meter twice: ~0.08 N m, nothing); a pivot with a little friction
+  (fought the muscle); the cart at 4/3 and 2 riders' weight: the riders flailed the speed away and
+  the coaster stalled after its loop. The coaster now has tyres into its loop and up the climb,
+  lower crests (camelback 200, airtime 400) and tyres up the turnaround (two carts wedged there
+  when one rolled back).
+  Still open: riders aren't hazed at depth (the cars and pipes are); legs show over the box.
 - [ ] **TR5. The cart in 3D.** The box drawn from the body's angle, the track's depth change and a
   roll per point; faces back to front, shaded from the scene light; the rider anchored to the
   projected seat. A banked turn and one corkscrew.
