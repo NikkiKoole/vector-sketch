@@ -88,10 +88,10 @@ local KNIKKERBAAN = {
     -- the loop: a square with corners as big as can be, so a circle (with 200 px corners at
     -- ~2000 px/s the cart took ~10 g, wedged sideways and everything piled up behind it)
     -- up, driven too: a train of bunched movers stalled halfway up, and what rolled back blocked the rest
-    { 1300, 2500, 'A', r = 300, drive = 'pace' },
-    { 1300, 1900, 'A', r = 300 }, -- over the top (turning to the back layer),
-    { 1600, 1900, 'B' },
-    { 1900, 1900, 'B', r = 300 }, -- and down, behind the run-in
+    { 1300, 2500, 'A', r = 300, drive = 'pace', loop = true },
+    { 1300, 1900, 'A', r = 300, loop = true }, -- over the top (turning to the back layer),
+    { 1600, 1900, 'B', loop = true },
+    { 1900, 1900, 'B', r = 300, loop = true }, -- and down, behind the run-in
     { 1900, 2700, 'B', drive = 'brake' }, -- the run-out, braked
     { 1000, 2700, 'B', drive = 'hoist' }, -- the riser, behind the zigzag, crossing it
     { 1000, -800, 'B', roll = 1 }, -- over the top, back to the left, behind: a corkscrew
@@ -113,10 +113,10 @@ local COASTER = {
     { 2000, -1400, 'A', r = 400 },                       -- the crest, then the first drop
     -- (r 400 here lost the most of the whole ride: ~600 px of height at ~2500 px/s)
     { 3000, 600, 'A', r = 700 },                         -- into the loop: up,
-    { 3800, 600, 'A', r = 300 },
-    { 3800, 0, 'A', r = 300 },                           -- over the top (to the back layer),
-    { 3450, 0, 'B' },
-    { 3100, 0, 'B', r = 300 },                           -- and down, behind the way in
+    { 3800, 600, 'A', r = 300, loop = true },
+    { 3800, 0, 'A', r = 300, loop = true },                           -- over the top (to the back layer),
+    { 3450, 0, 'B', loop = true },
+    { 3100, 0, 'B', r = 300, loop = true },                           -- and down, behind the way in
     { 3100, 800, 'B', r = 300 },
     { 4300, 800, 'A' },                                  -- clear of the loop: to the front again
     { 4800, 800, 'A', r = 400 },
@@ -159,7 +159,7 @@ local function cornerPoints()
     local pts = {}
     local n = #WAYPOINTS
     local function add(x, y, w, drive, roll, speed)
-        pts[#pts + 1] = { x = x, y = y, layer = w[3], drive = drive, roll = roll or 0,
+        pts[#pts + 1] = { x = x, y = y, layer = w[3], drive = drive, roll = roll or 0, loop = w.loop,
             speed = speed or (drive == w.drive and w.speed) or nil }
     end
     -- each corner's arc: from where it leaves the stretch before to where it joins the next
@@ -234,7 +234,8 @@ local function resample(pts, step)
         local a, b = pts[j], pts[j % n + 1]
         local t = (d - cum[j]) / math.max(1e-9, cum[j + 1] - cum[j])
         out[#out + 1] = { x = a.x + (b.x - a.x) * t, y = a.y + (b.y - a.y) * t, s = d,
-            layer = a.layer, drive = a.drive, speed = a.speed, roll = a.roll } -- roll not blended: wraps at 2 pi
+            layer = a.layer, drive = a.drive, speed = a.speed, roll = a.roll, -- roll not blended: wraps at 2 pi
+            loop = a.loop }
     end
     -- tangents (central difference) and normals (to the right of travel: y down, so (-ty, tx))
     local m = #out
@@ -306,9 +307,42 @@ local function runs(n, keep)
     return out
 end
 
+-- Which way is up, for drawing the cart. In Box2D the cart's up is the wall it rides on, and
+-- every U-turn in this side view (standing for a turn on the ground) turns that over: after one
+-- the cart rode on upside down. So each point gets `upright`, a roll (0 or pi, smoothed along
+-- the track) that brings the cart's up to: screen-up on ordinary track, and toward the loop's
+-- centre in a loop (a waypoint's `loop = true`: upside down over the top). The cart's up there
+-- is (ty, -tx), the left of travel.
+local UPRIGHT_SMOOTH = 300 -- px either side: a U-turn rolls the cart over gradually
+local function uprights(line)
+    local n = #line
+    local raw = {}
+    local turn = 0 -- a loop's direction of turning, kept over its straight bits
+    for i, p in ipairs(line) do
+        if p.loop then
+            local a, b = line[(i - 6) % n + 1], line[(i + 4) % n + 1]
+            local cross = a.tx * b.ty - a.ty * b.tx
+            if math.abs(cross) > 1e-3 then turn = cross end
+            -- left of travel is toward the centre when the line turns left (cross < 0, y down)
+            raw[i] = turn < 0 and 0 or math.pi
+        else
+            -- left of travel is screen-up when travelling right (tx > 0); vertical: on its side
+            raw[i] = math.pi * ease(0.5 - p.tx / 0.6)
+        end
+    end
+    local reach = math.floor(UPRIGHT_SMOOTH / STEP)
+    for i, p in ipairs(line) do
+        local sum = 0
+        for k = -reach, reach do sum = sum + raw[(i - 1 + k) % n + 1] end
+        p.upright = sum / (2 * reach + 1)
+    end
+end
+
 local function buildTrack()
     local line, length = resample(cornerPoints(), STEP)
     transitions(line, length)
+    uprights(line)
+    for i, p in ipairs(line) do p.i = i end
     for _, p in ipairs(line) do
         p.lx, p.ly = p.x - p.nx * HALF, p.y - p.ny * HALF
         p.rx, p.ry = p.x + p.nx * HALF, p.y + p.ny * HALF
@@ -566,6 +600,8 @@ local GLASS_DRIVE = {
     pace = { 0.65, 0.95, 0.6, 0.4 },
     brake = { 0.95, 0.6, 0.55, 0.4 },
 }
+local GLASS_BLEND = 250 -- px either side over which a drive's tint fades in and out
+local RIM_PIECE = 6     -- points per drawn piece of rim
 local RIM = { 0.35, 0.5, 0.6 }
 local HAZE = { 0.1, 0.18, 0.12 } -- toward the background
 local LIGHT_X, LIGHT_Y = -0.6, -0.8 -- toward the light
@@ -602,12 +638,28 @@ local function layerLook(track, layer)
     local line = track.line
     local n = #line
     local verts = {}
+    -- the glass tint per point, blended along the track: each drive's own tint changed in one step
+    -- where its stretch began, a hard colour edge across the pipe (Nikki: "specifically here")
+    if not track.glass then
+        local reach = math.floor(GLASS_BLEND / STEP)
+        track.glass = {}
+        for i = 1, n do
+            local sum = { 0, 0, 0, 0 }
+            for k = -reach, reach do
+                local q = line[(i - 1 + k) % n + 1]
+                local col = q.drive and GLASS_DRIVE[q.drive] or GLASS
+                for j = 1, 4 do sum[j] = sum[j] + col[j] end
+            end
+            for j = 1, 4 do sum[j] = sum[j] / (2 * reach + 1) end
+            track.glass[i] = sum
+        end
+    end
     local function vert(p, off)
         local px, py = projectOff(p, off)
-        local r, g, b, a = hazed(p.drive and GLASS_DRIVE[p.drive] or GLASS, p.depth)
+        local r, g, b, a = hazed(track.glass[p.i], p.depth)
         verts[#verts + 1] = { px, py, 0, 0, r, g, b, a }
     end
-    local look = { rims = {} }
+    local look = { rims = {}, glints = {} }
     for i = 1, n do
         local p, q = line[i], line[i % n + 1]
         if p.layer == layer then
@@ -618,20 +670,31 @@ local function layerLook(track, layer)
     if #verts > 0 then look.mesh = love.graphics.newMesh(verts, 'triangles', 'static') end
     for _, run in ipairs(runs(n, function(i) return line[i].layer == layer end)) do
         run[#run + 1] = run[#run] % n + 1 -- on to the next point: no gap where the layer changes
-        local left, right, glint, depth = {}, {}, {}, 0
+        -- the glint toward the light, one line per run (see-through: pieces overlapping showed as
+        -- dots), smoothly: through the middle where the pipe points at it
+        local glint, deepest = {}, 0
         for _, i in ipairs(run) do
             local p = line[i]
-            local x, y = projectOff(p, -HALF)
-            left[#left + 1], left[#left + 2] = x, y
-            x, y = projectOff(p, HALF)
-            right[#right + 1], right[#right + 2] = x, y
-            -- the glint toward the light, smoothly: through the middle where the pipe points at it
-            local side = p.nx * LIGHT_X + p.ny * LIGHT_Y
-            x, y = projectOff(p, HALF * 0.6 * side)
+            local x, y = projectOff(p, HALF * 0.6 * (p.nx * LIGHT_X + p.ny * LIGHT_Y))
             glint[#glint + 1], glint[#glint + 2] = x, y
-            depth = math.max(depth, p.depth)
+            deepest = math.max(deepest, p.depth)
         end
-        look.rims[#look.rims + 1] = { left = left, right = right, glint = glint, depth = depth }
+        look.glints[#look.glints + 1] = { line = glint, depth = deepest }
+        -- the rims in short pieces, each as thick as its own depth (one thickness for the whole run,
+        -- set by its deepest point, made a notch where one layer's rim met the next one's)
+        for from = 1, #run - 1, RIM_PIECE do
+            local left, right, depth = {}, {}, 0
+            local to = math.min(#run, from + RIM_PIECE) -- one point of overlap with the next piece
+            for k = from, to do
+                local p = line[run[k]]
+                local x, y = projectOff(p, -HALF)
+                left[#left + 1], left[#left + 2] = x, y
+                x, y = projectOff(p, HALF)
+                right[#right + 1], right[#right + 2] = x, y
+                depth = depth + p.depth / (to - from + 1)
+            end
+            look.rims[#look.rims + 1] = { left = left, right = right, depth = depth }
+        end
     end
     track.looks[layer] = look
     return look
@@ -707,7 +770,8 @@ local function cartFrame(c, m)
     local d = ux * fx + uy * fy + uz * dz
     ux, uy, uz = norm3(ux - d * fx, uy - d * fy, uz - d * dz)
     local sx, sy, sz = fy * uz - dz * uy, dz * ux - fx * uz, fx * uy - fy * ux
-    local cr, sr = math.cos(p.roll or 0), math.sin(p.roll or 0)
+    local roll = (p.roll or 0) + (p.upright or 0)
+    local cr, sr = math.cos(roll), math.sin(roll)
     ux, uy, uz, sx, sy, sz =
         ux * cr + sx * sr, uy * cr + sy * sr, uz * cr + sz * sr,
         sx * cr - ux * sr, sy * cr - uy * sr, sz * cr - uz * sr
@@ -828,9 +892,11 @@ local function drawLayer(c, layer)
             love.graphics.line(rim.left)
             love.graphics.line(rim.right)
         end
-        love.graphics.setColor(1, 1, 1, 0.35 * (1 - 0.5 * math.min(1, rim.depth)))
-        love.graphics.setLineWidth(4 * k)
-        if #rim.glint >= 4 then love.graphics.line(rim.glint) end
+    end
+    for _, glint in ipairs(look.glints) do
+        love.graphics.setColor(1, 1, 1, 0.35 * (1 - 0.5 * math.min(1, glint.depth)))
+        love.graphics.setLineWidth(4 * (1 - DEPTH_SHRINK * glint.depth))
+        if #glint.line >= 4 then love.graphics.line(glint.line) end
     end
 end
 

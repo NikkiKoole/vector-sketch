@@ -179,6 +179,20 @@ The talk assumed Box2D v3 (`b2Shape_SetFilter`, `b2Body_SetBullet`, one-sided ch
   900 px long (was 600; a course can set `transition`), eased with smootherstep (flat at both
   ends). Checked that no same-layer crossing falls inside the longer stretches. Both courses run
   as before (headless: the knikkerbaan 11 loops in three minutes, the coaster 14 in four, none out).
+- [x] **TR5d. The cart the right way up; no colour steps** (2026-11-06).
+  Nikki: "the cart is not always facing up (except in the corkscrew)". In Box2D the cart's up is the
+  wall it rides on, and every U-turn in this side view (standing for a turn on the ground) turns
+  that over: after one it rode on upside down, and the drawing showed it. Each track point now
+  gets `upright`, a roll of 0 or pi (smoothed over 300 px either side) that brings the drawn up to
+  screen-up on ordinary track and toward the centre in a loop (waypoints with `loop = true`), so a
+  U-turn rolls it over gradually, and it's still upside down over a loop's top. On a vertical
+  stretch it's on its side (a vertical track has no screen-up).
+  Nikki (relayed): the colour stepped where a curve met the straights. Not the haze (that's per
+  point already) but the drive tints (station green, lift yellow, brake red), each starting in one
+  step: the glass tint is now blended along the track over 250 px either side. The rims were one
+  line per run as thick as its deepest point, a notch where layers meet: now short pieces, each as
+  thick as its own depth (the see-through glint stays one line per run: its pieces' overlaps showed
+  as dots).
 - [ ] **TR6. In and out.** Drop a Mipo near a seat: it's seated. Pull hard: the joint breaks and the
   Mipo is back in the world with its own filter (flies off if the cart is fast).
 - [ ] **TR7. Nikki plays with it**: keep, change or park? Then which contraption first
