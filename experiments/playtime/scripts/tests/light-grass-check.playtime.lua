@@ -268,7 +268,8 @@ function s.drawUI()
     local lines = {
         '1 day  2 evening  3 night  4 turning lamp (r)  k sky light  m Mipos lit  c clay  tab: play, lamps  s turf',
         'now: ' .. c.mood .. (c.skyOff and ', sky light off' or ', sky light on')
-            .. (c.mipoLightOff and ', Mipos as drawn' or (c.mipoClayOff and ', Mipos lit, no clay' or ', Mipos lit, clay'))
+            .. (c.mipoLightOff and ', Mipos as drawn'
+                or (c.mipoClayOff and ', Mipos lit, no clay' or ', Mipos lit, clay'))
             .. '      shapes: ' .. table.concat(tries, '   ') .. '   (0 as elsewhere)',
         string.format('grass: SpriteBatches made in the last second: %d', c.perSecond),
     }
