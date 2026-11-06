@@ -1,5 +1,6 @@
 -- floor-guide.lua — the scene's light floor shown on the stage while the settings panel's light section
--- is open (src/ui/world-settings.lua, src/light-params.lua), and dragged there: the line things stand on
+-- is open and its 'floor on stage' is ticked (state.floorGuideOn, src/light-params.lua; off by default,
+-- Nikki: a deep setting, not to see always), and dragged there: the line things stand on
 -- (standY) and the wall's foot behind them (standY - depth), the floor the band between (src/scene-light.lua:
 -- the full level's 3D shadows fall along it). Each line has a knob at the screen's middle; dragging the
 -- stand line moves the whole floor, dragging the wall's foot changes the depth.
@@ -17,6 +18,7 @@ local ORANGE = { 242 / 255, 133 / 255, 0 } -- the UI's orange
 -- the floor while the light section is open in the editor, else nil
 function lib.floor()
     local pv = state.panelVisibility
+    if not state.floorGuideOn then return nil end
     if not (pv and pv.worldSettingsOpened and state.settingsFolds and state.settingsFolds.light) then return nil end
     return sceneLight.settings().floor
 end

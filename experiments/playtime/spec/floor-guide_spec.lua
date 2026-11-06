@@ -22,12 +22,14 @@ describe('the floor guide', function()
         folds = state.settingsFolds
         state.panelVisibility.worldSettingsOpened = true
         state.settingsFolds = { light = true }
+        state.floorGuideOn = true
         state.interaction.floorDrag = nil
     end)
 
     after_each(function()
         state.panelVisibility.worldSettingsOpened = pv
         state.settingsFolds = folds
+        state.floorGuideOn = nil
         state.interaction.floorDrag = nil
         sceneLight.load(nil)
     end)
@@ -36,6 +38,12 @@ describe('the floor guide', function()
         local _, sy = cam:getScreenCoordinates(0, wy)
         return sy
     end
+
+    it("is off unless 'floor on stage' is ticked", function()
+        state.floorGuideOn = nil
+        assert.is_nil(floorGuide.floor())
+        assert.is_false(floorGuide.pressed(400, screenY(100)))
+    end)
 
     it('is there only while the light section is open', function()
         assert.is_truthy(floorGuide.floor())

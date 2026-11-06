@@ -213,7 +213,8 @@ fade, a sun: the panel's `fades` switch, LS4).
   drawn into the stencil ~85 times a frame), the same picture. Measured after: contact shadows add
   +1.9..+2.4 ms over off (was +2.9), near the noise: that install's off was 8.8-9.6 ms (4.6 before; fresh
   random Mipos each install, and the phone warm after an hour of runs).
-  **The floor on the stage (2026-11-06):** while the settings panel's light section is open, the floor is
+  **The floor on the stage (2026-11-06):** with the settings' light section open and 'floor on stage' ticked
+  (off by default, not saved; 'floor at feet' ticks it; Nikki: a deep setting, not to see always), the floor is
   drawn (src/floor-guide.lua): a line where things stand, a dashed one at the wall's foot, the band between
   tinted; drag the first to move the floor, the second to change the depth (spec/floor-guide_spec.lua).
   **Before measuring more:** the same 20 Mipos every time (a seed: createCharacter +

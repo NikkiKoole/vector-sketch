@@ -5,6 +5,7 @@
 local lib = {}
 
 local sceneLight = require('src.scene-light')
+local state = require('src.state')
 
 local function levelNames()
     local names = {}
@@ -24,9 +25,17 @@ lib.rows = {
           return 'floor: 3D shadows at full'
       end },
     { kind = 'action', label = 'floor at feet', -- where the Mipos' feet are
-      run = function() sceneLight.floorUnderMipos() end },
+      run = function()
+          -- shown on the stage right away: what was just set
+          if sceneLight.floorUnderMipos() then state.floorGuideOn = true end
+      end },
     { kind = 'action', label = 'no floor',
       run = function(_, s) s.floor = nil end },
+    -- the floor's lines on the stage (src/floor-guide.lua), to see and drag them; off by default and not
+    -- saved: a deep setting, not something to look at all the time (Nikki 2026-11-06)
+    { key = 'floor on stage', kind = 'bool', visible = hasFloor,
+      get = function() return state.floorGuideOn == true end,
+      set = function(_, v) state.floorGuideOn = v or nil end },
     { key = 'stand y', kind = 'numberText', visible = hasFloor,
       get = function(s) return s.floor.standY end,
       set = function(s, v) s.floor.standY = v end },
