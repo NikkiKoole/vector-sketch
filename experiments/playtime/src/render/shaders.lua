@@ -6,6 +6,7 @@ local color = require('src.color')
 local formBake = require('src.render.form-bake')
 local materials = require('src.render.materials')
 local wet = require('src.wet')
+local state = require('src.state')
 
 
 -- Plasticine POC: procedural grain + soft edge darkening.
@@ -622,6 +623,9 @@ local rimStyles = { off = 0, silhouette = 1, vignette = 2 }
 -- One place for texfixtures, ribbons and trace vertices: three copies had drifted,
 -- two never sent the hairs mottle, so it kept the last ribbon's value (BUG11).
 local function setSurfaceShader(extra, body)
+    -- the shadows' silhouettes need only the outlines (src/shadow-silhouettes.lua): no lighting there
+    -- (it lit every part a second time, LIGHT-AND-SHADOW LS23)
+    if state.drawingOutlines then return false end
     if extra.hairs then
         love.graphics.setShader(hairsShader)
         hairsShader:send('strength',       extra.hairsStrength            or lib.hairsStrength)
@@ -683,7 +687,10 @@ function lib.gatherLightsForBody(body, fx, fy)
     end
     local count = 0
     local skipped = false
-    for _, f in pairs(registry.sfixtures) do
+    -- the light sfixtures only, a list the registry keeps until an sfixture comes or goes: walking all
+    -- of them for every lit part was 90% of the frame with 20 lit Mipos on an iPhone SE 2 (630 calls a
+    -- frame, 790,000 subtype checks; LIGHT-AND-SHADOW LS23). Intensity is read here, every call.
+    for _, f in ipairs(registry.sfixturesOf(subtypes.LIGHT)) do
         if count >= MAX_LIGHTS then break end
         if not f:isDestroyed() then
             local ud = f:getUserData()

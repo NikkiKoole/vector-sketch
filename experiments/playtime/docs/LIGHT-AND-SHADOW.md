@@ -264,8 +264,21 @@ fade, a sun: the panel's `fades` switch, LS4).
   night lamps: sun/moon 6.5, one glowing lamp 6.5, two 6.5, three circling 6.6, big soft edges (13
   rays) 6.8; everything on (lanes, backdrops, soft wall, three lamps) 8.6. So the CPU cost is the
   extra drawing of the world (~3 ms; again with lanes + soft wall); lights, glows, soft edges, the
-  ground and the plaster are free on the CPU. Still to do: 20 lit Mipos, and the GPU side (the
-  shaderCost tool) of the plaster, earth and glow passes.
+  ground and the plaster are free on the CPU. Still to do: the GPU side (the shaderCost tool) of the
+  plaster, earth and glow passes.
+  20 Mipos (17 added with createCharacter + randomizeMipoConstrained, 14:00, draw p50): as drawn, no
+  shadows 9.9 ms, 52 fps; lit without clay 58.8, 13 fps; lit with clay 60.4, 13 fps; + contact 62.7;
+  lit + 3D 104.5, 8 fps. ProFi: gatherLightsForBody (src/render/shaders.lua) 90% of the frame, 630 calls
+  a frame (every lit part, and again in the shadows' silhouette pass), each looping all of
+  registry.sfixtures to find the lights (subtypes.is 790,000 calls a frame). The lighting itself is
+  cheap; finding the lights per part is the cost. Levers: the light list kept (rebuilt when the
+  sfixtures change), and the silhouette pass drawn without lighting (it only needs alpha).
+  Both done (gatherLightsForBody walks registry.sfixturesOf(LIGHT); state.drawingOutlines while
+  src/shadow-silhouettes.lua draws). 20 Mipos again: as drawn 10.1 ms draw; lit + clay 18.8 (was 60.4);
+  contact + 3D, lit 26.9 (was 104.5); + soft wall 26.7; night, three circling lamps 27.6. Still 22-26 fps:
+  the update is ~12 ms with 20 Mipos (physics, as drawn too), lighting ~9 ms (~0.45 ms a Mipo: the
+  per-part uniforms), the shadows' outline pass ~8 ms (every part drawn again). Next levers: send a
+  body's lights once for all its parts, the outline pass for the casters only, or less often.
 - [ ] **LS15. Small ones:** should a new directional light be a sun (not fade) by default; the back
   light on a drawn stone lands on its black outline (reach past it, as the contact shadow does);
   grass on a moving body rebuilds its blades every frame (LITTLE-USED, the grass round).

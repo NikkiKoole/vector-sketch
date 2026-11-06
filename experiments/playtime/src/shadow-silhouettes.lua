@@ -12,6 +12,17 @@ local frameToken = {} -- a new one each frame (newFrame): what was drawn in an o
 -- which may itself draw shadows from these silhouettes)
 local function everything() return true end
 
+-- the textured world as plain outlines: no light or clay shaders (state.drawingOutlines, read by
+-- src/render/shaders.lua), only the pictures' alpha matters here
+local function drawOutlines(world, only)
+    local textured = require('src.physics.box2d-draw-textured')
+    local state = require('src.state')
+    state.drawingOutlines = true
+    local ok, err = pcall(textured.drawTexturedWorld, world, only)
+    state.drawingOutlines = false
+    if not ok then error(err, 0) end
+end
+
 local function canvasFor(w, h)
     if not canvas or canvas:getWidth() ~= w or canvas:getHeight() ~= h then
         if canvas then canvas:release() end
@@ -38,10 +49,9 @@ function lib.get(world)
         return silhouettes, w, h
     end
     key = { frame = frameToken, world = world, x0 = x0, y0 = y0, x1 = x1, y1 = y1 }
-    local textured = require('src.physics.box2d-draw-textured')
     love.graphics.setCanvas({ silhouettes, stencil = true })
     love.graphics.clear(0, 0, 0, 0)
-    textured.drawTexturedWorld(world, everything)
+    drawOutlines(world, everything)
     if target then love.graphics.setCanvas({ target, stencil = true }) else love.graphics.setCanvas() end
     return silhouettes, w, h
 end
@@ -66,10 +76,9 @@ function lib.getLayer(world, name, only)
         return c, w, h
     end
     layerKeys[name] = { frame = frameToken, world = world, x0 = x0, y0 = y0, x1 = x1, y1 = y1 }
-    local textured = require('src.physics.box2d-draw-textured')
     love.graphics.setCanvas({ c, stencil = true })
     love.graphics.clear(0, 0, 0, 0)
-    textured.drawTexturedWorld(world, only)
+    drawOutlines(world, only)
     if target then love.graphics.setCanvas({ target, stencil = true }) else love.graphics.setCanvas() end
     return c, w, h
 end
