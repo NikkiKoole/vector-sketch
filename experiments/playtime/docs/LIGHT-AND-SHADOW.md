@@ -250,6 +250,14 @@ fade, a sun: the panel's `fades` switch, LS4).
   own now: frontal 0.75, swing 0.3, and the sky light x1.3 (panel sliders 'Mipos: frontal', 'Mipos:
   swing', 'sky light strength'). Measured on the lit pixels at 12:00: drawn 128, before 129, now 136; at
   16:00 drawn 133, before 128, now 131. p hides the panel.
+  Smoother dawn and dusk (Nikki: "some transitions aren't smooth ... mathematically like our sun and
+  moon"): sampled every 3 minutes of the clock, the back light, both shadows' sides and the sky all
+  changed within ~20 minutes of 6:00 and 18:00, at the places where the code picked the stronger of sun
+  and moon. Now nothing picks: the sun and the moon each throw their own 3D shadows by their own
+  strength (both at once around dawn and dusk); the soft wall shadow is their blend by strength; the back
+  light turns from the moon's way to the sun's by their shares through 'from above', its strength from
+  their sum. The moon is up 17:00-7:00 (overlapping the sun), both fade over ~1.5 h near the horizon,
+  the sun's 3D shadows fade below 0.3 of its height. ; and ' step five minutes.
   Not yet: within a lane one depth (a Mipo's own parts, LS20) (per-thing depth,
   LS16/LS18), nothing on the floor in front of the things, the same cost as the wall shadows (LS12).
   Nikki: "I like where we are with the light" (2026-11-06).

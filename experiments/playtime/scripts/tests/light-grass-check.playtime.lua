@@ -8,9 +8,10 @@
 -- The panel (top left, folds with –, p hides it) has all of it as checkboxes, sliders and buttons; the keys
 -- still work:
 --   d the day-night cycle (a day in DAY_SECONDS: the sun rises on the left at 6, sets on the right at 18,
---     the moon the other way round the night; night, dawn, day, golden hour and dusk blended by the hour)
+--     the moon from 17 to 7, overlapping it; night, dawn, day, golden hour and dusk blended by the hour)
 --   t the day faster: a day in 120 / 30 / 10 seconds (turns the cycle on)
---   , . an hour back / on   1 noon   2 dusk (19:00)   3 midnight   4 only the turning lamp (r: its range)
+--   , . an hour back / on   ; ' five minutes back / on
+--   1 noon   2 dusk (19:00)   3 midnight   4 only the turning lamp (r: its range)
 --   m the Mipos lit like the shapes / as drawn (their picture parts, limbs and torso; not the face)
 --   c the Mipos' clay (grain, dents, sheen) off / on (on to start): off, the light and roundness only
 --   h contact shadows off / on (src/contact-shadows.lua; how dark goes with the time of day)
@@ -557,10 +558,19 @@ end
 
 -- where on the arc at theta (0 rising on the left, pi setting on the right), the way it shines (at the
 -- scene's middle), and how much it's up (0 at the horizon or below, 1 well up)
+-- Where the sun and the moon are on their arcs at an hour (0 rising on the left, pi setting on the right).
+-- The sun 6:00-18:00; the moon 17:00-7:00, so they overlap an hour at dusk and at dawn: the light and the
+-- shadows swing across while both are up, not through a moment with almost no light (Nikki 2026-11-06:
+-- "some transitions aren't smooth"; sampled: back light, both shadows' sides and the sky all changed
+-- within ~20 minutes of 6:00 and of 18:00).
+local function sunTheta(hour) return (hour - 6) / 12 * math.pi end
+local function moonTheta(hour) return ((hour - 17) % 24) / 14 * math.pi end
+
 local function onArc(theta)
     local x = ARC.x - ARC.r * math.cos(theta)
     local y = ARC.y - ARC.r * ARC.squash * math.sin(theta)
-    local up = math.max(0, math.min(1, (math.sin(theta) + 0.05) / 0.2))
+    -- fading in and out over about an hour and a half near the horizon (was ~45 minutes)
+    local up = math.max(0, math.min(1, (math.sin(theta) + 0.1) / 0.5))
     return x, y, math.atan2(ARC.y - 200 - y, ARC.x - x), up * up * (3 - 2 * up)
 end
 
@@ -587,14 +597,24 @@ local function wallShadow()
         local a = body:getAngle()
         return { math.cos(a) * WALL_BEHIND, math.max(0, math.sin(a)) * WALL_BEHIND }, 10, 1
     end
+    -- the sun's and the moon's shadow blended by how strong each is (no picking the stronger: a pick
+    -- flips in a frame); a moon behind the things (3D, 'moon from behind') throws none on the wall
     local _, sunExtra = lightOf('sun')
     local _, moonExtra = lightOf('moon')
-    local sun, moon = sunExtra and sunExtra.intensity or 0, moonExtra and moonExtra.intensity or 0
-    local theta = (sun >= moon) and (c.hour - 6) / 12 * math.pi or ((c.hour - 18) % 24) / 12 * math.pi
-    local high = math.max(0, math.sin(theta))
-    local length = WALL_BEHIND * math.min(4, 1 / (high + 0.25))
-    local fade = math.min(1, math.abs(sun - moon) / 0.6)
-    return { math.cos(theta) * length, high * length }, 5 + length * 0.06, fade
+    local wSun = sunExtra and sunExtra.intensity or 0
+    local wMoon = (c.solid and not c.moonInFront) and 0 or (moonExtra and moonExtra.intensity or 0)
+    local total = wSun + wMoon
+    if total <= 0.0001 then return nil end
+    local function cast(theta)
+        local high = math.max(0, math.sin(theta))
+        local length = WALL_BEHIND * math.min(4, 1 / (high + 0.25))
+        return math.cos(theta) * length, high * length, length
+    end
+    local sx, sy, sl = cast(sunTheta(c.hour))
+    local mx, my, ml = cast(moonTheta(c.hour))
+    local length = (sl * wSun + ml * wMoon) / total
+    return { (sx * wSun + mx * wMoon) / total, (sy * wSun + my * wMoon) / total }, 5 + length * 0.06,
+        math.min(1, total / 0.6)
 end
 
 -- The 3D shadows' light: the sun or the moon (whichever leads, as the wall shadows; its way towards it on
@@ -644,27 +664,31 @@ local function lampLight(label, inFront)
     return { kind = 'point', x = x, h = math.max(4, FLOOR_Y + z - y), z = z }
 end
 
-local SUN_FADE_HEIGHT = 0.15 -- below this height (as the sine of the sun's angle) its 3D shadows fade out
--- The sun or the moon as a 3D light (whichever leads, as the wall shadows; its way towards it on the arc, a
--- little out of the wall), and how much of the shadow's darkness is left.
-local function sunLight()
+local SUN_FADE_HEIGHT = 0.3 -- below this height (as the sine of the sun's angle) its 3D shadows fade out
+-- The sun and the moon each as a 3D light, each with its own share: as strong as its light, fading out near
+-- the horizon. Both at once around dawn and dusk (one fading in as the other fades out); no picking the
+-- stronger, which flipped the shadows' side in a frame. Returns a list of { light, fade, label }.
+local function skyLights()
     local c = look()
-    local _, sunExtra = lightOf('sun')
-    local _, moonExtra = lightOf('moon')
-    local sun, moon = sunExtra and sunExtra.intensity or 0, moonExtra and moonExtra.intensity or 0
-    local theta = (sun >= moon) and (c.hour - 6) / 12 * math.pi or ((c.hour - 18) % 24) / 12 * math.pi
-    local high = math.sin(theta)
-    if high <= 0.005 then return nil end
     local towards = c.sunOut or SUN_TOWARDS[c.sunTowards or 1]
-    -- the moon from behind the things (Nikki 2026-11-06: the sun casting backward by day, the moon forward
-    -- at night): its shadows fall forward onto the ground in front. They swap at the handover, when both
-    -- are faint ('moon from behind' in the panel; off, the moon shines from in front like the sun)
-    if sun < moon and not c.moonInFront then towards = -math.abs(towards) end
-    -- fading out as it nears the horizon: cut off at the horizon they vanished at once just before 18:00
-    -- while still dark (Nikki: "around 1800 something flips")
-    local low = math.min(1, high / SUN_FADE_HEIGHT)
-    low = low * low * (3 - 2 * low)
-    return { kind = 'sun', x = -math.cos(theta), h = high, z = towards }, math.min(1, math.abs(sun - moon) / 0.6) * low
+    local list = {}
+    for _, sky in ipairs({ { 'sun', sunTheta(c.hour), towards },
+        -- the moon from behind the things (Nikki: the sun casting backward by day, the moon forward at night;
+        -- 'moon from behind' in the panel, off: from in front like the sun)
+        { 'moon', moonTheta(c.hour), c.moonInFront and towards or -math.abs(towards) } }) do
+        local _, extra = lightOf(sky[1])
+        local intensity = extra and extra.intensity or 0
+        local high = math.sin(sky[2])
+        if high > 0.005 and intensity > 0 then
+            -- fading out as it nears the horizon (cut off there, they vanished at once: "around 1800 something
+            -- flips")
+            local low = math.min(1, high / SUN_FADE_HEIGHT)
+            low = low * low * (3 - 2 * low)
+            list[#list + 1] = { light = { kind = 'sun', x = -math.cos(sky[2]), h = high, z = sky[3] },
+                fade = math.min(1, intensity / 0.6) * low, label = sky[1] }
+        end
+    end
+    return list
 end
 
 -- how dark the hour is: 0 by day, 1 at night (from the sky's brightness)
@@ -685,12 +709,10 @@ local function solidLights(wallShadows)
     local soft = SOFTNESS[c.softness or 1]
     local list = {}
     if set.sun then
-        local light, fade = sunLight()
-        if light then
-            local sunBody = strongest({ 'sun', 'moon' })
-            local _, extra = lightOf(sunBody and sunBody:getUserData().thing.label or 'sun')
-            list[#list + 1] = { light = light, strength = math.min(0.7, wallShadows * 1.5) * fade, softness = soft.sun,
-                lightColour = rgb(extra and extra.colorHex or 'ffffff') }
+        for _, sky in ipairs(skyLights()) do
+            local _, extra = lightOf(sky.label)
+            list[#list + 1] = { light = sky.light, strength = math.min(0.7, wallShadows * 1.5) * sky.fade,
+                softness = soft.sun, lightColour = rgb(extra and extra.colorHex or 'ffffff') }
         end
     end
     local lamps = { { set.warm, 'warm lamp', c.lampDepth or LAMP_DEPTH }, { set.cool, 'cool lamp', COOL_LAMP_DEPTH },
@@ -754,8 +776,8 @@ local function applyTime()
     end
     local L = lookAt(c.hour)
     c.now = L
-    local sx, sy, sa, sunUp = onArc((c.hour - 6) / 12 * math.pi)
-    local mx, my, ma, moonUp = onArc(((c.hour - 18) % 24) / 12 * math.pi)
+    local sx, sy, sa, sunUp = onArc(sunTheta(c.hour))
+    local mx, my, ma, moonUp = onArc(moonTheta(c.hour))
     setLight('sun', L.sun[1] .. 'ff', L.sun[2] * sunUp, sx, sy, sa)
     setLight('moon', L.moon[1] .. 'ff', L.moon[2] * moonUp, mx, my, ma)
     -- the warm lamp throwing the 3D shadows is on, whatever the hour
@@ -781,14 +803,17 @@ local function applyTime()
     -- moon is still faint: the way they shine swings round while there's hardly any of it, so the back
     -- light fades with how much there is (full from BACK_FULL of the hour's strongest sun or moon up), out
     -- and in again through the handover, over half an hour or so of the clock.
+    -- Now: the way it shines turns from the moon's to the sun's by their shares, through 'from above'
+    -- (straight down, pi/2), never round the bottom; its strength follows how much light there is in all.
     local sunI, moonI = L.sun[2] * sunUp, L.moon[2] * moonUp
-    local vx = math.cos(sa) * sunI + math.cos(ma) * moonI
-    local vy = math.sin(sa) * sunI + math.sin(ma) * moonI
-    local strength = math.sqrt(vx * vx + vy * vy)
+    local total = sunI + moonI
+    local function belowUp(a) return (a + math.pi / 2) % (2 * math.pi) - math.pi / 2 end -- -pi/2 .. 3pi/2
+    local share = total > 0 and sunI / total or 0.5
+    local angle = belowUp(ma) + (belowUp(sa) - belowUp(ma)) * share
     local peak = math.max(L.sun[2], L.moon[2], 0.01)
-    local there = math.min(1, strength / (BACK_FULL * peak))
+    local there = math.min(1, total / (BACK_FULL * peak))
     there = there * there * (3 - 2 * there)
-    c.skyAngle, c.skyStrength = math.atan2(vy, vx), strength
+    c.skyAngle, c.skyStrength = angle, total
     setLight('back light', L.back[1] .. 'ff', c.backOff and 0 or L.back[2] * there, nil, nil, c.skyAngle)
 end
 
@@ -904,11 +929,6 @@ local function everyFrame()
     local offset, blur, fade = wallShadow()
     -- with the 3D shadows on too, the soft ones only on the wall above the floor, a little lighter:
     -- the two together (Nikki 2026-11-06: "combine multiple shadows")
-    -- a moon behind the things throws nothing back onto the wall
-    local _, sunE = lightOf('sun')
-    local _, moonE = lightOf('moon')
-    local moonLeads = (moonE and moonE.intensity or 0) > (sunE and sunE.intensity or 0)
-    if c.solid and moonLeads and not c.moonInFront then offset = nil end
     state.backdropShadows = (not c.wallShadowsOff and offset) and { wall = c.solid and wallAboveFloor or wallShape,
         offset = offset, blur = blur, strength = L.wallShadows * fade * (c.solid and 0.7 or 1) } or nil
     local lights = c.solid and solidLights(L.wallShadows) or {}
@@ -954,6 +974,8 @@ function s.onKeyPress(key)
         for i, d in ipairs(LAMP_DEPTHS) do if d <= now then at = i end end
         at = math.max(1, math.min(#LAMP_DEPTHS, at + (key == ']' and 1 or -1)))
         c.lampDepth = LAMP_DEPTHS[at]
+    elseif key == ';' or key == "'" then
+        c.hour = (c.hour + (key == ';' and -1 or 1) / 12) % 24 -- five minutes
     elseif key == 'p' then
         c.panelHidden = not c.panelHidden
     elseif key == 'x' then
