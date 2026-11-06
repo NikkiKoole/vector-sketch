@@ -1,0 +1,123 @@
+# Tracks — pipes and rails through depth layers, a cart that carries Mipos
+
+status: idea
+
+A track that runs through depth: a marble or a cart rolls down a pipe, goes behind the house,
+comes out in front, crosses itself on another layer. A Mipo rides along in a cart. It's a
+knikkerbaan to watch (like the bike and the soapbox), and the bones of a roller coaster, a
+buizenpost (pneumatic tube), a tube slide, a toy train, a spiral around a tree, a sushi belt.
+From a talk Nikki had outside the repo (2026-11-06), checked against this repo.
+Spike to build: `scripts/spikes/tracks`.
+
+## The idea
+
+- **Depth layers as collision categories.** A handful of layers, each its own Box2D category.
+  Depth only decides draw order and size; under the hood it's all 2D.
+- **A track is a pipe of two walls in one layer**: two chains, offset either side of a centre
+  line. Where the track crosses itself on another layer the walls overlap on screen but never
+  touch, because the categories don't collide.
+- **Changing layers without a jump.** At a transition both layers' walls run side by side for a
+  short stretch, in the same place. Somewhere in that stretch the moving body's filter switches
+  from layer A to B. Physically nothing happens: same position, same speed, it keeps rolling.
+  Only the drawn depth eases from A to B over the stretch.
+- **Arc length is only for drawing.** The track's centre line keeps its arc length (as in
+  achtbaan). The nearest arc position gives depth (draw order and size) and how far into a
+  transition a body is. Physics stays fully Box2D: gravity pulls things down the pipe; a
+  buizenpost's suction is a force along the pipe.
+- **The cart is the only thing that touches the track.** Riders are jointed to it and their
+  mask ignores the track, so they never catch on a pipe wall; cart and riders share a negative
+  group so they don't collide with each other. Only the cart switches layers; riders are drawn
+  at the cart's depth, so a Mipo is never split across two layers on screen.
+- **The cart drawn as a 3D box.** Box2D keeps a flat box; the drawing is a box turned in 3D:
+  forward in the plane from the body's angle, into or out of the screen from how fast the
+  track's depth changes there, and a roll per track point (banking, corkscrews; replaces
+  achtbaan's `flip`). Project the 8 corners like the layers (smaller toward the back), draw the
+  faces that face the camera, back to front. Riders stay flat puppets anchored to the projected
+  seat: a paper theatre, which suits the cut-out look. Accepted mismatch: a cart turned toward
+  the back is drawn shorter but its Box2D box isn't; only loose things hitting it notice.
+
+## Corrections for this repo (LÖVE 11.5 = Box2D 2.3, not v3)
+
+The talk assumed Box2D v3 (`b2Shape_SetFilter`, `b2Body_SetBullet`, one-sided chains). Here:
+
+- Filters are `fixture:setCategory / setMask / setGroupIndex / setFilterData`; `body:setBullet`.
+- **Chains collide on both sides** in 2.3, so a pipe is just two chains: no winding to get right.
+  Tunnelling is still real: `setBullet` on marbles and the cart, walls not too thin, and a pipe
+  wider than the body by a margin.
+- **Don't switch a filter inside a contact callback** (the world is locked). Decide the switch
+  in update, after `world:update`. Better still, decide it from the arc position (below), not a
+  sensor.
+- **16 categories**, and `src/hair-tufts.lua` already takes 16. Five layers fit; reserve them
+  in one place.
+- A **soft weld is only soft in its turning** (SOAPBOX.md tried list): at the hips it sways but
+  doesn't bob. The soapbox seats its rider on a wheel joint (`soapbox.playtime.lua:279`); reuse
+  that.
+- Breaking a rider out: `joint:getReactionForce(1 / dt)` above a threshold, then destroy it.
+
+## Choices for the spike
+
+- **Switch by arc position, not a sensor.** We compute the nearest arc position anyway for
+  drawing; past the middle of a transition stretch the cart is in layer B, before it in A. That
+  also works when it rolls back, which a one-shot sensor gets wrong. The switch point sits where
+  only the pipe's inside overlaps the new layer (nothing of B's walls touches the cart then).
+- **One track primitive: a channel.** The cart runs between both walls (wheels or a low-friction
+  rounded box held top and bottom), so loops and upside-down stretches hold it without upstop
+  wheels. A marble is the same with a circle.
+- **The track as data first**: points with a layer, a roll and achtbaan's flags (accelerate,
+  brake, hoist) in the scene script. Drawing tracks in the editor comes later, from achtbaan's
+  drawing (`../achtbaan/main.lua`: `Track:addPoint`, `findClosestPoint`, flags toggled on points).
+- **Drive by forces, not by setting speed.** achtbaan's hoist overrides the speed and
+  accelerate/brake kick the acceleration once per segment (`Cart:update`, :338). Here a hoist is
+  a force (or a motor) along the tangent up to a speed, boosters and brakes the same.
+- **Runs on its own**, no buttons on screen (BIKE.md: "def no in game buttons"). Switches,
+  sockets and dropping a Mipo in are things in the world, not UI.
+
+## Where it touches
+
+- `DEPTH-LAYERS.md` and the `depth` spike: lanes by `preSolve` (`instance.lane`, `state.drawSplits`,
+  `state.passableBodies`). Track layers are categories instead; if both live in one scene, a
+  track layer should map to a lane (back track = back lane) so the draw splits agree.
+- `SOAPBOX.md`: the rider on a wheel-joint seat, rider muscles (aimed at fixed world angles, gentle:
+  aimed at the cart's angle they rolled it over, at standing strength they braked it), ballast.
+- `BIKE.md`: the lift that carries the vehicle back to the start, the rescue after 8 s stuck.
+- `EXPERIMENTS-HARVEST.md` #13 (rail ride): proposed a kinematic cart on achtbaan's arc length;
+  this plan keeps the cart in Box2D and uses the arc length only for drawing.
+- `LIGHT-AND-SHADOW.md`: projected shadows per depth (`projectedShadows.layers`).
+
+## Steps (spike `tracks`)
+
+- [x] **TR1. One pipe, one marble** (2026-11-06). `scripts/spikes/tracks` (`m` a marble, `r`
+  start over): a closed glass pipe zigzagging down, then a riser back up. The centre line is
+  pieces (lines, arcs of radius 200) smoothed and resampled every 15 px (arc length; nearest point
+  searched around the last one); the walls are two closed chains offset 46 px either side, in
+  track layer A's category (2; 2..6 reserved for track layers). Marbles (r 30, bullets) roll down
+  by gravity. Instead of a separate lift, the bottom bend, the riser and the top bend are a
+  **hoist stretch**: a force along the pipe that cancels gravity there and pulls up to 700 px/s
+  (a buizenpost). A marble stopped for 6 s outside it gets a push. Measured: 12 marbles for a
+  minute, top speed ~1350 px/s, none out; all 12 thrown at 5000 px/s into a wall, none out
+  (an escape is counted in `state.tracksSpike.stats` and printed). Not measured on the phone yet.
+- [ ] **TR2. Two layers and a crossing.** The track goes behind itself: layer B's stretch crosses
+  layer A's on screen. A transition stretch with both layers' walls; the filter switches at its
+  middle by arc position; the drawn depth (order, size, a little haze) eases across it. Check:
+  rolling back through a transition, two marbles at once.
+- [ ] **TR3. The cart.** A box in the channel (wheels on both walls or a rounded slider), bullet,
+  ballast, switching layers like the marble. Loops and a drop. Hoist, booster and brake as forces.
+- [ ] **TR4. A rider.** A Mipo seated on the soapbox's wheel-joint seat, the track masked out,
+  one negative group with the cart, drawn at the cart's depth and size. Loose shoulders; does
+  the seat hold in a loop (stiffen at speed if it stretches)?
+- [ ] **TR5. The cart in 3D.** The box drawn from the body's angle, the track's depth change and a
+  roll per point; faces back to front, shaded from the scene light; the rider anchored to the
+  projected seat. A banked turn and one corkscrew.
+- [ ] **TR6. In and out.** Drop a Mipo near a seat: it's seated. Pull hard: the joint breaks and the
+  Mipo is back in the world with its own filter (flies off if the cart is fast).
+- [ ] **TR7. Nikki plays with it**: keep, change or park? Then which contraption first
+  (buizenpost, tube slide, train, spiral around a tree, sushi belt), and drawing tracks in the
+  editor.
+
+## Open questions
+
+- Categories or `preSolve` lanes? Categories are cheap and simple for tracks; the `depth` spike's
+  lanes have rules (one-way tops) that categories can't. Probably both: categories for tracks,
+  lanes for Mipos walking about.
+- How many layers, and how far apart in depth (size, haze)?
+- Several carts in a train: joints between carts (a tow bar), each switching on its own.
