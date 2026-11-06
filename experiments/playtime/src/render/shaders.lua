@@ -772,6 +772,22 @@ local function refreshFrameLights(list)
             end
         end
     end
+    -- a scene without lights of its own: the light level's (src/scene-light.lua: state.sceneDefaultLights,
+    -- { toLight = { x, y } (world), colorHex, groundHex, intensity, lightType }), else the shader's own
+    if count == 0 and not skipped and state.sceneDefaultLights then
+        for _, d in ipairs(state.sceneDefaultLights) do
+            if count >= MAX_LIGHTS then break end
+            count = count + 1
+            local L = frameLights[count]
+            L.wdx, L.wdy = d.toLight[1], d.toLight[2]
+            L.r, L.g, L.b = color.hexToColor(d.colorHex or 'ffffffff')
+            L.intensity = d.intensity or 1.0
+            L.type = LIGHT_TYPES[d.lightType] or 0
+            L.gr, L.gg, L.gb = color.hexToColor(d.groundHex or '6b5a40ff')
+            L.x, L.y = 0, 0
+            L.range = 0 -- no falloff
+        end
+    end
     frameLights.count, frameLights.skipped, frameLights.stale = count, skipped, false
     frameLights.version = (frameLights.version or 0) + 1 -- the shaders send the lights' colours etc. again
     frameLights.list, frameLights.listLength = list, #list

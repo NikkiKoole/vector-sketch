@@ -156,6 +156,7 @@ require('src.physics.physics-callbacks') -- fills state.physicsCallbacks, wired 
 local sceneLoader = require('src.scene-loader')
 local editorRenderer = require('src.editor-render')
 local transformHandles = require('src.transform-handles')
+local sceneLight = require('src.scene-light')
 local rightColumn = require('src.ui.right-column')
 
 -- Request window focus so mouse events work when launched from terminal
@@ -317,6 +318,7 @@ function love.draw()
     box2dDrawTextured.makeCombinedImages()
     shaders.newFrame() -- the lights worked out once this frame, not per lit part (src/render/shaders.lua)
     spineSkin.newFrame() -- a torso's bones (spine, lobes) found once this frame (src/spine-skin.lua)
+    sceneLight.apply() -- the scene's light level on its Mipos (src/scene-light.lua)
     --end
     cam:push()
     love.graphics.setColor(1, 1, 1, 1)

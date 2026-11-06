@@ -12,6 +12,7 @@ local lib = {}
 
 local ui = require('src.ui.all')
 local state = require('src.state')
+local sceneLight = require('src.scene-light')
 local objectManager = require('src.object-manager')
 local camera = require('src.camera')
 local cam = camera.getInstance()
@@ -486,6 +487,26 @@ local function drawSpeaker(cx, cy, r, muted)
     end
 end
 
+-- a bulb for the scene's light level (src/scene-light.lua): an outline when off, a bigger dot inside with each level,
+-- rays from 'lit' up
+local function drawBulb(cx, cy, r, step, steps)
+    local lg = love.graphics
+    lg.setColor(ui.theme.button.text_default)
+    lg.setLineWidth(3)
+    local by = cy - r * 0.2
+    if step > 1 then
+        local fill = (step - 1) / (steps - 1)
+        lg.circle('fill', cx, by, r * 0.62 * (0.35 + 0.65 * fill))
+        for i = -2, 2 do
+            local a = -math.pi / 2 + i * 0.6
+            lg.line(cx + math.cos(a) * r * 0.85, by + math.sin(a) * r * 0.85,
+                cx + math.cos(a) * r * 1.15, by + math.sin(a) * r * 1.15)
+        end
+    end
+    lg.circle('line', cx, by, r * 0.62)
+    lg.rectangle('fill', cx - r * 0.28, by + r * 0.6, r * 0.56, r * 0.42)
+end
+
 function lib.draw()
     local rs = railState()
     local gap = ui.theme.spacing
@@ -539,17 +560,27 @@ function lib.draw()
         end
     end)
 
-    -- the sound button, in its own box under the rail
+    -- the sound button and the light level, in their own box under the rail
     local soundY = RAIL_TOP + railH + gap
     local soundW = gap * 2 + BUTTON
-    ui.panel(RAIL_X, soundY, soundW, BUTTON + gap * 2, nil, function()
+    local boxH = BUTTON * 2 + gap * 3
+    ui.panel(RAIL_X, soundY, soundW, boxH, nil, function()
         local x, y = RAIL_X + gap, soundY + gap
         if ui.button(x, y, BUTTON, '', BUTTON, state.soundMuted and ui.theme.header.active or nil) then
             lib.toggleSound()
         end
         drawSpeaker(x + BUTTON / 2, y + BUTTON / 2, BUTTON * 0.3, state.soundMuted)
+        -- the light: each click the next level (off, lit, ...), saved with the scene
+        local ly = y + BUTTON + gap
+        local levels = sceneLight.LEVELS
+        local step = 1
+        for i, level in ipairs(levels) do if level.name == sceneLight.level().name then step = i end end
+        if ui.button(x, ly, BUTTON, '', BUTTON, step > 1 and ui.theme.header.active or nil) then
+            sceneLight.step()
+        end
+        drawBulb(x + BUTTON / 2, ly + BUTTON / 2, BUTTON * 0.3, step, #levels)
     end)
-    railRect.h = railH + gap + BUTTON + gap * 2
+    railRect.h = railH + gap + boxH
 
     if openGroup then
         drawFlyout(openGroup, RAIL_X + railW + gap, openY)

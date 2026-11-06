@@ -17,6 +17,7 @@ local ST = require('src.shape-types')
 local cameraFollow = require('src.camera-follow')
 local characterManager = require('src.character-manager')
 local roomMusic = require('src.room-music')
+local sceneLight = require('src.scene-light')
 local influences = require('src.influences')
 
 local lib = {}
@@ -215,6 +216,9 @@ local function jointForFile(joint)
 end
 
 function lib.gatherSaveData(world, camera)
+    -- the light level's settings off the Mipo parts first, so they don't go into the file (the next
+    -- frame puts them back: src/scene-light.lua)
+    sceneLight.unapply()
     local saveData = {
         version = "1.0",
         bodies = {},
@@ -243,6 +247,7 @@ function lib.gatherSaveData(world, camera)
         settings = cameraFollow.saveSettings(),
     }
     saveData.music = roomMusic.save()
+    saveData.light = sceneLight.save()
     return saveData
 end
 

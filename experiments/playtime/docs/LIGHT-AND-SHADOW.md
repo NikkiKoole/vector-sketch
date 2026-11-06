@@ -169,6 +169,19 @@ fade, a sun: the panel's `fades` switch, LS4).
   Then try it in a real room (the dollhouse, the overworld).
   Before it (ENGINE-MERGE.md, 2026-11-06): MATERIALS MT2 (which materials stay), then LS23 and LS15
   (a full room's defaults: clay or not, which Mipos are lit, a new lamp a sun or not).
+  **How (Nikki 2026-11-06):** a light button under the sound button that steps through levels, "like
+  disabling the volume": off -> lit -> shadows -> full, saved with the scene (LS23's levels). Each level a
+  table of settings (`src/scene-light.lua` LEVELS), so tuning is editing data; a more flexible shader
+  setup grows from that. Moving it in also makes speed-ups pay that didn't inside one test scene (LS24,
+  fewer lights per part, lights and parts found once for every scene).
+  **Slice 1 built (2026-11-06):** off and lit. `src/scene-light.lua`: the level on state, saved as the
+  scene's `light` (nothing when off); lit puts light-grass-check's liked Mipo settings (clay off) on every
+  Mipo part, contact shadows on, and, in a scene with no lights of its own, a sun high on the left and a
+  sky light (its day values; `state.sceneDefaultLights`, read in `src/render/shaders.lua`). The settings
+  come off again when the level drops and before a save (the part's own values back). Off touches
+  nothing, so light-grass-check and mipo-materials work as before. spec/scene-light_spec.lua.
+  Next: shadows (the wall and 3D shadows need a wall and a floor: which body is the wall, per scene),
+  then full (clay, lanes, lamp glow), then the details behind the button's arrow (time of day, ...).
 - [x] **LS14. A lamp's wall shadows both ways.** Now one direction per scene (from the sun or moon): a
   lamp in a room's middle should throw shadows away from it on both sides, which needs a pass per
   thing (or per side). Only if a real room wants it (after LS12).
