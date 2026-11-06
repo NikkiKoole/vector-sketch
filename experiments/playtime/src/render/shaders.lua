@@ -112,12 +112,16 @@ local plasticineShader = love.graphics.newShader([[
             base.rgb *= vec3(mr, mg, mb);
         }
 
-        // --- Micro-normal from fBm (thumb-dents) ---
-        vec2 p = uv * scale;
-        float h  = fbm(p);
-        float hx = fbm(p + vec2(0.5, 0.0));
-        float hy = fbm(p + vec2(0.0, 0.5));
-        vec2 microTilt = vec2(-(hx - h), -(hy - h)) * bumpAmp;
+        // --- Micro-normal from fBm (thumb-dents): clay's only; a material skips the noise (9 lookups) ---
+        float h = 0.5;
+        vec2 microTilt = vec2(0.0);
+        if (matKind < 0.5) {
+            vec2 p = uv * scale;
+            h  = fbm(p);
+            float hx = fbm(p + vec2(0.5, 0.0));
+            float hy = fbm(p + vec2(0.0, 0.5));
+            microTilt = vec2(-(hx - h), -(hy - h)) * bumpAmp;
+        }
 
         // --- Alpha neighborhood: gradient for form shading, average for rim ---
         // Sample the texture's own alpha at ±formRadius in UV space. The gradient
@@ -139,7 +143,6 @@ local plasticineShader = love.graphics.newShader([[
             macroTilt = nxy / nz * formStrength * 0.5;
         }
 
-        if (matKind > 0.5) microTilt = vec2(0.0); // thumb dents are clay's, not metal's or velvet's
         vec3 n = normalize(vec3(microTilt + macroTilt, 1.0));
         // the lights' main way, for a material's shine (weighted by how much each reaches it)
         vec3 Lmain = vec3(0.0);
@@ -679,11 +682,15 @@ function lib.gatherLightsForBody(body, fx, fy)
         bx, by = 0, 0
     end
     local count = 0
+    local skipped = false
     for _, f in pairs(registry.sfixtures) do
         if count >= MAX_LIGHTS then break end
         if not f:isDestroyed() then
             local ud = f:getUserData()
-            if ud and subtypes.is(ud, subtypes.LIGHT) then
+            -- a light that's off adds nothing, but the shader would still loop over it per pixel
+            local off = ud and subtypes.is(ud, subtypes.LIGHT) and (ud.extra.intensity or 1.0) <= 0
+            if off then skipped = true end
+            if ud and subtypes.is(ud, subtypes.LIGHT) and not off then
                 local lb = f:getBody()
                 local la = lb:getAngle()
                 -- the body's +X is the way the light shines (its panel: aim); the shader's lambert wants
@@ -719,6 +726,12 @@ function lib.gatherLightsForBody(body, fx, fy)
                 if ud.extra.lightType == 'back' then lightRangeBuf[count] = ud.extra.rimWidth or 0.045 end
             end
         end
+    end
+    -- every light off: one dark light, not none (no light at all means the shader's own default light,
+    -- which would light up a scene whose lights were all turned off)
+    if count == 0 and skipped then
+        count = 1
+        lightInBuf[1], lightTypeBuf[1], lightRangeBuf[1] = 0, 0, 0
     end
     return count, lightDirBuf, lightColorBuf, lightInBuf
 end
