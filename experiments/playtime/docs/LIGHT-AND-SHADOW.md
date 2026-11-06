@@ -297,6 +297,11 @@ fade, a sun: the panel's `fades` switch, LS4).
   Note: these phone runs were in the editor (the device build starts there), so box2d-draw's debug
   shapes (~18% of the draw) are in them; play mode doesn't draw those. Compare runs only within one
   install: how many Mipos land on screen changes the totals (paused is steadiest).
+  Then only what changed sent (the materials session, 988e4ecd: a uniform skipped when equal to what the
+  shader last got, the light colours/types/ranges once a frame): one install, paused, editor: as drawn
+  7.6 / 7.6, lit 9.3 / 9.5 (60 fps), lit with the frame cache forced off 12.4; lit + 3D every other
+  frame 17.3, 53 fps. Lighting 20 Mipos: ~9.8 ms in the morning, ~1.8 now. What's left for 60 fps with
+  shadows is the outline pass (LS24, LS25).
 - [ ] **LS24. Draw once for the screen and the shadows.** The outlines for the shadows are the world
   drawn a second time (~6 ms with 20 lit Mipos on the phone; every other frame halves it, LS23). The GPU
   can write two pictures in one pass (several canvases at once, `love.graphics.setCanvas` with a list;
