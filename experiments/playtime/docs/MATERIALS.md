@@ -272,3 +272,23 @@ What it means: a thing covers a small part of the screen (a Mipo ~5%), so even i
 everything else. So: lights, metal, gloss, see-through and velvet are affordable anywhere; the
 noise grains on things, not on big areas; the cell grains (pebble, crackle) baked into a picture
 once, or only on small things.
+
+## What the Mipo shaders cost (2026-11-06, after MT6)
+
+Timed with shader-cost on the part shader itself (src/render/shaders.lua, the plasticine shader all
+lit Mipo parts go through), under mipo-materials' 7 lights (4 off), in ms per million pixels:
+
+| | Mac before | Mac after | iPhone SE 2 after |
+|---|---|---|---|
+| no shader | 0.05 | 0.06 | 0.62 |
+| clay (the lit Mipos) | 1.9 | 1.3 | 9.3-9.5 |
+| a material | 1.8-2.2 | 0.71-0.78 | 5.1-5.9 |
+| clay + 12 wet spots | 2.0 | 1.46 | 12.3 |
+
+'After': lights that are off are skipped (they were looped per pixel), and a material skips clay's
+thumb-dent noise; the picture is the same (spec/light-off_spec.lua). A Mipo is ~5% of the phone's
+1 MP screen: a clay-lit Mipo ~0.47 ms a frame, one in materials ~0.28 ms; 20 lit Mipos (the room
+limit) ~9.5 ms clay or ~5.6 ms in materials, of the 16.7 ms a frame. mipo-materials itself (3 Mipos)
+runs at 60 fps on the phone.
+Still to win if needed: wet spots are looped per pixel for every part (12 spots: +2.7 ms/MP on the
+phone): send a part only the spots near it; and fewer lights per part (the far ones).
