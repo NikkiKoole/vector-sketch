@@ -8,7 +8,7 @@
 -- keys: r: a new Mipo   s: sit / stand   a: arms follow the facing (on/off)   left/right: turn
 --       , .: turn the heads   j: a little hop as the body switches (on/off)
 --       b: switch the body in place, or rebuild the whole Mipo (to compare)
---       f: the turning foot leans round, or flips
+--       f: the turning foot leans round, or flips   w: autowalk when dragged along the floor
 --       t: turning by itself   p: pause   h: panel
 
 local s = {}
@@ -20,7 +20,8 @@ local SPACING = 1100
 local GROUND_Y = 900
 local ZOOM = 0.3
 local SCALE = 0.3
-local SIDES = { 'left', 'front', 'right' }
+-- all front: a Mipo faces front and turns when pulled (was left / front / right)
+local SIDES = { 'front', 'front', 'front' }
 
 local function check() -- on state: a script hot reload keeps the Mipos
     state.facingSpike = state.facingSpike or { mipos = {}, stools = {}, showPanel = true }
@@ -213,6 +214,7 @@ end
 -- front; it turns quickly. The head (the face: mipoFacing.angle / applyFace, and the idle gaze)
 -- follows slowly, so the eyes pass through every place in between.
 local BODY_SPEED = math.rad(120) -- a second
+local WALK_TURN_SPEED = 0.6 -- a turn the walk makes (or relaxing back to front): of BODY_SPEED
 local HEAD_SPEED = math.rad(30)  -- a second: left -> right (60 degrees) in 2 s
 local SWITCH_AT = math.rad(15)
 local AUTO_HOLD = 1.2            -- seconds a turning Mipo stays put at a side before turning back
@@ -334,7 +336,28 @@ local function footPicture(inst, footName)
     end
 end
 
-local function held() return love.mouse.isDown(1) or #love.touch.getTouches() > 0 end
+-- a finger holds one of these parts (or, names nil, any part of the Mipo)
+local function held(inst, names)
+    if names then
+        for _, n in ipairs(names) do
+            local part = inst.parts[n]
+            if part and part.body and not part.body:isDestroyed() and getPJAttachedTo(part.body) then return true end
+        end
+        return false
+    end
+    for _, part in pairs(inst.parts) do
+        if part.body and not part.body:isDestroyed() and getPJAttachedTo(part.body) then return true end
+    end
+    return false
+end
+-- what an in-place switch remakes: a finger on one of them waits the switch out
+local REMADE = { 'lfoot', 'rfoot', 'lear', 'rear' }
+
+-- a held Mipo can't be rebuilt whole (its bodies go), and not in place while a remade part is held
+local function switchBlocked(inst)
+    if check().rebuild then return held(inst) end
+    return held(inst, REMADE)
+end
 
 local function doSwitch(inst, want)
     inst.dna.armFacing = facing.armFacing(inst) -- the arms keep theirs until updateArms moves them
@@ -356,7 +379,7 @@ local function updateLean(inst, dt)
     picture.leanAngle = L.start + (L.goal - L.start) * e
     if k < 1 then return end
     if L.phase == 'out' then
-        if held() then return end
+        if switchBlocked(inst) then return end
         doSwitch(inst, L.want) -- remakes the foot (and its picture)
         local newPicture = footPicture(inst, L.foot)
         if not newPicture then inst._lean = nil return end
@@ -373,8 +396,8 @@ end
 -- the body's switch: now, or (hopping) once it is in the air, or (leaning) once its foot tipped
 local function switchBody(inst, want, now)
     local c = check()
-    -- not while held: the rebuild would pull its bodies out from under the finger
-    if held() or inst._lean then return false end
+    -- not while held there: the switch would pull bodies out from under the finger
+    if switchBlocked(inst) or inst._lean then return false end
     if c.hop then
         if not inst._hopAt then
             hop(inst)
@@ -398,11 +421,11 @@ end
 
 -- The arms (limits, draw order) follow the body's facing at their own moment: once the head is
 -- c.armAt of the way there (0: with the body, 1: when the head arrives; the slider). Turning only
--- the head leaves them with the body. Not while held, as the body.
+-- the head leaves them with the body.
 local function updateArms(inst)
     local c = check()
     local body, arms = facing.get(inst), facing.armFacing(inst)
-    if body == arms or love.mouse.isDown(1) or #love.touch.getTouches() > 0 then return end
+    if body == arms then return end
     local ratio = facing.angle(inst) / facing.faceTurn -- the head: -1 left .. 1 right
     local at = c.armAt or 0.6
     local ready
@@ -419,10 +442,11 @@ local function updateTurn(inst, dt, now)
     if inst._lean then updateLean(inst, dt) end
     if inst._turnGoal then
         local target = STEPS[inst._turnGoal] * facing.faceTurn
-        inst._bodyAngle = approach(inst._bodyAngle or facing.dir(inst) * facing.faceTurn, target, BODY_SPEED * dt)
+        local speed = BODY_SPEED * (inst._slowTurn and WALK_TURN_SPEED or 1)
+        inst._bodyAngle = approach(inst._bodyAngle or facing.dir(inst) * facing.faceTurn, target, speed * dt)
         local want = facingAt(inst._bodyAngle)
         if want ~= facing.get(inst) then rebuilt = switchBody(inst, want, now) end
-        if inst._bodyAngle == target and want == facing.get(inst) then inst._turnGoal = nil end
+        if inst._bodyAngle == target and want == facing.get(inst) then inst._turnGoal, inst._slowTurn = nil, nil end
     end
     if inst._headGoal then
         local target = STEPS[inst._headGoal] * facing.faceTurn
@@ -437,13 +461,199 @@ local function updateTurn(inst, dt, now)
     updateArms(inst)
 end
 
+-- Autowalk (w): dragged sideways near the floor, a Mipo walks. It turns to face the way it's
+-- dragged, and its leg muscles (KEEP_ANGLE targets) step: the thighs swing forward and back in
+-- turn, the knee bends on the swing forward. The steps go by how far it is dragged, not by the
+-- clock, so a slow drag steps slowly and the feet don't skate. No force of its own: the finger
+-- moves it, the legs only step (docs/MIPO-FACING.md).
+local STRIDE = 28          -- degrees each thigh swings forward and back
+local KNEE = 55            -- degrees the knee bends on the swing forward
+local WALK_SPEED = 0.25    -- leg lengths a second: slower than that it stands
+-- Turning round takes a real pull (Nikki: no fidgety switching when just pressing it down):
+-- dragged one way TURN_DISTANCE leg lengths in all, for TURN_TIME at least. Back the other way
+-- starts over, held still it fades (PULL_FADE a second). A turn the walk makes goes slower
+-- (WALK_TURN_SPEED, with the turning above).
+local TURN_DISTANCE = 0.7  -- leg lengths
+local TURN_TIME = 0.3      -- seconds
+local PULL_FADE = 1.5      -- 1/s
+local GROUND_GRACE = 0.3   -- seconds after a foot last touched that it still counts as on the floor
+local RELAX_AFTER = 1.2    -- seconds after it stopped walking that a walked-round Mipo turns back to front
+local MAX_STEPS = 2.5      -- steps a second at most: dragged faster, it takes longer strides
+local MAX_STRIDE = 48      -- degrees: the longest stride
+-- Foot grip while walking: the dragging hand is faster than a Mipo walks, and feet that grip
+-- the floor (friction 1) held the legs back, trailing, and tipped the torso into the drag
+-- (Nikki's drag, 2026-11-06). The swinging foot hardly grips, the standing one half.
+local SWING_GRIP = 0.05
+local STANCE_GRIP = 0.5
+local FEET = { 'lfoot', 'rfoot' }
+-- Feet flat while walking: on their ankles' few degrees the feet turned with the shins, toes into
+-- the floor once a shin trailed back, and the swing jammed there (measured 2026-11-06: a shin
+-- held at its knee stop, 80 degrees off its target). While walking the ankles bend freely and a
+-- muscle holds each foot flat, its toes this much up on the swing.
+local TOES_UP = 12 -- degrees
+-- Hips: facing a side they only swing forward (sitting, docs/MIPO-FACING.md), so a walking
+-- thigh couldn't swing back behind the body (measured: the far leg stuck under it). While
+-- walking they get this much room behind.
+local HIP_BACK = math.rad(35)
+
+local LEG_PAIRS = { { 'luleg', 'llleg' }, { 'ruleg', 'rlleg' } }
+
+-- the ankle's joint (shin -> foot)
+local function ankleOf(inst, footName)
+    local foot = inst.parts[footName]
+    if not (foot and foot.body and not foot.body:isDestroyed()) then return nil end
+    for _, joint in ipairs(foot.body:getJoints()) do
+        local _, b = joint:getBodies()
+        if b == foot.body and joint:getType() == 'revolute' then return joint end
+    end
+end
+
+-- feet flat (face: 1 right, -1 left, toesUp per foot) or, face nil, back to their ankles' range
+local function holdFeet(inst, face, toesUp)
+    for i, footName in ipairs(FEET) do
+        local ankle = ankleOf(inst, footName)
+        if ankle then ankle:setLimitsEnabled(face == nil) end
+        local b = mipoActions.ensureKeepAngle(inst.parts[footName], 0, 40)
+        if b then
+            if face then
+                b.angle, b.enabled = -face * (90 + (toesUp[i] and TOES_UP or 0)), nil
+            else
+                b.enabled = false
+            end
+        end
+    end
+end
+
+-- the joint between a part and its parent
+local function jointTo(inst, parentName, partName)
+    local part, parent = inst.parts[partName], inst.parts[parentName]
+    if not (part and parent and part.body and not part.body:isDestroyed()) then return nil end
+    for _, joint in ipairs(part.body:getJoints()) do
+        local a, b = joint:getBodies()
+        if a == parent.body and b == part.body and joint:getType() == 'revolute' then return joint end
+    end
+end
+
+-- hips with room behind (face 1 / -1), or face nil: their limits as the facing set them. The
+-- facing's limits are remembered per facing: a turn mid-walk sets new ones (switchFacing).
+local function hipsBack(inst, face)
+    inst._hipBase = inst._hipBase or {}
+    local key = facing.get(inst)
+    for _, leg in ipairs({ 'luleg', 'ruleg' }) do
+        local joint = jointTo(inst, 'torso1', leg)
+        if joint then
+            local base = inst._hipBase[leg]
+            if not base or base.facing ~= key or base.joint ~= joint then
+                local lo, up = joint:getLimits()
+                base = { facing = key, joint = joint, lo = lo, up = up }
+                inst._hipBase[leg] = base
+            end
+            if face == 1 then joint:setLimits(base.lo, base.up + HIP_BACK)
+            elseif face == -1 then joint:setLimits(base.lo - HIP_BACK, base.up)
+            else joint:setLimits(base.lo, base.up) end
+        end
+    end
+end
+
+local function setGrip(inst, footName, friction)
+    local foot = inst.parts[footName]
+    if not (foot and foot.body and not foot.body:isDestroyed()) then return end
+    for _, fixture in ipairs(foot.body:getFixtures()) do
+        if not fixture:isSensor() then fixture:setFriction(friction) end
+    end
+end
+
+local function legLength(inst)
+    local hx, hy = jointPoint(inst, 'torso1', 'luleg')
+    local ax, ay = jointPoint(inst, 'llleg', 'lfoot')
+    if not (hx and ax) then return nil end
+    return math.sqrt((ax - hx) ^ 2 + (ay - hy) ^ 2)
+end
+
+-- body and head on their way to a side (the turn above takes it from there); slow: the body
+-- at WALK_TURN_SPEED
+local function turnTo(inst, side, slow)
+    if inst._turnGoal == side and inst._headGoal == side then return end
+    inst._slowTurn = slow
+    inst._bodyAngle = inst._bodyAngle or facing.dir(inst) * facing.faceTurn
+    inst._turnAngle = inst._turnAngle or facing.angle(inst)
+    inst._turnGoal, inst._headGoal = side, side
+end
+
+local function updateWalk(inst, dt, now)
+    local c = check()
+    if c.walk == false or c.sitting then return end
+    local torso = inst.parts.torso1
+    if not (torso and torso.body and not torso.body:isDestroyed()) then return end
+    local vx = torso.body:getLinearVelocity()
+    inst._walkVx = (inst._walkVx or 0) + (vx - (inst._walkVx or 0)) * math.min(1, dt * 8)
+    if mipoActions.isGrounded(inst) then inst._groundAt = now end
+    local legLen = legLength(inst)
+    local walking = legLen and held(inst) and inst._groundAt and now - inst._groundAt < GROUND_GRACE
+        and math.abs(inst._walkVx) > legLen * WALK_SPEED
+    -- the pull: how far it was dragged one way lately
+    local pull = inst._pull or 0
+    if not held(inst) or inst._walkVx * pull < 0 then pull, inst._pullStart = 0, now end
+    if held(inst) then pull = pull + inst._walkVx * dt end
+    inst._pull = pull * math.exp(-dt * PULL_FADE)
+    inst._pullStart = inst._pullStart or now
+    if not walking then
+        -- standing again after a walk: back to front, relaxed (head slow, as any turn)
+        if inst._walkTurned and not held(inst) and now - (inst._walkedAt or now) > RELAX_AFTER then
+            inst._walkTurned = nil
+            if facing.get(inst) ~= 'front' or inst._turnGoal then turnTo(inst, 'front', true) end
+        end
+        if inst._walking then
+            inst._walking = false
+            setLegTargets(inst, 0, 0) -- stand
+            holdFeet(inst, nil)
+            hipsBack(inst, nil)
+            for _, n in ipairs(FEET) do setGrip(inst, n, characterManager.footFriction) end
+        end
+        return
+    end
+    inst._walking, inst._walkedAt = true, now
+    local dir = inst._walkVx > 0 and 1 or -1
+    local pullDir = inst._pull > 0 and 1 or -1
+    if facing.dir(inst) ~= pullDir and math.abs(inst._pull) > legLen * TURN_DISTANCE
+        and now - inst._pullStart >= TURN_TIME then
+        turnTo(inst, SIDE_OF[pullDir], true)
+        inst._walkTurned = true -- the walk turned it: it relaxes back to front after
+    end
+    local face = facing.dir(inst)
+    local side = face ~= 0 -- feet flat only once it faces a side (front-on they point apart)
+    if face == 0 then face = dir end
+    -- one step (half a cycle) covers a stride; dragged faster than MAX_STEPS, the strides grow
+    local speed = math.abs(inst._walkVx)
+    local stride = math.max(2 * legLen * math.sin(math.rad(STRIDE)), speed / MAX_STEPS)
+    local swing = math.min(MAX_STRIDE, math.deg(math.asin(math.min(1, stride / (2 * legLen)))))
+    inst._gait = (inst._gait or 0) + speed * dt / stride * math.pi
+    local swinging = {}
+    for i, leg in ipairs(LEG_PAIRS) do
+        local phase = inst._gait + (i - 1) * math.pi
+        swinging[i] = math.cos(phase) > 0
+        setGrip(inst, FEET[i], swinging[i] and SWING_GRIP or STANCE_GRIP)
+        local thigh = -face * math.sin(phase) * swing              -- forward is the way it faces
+        local shin = thigh + face * math.max(0, math.cos(phase)) * KNEE -- bent on the way forward
+        local upper = mipoActions.ensureKeepAngle(inst.parts[leg[1]], 0, 40)
+        local lower = mipoActions.ensureKeepAngle(inst.parts[leg[2]], 0, 40)
+        if upper then upper.angle, upper.enabled = thigh, nil end
+        if lower then lower.angle, lower.enabled = shin, nil end
+    end
+    if side then holdFeet(inst, face, swinging) else holdFeet(inst, nil) end
+    hipsBack(inst, side and face or nil)
+end
+
 -- the follow camera moves the view: hold it on the Mipos until you touch, drag or zoom
 function s.update()
     local c = check()
     local dt, now = love.timer.getDelta(), love.timer.getTime()
     if not worldState.paused then
         for _, inst in pairs(c.mipos) do
-            if alive(inst) then updateTurn(inst, math.min(dt, 0.05), now) end
+            if alive(inst) then
+                updateWalk(inst, math.min(dt, 0.05), now)
+                updateTurn(inst, math.min(dt, 0.05), now)
+            end
         end
     end
     if not c.hold then return end
@@ -474,6 +684,7 @@ function s.onKeyPress(key)
     if key == 'j' then c.hop = not c.hop end
     if key == 'b' then c.rebuild = not c.rebuild end
     if key == 'f' then c.lean = c.lean == false end
+    if key == 'w' then c.walk = c.walk == false end
     if key == 'p' then worldState.paused = not worldState.paused end
     if key == 'h' then c.showPanel = not c.showPanel end
 end
@@ -483,7 +694,7 @@ function s.drawUI()
     if not (state.playMode and c.showPanel) then return end
     ui.startFrame() -- play mode draws no editor UI, so nothing else starts the frame
     local BH, pad, w = 34, 6, 300
-    local rows = 10
+    local rows = 11
     local h = BH * rows + pad * (rows + 1) + 24
     local _, sh = love.graphics.getDimensions()
     local x0, y0 = 20, sh - h - 20
@@ -516,6 +727,10 @@ function s.drawUI()
         x, y = ui.nextLayoutPosition(layout, w - 12, BH)
         if ui.button(x, y, w - 12, 'feet: ' .. (c.lean ~= false and 'lean round' or 'flip') .. ' (f)') then
             c.lean = c.lean == false
+        end
+        x, y = ui.nextLayoutPosition(layout, w - 12, BH)
+        if ui.button(x, y, w - 12, 'autowalk when dragged: ' .. (c.walk ~= false and 'on' or 'off') .. ' (w)') then
+            c.walk = c.walk == false
         end
         x, y = ui.nextLayoutPosition(layout, w - 12, BH)
         local v = ui.sliderWithInput('facing-armAt', x, y, 150, 0, 1, c.armAt or 0.6, nil, 0.05)

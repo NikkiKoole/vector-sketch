@@ -63,4 +63,33 @@ already folded; swinging straight legs forward in the air pushed it off the back
   the flip. Next if wanted: stagger
   feet / arms / ears, or swing the feet round instead of remaking them. Feet, limits, draw order and ears change in those two steps. Open: does
   the pop show, and a turn that's not a rebuild (feet swung, z swapped in place).
+- [ ] **MF6. Promote turning + autowalk out of the spike** (Nikki 2026-11-06: "we might want to
+  promote this soon"). The turning (body / head / arms / leaning foot) and the autowalk live in
+  `scripts/spikes/facing.playtime.lua`; for every Mipo they move into a module (`src/mipo-walk.lua`
+  next to `src/mipo-facing.lua`), run from `mipo-actions.update` for every registered Mipo. To
+  settle on the way: the defaults that stay (head speed, arm moment, turn pull, grips), which
+  spike switches go (rebuild compare, hop, flip), what a saved scene keeps (dna.facing yes;
+  mid-turn state no), and how it sits with what mipo-actions already does to legs (idle slump,
+  jump, ragdoll, sit). Checked by the full suite, `snapshot.sh mipos` before and after, and a
+  spec that drags a Mipo (a fake pointer, as the spike was measured) and sees it step and turn.
 - [ ] **MF4. A facing pick** in the Mipo editor (MIPO-EDITOR-LEFTOVERS E2).
+- [ ] **MF5. Autowalk.** Tried 2026-11-06 in the spike (`w`), "pretty good": a Mipo faces front;
+  dragged sideways near the floor (a foot touched in the last 0.3 s, faster than 0.25 leg
+  lengths a second) it turns that way and its leg muscles step (KEEP_ANGLE targets: thighs swing
+  in turn, the knee bends on the swing forward), the steps going by how far it's dragged, at
+  most 2.5 a second (faster: longer strides, up to 48 degrees). While walking the swinging foot
+  hardly grips (0.05) and the standing one half (0.5): with full grip the feet held the legs
+  back, trailing, and tipped the torso into the drag. 1.2 s after it stops it turns back to front
+  (only a turn the walk made). Then ("much better", 2026-11-06): the feet held flat by a muscle
+  with free ankles while walking (on their ±22 degrees they turned with the shins, toes into the
+  floor, and a shin stuck 80 degrees off its target), and the hips 35 degrees of room behind (facing
+  a side they only swing forward, for sitting; a walking thigh needs to swing back).
+  Turning round takes a real pull (Nikki: no fidgety switching when just pressing it down):
+  dragged one way 0.7 leg lengths in all for 0.3 s at least (back the other way starts over,
+  held still it fades), the body then turning at 0.6 of its speed, the head slow as always;
+  relaxing back to front the same. "A great experiment" (2026-11-06).
+  Muscles only, no forces: the hand moves it. A turn waits only
+  while a part it remakes (foot, ear) is held. Open: it still tips into the drag (pulled high,
+  feet on the floor: a broom by its handle), next try pulling at the hips while walking; out of
+  the spike into the Mipos everywhere,
+  and walking held by a foot (that foot can't step).
