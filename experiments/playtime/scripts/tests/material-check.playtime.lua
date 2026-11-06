@@ -62,6 +62,7 @@ local PUFFS = { 'mipo/body/body-01', 'mipo/body/body-03', 'mipo/body/body-05', '
 -- its alpha times its brightness (some are white on transparent, some opaque light on dark)
 local SECONDS = { false, 'brass', 'gold', 'tin', 'velvet plum', 'glass', 'felt' }
 local PATTERNS = { 'bee-stripes', 'type2t', 'ladybird-spots', 'type1', 'pattern4', 'type6', 'type8' }
+local PATTERN_NAMES = { 'stripes', 'dashes', 'spots', 'loops', 'zigzag', 'hatch', 'knit' } -- short, for the panel
 local PATTERN_SIZES = { 3, 6, 1.5 } -- repeats over the picture's height
 local CREASES = { { 'off', 0 }, { 'on', 1 }, { 'deep', 2.5 } }
 local RISES = { { 'dome', 1 }, { 'cushion', 0.5 }, { 'pebble', 0.2 } }
@@ -136,10 +137,17 @@ local function lab()
     -- added later: a live state lacks them (and time: a phone draws once before the first update)
     state.materialCheck.time = state.materialCheck.time or 0
     state.materialCheck.sinceFrame = state.materialCheck.sinceFrame or 0
+    state.materialCheck.wet = state.materialCheck.wet or 0
     state.materialCheck.crease = state.materialCheck.crease or 2
+    -- the panel's sliders: continuous values the keys step through
+    local c = state.materialCheck
+    c.creaseDepth = c.creaseDepth or CREASES[c.crease][2]
+    c.lightDepth = c.lightDepth or LIGHT_DEPTH
+    c.bands = c.bands or 4
     state.materialCheck.second = state.materialCheck.second or 1
     state.materialCheck.patternIndex = state.materialCheck.patternIndex or 1
     state.materialCheck.patternSize = state.materialCheck.patternSize or 1
+    c.patternRepeat = c.patternRepeat or PATTERN_SIZES[c.patternSize]
     state.materialCheck.slide = state.materialCheck.slide == nil and true or state.materialCheck.slide
     state.materialCheck.behindX = state.materialCheck.behindX or BEHIND.x
     state.materialCheck.behindY = state.materialCheck.behindY or BEHIND.y
@@ -440,7 +448,7 @@ end
 local function toLightFrom(x, y, rot)
     local c = lab()
     local dx, dy = c.lx - x, c.ly - y
-    local dz = c.back and -LIGHT_DEPTH or LIGHT_DEPTH
+    local dz = c.back and -c.lightDepth or c.lightDepth
     local ca, sa = math.cos(-(rot or 0)), math.sin(-(rot or 0))
     local rx, ry = dx * ca - dy * sa, dx * sa + dy * ca
     local len = math.sqrt(rx * rx + ry * ry + dz * dz)
@@ -466,7 +474,7 @@ local function drawPicture(name, mode, base, x, y, size, opts)
     sh:send('ambient', L.ambient)
     sh:send('baseColour', base)
     sh:send('mode', mode)
-    sh:send('bands', c.painted and 4 or 0)
+    sh:send('bands', c.painted and c.bands or 0)
     sh:send('seed', opts.seed or 0)
     sh:send('dissolve', opts.dissolve or 0)
     local p = opts.params or {}
@@ -484,11 +492,11 @@ local function drawPicture(name, mode, base, x, y, size, opts)
     sh:send('clear', four(p.clear, { 0, 0, 0, 0 }))
     sh:send('lines', look.line)
     sh:send('lineTexel', { 1 / look.line:getWidth(), 1 / look.line:getHeight() })
-    sh:send('crease', CREASES[c.crease][2])
+    sh:send('crease', c.creaseDepth)
     sh:send('patternOn', opts.pattern and 1 or 0)
     if opts.pattern then
         sh:send('pattern', opts.pattern)
-        sh:send('patternRepeat', PATTERN_SIZES[c.patternSize])
+        sh:send('patternRepeat', c.patternRepeat)
     end
     if c.behind then
         sh:send('behind', c.behind)
@@ -554,6 +562,14 @@ end
 
 ---------------------------------------------------------------- the scene
 
+-- the panel's place on screen (drawUI), so the light stays put while the mouse is on it
+local function overPanel()
+    local r = lab().panelRect
+    if not r or r.folded then return false end
+    local mx, my = love.mouse.getPosition()
+    return mx >= r[1] and mx <= r[1] + r[3] and my >= r[2] and my <= r[2] + r[4]
+end
+
 function s.onStart()
     worldState.paused = false
     cam:setScale(0.255)
@@ -573,7 +589,7 @@ function s.update(dt)
         c.behindX, c.behindY = mouseWorldPos()
     else
         if c.slide then c.behindX = BEHIND.x + math.sin(c.slideTime * 0.3) * BEHIND.slide end
-        if not c.frozen then c.lx, c.ly = mouseWorldPos() end
+        if not c.frozen and not overPanel() then c.lx, c.ly = mouseWorldPos() end
     end
     updateSmoke(dt)
     -- a shower: wet in two seconds, dry again over twenty
@@ -618,8 +634,10 @@ function s.onKeyPress(key)
         c.patternIndex = c.patternIndex % #PATTERNS + 1
     elseif key == 'y' then
         c.patternSize = c.patternSize % #PATTERN_SIZES + 1
+        c.patternRepeat = PATTERN_SIZES[c.patternSize]
     elseif key == 'k' then
         c.crease = c.crease % #CREASES + 1
+        c.creaseDepth = CREASES[c.crease][2]
     elseif key == 'x' then
         c.measureNext = true
     elseif key == 'j' then
@@ -885,28 +903,86 @@ drawPage = function()
     drawLight()
 end
 
+-- the panel: everything the keys do, as buttons that step through choices, checkboxes and sliders
+local PANEL = { w = 350, row = 36, pad = 6 }
+local DEBUG_NAMES = { 'off', 'height', 'normals', 'light alone' }
+
+local function nameOf(path) return path:match('([^/]+)$') end
+
 function s.drawUI()
     local c = lab()
-    local lines = {
-        'u second material   i pattern   y size   k creases   x cost   j slide   h hold: move the shape behind   b light in front / behind   f light stays / follows the mouse   c sun / candle / moon   p painted   o outlines'
-            .. '   n shape   l leaves   s steam / smoke / soot   w wind   m rise   r shower   g sees   e pass   t 12 fps',
-        string.format('light: %s, %s%s   %s   rise: %s   smoke: %s, wind %s   outlines %s',
-            LIGHTS[c.light].name, c.back and 'behind' or 'in front', c.frozen and ' (stays)' or '',
-            c.painted and 'painted in 4 steps' or 'smooth', RISES[c.rise][1], SMOKES[c.smoke].name,
-            c.wind == 0 and 'still' or (c.wind > 0 and 'to the right' or 'to the left'), c.outlines and 'on' or 'off')
-            .. string.format('   second %s in %s x%s', SECONDS[c.second] or 'off', PATTERNS[c.patternIndex],
-                PATTERN_SIZES[c.patternSize])
-            .. string.format('   creases %s   wet %.1f   sees: %s   pass %s   %s', CREASES[c.crease][1], c.wet or 0,
-                ({ 'off', 'height', 'normals', 'light alone' })[(c.debug or 0) + 1], c.post and 'on' or 'off',
-                c.stepped and '12 fps' or 'smooth'),
-        c.costLine or 'x: measure what each material costs',
-    }
-    for i, line in ipairs(lines) do
-        local y = love.graphics.getHeight() - 20 - (#lines - i + 1) * 20
+    ui.startFrame()
+    local sw, sh = love.graphics.getDimensions()
+    local rows = 16
+    local w, h = PANEL.w, PANEL.row * rows + 34
+    local x0, y0 = sw - w - 12, math.max(12, sh - h - 12)
+    c.panelRect = { x0, y0, w, h, folded = ui.isPanelFolded('•• materials ••') }
+    local half = (w - PANEL.pad * 3) / 2
+    ui.panel(x0, y0, w, h, '•• materials ••', function()
+        local layout = ui.createLayout({ type = 'columns', spacing = 0, startX = x0 + PANEL.pad, startY = y0 + 28 })
+        local function row() return ui.nextLayoutPosition(layout, w - PANEL.pad * 2, PANEL.row) end
+        -- a button that steps through a list; a checkbox; a slider with its name on the left
+        local function cycle(x, y, text, width)
+            return ui.button(x, y, width or half, text, PANEL.row - 6)
+        end
+        local function check(x, y, key, text)
+            local clicked, v = ui.checkbox(x, y, c[key], text)
+            if clicked then c[key] = v end
+        end
+        local function slider(key, text, min, max, step)
+            local x, y = row()
+            ui.label(x, y + 4, text)
+            local v = ui.sliderWithInput('mc-' .. key, x + 118, y - 2, 120, min, max, c[key], nil, step or 0.01)
+            if v then c[key] = v + 0 end
+            return v
+        end
+        local x, y = row()
+        if cycle(x, y, 'light: ' .. LIGHTS[c.light].name) then c.light = c.light % #LIGHTS + 1 end
+        if cycle(x + half + PANEL.pad, y, 'shape: ' .. nameOf(PALETTE_SHAPES[c.paletteShape])) then
+            c.paletteShape = c.paletteShape % #PALETTE_SHAPES + 1
+        end
+        x, y = row()
+        check(x, y, 'back', 'light behind')
+        local followClicked, follow = ui.checkbox(x + half + PANEL.pad, y, not c.frozen, 'follows mouse')
+        if followClicked then c.frozen = not follow end
+        slider('lightDepth', 'light up', 80, 1500, 1)
+        x, y = row()
+        if cycle(x, y, 'rise: ' .. RISES[c.rise][1]) then c.rise = c.rise % #RISES + 1 end
+        if cycle(x + half + PANEL.pad, y, 'sees: ' .. DEBUG_NAMES[(c.debug or 0) + 1]) then
+            c.debug = ((c.debug or 0) + 1) % 4
+        end
+        slider('creaseDepth', 'creases', 0, 4)
+        x, y = row()
+        if cycle(x, y, 'second: ' .. (SECONDS[c.second] or 'off')) then c.second = c.second % #SECONDS + 1 end
+        if cycle(x + half + PANEL.pad, y, 'pattern: ' .. PATTERN_NAMES[c.patternIndex]) then
+            c.patternIndex = c.patternIndex % #PATTERNS + 1
+        end
+        slider('patternRepeat', 'pattern', 0.5, 12)
+        x, y = row()
+        check(x, y, 'painted', 'painted')
+        check(x + half + PANEL.pad, y, 'outlines', 'outlines')
+        slider('bands', 'steps', 2, 8, 1)
+        x, y = row()
+        check(x, y, 'post', 'picture pass')
+        check(x + half + PANEL.pad, y, 'stepped', '12 fps')
+        local v = slider('wet', 'wet', 0, 1)
+        if v then c.shower = nil end -- a hand on the wet stops a shower drying it
+        x, y = row()
+        if cycle(x, y, 'shower') then c.shower = 0 end
+        if cycle(x + half + PANEL.pad, y, 'measure cost') then c.measureNext = true end
+        x, y = row()
+        if cycle(x, y, 'smoke: ' .. SMOKES[c.smoke].name) then c.smoke = c.smoke % #SMOKES + 1 end
+        if cycle(x + half + PANEL.pad, y, 'other leaves') then c.leaves = c.leaves % #LEAF_SETS + 1 end
+        slider('wind', 'wind', -1, 1)
+        x, y = row()
+        check(x, y, 'slide', 'back shape slides')
+    end)
+    if c.costLine then
+        local ty = sh - 34
         love.graphics.setColor(0, 0, 0, 0.8)
-        love.graphics.print(line, 121, y + 1)
+        love.graphics.print(c.costLine, 121, ty + 1)
         love.graphics.setColor(1, 0.95, 0.8, 1)
-        love.graphics.print(line, 120, y)
+        love.graphics.print(c.costLine, 120, ty)
     end
     love.graphics.setColor(1, 1, 1, 1)
 end

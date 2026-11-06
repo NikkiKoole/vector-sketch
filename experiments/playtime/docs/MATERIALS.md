@@ -8,7 +8,9 @@ numbers per material, her outline on top. The workbench is the scene `material-c
 (scripts/tests; its keys in the script's top comment and on its status line): 36 materials on one
 shape (n: hearts, ears, a snout, a foot, legs…), leaves, smoke, a striped shape sliding behind for the
 see-through ones, the light at the mouse (b behind), k creases from the inner lines, u/i/y a second
-material in the pattern, x measures what each costs. To open it next to the shared game: a second
+material in the pattern, x measures what each costs. A panel on the right (2026-11-06, Nikki: "easier to tweak") has all of it as
+buttons that step through choices, checkboxes and sliders (light height, crease depth, pattern size,
+paint steps, wet, wind: continuous there, the keys step them); – folds it. To open it next to the shared game: a second
 LÖVE with `PLAYTIME_BRIDGE_PORT=8002`, then load material-check there. Nothing is in the engine yet (MT6); it all lives in that
 scene. What we found:
 - **Drawn beats generated.** The first spike (noise only) read as "computer"; on her pictures the
