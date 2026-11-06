@@ -15,7 +15,7 @@
 --   w shadows on the back wall off / on (src/backdrop-shadows.lua: shifted the way the sun or moon
 --     shines, short and crisp at noon, long and soft when it's low, fading with its light; only on the
 --     wall, none on the open sky)
---   q the wall's grit: smooth / fine plaster / coarse plaster (lit from the sun or moon)
+--   q the wall's surface: flat / smooth clay / fine plaster / coarse plaster (lit from the sun or moon)
 --   the stones go from smooth clay to rough render (left to right), the fence is coarse plaster: their
 --   roughness is the plasticine grain, dents, grain size and sheen (the shape's panel)
 --   l the back light off / on (from behind: the edges glow; evening orange, night the moon's blue)
@@ -57,12 +57,14 @@ local LAMP_ONLY = { shadows = 0.45, wallShadows = 0.3 }
 -- the back wall (backdrop shadows fall on it, src/backdrop-shadows.lua; not on the open sky), and how
 -- far it is behind the things in front of it (how far their shadows shift), per time of day how dark
 local WALL = { x = -1600, y = -700, w = 3200, h = 1150, colour = { 0.91, 0.86, 0.75 } }
--- the wall's grit (q): none, fine plaster, coarse plaster. grit: how much sand and pits, scale: the
--- size of its bumps (world units), relief: how deep they are under the light
+-- the wall's surface (q): flat, smooth clay, fine plaster, coarse plaster. grit: how much sand and pits,
+-- scale: the size of its bumps (world units), relief: how deep they are under the light, sheen: a soft
+-- shine where a bump faces the light (clay has it, plaster doesn't)
 local GRITS = {
-    { name = 'smooth' },
-    { name = 'fine plaster', grit = 0.6, scale = 18, relief = 2.5 },
-    { name = 'coarse plaster', grit = 1.0, scale = 40, relief = 5 },
+    { name = 'flat' },
+    { name = 'smooth clay', grit = 0.12, scale = 90, relief = 1.6, sheen = 0.18 },
+    { name = 'fine plaster', grit = 0.6, scale = 18, relief = 2.5, sheen = 0 },
+    { name = 'coarse plaster', grit = 1.0, scale = 40, relief = 5, sheen = 0 },
 }
 local wallShader
 local function plasterShader()
@@ -82,6 +84,7 @@ local function plasterShader()
         uniform float relief;
         uniform vec2 toLight;
         uniform float lit;
+        uniform float sheen;
         float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
         float vnoise(vec2 p) {
             vec2 i = floor(p);
@@ -109,7 +112,8 @@ local function plasterShader()
             float sand = hash(floor(wpos / 2.0));
             float shade = 1.0 + light * lit * 0.6 - grit * (0.5 - h) * 0.18
                 - grit * step(0.93, sand) * 0.12 + grit * step(sand, 0.05) * 0.06;
-            return vec4(color.rgb * shade, color.a);
+            float shine = pow(max(dot(n, normalize(L + vec3(0.0, 0.0, 1.0))), 0.0), 24.0) * sheen * lit;
+            return vec4(color.rgb * shade + shine, color.a);
         }
         #endif
     ]])
@@ -398,7 +402,7 @@ function s.onKeyPress(key)
     elseif key == '0' then
         for _, k in ipairs(TRY_ORDER) do setAll(TRIES[k], TRIES[k].values[1]) end
     elseif key == 'q' then
-        look().grit = (look().grit or 2) % #GRITS + 1
+        look().grit = (look().grit or 3) % #GRITS + 1
     elseif key == 'w' then
         look().wallShadowsOff = not look().wallShadowsOff
     elseif key == 'h' then
@@ -435,7 +439,7 @@ function s.drawBelow()
     local c = WALL.colour
     love.graphics.setColor(c[1] * math.min(1, 0.2 + sky[1] * 0.9), c[2] * math.min(1, 0.2 + sky[2] * 0.9),
         c[3] * math.min(1, 0.2 + sky[3] * 0.9), 1)
-    local grit = GRITS[look().grit or 2]
+    local grit = GRITS[look().grit or 3]
     if grit.grit then
         -- lit from wherever the sun or moon is (the way to it: against the way it shines)
         local body = strongest({ 'sun', 'moon' }) or strongest({ 'turning lamp' })
@@ -446,6 +450,7 @@ function s.drawBelow()
         shader:send('grit', grit.grit)
         shader:send('scale', grit.scale)
         shader:send('relief', grit.relief)
+        shader:send('sheen', grit.sheen)
         shader:send('toLight', { -math.cos(a), -math.sin(a) })
         shader:send('lit', math.min(1, extra and extra.intensity or 0))
         local ox, oy = cam:getWorldCoordinates(0, 0)
@@ -518,6 +523,7 @@ function s.drawUI()
             .. (c.skyOff and ', sky light off' or ', sky light on')
             .. (c.shadowsOff and ', no shadows' or ', shadows')
             .. (c.wallShadowsOff and ', none on the wall' or ', on the wall')
+            .. ', wall ' .. GRITS[c.grit or 3].name
             .. (c.backOff and ', no back light' or ', back light')
             .. (c.mipoLightOff and ', Mipos as drawn'
                 or (c.mipoClayOff and ', Mipos lit, no clay' or ', Mipos lit, clay'))
