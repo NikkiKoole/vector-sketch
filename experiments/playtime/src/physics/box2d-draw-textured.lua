@@ -1060,4 +1060,14 @@ lib._test = {
     end,
 }
 
+-- A pictured sfixture's picture as the world draws it (an OMP texfixture's combined image), no shader:
+-- for a stencil of what's drawn (src/contact-shadows.lua). Returns false when it has none to draw.
+function lib.drawPictureOf(fixture)
+    local ud = fixture:getUserData()
+    local extra = type(ud) == 'table' and ud.subtype == subtypes.TEXFIXTURE and ud.extra
+    if not (extra and extra.OMP and extra.ompImage) then return false end
+    drawCombinedImageVanilla(extra.ompImage, extra, fixture, utils.thingOf(fixture:getBody()))
+    return true
+end
+
 return lib

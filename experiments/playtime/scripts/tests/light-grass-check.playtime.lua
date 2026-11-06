@@ -9,6 +9,7 @@
 --   1 day   2 evening   3 night   4 only the turning lamp (its range: r 5000 / 500)
 --   m the Mipos lit like the shapes / as drawn (their picture parts, limbs and torso; not the face)
 --   c the Mipos' clay (grain, dents, sheen) off / on (on to start): off, the light and roundness only
+--   h contact shadows off / on (src/contact-shadows.lua; how dark goes with the time of day)
 --   k the sky light off / on (light from all of above in the sky's colour, from below in the ground's)
 --   g light swing   z how much the light comes from the front   f the quick form's depth
 --   b baked form / the shader's quick guess   n baked rise (1 a dome, 0.5, 0.2 a pebble)
@@ -38,6 +39,8 @@ local MOODS = {
         ['sky light'] = { '9cc8ffff', 0, nil, nil, nil, '8a7a50ff' } },
 }
 local MOOD_KEYS = { ['1'] = 'day', ['2'] = 'evening', ['3'] = 'night', ['4'] = 'lamp' }
+-- contact shadows (src/contact-shadows.lua) per time of day: how dark
+local SHADOWS = { day = 0.5, evening = 0.4, night = 0.3, lamp = 0.45 }
 local LIGHTS = { 'sun', 'warm lamp', 'cool lamp', 'turning lamp', 'sky light' }
 
 -- each key steps through these on every shape; the first is how other scenes draw them
@@ -157,6 +160,7 @@ function s.onStart()
 end
 
 function s.onUnload()
+    state.contactShadows = nil -- only in this scene
     local c = look()
     if c.original then
         love.graphics.newSpriteBatch = c.original
@@ -185,6 +189,7 @@ end
 
 function s.update(dt)
     lightMipos()
+    state.contactShadows = not look().shadowsOff and { strength = SHADOWS[look().mood] or 0.45 } or nil
     local c = look()
     c.time = c.time + (dt or 0)
     if c.time >= 1 then
@@ -199,6 +204,8 @@ function s.onKeyPress(key)
         step(TRIES[key])
     elseif key == '0' then
         for _, k in ipairs(TRY_ORDER) do setAll(TRIES[k], TRIES[k].values[1]) end
+    elseif key == 'h' then
+        look().shadowsOff = not look().shadowsOff
     elseif key == 'm' then
         look().mipoLightOff = not look().mipoLightOff
     elseif key == 'c' then
@@ -266,8 +273,9 @@ function s.drawUI()
         tries[#tries + 1] = string.format('%s %s %s', k, TRIES[k].name, tostring(current(TRIES[k])))
     end
     local lines = {
-        '1 day  2 evening  3 night  4 turning lamp (r)  k sky light  m Mipos lit  c clay  tab: play, lamps  s turf',
+        '1 day 2 evening 3 night 4 turning lamp (r)  k sky  h shadows  m Mipos lit  c clay  tab: play  s turf',
         'now: ' .. c.mood .. (c.skyOff and ', sky light off' or ', sky light on')
+            .. (c.shadowsOff and ', no shadows' or ', shadows')
             .. (c.mipoLightOff and ', Mipos as drawn'
                 or (c.mipoClayOff and ', Mipos lit, no clay' or ', Mipos lit, clay'))
             .. '      shapes: ' .. table.concat(tries, '   ') .. '   (0 as elsewhere)',

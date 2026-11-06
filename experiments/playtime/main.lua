@@ -122,6 +122,7 @@ local mipoActions = require('src.mipo-actions')
 local fabuland = require('src.fabuland')
 local sceneCatalog = require('src.scene-catalog')
 local blobs = require('src.blob') -- blob rims (SOFTBODY sfixtures)
+local contactShadows = require('src.contact-shadows') -- off unless a scene sets state.contactShadows
 local liquid = require('src.liquid')
 local signals = require('src.signals')
 local doors = require('src.doors')
@@ -352,7 +353,9 @@ function love.draw()
     fabuland.draw() -- building parts, behind the Mipos; only while a scene turns it on (src/fabuland.lua)
     prof.push('drawtexturedworld')
     if state.world.showTextures then
+        contactShadows.beforeTextured(state.physicsWorld) -- on what things stand on (src/contact-shadows.lua)
         box2dDrawTextured.drawTexturedWorld(state.physicsWorld)
+        contactShadows.afterTextured()
     end
     prof.pop('drawtexturedworld')
     script.call('draw')
