@@ -62,6 +62,26 @@ describe('contact shadows', function()
         objectManager.addThing('rectangle', { x = -40, y = 100, width = 200, height = 100, bodyType = 'static' })
     end
 
+    it('on a sloped floor the shadow lies along the slope, both sides of the box', function()
+        -- a floor turned 20 degrees (rising to the right), its top through about (0, 50)
+        local floor = objectManager.addThing('rectangle', { x = 0, y = 100, width = 400, height = 100,
+            bodyType = 'static' })
+        floor.body:setAngle(-math.rad(20))
+        -- a small box just above the slope at x = 0
+        objectManager.addThing('rectangle', { x = 0, y = 25, width = 40, height = 20, bodyType = 'static' })
+        local list = contactShadows.compute(state.physicsWorld)
+        assert.are.equal(1, #list)
+        assert.is_near(-math.rad(20), list[1].angle, 0.01, 'turned along the floor')
+        -- darkened on the slope both left (lower) and right (higher) of the box's middle
+        local img = render(state.physicsWorld)
+        -- the floor's top: its centre (0, 100) plus (0, -50) turned -20 degrees, then along the slope
+        local a = -math.rad(20)
+        local tx, ty = 50 * math.sin(a), 100 - 50 * math.cos(a)
+        local function onSlope(x) return math.floor(ty + (x - tx) * math.tan(a) + 4) end
+        assert.is_true(darkest(img, -16, onSlope(-14) - 2, -12, onSlope(-14) + 2) < 0.9, 'left, down the slope')
+        assert.is_true(darkest(img, 12, onSlope(14) - 2, 16, onSlope(14) + 2) < 0.9, 'right, up the slope')
+    end)
+
     it('a box standing on a shelf darkens the shelf just under it', function()
         shelf()
         objectManager.addThing('rectangle', { x = -40, y = 25, width = 50, height = 50, bodyType = 'static' })

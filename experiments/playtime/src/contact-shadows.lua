@@ -63,19 +63,20 @@ local function casts(body)
     return true
 end
 
--- the nearest up-facing surface straight under (x, y) within reach: receiver body, its fixture, the y
+-- the nearest up-facing surface straight under (x, y) within reach: its fixture, the y, and the
+-- surface's normal there (a sloped floor: the shadow lies along it)
 local function surfaceUnder(world, body, x, y, reach)
     local mipoId = (utils.thingOf(body) or {}).mipoId
-    local best, bestFixture, bestY = math.huge, nil, nil
-    world:rayCast(x, y, x, y + reach, function(fixture, _, hy, _, ny, fraction)
+    local best, bestFixture, bestY, bestNx, bestNy = math.huge, nil, nil, 0, -1
+    world:rayCast(x, y, x, y + reach, function(fixture, _, hy, nx, ny, fraction)
         local other = fixture:getBody()
         if fixture:isSensor() or other == body or ny > -0.3 then return -1 end
         local otherThing = utils.thingOf(other)
         if mipoId and otherThing and otherThing.mipoId == mipoId then return -1 end
-        if fraction < best then best, bestFixture, bestY = fraction, fixture, hy end
+        if fraction < best then best, bestFixture, bestY, bestNx, bestNy = fraction, fixture, hy, nx, ny end
         return fraction
     end)
-    return bestFixture, bestY
+    return bestFixture, bestY, bestNx, bestNy
 end
 
 -- the depth just above a body's own pictures, nil if it has none
@@ -104,12 +105,13 @@ function lib.compute(world)
             if width and width > 0 and width < MAX_CASTER_WIDTH then
                 local reach = math.max(width * reachWidths, 60)
                 local cx = (x0 + x1) / 2
-                local fixture, surfaceY
+                local fixture, surfaceY, nx, ny, hitX
                 -- from a little up inside the caster (skipped by the rays): a ray starting inside the
                 -- surface wouldn't see it
                 local from = bottom - math.min((bottom - top) * 0.5, 20)
                 for _, k in ipairs({ 0, -0.35, 0.35 }) do
-                    fixture, surfaceY = surfaceUnder(world, body, cx + k * width, from, reach + bottom - from)
+                    hitX = cx + k * width
+                    fixture, surfaceY, nx, ny = surfaceUnder(world, body, hitX, from, reach + bottom - from)
                     if fixture then break end
                 end
                 if fixture then
@@ -120,8 +122,12 @@ function lib.compute(world)
                         -- deep enough to reach past a drawn outline onto the picture (a stone's black
                         -- line is ~15 thick: a small foot's shadow lay all on it, unseen)
                         local hh = math.max(hw * 0.28, MIN_DEPTH)
-                        list[#list + 1] = { receiver = fixture:getBody(), x = cx, y = surfaceY, hw = hw,
-                            hh = hh, alpha = alpha, z = pictureDepth(fixture:getBody()) }
+                        -- along the surface (its tangent from the normal); on a slope the middle's height
+                        -- is where the surface is under the caster's middle, not under the ray that hit
+                        local angle = math.atan2(nx, -ny)
+                        local y = surfaceY + (cx - hitX) * math.tan(angle)
+                        list[#list + 1] = { receiver = fixture:getBody(), x = cx, y = y, hw = hw,
+                            hh = hh, alpha = alpha, angle = angle, z = pictureDepth(fixture:getBody()) }
                     end
                 end
             end
@@ -179,7 +185,7 @@ local function drawOn(receiver, shadows)
     local iw, ih = image:getDimensions()
     for _, s in ipairs(shadows) do
         love.graphics.setColor(0, 0, 0, s.alpha)
-        love.graphics.draw(image, s.x, s.y, 0, s.hw * 2 / iw, s.hh * 2 / ih, iw / 2, ih / 2)
+        love.graphics.draw(image, s.x, s.y, s.angle or 0, s.hw * 2 / iw, s.hh * 2 / ih, iw / 2, ih / 2)
     end
     love.graphics.setColor(1, 1, 1, 1)
     if compare then love.graphics.setStencilTest(compare, value) else love.graphics.setStencilTest() end
