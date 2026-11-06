@@ -8,6 +8,27 @@ local ownStrip = ribbon.ownStrip
 local shapes = require('src.shapes')
 local utils = require('src.utils')
 
+-- A mouth part in a material (src/render/materials.lua; docs/MATERIALS.md MT6b): the lips' and the
+-- teeth's own `extra.material`, the inner mouth's `extra.innerMaterial` (on the lower lip's extra).
+-- Nothing set: drawn as always, no shader. Required when first used (shaders requires a lot).
+local shaders
+local innerProxies = setmetatable({}, { __mode = 'k' })
+local function shadeAs(extra, body, material)
+    if not material then return false end
+    shaders = shaders or require('src.render.shaders')
+    local e = extra
+    if extra.material ~= material then
+        -- the inner mouth: the lower lip's settings with its own material and no baked form
+        e = innerProxies[extra]
+        if not e then
+            e = setmetatable({ plasticineFormBaked = false }, { __index = extra })
+            innerProxies[extra] = e
+        end
+        e.material = material
+    end
+    return shaders.setSurfaceShader(e, body)
+end
+
 -- Build a closed polygon from mouth curvePoints (16 floats: 8 control points).
 -- Returns a cleaned flat vertex array suitable for triangulation, or nil.
 -- A mouth's triangles, kept until its polygon changes: the mouth is drawn every frame
@@ -243,7 +264,9 @@ local function drawMouthBackdrop(d)
         local mesh = cleaned and mouthMesh(extra, 'backdrop', cleaned)
         if mesh then
             love.graphics.setColor(color.hexToColor(extra.backdropHex or '00000099'))
+            local shaded = shadeAs(extra, body, extra.innerMaterial)
             love.graphics.draw(mesh)
+            if shaded then love.graphics.setShader() end
         end
 
         love.graphics.pop()
@@ -271,8 +294,10 @@ local function drawLowerLip(d)
         if lipImg then
             local scale = extra.lipScale or 0.25
             love.graphics.setColor(1, 1, 1, 1)
+            local shaded = shadeAs(extra, body, extra.material)
             love.graphics.draw(ownStrip(extra, 'lip', lipImg, scale, curve, -1, lipShift(extra, 'lower', lipImg),
                 nil, true))
+            if shaded then love.graphics.setShader() end
         end
 
         love.graphics.pop()
@@ -299,8 +324,10 @@ local function drawUpperLip(d)
         if lipImg then
             local scale = extra.lipScale or 0.25
             love.graphics.setColor(1, 1, 1, 1)
+            local shaded = shadeAs(extra, body, extra.material)
             love.graphics.draw(ownStrip(extra, 'lip', lipImg, scale, curve, -1, lipShift(extra, 'upper', lipImg),
                 nil, true))
+            if shaded then love.graphics.setShader() end
         end
 
         love.graphics.pop()
@@ -413,7 +440,9 @@ local function drawTeeth(d)
                     end
 
                     love.graphics.setColor(1, 1, 1, 1)
+                    local shaded = shadeAs(extra, body, extra.material)
                     love.graphics.draw(img, ox - w / 2, oy - h / 2, 0, scaleX, scaleY)
+                    if shaded then love.graphics.setShader() end
 
                     love.graphics.setStencilTest()
                 end

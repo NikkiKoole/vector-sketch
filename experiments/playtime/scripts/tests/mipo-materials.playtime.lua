@@ -22,6 +22,14 @@ local GROUPS = {
     { name = 'legs', labels = { luleg = true, llleg = true, ruleg = true, rlleg = true } },
     { name = 'feet', labels = { lfoot = true, rfoot = true } },
 }
+-- the mouth's parts (on the head, by their mouthCurve): the lips, the teeth, the inside
+local MOUTH_GROUPS = { 'lips', 'teeth', 'inside' }
+local MOUTH_PART = { upper = 'lips', lower = 'lips', teeth = 'teeth' }
+-- the inside's colour: as the Mipo has it, then a few
+local INSIDE_COLOURS = { false, '000000cc', '5a1e2acc', 'b5546acc', '2a3a6acc' }
+local INSIDE_NAMES = { 'as is', 'black', 'dark red', 'pink', 'deep blue' }
+-- the light on the mouth: as on the parts, without the baked form (the lips are strips)
+local MOUTH_LIT = { plasticineLightAdd = true, plasticineLightGain = 0.5, plasticineLightZ = 0.35 }
 -- clay, then the presets (src/render/materials.lua)
 local CHOICES = { false }
 for _, name in ipairs(materials.NAMES) do CHOICES[#CHOICES + 1] = name end
@@ -74,6 +82,10 @@ local function groupOf(label)
 end
 
 -- a Mipo's choice for a group (index into CHOICES); a Mipo with none follows 'all'
+-- each lower lip's own inside colour, from before the panel changed it (a plain table: no setmetatable in
+-- the script sandbox; it goes with the script on a reload)
+local originalInside = {}
+
 local function choiceFor(mipoId, group)
     local c = mm()
     local own = c.choice[mipoId]
@@ -90,9 +102,20 @@ local function dressMipos()
             local material = group and CHOICES[choiceFor(thing.mipoId, group)] or false
             for _, fixture in ipairs(body:getFixtures()) do
                 local ud = fixture:getUserData()
-                if ud and LIT_PARTS[ud.subtype] and ud.extra and ud.extra.main then
-                    for k, v in pairs(LIT) do ud.extra[k] = v end
-                    ud.extra.material = material or nil
+                local extra = ud and ud.extra
+                local mouthGroup = extra and MOUTH_PART[extra.mouthCurve]
+                if mouthGroup then
+                    for k, v in pairs(MOUTH_LIT) do extra[k] = v end
+                    extra.material = CHOICES[choiceFor(thing.mipoId, mouthGroup)] or nil
+                    if extra.mouthCurve == 'lower' then
+                        extra.innerMaterial = CHOICES[choiceFor(thing.mipoId, 'inside')] or nil
+                        if originalInside[extra] == nil then originalInside[extra] = extra.backdropHex or false end
+                        local colour = INSIDE_COLOURS[choiceFor(thing.mipoId, 'inside colour')]
+                        extra.backdropHex = colour or originalInside[extra] or nil
+                    end
+                elseif ud and LIT_PARTS[ud.subtype] and extra and extra.main then
+                    for k, v in pairs(LIT) do extra[k] = v end
+                    extra.material = material or nil
                 end
             end
         end
@@ -180,7 +203,7 @@ function s.drawUI()
     ui.startFrame()
     local sw, sh = love.graphics.getDimensions()
     local ids = mipoIds()
-    local rows = #GROUPS + 5
+    local rows = #GROUPS + #MOUTH_GROUPS + 6
     local w, h = PANEL.w, PANEL.row * rows + 34
     local x0, y0 = sw - w - 12, math.max(12, sh - h - 12)
     local half = (w - PANEL.pad * 3) / 2
@@ -206,6 +229,20 @@ function s.drawUI()
             if button(x + 90, y, text, w - 90 - PANEL.pad * 2) then
                 c.choice[key][g.name] = index % #CHOICES + 1
             end
+        end
+        for _, name in ipairs(MOUTH_GROUPS) do
+            x, y = row()
+            ui.label(x, y + 4, name)
+            local index = c.choice[key][name] or (c.which ~= 0 and (c.choice.all or {})[name]) or 1
+            if button(x + 90, y, CHOICES[index] or 'clay', w - 90 - PANEL.pad * 2) then
+                c.choice[key][name] = index % #CHOICES + 1
+            end
+        end
+        x, y = row()
+        ui.label(x, y + 4, 'its colour')
+        local ci = c.choice[key]['inside colour'] or (c.which ~= 0 and (c.choice.all or {})['inside colour']) or 1
+        if button(x + 90, y, INSIDE_NAMES[ci], w - 90 - PANEL.pad * 2) then
+            c.choice[key]['inside colour'] = ci % #INSIDE_COLOURS + 1
         end
         x, y = row()
         ui.label(x, y + 4, 'water')

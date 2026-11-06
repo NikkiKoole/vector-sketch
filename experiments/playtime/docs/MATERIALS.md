@@ -158,6 +158,13 @@ Kinds of material, by what the shader does differently:
   light-grass-check's lights and Mipos at a fixed day): a panel with a material per part (all Mipos
   or one), the water's height, rain, dry; w a wet spot at the mouse. Not yet: saved in a Mipo's DNA
   (breeds), the editor's part panel, the face (its decals and the mouth don't take the light).
+- [~] **MT6b. The mouth** (2026-11-06, Nikki: "the mouth, teeth, lips and inner mouth various
+  settings"): the lips' and the teeth's own `extra.material`, the inside's `extra.innerMaterial` (on
+  the lower lip's extra) and its colour (`backdropHex`), drawn by `src/render/mouth.lua` through the
+  same shader (no material: no shader, as before). In mipo-materials: lips, teeth, inside, its colour
+  (as is, black, dark red, pink, deep blue). Gold teeth, candy lips, a glazed inside read well.
+  Wet spots reach the mouth only where it has a material (it's drawn without the shader otherwise).
+  Found on the way: the script sandbox has no setmetatable (a scene script that uses it fails to load).
 - [ ] **MT6. Into the engine**: a material as a texfixture setting, next to plasticine (SHADER-LOOKS'
   "looks on shapes"), if any of it earns a place.
 
