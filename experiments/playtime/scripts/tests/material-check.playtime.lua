@@ -26,7 +26,7 @@
 --   p painted (the light in a few steps, like poster paint) / smooth   o outlines on / off
 --   n another shape   l other leaves   s smoke: steam / smoke / soot   w wind
 --   m the bake's rise: dome / cushion / pebble (how round the shapes are)
---   r a shower: everything gets wet (darker, a sharp shine, drops), then dries again
+--   r a shower: everything gets wet (darker, a soft sheen), then dries again
 --   g what the shader sees: off / height / normals / the light alone (on white)
 --   e the picture pass: grain, vignette, a soft glow and a grade by the light / off
 --   t 12 frames a second for the whole picture (stop-motion), the leaves' sway too / smooth
@@ -399,15 +399,10 @@ local function materialShader()
                 col = base * (ambient * 0.8 + wrap * lightColour * (1.0 - 0.5 * back)) + glow * lightColour * 0.7;
             }
             if (wet > 0.0 && mode > 0.5 && mode != 4.0) {
-                // just rained on: a sharp wet shine and drops, each drop dark with a bright spot
-                // toward the light
+                // just rained on: a soft wet sheen where the light catches it (no drops: their
+                // white sparks read as stray pixels, Nikki 2026-11-06; a tight shine did too)
                 vec3 H = normalize(L + vec3(0.0, 0.0, 1.0));
-                col += wet * st(pow(max(dot(n, H), 0.0), 160.0)) * 1.1 * lightColour;
-                vec2 dp = uv * vec2(more.y, 1.0) * 11.0 + seed;
-                float drop = 1.0 - smoothstep(0.07, 0.11, cells(dp).x);
-                float spark = 1.0 - smoothstep(0.015, 0.04, cells(dp - L.xy * 0.05).x);
-                float keep = step(0.55, hash(floor(dp) + 7.0)) * smoothstep(0.3, 0.7, wet);
-                col = mix(col, col * 0.72, drop * keep) + spark * keep * lightColour * 0.9;
+                col += wet * st(pow(max(dot(n, H), 0.0), 40.0)) * 0.55 * lightColour;
             }
             return vec4(col, alpha) * colour;
         }

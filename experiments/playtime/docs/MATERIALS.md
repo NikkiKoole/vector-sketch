@@ -235,6 +235,8 @@ Other ways, in our pipeline:
 
 - [x] **MT12. Wet** (r: a shower, wet in 2 s, dry over 20): porous things darken most (metal and glaze
   hardly), a sharp wet shine, drops (dark, a bright spot toward the light).
+  Changed 2026-11-06 (Nikki: "the little white pixels feel ugly"): no drops, and a soft sheen instead of
+  the sharp shine (exponent 160 -> 40), here and in the engine's wet (src/render/shaders.lua). "Better".
 - [x] **MT13. What the shader sees** (g): the height, the normals, the light alone on white. For when a
   material looks off.
 - [x] **MT14. The picture pass** (e): a soft glow from the bright parts, a grade by the light (warm sun,

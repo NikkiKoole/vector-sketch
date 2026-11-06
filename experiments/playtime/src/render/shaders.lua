@@ -306,9 +306,10 @@ local plasticineShader = love.graphics.newShader([[
             base.rgb += (totalSpec + totalSSS) * base.a;
         }
         if (wet > 0.0) {
-            // wet: a sharp shine where the light catches it
+            // wet: a soft sheen where the light catches it (a tight one broke up into white
+            // specks on bumpy parts, Nikki 2026-11-06)
             vec3 H = normalize(Ld + vec3(0.0, 0.0, 1.0));
-            base.rgb += wet * pow(max(dot(n, H), 0.0), 160.0) * 1.1 * Lc * base.a;
+            base.rgb += wet * pow(max(dot(n, H), 0.0), 40.0) * 0.55 * Lc * base.a;
         }
         return base;
     }
