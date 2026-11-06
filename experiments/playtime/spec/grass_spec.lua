@@ -51,4 +51,38 @@ describe("src.grass placeBlades", function()
             assert.is_boolean(blade.front)
         end
     end)
+
+    it("bands: rows going down into the ground, back row behind and shorter, front row in front", function()
+        local blades = grass.placeBlades(rect, 0, { density = 10, bands = 3, bandSpread = 40, heightVariation = 0 })
+        assert.are.equal(60, #blades)
+        local seen = {}
+        for _, blade in ipairs(blades) do
+            seen[blade.y] = blade
+            if blade.y < -50 then assert.is_false(blade.front) end
+            if blade.y > -50 then assert.is_true(blade.front) end
+        end
+        assert.is_truthy(seen[-70]) -- back row 20 up
+        assert.is_truthy(seen[-30]) -- front row 20 down
+        assert.is_true(seen[-70].scale < seen[-30].scale)
+        assert.are.equal(0, seen[-70].shade)
+        assert.are.equal(1, seen[-30].shade)
+        -- drawn back to front
+        assert.are.equal(-70, blades[1].y)
+        assert.are.equal(-30, blades[#blades].y)
+    end)
+
+    it("one band places exactly as before", function()
+        local a = grass.placeBlades(rect, 0, { density = 10 })
+        local b = grass.placeBlades(rect, 0, { density = 10, bands = 1, bumps = 0 })
+        for i = 1, #a do
+            assert.are.same(a[i], b[i])
+        end
+    end)
+
+    it("bands follow the body's angle: upside down, the rows go the other way", function()
+        local blades = grass.placeBlades(rect, math.pi, { density = 10, bands = 2, bandSpread = 40 })
+        for _, blade in ipairs(blades) do
+            assert.is_true(math.abs(blade.y - 50) < 21 and math.abs(blade.y - 50) > 19)
+        end
+    end)
 end)

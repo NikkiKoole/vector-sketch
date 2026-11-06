@@ -35,6 +35,14 @@ lib.defaults = {
     colorBack = '2a5b3eff',
     colorFront = '86a542ff',
     seed = 0,
+    -- rows of grass going into the ground's depth: back rows higher, smaller and in colorBack,
+    -- front rows lower, full size and in colorFront. 1 = the single row along the edge.
+    bands = 1,
+    bandSpread = 40,     -- world units from the back row's root to the front row's
+    bandShrink = 0.3,    -- the back row is this much shorter than the front one
+    -- a bumpy ground under the roots: noise moves every root up/down, rows share the hills
+    bumps = 0,           -- world units up and down, 0 = flat
+    bumpSize = 200,      -- world units, about one hill
 }
 
 local function noise(...)
@@ -76,31 +84,60 @@ function lib.placeBlades(vertices, angle, extra)
     local frontShare = setting(extra, 'frontShare')
     local seed = setting(extra, 'seed')
 
-    for i = 1, n do
-        local j = i % n + 1
-        local x1, y1 = vertices[i * 2 - 1], vertices[i * 2]
-        local x2, y2 = vertices[j * 2 - 1], vertices[j * 2]
-        local dx, dy = x2 - x1, y2 - y1
-        local len = math.sqrt(dx * dx + dy * dy)
-        if len > 0 then
-            -- outward normal in body space, then turned into the world
-            local nx, ny = dy / len * outward, -dx / len * outward
-            local worldNy = nx * sinA + ny * cosA
-            if -worldNy >= minUp then
-                local count = math.floor(len / spacing)
-                for k = 0, count - 1 do
-                    local t = (k + 0.5) / count
-                    local x, y = x1 + dx * t, y1 + dy * t
-                    -- height rolls smoothly along the edge (clumps), the rest differs per blade
-                    local h = noise(x / 300, y / 300, seed + 0.5)
-                    blades[#blades + 1] = {
-                        x = x, y = y,
-                        quad = math.min(#lib.QUADS, math.floor(hash(x, y, seed + 1) * #lib.QUADS) + 1),
-                        scale = (1 - variation) + variation * h,
-                        lean = (hash(x, y, seed + 2) - 0.5) * 0.5,
-                        phase = hash(x, y, seed + 3) * math.pi * 2,
-                        front = hash(x, y, seed + 4) < frontShare,
-                    }
+    local bands = math.max(1, math.floor(setting(extra, 'bands')))
+    local spread = setting(extra, 'bandSpread')
+    local shrink = setting(extra, 'bandShrink')
+    local bumps = setting(extra, 'bumps')
+    local bumpSize = math.max(1, setting(extra, 'bumpSize'))
+    -- 'down in the world' in body space: rows and bumps move roots along it
+    local downX, downY = sinA, cosA
+
+    -- band by band, back to front, so a batch draws the front rows over the back ones
+    for band = 1, bands do
+        local depth = bands == 1 and 0.5 or (band - 1) / (bands - 1) -- 0 back .. 1 front
+        local rowOffset = (depth - 0.5) * spread * (bands == 1 and 0 or 1)
+        local salt = (band - 1) * 17.3 -- band 1 hashes as the old single row did
+        for i = 1, n do
+            local j = i % n + 1
+            local x1, y1 = vertices[i * 2 - 1], vertices[i * 2]
+            local x2, y2 = vertices[j * 2 - 1], vertices[j * 2]
+            local dx, dy = x2 - x1, y2 - y1
+            local len = math.sqrt(dx * dx + dy * dy)
+            if len > 0 then
+                -- outward normal in body space, then turned into the world
+                local nx, ny = dy / len * outward, -dx / len * outward
+                local worldNy = nx * sinA + ny * cosA
+                if -worldNy >= minUp then
+                    local count = math.floor(len / spacing)
+                    for k = 0, count - 1 do
+                        -- extra rows slide along a bit so their blades don't line up behind each other
+                        local jitter = bands > 1 and (hash(k, band, seed + 5) - 0.5) * 0.8 or 0
+                        local t = math.max(0, math.min(1, (k + 0.5 + jitter) / count))
+                        local ex, ey = x1 + dx * t, y1 + dy * t
+                        local hy = ey + salt
+                        local bump = 0
+                        if bumps > 0 then
+                            -- the second noise axis is the depth: neighbouring rows share their hills
+                            bump = (noise(ex / bumpSize, depth * 0.6, seed + 7) - 0.5) * 2 * bumps
+                        end
+                        local x, y = ex + downX * (rowOffset + bump), ey + downY * (rowOffset + bump)
+                        -- height rolls smoothly along the edge (clumps), the rest differs per blade
+                        local h = noise(ex / 300, ey / 300, seed + 0.5)
+                        local scale = (1 - variation) + variation * h
+                        local front
+                        if rowOffset > 0 then front = true
+                        elseif rowOffset < 0 then front = false
+                        else front = hash(ex, hy, seed + 4) < frontShare end
+                        blades[#blades + 1] = {
+                            x = x, y = y,
+                            quad = math.min(#lib.QUADS, math.floor(hash(ex, hy, seed + 1) * #lib.QUADS) + 1),
+                            scale = scale * (bands > 1 and (1 - shrink * (1 - depth)) or 1),
+                            lean = (hash(ex, hy, seed + 2) - 0.5) * 0.5,
+                            phase = hash(ex, hy, seed + 3) * math.pi * 2,
+                            front = front,
+                            shade = bands > 1 and depth or nil, -- colour between back and front
+                        }
+                    end
                 end
             end
         end
@@ -125,7 +162,7 @@ local function loadAtlas()
 end
 
 local SIGNATURE_KEYS = { 'density', 'height', 'heightVariation', 'width', 'frontShare', 'maxSlope',
-    'colorBack', 'colorFront', 'seed' }
+    'colorBack', 'colorFront', 'seed', 'bands', 'bandSpread', 'bandShrink', 'bumps', 'bumpSize' }
 
 local function signature(extra, vertices, angle)
     local parts = { tostring(vertices), #vertices, string.format('%.3f', angle) }
@@ -140,6 +177,7 @@ local function setBlade(batch, id, blade, extra, angle, time)
     local s = setting(extra, 'height') * blade.scale / q[4]
     local sway = setting(extra, 'sway') * (math.sin(time * 1.7 + blade.phase) * 0.06
         + math.sin(time * 0.6 + blade.phase * 0.3) * 0.04)
+    if blade.r then batch:setColor(blade.r, blade.g, blade.b, blade.a) end
     -- grass grows up in the world, whatever the body's angle
     batch:set(id, quads[blade.quad], blade.x, blade.y, blade.lean + sway - angle,
         s * setting(extra, 'width'), s, q[5], q[6])
@@ -156,6 +194,13 @@ local function bodyLocal(vertices)
     return out
 end
 
+-- colorBack at 0 .. colorFront at 1
+local function mixColor(extra, t)
+    local r1, g1, b1, a1 = hexColor(setting(extra, 'colorBack'))
+    local r2, g2, b2, a2 = hexColor(setting(extra, 'colorFront'))
+    return r1 + (r2 - r1) * t, g1 + (g2 - g1) * t, b1 + (b2 - b1) * t, a1 + (a2 - a1) * t
+end
+
 local function build(extra, thing, angle)
     local blades = lib.placeBlades(bodyLocal(thing.vertices), angle, extra)
     local entry = { blades = blades, signature = signature(extra, thing.vertices, angle) }
@@ -166,6 +211,10 @@ local function build(extra, thing, angle)
         local ids = {}
         for i, blade in ipairs(blades) do
             if blade.front == (layer == 'front') then
+                if blade.shade then
+                    blade.r, blade.g, blade.b, blade.a = mixColor(extra, blade.shade)
+                    batch:setColor(blade.r, blade.g, blade.b, blade.a)
+                end
                 ids[i] = batch:add(quads[blade.quad], blade.x, blade.y)
             end
         end

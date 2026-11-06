@@ -213,6 +213,15 @@ It grows out of the click-in stacking above:
   - Inspector: react on/off, stiffness, damping, push strength, flatten recovery.
   - Specs: the spring settles, the push direction follows the side, blades outside a span are
     untouched; in the app, drop a ball through the bridge and read the blade angles back.
+- [x] **G3. Rows and bumps.** **Built 2026-11-06, Nikki: much better.** The grass was one row on the
+  edge; now `bands` rows go into the ground's depth (`src/grass.lua`): back rows higher, shorter
+  (`bandShrink`) and in the back colour, front rows lower in the front colour, `bandSpread` apart.
+  Rows above the edge draw behind the Mipos, rows below it in front; a single middle row keeps
+  `frontShare`. Each row slides its blades a bit so they don't line up. `bumps`/`bumpSize` move the
+  roots up and down along noise whose second axis is the depth, so neighbouring rows share their
+  hills. Only drawn: the body the Mipos stand on stays flat. 1 row and no bumps place exactly as before
+  (spec). Every row is another full set of blades swayed per frame; not measured on the phone yet.
+  `light-grass-check` uses 4 rows, 60 deep, bumps 25.
   - Open: should a finger or mouse dragged through the grass part it too (the pointer as one more pusher)?
 - [ ] **G3. tile-repeat as a ground skin.** An alpha setting instead of the fixed 140 (old
   scenes keep 140). An optional top band: a strip texture along the up-facing edges with the
