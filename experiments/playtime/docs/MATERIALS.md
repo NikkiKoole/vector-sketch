@@ -108,3 +108,54 @@ Kinds of material, by what the shader does differently:
 - [ ] **MT5. Leaves for real**: translucency on the plants and garden spikes' leaves, with their sway.
 - [ ] **MT6. Into the engine**: a material as a texfixture setting, next to plasticine (SHADER-LOOKS'
   "looks on shapes"), if any of it earns a place.
+
+## Fur (Nikki's follow-up talk, 2026-11-06)
+
+Already here: the hairs shader (strand noise, frayed edges: `src/render/shaders.lua`), the back light
+(LS9: its rim shows best on the Mipos' fur strokes), hair tufts as real bodies (HAIR-LOCKS.md).
+From the talk: light streaking along the way the fur grows (in clumps, not single hairs); never a
+crisp outline (tufts along the edge, fade or dither); a strong soft rim; darker at the root, lighter
+at the tips; denser and darker in creases; flutter at the tips from the plants' wind; wet fur clumps,
+darkens and gets sharper highlights. For close-ups, shell layers: a few copies, each thinned by
+noise and pushed a little outward.
+- [ ] **MT7. Fur on the palette**: one or two furs (short plush, long shaggy) next to velvet, using
+  the hairs shader's strand noise along a direction, root-to-tip colour, the rim.
+
+## Drawing styles: the dry signal and the live one
+
+Less what a thing is made of, more how the whole picture is drawn: pencil, charcoal, watercolour
+(washes, pigment gathering at the edges, white paper in the highlights), gouache (flat, opaque,
+brush edges), oil (thick strokes along the form).
+- **Dry**: strokes in the drawing itself: her outlines, the crayon strokes (`textures/strokes/`, the
+  burrow rim, BURROW.md), anything through scan2tex. The most real, but it doesn't follow the light.
+- **Live**: the shader turns the lit picture into strokes, e.g. cross-hatching where it's dark.
+  Follows the light and the day-night cycle, but alone it looks made by a machine.
+- **Both (the one to try)**: tonal art maps. Nikki draws hatching at four or five densities (light,
+  medium, dense, cross-hatched), a few versions of each; the shader picks and blends them by how dark
+  each spot is after lighting, swapping versions at ~12 fps (the burrow's line boil is 10 Hz). Real
+  lines that still answer the light. One paper grain under both.
+  Materials can steer it: a shiny thing gets a bright dab, see-through a lighter wash, wet darker.
+- [ ] **MT8. Hatching from a scanned sheet**: Nikki's hatching sheet through scan2tex, tried in
+  material-check as a mode where the light becomes her hatching instead of shading.
+- [ ] **MT9. One style over a whole scene** (watercolour or gouache): needs SH3's effects stack
+  (SHADER-LOOKS.md); per thing too, like a pencil 'memory'.
+
+## Normal and depth maps: where ours come from
+
+Ours now: `src/render/form-bake.lua` makes a height and normal from any picture's mask (how far in
+from the edge), no tools and no extra drawing. Its limits: it only knows the outline, so every shape
+is a dome or a cushion (no nose bump, no fold in an ear), and a brushy mask shows as ridges
+(body-04 in metal).
+Other ways, in our pipeline:
+- **The outline's inner lines as creases**: the strokes inside a shape (a fold, a cheek) dent the
+  height. Automatic, from what's already drawn. Cheapest to try.
+- **A painted height picture**: a grey `-height.png` next to outline and mask (lighter is nearer),
+  added to the bake. Fully in Nikki's hand; scan2tex could cut it from the same sheet.
+- **Photographed clay**: a clay model lit from four sides, combined into real normals (photometric
+  stereo). Fits the claymation look.
+- **Tools** (Laigter, SpriteIlluminator) work but are another app; tools we build in LÖVE come first
+  (`feedback_deform_editor`).
+- **Depth** for parallax comes from the layer order (DEPTH-LAYERS.md); AI depth estimation (Depth
+  Anything) only for a painted backdrop, if ever.
+- [ ] **MT10. Creases from the outline** into the bake, compared in material-check.
+- [ ] **MT11. A painted height picture** as an option on a part (outline + mask + height).
