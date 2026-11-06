@@ -37,7 +37,7 @@ first.
   'turned upside down' case for every feature; nothing broke, every grass sfixture keeps blades on
   its upper edge at any angle, flipped and reloaded too (the check caught a planted fault). To look
   at, not a bug: the blade cache's key holds the body's angle, so a tumbling grassy body builds both
-  its SpriteBatches again every frame; none is saved in a scene yet)
+  its SpriteBatches again every frame, ~118 a second in the scene `light-grass-check`)
 - [x] Liquid round (2026-11-06: a dynamic cup and a static bath from the toys; 178 cases x 2 meters,
   nothing broke: the fill stays in 0..1, no container holds more than it can at its angle, the level
   always holds the water's amount, after a reload too (the check caught spilling switched off).
@@ -51,5 +51,6 @@ first.
   the sweeps never touched a texfixture's settings, its panel builds them from texfixture-params'
   accordions, not sfixture-params' bySubtype; `claudetools/actions.lua` adds them now. To look at, not a
   bug: a *directional* light also fades with the distance from its lamp (`range`, 500), so one 300 px
-  away only gives about a third, and turning the lamp round changed a box's halves by ~1%)
+  away only gives about a third, and turning the lamp round changed a box's halves by ~1%; see it in
+  the scene `light-grass-check`)
 - [ ] Recorder round
