@@ -29,8 +29,9 @@
 --   v 3D shadows on / off (src/projected-shadows.lua, LS22): a floor appears between the wall and the
 --     things, and the shadows are thrown from the light along it and up the wall, hard; with w's on too,
 --     both (the soft ones on the wall only, a little lighter)
---   e the 3D shadows' light: the sun or moon (a low sun stretches them long over the floor) / the warm
---     lamp (drag it in play mode; a torch: close to the things a big shadow on the wall, back it shrinks)
+--   e the 3D shadows' lights: the sun or moon (a low sun stretches them long over the floor) / the warm
+--     lamp (drag it in play mode; a torch: close to the things a big shadow on the wall, back it shrinks) /
+--     the sun or moon and the warm lamp / and both lamps: each throws its own shadow
 --   y how much the sun shines out of the wall: some / a little (shadows run far along the floor) / much
 --   [ ] the lamp nearer the things / further towards you   j edges: hard / a small lamp / a big lamp
 
@@ -487,16 +488,35 @@ end
 -- The 3D shadows' light: the sun or the moon (whichever leads, as the wall shadows; its way towards it on
 -- the arc, a little out of the wall), or the warm lamp where it is, at the lamp's depth. Returns the light
 -- and how much of the shadow's darkness is left.
-local function solidLight()
+-- e: which lights throw the 3D shadows; several, each its own shadow (Nikki 2026-11-06: the soft and the
+-- hard together liked, then "lets try" shadows from more than one light)
+local LIGHT_SETS = {
+    { name = 'the sun or moon', sun = true },
+    { name = 'the warm lamp', warm = true },
+    { name = 'the sun or moon and the warm lamp', sun = true, warm = true },
+    { name = 'the sun or moon and both lamps', sun = true, warm = true, cool = true },
+}
+local COOL_LAMP_DEPTH = 700 -- the cool lamp's distance in front of the things (the warm one's: [ ])
+
+local function lightSet()
     local c = look()
-    if c.solidLamp then
-        local body = lightOf('warm lamp')
-        if not body then return nil end
-        local x, y = body:getPosition()
-        local z = SOLID_DEPTH + (c.lampDepth or LAMP_DEPTH)
-        -- on screen the lamp sits at y = FLOOR_Y + z - h
-        return { kind = 'point', x = x, h = math.max(4, FLOOR_Y + z - y), z = z }, 1
-    end
+    return LIGHT_SETS[c.lightSet or (c.solidLamp and 2) or 1]
+end
+
+-- a carried lamp as a 3D light: where it is on screen, `inFront` in front of the things
+local function lampLight(label, inFront)
+    local body = lightOf(label)
+    if not body then return nil end
+    local x, y = body:getPosition()
+    local z = SOLID_DEPTH + inFront
+    -- on screen the lamp sits at y = FLOOR_Y + z - h
+    return { kind = 'point', x = x, h = math.max(4, FLOOR_Y + z - y), z = z }
+end
+
+-- The sun or the moon as a 3D light (whichever leads, as the wall shadows; its way towards it on the arc, a
+-- little out of the wall), and how much of the shadow's darkness is left.
+local function sunLight()
+    local c = look()
     local _, sunExtra = lightOf('sun')
     local _, moonExtra = lightOf('moon')
     local sun, moon = sunExtra and sunExtra.intensity or 0, moonExtra and moonExtra.intensity or 0
@@ -505,6 +525,30 @@ local function solidLight()
     if high <= 0.02 then return nil end
     local towards = SUN_TOWARDS[c.sunTowards or 1]
     return { kind = 'sun', x = -math.cos(theta), h = high, z = towards }, math.min(1, math.abs(sun - moon) / 0.6)
+end
+
+-- every light of the set that's there, each with its shadow's strength and edge; with more than one a
+-- little lighter each (where they cross, darker)
+local function solidLights(wallShadows)
+    local c = look()
+    local set = lightSet()
+    local soft = SOFTNESS[c.softness or 1]
+    local list = {}
+    if set.sun then
+        local light, fade = sunLight()
+        if light then
+            list[#list + 1] = { light = light, strength = math.min(0.7, wallShadows * 1.5) * fade, softness = soft.sun }
+        end
+    end
+    local lamps = { { set.warm, 'warm lamp', c.lampDepth or LAMP_DEPTH }, { set.cool, 'cool lamp', COOL_LAMP_DEPTH } }
+    for _, lamp in ipairs(lamps) do
+        local light = lamp[1] and lampLight(lamp[2], lamp[3])
+        if light then list[#list + 1] = { light = light, strength = 0.55, softness = soft.lamp } end
+    end
+    if #list > 1 then
+        for _, one in ipairs(list) do one.strength = one.strength * 0.75 end
+    end
+    return list
 end
 
 local function wallAboveFloor()
@@ -531,8 +575,9 @@ local function applyTime()
     setLight('sun', L.sun[1] .. 'ff', L.sun[2] * sunUp, sx, sy, sa)
     setLight('moon', L.moon[1] .. 'ff', L.moon[2] * moonUp, mx, my, ma)
     -- the warm lamp throwing the 3D shadows is on, whatever the hour
-    setLight('warm lamp', nil, (c.solid and c.solidLamp) and math.max(1.4, L.warm) or L.warm)
-    setLight('cool lamp', nil, L.cool)
+    local set = lightSet()
+    setLight('warm lamp', nil, (c.solid and set.warm) and math.max(1.4, L.warm) or L.warm)
+    setLight('cool lamp', nil, (c.solid and set.cool) and math.max(1.2, L.cool) or L.cool)
     setLight('turning lamp', nil, 0)
     setLight('sky light', L.skyLight[1] .. 'ff', c.skyOff and 0 or L.skyLight[3])
     local _, skyExtra = lightOf('sky light')
@@ -609,13 +654,10 @@ function s.update(dt)
     -- the two together (Nikki 2026-11-06: "combine multiple shadows")
     state.backdropShadows = (not c.wallShadowsOff and offset) and { wall = c.solid and wallAboveFloor or wallShape,
         offset = offset, blur = blur, strength = L.wallShadows * fade * (c.solid and 0.7 or 1) } or nil
-    local light, lightFade = nil, 0
-    if c.solid then light, lightFade = solidLight() end
-    local soft = SOFTNESS[c.softness or 1]
+    local lights = c.solid and solidLights(L.wallShadows) or {}
     state.drawSplits = c.solid and GROUND_SPLITS or nil
-    state.projectedShadows = light and { area = solidArea, floorY = FLOOR_Y, depth = SOLID_DEPTH, light = light,
-        strength = c.solidLamp and 0.55 or math.min(0.7, L.wallShadows * 1.5) * lightFade,
-        softness = light.kind == 'sun' and soft.sun or soft.lamp } or nil
+    state.projectedShadows = #lights > 0 and { area = solidArea, floorY = FLOOR_Y, depth = SOLID_DEPTH,
+        lights = lights } or nil
     c.time = c.time + (dt or 0)
     if c.time >= 1 then
         c.perSecond, c.made, c.time = c.made, 0, c.time - 1
@@ -647,7 +689,7 @@ function s.onKeyPress(key)
     elseif key == 'v' then
         c.solid = not c.solid
     elseif key == 'e' then
-        c.solidLamp = not c.solidLamp
+        c.lightSet = (c.lightSet or (c.solidLamp and 2) or 1) % #LIGHT_SETS + 1
     elseif key == '[' or key == ']' then
         local now, at = c.lampDepth or LAMP_DEPTH, 1
         for i, d in ipairs(LAMP_DEPTHS) do if d <= now then at = i end end
@@ -793,11 +835,11 @@ function s.drawUI()
             .. (c.mipoLightOff and ', Mipos as drawn'
                 or (c.mipoClayOff and ', Mipos lit, no clay' or ', Mipos lit, clay'))
             .. '      shapes: ' .. table.concat(tries, '   ') .. '   (0 as elsewhere)',
-        'v 3D shadows: ' .. (c.solid and ('on, from ' .. (c.solidLamp
-            and string.format('the warm lamp, %d in front of the things', c.lampDepth or LAMP_DEPTH)
-            or string.format('the sun or moon, %.2f out of the wall', SUN_TOWARDS[c.sunTowards or 1]))
+        'v 3D shadows: ' .. (c.solid and ('on, from ' .. lightSet().name
+            .. (lightSet().warm and string.format(', warm lamp %d in front', c.lampDepth or LAMP_DEPTH) or '')
+            .. (lightSet().sun and string.format(', sun %.2f out of the wall', SUN_TOWARDS[c.sunTowards or 1]) or '')
             .. ', ' .. SOFTNESS[c.softness or 1].name) or 'off')
-            .. '   (e sun / lamp  y sun out of the wall  [ ] lamp depth  j edges)',
+            .. '   (e which lights  y sun out of the wall  [ ] lamp depth  j edges)',
         string.format('grass: SpriteBatches made in the last second: %d', c.perSecond),
     }
     for i, line in ipairs(lines) do

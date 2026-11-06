@@ -83,6 +83,19 @@ describe('projected shadows', function()
         assert.is_true(at(img, -100, 60) > 0.99, 'none on its left')
     end)
 
+    it('two lights, two shadows: a lamp on the left and one on the right', function()
+        state.projectedShadows.light = nil
+        state.projectedShadows.lights = {
+            { light = { kind = 'point', x = -100, h = 40, z = 80 } },
+            { light = { kind = 'point', x = 100, h = 40, z = 80 }, strength = 0.3 },
+        }
+        local img = render(state.physicsWorld)
+        -- from the left lamp the shadow lands right of the box, from the right lamp left of it
+        assert.is_true(at(img, 110, 10) < 0.6, 'the left lamp\'s shadow: ' .. at(img, 110, 10))
+        assert.is_true(at(img, -110, 10) < 0.8, 'the right lamp\'s, lighter: ' .. at(img, -110, 10))
+        assert.is_true(at(img, -110, 10) > at(img, 110, 10), 'each its own strength')
+    end)
+
     it('only on the area, and off draws nothing', function()
         state.projectedShadows.light = { kind = 'point', x = 0, h = 40, z = 50 } -- a huge shadow
         local img = render(state.physicsWorld)

@@ -15,6 +15,9 @@
 -- space: the shadows land only there), floorY, depth, strength = 0..1, softness (world units for a lamp,
 -- about 0.05..0.3 for a sun), colour = { r, g, b } (black),
 -- light = { kind = 'point', x, h, z } or { kind = 'sun', x, h, z } (the way towards it, z towards you) }.
+-- Several lights: lights = { { light = ..., strength =, softness =, colour = }, ... } in place of light (each
+-- falls back to the settings' own strength, softness and colour); each throws its own shadow, one pass each
+-- over the same silhouettes, so where two shadows cross it's darker.
 -- The lamp's z must be in front of the things (z > depth), else no shadow falls behind them.
 -- Costs a second pass of the textured drawing per frame (as the wall shadow does), and a per-pixel loop.
 local lib = {}
@@ -99,7 +102,7 @@ end
 
 function lib.draw(world)
     local settings = state.projectedShadows
-    if not settings or not settings.area or not settings.light or not world then return end
+    if not settings or not settings.area or not (settings.light or settings.lights) or not world then return end
     local textured = require('src.physics.box2d-draw-textured')
     local target = love.graphics.getCanvas()
     local w, h
@@ -114,7 +117,6 @@ function lib.draw(world)
 
     local ox, oy = love.graphics.inverseTransformPoint(0, 0)
     local scale = pixelsPerUnit()
-    local light = settings.light
     local compare, value = love.graphics.getStencilTest()
     love.graphics.stencil(settings.area, 'replace', 1)
     love.graphics.setStencilTest('greater', 0)
@@ -126,13 +128,16 @@ function lib.draw(world)
     shader:send('screen', { w / scale, h / scale })
     shader:send('floorY', settings.floorY)
     shader:send('depth', settings.depth)
-    shader:send('light', { light.x, light.h, light.z })
-    shader:send('isSun', light.kind == 'sun' and 1 or 0)
-    shader:send('softness', settings.softness or 0)
-    shader:send('strength', settings.strength or 0.5)
-    shader:send('colour', settings.colour or { 0, 0, 0 })
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.draw(silhouettes, 0, 0)
+    for _, one in ipairs(settings.lights or { { light = settings.light } }) do
+        local light = one.light
+        shader:send('light', { light.x, light.h, light.z })
+        shader:send('isSun', light.kind == 'sun' and 1 or 0)
+        shader:send('softness', one.softness or settings.softness or 0)
+        shader:send('strength', one.strength or settings.strength or 0.5)
+        shader:send('colour', one.colour or settings.colour or { 0, 0, 0 })
+        love.graphics.draw(silhouettes, 0, 0)
+    end
     love.graphics.setShader()
     love.graphics.pop()
     if compare then love.graphics.setStencilTest(compare, value) else love.graphics.setStencilTest() end

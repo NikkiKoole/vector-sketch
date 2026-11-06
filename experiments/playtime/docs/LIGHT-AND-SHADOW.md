@@ -170,6 +170,9 @@ fade, a sun: the panel's `fades` switch, LS4).
   the ground's front edge (grain, worn patches, pebbles, darker into the corner), the earth cut open below
   the edge (burrow's topsoil to clay, grain, fine roots), burrow's crayon strokes along the edge and in
   the corner; the floor behind the things under the shadows, the rest under the things (a draw split).
+  Several lights (Nikki: the soft and hard shadows together liked, then shadows from more than one light):
+  `lights = { ... }`, each its own pass over the same silhouettes, darker where they cross; e steps the
+  sun or moon / the warm lamp / sun and warm lamp / sun and both lamps; w's soft wall shadow can be on too.
   Not yet: one depth for everything (per-thing depth,
   LS16/LS18), nothing on the floor in front of the things, the same cost as the wall shadows (LS12).
 - [ ] **LS15. Small ones:** should a new directional light be a sun (not fade) by default; the back
