@@ -317,7 +317,7 @@ measured are in the sections above. The concepts by name are in `MUSIC-CONCEPTS.
 - [ ] Vocals: narration or melody?
 - [x] Electric Relaxation's bass as a humanized part: the style `brew` (2026-11-05)
 - [x] Electric Relaxation's keys, guitar, drums, the song's map and form into `brew` (2026-11-05/06)
-- [ ] Nikki listens to `brew` (humanized against plain, the organ, the form) and tunes
+- [x] Nikki listened (2026-11-06): likes the original `brew` best, and the bass most of all ("the original and then just the bass"); `brewjam` and the rest nice to have. Experiment done; both styles stay.
 
 - [x] Turn the 1:53 jab pattern into a picking mode (`picking = 'jabs'`) on the electric guitar, kept sparse, as background. Built 2026-10-30 as the style **rollo**:
   - `jabGuitar`: the guitar, choked, with the tape on
