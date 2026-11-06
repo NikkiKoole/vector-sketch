@@ -250,6 +250,19 @@ function lib.makeSprings(instance, partName, torsoBody, lobeBody)
     end
 end
 
+-- Softness (creation.softness, 0 firm .. 1 jelly) as the springs: firm is quick and settles at
+-- once, jelly slow and wobbling on. Written into lobeSpring and lobeDamping (what the springs
+-- read; the editor can still fine-tune those).
+lib.firm = { spring = 6, damping = 0.5 }
+lib.jelly = { spring = 1.5, damping = 0.08 }
+function lib.applySoftness(creation, softness)
+    softness = math.max(0, math.min(1, softness or creation.softness or 0.5))
+    creation.softness = softness
+    local function lerp(a, b) return a + (b - a) * softness end
+    creation.lobeSpring = lerp(lib.firm.spring, lib.jelly.spring)
+    creation.lobeDamping = lerp(lib.firm.damping, lib.jelly.damping)
+end
+
 -- The springs' frequency and damping from the DNA, live (editor sliders).
 function lib.setSprings(instance)
     local creation = instance.dna.creation

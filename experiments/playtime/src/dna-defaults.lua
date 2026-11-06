@@ -100,6 +100,7 @@ lib.creation = {
     lobeDepth = 0.35,  -- part of the torso's height each end's lobes take
     lobeSpring = 2.5,  -- Hz of their springs
     lobeDamping = 0.2, -- of their springs
+    softness = 0.5,    -- 0 firm .. 1 jelly: sets lobeSpring and lobeDamping (torsoLobes.applySoftness)
     -- jiggle (src/torso-jiggle.lua): the torso picture soft, drawn only
     torsoJiggle = false,
     jiggleAmount = 0.4,   -- how much it lags behind the torso's moves
@@ -145,6 +146,11 @@ lib.randomRanges = {
     teethStickOut = 0.2,
     limbWMul      = { min = 0.2, max = 0.5 },
     bodyFlipChance = 0.5, -- a torso drawn upside down (sy < 0); a breed can rule it out
+    -- soft torso (docs/SOFT-TORSO.md): how many Mipos get lobes, how soft, how deep; a breed
+    -- can make them all jelly (softChance 1, softness 0.8-1) or all firm (softChance 0)
+    softChance    = 0.5,
+    softness      = { min = 0, max = 1 },
+    lobeDepth     = { min = 0.25, max = 0.45 },
     headFlipChance = 0.5,
 }
 
@@ -216,6 +222,7 @@ lib.creationSchema = {
     lobeDepth = 'number',
     lobeSpring = 'number',
     lobeDamping = 'number',
+    softness = 'number',
     torsoJiggle = 'boolean',
     jiggleAmount = 'number',
     jiggleSpring = 'number',

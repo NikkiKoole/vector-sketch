@@ -10,6 +10,7 @@ local mipoRegistry = require('src.mipo-registry')
 local mouthShapes = require('src.mouth-shapes')
 local D = require('src.dna-defaults')
 local C = require('src.shape-catalogs')
+local torsoLobes = require('src.torso-lobes')
 
 -- Every random colour comes from here (character-manager setRandomColor: a breed's palette).
 lib.anyColor = utils.randomHexColor
@@ -340,6 +341,15 @@ function lib.limitArmReach(instance)
     return changed
 end
 
+-- Soft or not, and how (docs/SOFT-TORSO.md ST4), into the creation patch: lobes for
+-- softChance of the Mipos, their softness and depth from D.randomRanges (a breed narrows them).
+local function randomizeSoftness(patch)
+    patch.torsoLobes = math.random() < D.randomRanges.softChance
+    if not patch.torsoLobes then return end
+    torsoLobes.applySoftness(patch, D.randomInRange('softness'))
+    patch.lobeDepth = math.floor(D.randomInRange('lobeDepth') * 20 + 0.5) / 20
+end
+
 -- Everything at random; textureOpts / faceOpts narrow it down (see randomizeMipoConstrained).
 -- faceOpts: uniformEyeScale, allowedPupilShapes, allowedEyeShapes, allowedNoseShapes (indexes into
 -- the catalogs).
@@ -353,7 +363,9 @@ local function randomizeAll(instance, textureOpts, faceOpts)
     randomizeTextures(instance, hairColor, textureOpts)
     randomizeFace(instance, hairColor, faceOpts)
     -- no physics nose: the randomized nose is drawn on the face
-    build.rebuildFromCreation(instance, { isPotatoHead = not instance.dna.creation.isPotatoHead, noseSegments = 0 })
+    local patch = { isPotatoHead = not instance.dna.creation.isPotatoHead, noseSegments = 0 }
+    randomizeSoftness(patch)
+    build.rebuildFromCreation(instance, patch)
     lib.limitArmReach(instance)
     textures.rebuildTextures(instance)
 end

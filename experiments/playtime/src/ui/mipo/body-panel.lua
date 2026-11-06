@@ -94,6 +94,14 @@ local function drawTorsoRows(instance, creation, x, y, ROW)
         depth = depth and math.floor((tonumber(depth) or 0.35) * 20 + 0.5) / 20
         if depth and depth ~= creation.lobeDepth then rebuild(instance, { lobeDepth = depth }) end
         y = y + ROW
+        -- softness: 0 firm .. 1 jelly, sets spring and damping below (live)
+        local soft = ui.sliderWithInput('mipo_softness', x, y, 120, 0, 1, creation.softness or 0.5)
+        ui.alignedLabel(x, y, '  softness')
+        if soft and soft ~= creation.softness then
+            torsoLobes.applySoftness(creation, soft)
+            torsoLobes.setSprings(instance)
+        end
+        y = y + ROW
         local spring = ui.sliderWithInput('mipo_lobeSpring', x, y, 120, 0.5, 8, creation.lobeSpring or 2.5)
         ui.alignedLabel(x, y, '  lobe spring (Hz)')
         local damping = ui.sliderWithInput('mipo_lobeDamping', x, y + ROW, 120, 0, 1, creation.lobeDamping or 0.2)

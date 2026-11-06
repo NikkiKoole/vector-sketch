@@ -1,6 +1,6 @@
 # Soft torso — lobes on every torso shape, with the spine
 
-status: active
+status: done — 2026-11-06: ST1-ST4 (lobes from any outline, with the spine, 60 fps on the phone, softness in the DNA); open notes at the end
 
 Torsos were one rigid shape (or a spine of rigid bands). Nikki (2026-11-06), looking at the
 upside-down heart torso: its two big bottoms should move on their own, "like the segmented torso
@@ -48,8 +48,14 @@ ears) only springs in rotation. Two distance joints in a V are real springs in b
   vertices in a C buffer, bent over a spine and pushed there; spine Mipos without lobes gain too)
   in `native/desound/grid.c`; the same points as the Lua path to 0.0001 px. Draw 7.4 -> ~6.1 ms
   (no lobes 5.3), still 60 fps, slowest frame 17 ms.
-- [ ] **ST4. DNA traits.** Softness in randomize and as a breed trait (MIPO-BREEDS.md): a jelly
-  breed and a firm one.
+- [x] **ST4. DNA traits.** `creation.softness` (0 firm .. 1 jelly) sets the springs
+  (`torsoLobes.applySoftness`: firm 6 Hz damping 0.5, jelly 1.5 Hz 0.08; lobeSpring/lobeDamping
+  stay for fine-tuning). Randomize: lobes for `softChance` of the Mipos (0.5), softness and
+  lobeDepth from `D.randomRanges` (0-1, 0.25-0.45); 10 rolls gave 4 soft ones, softness 0.09-0.95.
+  A breed narrows them like any range (MIPO-BREEDS.md): jelly `softChance = 1, softness = { min =
+  0.8, max = 1 }`, firm `softChance = 0` (tried with a throwaway breed: 3 of 3 at 0.84-0.93).
+  Editor: a softness slider over the spring and damping ones. A scene round trip (save data,
+  load) keeps the lobes on their bands, their springs and the softness.
 
 Open: on a hard landing the lobes go as far as the rope lets them (~24 px at scale 0.3); more
 slack if that reads as a stop. The drawn jiggle doesn't combine with a spine. Placements judged by
