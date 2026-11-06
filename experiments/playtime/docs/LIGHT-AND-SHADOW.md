@@ -37,12 +37,13 @@ fade, a sun, but the panel can't set 0).
   for it (night lamps 2.0 and 1.6) (2026-11-06).
 - [ ] **LS4. The settings in the panel.** Swing, front, baked and rise as rows in the texfixture's
   plasticine section; a sun (range 0) settable on the light's panel.
-- [ ] **LS5. Mipos under the light.** The same light on a Mipo's parts, to judge it on what it's for
+- [x] **LS5. Mipos under the light.** The same light on a Mipo's parts, to judge it on what it's for
   (and against the hand-drawn look: shaders for moments, `feedback_handdrawn_over_shaders`).
   Ready to judge (2026-11-06): three Mipos in `light-grass-check`, their picture parts, limb ribbons
   and torso lit like the shapes (not the face's decals), m lit / as drawn. With the plasticine clay
   (grain, dents, sheen) the crayon strokes went muddy; without it (c, the default for the Mipos) they
   stay, the light and roundness on top. Night looks best: as drawn they sat bright in the dark. By
   day a little darker than drawn (the sun or sky could go up).
+  Nikki: "looks really nice!" (2026-11-06, lit without the clay).
 - [ ] **LS6. Contact shadows.** A soft dark patch under what rests on something (`DEPTH-LAYERS.md`).
 - [ ] **LS7. Cast shadows.** Bodies throwing 2D shadows away from a lamp onto what's behind them.
