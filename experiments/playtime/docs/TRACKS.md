@@ -152,6 +152,24 @@ The talk assumed Box2D v3 (`b2Shape_SetFilter`, `b2Body_SetBullet`, one-sided ch
   one end; over the loop's top it turns end-on into the screen; in the corkscrew the top and
   then the dark underside come round. Still open: a banked turn, the scene light (it uses its
   own), and the rider on the projected seat (after TR4).
+- [x] **TR5b. A classic coaster course** (2026-11-06, Nikki: "more classically rollercoaster
+  shape, another level"). `n` switches course in the `tracks` scene (the knikkerbaan, the
+  coaster); `f` makes the camera follow the first cart (on for the coaster: it's ~10000 px wide).
+  An out-and-back seen from the side: a station (tyres at 300), a chain lift (hoist at 450), a
+  steep first drop straight into a loop (the loop turns to B over its top; its way out passes
+  behind its way in), back to A for a camelback and an airtime hill, a turnaround up into C
+  (furthest back) and home through C, behind everything, braked, lifted by tyres round a U-turn
+  into the station. Courses carry their own vanishing point, camera and layer depths (the coaster's
+  are 0 / 0.6 / 1.2: three layers at the knikkerbaan's spacing went too hazy); waypoints can set
+  their drive's speed. Headless, two carts for four simulated minutes: 14 loops, a lap ~25 s,
+  none out.
+  Energy (logged as height minus v²/2g along a lap): the bends cost the most. The first drop's
+  bottom corner at r 400 and ~2500 px/s lost ~600 px of height, the loop ~300, the hills ~170.
+  With the loop after the hills, and the turnaround climbing 800 px, the carts rocked in a
+  valley for good. Now the loop comes straight after the drop (as on classic looping coasters),
+  the drop's bottom corner is r 700, and the turnaround and the way home stay low. The wheels'
+  friction went down to 0.05 (they skidded each time the cart swapped walls), which wasn't the
+  main loss. With 14 movers the knikkerbaan now makes 7 loops in three minutes (was 10), none out.
 - [ ] **TR6. In and out.** Drop a Mipo near a seat: it's seated. Pull hard: the joint breaks and the
   Mipo is back in the world with its own filter (flies off if the cart is fast).
 - [ ] **TR7. Nikki plays with it**: keep, change or park? Then which contraption first

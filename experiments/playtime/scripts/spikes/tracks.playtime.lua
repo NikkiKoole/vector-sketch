@@ -11,13 +11,15 @@
 -- riser a hoist that pulls everything up and over the top, like a buizenpost.
 -- A cart: a box on four wheels, two on each wall of the pipe, so a loop can't drop it; only its
 -- wheels touch the walls. No buttons: it runs on its own.
--- keys: m a marble   c a cart   r start over   p pause
+-- Two courses (n switches): the knikkerbaan above, and a classic out-and-back coaster.
+-- keys: m a marble   c a cart   r start over   n the next course   f the camera follows the cart   p pause
 
 local s = {}
 
 -- Track layers are collision categories (TRACKS.md): 2..6 reserved for them (16: hair tufts).
 local TRACK_LAYERS = { A = 2, B = 3, C = 4, D = 5, E = 6 }
-local LAYER_DEPTH = { A = 0, B = 1, C = 2, D = 3, E = 4 } -- drawn depth: 0 in front
+local DEFAULT_DEPTH = { A = 0, B = 1, C = 2, D = 3, E = 4 } -- drawn depth: 0 in front
+local LAYER_DEPTH = DEFAULT_DEPTH -- the course's own (set with the course)
 
 local HALF = 70           -- the pipe's inside half width
 local CORNER = 200        -- corner radius (well over HALF, or the inner wall folds)
@@ -25,8 +27,6 @@ local STEP = 15           -- centre line sample spacing (px of arc length)
 local TRANSITION = 600    -- length of a layer change, both layers' walls side by side (360 showed a jog)
 local WALL = 8            -- drawn wall thickness
 local MARBLE_R = 40        -- two side by side would need 160: more than the pipe (30 wedged across it in pairs)
-local MARBLES = 4         -- at the start
-local CARTS = 1
 local MAX_MOVERS = 14
 -- the cart: wheels at both ends, on both walls, with a little play across (a bend widens the
 -- pipe along the cart's normal, so it never jams; the box stays clear of the walls)
@@ -48,7 +48,7 @@ local STILL_FOR = 6       -- seconds stopped outside the hoist: nudged along the
 -- drawn depth: a layer one deeper is drawn this much smaller toward the vanishing point, hazier
 local DEPTH_SHRINK = 0.16
 local DEPTH_HAZE = 0.4
-local VANISH_X, VANISH_Y = 950, 1000
+local VANISH_X, VANISH_Y = 950, 1000 -- the course's own (set with the course)
 -- the cart drawn as a box in 3D: depth 1 is this far back (px), which makes the shrink a
 -- perspective with the eye at VANISH, DEPTH_Z / DEPTH_SHRINK in front of the screen
 local DEPTH_Z = 600
@@ -73,7 +73,7 @@ local function alive(body) return body and not body:isDestroyed() end
 -- the course, in the direction of travel, y down. Each waypoint starts a straight stretch to the
 -- next one, in a layer, maybe driving. Waypoints on a straight line split a stretch (a layer
 -- change in the middle of one).
-local WAYPOINTS = {
+local KNIKKERBAAN = {
     { -300, 0, 'A' },
     { 2200, 300, 'A' },       -- the zigzag down, in front
     { 2200, 750, 'A' },
@@ -97,14 +97,66 @@ local WAYPOINTS = {
 -- (a stretch must be longer than the corners at its ends take, ~CORNER each for a right angle,
 -- or the arcs overlap and the walls fold: a Box2D chain assertion)
 
+-- a classic out-and-back coaster, seen from the side: a station, a lift hill, a steep first drop
+-- straight into a loop (where the speed is: with a camelback and an airtime hill before it, the
+-- carts rocked in the valley in front of it), the loop turning to B over its top so its way out
+-- passes behind its way in, back to the front for a camelback and an airtime hill, a turnaround
+-- up into C (furthest back) and home through C, behind everything, then a U-turn back to the
+-- front into the station. Waypoint speed: that stretch's drive speed (else DRIVES').
+local COASTER = {
+    { 0, 0, 'A', drive = 'pace', speed = 300 },          -- the station: rolled out slowly
+    { 600, 0, 'A', drive = 'hoist', speed = 450, r = 300 }, -- the lift hill, a chain lift
+    { 2000, -1400, 'A', r = 400 },                       -- the crest, then the first drop
+    -- (r 400 here lost the most of the whole ride: ~600 px of height at ~2500 px/s)
+    { 3000, 600, 'A', r = 700 },                         -- into the loop: up,
+    { 3800, 600, 'A', r = 300 },
+    { 3800, 0, 'A', r = 300 },                           -- over the top (to the back layer),
+    { 3450, 0, 'B' },
+    { 3100, 0, 'B', r = 300 },                           -- and down, behind the way in
+    { 3100, 800, 'B', r = 300 },
+    { 4300, 800, 'A' },                                  -- clear of the loop: to the front again
+    { 4800, 800, 'A', r = 400 },
+    { 5700, 0, 'A', r = 600 },                           -- the camelback
+    { 6700, 700, 'A', r = 450 },
+    { 7500, 200, 'A', r = 600 },                         -- an airtime hill
+    { 8300, 700, 'A', r = 400 },
+    -- the turnaround and the way home kept low: by here a cart has lost ~1000 px of height to the
+    -- bends (an 800 px climb up a turnaround stopped it, rocking in the valley before it)
+    { 9300, 700, 'A', r = 200 },                         -- the turnaround: up,
+    { 9300, 500, 'C' },                                  -- into the furthest layer,
+    { 9300, 300, 'C', r = 180 },                         -- and home, behind everything:
+    { 7500, 400, 'C', r = 700 },                         -- bunny hops
+    { 6000, 650, 'C', r = 700 },
+    { 4500, 500, 'C', r = 700 },
+    { 2500, 750, 'C', drive = 'brake', speed = 400, r = 600 }, -- braked,
+    { -700, 750, 'C', drive = 'hoist', speed = 300, r = 300 }, -- tyres lift it round a U-turn to the front
+    { -700, 375, 'A', drive = 'hoist', speed = 300 },
+    { -700, 0, 'A', drive = 'pace', speed = 300, r = 300 }, -- into the station
+}
+
+local COURSES = {
+    knikkerbaan = {
+        waypoints = KNIKKERBAAN, vanish = { 950, 1000 }, camera = { 950, 980, 0.2 },
+        carts = 1, marbles = 4,
+    },
+    coaster = {
+        waypoints = COASTER, vanish = { 4300, -300 }, camera = { 4300, -350, 0.11 },
+        depth = { A = 0, B = 0.6, C = 1.2, D = 1.8, E = 2.4 },
+        carts = 2, marbles = 0, follow = true,
+    },
+}
+local COURSE_ORDER = { 'knikkerbaan', 'coaster' }
+local WAYPOINTS = KNIKKERBAAN -- the course being built (set from state on start)
+
 -- the centre line, dense: straight stretches with arcs at the corners; each point knows its
 -- stretch's layer and drive (an arc belongs to the stretch after it; a hoist carries on through
 -- the corner after it, over the top)
 local function cornerPoints()
     local pts = {}
     local n = #WAYPOINTS
-    local function add(x, y, w, drive, roll)
-        pts[#pts + 1] = { x = x, y = y, layer = w[3], drive = drive, roll = roll or 0 }
+    local function add(x, y, w, drive, roll, speed)
+        pts[#pts + 1] = { x = x, y = y, layer = w[3], drive = drive, roll = roll or 0,
+            speed = speed or (drive == w.drive and w.speed) or nil }
     end
     -- each corner's arc: from where it leaves the stretch before to where it joins the next
     local arcs = {}
@@ -138,10 +190,11 @@ local function cornerPoints()
         local arc = arcs[i]
         if arc.cx then
             local drive = prev.drive == 'hoist' and 'hoist' or w.drive
+            local speed = prev.drive == 'hoist' and prev.speed or w.speed
             local count = math.max(2, math.floor(math.abs(arc.sweep) * arc.r / 5))
             for k = 0, count do
                 local ang = arc.a0 + arc.sweep * k / count
-                add(arc.cx + math.cos(ang) * arc.r, arc.cy + math.sin(ang) * arc.r, w, drive)
+                add(arc.cx + math.cos(ang) * arc.r, arc.cy + math.sin(ang) * arc.r, w, drive, 0, speed)
             end
         else
             add(arc.x0, arc.y0, w, w.drive)
@@ -177,7 +230,7 @@ local function resample(pts, step)
         local a, b = pts[j], pts[j % n + 1]
         local t = (d - cum[j]) / math.max(1e-9, cum[j + 1] - cum[j])
         out[#out + 1] = { x = a.x + (b.x - a.x) * t, y = a.y + (b.y - a.y) * t, s = d,
-            layer = a.layer, drive = a.drive, roll = a.roll } -- roll not blended: it wraps at 2 pi
+            layer = a.layer, drive = a.drive, speed = a.speed, roll = a.roll } -- roll not blended: wraps at 2 pi
     end
     -- tangents (central difference) and normals (to the right of travel: y down, so (-ty, tx))
     local m = #out
@@ -391,7 +444,7 @@ local function addCart()
             local wy = p.y + p.ty * along + p.ny * across
             local wheel = love.physics.newBody(world, wx, wy, 'dynamic')
             local wf = love.physics.newFixture(wheel, love.physics.newCircleShape(WHEEL_R), WHEEL_DENSITY)
-            wf:setFriction(0.8)
+            wf:setFriction(0.05) -- low: grippy wheels skid each time the cart swaps walls (not the main loss, though)
             love.physics.newRevoluteJoint(body, wheel, wx, wy, false)
             bodies[#bodies + 1], fixtures[#fixtures + 1] = wheel, wf
             wheels[#wheels + 1] = wheel
@@ -417,8 +470,9 @@ local function startOver()
     local c = check()
     removeMovers()
     c.stats = newStats()
-    for _ = 1, CARTS do addCart() end
-    for _ = 1, MARBLES do addMarble() end
+    local course = COURSES[c.course] or COURSES.knikkerbaan
+    for _ = 1, course.carts do addCart() end
+    for _ = 1, course.marbles do addMarble() end
 end
 
 -- every body of a mover to (x, y), lined up with the pipe there, at rest
@@ -440,7 +494,7 @@ end
 -- along the pipe: drive to a speed (DRIVES), the whole mover's mass at its main body
 local function drive(m, p, vt, gy)
     local d = DRIVES[p.drive]
-    local a = d.gain * (d.speed - vt)
+    local a = d.gain * ((p.speed or d.speed) - vt)
     if p.drive == 'hoist' then
         a = a - gy * p.ty
     elseif p.drive == 'brake' then
@@ -473,10 +527,12 @@ local function updateMover(c, m, dt, gy)
     -- the layer by arc position: the point's own layer changes at a transition's middle, where
     -- both layers' walls are; done here after the step, not in a contact callback (world locked)
     if p.layer ~= m.layer then
+        m.wasLayer = m.layer
         setLayer(m, p.layer)
         c.stats.switches = c.stats.switches + 1
         -- a cart that made it over the loop's top (A to B there)
-        if m.kind == 'cart' and p.layer == 'B' and math.abs(p.y - 1900) < 100 and i > before then
+        -- (both courses go from A to B only over a loop's top)
+        if m.kind == 'cart' and p.layer == 'B' and m.wasLayer == 'A' and i > before then
             c.stats.loops = c.stats.loops + 1
         end
     end
@@ -781,22 +837,44 @@ end
 
 -- ─── Scene ───
 
+-- the course from state.tracksSpike.course: its waypoints, vanishing point, depths
+local function useCourse(c)
+    c.course = COURSES[c.course] and c.course or 'knikkerbaan'
+    local course = COURSES[c.course]
+    WAYPOINTS = course.waypoints
+    VANISH_X, VANISH_Y = course.vanish[1], course.vanish[2]
+    LAYER_DEPTH = course.depth or DEFAULT_DEPTH
+    return course
+end
+
+local function showWhole(course)
+    cam:setScale(course.camera[3])
+    cam:setTranslation(course.camera[1], course.camera[2])
+end
+
+local function destroyAll(c)
+    for _, m in ipairs(c.movers or c.marbles or {}) do
+        for _, b in ipairs(m.bodies or { m.body }) do
+            if alive(b) then b:destroy() end
+        end
+    end
+    c.movers = {}
+    if c.track and alive(c.track.body) then c.track.body:destroy() end
+    c.track = nil
+end
+
 function s.onStart()
     worldState.paused = false
     local c = check()
-    -- a track from an older version of this script (other course, marbles only): built again
-    if not c.movers or (c.track and c.track.half ~= HALF) then
-        for _, m in ipairs(c.movers or c.marbles or {}) do
-            for _, b in ipairs(m.bodies or { m.body }) do
-                if alive(b) then b:destroy() end
-            end
-        end
-        if c.track and alive(c.track.body) then c.track.body:destroy() end
-        state.tracksSpike = nil
-        c = check()
+    -- a track from an older version of this script (marbles only, a narrower pipe): built again
+    if not c.movers or (c.track and (c.track.half ~= HALF or c.track.course ~= c.course)) then
+        destroyAll(c)
     end
+    local course = useCourse(c)
+    if not c.track then showWhole(course) end
+    if c.follow == nil then c.follow = course.follow or false end
     makeTrack()
-    c.track.half = HALF
+    c.track.half, c.track.course = HALF, c.course
     if #c.movers == 0 then startOver() end
 end
 
@@ -808,6 +886,22 @@ function s.onUnload()
     state.tracksSpike = nil
 end
 
+-- the camera rides with the first cart (until you touch, drag or zoom)
+local function follow(c)
+    if not c.follow or love.mouse.isDown(1, 2, 3) or #love.touch.getTouches() > 0 then return end
+    for _, m in ipairs(c.movers) do
+        if m.kind == 'cart' and alive(m.body) then
+            local x, y = m.body:getPosition()
+            local k = 1 - DEPTH_SHRINK * c.track.line[m.index].depth
+            x, y = VANISH_X + (x - VANISH_X) * k, VANISH_Y + (y - VANISH_Y) * k
+            cam:setScale(0.35)
+            local tx, ty = cam:getTranslation()
+            cam:setTranslation(tx + (x - tx) * 0.08, ty + (y - ty) * 0.08)
+            return
+        end
+    end
+end
+
 function s.update()
     local c = check()
     if not (c.track and alive(c.track.body)) then return end
@@ -817,13 +911,27 @@ function s.update()
     for _, m in ipairs(c.movers) do
         if alive(m.body) then updateMover(c, m, dt, gy) end
     end
+    follow(c)
 end
 
 function s.onKeyPress(key)
+    local c = check()
     if key == 'm' then addMarble() end
     if key == 'c' then addCart() end
     if key == 'r' then startOver() end
     if key == 'p' then worldState.paused = not worldState.paused end
+    if key == 'f' then
+        c.follow = not c.follow
+        if not c.follow then showWhole(COURSES[c.course]) end
+    end
+    if key == 'n' then -- the next course
+        local index = 1
+        for k, name in ipairs(COURSE_ORDER) do if name == c.course then index = k end end
+        destroyAll(c)
+        c.course = COURSE_ORDER[index % #COURSE_ORDER + 1]
+        c.follow = nil
+        s.onStart()
+    end
 end
 
 return s
