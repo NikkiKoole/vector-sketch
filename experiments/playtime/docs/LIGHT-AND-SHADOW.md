@@ -45,7 +45,7 @@ fade, a sun, but the panel can't set 0).
   (Claude first had it off, from screenshots: the crayon strokes looked muddier). Night looks best: as drawn
   they sat bright in the dark. By day a little darker than drawn (the sun or sky could go up).
   Nikki: "looks really nice!" (2026-11-06, seen without the clay).
-- [ ] **LS6. Contact shadows.** A soft dark patch under what rests on something (`DEPTH-LAYERS.md`).
+- [x] **LS6. Contact shadows.** A soft dark patch under what rests on something (`DEPTH-LAYERS.md`).
   Built 2026-11-06, for Nikki to judge: `src/contact-shadows.lua`, on while a scene sets
   `state.contactShadows` (light-grass-check: h, how dark by the time of day). A caster (of a Mipo only
   its feet, hands and torso) finds the up-facing surface under it with three short rays; the shadow
@@ -55,4 +55,8 @@ fade, a sun, but the panel can't set 0).
   Mipo standing on the stone's square). Deep enough to reach past a drawn outline. Drawn just above
   the surface's own pictures (state.drawSplits). The scene's stones got their pictures' outlines as
   collision shapes (shape8-dict), so things stand on the drawn stone (spec/contact-shadows_spec.lua).
+  Nikki: "its nice" (2026-11-06); it fades out as a thing rises (by design, it's about touching),
+  where you still want a shadow: that one belongs on the backdrop, LS7.
 - [ ] **LS7. Cast shadows.** Bodies throwing 2D shadows away from a lamp onto what's behind them.
+  Nikki (2026-11-06): the shadow you still want when the contact shadow has faded (a thing lifted or
+  jumping) is this one, on the vertical plane behind: the backdrop.
