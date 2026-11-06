@@ -143,7 +143,10 @@
                 "bgHex":"000000ff",
                 "fgURL":"mipo/body/body-03-mask.png"
               },
-              "plasticine":true
+              "plasticine":true,
+              "plasticineLightGain":0.5,
+              "plasticineLightZ":0.35,
+              "plasticineFormRadius":0.35
             },
             "label":""
           }
@@ -197,7 +200,10 @@
                 "bgHex":"000000ff",
                 "fgURL":"mipo/body/body-03-mask.png"
               },
-              "plasticine":true
+              "plasticine":true,
+              "plasticineLightGain":0.5,
+              "plasticineLightZ":0.35,
+              "plasticineFormRadius":0.35
             },
             "label":""
           }
@@ -251,7 +257,10 @@
                 "bgHex":"000000ff",
                 "fgURL":"mipo/body/body-03-mask.png"
               },
-              "plasticine":true
+              "plasticine":true,
+              "plasticineLightGain":0.5,
+              "plasticineLightZ":0.35,
+              "plasticineFormRadius":0.35
             },
             "label":""
           }
@@ -305,7 +314,10 @@
                 "bgHex":"000000ff",
                 "fgURL":"mipo/body/body-03-mask.png"
               },
-              "plasticine":true
+              "plasticine":true,
+              "plasticineLightGain":0.5,
+              "plasticineLightZ":0.35,
+              "plasticineFormRadius":0.35
             },
             "label":""
           }
@@ -348,7 +360,7 @@
             "subtype":"light",
             "extra":{
               "intensity":1,
-              "range":500,
+              "range":5000,
               "lightType":"directional",
               "colorHex":"fff2d9ff"
             },

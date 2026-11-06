@@ -7,7 +7,8 @@
 -- body's angle, so the turning turf builds its two SpriteBatches again every frame; the counter
 -- top left shows how many are made per second (the still ground: none).
 -- keys: r lamp range 500 / 5000   t directional / point   s turf spinning or not
--- Trying more light on the boxes (src/render/shaders.lua; the defaults draw as before):
+-- Trying more light on the boxes (src/render/shaders.lua; the defaults draw as before). The scene starts
+-- at the strongest (range 5000, g 0.5, z 0.35, f 0.35); 0 shows them as every other scene draws them:
 --   g gain: how much the light brightens / darkens (0 = as before, x0.82..x1.09)
 --   z how much the light comes from the front (0.9 as before; lower: its side shows more)
 --   f form: how far in from the outline the shape rounds (0.08 as before; more: the middle bulges)
