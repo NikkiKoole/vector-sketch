@@ -1362,6 +1362,9 @@ local LOOP_BARS = { satie = bookSatieBar, ambient = bookAmbientBar, score = book
     end,
     brew = function(synth, t0, song, b)
         return require('src.music-brew').bookBar(play, remember, synth, t0, song, b)
+    end,
+    brewjam = function(synth, t0, song, b)
+        return require('src.music-brewjam').bookBar(play, remember, synth, t0, song, b)
     end }
 
 -- strum's guitar: the strings of a chord's barre grip, low to high (nil = damped)

@@ -644,6 +644,9 @@ D.styles = {
     -- feel (beat notes early, the long notes on the and late, damped shorts) over a rigid sampler kit; the
     -- music panel's 'humanize' row plays it plainly (src/music-brew.lua, MUSIC-ANALYSIS.md Song 3)
     brew = { loop = 'brew', bpm = { 96, 100 }, swing = 0.5 },
+    -- brewjam: improvisations on brew, a new riff and its chords each song by the rules Mystic Brew works by
+    -- (the push, the held top note, colour voicings), played by brew's player (src/music-brewjam.lua)
+    brewjam = { loop = 'brewjam', bpm = { 94, 102 }, swing = 0.5 },
     jam = { loop = 'jam', bpm = 120, swing = 0.5,
         groups = { 'Electro', 'Hip Hop', 'Breaks', 'Disco', 'Funk', 'Brushes' },
         bpms = { Electro = { 118, 128 }, ['Hip Hop'] = { 86, 94 }, Breaks = { 96, 108 }, Disco = { 116, 124 },

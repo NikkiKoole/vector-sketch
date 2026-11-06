@@ -54,7 +54,7 @@ add('jam-breaks-long', { style = 'jam', seed = 1, seconds = 400, bumps = BUSY, j
 -- Every other style: calm with the ideas off (the default), busy with every idea at 'some' and the world's
 -- moments answered, and busy with every idea at 'lots'; the humanized players plain too; the live set.
 -- ideas = 'some' / 'lots': every idea the style has (music-styles' ideasOf) at that level.
-local STYLES = { 'acid', 'ambient', 'bachprelude', 'ballad', 'bethena', 'bossa', 'brew', 'buymode', 'carrelage', 'citypop',
+local STYLES = { 'acid', 'ambient', 'bachprelude', 'ballad', 'bethena', 'bossa', 'brew', 'brewjam', 'buymode', 'carrelage', 'citypop',
                  'dumont', 'dusk', 'gershwin2', 'gnossienne', 'guaraldi', 'gymnopedie', 'herbs', 'island', 'jingle',
                  'lofi', 'parlour', 'puppetmaker', 'rollo', 'satie', 'sesame', 'strum', 'supermarket', 'tapisserie',
                  'traumerei', 'upright', 'vibesnight', 'wave' }
@@ -65,7 +65,7 @@ for _, style in ipairs(STYLES) do
                             impacts = { { 33, 0.7 }, { 61, 0.95 } }, moments = MOMENTS, world = STINGERS })
     add(style .. '-lots', { style = style, seed = 3, seconds = 120, bumps = RISE_FALL, ideas = 'lots' })
 end
-for _, style in ipairs({ 'parlour', 'upright', 'brew', 'citypop', 'vibesnight', 'dusk', 'wave' }) do
+for _, style in ipairs({ 'parlour', 'upright', 'brew', 'brewjam', 'citypop', 'vibesnight', 'dusk', 'wave' }) do
     add(style .. '-plain', { style = style, seed = 2, seconds = 90, bumps = RISE_FALL, ideas = 'some',
                              humanize = false })
 end

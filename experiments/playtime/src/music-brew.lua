@@ -122,12 +122,17 @@ local function defineShapes(synth)
     if synth.defineShape(SH.close, { 0, 200 }, { 1, 0 }, 'fast') then state.music.brewShapes = synth.audioTime end
 end
 
-function lib.plan(song, _style, addSections)
+-- the sections of lib.FORM, each bar's harmony from chords (three, one a bar of the riff)
+function lib.addForm(song, addSections, chords)
     local list = {}
     for _, entry in ipairs(lib.FORM) do
-        list[#list + 1] = { entry[1], entry[2], function(j) return lib.CHORDS[j % 3 + 1] end, entry[3] }
+        list[#list + 1] = { entry[1], entry[2], function(j) return chords[j % 3 + 1] end, entry[3] }
     end
     addSections(song, list)
+end
+
+function lib.plan(song, _style, addSections)
+    lib.addForm(song, addSections, lib.CHORDS)
     -- always in Eb, Electric Relaxation's pitch: the riff 2 down from Mystic Brew's F (Nikki 2026-11-05: the
     -- set's keys moved it up, in Ab it sat too high; pinned to the record's)
     song.key = 3
@@ -149,10 +154,11 @@ local function bookBass(play, synth, t0, song, b, roles, h)
     local lo, hi = pass * 4, pass * 4 + 4
     local shift = song.brew.shift
     if pass == 0 and h then song.brew.passGain = gauss(0.5) end -- each pass a little louder or softer
-    for k, n in ipairs(lib.RIFF) do
+    local riff = song.brew.riff or lib.RIFF -- brewjam's improvised one, or Mystic Brew's
+    for k, n in ipairs(riff) do
         local semi, len, short, feel, acc = n[2], n[3], n[4], n[5], n[6]
         local pos = (n[1] + OFFSET) % 12
-        local final = roles.ending and k == #lib.RIFF
+        local final = roles.ending and k == #riff
         if pos >= lo and pos < hi and (final or not roles.ending) then
             local midi = 41 + semi + shift
             local s = math.floor((pos - lo) * 4 + 0.5) -- 16th step in the bar
@@ -186,7 +192,7 @@ local function bookBass(play, synth, t0, song, b, roles, h)
     end
     -- about one dead note a pass, off the riff (not in the ending)
     if h and not roles.ending then
-        for _, g in ipairs(lib.GHOSTS) do
+        for _, g in ipairs(song.brew.ghosts or lib.GHOSTS) do
             local pos = (g[1] + OFFSET) % 12
             if pos >= lo and pos < hi and love.math.random() < 0.2 then
                 local at = t0 + (pos - lo) * song.beat + gauss(0.014)
@@ -279,10 +285,12 @@ function lib.bookBar(play, remember, synth, t0, song, b)
     local left = song.barSection[b].bars - song.barIndex[b]
     local swell = roles.swell and left <= 2
     if roles.band or roles.organ then -- the organ a hair behind the grid, its keys together
-        bookChords(play, synth, t0, song, b, lib.ORGAN, 'keys', 'brewOrgan', h, 0.008, 0.002, 4, swell and 1 or 0.7)
+        bookChords(play, synth, t0, song, b, song.brew.organ or lib.ORGAN, 'keys', 'brewOrgan', h, 0.008, 0.002, 4,
+                   swell and 1 or 0.7)
     end
     if roles.band and not (swell and left == 1) then -- the guitar further behind, a quick down-strum
-        bookChords(play, synth, t0, song, b, lib.GUITAR, 'guitar', 'brewGuitar', h, 0.018, 0.012, 4, 0.75)
+        bookChords(play, synth, t0, song, b, song.brew.guitar or lib.GUITAR, 'guitar', 'brewGuitar', h, 0.018, 0.012,
+                   4, 0.75)
     end
     if roles.bells then bookBells(play, synth, t0, song, b, roles.bells) end
     if roles.drums then bookDrums(play, synth, t0, song) end
