@@ -28,6 +28,8 @@ local plasticineShader = love.graphics.newShader([[
     uniform float sssPow;        // SSS falloff: lower = wider softer scatter
     uniform float sssStrength;   // SSS intensity (replaces spec for clay look)
     uniform float terminatorPow; // lambert falloff exponent: higher = tighter shadow edge
+    uniform float lightZ;        // how much the lights come from the front (0.9: mostly; lower: more from the side)
+    uniform float lightGain;     // light's brightness swing, darkest 1-gain to brightest 1+gain (0: from strength)
     uniform vec3  warmColor;     // lit-side chromatic tint (e.g. amber)
     uniform vec3  coolColor;     // shadow-side chromatic tint = environment/ambient color
     uniform int   lightCount;    // number of active lights (0 → baked default)
@@ -122,7 +124,7 @@ local plasticineShader = love.graphics.newShader([[
             // Thin-edge weight: silhouette areas scatter more (less avgAlpha = thinner clay)
             float thinEdge = 1.0 - avgAlpha;
             if (lightCount <= 0) {
-                vec3 L = normalize(vec3(-0.7, -0.7, 0.9));
+                vec3 L = normalize(vec3(-0.7, -0.7, lightZ));
                 float lambert = pow(dot(n, L) * 0.5 + 0.5, terminatorPow);
                 totalLight = vec3(lambert);
                 weightSum  = lambert;
@@ -138,9 +140,9 @@ local plasticineShader = love.graphics.newShader([[
                         float dist  = length(delta);
                         atten = 1.0 - smoothstep(0.0, max(lightRange[i], 1.0), dist);
                         vec2 dir2D = delta / max(dist, 0.001);
-                        L = normalize(vec3(dir2D, 0.9));
+                        L = normalize(vec3(dir2D, lightZ));
                     } else {
-                        L = normalize(vec3(lightDir[i], 0.9));
+                        L = normalize(vec3(lightDir[i], lightZ));
                         if (lightRange[i] > 0.0) {
                             float dist = length(lightLocalPos[i] - varVertexPos);
                             atten = 1.0 - smoothstep(0.0, lightRange[i], dist);
@@ -161,7 +163,8 @@ local plasticineShader = love.graphics.newShader([[
             float attenBlend = clamp(weightSum, 0.0, 1.0);
             vec3 rawTint = (weightSum > 0.001) ? totalLight / weightSum : vec3(1.0);
             tint  = mix(coolColor, rawTint * warmColor, attenBlend);
-            shade = mix(1.0 - strength, 1.0 + strength * 0.5, attenBlend);
+            shade = (lightGain > 0.0) ? mix(1.0 - lightGain, 1.0 + lightGain, attenBlend)
+                                      : mix(1.0 - strength, 1.0 + strength * 0.5, attenBlend);
         }
 
         float pit = mix(1.0 - strength * 0.25, 1.0, smoothstep(0.15, 0.55, h));
@@ -193,6 +196,8 @@ lib.plasticineLight       = { -0.7, -0.7 }
 lib.plasticineFormStrength = 2.0
 lib.plasticineFormRadius   = 0.08
 lib.plasticineUseLighting  = true
+lib.plasticineLightZ       = 0.9  -- lights mostly from the front; lower: the side they come from shows more
+lib.plasticineLightGain    = 0    -- 0: the light swings brightness by strength (x0.82..x1.09); else x(1-g)..x(1+g)
 lib.plasticineMottleStrength = 0.0
 lib.plasticineMottleScale    = 3.0
 lib.plasticineSpecPow      = 25.0
@@ -225,6 +230,8 @@ local hairsShader = love.graphics.newShader([[
     uniform float sssPow;
     uniform float sssStrength;
     uniform float terminatorPow;
+    uniform float lightZ;
+    uniform float lightGain;
     uniform vec3  warmColor;
     uniform vec3  coolColor;
     uniform int   lightCount;
@@ -316,7 +323,7 @@ local hairsShader = love.graphics.newShader([[
             vec3  V = vec3(0.0, 0.0, 1.0);
             float thinEdge = 1.0 - avgAlpha;
             if (lightCount <= 0) {
-                vec3 L = normalize(vec3(-0.7, -0.7, 0.9));
+                vec3 L = normalize(vec3(-0.7, -0.7, lightZ));
                 float lambert = pow(dot(n, L) * 0.5 + 0.5, terminatorPow);
                 totalLight = vec3(lambert);
                 weightSum  = lambert;
@@ -331,9 +338,9 @@ local hairsShader = love.graphics.newShader([[
                         vec2  delta = lightLocalPos[i] - varVertexPos;
                         float dist  = length(delta);
                         atten = 1.0 - smoothstep(0.0, max(lightRange[i], 1.0), dist);
-                        L = normalize(vec3(delta / max(dist, 0.001), 0.9));
+                        L = normalize(vec3(delta / max(dist, 0.001), lightZ));
                     } else {
-                        L = normalize(vec3(lightDir[i], 0.9));
+                        L = normalize(vec3(lightDir[i], lightZ));
                         if (lightRange[i] > 0.0) {
                             float dist = length(lightLocalPos[i] - varVertexPos);
                             atten = 1.0 - smoothstep(0.0, lightRange[i], dist);
@@ -353,7 +360,8 @@ local hairsShader = love.graphics.newShader([[
             float attenBlend = clamp(weightSum, 0.0, 1.0);
             vec3 rawTint = (weightSum > 0.001) ? totalLight / weightSum : vec3(1.0);
             tint       = mix(coolColor, rawTint * warmColor, attenBlend);
-            lightShade = mix(1.0 - strength, 1.0 + strength * 0.5, attenBlend);
+            lightShade = (lightGain > 0.0) ? mix(1.0 - lightGain, 1.0 + lightGain, attenBlend)
+                                           : mix(1.0 - strength, 1.0 + strength * 0.5, attenBlend);
         }
 
         // Rim darkening from alpha gradient
@@ -429,6 +437,8 @@ local function sendSharedLighting(shader, body, extra)
     shader:send('sssPow',        extra.plasticineSSSpow       or lib.plasticineSSSpow)
     shader:send('sssStrength',   extra.plasticineSSSstrength  or lib.plasticineSSSstrength)
     shader:send('terminatorPow', extra.plasticineTerminator   or lib.plasticineTerminator)
+    shader:send('lightZ',        extra.plasticineLightZ       or lib.plasticineLightZ)
+    shader:send('lightGain',     extra.plasticineLightGain    or lib.plasticineLightGain)
     local wr, wg, wb = color.hexToColor(extra.plasticineWarmHex or lib.plasticineWarmHex)
     local cr, cg, cb = color.hexToColor(extra.plasticineCoolHex or lib.plasticineCoolHex)
     shader:send('warmColor', {wr, wg, wb})
@@ -496,7 +506,9 @@ function lib.gatherLightsForBody(body, fx, fy)
             if ud and subtypes.is(ud, subtypes.LIGHT) then
                 local lb = f:getBody()
                 local la = lb:getAngle()
-                local wdx, wdy = math.cos(la), math.sin(la)
+                -- the body's +X is the way the light shines (its panel: aim); the shader's lambert wants
+                -- the way to the light, so the other way round (spec/light-aim_spec.lua)
+                local wdx, wdy = -math.cos(la), -math.sin(la)
                 local ldx = (wdx * cosA - wdy * sinA) * fx
                 local ldy = (wdx * sinA + wdy * cosA) * fy
                 count = count + 1

@@ -7,10 +7,45 @@
 -- body's angle, so the turning turf builds its two SpriteBatches again every frame; the counter
 -- top left shows how many are made per second (the still ground: none).
 -- keys: r lamp range 500 / 5000   t directional / point   s turf spinning or not
+-- Trying more light on the boxes (src/render/shaders.lua; the defaults draw as before):
+--   g gain: how much the light brightens / darkens (0 = as before, x0.82..x1.09)
+--   z how much the light comes from the front (0.9 as before; lower: its side shows more)
+--   f form: how far in from the outline the shape rounds (0.08 as before; more: the middle bulges)
+--   0 all three back to before
 
 local s = {}
 
 local RANGES = { 500, 5000 }
+-- each key steps through these; the first is how it was
+local TRIES = {
+    g = { key = 'plasticineLightGain', name = 'gain', values = { 0, 0.3, 0.5 } },
+    z = { key = 'plasticineLightZ', name = 'from the front', values = { 0.9, 0.6, 0.35 } },
+    f = { key = 'plasticineFormRadius', name = 'form', values = { 0.08, 0.2, 0.35 } },
+}
+local TRY_ORDER = { 'g', 'z', 'f' }
+
+-- the boxes' texfixture settings
+local function boxExtras()
+    local list = {}
+    for _, thing in ipairs(getObjectsByLabel('lit box')) do
+        for _, fixture in ipairs(thing.body:getFixtures()) do
+            local ud = fixture:getUserData()
+            if ud and ud.subtype == 'texfixture' then list[#list + 1] = ud.extra end
+        end
+    end
+    return list
+end
+
+local function current(try)
+    local extra = boxExtras()[1]
+    local v = extra and extra[try.key]
+    if v == nil then return try.values[1] end
+    return v
+end
+
+local function setAll(try, v)
+    for _, extra in ipairs(boxExtras()) do extra[try.key] = v end
+end
 
 local function lampLight()
     for _, thing in ipairs(getObjectsByLabel('lamp')) do
@@ -72,6 +107,16 @@ function s.onKeyPress(key)
             thing.body:setAngularVelocity(spinning and 0 or 0.8)
         end
     end
+    local try = TRIES[key]
+    if try then
+        local now, nextValue = current(try), try.values[1]
+        for i, v in ipairs(try.values) do
+            if math.abs(v - now) < 1e-6 then nextValue = try.values[i % #try.values + 1] end
+        end
+        setAll(try, nextValue)
+    elseif key == '0' then
+        for _, k in ipairs(TRY_ORDER) do setAll(TRIES[k], TRIES[k].values[1]) end
+    end
     if body then body:setAwake(true) end
 end
 
@@ -107,11 +152,16 @@ function s.drawUI()
     local _, extra = lampLight()
     local c = counter()
     local lines = {
-        'light-grass-check   r lamp range   t directional / point   s turf spinning',
+        'light-grass-check   r lamp range   t directional / point   s turf spinning   g z f light on the boxes',
         string.format('lamp: %s, range %d', extra and (extra.lightType or 'directional') or '-',
             extra and (extra.range or 500) or 0),
         string.format('grass: SpriteBatches made in the last second: %d', c.perSecond),
     }
+    local tries = {}
+    for _, k in ipairs(TRY_ORDER) do
+        tries[#tries + 1] = string.format('%s %s %g', k, TRIES[k].name, current(TRIES[k]))
+    end
+    table.insert(lines, 2, 'boxes: ' .. table.concat(tries, '   ') .. '   (0 as before)')
     for i, line in ipairs(lines) do
         local y = love.graphics.getHeight() - 20 - (#lines - i + 1) * 20
         love.graphics.setColor(0, 0, 0, 0.8)
