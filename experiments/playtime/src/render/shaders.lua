@@ -671,26 +671,26 @@ local function setSurfaceShader(extra, body)
     return false
 end
 
--- Gather scene LIGHT sfixtures and rotate each world-space direction into the
--- target body's local UV frame. Returns count + (buffers reused every call).
--- Capped at MAX_LIGHTS; extras silently ignored.
-function lib.gatherLightsForBody(body, fx, fy)
-    fx = fx or 1; fy = fy or 1
-    local cosA, sinA, bx, by
-    if body then
-        local a = body:getAngle()
-        cosA, sinA = math.cos(-a), math.sin(-a)
-        bx, by = body:getPosition()
-    else
-        cosA, sinA = 1, 0  -- identity: no rotation (for CT ribbons)
-        bx, by = 0, 0
-    end
-    local count = 0
-    local skipped = false
-    -- the light sfixtures only, a list the registry keeps until an sfixture comes or goes: walking all
-    -- of them for every lit part was 90% of the frame with 20 lit Mipos on an iPhone SE 2 (630 calls a
-    -- frame, 790,000 subtype checks; LIGHT-AND-SHADOW LS23). Intensity is read here, every call.
-    for _, f in ipairs(registry.sfixturesOf(subtypes.LIGHT)) do
+-- The scene's lights, worked out once a frame (lib.newFrame, from main.lua's love.draw): each one that's
+-- on, with its world direction, parsed colours, position and range. Each lit part then only turns
+-- these into its own frame. Before, every part did it per light: the angle, cos and sin, two colour
+-- strings parsed, the position (60% of setSurfaceShader with 20 lit Mipos on an iPhone SE 2,
+-- LIGHT-AND-SHADOW LS23). The numbers sent are the same as before.
+local frameLights = { stale = true, count = 0, skipped = false }
+for i = 1, MAX_LIGHTS do
+    frameLights[i] = { wdx = 0, wdy = 0, r = 1, g = 1, b = 1, intensity = 0, type = 0, gr = 0, gg = 0, gb = 0,
+        x = 0, y = 0, range = 1 }
+end
+
+function lib.newFrame()
+    frameLights.stale = true
+    lib.frameCaching = true -- from here on the game says when a frame starts
+end
+
+local function refreshFrameLights(list)
+    local count, skipped = 0, false
+    -- the light sfixtures only, a list the registry keeps until an sfixture comes or goes (LS23)
+    for _, f in ipairs(list) do
         if count >= MAX_LIGHTS then break end
         if not f:isDestroyed() then
             local ud = f:getUserData()
@@ -700,43 +700,66 @@ function lib.gatherLightsForBody(body, fx, fy)
             if ud and subtypes.is(ud, subtypes.LIGHT) and not off then
                 local lb = f:getBody()
                 local la = lb:getAngle()
+                count = count + 1
+                local L = frameLights[count]
                 -- the body's +X is the way the light shines (its panel: aim); the shader's lambert wants
                 -- the way to the light, so the other way round (spec/light-aim_spec.lua)
-                local wdx, wdy = -math.cos(la), -math.sin(la)
-                if ud.extra.lightType == 'sky' then wdx, wdy = 0, -1 end -- the way to a sky: the world's up
-                local ldx = (wdx * cosA - wdy * sinA) * fx
-                local ldy = (wdx * sinA + wdy * cosA) * fy
-                count = count + 1
-                lightDirBuf[count][1] = ldx
-                lightDirBuf[count][2] = ldy
-                local r, g, b = color.hexToColor(ud.extra.colorHex or 'ffffffff')
-                lightColorBuf[count][1] = r
-                lightColorBuf[count][2] = g
-                lightColorBuf[count][3] = b
-                lightInBuf[count]       = ud.extra.intensity or 1.0
-
-                -- Light position in the target body's local space (or world space for CTs).
-                -- Used for distance falloff by both point and directional lights.
-                lightTypeBuf[count] = LIGHT_TYPES[ud.extra.lightType] or 0
-                local gr, gg, gb = color.hexToColor(ud.extra.groundHex or '6b5a40ff')
-                lightGroundBuf[count][1], lightGroundBuf[count][2], lightGroundBuf[count][3] = gr, gg, gb
-                -- Both point and directional lights send their body-local position
-                -- so the shader can compute distance-based attenuation for both.
-                local lwx, lwy = lb:getPosition()
-                local dxw, dyw = lwx - bx, lwy - by
-                local lpx = (dxw * cosA - dyw * sinA) * fx
-                local lpy = (dxw * sinA + dyw * cosA) * fy
-                lightPosBuf[count][1] = lpx
-                lightPosBuf[count][2] = lpy
-                lightRangeBuf[count]  = ud.extra.range or 500
+                L.wdx, L.wdy = -math.cos(la), -math.sin(la)
+                if ud.extra.lightType == 'sky' then L.wdx, L.wdy = 0, -1 end -- a sky: the world's up
+                L.r, L.g, L.b = color.hexToColor(ud.extra.colorHex or 'ffffffff')
+                L.intensity = ud.extra.intensity or 1.0
+                L.type = LIGHT_TYPES[ud.extra.lightType] or 0
+                L.gr, L.gg, L.gb = color.hexToColor(ud.extra.groundHex or '6b5a40ff')
+                L.x, L.y = lb:getPosition()
+                L.range = ud.extra.range or 500
                 -- a back light has no falloff: its slot carries how far in its rim reaches (uv)
-                if ud.extra.lightType == 'back' then lightRangeBuf[count] = ud.extra.rimWidth or 0.045 end
+                if ud.extra.lightType == 'back' then L.range = ud.extra.rimWidth or 0.045 end
             end
         end
     end
+    frameLights.count, frameLights.skipped, frameLights.stale = count, skipped, false
+    frameLights.list, frameLights.listLength = list, #list
+end
+
+-- Gather scene LIGHT sfixtures and rotate each world-space direction into the
+-- target body's local UV frame. Returns count + (buffers reused every call).
+-- Capped at MAX_LIGHTS; extras silently ignored.
+function lib.gatherLightsForBody(body, fx, fy)
+    fx = fx or 1; fy = fy or 1
+    -- outside the game's frames (a spec) nothing calls newFrame: worked out each time; within one,
+    -- again when a light comes or goes
+    local list = registry.sfixturesOf(subtypes.LIGHT)
+    if frameLights.stale or not lib.frameCaching or list ~= frameLights.list or #list ~= frameLights.listLength then
+        refreshFrameLights(list)
+    end
+    local cosA, sinA, bx, by
+    if body then
+        local a = body:getAngle()
+        cosA, sinA = math.cos(-a), math.sin(-a)
+        bx, by = body:getPosition()
+    else
+        cosA, sinA = 1, 0  -- identity: no rotation (for CT ribbons)
+        bx, by = 0, 0
+    end
+    local count = frameLights.count
+    for i = 1, count do
+        local L = frameLights[i]
+        lightDirBuf[i][1] = (L.wdx * cosA - L.wdy * sinA) * fx
+        lightDirBuf[i][2] = (L.wdx * sinA + L.wdy * cosA) * fy
+        lightColorBuf[i][1], lightColorBuf[i][2], lightColorBuf[i][3] = L.r, L.g, L.b
+        lightInBuf[i] = L.intensity
+        lightTypeBuf[i] = L.type
+        lightGroundBuf[i][1], lightGroundBuf[i][2], lightGroundBuf[i][3] = L.gr, L.gg, L.gb
+        -- the light's position in the body's own frame (world for ribbons): the falloff of point and
+        -- directional lights alike
+        local dxw, dyw = L.x - bx, L.y - by
+        lightPosBuf[i][1] = (dxw * cosA - dyw * sinA) * fx
+        lightPosBuf[i][2] = (dxw * sinA + dyw * cosA) * fy
+        lightRangeBuf[i] = L.range
+    end
     -- every light off: one dark light, not none (no light at all means the shader's own default light,
     -- which would light up a scene whose lights were all turned off)
-    if count == 0 and skipped then
+    if count == 0 and frameLights.skipped then
         count = 1
         lightInBuf[1], lightTypeBuf[1], lightRangeBuf[1] = 0, 0, 0
     end

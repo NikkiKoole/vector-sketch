@@ -125,6 +125,7 @@ local blobs = require('src.blob') -- blob rims (SOFTBODY sfixtures)
 local contactShadows = require('src.contact-shadows') -- off unless a scene sets state.contactShadows
 local backdropShadows = require('src.backdrop-shadows') -- off unless a scene sets state.backdropShadows
 local projectedShadows = require('src.projected-shadows') -- off unless a scene sets state.projectedShadows
+local shaders = require('src.render.shaders')
 local shadowSilhouettes = require('src.shadow-silhouettes') -- the world drawn once for both
 local liquid = require('src.liquid')
 local signals = require('src.signals')
@@ -310,6 +311,7 @@ function love.draw()
     end
 
     box2dDrawTextured.makeCombinedImages()
+    shaders.newFrame() -- the lights worked out once this frame, not per lit part (src/render/shaders.lua)
     --end
     cam:push()
     love.graphics.setColor(1, 1, 1, 1)
