@@ -23,7 +23,7 @@ lib.rows = {
           if not s.floor then return 'no floor: no 3D shadows (full)' end
           return 'floor: 3D shadows at full'
       end },
-    { kind = 'action', label = 'floor = under the Mipos',
+    { kind = 'action', label = 'floor at feet', -- where the Mipos' feet are
       run = function() sceneLight.floorUnderMipos() end },
     { kind = 'action', label = 'no floor',
       run = function(_, s) s.floor = nil end },

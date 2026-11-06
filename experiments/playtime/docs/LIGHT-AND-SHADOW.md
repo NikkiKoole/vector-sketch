@@ -213,6 +213,9 @@ fade, a sun: the panel's `fades` switch, LS4).
   drawn into the stencil ~85 times a frame), the same picture. Measured after: contact shadows add
   +1.9..+2.4 ms over off (was +2.9), near the noise: that install's off was 8.8-9.6 ms (4.6 before; fresh
   random Mipos each install, and the phone warm after an hour of runs).
+  **The floor on the stage (2026-11-06):** while the settings panel's light section is open, the floor is
+  drawn (src/floor-guide.lua): a line where things stand, a dashed one at the wall's foot, the band between
+  tinted; drag the first to move the floor, the second to change the depth (spec/floor-guide_spec.lua).
   **Before measuring more:** the same 20 Mipos every time (a seed: createCharacter +
   randomizeMipoConstrained after love.math.setRandomSeed), and a cool phone; else a ~1 ms win drowns. Next: measure each level on the phone (`./playtime.sh bench device`, a room of ~20 Mipos);
   then the details behind the button's arrow (time of day, which wall, a floor picker drawn on stage).

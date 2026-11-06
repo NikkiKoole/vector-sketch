@@ -156,6 +156,7 @@ require('src.physics.physics-callbacks') -- fills state.physicsCallbacks, wired 
 local sceneLoader = require('src.scene-loader')
 local editorRenderer = require('src.editor-render')
 local transformHandles = require('src.transform-handles')
+local floorGuide = require('src.floor-guide')
 local sceneLight = require('src.scene-light')
 local rightColumn = require('src.ui.right-column')
 
@@ -392,6 +393,7 @@ function love.draw()
         editorRenderer.renderSteinerOverlay()
         editorRenderer.renderSelectionBox()
         transformHandles.draw()
+        floorGuide.draw() -- the light floor while the settings' light section is open
         if state.world.paused then
             local selected = state.selection.selectedObj and state.selection.selectedObj.body
             signals.drawWires(selected)
