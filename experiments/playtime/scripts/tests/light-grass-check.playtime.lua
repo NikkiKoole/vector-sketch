@@ -8,6 +8,7 @@
 -- keys:
 --   d the day-night cycle (a day in DAY_SECONDS: the sun rises on the left at 6, sets on the right at 18,
 --     the moon the other way round the night; night, dawn, day, golden hour and dusk blended by the hour)
+--   t the day faster: a day in 120 / 30 / 10 seconds (turns the cycle on)
 --   , . an hour back / on   1 noon   2 dusk (19:00)   3 midnight   4 only the turning lamp (r: its range)
 --   m the Mipos lit like the shapes / as drawn (their picture parts, limbs and torso; not the face)
 --   c the Mipos' clay (grain, dents, sheen) off / on (on to start): off, the light and roundness only
@@ -55,6 +56,8 @@ local TIMELINE = { { 0, 'night' }, { 5, 'night' }, { 6.5, 'dawn' }, { 8.5, 'day'
     { 19, 'dusk' }, { 20.5, 'night' }, { 24, 'night' } }
 local HOUR_KEYS = { ['1'] = 12, ['2'] = 19, ['3'] = 0 } -- day, dusk, night
 local DAY_SECONDS = 120 -- a whole day, with the cycle running
+-- t: the day faster (the sun swinging round to watch the shadows move), seconds a day
+local DAY_SPEEDS = { 120, 30, 10 }
 -- the sun and the moon on an arc over the scene: rising on the left, setting on the right, shining at
 -- its middle
 local ARC = { x = -300, y = 450, r = 1150, squash = 0.8 }
@@ -590,7 +593,8 @@ end
 
 function s.update(dt)
     local c = look()
-    if c.cycle and not c.lampOnly then c.hour = (c.hour + (dt or 0) * 24 / DAY_SECONDS) % 24 end
+    local daySeconds = DAY_SPEEDS[c.daySpeed or 1] or DAY_SECONDS
+    if c.cycle and not c.lampOnly then c.hour = (c.hour + (dt or 0) * 24 / daySeconds) % 24 end
     applyTime()
     lightMipos()
     local L = c.now or LAMP_ONLY
@@ -642,6 +646,9 @@ function s.onKeyPress(key)
         for i, d in ipairs(LAMP_DEPTHS) do if d <= now then at = i end end
         at = math.max(1, math.min(#LAMP_DEPTHS, at + (key == ']' and 1 or -1)))
         c.lampDepth = LAMP_DEPTHS[at]
+    elseif key == 't' then
+        c.daySpeed = (c.daySpeed or 1) % #DAY_SPEEDS + 1
+        c.cycle, c.lampOnly = true, false
     elseif key == 'y' then
         c.sunTowards = (c.sunTowards or 1) % #SUN_TOWARDS + 1
     elseif key == 'j' then
@@ -770,7 +777,7 @@ function s.drawUI()
         'd day-night  , . hour  1 day 2 dusk 3 night 4 lamp  k sky  l back  h shadows  w wall  q grit  m Mipos  c clay',
         'now: ' .. (c.lampOnly and 'the turning lamp'
             or string.format('%02d:%02d%s', math.floor(c.hour), math.floor(c.hour % 1 * 60),
-                c.cycle and ' (cycle)' or ''))
+                c.cycle and string.format(' (cycle, a day in %ds, t)', DAY_SPEEDS[c.daySpeed or 1]) or ''))
             .. (c.skyOff and ', sky light off' or ', sky light on')
             .. (c.shadowsOff and ', no shadows' or ', shadows')
             .. (c.wallShadowsOff and ', none on the wall' or ', on the wall')
