@@ -4,6 +4,8 @@ status: done
 
 S1–S4 done 2026-10-29. Maybe later: randomize turns it on for tall torsos.
 
+Since 2026-11-06 a spine can have lobes too (soft bodies at the torso's ends, each on its own band): `docs/SOFT-TORSO.md`.
+
 Tall torsos (P4re5) are one rigid body with one static picture. A spine splits the torso
 into 2-3 bones that bend a little against each other, and the one picture bends with them.
 Optional per Mipo, like potato head and neck segments.

@@ -160,6 +160,7 @@ into named steps, checked by a snapshot or the music trace before and after.
 - `src/mipo-band.lua` — the Mipos and the music: plays the music's 'sample' notes (Mipos sing pi/po), breath/doink in the puppetmaker style; `src/voice-lab.lua` — test bench for Mipo voices on the synth (settings → voice lab)
 - `src/mipo-actions.lua` — breathe / jump / ragdoll / flip / lookAt / pointAt
 - `src/spine-skin.lua` — Mipo spine: one torso picture bent over the torso bands (`docs/MIPO-SPINE.md`)
+- `src/torso-lobes.lua` — soft torso: lobe bodies on springs at a torso's ends, found from its outline, with or without a spine; `src/torso-jiggle.lua` the drawn-only version (`docs/SOFT-TORSO.md`)
 - `src/signals.lua` — contraption wiring: triggers send a named signal, receivers act on it (behaviors)
 - `src/doors.lua` — DOOR behavior: tap open, drop a Mipo on it, go into another room (`docs/WORLDS-AND-DOORS.md`)
 - `src/grass.lua`, `src/liquid.lua` — grass edge and level-water sfixtures
