@@ -82,15 +82,17 @@ lib.GUITAR = {
     { 11.0, 61, 65, 68, 73 },  -- C# F G# C# over C#
 }
 
--- the bells (Eb, Electric Relaxation's pitch: as heard there), { beat in the bar, midi, midi }. The verse: the low
--- bell's fifth in 8ths a little late (~a 16th), once a pass in its second bar. The intro and break: two bars,
--- the high bell on 2, 2&, 4, 4&, the middle one on 3, 3&; then the verse figure, the middle bell, the high one
-local LOW, MID, HIGH = { 87, 94 }, { 88 }, { 92, 100 }
+-- the bells: a pair, like an agogo's (measured per hit 2026-11-06: every intro hit the same two partials, 1635
+-- and 2604 Hz, ratio 1.59, an inharmonic bell, not an arpeggio, its louder partial changing from hit to hit;
+-- the verse's a lower one, 1241 + 1863 Hz; both a quarter tone flat of the loop, which sounded off). One pitch
+-- each, in tune (Nikki: 'let them have 1 pitch, be rhythmic'): the high bell Ab6, the low one the key's Eb6.
+-- { beat in the bar, bell, volume }. The intro and break: the high bell on the beats ~35 ms late, a soft grace
+-- just before 4 and a soft and-of-4. The verse: the low bell in 8ths a little late, once a pass, second bar.
+local HIGH, LOW = 92, 87
 lib.BELLS = {
-    verse = { { 0.2, LOW }, { 0.7, LOW }, { 1.2, LOW }, { 1.7, LOW }, { 2.2, LOW }, { 2.7, LOW } },
-    introA = { { 1, HIGH }, { 1.5, HIGH }, { 2, MID }, { 2.5, MID }, { 3, HIGH }, { 3.5, HIGH } },
-    introB = { { 0.2, LOW }, { 0.7, LOW }, { 1.2, LOW }, { 1.7, LOW }, { 2.25, MID }, { 2.75, MID },
-               { 3, HIGH }, { 3.5, HIGH } },
+    verse = { { 0.2, LOW, 3 }, { 0.7, LOW, 3 }, { 1.2, LOW, 3 }, { 1.7, LOW, 3 }, { 2.2, LOW, 3 }, { 2.7, LOW, 3 } },
+    intro = { { 0.06, HIGH, 3 }, { 1.06, HIGH, 3 }, { 2.06, HIGH, 3 }, { 2.9, HIGH, 2 }, { 3.05, HIGH, 3 },
+              { 3.45, HIGH, 2 } },
 }
 
 lib.FORM = {
@@ -234,13 +236,10 @@ local function bookBells(play, synth, t0, song, b, kind)
         if (b - 1) % 3 ~= 1 then return end -- once a pass, in its second bar
         list = lib.BELLS.verse
     else
-        list = song.barIndex[b] % 2 == 0 and lib.BELLS.introA or lib.BELLS.introB
+        list = lib.BELLS.intro
     end
     for _, hit in ipairs(list) do
-        local t = t0 + hit[1] * song.beat
-        for _, midi in ipairs(hit[2]) do
-            play(synth, 'perc', 'brewBell', t, midi, 3, 150, math.floor(hit[1] * 4 + 0.5))
-        end
+        play(synth, 'perc', 'brewBell', t0 + hit[1] * song.beat, hit[2], hit[3], 150, math.floor(hit[1] * 4 + 0.5))
     end
 end
 

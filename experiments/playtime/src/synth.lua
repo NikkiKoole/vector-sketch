@@ -305,7 +305,7 @@ lib.patches = {
                   reverb = 0.3, level = 0.3, filter = { mode = 1, cutoff = 1200, resonance = 0 },
                   leslie = { speed = 1, drive = 0.1, balance = 0.5, doppler = 0.2, mix = 0.5 } },
     -- and the pings over Electric Relaxation's intro, break and verses (likely Outside Love's, sped up with its
-    -- drums): two bells, ~150 ms rings; each struck as its two strongest partials (a fifth, a sixth)
+    -- drums): a pair of bells, ~150 ms rings, inharmonic (the mallet's bell material makes the overtones)
     brewBell = { pool = true, wave = 'MALLET', adsr = { 0, 160, 0, 80 }, harmonics = 0.85, timbre = 0.7, morph = 0.2,
                  reverb = 0.25, level = 0.3 },
     brewGuitar = { pool = true, wave = 'GUITAR', adsr = { 2, 0, 7, 900 }, harmonics = 0.4, timbre = 0.22, morph = 0.1,
