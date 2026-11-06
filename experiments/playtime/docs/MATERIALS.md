@@ -294,3 +294,11 @@ Wet spots were looped per pixel for every part (12 spots: +2.7 ms/MP on the phon
 part is sent only the spots that reach it (wet.shaderSpots(body); limb ribbons, drawn without a body,
 still get all), so a dry part pays nothing: after a dip, 23 of a scene's 48 Mipo bodies got spots,
 25 none (spec/wet_spec.lua). Still to win if needed: fewer lights per part (the far ones).
+
+**Lighting 20 Mipos on the phone, the whole frame** (b5's measurements, iPhone SE 2, editor, paused,
+2026-11-06): the per-part Lua was the real cost, not the pixels. As drawn 7.6 ms draw; lit was 19.6
+(the lights searched for in all sfixtures per part, then gathered per light per part), 16 after the
+light list (LS23), 12.4 after the lights worked out once a frame (shaders.newFrame), 9.3 after sending
+a shader only what changed: lighting 20 Mipos ~1.8 ms, from ~9.8 that morning. 60 fps. Rule since then:
+nothing sends to the plasticine or hairs shader except through setSurfaceShader (it remembers what each
+shader last got).
