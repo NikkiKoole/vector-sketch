@@ -2,6 +2,28 @@
 
 status: active
 
+**Where it stands (2026-11-06, end of the day).** Materials are now *how Nikki's drawn pictures take
+the light*: the picture's mask, its roundness baked from the mask, one shader with a mode or a row of
+numbers per material, her outline on top. The workbench is the scene `material-check`
+(scripts/tests; its keys in the script's top comment and on its status line): 36 materials on one
+shape, leaves, smoke, a striped shape sliding behind for the see-through ones, the light at the mouse
+(b behind), x measures what each costs. Nothing is in the engine yet (MT6); it all lives in that
+scene. What we found:
+- **Drawn beats generated.** The first spike (noise only) read as "computer"; on her pictures the
+  same tricks read as made: metal, glaze, candy, velvet, wood, leather. The weakest are the cell
+  grains (stone and wet stone look like a turtle shell) and the pale ones in full sun (paper, plaster).
+- **The roundness only knows the outline**: every shape is a dome or a cushion. A brushy mask
+  (body-04's streaks) shows in shiny materials as ridges, like hammered tin. Inner shape needs
+  creases from her inner lines (MT10) or a painted height picture (MT11).
+- **See-through works** (glass, ice, bubble, clear candy, amber): what's behind, bent by the roundness.
+  It needs what's behind drawn into a canvas first, so in a real scene it rides on SH3's effects stack.
+- **The phone can afford most of it** (iPhone SE 2, MT18 below): lights, metal, gloss, see-through,
+  velvet anywhere; noise grains and fur on things, not on walls and ground; the cell grains (stucco,
+  stone, leather, tin, mud, ice) baked into a picture once, or only on small things.
+- **Next**: Nikki judges which read as hers (MT2); she draws hatching sheets, height pictures, a
+  material map and smoke puffs (THINGS-TO-DRAW A14-A17); then the liked ones become a texfixture
+  setting (MT6).
+
 Nikki's AI pictures, made for mood and **not to be used in the game** (not drawn by us, not shipped):
 `docs/inspiration/ai-materials/` (16, 2026-11-04). They show Mipo's world as a handmade
 diorama on a table. Below is what each material is made of, and how we could get it at runtime
@@ -95,16 +117,19 @@ Kinds of material, by what the shader does differently:
   lit from the front (waxy) or behind (glowing), smoke as steam / smoke / soot from the body pictures
   as puffs. p paints the light in four steps (poster paint) instead of smooth. Found: a brushy mask
   (body-04's streaks) shows as ridges in metal, like hammered tin: kept, it's the drawing.
-- [x] **MT1b. The palette** (2026-11-06, to judge): page 1 of `material-check` (v), 28 materials on one shape
+- [x] **MT1b. The palette** (2026-11-06, to judge): in `material-check`, 28 materials (36 now) on one shape
   (n another): clay, plaster, stucco, stone, paper, felt, cotton; velvet ×2, satin, suede, leather,
   rubber, wax; toy plastic, glazed pot, candy, jade, pearl, wet stone, mud; wood, varnished, brass,
   gold, copper, tin, iron. Most are one 'surface' model with settings (PALETTE in the script: wrap,
   shine, clear coat, sheen, edges darkened, light through, grain: sand / fibre / pebble / wood /
   crackle, rainbow), so a new material is a row of numbers.
-- [ ] **MT2. Judge and tune** with Nikki: which read as made by hand, which as "computer".
-- [ ] **MT3. A material map per picture** (the sneaker idea): one more picture next to outline + mask
+- [ ] **MT2. Judge and tune** with Nikki: which read as made by hand, which as "computer". Claude's
+  read from screenshots: strongest metal, glaze, plastic, candy, wood, leather, felt, plush fur,
+  the backlit leaves; weakest stone / wet stone (cell pattern), shaggy fur (more hair than fur),
+  smoke (pale clumps more than smoke), paper and plaster washed out in full sun.
+- [ ] **MT3. A material map per picture** (the sneaker idea; drawing it: THINGS-TO-DRAW A16): one more picture next to outline + mask
   saying which part is which material (leather / rubber / cloth), so one Mipo part can be two materials.
-- [ ] **MT4. The next ones**: leather, rubber, stucco, glazed pottery, wet (a wetness that comes and goes).
+- [x] **MT4. The next ones**: leather, rubber, stucco, glazed pottery (MT1b), wet (MT12).
 - [ ] **MT5. Leaves for real**: translucency on the plants and garden spikes' leaves, with their sway.
 - [ ] **MT6. Into the engine**: a material as a texfixture setting, next to plasticine (SHADER-LOOKS'
   "looks on shapes"), if any of it earns a place.
@@ -128,7 +153,7 @@ noise and pushed a little outward.
 Pencil, charcoal, watercolour, gouache, oil: how the whole picture is drawn, more than what a thing
 is made of. Nikki (2026-11-06): don't worry much about generated strokes vs drawn ones; what we want
 is **hatching sheets** of her own, so the shading can be her lines.
-- [ ] **MT8. Hatching sheets**: Nikki draws hatching at four or five densities (light .. cross-hatched),
+- [ ] **MT8. Hatching sheets** (drawing them: THINGS-TO-DRAW A14): Nikki draws hatching at four or five densities (light .. cross-hatched),
   a few versions of each; through scan2tex; in material-check a mode where the darkness after lighting
   picks her hatching (tonal art maps), swapping versions ~12 times a second.
 - A style over a whole scene (watercolour, gouache) waits for SH3's effects stack (SHADER-LOOKS.md);
@@ -152,7 +177,8 @@ Other ways, in our pipeline:
 - **Depth** for parallax comes from the layer order (DEPTH-LAYERS.md); AI depth estimation (Depth
   Anything) only for a painted backdrop, if ever.
 - [ ] **MT10. Creases from the outline** into the bake, compared in material-check.
-- [ ] **MT11. A painted height picture** as an option on a part (outline + mask + height).
+- [ ] **MT11. A painted height picture** as an option on a part (outline + mask + height; drawing
+  them: THINGS-TO-DRAW A15).
 
 ## More from the lists (2026-11-06, in material-check)
 
@@ -163,7 +189,7 @@ Other ways, in our pipeline:
 - [x] **MT14. The picture pass** (e): a soft glow from the bright parts, a grade by the light (warm sun,
   warmer candle, cool moon), a vignette, film grain at 12 fps. **t**: the whole picture at 12 frames a
   second (stop-motion), the leaves' sway too.
-- [x] **MT15. Leaves sway** (page 2): a slow sway and a quick flutter from the stem, more with wind (w).
+- [x] **MT15. Leaves sway**: a slow sway and a quick flutter from the stem, more with wind (w).
 - Still in the lists, not built: a material map per picture (MT3), varied gloss and per-plant colour
   and size, ambient occlusion at a plant's base and in clumps, front leaves blurred and back layers
   darker (DEPTH-LAYERS), pollen and falling leaves, plants that react when brushed through.

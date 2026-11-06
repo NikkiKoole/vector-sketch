@@ -99,6 +99,42 @@ and what's there already. Pick a few, draw them, drop them in `textures/`, tick 
   - Have: `textures/plants/` (ovals, petals, daisy, heart, sprouts, tufts, two fronds), the eye
     rings copied as `berry-0n`; all fine to keep as fallbacks until the new ones are in.
 
+## For the materials (MATERIALS.md, 2026-11-06)
+
+The materials in `material-check` are lit from each picture's mask; these give them what a mask
+can't. Try each on two or three pictures first: the scene shows straight away if it helps.
+
+- [ ] **A14. Hatching sheets.** So the shading can be her own lines (MATERIALS MT8): where a thing is
+  darker after the light, it shows denser hatching of hers.
+  - Draw: one pencil (or crayon), the same on every sheet, **five densities**: very light, light,
+    medium, dense, cross-hatched; **three versions of each** (they swap ~12 times a second, so the
+    hatching boils like the burrow rim). Fill a square, about 512×512, edge to edge (it repeats
+    across a shape, so no border, lines running off all sides). Strokes all leaning the same way
+    on a sheet; a second set at another angle is a bonus.
+  - White on transparent like everything else; no mask. One sheet per density, or all on one scan
+    with space between (`tools/scan2tex` cuts them).
+- [ ] **A15. Height pictures** (MATERIALS MT11). Today every shape is lit as a dome or a cushion,
+  because the light only knows the outline: no nose bump, no fold in an ear, no belly.
+  - Draw: for a few parts that have a shape inside (a body or two, an ear, a nose, a foot), a
+    **grey picture the same size as the part**, `name-height.png`: lighter is nearer you, darker
+    further away, soft (a soft pencil or brush, smudged; hard edges show as steps in shiny
+    materials). It only has to say where the bumps and dips are; the outline still makes the rim.
+  - Also, for parts meant to be **shiny** (metal, glaze, glass): masks filled **solid**, no brush
+    gaps. body-04's streaky mask shows on metal as ridges (nice as hammered tin, not as gold).
+- [ ] **A16. A material map** (MATERIALS MT3, the sneaker idea): one part, two or three materials.
+  - Draw: for two or three parts (a foot with a sole and a cloth top, a body with a belly patch, a
+    shoe), next to outline + mask, `name-material.png` the same size: **red** where it's the first
+    material (leather), **green** the second (rubber), **blue** the third (cloth). Flat colour, a
+    hard edge between them is fine.
+- [ ] **A17. Smoke puffs.** The smoke borrows the Mipo body outlines now and reads as pale clumps.
+  - Draw: outline + mask, about 200×200, **six or more**: round puffs, lumpy ones (three bumps), a
+    small curl, a long wisp, a torn bit for the end of the trail. Loose, soft line. The boat
+    scenes' vector puffs (walter-boat) are the look.
+- A12's leaves: **a vein down the middle (and side veins)** shows well now: with the light behind
+  a leaf (material-check, b), the veins in the outline come out dark against the glow.
+- A3's hair tufts would also give **fur an edge** (tufts sticking out past the outline instead of a
+  frayed inside).
+
 ## Worth doing in the same sessions
 
 - [ ] **A4. Hands.** Only 3 hand shapes (`hand1`-`hand3`, `hand3r`) against 8 feet with r/x
