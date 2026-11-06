@@ -310,6 +310,16 @@ fade, a sun: the panel's `fades` switch, LS4).
   the default one) would write the second output, and the world would be drawn into a canvas, not
   straight to the screen. Try first on a small test that LÖVE 11 does it on the phone (GLES), then
   only if shadows go into real rooms (LS13). Idea, Nikki 2026-11-06: 'note it down'.
+  Probed 2026-11-06 on the iPhone SE 2 and the Mac (setCanvas(a, b), one rectangle): several canvases
+  work (4 on the phone, 8 on the Mac), but LÖVE's default drawing and any `vec4 effect` shader write
+  only the first; a `void effect()` shader writing love_Canvases[0] and [1] fills both, on the phone too.
+  So it needs: an MRT variant of every shader the textured world draws with (plasticine, hairs, the
+  mouth's, the default for plain pictures: the source's effect renamed and wrapped), the drawers' resets
+  to 'no shader' going to the MRT default during that pass, the textured world drawn into a canvas pair
+  and laid on the screen (premultiplied alpha, with a stencil for the contact shadows), the wall and
+  floor shadows using the previous frame's outlines (they're drawn before the things), and lanes
+  falling back to their own passes. Saves the outline pass (~5-6 ms with 20 lit Mipos; ~3 with LS25 and
+  every other frame), costs a full-screen copy (~1 ms on the phone).
 - [x] **LS25. Only what shows in a shadow.** The outline pass draws every drawable: faces, decals,
   grass, mouths, small bits that barely change a shadow. Drawing only the bodies, heads and limbs
   (a filter on the drawable's type in drawTexturedWorld's `only`, or a list per Mipo) makes it cheaper;
