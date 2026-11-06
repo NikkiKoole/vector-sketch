@@ -158,7 +158,7 @@ local plasticineShader = love.graphics.newShader([[
                             ? max(dot(normalize(n.xy), normalize(lightDir[i])), 0.0) : 0.0;
                         // its own narrow edge: the picture's alpha just around (the form's measure
                         // reaches far in), small see-through gaps (fur) not counted
-                        float rr = 0.045;
+                        float rr = lightRange[i]; // a back light's width (extra.rimWidth)
                         float near = (Texel(tex, uv + vec2(rr, 0.0)).a + Texel(tex, uv - vec2(rr, 0.0)).a
                             + Texel(tex, uv + vec2(0.0, rr)).a + Texel(tex, uv - vec2(0.0, rr)).a) * 0.25;
                         float edge = smoothstep(0.15, 0.6, 1.0 - near);
@@ -244,6 +244,7 @@ lib.plasticineFormRadius   = 0.08
 lib.plasticineUseLighting  = true
 lib.plasticineLightZ       = 0.9  -- lights mostly from the front; lower: the side they come from shows more
 lib.plasticineLightGain    = 0    -- 0: the light swings brightness by strength (x0.82..x1.09); else x(1-g)..x(1+g)
+lib.plasticineFormRise     = 1    -- a baked form's rise (form-bake): 1 a dome, 0.2 a pebble
 lib.plasticineMottleStrength = 0.0
 lib.plasticineMottleScale    = 3.0
 lib.plasticineSpecPow      = 25.0
@@ -394,7 +395,7 @@ local hairsShader = love.graphics.newShader([[
                             ? max(dot(normalize(n.xy), normalize(lightDir[i])), 0.0) : 0.0;
                         // its own narrow edge: the picture's alpha just around (the form's measure
                         // reaches far in), small see-through gaps (fur) not counted
-                        float rr = 0.045;
+                        float rr = lightRange[i]; // a back light's width (extra.rimWidth)
                         float near = (Texel(tex, uv + vec2(rr, 0.0)).a + Texel(tex, uv - vec2(rr, 0.0)).a
                             + Texel(tex, uv + vec2(0.0, rr)).a + Texel(tex, uv - vec2(0.0, rr)).a) * 0.25;
                         float edge = smoothstep(0.15, 0.6, 1.0 - near);
@@ -626,6 +627,8 @@ function lib.gatherLightsForBody(body, fx, fy)
                 lightPosBuf[count][1] = lpx
                 lightPosBuf[count][2] = lpy
                 lightRangeBuf[count]  = ud.extra.range or 500
+                -- a back light has no falloff: its slot carries how far in its rim reaches (uv)
+                if ud.extra.lightType == 'back' then lightRangeBuf[count] = ud.extra.rimWidth or 0.045 end
             end
         end
     end

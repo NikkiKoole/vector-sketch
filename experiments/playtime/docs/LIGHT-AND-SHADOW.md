@@ -29,7 +29,7 @@ fade, a sun, but the panel can't set 0).
   colour (`groundHex`, a row on the light's panel) from all of below, wherever the light is; above is
   the world's above (spec/light-sky_spec.lua). In the scene per time of day, k off / on: it fills the
   sun's dark sides with the sky's blue (2026-11-06).
-- [ ] **LS9. Back light (rim).** A light type `back`: from behind a shape, towards you; its edges glow in
+- [x] **LS9. Back light (rim).** A light type `back`: from behind a shape, towards you; its edges glow in
   the light's colour, most those facing where it comes from (body +X the way it shines), the middle not
   at all; added on top like the sheen. Its own narrow edge measure (the picture's alpha just around),
   so fur's small gaps don't sparkle (the form's wide measure lit half a stone). Built 2026-11-06, to
@@ -37,6 +37,7 @@ fade, a sun, but the panel can't set 0).
   faint white (spec/light-back_spec.lua). On a drawn stone it mostly lands on the black outline; on
   the Mipos' fur strokes it shows best. It's also the parked claymation plan's "rim tinting from the
   opposing light".
+  Nikki: "backlight i like but also need settings" (2026-11-06): its width on the light's panel (LS4).
 - [x] **LS10. A day-night cycle.** Built 2026-11-06 in light-grass-check, to judge: a clock (d runs a day
   in two minutes, , and . an hour, 1 noon, 2 dusk, 3 midnight); five looks blended by the hour, after
   ../sky-atmosphere's timeline (WORLD-BUILDING G5) plus a golden hour at 18:00 (blue straight to
@@ -58,8 +59,12 @@ fade, a sun, but the panel can't set 0).
   shoulder past full (as is up to 0.8, then towards 1.35); nothing reaching it, it's dark
   (spec/light-add_spec.lua). Off by default. In the scene on, a switches; the moods' intensities tuned
   for it (night lamps 2.0 and 1.6) (2026-11-06).
-- [ ] **LS4. The settings in the panel.** Swing, front, baked and rise as rows in the texfixture's
-  plasticine section; a sun (range 0) settable on the light's panel.
+- [x] **LS4. The settings in the panel.** A texfixture's light rows (both plasticine and hairs): adds up,
+  swing, from front; plasticine also baked form and its rise (shown with a baked form). The light's
+  panel: a directional light's `fades` (off: range 0, a sun), the range only where it counts
+  (directional that fades, point), a back light's `width` (extra.rimWidth, how far in its rim reaches;
+  it rides in the light's range slot, which a back light doesn't use) (spec/light-settings_spec.lua;
+  the editor-actions sweep on light-grass-check clicks them all, clean) (2026-11-06).
 - [x] **LS5. Mipos under the light.** The same light on a Mipo's parts, to judge it on what it's for
   (and against the hand-drawn look: shaders for moments, `feedback_handdrawn_over_shaders`).
   Ready to judge (2026-11-06): three Mipos in `light-grass-check`, their picture parts, limb ribbons

@@ -238,10 +238,20 @@ lib.bySubtype = {
         { key = 'ground', kind = 'color', visible = isSkyLight,
           get = function(fixture) return extraOf(fixture).groundHex or '6b5a40ff' end,
           set = function(fixture, v) extraOf(fixture).groundHex = v end },
+        -- a directional light fades with the distance from its lamp; off, it's a sun (range 0)
+        { key = 'fades', kind = 'bool',
+          visible = function(f) return (extraOf(f).lightType or 'directional') == 'directional' end,
+          get = function(f) return (extraOf(f).range or 500) ~= 0 end,
+          set = function(f, v) extraOf(f).range = v and 500 or 0 end },
         extraNumber('range', 'range', 10, 2000, 500, nil, { visible = function(f)
-            local lightType = extraOf(f).lightType
-            return lightType ~= 'sky' and lightType ~= 'back'
+            local e = extraOf(f)
+            local lightType = e.lightType or 'directional'
+            if lightType == 'directional' then return (e.range or 500) ~= 0 end
+            return lightType == 'point'
         end }),
+        -- a back light: how far in from the outline its rim reaches
+        extraNumber('rimWidth', 'width', 0.01, 0.15, 0.045, nil,
+            { visible = function(f) return extraOf(f).lightType == 'back' end }),
         { kind = 'note',
           label = function(fixture)
               local lightType = extraOf(fixture).lightType

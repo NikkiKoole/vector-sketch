@@ -295,6 +295,12 @@ local surfaceLight = {
     shaderNumber('plasticineSSSpow', 'sss falloff', 0.5, 8, { advanced = true }),
     shaderNumber('plasticineSSSstrength', 'sss', 0, 1, { advanced = true }),
     shaderNumber('plasticineTerminator', 'terminator', 0.5, 6, { advanced = true }),
+    -- how the scene's lights add up and swing (docs/LIGHT-AND-SHADOW.md LS3, LS4)
+    { key = 'adds up', kind = 'bool', -- the sky lights the base, every lamp adds (off: averaged, capped)
+      get = function(fixture) return extraOf(fixture).plasticineLightAdd == true end,
+      set = function(fixture, v) extraOf(fixture).plasticineLightAdd = v or nil end },
+    shaderNumber('plasticineLightGain', 'swing', 0, 1), -- 0: by grain as before
+    shaderNumber('plasticineLightZ', 'from front', 0.1, 0.95), -- lower: the light's side shows more
 }
 
 lib.hairs = concat({
@@ -316,6 +322,12 @@ lib.plasticine = concat({
     shaderNumber('plasticineEdge', 'edge dark', 0, 0.6),
     shaderNumber('plasticineFormStrength', 'form depth', 0, 6, { advanced = true }),
     shaderNumber('plasticineFormRadius', 'form size', 0.01, 0.2, { advanced = true }),
+    -- the roundness baked from the picture's mask (src/render/form-bake.lua): round all the way in
+    { key = 'baked form', kind = 'bool',
+      get = function(fixture) return extraOf(fixture).plasticineFormBaked == true end,
+      set = function(fixture, v) extraOf(fixture).plasticineFormBaked = v or nil end },
+    shaderNumber('plasticineFormRise', 'rise', 0.1, 1, -- 1 a dome, 0.2 a pebble
+        { visible = function(fixture) return extraOf(fixture).plasticineFormBaked == true end }),
 }, surfaceLight)
 
 -- A patch layer: its images, where it sits on the texture, flips and tint.
