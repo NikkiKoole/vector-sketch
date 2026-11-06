@@ -95,12 +95,43 @@ end
 -- The map as ImageData from a mask's ImageData (white inside, black or see-through outside).
 function lib.bakeData(data, rise)
     local iw, ih = data:getDimensions()
-    local step = math.max(iw, ih) / lib.MAP
+    rise = rise or 1
+    -- a low rise (a pebble) turns from edge to flat top in a few cells: its rim followed the grid's
+    -- steps (Nikki 2026-11-06, brass and gold showed them). A finer grid there, and the distance
+    -- smoothed before it becomes a height. A dome (rise 1) is baked as before.
+    local low = rise < 1
+    local cells = low and math.floor(lib.MAP * math.min(2, 1 / math.sqrt(rise))) or lib.MAP
+    local step = math.max(iw, ih) / cells
     local gw, gh = math.max(1, math.ceil(iw / step)), math.max(1, math.ceil(ih / step))
     local inside, dist = grid(data, step, gw, gh)
     fillSmallHoles(inside, dist, gw, gh)
     local dmax = chamfer(inside, dist, gw, gh)
-    local riseTexels = math.max(1, (rise or 1) * dmax)
+    if low then
+        for _ = 1, 4 do
+            local smooth = {}
+            for gy = 0, gh - 1 do
+                for gx = 0, gw - 1 do
+                    local k = gy * gw + gx
+                    if inside[k] then
+                        local sum = 0
+                        for oy = -1, 1 do
+                            for ox = -1, 1 do
+                                local nx, ny = gx + ox, gy + oy
+                                if nx >= 0 and ny >= 0 and nx < gw and ny < gh then
+                                    sum = sum + dist[ny * gw + nx]
+                                end
+                            end
+                        end
+                        smooth[k] = sum / 9
+                    else
+                        smooth[k] = 0
+                    end
+                end
+            end
+            dist = smooth
+        end
+    end
+    local riseTexels = math.max(1, rise * dmax)
     local height = {}
     for k = 0, gw * gh - 1 do
         local t = math.min(1, dist[k] / riseTexels)
