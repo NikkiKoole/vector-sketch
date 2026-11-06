@@ -173,6 +173,8 @@ fade, a sun: the panel's `fades` switch, LS4).
   Several lights (Nikki: the soft and hard shadows together liked, then shadows from more than one light):
   `lights = { ... }`, each its own pass over the same silhouettes, darker where they cross; e steps the
   sun or moon / the warm lamp / sun and warm lamp / sun and both lamps; w's soft wall shadow can be on too.
+  Coloured (LS19 for these shadows; x black / coloured): in one light's shadow the other lights and the
+  sky still reach, so it takes their colour, darkened (SHADOW_TINT 0.4).
   Not yet: one depth for everything (per-thing depth,
   LS16/LS18), nothing on the floor in front of the things, the same cost as the wall shadows (LS12).
 - [ ] **LS15. Small ones:** should a new directional light be a sun (not fade) by default; the back

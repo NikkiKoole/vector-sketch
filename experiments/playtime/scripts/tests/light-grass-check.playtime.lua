@@ -32,6 +32,7 @@
 --   e the 3D shadows' lights: the sun or moon (a low sun stretches them long over the floor) / the warm
 --     lamp (drag it in play mode; a torch: close to the things a big shadow on the wall, back it shrinks) /
 --     the sun or moon and the warm lamp / and both lamps: each throws its own shadow
+--   x the 3D shadows coloured (by the other lights and the sky that still reach into them) / black
 --   y how much the sun shines out of the wall: some / a little (shadows run far along the floor) / much
 --   [ ] the lamp nearer the things / further towards you   j edges: hard / a small lamp / a big lamp
 
@@ -496,6 +497,8 @@ local LIGHT_SETS = {
     { name = 'the sun or moon and the warm lamp', sun = true, warm = true },
     { name = 'the sun or moon and both lamps', sun = true, warm = true, cool = true },
 }
+-- how light a coloured shadow's colour is (0 black, 1 the other lights' colour itself)
+local SHADOW_TINT = 0.4
 local COOL_LAMP_DEPTH = 700 -- the cool lamp's distance in front of the things (the warm one's: [ ])
 
 local function lightSet()
@@ -537,16 +540,39 @@ local function solidLights(wallShadows)
     if set.sun then
         local light, fade = sunLight()
         if light then
-            list[#list + 1] = { light = light, strength = math.min(0.7, wallShadows * 1.5) * fade, softness = soft.sun }
+            local sunBody = strongest({ 'sun', 'moon' })
+            local _, extra = lightOf(sunBody and sunBody:getUserData().thing.label or 'sun')
+            list[#list + 1] = { light = light, strength = math.min(0.7, wallShadows * 1.5) * fade, softness = soft.sun,
+                lightColour = rgb(extra and extra.colorHex or 'ffffff') }
         end
     end
     local lamps = { { set.warm, 'warm lamp', c.lampDepth or LAMP_DEPTH }, { set.cool, 'cool lamp', COOL_LAMP_DEPTH } }
     for _, lamp in ipairs(lamps) do
         local light = lamp[1] and lampLight(lamp[2], lamp[3])
-        if light then list[#list + 1] = { light = light, strength = 0.55, softness = soft.lamp } end
+        if light then
+            local _, extra = lightOf(lamp[2])
+            list[#list + 1] = { light = light, strength = 0.55, softness = soft.lamp,
+                lightColour = rgb(extra and extra.colorHex or 'ffffff') }
+        end
     end
     if #list > 1 then
         for _, one in ipairs(list) do one.strength = one.strength * 0.75 end
+    end
+    -- x: coloured shadows (LS19). In one light's shadow the others still reach, and the sky: the shadow
+    -- takes their colour, darkened (under the warm lamp a blue-ish shadow where the cool one reaches, under
+    -- a warm sun the sky's blue), not plain black
+    if not c.blackShadows then
+        local sky = c.now and rgb(c.now.skyLight[1]) or { 0.5, 0.6, 0.8 }
+        for i, one in ipairs(list) do
+            local r, g, b, n = sky[1], sky[2], sky[3], 1
+            for j, other in ipairs(list) do
+                if j ~= i then
+                    r, g, b, n = r + other.lightColour[1] * 1.5, g + other.lightColour[2] * 1.5,
+                        b + other.lightColour[3] * 1.5, n + 1.5
+                end
+            end
+            one.colour = { r / n * SHADOW_TINT, g / n * SHADOW_TINT, b / n * SHADOW_TINT }
+        end
     end
     return list
 end
@@ -695,6 +721,8 @@ function s.onKeyPress(key)
         for i, d in ipairs(LAMP_DEPTHS) do if d <= now then at = i end end
         at = math.max(1, math.min(#LAMP_DEPTHS, at + (key == ']' and 1 or -1)))
         c.lampDepth = LAMP_DEPTHS[at]
+    elseif key == 'x' then
+        c.blackShadows = not c.blackShadows
     elseif key == 't' then
         c.daySpeed = (c.daySpeed or 1) % #DAY_SPEEDS + 1
         c.cycle, c.lampOnly = true, false
@@ -838,8 +866,8 @@ function s.drawUI()
         'v 3D shadows: ' .. (c.solid and ('on, from ' .. lightSet().name
             .. (lightSet().warm and string.format(', warm lamp %d in front', c.lampDepth or LAMP_DEPTH) or '')
             .. (lightSet().sun and string.format(', sun %.2f out of the wall', SUN_TOWARDS[c.sunTowards or 1]) or '')
-            .. ', ' .. SOFTNESS[c.softness or 1].name) or 'off')
-            .. '   (e which lights  y sun out of the wall  [ ] lamp depth  j edges)',
+            .. ', ' .. SOFTNESS[c.softness or 1].name .. (c.blackShadows and ', black' or ', coloured')) or 'off')
+            .. '   (e which lights  x colour  y sun out of the wall  [ ] lamp depth  j edges)',
         string.format('grass: SpriteBatches made in the last second: %d', c.perSecond),
     }
     for i, line in ipairs(lines) do
