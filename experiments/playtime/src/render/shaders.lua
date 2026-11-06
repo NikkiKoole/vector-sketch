@@ -3,15 +3,16 @@ local lib = {}
 local registry = require('src.registry')
 local subtypes = require('src.subtypes')
 local color = require('src.color')
+local formBake = require('src.render.form-bake')
 
 
 -- Plasticine POC: procedural grain + soft edge darkening.
 -- Noise samples in UV space so it rotates/translates with the body (noise stuck to
 -- the character, not the screen). fBm approximates thumbprint texture without an
 -- asset file. Tune via lib.plasticineStrength / lib.plasticineScale / lib.plasticineEdge.
-local MAX_LIGHTS = 4
+local MAX_LIGHTS = 8
 local plasticineShader = love.graphics.newShader([[
-    #define MAX_LIGHTS 4
+    #define MAX_LIGHTS 8
     uniform float strength;
     uniform float scale;
     uniform float edgeDark;
@@ -19,6 +20,8 @@ local plasticineShader = love.graphics.newShader([[
     uniform float formStrength;  // macro-form tilt from alpha gradient (rounds the shape)
     uniform float formRadius;    // UV-space step for the alpha gradient sample
     uniform float useForm;       // 0/1 — gate macro-form contribution
+    uniform Image formMap;       // the shape's roundness baked from its mask (src/render/form-bake.lua):
+    uniform float useFormMap;    //   g b the normal's x y; 1 = use it instead of the alpha guess below
     uniform float rimStyle;      // 0=off, 1=silhouette, 2=UV vignette
     uniform float mottleStrength; // pigment mottling intensity (0 = off)
     uniform float mottleScale;   // mottling spatial frequency (low = big blobs)
@@ -109,6 +112,12 @@ local plasticineShader = love.graphics.newShader([[
         vec2  gAlpha   = vec2(aR - aL, aU - aD) * 0.5;
         float avgAlpha = (aR + aL + aU + aD) * 0.25;
         vec2 macroTilt = (useForm > 0.5) ? (-gAlpha * formStrength) : vec2(0.0);
+        if (useFormMap > 0.5) {
+            // round all the way in, not only at the edge: the baked normal as a tilt (formStrength 2 = as baked)
+            vec2 nxy = (Texel(formMap, uv).gb - 0.5) * 2.0;
+            float nz = sqrt(max(1.0 - dot(nxy, nxy), 0.04));
+            macroTilt = nxy / nz * formStrength * 0.5;
+        }
 
         vec3 n = normalize(vec3(microTilt + macroTilt, 1.0));
 
@@ -215,7 +224,7 @@ lib.plasticineCoolHex      = 'c8d8ffff'   -- steel blue: shadow/environment
 -- uv.y = across width; on surfaces where the axes are swapped, strands simply
 -- run the other way — tune density to taste.
 local hairsShader = love.graphics.newShader([[
-    #define MAX_LIGHTS 4
+    #define MAX_LIGHTS 8
     uniform float strength;      // strand brightness variation
     uniform float density;       // strand density
     uniform float fuzz;          // edge frayness
@@ -391,12 +400,12 @@ lib.hairsFuzz     = 0.15
 lib.hairsBush     = 0.0
 
 -- Reused per-draw buffers so we don't churn tables each frame.
-local lightDirBuf   = {{0,0}, {0,0}, {0,0}, {0,0}}
-local lightColorBuf = {{1,1,1}, {1,1,1}, {1,1,1}, {1,1,1}}
-local lightInBuf    = {0, 0, 0, 0}
-local lightTypeBuf  = {0, 0, 0, 0}          -- 0 = directional, 1 = point
-local lightPosBuf   = {{0,0}, {0,0}, {0,0}, {0,0}}
-local lightRangeBuf = {1, 1, 1, 1}
+-- One slot per light the shaders take (MAX_LIGHTS); lightTypeBuf 0 = directional, 1 = point.
+local lightDirBuf, lightColorBuf, lightInBuf, lightTypeBuf, lightPosBuf, lightRangeBuf = {}, {}, {}, {}, {}, {}
+for i = 1, MAX_LIGHTS do
+    lightDirBuf[i], lightColorBuf[i], lightInBuf[i] = { 0, 0 }, { 1, 1, 1 }, 0
+    lightTypeBuf[i], lightPosBuf[i], lightRangeBuf[i] = 0, { 0, 0 }, 1
+end
 
 -- Send light arrays to any shader that exposes the standard light uniforms.
 -- Honors the legacy per-fixture `extra.plasticineLight` override.
@@ -468,6 +477,9 @@ local function setSurfaceShader(extra, body)
     end
     if extra.plasticine then
         love.graphics.setShader(plasticineShader)
+        local formMap = extra.plasticineFormBaked and formBake.map(extra, extra.plasticineFormRise)
+        if formMap then plasticineShader:send('formMap', formMap) end
+        plasticineShader:send('useFormMap', formMap and 1 or 0)
         plasticineShader:send('strength',       extra.plasticineStrength       or lib.plasticineStrength)
         plasticineShader:send('scale',          extra.plasticineScale          or lib.plasticineScale)
         plasticineShader:send('edgeDark',       extra.plasticineEdge           or lib.plasticineEdge)

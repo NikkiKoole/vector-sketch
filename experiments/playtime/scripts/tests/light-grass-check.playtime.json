@@ -1,392 +1,1152 @@
 {
-  "bodies":[{
-      "sharedFixtureData":{
-        "sensor":false,
-        "density":1,
-        "shapeType":"polygon",
-        "friction":0.2,
-        "restitution":0.3,
-        "groupIndex":0
-      },
-      "mirrorX":1,
-      "bodyType":"kinematic",
-      "vertices":[-180,-100,180,-100,180,100,-180,100],
-      "shapeType":"rectangle",
-      "id":"1JvCNN",
-      "dims":{
-        "height":200,
-        "width":360
-      },
-      "fixtures":[{
-          "sensor":true,
-          "points":[10,-10,10,10,-10,10,-10,-10],
-          "userData":{
-            "id":"2AlRXt",
-            "type":"sfixture",
-            "subtype":"grass",
-            "extra":{
-              "zOffset":0,
-              "density":8,
-              "heightVariation":0.5,
-              "frontShare":0.25,
-              "maxSlope":50,
-              "sway":1,
-              "colorBack":"2a5b3eff",
-              "zGroupOffset":0,
-              "height":90,
-              "seed":0,
-              "colorFront":"86a542ff",
-              "width":1
-            },
-            "label":""
+  "backdrops": [],
+  "version": "1.0",
+  "bodies": [
+    {
+      "label": "spinning turf",
+      "bodyType": "kinematic",
+      "mirrorY": 1,
+      "vertices": [
+        -180,
+        -100,
+        180,
+        -100,
+        180,
+        100,
+        -180,
+        100
+      ],
+      "shapeType": "rectangle",
+      "fixtures": [
+        {
+          "points": [
+            10,
+            -10,
+            10,
+            10,
+            -10,
+            10,
+            -10,
+            -10
+          ],
+          "sensor": true,
+          "userData": {
+            "subtype": "grass",
+            "label": "",
+            "type": "sfixture",
+            "id": "1OT4tL",
+            "extra": {
+              "seed": 0,
+              "width": 1,
+              "height": 90,
+              "heightVariation": 0.5,
+              "frontShare": 0.25,
+              "maxSlope": 50,
+              "sway": 1,
+              "colorBack": "2a5b3eff",
+              "colorFront": "86a542ff",
+              "zOffset": 0,
+              "density": 8,
+              "zGroupOffset": 0
+            }
           }
-        },{
-          "points":[-180,-100,180,-100,180,100,-180,100]
-        }],
-      "mirrorY":1,
-      "label":"spinning turf",
-      "position":[1050,-100],
-      "angle":0,
-      "linearVelocity":[0,0],
-      "angularVelocity":0.8,
-      "fixedRotation":false,
-      "linearDamping":0,
-      "angularDamping":0
-    },{
-      "sharedFixtureData":{
-        "sensor":false,
-        "density":1,
-        "shapeType":"polygon",
-        "friction":0.2,
-        "restitution":0.3,
-        "groupIndex":0
+        },
+        {
+          "points": [
+            -180,
+            -100,
+            180,
+            -100,
+            180,
+            100,
+            -180,
+            100
+          ]
+        }
+      ],
+      "dims": {
+        "width": 360,
+        "height": 200
       },
-      "mirrorX":1,
-      "bodyType":"static",
-      "vertices":[-1800,-80,1800,-80,1800,80,-1800,80],
-      "shapeType":"rectangle",
-      "id":"23T0hJ",
-      "dims":{
-        "height":160,
-        "width":3600
+      "sharedFixtureData": {
+        "friction": 0.2,
+        "restitution": 0.3,
+        "groupIndex": 0,
+        "sensor": false,
+        "shapeType": "polygon",
+        "density": 1
       },
-      "fixtures":[{
-          "sensor":true,
-          "points":[10,-10,10,10,-10,10,-10,-10],
-          "userData":{
-            "id":"2kEPSt",
-            "type":"sfixture",
-            "subtype":"grass",
-            "extra":{
-              "zOffset":0,
-              "density":8,
-              "heightVariation":0.5,
-              "frontShare":0.25,
-              "maxSlope":50,
-              "sway":1,
-              "colorBack":"2a5b3eff",
-              "zGroupOffset":0,
-              "height":90,
-              "seed":0,
-              "colorFront":"86a542ff",
-              "width":1
-            },
-            "label":""
+      "position": [
+        1000,
+        -200
+      ],
+      "angle": 0,
+      "linearVelocity": [
+        0,
+        0
+      ],
+      "angularVelocity": 0.8,
+      "fixedRotation": false,
+      "linearDamping": 0,
+      "angularDamping": 0,
+      "id": "2U70gI",
+      "mirrorX": 1
+    },
+    {
+      "label": "still grassy ground",
+      "bodyType": "static",
+      "mirrorY": 1,
+      "vertices": [
+        -2100,
+        -80,
+        2100,
+        -80,
+        2100,
+        80,
+        -2100,
+        80
+      ],
+      "shapeType": "rectangle",
+      "fixtures": [
+        {
+          "points": [
+            10,
+            -10,
+            10,
+            10,
+            -10,
+            10,
+            -10,
+            -10
+          ],
+          "sensor": true,
+          "userData": {
+            "subtype": "grass",
+            "label": "",
+            "type": "sfixture",
+            "id": "2ix8EQ",
+            "extra": {
+              "seed": 0,
+              "width": 1,
+              "height": 90,
+              "heightVariation": 0.5,
+              "frontShare": 0.25,
+              "maxSlope": 50,
+              "sway": 1,
+              "colorBack": "2a5b3eff",
+              "colorFront": "86a542ff",
+              "zOffset": 0,
+              "density": 8,
+              "zGroupOffset": 0
+            }
           }
-        },{
-          "points":[-1800,-80,1800,-80,1800,80,-1800,80]
-        }],
-      "mirrorY":1,
-      "label":"still grassy ground",
-      "position":[0,550],
-      "angle":0,
-      "linearVelocity":[0,0],
-      "angularVelocity":0,
-      "fixedRotation":false,
-      "linearDamping":0,
-      "angularDamping":0
-    },{
-      "sharedFixtureData":{
-        "sensor":false,
-        "density":1,
-        "shapeType":"polygon",
-        "friction":0.2,
-        "restitution":0.3,
-        "groupIndex":0
+        },
+        {
+          "points": [
+            -2100,
+            -80,
+            2100,
+            -80,
+            2100,
+            80,
+            -2100,
+            80
+          ]
+        }
+      ],
+      "dims": {
+        "width": 4200,
+        "height": 160
       },
-      "mirrorX":1,
-      "bodyType":"static",
-      "vertices":[-110,-110,110,-110,110,110,-110,110],
-      "shapeType":"rectangle",
-      "id":"2D06gw",
-      "dims":{
-        "height":220,
-        "width":220
+      "sharedFixtureData": {
+        "friction": 0.2,
+        "restitution": 0.3,
+        "groupIndex": 0,
+        "sensor": false,
+        "shapeType": "polygon",
+        "density": 1
       },
-      "fixtures":[{
-          "sensor":true,
-          "points":[110,-110,110,110,-110,110,-110,-110],
-          "userData":{
-            "id":"RfHp1",
-            "type":"sfixture",
-            "subtype":"texfixture",
-            "extra":{
-              "vertexCount":4,
-              "vertices":[-110,-110,110,-110,110,110,-110,110],
-              "dirty":true,
-              "OMP":true,
-              "main":{
-                "bgURL":"mipo/body/body-03.png",
-                "pHex":"a08c74ff",
-                "pURL":"type0.png",
-                "fgHex":"b8a48cff",
-                "bgHex":"000000ff",
-                "fgURL":"mipo/body/body-03-mask.png"
+      "position": [
+        0,
+        530
+      ],
+      "angle": 0,
+      "linearVelocity": [
+        0,
+        0
+      ],
+      "angularVelocity": 0,
+      "fixedRotation": false,
+      "linearDamping": 0,
+      "angularDamping": 0,
+      "id": "2C4xeB",
+      "mirrorX": 1
+    },
+    {
+      "label": "lit box",
+      "bodyType": "static",
+      "mirrorY": 1,
+      "vertices": [
+        -150,
+        -150,
+        150,
+        -150,
+        150,
+        150,
+        -150,
+        150
+      ],
+      "shapeType": "rectangle",
+      "fixtures": [
+        {
+          "points": [
+            150,
+            -150,
+            150,
+            150,
+            -150,
+            150,
+            -150,
+            -150
+          ],
+          "sensor": true,
+          "userData": {
+            "subtype": "texfixture",
+            "label": "",
+            "type": "sfixture",
+            "id": "3p8UJH",
+            "extra": {
+              "main": {
+                "pHex": "a89880ff",
+                "fgURL": "mipo/body/body-04-mask.png",
+                "pURL": "type0.png",
+                "bgHex": "000000ff",
+                "bgURL": "mipo/body/body-04.png",
+                "fgHex": "c8b8a0ff"
               },
-              "plasticine":true,
-              "plasticineLightGain":0.5,
-              "plasticineLightZ":0.35,
-              "plasticineFormRadius":0.35
-            },
-            "label":""
+              "vertexCount": 4,
+              "OMP": true,
+              "dirty": true,
+              "plasticine": true,
+              "plasticineLightGain": 0.5,
+              "plasticineLightZ": 0.35,
+              "plasticineFormRadius": 0.35,
+              "plasticineFormBaked": true,
+              "plasticineFormRise": 1,
+              "vertices": [
+                -150,
+                -150,
+                150,
+                -150,
+                150,
+                150,
+                -150,
+                150
+              ]
+            }
           }
-        },{
-          "points":[-110,-110,110,-110,110,110,-110,110]
-        }],
-      "mirrorY":1,
-      "label":"lit box",
-      "position":[250,150],
-      "angle":0,
-      "linearVelocity":[0,0],
-      "angularVelocity":0,
-      "fixedRotation":false,
-      "linearDamping":0,
-      "angularDamping":0
-    },{
-      "sharedFixtureData":{
-        "sensor":false,
-        "density":1,
-        "shapeType":"polygon",
-        "friction":0.2,
-        "restitution":0.3,
-        "groupIndex":0
+        },
+        {
+          "points": [
+            -150,
+            -150,
+            150,
+            -150,
+            150,
+            150,
+            -150,
+            150
+          ]
+        }
+      ],
+      "dims": {
+        "width": 300,
+        "height": 300
       },
-      "mirrorX":1,
-      "bodyType":"static",
-      "vertices":[-110,-110,110,-110,110,110,-110,110],
-      "shapeType":"rectangle",
-      "id":"33lbt7",
-      "dims":{
-        "height":220,
-        "width":220
+      "sharedFixtureData": {
+        "friction": 0.2,
+        "restitution": 0.3,
+        "groupIndex": 0,
+        "sensor": false,
+        "shapeType": "polygon",
+        "density": 1
       },
-      "fixtures":[{
-          "sensor":true,
-          "points":[110,-110,110,110,-110,110,-110,-110],
-          "userData":{
-            "id":"45Idg2",
-            "type":"sfixture",
-            "subtype":"texfixture",
-            "extra":{
-              "vertexCount":4,
-              "vertices":[-110,-110,110,-110,110,110,-110,110],
-              "dirty":true,
-              "OMP":true,
-              "main":{
-                "bgURL":"mipo/body/body-03.png",
-                "pHex":"a08c74ff",
-                "pURL":"type0.png",
-                "fgHex":"b8a48cff",
-                "bgHex":"000000ff",
-                "fgURL":"mipo/body/body-03-mask.png"
+      "position": [
+        300,
+        280
+      ],
+      "angle": 0,
+      "linearVelocity": [
+        0,
+        0
+      ],
+      "angularVelocity": 0,
+      "fixedRotation": false,
+      "linearDamping": 0,
+      "angularDamping": 0,
+      "id": "3izjAz",
+      "mirrorX": 1
+    },
+    {
+      "label": "lit box",
+      "bodyType": "static",
+      "mirrorY": 1,
+      "vertices": [
+        -125,
+        -125,
+        125,
+        -125,
+        125,
+        125,
+        -125,
+        125
+      ],
+      "shapeType": "rectangle",
+      "fixtures": [
+        {
+          "points": [
+            125,
+            -125,
+            125,
+            125,
+            -125,
+            125,
+            -125,
+            -125
+          ],
+          "sensor": true,
+          "userData": {
+            "subtype": "texfixture",
+            "label": "",
+            "type": "sfixture",
+            "id": "1llrnW",
+            "extra": {
+              "main": {
+                "pHex": "8484b8ff",
+                "fgURL": "mipo/body/body-09-mask.png",
+                "pURL": "type6.png",
+                "bgHex": "000000ff",
+                "bgURL": "mipo/body/body-09.png",
+                "fgHex": "a8a8d8ff"
               },
-              "plasticine":true,
-              "plasticineLightGain":0.5,
-              "plasticineLightZ":0.35,
-              "plasticineFormRadius":0.35
-            },
-            "label":""
+              "vertexCount": 4,
+              "OMP": true,
+              "dirty": true,
+              "plasticine": true,
+              "plasticineLightGain": 0.5,
+              "plasticineLightZ": 0.35,
+              "plasticineFormRadius": 0.35,
+              "plasticineFormBaked": true,
+              "plasticineFormRise": 1,
+              "vertices": [
+                -125,
+                -125,
+                125,
+                -125,
+                125,
+                125,
+                -125,
+                125
+              ]
+            }
           }
-        },{
-          "points":[-110,-110,110,-110,110,110,-110,110]
-        }],
-      "mirrorY":1,
-      "label":"lit box",
-      "position":[-250,150],
-      "angle":0,
-      "linearVelocity":[0,0],
-      "angularVelocity":0,
-      "fixedRotation":false,
-      "linearDamping":0,
-      "angularDamping":0
-    },{
-      "sharedFixtureData":{
-        "sensor":false,
-        "density":1,
-        "shapeType":"polygon",
-        "friction":0.2,
-        "restitution":0.3,
-        "groupIndex":0
+        },
+        {
+          "points": [
+            -125,
+            -125,
+            125,
+            -125,
+            125,
+            125,
+            -125,
+            125
+          ]
+        }
+      ],
+      "dims": {
+        "width": 250,
+        "height": 250
       },
-      "mirrorX":1,
-      "bodyType":"static",
-      "vertices":[-110,-110,110,-110,110,110,-110,110],
-      "shapeType":"rectangle",
-      "id":"3ZOHjQ",
-      "dims":{
-        "height":220,
-        "width":220
+      "sharedFixtureData": {
+        "friction": 0.2,
+        "restitution": 0.3,
+        "groupIndex": 0,
+        "sensor": false,
+        "shapeType": "polygon",
+        "density": 1
       },
-      "fixtures":[{
-          "sensor":true,
-          "points":[110,-110,110,110,-110,110,-110,-110],
-          "userData":{
-            "id":"3jD9Dc",
-            "type":"sfixture",
-            "subtype":"texfixture",
-            "extra":{
-              "vertexCount":4,
-              "vertices":[-110,-110,110,-110,110,110,-110,110],
-              "dirty":true,
-              "OMP":true,
-              "main":{
-                "bgURL":"mipo/body/body-03.png",
-                "pHex":"a08c74ff",
-                "pURL":"type0.png",
-                "fgHex":"b8a48cff",
-                "bgHex":"000000ff",
-                "fgURL":"mipo/body/body-03-mask.png"
+      "position": [
+        -30,
+        305
+      ],
+      "angle": 0,
+      "linearVelocity": [
+        0,
+        0
+      ],
+      "angularVelocity": 0,
+      "fixedRotation": false,
+      "linearDamping": 0,
+      "angularDamping": 0,
+      "id": "3cqAPn",
+      "mirrorX": 1
+    },
+    {
+      "label": "lit box",
+      "bodyType": "static",
+      "mirrorY": 1,
+      "vertices": [
+        -150,
+        -150,
+        150,
+        -150,
+        150,
+        150,
+        -150,
+        150
+      ],
+      "shapeType": "rectangle",
+      "fixtures": [
+        {
+          "points": [
+            150,
+            -150,
+            150,
+            150,
+            -150,
+            150,
+            -150,
+            -150
+          ],
+          "sensor": true,
+          "userData": {
+            "subtype": "texfixture",
+            "label": "",
+            "type": "sfixture",
+            "id": "327WDP",
+            "extra": {
+              "main": {
+                "pHex": "b89c48ff",
+                "fgURL": "mipo/body/body-07-mask.png",
+                "pURL": "type3_.png",
+                "bgHex": "000000ff",
+                "bgURL": "mipo/body/body-07.png",
+                "fgHex": "d8c070ff"
               },
-              "plasticine":true,
-              "plasticineLightGain":0.5,
-              "plasticineLightZ":0.35,
-              "plasticineFormRadius":0.35
-            },
-            "label":""
+              "vertexCount": 4,
+              "OMP": true,
+              "dirty": true,
+              "plasticine": true,
+              "plasticineLightGain": 0.5,
+              "plasticineLightZ": 0.35,
+              "plasticineFormRadius": 0.35,
+              "plasticineFormBaked": true,
+              "plasticineFormRise": 1,
+              "vertices": [
+                -150,
+                -150,
+                150,
+                -150,
+                150,
+                150,
+                -150,
+                150
+              ]
+            }
           }
-        },{
-          "points":[-110,-110,110,-110,110,110,-110,110]
-        }],
-      "mirrorY":1,
-      "label":"lit box",
-      "position":[-700,150],
-      "angle":0,
-      "linearVelocity":[0,0],
-      "angularVelocity":0,
-      "fixedRotation":false,
-      "linearDamping":0,
-      "angularDamping":0
-    },{
-      "sharedFixtureData":{
-        "sensor":false,
-        "density":1,
-        "shapeType":"polygon",
-        "friction":0.2,
-        "restitution":0.3,
-        "groupIndex":0
+        },
+        {
+          "points": [
+            -150,
+            -150,
+            150,
+            -150,
+            150,
+            150,
+            -150,
+            150
+          ]
+        }
+      ],
+      "dims": {
+        "width": 300,
+        "height": 300
       },
-      "mirrorX":1,
-      "bodyType":"static",
-      "vertices":[-110,-110,110,-110,110,110,-110,110],
-      "shapeType":"rectangle",
-      "id":"3W2Ldr",
-      "dims":{
-        "height":220,
-        "width":220
+      "sharedFixtureData": {
+        "friction": 0.2,
+        "restitution": 0.3,
+        "groupIndex": 0,
+        "sensor": false,
+        "shapeType": "polygon",
+        "density": 1
       },
-      "fixtures":[{
-          "sensor":true,
-          "points":[110,-110,110,110,-110,110,-110,-110],
-          "userData":{
-            "id":"2BzLtW",
-            "type":"sfixture",
-            "subtype":"texfixture",
-            "extra":{
-              "vertexCount":4,
-              "vertices":[-110,-110,110,-110,110,110,-110,110],
-              "dirty":true,
-              "OMP":true,
-              "main":{
-                "bgURL":"mipo/body/body-03.png",
-                "pHex":"a08c74ff",
-                "pURL":"type0.png",
-                "fgHex":"b8a48cff",
-                "bgHex":"000000ff",
-                "fgURL":"mipo/body/body-03-mask.png"
+      "position": [
+        -360,
+        280
+      ],
+      "angle": 0,
+      "linearVelocity": [
+        0,
+        0
+      ],
+      "angularVelocity": 0,
+      "fixedRotation": false,
+      "linearDamping": 0,
+      "angularDamping": 0,
+      "id": "31kDbB",
+      "mirrorX": 1
+    },
+    {
+      "label": "lit box",
+      "bodyType": "static",
+      "mirrorY": 1,
+      "vertices": [
+        -125,
+        -125,
+        125,
+        -125,
+        125,
+        125,
+        -125,
+        125
+      ],
+      "shapeType": "rectangle",
+      "fixtures": [
+        {
+          "points": [
+            125,
+            -125,
+            125,
+            125,
+            -125,
+            125,
+            -125,
+            -125
+          ],
+          "sensor": true,
+          "userData": {
+            "subtype": "texfixture",
+            "label": "",
+            "type": "sfixture",
+            "id": "M4POt",
+            "extra": {
+              "main": {
+                "pHex": "78a07cff",
+                "fgURL": "mipo/body/body-05-mask.png",
+                "pURL": "type2t.png",
+                "bgHex": "000000ff",
+                "bgURL": "mipo/body/body-05.png",
+                "fgHex": "9cc0a0ff"
               },
-              "plasticine":true,
-              "plasticineLightGain":0.5,
-              "plasticineLightZ":0.35,
-              "plasticineFormRadius":0.35
-            },
-            "label":""
+              "vertexCount": 4,
+              "OMP": true,
+              "dirty": true,
+              "plasticine": true,
+              "plasticineLightGain": 0.5,
+              "plasticineLightZ": 0.35,
+              "plasticineFormRadius": 0.35,
+              "plasticineFormBaked": true,
+              "plasticineFormRise": 1,
+              "vertices": [
+                -125,
+                -125,
+                125,
+                -125,
+                125,
+                125,
+                -125,
+                125
+              ]
+            }
           }
-        },{
-          "points":[-110,-110,110,-110,110,110,-110,110]
-        }],
-      "mirrorY":1,
-      "label":"lit box",
-      "position":[-1050,150],
-      "angle":0,
-      "linearVelocity":[0,0],
-      "angularVelocity":0,
-      "fixedRotation":false,
-      "linearDamping":0,
-      "angularDamping":0
-    },{
-      "sharedFixtureData":{
-        "sensor":false,
-        "density":1,
-        "shapeType":"polygon",
-        "friction":0.2,
-        "restitution":0.3,
-        "groupIndex":0
+        },
+        {
+          "points": [
+            -125,
+            -125,
+            125,
+            -125,
+            125,
+            125,
+            -125,
+            125
+          ]
+        }
+      ],
+      "dims": {
+        "width": 250,
+        "height": 250
       },
-      "mirrorX":1,
-      "bodyType":"kinematic",
-      "vertices":[-35,-35,35,-35,35,35,-35,35],
-      "shapeType":"rectangle",
-      "id":"4g1Y4M",
-      "dims":{
-        "height":70,
-        "width":70
+      "sharedFixtureData": {
+        "friction": 0.2,
+        "restitution": 0.3,
+        "groupIndex": 0,
+        "sensor": false,
+        "shapeType": "polygon",
+        "density": 1
       },
-      "fixtures":[{
-          "sensor":true,
-          "points":[5,-5,5,5,-5,5,-5,-5],
-          "userData":{
-            "id":"2U3zaF",
-            "type":"sfixture",
-            "subtype":"light",
-            "extra":{
-              "intensity":1,
-              "range":5000,
-              "lightType":"directional",
-              "colorHex":"fff2d9ff"
-            },
-            "label":""
+      "position": [
+        -690,
+        305
+      ],
+      "angle": 0,
+      "linearVelocity": [
+        0,
+        0
+      ],
+      "angularVelocity": 0,
+      "fixedRotation": false,
+      "linearDamping": 0,
+      "angularDamping": 0,
+      "id": "2YMtF2",
+      "mirrorX": 1
+    },
+    {
+      "label": "lit box",
+      "bodyType": "static",
+      "mirrorY": 1,
+      "vertices": [
+        -150,
+        -150,
+        150,
+        -150,
+        150,
+        150,
+        -150,
+        150
+      ],
+      "shapeType": "rectangle",
+      "fixtures": [
+        {
+          "points": [
+            150,
+            -150,
+            150,
+            150,
+            -150,
+            150,
+            -150,
+            -150
+          ],
+          "sensor": true,
+          "userData": {
+            "subtype": "texfixture",
+            "label": "",
+            "type": "sfixture",
+            "id": "3ifZVp",
+            "extra": {
+              "main": {
+                "pHex": "c07868ff",
+                "fgURL": "mipo/body/body-03-mask.png",
+                "pURL": "type1.png",
+                "bgHex": "000000ff",
+                "bgURL": "mipo/body/body-03.png",
+                "fgHex": "e0a090ff"
+              },
+              "vertexCount": 4,
+              "OMP": true,
+              "dirty": true,
+              "plasticine": true,
+              "plasticineLightGain": 0.5,
+              "plasticineLightZ": 0.35,
+              "plasticineFormRadius": 0.35,
+              "plasticineFormBaked": true,
+              "plasticineFormRise": 1,
+              "vertices": [
+                -150,
+                -150,
+                150,
+                -150,
+                150,
+                150,
+                -150,
+                150
+              ]
+            }
           }
-        },{
-          "points":[-35,-35,35,-35,35,35,-35,35]
-        }],
-      "mirrorY":1,
-      "label":"lamp",
-      "position":[-700,-60],
-      "angle":0,
-      "linearVelocity":[0,0],
-      "angularVelocity":0.5,
-      "fixedRotation":false,
-      "linearDamping":0,
-      "angularDamping":0
-    }],
-  "camera":{
-    "rotation":0,
-    "x":0,
-    "y":100,
-    "scale":0.33
+        },
+        {
+          "points": [
+            -150,
+            -150,
+            150,
+            -150,
+            150,
+            150,
+            -150,
+            150
+          ]
+        }
+      ],
+      "dims": {
+        "width": 300,
+        "height": 300
+      },
+      "sharedFixtureData": {
+        "friction": 0.2,
+        "restitution": 0.3,
+        "groupIndex": 0,
+        "sensor": false,
+        "shapeType": "polygon",
+        "density": 1
+      },
+      "position": [
+        -1020,
+        280
+      ],
+      "angle": 0,
+      "linearVelocity": [
+        0,
+        0
+      ],
+      "angularVelocity": 0,
+      "fixedRotation": false,
+      "linearDamping": 0,
+      "angularDamping": 0,
+      "id": "3eQQEu",
+      "mirrorX": 1
+    },
+    {
+      "label": "lit box",
+      "bodyType": "static",
+      "mirrorY": 1,
+      "vertices": [
+        -125,
+        -125,
+        125,
+        -125,
+        125,
+        125,
+        -125,
+        125
+      ],
+      "shapeType": "rectangle",
+      "fixtures": [
+        {
+          "points": [
+            125,
+            -125,
+            125,
+            125,
+            -125,
+            125,
+            -125,
+            -125
+          ],
+          "sensor": true,
+          "userData": {
+            "subtype": "texfixture",
+            "label": "",
+            "type": "sfixture",
+            "id": "2MgeMW",
+            "extra": {
+              "main": {
+                "pHex": "a08c74ff",
+                "fgURL": "mipo/body/body-01-mask.png",
+                "pURL": "type0.png",
+                "bgHex": "000000ff",
+                "bgURL": "mipo/body/body-01.png",
+                "fgHex": "b8a48cff"
+              },
+              "vertexCount": 4,
+              "OMP": true,
+              "dirty": true,
+              "plasticine": true,
+              "plasticineLightGain": 0.5,
+              "plasticineLightZ": 0.35,
+              "plasticineFormRadius": 0.35,
+              "plasticineFormBaked": true,
+              "plasticineFormRise": 1,
+              "vertices": [
+                -125,
+                -125,
+                125,
+                -125,
+                125,
+                125,
+                -125,
+                125
+              ]
+            }
+          }
+        },
+        {
+          "points": [
+            -125,
+            -125,
+            125,
+            -125,
+            125,
+            125,
+            -125,
+            125
+          ]
+        }
+      ],
+      "dims": {
+        "width": 250,
+        "height": 250
+      },
+      "sharedFixtureData": {
+        "friction": 0.2,
+        "restitution": 0.3,
+        "groupIndex": 0,
+        "sensor": false,
+        "shapeType": "polygon",
+        "density": 1
+      },
+      "position": [
+        -1350,
+        305
+      ],
+      "angle": 0,
+      "linearVelocity": [
+        0,
+        0
+      ],
+      "angularVelocity": 0,
+      "fixedRotation": false,
+      "linearDamping": 0,
+      "angularDamping": 0,
+      "id": "1aJq6c",
+      "mirrorX": 1
+    },
+    {
+      "label": "turning lamp",
+      "bodyType": "kinematic",
+      "mirrorY": 1,
+      "vertices": [
+        -35,
+        -35,
+        35,
+        -35,
+        35,
+        35,
+        -35,
+        35
+      ],
+      "shapeType": "rectangle",
+      "fixtures": [
+        {
+          "points": [
+            5,
+            -5,
+            5,
+            5,
+            -5,
+            5,
+            -5,
+            -5
+          ],
+          "sensor": true,
+          "userData": {
+            "subtype": "light",
+            "label": "",
+            "type": "sfixture",
+            "id": "42g9Lb",
+            "extra": {
+              "lightType": "directional",
+              "colorHex": "fff2d9ff",
+              "range": 5000,
+              "intensity": 0
+            }
+          }
+        },
+        {
+          "points": [
+            -35,
+            -35,
+            35,
+            -35,
+            35,
+            35,
+            -35,
+            35
+          ]
+        }
+      ],
+      "dims": {
+        "width": 70,
+        "height": 70
+      },
+      "sharedFixtureData": {
+        "friction": 0.2,
+        "restitution": 0.3,
+        "groupIndex": 0,
+        "sensor": false,
+        "shapeType": "polygon",
+        "density": 1
+      },
+      "position": [
+        -300,
+        -450
+      ],
+      "angle": 0,
+      "linearVelocity": [
+        0,
+        0
+      ],
+      "angularVelocity": 0.5,
+      "fixedRotation": false,
+      "linearDamping": 0,
+      "angularDamping": 0,
+      "id": "2V7Sp4",
+      "mirrorX": 1
+    },
+    {
+      "label": "cool lamp",
+      "bodyType": "dynamic",
+      "mirrorY": 1,
+      "vertices": [
+        -35,
+        -35,
+        35,
+        -35,
+        35,
+        35,
+        -35,
+        35
+      ],
+      "shapeType": "rectangle",
+      "fixtures": [
+        {
+          "points": [
+            5,
+            -5,
+            5,
+            5,
+            -5,
+            5,
+            -5,
+            -5
+          ],
+          "sensor": true,
+          "userData": {
+            "subtype": "light",
+            "label": "",
+            "type": "sfixture",
+            "id": "CYvHT",
+            "extra": {
+              "lightType": "point",
+              "colorHex": "80a8ffff",
+              "range": 700,
+              "intensity": 0
+            }
+          }
+        },
+        {
+          "points": [
+            -35,
+            -35,
+            35,
+            -35,
+            35,
+            35,
+            -35,
+            35
+          ]
+        }
+      ],
+      "dims": {
+        "width": 70,
+        "height": 70
+      },
+      "sharedFixtureData": {
+        "friction": 0.2,
+        "restitution": 0.3,
+        "groupIndex": 0,
+        "sensor": false,
+        "shapeType": "polygon",
+        "density": 1
+      },
+      "position": [
+        150,
+        -120
+      ],
+      "angle": 0,
+      "linearVelocity": [
+        0,
+        0
+      ],
+      "angularVelocity": 0,
+      "fixedRotation": false,
+      "linearDamping": 0,
+      "angularDamping": 0,
+      "id": "3MUbLE",
+      "mirrorX": 1
+    },
+    {
+      "label": "warm lamp",
+      "bodyType": "dynamic",
+      "mirrorY": 1,
+      "vertices": [
+        -35,
+        -35,
+        35,
+        -35,
+        35,
+        35,
+        -35,
+        35
+      ],
+      "shapeType": "rectangle",
+      "fixtures": [
+        {
+          "points": [
+            5,
+            -5,
+            5,
+            5,
+            -5,
+            5,
+            -5,
+            -5
+          ],
+          "sensor": true,
+          "userData": {
+            "subtype": "light",
+            "label": "",
+            "type": "sfixture",
+            "id": "e8J4b",
+            "extra": {
+              "lightType": "point",
+              "colorHex": "ffb060ff",
+              "range": 700,
+              "intensity": 0
+            }
+          }
+        },
+        {
+          "points": [
+            -35,
+            -35,
+            35,
+            -35,
+            35,
+            35,
+            -35,
+            35
+          ]
+        }
+      ],
+      "dims": {
+        "width": 70,
+        "height": 70
+      },
+      "sharedFixtureData": {
+        "friction": 0.2,
+        "restitution": 0.3,
+        "groupIndex": 0,
+        "sensor": false,
+        "shapeType": "polygon",
+        "density": 1
+      },
+      "position": [
+        -700,
+        -120
+      ],
+      "angle": 0,
+      "linearVelocity": [
+        0,
+        0
+      ],
+      "angularVelocity": 0,
+      "fixedRotation": false,
+      "linearDamping": 0,
+      "angularDamping": 0,
+      "id": "4dvezX",
+      "mirrorX": 1
+    },
+    {
+      "label": "sun",
+      "bodyType": "static",
+      "mirrorY": 1,
+      "vertices": [
+        -35,
+        -35,
+        35,
+        -35,
+        35,
+        35,
+        -35,
+        35
+      ],
+      "shapeType": "rectangle",
+      "fixtures": [
+        {
+          "points": [
+            5,
+            -5,
+            5,
+            5,
+            -5,
+            5,
+            -5,
+            -5
+          ],
+          "sensor": true,
+          "userData": {
+            "subtype": "light",
+            "label": "",
+            "type": "sfixture",
+            "id": "4mPOxS",
+            "extra": {
+              "lightType": "directional",
+              "colorHex": "fff2d9ff",
+              "range": 0,
+              "intensity": 1
+            }
+          }
+        },
+        {
+          "points": [
+            -35,
+            -35,
+            35,
+            -35,
+            35,
+            35,
+            -35,
+            35
+          ]
+        }
+      ],
+      "dims": {
+        "width": 70,
+        "height": 70
+      },
+      "sharedFixtureData": {
+        "friction": 0.2,
+        "restitution": 0.3,
+        "groupIndex": 0,
+        "sensor": false,
+        "shapeType": "polygon",
+        "density": 1
+      },
+      "position": [
+        -1250,
+        -650
+      ],
+      "angle": 0,
+      "linearVelocity": [
+        0,
+        0
+      ],
+      "angularVelocity": 0,
+      "fixedRotation": false,
+      "linearDamping": 0,
+      "angularDamping": 0,
+      "id": "CUVzT",
+      "mirrorX": 1
+    }
+  ],
+  "camera": {
+    "x": -150,
+    "y": 0,
+    "scale": 0.36,
+    "rotation": 0
   },
-  "backdrops":[],
-  "joints":[],
-  "version":"1.0",
-  "characters":[]
+  "characters": [],
+  "joints": []
 }
