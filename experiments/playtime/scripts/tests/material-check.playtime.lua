@@ -14,6 +14,8 @@
 -- through (wax, jade, candy), a grain (sand, fibre, pebble, wood, crackle), a rainbow (pearl) and how
 -- see-through it is (clear: how much, how far it bends, tinted, frosted).
 -- keys:
+--   k creases from the inner lines: off / on / deep (MT10: the strokes inside a shape, an ear's fold,
+--     a snout's nostrils, dent its roundness; n for the shapes that have them: ears, a snout, a foot)
 --   x measure what each material costs the GPU (src/render/shader-cost.lua): under each name its cost
 --     against 'as drawn', the status line the cheapest and dearest in ms per million pixels
 --   j the shape behind slides / stays   hold h: the shape behind follows the mouse (the light stays)
@@ -53,6 +55,7 @@ local SMOKES = {
 }
 local PUFFS = { 'mipo/body/body-01', 'mipo/body/body-03', 'mipo/body/body-05', 'mipo/body/body-11',
     'mipo/body/body-13', 'mipo/body/body-16' }
+local CREASES = { { 'off', 0 }, { 'on', 1 }, { 'deep', 2.5 } }
 local RISES = { { 'dome', 1 }, { 'cushion', 0.5 }, { 'pebble', 0.2 } }
 local LIGHT_DEPTH = 420
 
@@ -113,7 +116,8 @@ local PALETTE = {
         clear = { 0.55, 20, 0.95 } },
     { name = 'iron', mode = 1, base = { 0.45, 0.45, 0.48 }, spec = { 0.6, 14 }, rough = 0.8, grain = { SAND, 30, 0.3, 0.2 } },
 }
-local PALETTE_SHAPES = { 'mipo/body/body-12', 'mipo/body/body-06', 'mipo/body/body-15', 'mipo/body/body-17',
+local PALETTE_SHAPES = { 'mipo/body/body-12', 'mipo/ear/ear-06', 'mipo/nose/nose-07', 'mipo/foot/foot-01',
+    'mipo/ear/ear-10', 'mipo/ear/ear-05', 'mipo/body/body-06', 'mipo/body/body-15', 'mipo/body/body-17',
     'mipo/body/body-03', 'mipo/patch/patch-01' } -- how far in front of (or behind) the pictures the light is
 
 local function lab()
@@ -124,6 +128,7 @@ local function lab()
     -- added later: a live state lacks them (and time: a phone draws once before the first update)
     state.materialCheck.time = state.materialCheck.time or 0
     state.materialCheck.sinceFrame = state.materialCheck.sinceFrame or 0
+    state.materialCheck.crease = state.materialCheck.crease or 2
     state.materialCheck.slide = state.materialCheck.slide == nil and true or state.materialCheck.slide
     state.materialCheck.behindX = state.materialCheck.behindX or BEHIND.x
     state.materialCheck.behindY = state.materialCheck.behindY or BEHIND.y
@@ -156,6 +161,9 @@ local function materialShader()
         uniform vec4 clear;      // see-through: how much, how far it bends (px), tinted, frosted (px)
         uniform Image behind;    // what's behind everything (the wall and the striped shape)
         uniform vec2 screenSize; // its size in pixels
+        uniform Image lines;     // the drawn outline picture (mipmapped: a blurred copy for free)
+        uniform vec2 lineTexel;  // one texel of it
+        uniform float crease;    // how deep the inner lines dent the roundness (0: not at all)
 
         float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
         float vnoise(vec2 p) {
@@ -214,6 +222,18 @@ local function materialShader()
             float h = f.r;
             vec2 nxy = (f.gb - 0.5) * 2.0;
             vec3 n = normalize(vec3(nxy, sqrt(max(0.0, 1.0 - dot(nxy, nxy)))));
+            // creases: the strokes inside the shape (not its outline: only where the blurred mask is
+            // well inside) are valleys; the blurred line is how deep, its slope tilts the normal
+            float creaseShade = 0.0;
+            if (crease > 0.0) {
+                vec4 mb = Texel(tex, uv, 3.5);
+                float inner = smoothstep(0.8, 0.97, mb.r * mb.a);
+                vec2 e = lineTexel * 7.0;
+                float cx = Texel(lines, uv + vec2(e.x, 0.0), 2.5).a - Texel(lines, uv - vec2(e.x, 0.0), 2.5).a;
+                float cy = Texel(lines, uv + vec2(0.0, e.y), 2.5).a - Texel(lines, uv - vec2(0.0, e.y), 2.5).a;
+                n = normalize(n + vec3(cx, cy, 0.0) * crease * 1.6 * inner);
+                creaseShade = Texel(lines, uv, 3.0).a * inner * min(crease, 1.5);
+            }
             // the grain: a small relief on the roundness, and a little in the colour
             float g = 0.5;
             if (grain.x > 0.5) {
@@ -228,6 +248,7 @@ local function materialShader()
             float ndl = dot(n, L);
             float alpha = m;
             vec3 base = baseColour * (1.0 + (g - 0.5) * grain.w * 2.0);
+            if (mode > 0.5) base *= 1.0 - 0.3 * creaseShade; // a crease is darker inside: less light gets in
             // wet: porous things darken most, metal and glaze hardly
             float porous = mode > 0.5 && mode < 1.5 ? 0.15 : 1.0 - min(spec.w, 1.0) * 0.7;
             if (mode > 0.5 && mode != 4.0) base *= 1.0 - 0.42 * wet * porous;
@@ -381,6 +402,8 @@ local function lookOf(name)
             local mask = love.graphics.newImage(base .. '-mask.png', { mipmaps = true })
             line:setFilter('linear', 'linear')
             mask:setFilter('linear', 'linear')
+            line:setMipmapFilter('linear')
+            mask:setMipmapFilter('linear')
             local form = love.graphics.newImage(formBake.bakeData(love.image.newImageData(base .. '-mask.png'), rise))
             form:setFilter('linear', 'linear')
             looks[key] = { line = line, mask = mask, form = form }
@@ -441,6 +464,9 @@ local function drawPicture(name, mode, base, x, y, size, opts)
     sh:send('wet', c.wet or 0)
     sh:send('debug', c.debug or 0)
     sh:send('clear', four(p.clear, { 0, 0, 0, 0 }))
+    sh:send('lines', look.line)
+    sh:send('lineTexel', { 1 / look.line:getWidth(), 1 / look.line:getHeight() })
+    sh:send('crease', CREASES[c.crease][2])
     if c.behind then
         sh:send('behind', c.behind)
         sh:send('screenSize', { c.behind:getPixelDimensions() })
@@ -563,6 +589,8 @@ function s.onKeyPress(key)
         c.wind = (c.wind == 0 and 1) or (c.wind == 1 and -1) or 0
     elseif key == 'm' then
         c.rise = c.rise % #RISES + 1
+    elseif key == 'k' then
+        c.crease = c.crease % #CREASES + 1
     elseif key == 'x' then
         c.measureNext = true
     elseif key == 'j' then
@@ -804,13 +832,13 @@ end
 function s.drawUI()
     local c = lab()
     local lines = {
-        'x cost   j slide   h hold: move the shape behind   b light in front / behind   f light stays / follows the mouse   c sun / candle / moon   p painted   o outlines'
+        'k creases   x cost   j slide   h hold: move the shape behind   b light in front / behind   f light stays / follows the mouse   c sun / candle / moon   p painted   o outlines'
             .. '   n shape   l leaves   s steam / smoke / soot   w wind   m rise   r shower   g sees   e pass   t 12 fps',
         string.format('light: %s, %s%s   %s   rise: %s   smoke: %s, wind %s   outlines %s',
             LIGHTS[c.light].name, c.back and 'behind' or 'in front', c.frozen and ' (stays)' or '',
             c.painted and 'painted in 4 steps' or 'smooth', RISES[c.rise][1], SMOKES[c.smoke].name,
             c.wind == 0 and 'still' or (c.wind > 0 and 'to the right' or 'to the left'), c.outlines and 'on' or 'off')
-            .. string.format('   wet %.1f   sees: %s   pass %s   %s', c.wet or 0,
+            .. string.format('   creases %s   wet %.1f   sees: %s   pass %s   %s', CREASES[c.crease][1], c.wet or 0,
                 ({ 'off', 'height', 'normals', 'light alone' })[(c.debug or 0) + 1], c.post and 'on' or 'off',
                 c.stepped and '12 fps' or 'smooth'),
         c.costLine or 'x: measure what each material costs',

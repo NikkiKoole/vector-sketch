@@ -176,7 +176,14 @@ Other ways, in our pipeline:
   (`feedback_deform_editor`).
 - **Depth** for parallax comes from the layer order (DEPTH-LAYERS.md); AI depth estimation (Depth
   Anything) only for a painted backdrop, if ever.
-- [ ] **MT10. Creases from the outline** into the bake, compared in material-check.
+- [x] **MT10. Creases from the outline** (2026-11-06, to judge): in the shader, not the bake. The drawn
+  outline picture, blurred for free by its mipmaps, is a valley wherever a stroke lies well inside the
+  shape (the blurred mask near full, so the outer outline doesn't count): its slope tilts the normal,
+  and a crease is a little darker inside. k: off / on / deep (on to start). Shapes that have inner
+  lines added to n: ear-06, the snout nose-07, foot-01, ear-10, ear-05 (found by how much of a
+  picture's line lies deep inside its mask). The snout's nostrils show it best (g, normals); on
+  ears whose inner lines are thick and close the drawn line hides most of it. Cheap: +0.02 ms/MP
+  on the Mac (~10%).
 - [ ] **MT11. A painted height picture** as an option on a part (outline + mask + height; drawing
   them: THINGS-TO-DRAW A15).
 
