@@ -23,6 +23,13 @@ Things found on the way: a directional light lit the side facing away from where
 spec/light-aim_spec.lua); a directional light fades with its lamp's distance (`range`; 0 means no
 fade, a sun, but the panel can't set 0).
 
+- [x] **LS11. Plaster and clay.** In light-grass-check (2026-11-06, Nikki: "grit to the background ... fences
+  or obstacles with different roughness ... plaster or clay"): the back wall gets a plaster shader of
+  the scene's own (a sand speck and a bumped relief from noise, lit from the sun or moon, around the
+  wall's own colour; q: smooth / fine / coarse plaster); the six stones go from smooth clay to rough
+  render (the plasticine grain, dents, grain size and sheen per stone, labelled) and a fence of
+  coarse plaster stands on the right, its posts and rails her drawn body pictures. The first wall
+  shading darkened everything to grey stone (a flat bit counted as half in shadow); centred now.
 - [x] **LS1. More lamps and colour.** 8 lights, the scene's lamps and times of day (2026-11-06).
 - [x] **LS2. Roundness baked from the mask**, next to the quick guess, switchable (2026-11-06).
 - [x] **LS8. Sky and ground light.** A light type `sky`: its colour from all of above, its ground

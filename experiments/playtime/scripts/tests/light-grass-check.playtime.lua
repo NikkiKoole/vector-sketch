@@ -15,6 +15,9 @@
 --   w shadows on the back wall off / on (src/backdrop-shadows.lua: shifted the way the sun or moon
 --     shines, short and crisp at noon, long and soft when it's low, fading with its light; only on the
 --     wall, none on the open sky)
+--   q the wall's grit: smooth / fine plaster / coarse plaster (lit from the sun or moon)
+--   the stones go from smooth clay to rough render (left to right), the fence is coarse plaster: their
+--   roughness is the plasticine grain, dents, grain size and sheen (the shape's panel)
 --   l the back light off / on (from behind: the edges glow; evening orange, night the moon's blue)
 --   k the sky light off / on (light from all of above in the sky's colour, from below in the ground's)
 --   g light swing   z how much the light comes from the front   f the quick form's depth
@@ -53,7 +56,60 @@ local LAMP_ONLY = { shadows = 0.45, wallShadows = 0.3 }
 
 -- the back wall (backdrop shadows fall on it, src/backdrop-shadows.lua; not on the open sky), and how
 -- far it is behind the things in front of it (how far their shadows shift), per time of day how dark
-local WALL = { x = -1550, y = -700, w = 2200, h = 1150, colour = { 0.91, 0.86, 0.75 } }
+local WALL = { x = -1600, y = -700, w = 3200, h = 1150, colour = { 0.91, 0.86, 0.75 } }
+-- the wall's grit (q): none, fine plaster, coarse plaster. grit: how much sand and pits, scale: the
+-- size of its bumps (world units), relief: how deep they are under the light
+local GRITS = {
+    { name = 'smooth' },
+    { name = 'fine plaster', grit = 0.6, scale = 18, relief = 2.5 },
+    { name = 'coarse plaster', grit = 1.0, scale = 40, relief = 5 },
+}
+local wallShader
+local function plasterShader()
+    wallShader = wallShader or love.graphics.newShader([[
+        varying vec2 wpos;
+        #ifdef VERTEX
+        vec4 position(mat4 t, vec4 v) { wpos = v.xy; return t * v; }
+        #endif
+        #ifdef PIXEL
+        uniform float grit;
+        uniform float scale;
+        uniform float relief;
+        uniform vec2 toLight;
+        uniform float lit;
+        float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+        float vnoise(vec2 p) {
+            vec2 i = floor(p);
+            vec2 f = fract(p);
+            f = f * f * (3.0 - 2.0 * f);
+            return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x),
+                mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
+        }
+        float fbm(vec2 p) {
+            float v = 0.0;
+            float a = 0.5;
+            for (int k = 0; k < 4; k++) { v += a * vnoise(p); p *= 2.1; a *= 0.5; }
+            return v;
+        }
+        vec4 effect(vec4 color, Image tex, vec2 uv, vec2 sc) {
+            vec2 p = wpos / scale;
+            float h = fbm(p);
+            float hx = fbm(p + vec2(0.15, 0.0));
+            float hy = fbm(p + vec2(0.0, 0.15));
+            vec3 n = normalize(vec3((h - hx) * relief, (h - hy) * relief, 1.0));
+            // around the wall's own colour: a flat bit of wall stays as it is, the bumps lighter or
+            // darker than that by the light, the pits and the sand a little
+            vec3 L = normalize(vec3(toLight, 0.6));
+            float light = dot(n, L) - L.z;
+            float sand = hash(floor(wpos / 2.0));
+            float shade = 1.0 + light * lit * 0.6 - grit * (0.5 - h) * 0.18
+                - grit * step(0.93, sand) * 0.12 + grit * step(sand, 0.05) * 0.06;
+            return vec4(color.rgb * shade, color.a);
+        }
+        #endif
+    ]])
+    return wallShader
+end
 local WALL_BEHIND = 90
 local function wallShape() love.graphics.rectangle('fill', WALL.x, WALL.y, WALL.w, WALL.h) end
 local LIGHTS = { 'sun', 'moon', 'warm lamp', 'cool lamp', 'turning lamp', 'sky light', 'back light' }
@@ -336,6 +392,8 @@ function s.onKeyPress(key)
         step(TRIES[key])
     elseif key == '0' then
         for _, k in ipairs(TRY_ORDER) do setAll(TRIES[k], TRIES[k].values[1]) end
+    elseif key == 'q' then
+        look().grit = (look().grit or 2) % #GRITS + 1
     elseif key == 'w' then
         look().wallShadowsOff = not look().wallShadowsOff
     elseif key == 'h' then
@@ -372,7 +430,22 @@ function s.drawBelow()
     local c = WALL.colour
     love.graphics.setColor(c[1] * math.min(1, 0.2 + sky[1] * 0.9), c[2] * math.min(1, 0.2 + sky[2] * 0.9),
         c[3] * math.min(1, 0.2 + sky[3] * 0.9), 1)
+    local grit = GRITS[look().grit or 2]
+    if grit.grit then
+        -- lit from wherever the sun or moon is (the way to it: against the way it shines)
+        local body = strongest({ 'sun', 'moon' }) or strongest({ 'turning lamp' })
+        local a = body and body:getAngle() or math.rad(60)
+        local _, extra = lightOf((body and body:getUserData().thing or {}).label)
+        local shader = plasterShader()
+        love.graphics.setShader(shader)
+        shader:send('grit', grit.grit)
+        shader:send('scale', grit.scale)
+        shader:send('relief', grit.relief)
+        shader:send('toLight', { -math.cos(a), -math.sin(a) })
+        shader:send('lit', math.min(1, extra and extra.intensity or 0))
+    end
     wallShape()
+    love.graphics.setShader()
     love.graphics.setColor(1, 1, 1, 1)
 end
 
@@ -402,6 +475,23 @@ function s.draw()
             end
         end
     end
+    -- each stone's and the fence's roughness, small under it
+    local font = love.graphics.getFont()
+    for _, label in ipairs({ 'lit box', 'fence post' }) do
+        for _, thing in ipairs(getObjectsByLabel(label)) do
+            for _, fixture in ipairs(thing.body:getFixtures()) do
+                local ud = fixture:getUserData()
+                if ud and ud.extra and ud.extra.roughness and (label ~= 'fence post' or thing.body:getX() > 1400) then
+                    local x = thing.body:getX()
+                    local text = ud.extra.roughness
+                    love.graphics.setColor(0, 0, 0, 0.6)
+                    love.graphics.print(text, x - font:getWidth(text) * 1.25 + 3, 540 + 3, 0, 2.5, 2.5)
+                    love.graphics.setColor(1, 0.97, 0.9, 1)
+                    love.graphics.print(text, x - font:getWidth(text) * 1.25, 540, 0, 2.5, 2.5)
+                end
+            end
+        end
+    end
     love.graphics.setColor(1, 1, 1, 1)
 end
 
@@ -412,7 +502,7 @@ function s.drawUI()
         tries[#tries + 1] = string.format('%s %s %s', k, TRIES[k].name, tostring(current(TRIES[k])))
     end
     local lines = {
-        'd day-night  , . an hour  1 day 2 dusk 3 night 4 lamp (r)  k sky  l back  h shadows  w wall  m Mipos  c clay',
+        'd day-night  , . hour  1 day 2 dusk 3 night 4 lamp  k sky  l back  h shadows  w wall  q grit  m Mipos  c clay',
         'now: ' .. (c.lampOnly and 'the turning lamp'
             or string.format('%02d:%02d%s', math.floor(c.hour), math.floor(c.hour % 1 * 60),
                 c.cycle and ' (cycle)' or ''))
