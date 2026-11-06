@@ -228,6 +228,11 @@ fade, a sun: the panel's `fades` switch, LS4).
   front, and throws no soft shadow back onto the wall; they swap at the handover, both faint then (the
   panel's 'moon from behind'). The sun's 3D shadows fade out near the horizon (they vanished at once just
   before 18:00).
+  Mipos too dark by day (Nikki): they took the stones' light settings (light mostly from the side,
+  frontal 0.35, a strong swing 0.5), so a flat drawing faced away from the light most of the day. Their
+  own now: frontal 0.75, swing 0.3, and the sky light x1.3 (panel sliders 'Mipos: frontal', 'Mipos:
+  swing', 'sky light strength'). Measured on the lit pixels at 12:00: drawn 128, before 129, now 136; at
+  16:00 drawn 133, before 128, now 131. p hides the panel.
   Not yet: within a lane one depth (a Mipo's own parts, LS20) (per-thing depth,
   LS16/LS18), nothing on the floor in front of the things, the same cost as the wall shadows (LS12).
 - [ ] **LS15. Small ones:** should a new directional light be a sun (not fade) by default; the back

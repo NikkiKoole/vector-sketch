@@ -5,7 +5,8 @@
 -- The shapes start lit strongly and baked round (their settings, src/render/shaders.lua and
 -- src/render/form-bake.lua; 0 shows them as other scenes draw them).
 -- play mode (tab): drag the warm and the cool lamp about.
--- The panel (top left, folds with –) has all of it as checkboxes, sliders and buttons; the keys still work:
+-- The panel (top left, folds with –, p hides it) has all of it as checkboxes, sliders and buttons; the keys
+-- still work:
 --   d the day-night cycle (a day in DAY_SECONDS: the sun rises on the left at 6, sets on the right at 18,
 --     the moon the other way round the night; night, dawn, day, golden hour and dusk blended by the hour)
 --   t the day faster: a day in 120 / 30 / 10 seconds (turns the cycle on)
@@ -740,6 +741,7 @@ local function solidArea()
 end
 
 -- everything at the clock's hour (or only the turning lamp)
+local SKY_STRENGTH = 1.3 -- the sky light times this (the panel's slider)
 local BACK_FULL = 0.5 -- the sun and moon (added up) this share of the hour's strongest: the back light full
 local function applyTime()
     local c = look()
@@ -768,7 +770,8 @@ local function applyTime()
         turning.range = c.circling and 1400 or 5000
     end
     setLight('turning lamp', c.circling and CIRCLING_COLOUR or 'fff2d9ff', c.circling and 1.4 or 0)
-    setLight('sky light', L.skyLight[1] .. 'ff', c.skyOff and 0 or L.skyLight[3])
+    -- the panel's 'sky light strength' (1.3 to start: the Mipos were dark by day)
+    setLight('sky light', L.skyLight[1] .. 'ff', c.skyOff and 0 or L.skyLight[3] * (c.skyStrength or SKY_STRENGTH))
     local _, skyExtra = lightOf('sky light')
     if skyExtra then skyExtra.groundHex = L.skyLight[2] .. 'ff' end
     -- The back light and the wall's relief come from the sun and the moon together, each by how strong
@@ -831,11 +834,20 @@ end
 local CLAY_OFF = { plasticineStrength = 0, plasticineBump = 0, plasticineSpecStrength = 0, plasticineSSSstrength = 0 }
 
 -- the Mipos lit like the shapes (a Mipo rebuilt from its DNA has new parts: set every frame)
+-- The Mipos' own swing and frontal light (Nikki 2026-11-06: "the mipos are kinda dark almost the whole
+-- day"): with the stones' (light mostly from the side, a strong swing) a flat drawing faces away from the
+-- light most of the day and came out darker than drawn. More from the front and a softer swing.
+local MIPO_FRONTAL, MIPO_SWING = 0.75, 0.3
 local function lightMipos()
-    local on, clay = not look().mipoLightOff, not look().mipoClayOff
-    -- the shapes' settings once, not once per part
+    local c = look()
+    local on, clay = not c.mipoLightOff, not c.mipoClayOff
+    -- the shapes' settings once, not once per part; the Mipos' own frontal light and swing
     local values = {}
     for _, k in ipairs(TRY_ORDER) do values[k] = on and current(TRIES[k]) or nil end
+    if on then
+        values.z = c.mipoFrontal or MIPO_FRONTAL
+        values.g = c.mipoSwing or MIPO_SWING
+    end
     for _, extra in ipairs(mipoExtras()) do
         extra.plasticine = on or nil
         for _, k in ipairs(TRY_ORDER) do
@@ -939,6 +951,8 @@ function s.onKeyPress(key)
         for i, d in ipairs(LAMP_DEPTHS) do if d <= now then at = i end end
         at = math.max(1, math.min(#LAMP_DEPTHS, at + (key == ']' and 1 or -1)))
         c.lampDepth = LAMP_DEPTHS[at]
+    elseif key == 'p' then
+        c.panelHidden = not c.panelHidden
     elseif key == 'x' then
         c.blackShadows = not c.blackShadows
     elseif key == 't' then
@@ -1112,7 +1126,7 @@ end
 -- sliders and buttons; the keys still work. Folds away with its – button.
 local PANEL = '•• light and shadow ••'
 local ROW, COL_W = 34, 380
-local PANEL_ROWS = 16
+local PANEL_ROWS = 19
 
 local function check(x, y, on, label)
     local clicked, now = ui.checkbox(x, y, on, label)
@@ -1179,6 +1193,15 @@ local function drawPanel(c)
         on = toggle(x, y, not c.mipoClayOff, 'Mipos clay')
         c.mipoClayOff = not on
         row()
+        local mf = slider('mipoFrontal', x, y, 0.2, 0.95, c.mipoFrontal or MIPO_FRONTAL, 'Mipos: frontal')
+        if mf then c.mipoFrontal = mf end
+        row()
+        local ms = slider('mipoSwing', x, y, 0, 0.6, c.mipoSwing or MIPO_SWING, 'Mipos: swing')
+        if ms then c.mipoSwing = ms end
+        row()
+        local sk = slider('sky', x, y, 0, 2.5, c.skyStrength or SKY_STRENGTH, 'sky light strength')
+        if sk then c.skyStrength = sk end
+        row()
         if stepper(x, y, COL_W - 30, 'wall: ' .. GRITS[c.grit or 2].name) then c.grit = (c.grit or 2) % #GRITS + 1 end
         row()
         c.circling = toggle(x, y, c.circling, 'a lamp circling round (3D)')
@@ -1239,7 +1262,7 @@ function s.drawUI()
     -- play mode draws no editor UI, so nothing else starts the UI's frame: without it the panel's clicks
     -- only worked in the editor (Nikki)
     if state.playMode then ui.startFrame() end
-    drawPanel(c)
+    if not c.panelHidden then drawPanel(c) end
     local line = 'now: ' .. (c.lampOnly and 'the turning lamp'
         or string.format('%02d:%02d', math.floor(c.hour), math.floor(c.hour % 1 * 60)))
         .. string.format('     lights and parts %.2f ms a frame, grass batches %d/s', c.frameWorkMs or 0, c.perSecond)
