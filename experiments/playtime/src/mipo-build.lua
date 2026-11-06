@@ -23,6 +23,7 @@ local topology = require('src.character-topology')
 local units = require('src.physics-units')
 local registry = require('src.registry')
 local facing = require('src.mipo-facing')
+local torsoLobes = require('src.torso-lobes')
 local dna, earJoint = mipoDna.dna, mipoDna.earJoint
 local TORSO_SKIN_Z, TORSO_HAIR_ABOVE_SKIN = mipoDna.TORSO_SKIN_Z, mipoDna.TORSO_HAIR_ABOVE_SKIN
 local initBlock = appearance.initBlock
@@ -172,6 +173,8 @@ local function partSettings(partName, partData, scale, x, y, instance)
         local raw = topology.shape8Vertices(partData) -- a spine band, or the whole shape
         settings.vertices = makeTransformedVertices(raw, (partData.dims.sx or 1) * scale,
             (partData.dims.sy or 1) * scale)
+        -- with lobes, the torso's collision stops where they start (src/torso-lobes.lua)
+        if instance then settings.vertices = torsoLobes.collision(instance, partName, settings.vertices, scale) end
     end
     return settings
 end
@@ -244,6 +247,7 @@ local function makePart(partName, instance, settings)
                 offsetB = { x = 0, y = 0 },
                 frequency = jointData.frequency and units.rate(jointData.frequency),
                 dampingRatio = jointData.dampingRatio,
+                maxLength = jointData.maxLength and jointData.maxLength * instance.scale,
             }
             -- logger:info('joint:', parent, partName)
             -- todo we dont really need this yet...
@@ -261,6 +265,9 @@ local function makePart(partName, instance, settings)
             end
             applyShoulderLimits(joint, facing.source(instance, partName))
             applyLegLimits(instance, joint, partName)
+            if joint and torsoLobes.isLobe(partName) then
+                torsoLobes.makeSprings(instance, partName, partA_thing.body, partB_thing.body)
+            end
         end
     end
 end
@@ -332,7 +339,10 @@ local function updateSinglePart(partName, data, instance)
         end
     end
     -- a spine's bands all take torso1's shape (rebuilt below as its children)
-    if partName:find('^torso%d') then balance.applySpine(instance) end
+    if partName:find('^torso%d') then
+        balance.applySpine(instance)
+        torsoLobes.apply(instance)
+    end
 
     local oldPosX, oldPosY = 0, 0
     local oldAngle = 0
@@ -383,6 +393,12 @@ function lib.updatePart(partName, data, instance)
     -- filling the cache
     local poseCache = getPoseCache(instance)
     updateSinglePart(partName, data, instance)
+    -- a new torso shape can have another number of lobes: build the Mipo again
+    local lobes, built = torsoLobes.names(instance), 0
+    for name in pairs(instance.entryMap or {}) do
+        if torsoLobes.isLobe(name) then built = built + 1 end
+    end
+    if lobes and #lobes ~= built then return lib.rebuildFromCreation(instance, {}) end
     balance.balanceMasses(instance)
     applyPoseCache(instance, poseCache)
     if positionTorso then fixDrift(positionTorso, instance) end
@@ -529,7 +545,7 @@ local function prepareDNA(instance)
     instance.dna.faceMagnitude = instance.dna.faceMagnitude or D.faceMagnitude
     instance.dna.positioners = instance.dna.positioners or {}
     D.ensureDefaults(instance.dna.positioners, D.positioners)
-    local topo = topology.resolve(instance.dna.creation, instance.dna.positioners)
+    local topo = topology.resolve(instance.dna.creation, instance.dna.positioners, torsoLobes.names(instance))
     instance.topology = topo
     instance.entryMap = topology.buildEntryMap(topo)
     instance.childrenMap = topology.buildChildrenMap(topo)
@@ -565,6 +581,7 @@ function lib.createCharacterFromExistingDNA(instance, x, y, optionalTorsoAngle)
         end
     end
     balance.applySpine(instance)
+    torsoLobes.apply(instance)
 
     if not instance.dna.creation.isPotatoHead and instance.dna.creation.neckSegments > 0 then
         for i = 1, instance.dna.creation.neckSegments do

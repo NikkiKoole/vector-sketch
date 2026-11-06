@@ -95,6 +95,17 @@ lib.creation = {
     torsoSpine = false,
     spineBend = 15,   -- degrees each spine joint bends at most
     spineSway = 0.3,  -- idle sway with the breath, 0 = none, 1 = a lot
+    -- lobes (src/torso-lobes.lua): soft round bodies at the torso's ends, found from its shape
+    torsoLobes = false,
+    lobeDepth = 0.35,  -- part of the torso's height each end's lobes take
+    lobeSpring = 2.5,  -- Hz of their springs
+    lobeDamping = 0.2, -- of their springs
+    -- jiggle (src/torso-jiggle.lua): the torso picture soft, drawn only
+    torsoJiggle = false,
+    jiggleAmount = 0.4,   -- how much it lags behind the torso's moves
+    jiggleSpring = 3,     -- Hz
+    jiggleDamping = 0.15,
+    headJiggle = 0.25,    -- the far end's (a potato's face) share of the swing
 }
 
 -- Face magnitude (overall face-part scale factor)
@@ -201,6 +212,15 @@ lib.creationSchema = {
     torsoSpine = 'boolean',
     spineBend = 'number',
     spineSway = 'number',
+    torsoLobes = 'boolean',
+    lobeDepth = 'number',
+    lobeSpring = 'number',
+    lobeDamping = 'number',
+    torsoJiggle = 'boolean',
+    jiggleAmount = 'number',
+    jiggleSpring = 'number',
+    jiggleDamping = 'number',
+    headJiggle = 'number',
 }
 
 --- Recursively validate target against schema.

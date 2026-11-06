@@ -279,6 +279,12 @@ parentStrategies.outline = function(partName, instance, entry)
     return x, y
 end
 
+-- A torso lobe (src/torso-lobes.lua): its rest place on torso1, set by torsoLobes.apply.
+parentStrategies.lobe = function(partName, instance)
+    local at = instance.dna.parts[partName].at
+    return at[1] * instance.scale, at[2] * instance.scale
+end
+
 -- Lerp along vertex 1→5 midline on parent (nose placement).
 parentStrategies.midlineLerp = function(_partName, instance, entry)
     local parentPart = instance.dna.parts[entry.parent]
@@ -383,7 +389,9 @@ end
 
 --- `positioners` (optional, the instance's dna.positioners): a potato's ears pick their torso
 --- segment from the ear height.
-function lib.resolve(creation, positioners)
+--- `lobeNames` (optional): the torso lobes this Mipo has ({ { name, parent } }, torsoLobes.names),
+--- each a child of the torso band it sits in.
+function lib.resolve(creation, positioners, lobeNames)
     local torsoSegments = creation.torsoSegments or 1
     local neckSegments = creation.neckSegments or 0
     local noseSegments = creation.noseSegments or 0
@@ -548,6 +556,14 @@ function lib.resolve(creation, positioners)
 
     for _, entry in ipairs(limbs) do
         result[#result + 1] = entry
+    end
+
+    -- 6. Torso lobes (src/torso-lobes.lua): how many comes from torso1's shape
+    if lobeNames then
+        for _, lobe in ipairs(lobeNames) do
+            result[#result + 1] = { name = lobe.name, parent = lobe.parent, parentAttach = { strategy = 'lobe' },
+                ownAttach = { strategy = 'centre' }, angleOffset = 0 }
+        end
     end
 
     return result

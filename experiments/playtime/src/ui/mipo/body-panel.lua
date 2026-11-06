@@ -7,6 +7,8 @@ local CharacterManager = require('src.character-manager')
 local mipoBreeds = require('src.mipo-breeds')
 local mipoRegistry = require('src.mipo-registry')
 local mipoActions = require('src.mipo-actions')
+local torsoLobes = require('src.torso-lobes')
+local torsoJiggle = require('src.torso-jiggle')
 local ST = require('src.shape-types')
 local C = require('src.shape-catalogs')
 local widgets = require('src.ui.mipo.widgets')
@@ -77,6 +79,52 @@ local function drawTorsoRows(instance, creation, x, y, ROW)
         ui.alignedLabel(x, y, '  spine sway')
         if sway and sway ~= creation.spineSway then creation.spineSway = sway end -- read live
         y = y + ROW
+    end
+
+    -- lobes: soft round bodies at the torso's ends, found from its shape (src/torso-lobes.lua);
+    -- with a spine each hangs from its own band
+    local loClicked, loChecked = ui.checkbox(x, y, creation.torsoLobes or false, 'lobes')
+    if loClicked then
+        rebuild(instance, { torsoLobes = loChecked })
+    end
+    y = y + ROW
+    if creation.torsoLobes then
+        local depth = ui.sliderWithInput('mipo_lobeDepth', x, y, 120, 0.15, 0.6, creation.lobeDepth or 0.35)
+        ui.alignedLabel(x, y, '  lobe depth')
+        depth = depth and math.floor((tonumber(depth) or 0.35) * 20 + 0.5) / 20
+        if depth and depth ~= creation.lobeDepth then rebuild(instance, { lobeDepth = depth }) end
+        y = y + ROW
+        local spring = ui.sliderWithInput('mipo_lobeSpring', x, y, 120, 0.5, 8, creation.lobeSpring or 2.5)
+        ui.alignedLabel(x, y, '  lobe spring (Hz)')
+        local damping = ui.sliderWithInput('mipo_lobeDamping', x, y + ROW, 120, 0, 1, creation.lobeDamping or 0.2)
+        ui.alignedLabel(x, y + ROW, '  lobe damping')
+        if (spring and spring ~= creation.lobeSpring) or (damping and damping ~= creation.lobeDamping) then
+            creation.lobeSpring = spring or creation.lobeSpring
+            creation.lobeDamping = damping or creation.lobeDamping
+            torsoLobes.setSprings(instance) -- live, no rebuild
+        end
+        y = y + 2 * ROW
+    end
+
+    -- jiggle: the torso picture soft, drawn only (src/torso-jiggle.lua); all read live
+    local jiClicked, jiChecked = ui.checkbox(x, y, creation.torsoJiggle or false, 'jiggle (drawn)')
+    if jiClicked then creation.torsoJiggle = jiChecked end
+    y = y + ROW
+    if creation.torsoJiggle then
+        local J = torsoJiggle.defaults
+        local rows = {
+            { 'jiggleAmount', 0, 3, 'jiggle amount' },
+            { 'jiggleSpring', 0.5, 8, 'jiggle spring (Hz)' },
+            { 'jiggleDamping', 0, 1, 'jiggle damping' },
+            { 'headJiggle', 0, 1, 'head share' },
+        }
+        for _, row in ipairs(rows) do
+            local key = row[1]
+            local v = ui.sliderWithInput('mipo_' .. key, x, y, 120, row[2], row[3], creation[key] or J[key])
+            ui.alignedLabel(x, y, '  ' .. row[4])
+            if v and v ~= creation[key] then creation[key] = v end
+            y = y + ROW
+        end
     end
     return y
 end

@@ -9,6 +9,8 @@ local mipoRegistry = require('src.mipo-registry')
 local mathutils = require('src.math-utils')
 local shape8Dict = require('src.shape8-dict')
 local topology = require('src.character-topology')
+local torsoLobes = require('src.torso-lobes')
+local torsoJiggle = require('src.torso-jiggle')
 
 local lib = {}
 
@@ -51,6 +53,25 @@ function lib.bonesOf(body)
     return { bodies = bodies, middles = middles, originY = -first * sy, outline = outline }
 end
 
+-- A torso's bones: a spine's, its lobes' (src/torso-lobes.lua, with a deform of their own),
+-- both (bent by the spine, then pushed by the lobes), or the drawn jiggle's.
+local together = setmetatable({}, { __mode = 'k' }) -- [torso1 body] = the combined bones
+local function bendThenPush(points, bones, out)
+    local bent = lib.deform(points, bones.spine, bones.bent)
+    torsoLobes.measure(bones.lobes)
+    return torsoLobes.pushPoints(points, bones.lobes.lobes, out, bent)
+end
+function lib.torsoBones(body)
+    local spine, lobes = lib.bonesOf(body), torsoLobes.bonesOf(body)
+    if spine and lobes then
+        local bones = together[body] or { deform = bendThenPush, bent = {} }
+        together[body] = bones
+        bones.spine, bones.lobes, bones.cols, bones.rows = spine, lobes, lobes.cols, lobes.rows
+        return bones
+    end
+    return spine or lobes or torsoJiggle.bonesOf(body)
+end
+
 -- Bend a flat list of torso1-local rest points (x1, y1, x2, y2, ...) over the bones;
 -- writes into `out` (or a new table) and returns it.
 function lib.deform(points, bones, out)
@@ -83,12 +104,12 @@ end
 -- a face part keeps its shape and rides the spine. nil when `body` is no spine torso1.
 local transform, toBody, fromBody = nil, nil, nil
 function lib.transformAt(body, x, y)
-    local bones = lib.bonesOf(body)
+    local bones = lib.torsoBones(body)
     if not bones then return nil end
     transform = transform or love.math.newTransform()
     toBody = toBody or love.math.newTransform()
     fromBody = fromBody or love.math.newTransform()
-    local p = lib.deform({ x, y, x + 10, y }, bones)
+    local p = (bones.deform or lib.deform)({ x, y, x + 10, y }, bones)
     local turn = math.atan2(p[4] - p[2], p[3] - p[1])
     local bx, by, angle = body:getX(), body:getY(), body:getAngle()
     toBody:setTransformation(bx, by, angle)
@@ -165,7 +186,7 @@ function lib.drawFan(img, ring, bones, body, extra)
         cache = { key = key, mesh = mesh, img = img, rest = rest, bent = {}, verts = verts }
         byImg[img] = cache
     end
-    local bent = lib.deform(cache.rest, bones, cache.bent)
+    local bent = (bones.deform or lib.deform)(cache.rest, bones, cache.bent)
     for i, d in ipairs(cache.verts) do d[1], d[2] = bent[i * 2 - 1], bent[i * 2] end
     cache.mesh:setVertices(cache.verts)
     love.graphics.draw(cache.mesh, body:getX(), body:getY(), body:getAngle())
@@ -244,7 +265,7 @@ function lib.bentGridC(corners, bones)
 end
 
 function lib.drawGrid(img, corners, bones, body, extra)
-    local cols, rows = lib.columns, lib.rows
+    local cols, rows = bones.cols or lib.columns, bones.rows or lib.rows
     if C == nil then C = nativeLib.load(CDEF, 'grid_spine') end
     -- an ear's bones or a spine's (no deform of their own); anything else bends in Lua
     local useNative = lib.useNative and C and (bones.ear ~= nil or not bones.deform) and #corners == 8

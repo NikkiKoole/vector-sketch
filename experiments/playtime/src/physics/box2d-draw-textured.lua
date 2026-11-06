@@ -86,7 +86,7 @@ end
 local function drawImageLayerSquishRGBA(url, r, g, b, a, extra, texfixture)
     local img = getLoveImage('textures/' .. url)
     local vertices = extra.vertices or { texfixture:getShape():getPoints() }
-    local bones = #vertices == 16 and spineSkin.bonesOf(texfixture:getBody()) -- a spine's bodyhair bends with it
+    local bones = #vertices == 16 and spineSkin.torsoBones(texfixture:getBody()) -- a spine's bodyhair bends with it
     if bones and img then
         love.graphics.setColor(r, g, b, a)
         spineSkin.drawFan(img, vertices, bones, texfixture:getBody(), extra)
@@ -108,7 +108,7 @@ local function drawCombinedImageVanilla(ompImage, extra, texfixture, _thing)
     if vertices and img then
         local body = texfixture:getBody()
         -- a spine's torso picture bends, and a Mipo ear's
-        local bones = #vertices == 8 and (spineSkin.bonesOf(body) or earBend.bonesOf(body, vertices))
+        local bones = #vertices == 8 and (spineSkin.torsoBones(body) or earBend.bonesOf(body, vertices))
         if bones then
             love.graphics.setColor(1, 1, 1, 1)
             if extra.main.tint then love.graphics.setColor(color.hexToColor(extra.main.tint)) end
