@@ -5,7 +5,7 @@
 -- The shapes start lit strongly and baked round (their settings, src/render/shaders.lua and
 -- src/render/form-bake.lua; 0 shows them as other scenes draw them).
 -- play mode (tab): drag the warm and the cool lamp about.
--- keys:
+-- The panel (top left, folds with –) has all of it as checkboxes, sliders and buttons; the keys still work:
 --   d the day-night cycle (a day in DAY_SECONDS: the sun rises on the left at 6, sets on the right at 18,
 --     the moon the other way round the night; night, dawn, day, golden hour and dusk blended by the hour)
 --   t the day faster: a day in 120 / 30 / 10 seconds (turns the cycle on)
@@ -562,7 +562,7 @@ local function sunLight()
     local theta = (sun >= moon) and (c.hour - 6) / 12 * math.pi or ((c.hour - 18) % 24) / 12 * math.pi
     local high = math.sin(theta)
     if high <= 0.02 then return nil end
-    local towards = SUN_TOWARDS[c.sunTowards or 1]
+    local towards = c.sunOut or SUN_TOWARDS[c.sunTowards or 1]
     return { kind = 'sun', x = -math.cos(theta), h = high, z = towards }, math.min(1, math.abs(sun - moon) / 0.6)
 end
 
@@ -785,6 +785,7 @@ function s.onKeyPress(key)
         c.daySpeed = (c.daySpeed or 1) % #DAY_SPEEDS + 1
         c.cycle, c.lampOnly = true, false
     elseif key == 'y' then
+        c.sunOut = nil
         c.sunTowards = (c.sunTowards or 1) % #SUN_TOWARDS + 1
     elseif key == 'j' then
         c.softness = (c.softness or 1) % #SOFTNESS + 1
@@ -911,40 +912,129 @@ function s.draw()
     love.graphics.setColor(1, 1, 1, 1)
 end
 
+-- The panel (Nikki 2026-11-06: "on screen toggles and sliders"): everything the keys do, as checkboxes,
+-- sliders and buttons; the keys still work. Folds away with its – button.
+local PANEL = '•• light and shadow ••'
+local ROW, COL_W = 34, 380
+
+local function check(x, y, on, label)
+    local clicked, now = ui.checkbox(x, y, on, label)
+    return clicked, now
+end
+-- a checkbox's new state alone
+local function toggle(x, y, on, label)
+    local _, now = ui.checkbox(x, y, on, label)
+    return now
+end
+
+local function slider(id, x, y, min, max, value, label, stepSize)
+    local v = ui.sliderWithInput('light-' .. id, x, y - 6, 130, min, max, value, nil, stepSize)
+    ui.label(x + 228, y, label)
+    return v
+end
+
+-- a button stepping through choices: shows the current one
+local function stepper(x, y, w, text)
+    return ui.button(x, y, w, text, ROW - 6)
+end
+
+local function drawPanel(c)
+    local x0, y0 = state.playMode and 20 or 90, 20
+    local w, h = COL_W * 2 + 20, ROW * 12 + 50
+    ui.panel(x0, y0, w, h, PANEL, function()
+        local x, y = x0 + 12, y0 + 40
+        local function row() y = y + ROW end
+        -- left: the time and the lights
+        local clicked
+        clicked, c.cycle = check(x, y, c.cycle, 'day running')
+        if clicked then c.lampOnly = false end
+        row()
+        local hour = slider('hour', x, y, 0, 24, math.floor(c.hour * 100 + 0.5) / 100, 'hour')
+        if hour then c.hour, c.lampOnly = hour % 24, false end
+        row()
+        local bw = (COL_W - 30) / 3
+        for i, secs in ipairs(DAY_SPEEDS) do
+            local label = (secs >= 60 and (secs / 60) .. ' min' or secs .. ' s')
+                .. ((c.daySpeed or 1) == i and ' •' or '')
+            if ui.button(x + (i - 1) * (bw + 6), y, bw, label, ROW - 6) then
+                c.daySpeed, c.cycle, c.lampOnly = i, true, false
+            end
+        end
+        row()
+        for i, pick in ipairs({ { 'noon', 12 }, { 'dusk', 19 }, { 'night', 0 } }) do
+            if ui.button(x + (i - 1) * (bw + 6), y, bw, pick[1], ROW - 6) then
+                c.hour, c.lampOnly = pick[2], false
+            end
+        end
+        row()
+        c.lampOnly = toggle(x, y, c.lampOnly, 'only the turning lamp')
+        row()
+        local on
+        on = toggle(x, y, not c.skyOff, 'sky light')
+        c.skyOff = not on
+        row()
+        on = toggle(x, y, not c.backOff, 'back light (edges glow)')
+        c.backOff = not on
+        row()
+        on = toggle(x, y, not c.mipoLightOff, 'Mipos lit')
+        c.mipoLightOff = not on
+        row()
+        on = toggle(x, y, not c.mipoClayOff, 'Mipos clay')
+        c.mipoClayOff = not on
+        row()
+        if stepper(x, y, COL_W - 30, 'wall: ' .. GRITS[c.grit or 2].name) then c.grit = (c.grit or 2) % #GRITS + 1 end
+        row()
+        if stepper(x, y, COL_W - 30, 'back to the liked settings') then s.onKeyPress('o') end
+
+        -- right: the shadows and the shapes
+        x, y = x0 + 12 + COL_W + 10, y0 + 40
+        on = toggle(x, y, not c.shadowsOff, 'contact shadows')
+        c.shadowsOff = not on
+        row()
+        on = toggle(x, y, not c.wallShadowsOff, 'soft wall shadows')
+        c.wallShadowsOff = not on
+        row()
+        c.solid = toggle(x, y, c.solid, '3D shadows (and the ground)')
+        row()
+        if stepper(x, y, COL_W - 30, 'from ' .. lightSet().name) then s.onKeyPress('e') end
+        row()
+        on = toggle(x, y, not c.blackShadows, 'coloured shadows')
+        c.blackShadows = not on
+        row()
+        if stepper(x, y, COL_W - 30, 'edges: ' .. SOFTNESS[c.softness or 1].name) then s.onKeyPress('j') end
+        row()
+        local depth = slider('lamp', x, y, 40, 3000, c.lampDepth or LAMP_DEPTH, 'lamp distance', 1)
+        if depth then c.lampDepth = depth end
+        row()
+        local out = slider('sun', x, y, 0.05, 0.6, c.sunOut or SUN_TOWARDS[c.sunTowards or 1], 'sun out of wall')
+        if out then c.sunOut = out end
+        row()
+        clicked, on = check(x, y, current(TRIES.a) == true, 'stones: lights add up')
+        if clicked then setAll(TRIES.a, on) end
+        row()
+        clicked, on = check(x, y, current(TRIES.b) == true, 'stones: baked roundness')
+        if clicked then setAll(TRIES.b, on) end
+        row()
+        local swing = slider('swing', x, y, 0, 0.6, current(TRIES.g), 'stones: swing')
+        if swing then setAll(TRIES.g, swing) end
+        row()
+        local front = slider('front', x, y, 0.2, 0.95, current(TRIES.z), 'stones: frontal')
+        if front then setAll(TRIES.z, front) end
+    end)
+end
+
 function s.drawUI()
     local c = look()
-    local tries = {}
-    for _, k in ipairs(TRY_ORDER) do
-        tries[#tries + 1] = string.format('%s %s %s', k, TRIES[k].name, tostring(current(TRIES[k])))
-    end
-    local lines = {
-        'd day-night  , . hour  1 day 2 dusk 3 night 4 lamp  k sky  l back  h shadows  w wall  q grit  m Mipos  c clay',
-        'now: ' .. (c.lampOnly and 'the turning lamp'
-            or string.format('%02d:%02d%s', math.floor(c.hour), math.floor(c.hour % 1 * 60),
-                c.cycle and string.format(' (cycle, a day in %ds, t)', DAY_SPEEDS[c.daySpeed or 1]) or ''))
-            .. (c.skyOff and ', sky light off' or ', sky light on')
-            .. (c.shadowsOff and ', no shadows' or ', shadows')
-            .. (c.wallShadowsOff and ', none on the wall' or ', on the wall')
-            .. ', wall ' .. GRITS[c.grit or 2].name
-            .. (c.backOff and ', no back light' or ', back light')
-            .. (c.mipoLightOff and ', Mipos as drawn'
-                or (c.mipoClayOff and ', Mipos lit, no clay' or ', Mipos lit, clay'))
-            .. '      shapes: ' .. table.concat(tries, '   ') .. '   (0 as elsewhere)',
-        'v 3D shadows: ' .. (c.solid and ('on, from ' .. lightSet().name
-            .. (lightSet().warm and string.format(', warm lamp %d in front', c.lampDepth or LAMP_DEPTH) or '')
-            .. (lightSet().sun and string.format(', sun %.2f out of the wall', SUN_TOWARDS[c.sunTowards or 1]) or '')
-            .. ', ' .. SOFTNESS[c.softness or 1].name .. (c.blackShadows and ', black' or ', coloured')) or 'off')
-            .. '   (e which lights  x colour  y sun out of the wall  [ ] lamp depth  j edges)',
-        string.format('grass: SpriteBatches made in the last second: %d   lights and parts: %.2f ms a frame',
-            c.perSecond, c.frameWorkMs or 0),
-    }
-    for i, line in ipairs(lines) do
-        local y = love.graphics.getHeight() - 20 - (#lines - i + 1) * 20
-        love.graphics.setColor(0, 0, 0, 0.8)
-        love.graphics.print(line, 121, y + 1)
-        love.graphics.setColor(1, 0.95, 0.8, 1)
-        love.graphics.print(line, 120, y)
-    end
+    drawPanel(c)
+    local line = 'now: ' .. (c.lampOnly and 'the turning lamp'
+        or string.format('%02d:%02d', math.floor(c.hour), math.floor(c.hour % 1 * 60)))
+        .. string.format('     lights and parts %.2f ms a frame, grass batches %d/s', c.frameWorkMs or 0, c.perSecond)
+        .. '     (the keys still work: see the script\'s top comment)'
+    local y = love.graphics.getHeight() - 40
+    love.graphics.setColor(0, 0, 0, 0.8)
+    love.graphics.print(line, 121, y + 1)
+    love.graphics.setColor(1, 0.95, 0.8, 1)
+    love.graphics.print(line, 120, y)
     love.graphics.setColor(1, 1, 1, 1)
 end
 
