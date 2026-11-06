@@ -170,6 +170,15 @@ The talk assumed Box2D v3 (`b2Shape_SetFilter`, `b2Body_SetBullet`, one-sided ch
   the drop's bottom corner is r 700, and the turnaround and the way home stay low. The wheels'
   friction went down to 0.05 (they skidded each time the cart swapped walls), which wasn't the
   main loss. With 14 movers the knikkerbaan now makes 7 loops in three minutes (was 10), none out.
+- [x] **TR5c. Gentler depth changes** (2026-11-06, Nikki: "smoother, slower, less jarring").
+  Depth moved things toward the vanishing point as much as it shrank them, so far from that point
+  a layer change slid the pipe hundreds of px across the screen over a short stretch (the
+  coaster's turnaround: a wedge; the loops drawn as pears). Now depth shrinks sizes 16% per
+  layer but moves positions only 5% (`DEPTH_SHIFT`): the pipe narrows around its own centre line,
+  and the cart's 3D box keeps its full perspective around its own centre. Layer changes are
+  900 px long (was 600; a course can set `transition`), eased with smootherstep (flat at both
+  ends). Checked that no same-layer crossing falls inside the longer stretches. Both courses run
+  as before (headless: the knikkerbaan 11 loops in three minutes, the coaster 14 in four, none out).
 - [ ] **TR6. In and out.** Drop a Mipo near a seat: it's seated. Pull hard: the joint breaks and the
   Mipo is back in the world with its own filter (flies off if the cart is fast).
 - [ ] **TR7. Nikki plays with it**: keep, change or park? Then which contraption first

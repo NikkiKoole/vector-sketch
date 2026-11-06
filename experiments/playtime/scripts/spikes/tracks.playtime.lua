@@ -24,7 +24,10 @@ local LAYER_DEPTH = DEFAULT_DEPTH -- the course's own (set with the course)
 local HALF = 70           -- the pipe's inside half width
 local CORNER = 200        -- corner radius (well over HALF, or the inner wall folds)
 local STEP = 15           -- centre line sample spacing (px of arc length)
-local TRANSITION = 600    -- length of a layer change, both layers' walls side by side (360 showed a jog)
+-- length of a layer change, both layers' walls side by side (360 showed a jog; 600 still jarred
+-- where depth also slid the pipe a long way across the screen); a course can set its own
+local DEFAULT_TRANSITION = 900
+local TRANSITION = DEFAULT_TRANSITION
 local WALL = 8            -- drawn wall thickness
 local MARBLE_R = 40        -- two side by side would need 160: more than the pipe (30 wedged across it in pairs)
 local MAX_MOVERS = 14
@@ -47,6 +50,7 @@ local DRIVES = {
 local STILL_FOR = 6       -- seconds stopped outside the hoist: nudged along the pipe
 -- drawn depth: a layer one deeper is drawn this much smaller toward the vanishing point, hazier
 local DEPTH_SHRINK = 0.16
+local DEPTH_SHIFT = 0.05  -- and moved this much toward it (positions; was the same as the shrink)
 local DEPTH_HAZE = 0.4
 local VANISH_X, VANISH_Y = 950, 1000 -- the course's own (set with the course)
 -- the cart drawn as a box in 3D: depth 1 is this far back (px), which makes the shrink a
@@ -244,9 +248,10 @@ local function resample(pts, step)
     return out, total
 end
 
-local function smoothstep(t)
+-- the ease across a layer change: flat at both ends (smootherstep: no kink where it starts)
+local function ease(t)
     t = math.max(0, math.min(1, t))
-    return t * t * (3 - 2 * t)
+    return t * t * t * (t * (t * 6 - 15) + 10)
 end
 
 -- the layer changes: which layers' walls each point has, and its drawn depth (eased across)
@@ -267,7 +272,7 @@ local function transitions(line, length)
             if d > length / 2 then d = d - length elseif d < -length / 2 then d = d + length end
             if math.abs(d) <= TRANSITION / 2 then
                 p.walls[ch.from], p.walls[ch.to] = true, true
-                local t = smoothstep(d / TRANSITION + 0.5)
+                local t = ease(d / TRANSITION + 0.5)
                 p.depth = LAYER_DEPTH[ch.from] + (LAYER_DEPTH[ch.to] - LAYER_DEPTH[ch.from]) * t
             end
         end
@@ -567,10 +572,20 @@ local LIGHT_X, LIGHT_Y = -0.6, -0.8 -- toward the light
 local CART_WOOD = { 0.78, 0.58, 0.36 }
 local CART_DARK = { 0.45, 0.32, 0.2 }
 
--- a world point at a drawn depth: smaller toward the vanishing point
+-- a world point at a drawn depth: a little toward the vanishing point (DEPTH_SHIFT), and the
+-- size there (k, DEPTH_SHRINK). Moving things as much as they shrink slid a far-off pipe hundreds
+-- of px across the screen in a layer change (the coaster's turnaround: a wedge); now depth mostly
+-- shrinks and hazes, and moves only a little.
 local function project(x, y, depth)
-    local k = 1 - DEPTH_SHRINK * depth
-    return VANISH_X + (x - VANISH_X) * k, VANISH_Y + (y - VANISH_Y) * k, k
+    local m = 1 - DEPTH_SHIFT * depth
+    return VANISH_X + (x - VANISH_X) * m, VANISH_Y + (y - VANISH_Y) * m, 1 - DEPTH_SHRINK * depth
+end
+
+-- a point `off` px along a track point's normal, drawn at its depth: the width shrinks around the
+-- (projected) centre line
+local function projectOff(p, off)
+    local x, y, k = project(p.x, p.y, p.depth)
+    return x + p.nx * off * k, y + p.ny * off * k
 end
 
 local function hazed(col, depth, alpha)
@@ -587,8 +602,8 @@ local function layerLook(track, layer)
     local line = track.line
     local n = #line
     local verts = {}
-    local function vert(p, x, y)
-        local px, py = project(x, y, p.depth)
+    local function vert(p, off)
+        local px, py = projectOff(p, off)
         local r, g, b, a = hazed(p.drive and GLASS_DRIVE[p.drive] or GLASS, p.depth)
         verts[#verts + 1] = { px, py, 0, 0, r, g, b, a }
     end
@@ -596,8 +611,8 @@ local function layerLook(track, layer)
     for i = 1, n do
         local p, q = line[i], line[i % n + 1]
         if p.layer == layer then
-            vert(p, p.lx, p.ly); vert(p, p.rx, p.ry); vert(q, q.lx, q.ly)
-            vert(q, q.lx, q.ly); vert(p, p.rx, p.ry); vert(q, q.rx, q.ry)
+            vert(p, -HALF); vert(p, HALF); vert(q, -HALF)
+            vert(q, -HALF); vert(p, HALF); vert(q, HALF)
         end
     end
     if #verts > 0 then look.mesh = love.graphics.newMesh(verts, 'triangles', 'static') end
@@ -606,13 +621,13 @@ local function layerLook(track, layer)
         local left, right, glint, depth = {}, {}, {}, 0
         for _, i in ipairs(run) do
             local p = line[i]
-            local x, y = project(p.lx, p.ly, p.depth)
+            local x, y = projectOff(p, -HALF)
             left[#left + 1], left[#left + 2] = x, y
-            x, y = project(p.rx, p.ry, p.depth)
+            x, y = projectOff(p, HALF)
             right[#right + 1], right[#right + 2] = x, y
             -- the glint toward the light, smoothly: through the middle where the pipe points at it
             local side = p.nx * LIGHT_X + p.ny * LIGHT_Y
-            x, y = project(p.x + p.nx * HALF * 0.6 * side, p.y + p.ny * HALF * 0.6 * side, p.depth)
+            x, y = projectOff(p, HALF * 0.6 * side)
             glint[#glint + 1], glint[#glint + 2] = x, y
             depth = math.max(depth, p.depth)
         end
@@ -656,9 +671,18 @@ do
     LIGHT3 = { LIGHT3[1] / l, LIGHT3[2] / l, LIGHT3[3] / l }
 end
 
-local function project3(x, y, z)
+local function perspective(x, y, z)
     local k = 1 - DEPTH_SHRINK * z / DEPTH_Z
     return VANISH_X + (x - VANISH_X) * k, VANISH_Y + (y - VANISH_Y) * k
+end
+
+-- a point of the cart: the full perspective around the cart's centre, the centre itself placed
+-- where project() puts it (so the box sits in its pipe however little depth moves things)
+local function project3(fr, x, y, z)
+    local px, py = perspective(x, y, z)
+    local cx, cy = perspective(fr.x, fr.y, fr.z)
+    local sx, sy = project(fr.x, fr.y, fr.depth)
+    return sx + px - cx, sy + py - cy
 end
 
 local function norm3(x, y, z)
@@ -708,7 +732,7 @@ local function quad3(fr, pts, col, n)
     local flat = {}
     for _, q in ipairs(pts) do
         local x, y, z = at(fr, q[1], q[2], q[3])
-        flat[#flat + 1], flat[#flat + 2] = project3(x, y, z)
+        flat[#flat + 1], flat[#flat + 2] = project3(fr, x, y, z)
     end
     local light = math.max(0, n[1] * LIGHT3[1] + n[2] * LIGHT3[2] + n[3] * LIGHT3[3])
     local shade = 0.5 + 0.5 * light
@@ -730,8 +754,8 @@ local function drawWheel3(fr, wheel, body, side)
     local n = side > 0 and fr.s or { -fr.s[1], -fr.s[2], -fr.s[3] }
     quad3(fr, pts, { 0.25, 0.23, 0.22 }, n)
     -- a spoke, to see it turn
-    local x0, y0 = project3(at(fr, lx, -ly, side))
-    local x1, y1 = project3(at(fr, lx + math.cos(spin) * WHEEL_R * 0.8, -ly - math.sin(spin) * WHEEL_R * 0.8, side))
+    local x0, y0 = project3(fr, at(fr, lx, -ly, side))
+    local x1, y1 = project3(fr, at(fr, lx + math.cos(spin) * WHEEL_R * 0.8, -ly - math.sin(spin) * WHEEL_R * 0.8, side))
     love.graphics.setColor(hazed({ 0.75, 0.75, 0.72 }, fr.depth, 1))
     love.graphics.setLineWidth(3)
     love.graphics.line(x0, y0, x1, y1)
@@ -844,6 +868,7 @@ local function useCourse(c)
     WAYPOINTS = course.waypoints
     VANISH_X, VANISH_Y = course.vanish[1], course.vanish[2]
     LAYER_DEPTH = course.depth or DEFAULT_DEPTH
+    TRANSITION = course.transition or DEFAULT_TRANSITION
     return course
 end
 
@@ -892,8 +917,7 @@ local function follow(c)
     for _, m in ipairs(c.movers) do
         if m.kind == 'cart' and alive(m.body) then
             local x, y = m.body:getPosition()
-            local k = 1 - DEPTH_SHRINK * c.track.line[m.index].depth
-            x, y = VANISH_X + (x - VANISH_X) * k, VANISH_Y + (y - VANISH_Y) * k
+            x, y = project(x, y, c.track.line[m.index].depth)
             cam:setScale(0.35)
             local tx, ty = cam:getTranslation()
             cam:setTranslation(tx + (x - tx) * 0.08, ty + (y - ty) * 0.08)
