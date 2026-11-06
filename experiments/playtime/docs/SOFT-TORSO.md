@@ -44,6 +44,10 @@ ears) only springs in rotation. Two distance joints in a V are real springs in b
   frame; kept for the frame, `spineSkin.newFrame`, lobes measured once), and the lobed grid
   went through Lua tables (C lays it now, the pushes added into its buffer, weights kept per
   grid). Physics itself costs ~0.3 ms.
+  **More C, the same day:** the pushes (`grid_push`) and bodyhair's fan (`points_spine`: its rest
+  vertices in a C buffer, bent over a spine and pushed there; spine Mipos without lobes gain too)
+  in `native/desound/grid.c`; the same points as the Lua path to 0.0001 px. Draw 7.4 -> ~6.1 ms
+  (no lobes 5.3), still 60 fps, slowest frame 17 ms.
 - [ ] **ST4. DNA traits.** Softness in randomize and as a breed trait (MIPO-BREEDS.md): a jelly
   breed and a firm one.
 

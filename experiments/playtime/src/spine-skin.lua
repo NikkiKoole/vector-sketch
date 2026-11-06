@@ -177,10 +177,12 @@ end
 -- grid point follows its band like the torso picture does.
 -- [extra] = { [img] = { key, mesh, img, rest, bent, verts } } (bodyhair draws two layers)
 local fans = setmetatable({}, { __mode = 'k' })
+local fanInC -- the fan laid and bent in C (below, where the C buffers are)
 
 function lib.drawFan(img, ring, bones, body, extra)
     local n = lib.rows
     local key = table.concat(ring, ',')
+    if fanInC(img, ring, key, bones, body, extra) then return end
     local byImg = fans[extra]
     if not byImg then
         byImg = setmetatable({}, { __mode = 'k' })
@@ -232,6 +234,8 @@ local ffi = nativeLib.ffi
 local CDEF = [[
 int grid_spine(const float *corners, int cols, int rows, const float *bones, const float *middles,
                int nBones, float blend, float *out);
+int points_spine(const float *in, int count, const float *bones, const float *middles, int nBones,
+                 float blend, float *out);
 int grid_ear(const float *corners, int cols, int rows, const float *ear, const float *parent,
              float restAngle, float anchorX, float anchorY, float rootX, float rootY,
              float axisX, float axisY, float length, float bendLength, float *out);
@@ -327,6 +331,64 @@ local function softInC(corners, bones, body, cols, rows, cache)
     end
     torsoLobes.pushBuffer(cache.rest, soft, gridOut, n)
     return n
+end
+
+-- Bodyhair's fan in C: its rest vertices kept in a C buffer, bent over the spine there
+-- (points_spine) or copied, the soft points' pushes added (grid_push), one setVertices of the
+-- ByteData. In Lua this built a table a vertex every frame (169 of them a torso).
+local nativeFans = setmetatable({}, { __mode = 'k' }) -- [extra] = { [img] = { key, mesh, rest, buf } }
+fanInC = function(img, ring, key, bones, body, extra)
+    if C == nil then C = nativeLib.load(CDEF, 'grid_spine') end
+    if not (lib.useNative and C and pcall(function() return C.points_spine end)) then return false end
+    local spine = bones.spine or (bones.bodies and bones)
+    if spine and (spine.deform or #spine.bodies > 32) then return false end
+    local n = lib.rows
+    local count = (n + 1) * (n + 1)
+    local byImg = nativeFans[extra]
+    if not byImg then
+        byImg = setmetatable({}, { __mode = 'k' })
+        nativeFans[extra] = byImg
+    end
+    local cache = byImg[img]
+    if not cache or cache.key ~= key then
+        local map, rest = {}, {}
+        local buf = ffi.new('float[?]', count * 4)
+        local cx, cy = mathutils.getCenterOfPoints(ring)
+        for r = 0, n do
+            for c = 0, n do
+                local i = r * (n + 1) + c
+                local u, v = c / n, r / n
+                local x, y = lib.fanPoint(ring, cx, cy, u, v)
+                rest[i * 2 + 1], rest[i * 2 + 2] = x, y
+                buf[i * 4], buf[i * 4 + 1], buf[i * 4 + 2], buf[i * 4 + 3] = x, y, u, v
+            end
+        end
+        for r = 0, n - 1 do
+            for c = 0, n - 1 do
+                local v = r * (n + 1) + c + 1
+                for _, idx in ipairs({ v, v + 1, v + n + 1, v + 1, v + n + 2, v + n + 1 }) do map[#map + 1] = idx end
+            end
+        end
+        local mesh = cache and cache.mesh or love.graphics.newMesh(nativeLib.FORMAT, count, 'triangles', 'stream')
+        mesh:setVertexMap(map)
+        mesh:setTexture(img)
+        cache = { key = key, mesh = mesh, rest = rest, buf = buf }
+        byImg[img] = cache
+    end
+    ensureGridData(count)
+    if spine then
+        for i, b in ipairs(spine.bodies) do
+            xformInto(boneBuf, (i - 1) * 3, b)
+            middleBuf[i - 1] = spine.middles[i]
+        end
+        C.points_spine(cache.buf, count, boneBuf, middleBuf, #spine.bodies, lib.blend, gridOut)
+    else
+        ffi.copy(gridOut, cache.buf, count * nativeLib.BYTES_PER_VERTEX)
+    end
+    if bones.soft then torsoLobes.pushBuffer(cache.rest, bones.soft(bones), gridOut, count) end
+    cache.mesh:setVertices(gridData, 1, count)
+    love.graphics.draw(cache.mesh, body:getX(), body:getY(), body:getAngle())
+    return true
 end
 
 function lib.drawGrid(img, corners, bones, body, extra)

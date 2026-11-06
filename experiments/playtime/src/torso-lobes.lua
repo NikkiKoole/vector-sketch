@@ -15,6 +15,14 @@ local units = require('src.physics-units')
 local ST = require('src.shape-types')
 local JT = require('src.joint-types')
 local topology = require('src.character-topology')
+local nativeLib = require('src.native-lib')
+local ffi = nativeLib.ffi
+local CDEF = [[
+void grid_push(float *out, int count, int stride, const float *weights, int nSoft, const float *offsets);
+]]
+local C -- native/desound/grid.c, false without it (nil: not asked yet)
+local MAX_SOFT = 16
+local offsetBuf = ffi and ffi.new('float[?]', MAX_SOFT * 2)
 
 local lib = {}
 
@@ -280,7 +288,7 @@ local function weightsFor(points, soft)
         sig = sig + i * (p.x * 1.31 + p.y * 1.77 + p.r * 0.91)
     end
     local cache = #points > 8 and weightCache[points]
-    if cache and cache.sig == sig then return cache.w end
+    if cache and cache.sig == sig then return cache.w, cache.buf end
     local inner, span = lib.inner, lib.outer - lib.inner
     local w = {}
     for k = 1, #points - 1, 2 do
@@ -296,8 +304,14 @@ local function weightsFor(points, soft)
             for i = 1, n do w[base + i] = w[base + i] / sum end
         end
     end
-    if #points > 8 then weightCache[points] = { sig = sig, w = w } end
-    return w
+    local buf
+    if #points > 8 then
+        -- the same weights for C (grid_push), made once with them
+        buf = ffi and #w > 0 and ffi.new('float[?]', #w)
+        if buf then for i = 1, #w do buf[i - 1] = w[i] end end
+        weightCache[points] = { sig = sig, w = w, buf = buf }
+    end
+    return w, buf
 end
 
 function lib.pushPoints(points, soft, out, base)
@@ -324,7 +338,16 @@ end
 -- first), `count` vertices laid like `points`.
 function lib.pushBuffer(points, soft, buf, count)
     local n = #soft
-    local w = weightsFor(points, soft)
+    if n == 0 then return end
+    local w, wbuf = weightsFor(points, soft)
+    if C == nil then C = nativeLib.load(CDEF, 'grid_push') end
+    if C and wbuf and n <= MAX_SOFT then
+        for i = 1, n do
+            offsetBuf[i * 2 - 2], offsetBuf[i * 2 - 1] = soft[i].ox, soft[i].oy
+        end
+        C.grid_push(buf, count, 4, wbuf, n, offsetBuf)
+        return
+    end
     for v = 0, count - 1 do
         local at = v * n
         local ox, oy = 0, 0
