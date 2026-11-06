@@ -257,6 +257,15 @@ fade, a sun: the panel's `fades` switch, LS4).
   session's measure), so 20 of them ~9-10 ms on top of the shadows' ~5: tight at 60 fps. Measure a room
   of 20 lit Mipos with the 3D shadows; if it's too much, fewer lights per part, no clay by default, or
   lighting only the near ones. Decide before LS13 makes it a scene setting.
+  Measured 2026-11-06 (iPhone SE 2, 3 Mipos, 60 fps throughout, draw p50 = the CPU's time; GPU-heavy
+  pixel work only shows once a frame misses 60): no shadows 5.2; contact 5.3; + soft wall 8.1;
+  contact + 3D + ground 8.2 (6.4 another run); + soft wall 8.2 (shared); + lanes 8.4, lanes + soft wall
+  11.6 (the soft one draws the world again); + backdrops 8.2; plaster wall flat or smooth clay the same;
+  night lamps: sun/moon 6.5, one glowing lamp 6.5, two 6.5, three circling 6.6, big soft edges (13
+  rays) 6.8; everything on (lanes, backdrops, soft wall, three lamps) 8.6. So the CPU cost is the
+  extra drawing of the world (~3 ms; again with lanes + soft wall); lights, glows, soft edges, the
+  ground and the plaster are free on the CPU. Still to do: 20 lit Mipos, and the GPU side (the
+  shaderCost tool) of the plaster, earth and glow passes.
 - [ ] **LS15. Small ones:** should a new directional light be a sun (not fade) by default; the back
   light on a drawn stone lands on its black outline (reach past it, as the contact shadow does);
   grass on a moving body rebuilds its blades every frame (LITTLE-USED, the grass round).

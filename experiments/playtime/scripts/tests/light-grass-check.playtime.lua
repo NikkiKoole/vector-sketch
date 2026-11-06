@@ -629,7 +629,8 @@ local COOL_LAMP_DEPTH = 700 -- the cool lamp's distance in front of the things (
 
 local function lightSet()
     local c = look()
-    return LIGHT_SETS[c.lightSet or (c.solidLamp and 2) or 1]
+    -- (an index past the list, from an older list or the bridge, falls back to the first: it crashed, 762)
+    return LIGHT_SETS[c.lightSet or (c.solidLamp and 2) or 1] or LIGHT_SETS[1]
 end
 
 -- a carried lamp as a 3D light: where it is on screen, `inFront` in front of the things
@@ -994,6 +995,19 @@ local function hexColor(text)
     return c[1], c[2], c[3]
 end
 
+-- a disc whose alpha falls from 1 in the middle to 0 at its rim (radius 1), drawn scaled
+local glowDisc
+local function glowMesh()
+    if glowDisc then return glowDisc end
+    local verts = { { 0, 0, 0.5, 0.5, 1, 1, 1, 1 } }
+    for i = 0, 32 do
+        local a = i / 32 * math.pi * 2
+        verts[#verts + 1] = { math.cos(a), math.sin(a), 0.5, 0.5, 1, 1, 1, 0 }
+    end
+    glowDisc = love.graphics.newMesh(verts, 'fan', 'static')
+    return glowDisc
+end
+
 -- each light that's on: a glow in its colour, and (directional) the way it shines. A circling lamp behind
 -- the things is drawn behind them (behind = true, from drawBelow), in front of them over them; nearer you
 -- it's bigger
@@ -1008,12 +1022,12 @@ local function drawLampGlows(behind)
             local x, y = body:getPosition()
             local size = z and (0.5 + 0.8 * z / (ORBIT.cz + ORBIT.rz)) or 1
             local r, g, b = hexColor(extra.colorHex or 'ffffffff')
-            for k = 4, 1, -1 do
-                love.graphics.setColor(r, g, b, 0.12 * (extra.intensity or 1))
-                love.graphics.circle('fill', x, y, (30 + k * 28) * size)
-            end
+            -- a soft glow fading out, and a small bright core (four stacked hard circles read as big hard
+            -- discs on the phone, Nikki 2026-11-06)
+            love.graphics.setColor(r, g, b, math.min(0.6, 0.35 * (extra.intensity or 1)))
+            love.graphics.draw(glowMesh(), x, y, 0, 110 * size, 110 * size)
             love.graphics.setColor(r, g, b, 1)
-            love.graphics.circle('fill', x, y, 26 * size)
+            love.graphics.circle('fill', x, y, 14 * size)
             if extra.lightType ~= 'point' and label ~= 'sun' and label ~= 'moon' then
                 local a = body:getAngle()
                 love.graphics.setLineWidth(8)
@@ -1098,8 +1112,7 @@ plaster = function(drawShape, c, sky, grit)
     love.graphics.setShader()
 end
 
-
--- each light that's on: a glow in its colour, and (directional) the way it shines
+-- the lamps in front of the things, and the stones' labels
 function s.draw()
     drawLampGlows(false)
     -- each stone's and the fence's roughness, small under it
