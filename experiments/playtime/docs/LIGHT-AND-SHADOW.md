@@ -37,7 +37,7 @@ fade, a sun, but the panel can't set 0).
   faint white (spec/light-back_spec.lua). On a drawn stone it mostly lands on the black outline; on
   the Mipos' fur strokes it shows best. It's also the parked claymation plan's "rim tinting from the
   opposing light".
-- [ ] **LS10. A day-night cycle.** Built 2026-11-06 in light-grass-check, to judge: a clock (d runs a day
+- [x] **LS10. A day-night cycle.** Built 2026-11-06 in light-grass-check, to judge: a clock (d runs a day
   in two minutes, , and . an hour, 1 noon, 2 dusk, 3 midnight); five looks blended by the hour, after
   ../sky-atmosphere's timeline (WORLD-BUILDING G5) plus a golden hour at 18:00 (blue straight to
   orange went through a muddy grey): the sky, the sun's and moon's colour and strength, the lamps (on
@@ -49,7 +49,8 @@ fade, a sun, but the panel can't set 0).
   sideways and softer (never up the wall), and they fade at the handover: as strong as the leading
   light is stronger than the other, so the moon's fade out and the sun's in, swapping sides while
   faint (Nikki saw a jump around 07:00: they flipped sides at 6:00, and taken from where the sun
-  aimed, their length stuck at its longest until 6:50; now from its height on the arc). Scene-only for now: a real scene would want it as a world setting
+  aimed, their length stuck at its longest until 6:50; now from its height on the arc).
+  Nikki: "nice" (2026-11-06). Scene-only for now: a real scene would want it as a world setting
   (G5's open question: the sky per scene, with a time of day).
 - [x] **LS3. Light that adds up.** How lit a shape was stopped at 1 (colours averaged): a second lamp
   near a lit shape added little, and a shape no light reached kept a middling brightness. A shape's
