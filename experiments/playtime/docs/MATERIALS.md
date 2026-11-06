@@ -290,5 +290,7 @@ thumb-dent noise; the picture is the same (spec/light-off_spec.lua). A Mipo is ~
 1 MP screen: a clay-lit Mipo ~0.47 ms a frame, one in materials ~0.28 ms; 20 lit Mipos (the room
 limit) ~9.5 ms clay or ~5.6 ms in materials, of the 16.7 ms a frame. mipo-materials itself (3 Mipos)
 runs at 60 fps on the phone.
-Still to win if needed: wet spots are looped per pixel for every part (12 spots: +2.7 ms/MP on the
-phone): send a part only the spots near it; and fewer lights per part (the far ones).
+Wet spots were looped per pixel for every part (12 spots: +2.7 ms/MP on the phone); since 2026-11-06 a
+part is sent only the spots that reach it (wet.shaderSpots(body); limb ribbons, drawn without a body,
+still get all), so a dry part pays nothing: after a dip, 23 of a scene's 48 Mipo bodies got spots,
+25 none (spec/wet_spec.lua). Still to win if needed: fewer lights per part (the far ones).

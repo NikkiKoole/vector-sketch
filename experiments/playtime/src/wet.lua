@@ -5,7 +5,7 @@
 --   wet.splash(wx, wy, r, amount)  a wet spot; on the body under it if any (it moves with it)
 --   wet.setWaterline(y)            everything below world y gets wet while it's there (nil: none)
 --   wet.update(dt)                 drying, the waterline, and the spots' screen places for the shader
---   wet.shaderSpots()              count, the spots as { x, y, r, amount } in screen pixels
+--   wet.shaderSpots(body)          count, the spots near that body as { x, y, r, amount } in screen pixels
 --   wet.clear()
 -- The spots live on `state` (a hot swap keeps them).
 local state = require('src.state')
@@ -125,14 +125,51 @@ end
 local empty = {}
 for i = 1, lib.MAX do empty[i] = { 0, 0, 0, 0 } end
 local buffer = {}
-function lib.shaderSpots()
+
+-- a body's reach from its middle (its fixtures' bounding box, measured once; the shape doesn't change)
+local reach = setmetatable({}, { __mode = 'k' })
+local function reachOf(body)
+    local r = reach[body]
+    if r == nil then
+        local bx, by = body:getPosition()
+        r = 0
+        for _, f in ipairs(body:getFixtures()) do
+            local x0, y0, x1, y1 = f:getBoundingBox()
+            r = math.max(r, math.abs(x0 - bx), math.abs(x1 - bx), math.abs(y0 - by), math.abs(y1 - by))
+        end
+        r = r * 1.5 -- a picture can reach past its body's shapes
+        reach[body] = r
+    end
+    return r
+end
+
+-- The spots for the shader, as { x, y, r, amount } in screen pixels: with a body, only those that
+-- reach it (a dry part pays nothing per pixel: the shader loops over what it's sent); without one
+-- (a limb ribbon, drawn in the world), all of them.
+function lib.shaderSpots(body)
     local d = state.wet
     if not d or #d.spots == 0 then return 0, empty end
+    local bsx, bsy, br
+    if body and not body:isDestroyed() then
+        local c = cam()
+        local dpi = love.graphics.getDPIScale()
+        local x, y = c:getScreenCoordinates(body:getPosition())
+        bsx, bsy, br = x * dpi, y * dpi, reachOf(body) * c:getScale() * dpi
+    end
     local n = 0
     for _, s in ipairs(d.spots) do
-        if s.screen then
-            n = n + 1
-            buffer[n] = s.screen
+        local sc = s.screen
+        if sc then
+            local near = true
+            if bsx then
+                local dx, dy = sc[1] - bsx, sc[2] - bsy
+                local rr = sc[3] + br
+                near = dx * dx + dy * dy < rr * rr
+            end
+            if near then
+                n = n + 1
+                buffer[n] = sc
+            end
         end
     end
     for i = n + 1, lib.MAX do buffer[i] = empty[i] end

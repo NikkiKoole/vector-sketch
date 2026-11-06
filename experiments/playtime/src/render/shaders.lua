@@ -645,7 +645,7 @@ local function setSurfaceShader(extra, body)
             plasticineShader:send('matSurf', m.surf)
             plasticineShader:send('matTint', m.tint)
         end
-        local wetCount, wetSpots = wet.shaderSpots()
+        local wetCount, wetSpots = wet.shaderSpots(body)
         plasticineShader:send('wetCount', wetCount)
         if wetCount > 0 then plasticineShader:send('wetSpot', unpack(wetSpots)) end
         local formMap = extra.plasticineFormBaked and formBake.map(extra, extra.plasticineFormRise)
