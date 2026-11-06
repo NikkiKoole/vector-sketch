@@ -34,7 +34,9 @@
 --     the sun or moon and the warm lamp / and both lamps: each throws its own shadow
 --   x the 3D shadows coloured (by the other lights and the sky that still reach into them) / black
 --   y how much the sun shines out of the wall: some / a little (shadows run far along the floor) / much
---   [ ] the lamp nearer the things / further towards you   j edges: hard / a small lamp / a big lamp
+--   [ ] the lamp nearer the things / further towards you (below 0 behind them: their shadows fall forward
+--     onto the ground in front; the panel's 'sun out of wall' below 0 is a sun from behind, the same)
+--   j edges: hard / a small lamp / a big lamp
 
 local s = {}
 
@@ -144,7 +146,9 @@ local FLOOR_Y = GROUND_TOP - SOLID_DEPTH
 -- y steps it: low, the shadows run far along the floor before they reach the wall; high, they climb it soon
 local SUN_TOWARDS = { 0.2, 0.08, 0.5 }
 local LAMP_DEPTH = 300
-local LAMP_DEPTHS = { 40, 100, 200, 300, 500, 900, 1600, 3000 }
+-- (below 0 the lamp is behind the things, between them and the wall: their shadows fall forward, onto
+-- the ground in front of them)
+local LAMP_DEPTHS = { -300, -150, -60, 40, 100, 200, 300, 500, 900, 1600, 3000 }
 -- j: hard, a small lamp, a big one (world units; for the sun how wide, as a slope)
 local SOFTNESS = { { name = 'hard', lamp = 0, sun = 0 }, { name = 'small lamp', lamp = 14, sun = 0.03 },
     { name = 'big lamp', lamp = 45, sun = 0.1 } }
@@ -307,9 +311,16 @@ local function drawEarth(y0, y1, tint)
 end
 
 -- over the ground's plain shape, under everything drawn on it (the textured world's first split)
+-- the floor in front of the things, where a light behind them throws their shadows forward
+local function frontFloor()
+    love.graphics.rectangle('fill', GROUND_X0, GROUND_TOP, GROUND_X1 - GROUND_X0, GROUND_FRONT - GROUND_TOP)
+end
+
 local function drawGroundFront()
     local tint = groundTint()
     drawEarth(GROUND_TOP, GROUND_FRONT + CUT_DEPTH, tint)
+    -- (projectedShadows is in the sandbox since 2026-11-06: a scene loaded before has none until reloaded)
+    if projectedShadows then projectedShadows.drawFront(world, frontFloor) end
     drawRims('front', tint)
     love.graphics.setColor(1, 1, 1, 1)
 end
@@ -425,8 +436,8 @@ local function notStone(body) return not isStone(body) end
 
 -- the stones to the back lane and home again (c.lanes, with the 3D shadows on: without them there's no
 -- floor to stand further back on): lifted by how much further back they stand
-local function placeStones(c)
-    local back = (c.lanes and c.solid) and true or false
+local function placeStones(c, goHome)
+    local back = (c.lanes and c.solid and not goHome) and true or false
     if back == (c.lanesPlaced or false) then return end
     c.stoneHome = c.stoneHome or {}
     local lift = back and (SOLID_DEPTH - STONE_DEPTH) or 0
@@ -629,6 +640,16 @@ local function sunLight()
     return { kind = 'sun', x = -math.cos(theta), h = high, z = towards }, math.min(1, math.abs(sun - moon) / 0.6)
 end
 
+-- how dark the hour is: 0 by day, 1 at night (from the sky's brightness)
+local function nightness()
+    local now = look().now
+    if not now then return 1 end
+    local sky = (now.sky[1] + now.sky[2] + now.sky[3]) / 3
+    return math.max(0, math.min(1, 1 - (sky - 0.15) / 0.5))
+end
+-- a lamp's light on the wall, floor and ground in the dark: how bright at the lamp, how far it reaches
+local LAMP_GLOW, LAMP_GLOW_RANGE = 0.55, 700
+
 -- every light of the set that's there, each with its shadow's strength and edge; with more than one a
 -- little lighter each (where they cross, darker)
 local function solidLights(wallShadows)
@@ -650,8 +671,14 @@ local function solidLights(wallShadows)
         local light = lamp[1] and lampLight(lamp[2], lamp[3])
         if light then
             local _, extra = lightOf(lamp[2])
-            list[#list + 1] = { light = light, strength = 0.55, softness = soft.lamp,
-                lightColour = rgb(extra and extra.colorHex or 'ffffff') }
+            local colourOf = rgb(extra and extra.colorHex or 'ffffff')
+            -- in the dark the lamp lights the wall, floor and ground around it and its shadows are the
+            -- holes in that light; by day only the darkening
+            local dark = nightness()
+            list[#list + 1] = { light = light, strength = 0.55 * (1 - 0.8 * dark), softness = soft.lamp,
+                lightColour = colourOf, glowRange = LAMP_GLOW_RANGE,
+                glow = dark > 0 and { colourOf[1] * LAMP_GLOW * dark, colourOf[2] * LAMP_GLOW * dark,
+                    colourOf[3] * LAMP_GLOW * dark } or nil }
         end
     end
     if #list > 1 then
@@ -681,7 +708,9 @@ local function wallAboveFloor()
 end
 
 local function solidArea()
-    love.graphics.rectangle('fill', WALL.x, WALL.y, WALL.w, GROUND_TOP - WALL.y)
+    love.graphics.rectangle('fill', WALL.x, WALL.y, WALL.w, FLOOR_Y - WALL.y)
+    -- the floor runs the ground's whole width, past the wall's ends
+    love.graphics.rectangle('fill', GROUND_X0, FLOOR_Y, GROUND_X1 - GROUND_X0, GROUND_TOP - FLOOR_Y)
 end
 
 -- everything at the clock's hour (or only the turning lamp)
@@ -749,9 +778,9 @@ function s.onStart()
 end
 
 function s.onUnload()
-    local lab = look()
-    lab.lanes = false
-    placeStones(lab) -- the stones home, so the scene saves as it was
+    -- the stones home, so the scene saves as it was; still 'further back' after a hot reload (it unloads
+    -- and starts again), the next frame lifts them again
+    placeStones(look(), true)
     state.contactShadows = nil -- only in this scene
     state.backdropShadows = nil
     state.projectedShadows = nil
@@ -1100,10 +1129,10 @@ local function drawPanel(c)
         row()
         if stepper(x, y, COL_W - 30, 'edges: ' .. SOFTNESS[c.softness or 1].name) then s.onKeyPress('j') end
         row()
-        local depth = slider('lamp', x, y, 40, 3000, c.lampDepth or LAMP_DEPTH, 'lamp distance', 1)
+        local depth = slider('lamp', x, y, -380, 3000, c.lampDepth or LAMP_DEPTH, 'lamp distance', 1)
         if depth then c.lampDepth = depth end
         row()
-        local out = slider('sun', x, y, 0.05, 0.6, c.sunOut or SUN_TOWARDS[c.sunTowards or 1], 'sun out of wall')
+        local out = slider('sun', x, y, -0.6, 0.6, c.sunOut or SUN_TOWARDS[c.sunTowards or 1], 'sun out of wall')
         if out then c.sunOut = out end
         row()
         clicked, on = check(x, y, current(TRIES.a) == true, 'stones: lights add up')

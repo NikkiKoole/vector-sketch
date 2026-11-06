@@ -8,6 +8,9 @@ local lib = {}
 local canvas
 local key = {}
 local frameToken = {} -- a new one each frame (newFrame): what was drawn in an older frame is redrawn
+-- every body: a filter makes the textured drawing leave out the scene's splits (a ground drawn in one,
+-- which may itself draw shadows from these silhouettes)
+local function everything() return true end
 
 local function canvasFor(w, h)
     if not canvas or canvas:getWidth() ~= w or canvas:getHeight() ~= h then
@@ -38,7 +41,7 @@ function lib.get(world)
     local textured = require('src.physics.box2d-draw-textured')
     love.graphics.setCanvas({ silhouettes, stencil = true })
     love.graphics.clear(0, 0, 0, 0)
-    textured.drawTexturedWorld(world)
+    textured.drawTexturedWorld(world, everything)
     if target then love.graphics.setCanvas({ target, stencil = true }) else love.graphics.setCanvas() end
     return silhouettes, w, h
 end

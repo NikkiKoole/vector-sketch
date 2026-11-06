@@ -140,6 +140,26 @@ describe('projected shadows', function()
         assert.is_true(at(img, -100, 0) > 0.99, 'none where nothing is')
     end)
 
+    it('a lamp behind the box throws its shadow forward onto the ground in front', function()
+        -- the lamp between the wall and the box (z 20, the box at 40); the ground in front from y 90 (z 40)
+        state.projectedShadows.light = { kind = 'point', x = 0, h = 40, z = 20 }
+        local function front() love.graphics.rectangle('fill', -150, 90, 300, 60) end
+        box2dDrawTextured.makeCombinedImages()
+        local canvas = love.graphics.newCanvas(W, H)
+        love.graphics.setCanvas({ canvas, stencil = true })
+        love.graphics.clear(1, 1, 1, 1)
+        love.graphics.push()
+        love.graphics.translate(W / 2, H / 2)
+        projectedShadows.drawFront(state.physicsWorld, front)
+        love.graphics.pop()
+        love.graphics.setCanvas()
+        local img = canvas:newImageData()
+        -- the ground at z 60 (y 110): x 50 is the box's x 25, 20 up
+        assert.is_true(at(img, 50, 110) < 0.6, 'in front of the box: ' .. at(img, 50, 110))
+        assert.is_true(at(img, 110, 110) > 0.99, 'past its shadow')
+        assert.are.equal(1, at(img, 0, 60), 'not outside the area')
+    end)
+
     it('only on the area, and off draws nothing', function()
         state.projectedShadows.light = { kind = 'point', x = 0, h = 40, z = 50 } -- a huge shadow
         local img = render(state.physicsWorld)

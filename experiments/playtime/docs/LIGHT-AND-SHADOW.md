@@ -208,6 +208,15 @@ fade, a sun: the panel's `fades` switch, LS4).
   light-grass-check lifts the six stones onto a back lane (230 in front of the wall, the Mipos and the
   fence at 400; their shapes sensors meanwhile, so Mipos walk past): panel 'stones further back', with
   3D on. The boards moved to 50, 110, 170 to stay behind the stones.
+  On the ground in front (Nikki: "shadows on the ground in front of things"): a spot in front of the
+  things takes its light from behind them, so a lamp between them and the wall (the lamp distance below
+  0) or a sun from behind ('sun out of wall' below 0) throws their shadows forward. The scene draws that
+  ground late (a split, over the ground's plain shape), so it calls projectedShadows.drawFront (in the
+  script sandbox) after drawing it.
+  A lamp's light (glow): in the dark the wall and floor are dark, so a shadow on them didn't show. A lamp
+  now lights the wall, floor, boards and ground around it, added on and falling off with distance,
+  except where its shadows are: at night the shadows are holes in its light (light-grass-check mixes
+  glow and darkening by how dark the sky is).
   Not yet: within a lane one depth (a Mipo's own parts, LS20) (per-thing depth,
   LS16/LS18), nothing on the floor in front of the things, the same cost as the wall shadows (LS12).
 - [ ] **LS15. Small ones:** should a new directional light be a sun (not fade) by default; the back

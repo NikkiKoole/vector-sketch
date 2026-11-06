@@ -25,6 +25,11 @@
 -- A shadow landing on one is cut short there, so a board close behind the things catches a shadow near
 -- their size and crisp, the wall far behind a bigger, softer one. The scene draws the boards (before the
 -- shadows); they don't throw shadows themselves.
+-- A lamp's light: a light's glow = { r, g, b } (and glowRange, world units) lights the wall, the floor,
+-- the boards and the ground around it (added on, falling off with distance) except where its shadows
+-- are: at night, when the scene's own colours are dark, the shadows are the holes in a lamp's light,
+-- not black on black. strength darkens as before; a light can have both (the scene mixes them by the
+-- hour). The things themselves take a lamp's light in their own shaders; on them only the darkening.
 -- Things at different depths: layers = { { z = n, only = function(body) ... end }, ... }, back to front
 -- (default: one layer, everything at `depth`). A layer's things stand on y = floorY + z (further back,
 -- higher up the floor: lanes, as in DEPTH-LAYERS). Each layer throws its own shadows from its own depth,
@@ -50,11 +55,16 @@ local COMMON = [[
     uniform float softness;
     uniform float strength;
     uniform vec3 colour;
+    uniform vec3 glow;
+    uniform float glowRange;
+    uniform float glowing;
     const int TAPS = 13;
 
     float shade(Image tex, vec3 S, vec3 L) {
         vec3 toL = isSun > 0.5 ? L : L - S;
-        if (toL.z <= 0.0) return 1.0;           // the light behind the things: nothing falls back here
+        // a spot behind the things takes the light from in front of them, a spot in front of them (the
+        // ground nearer you) from behind them: either way the way to the light has to cross their plane
+        if (abs(toL.z) < 0.0001) return 1.0;
         float s = (casterDepth - S.z) / toL.z;
         if (s <= 0.0) return 1.0;
         if (isSun < 0.5 && s >= 1.0) return 1.0; // the lamp between the spot and the things
@@ -78,6 +88,15 @@ local COMMON = [[
         // a lamp that size, facing the wall (its x and height); a sun that wide
         for (int i = 0; i < TAPS; ++i) lit += shade(tex, S, light + vec3(offs[i] * softness, 0.0));
         return 1.0 - lit / float(TAPS);
+    }
+
+    // a lamp's light where it reaches (added on), or the shadow's darkness (laid over)
+    vec4 result(vec3 S, float dark) {
+        if (glowing > 0.5) {
+            float d = length(light - S) / glowRange;
+            return vec4(glow * (1.0 - dark) / (1.0 + d * d), 1.0);
+        }
+        return vec4(colour, dark * strength);
     }
 ]]
 
@@ -104,8 +123,7 @@ local function projectorShader()
                     }
                 }
             }
-            if (S.z >= casterDepth) return vec4(0.0);
-            return vec4(colour, darkness(tex, S) * strength);
+            return result(S, darkness(tex, S));
         }
     ]])
     return projector
@@ -124,7 +142,7 @@ local function ontoThingsShader()
             if (z >= casterDepth - 2.0) return vec4(0.0);  // it's this layer, or in front of it
             vec2 w = origin + uv * screen;
             vec3 S = vec3(w.x, floorY + z - w.y, z);
-            return vec4(colour, darkness(tex, S) * strength);
+            return result(S, darkness(tex, S));
         }
     ]])
     return ontoThings
@@ -178,38 +196,47 @@ local function sendCommon(shader, settings, w, h)
     shader:send('floorY', settings.floorY)
 end
 
--- each light's shadow from one layer's silhouettes
-local function castFrom(shader, settings, layer, silhouettes)
+-- each light's shadow from one layer's silhouettes (and a lamp's glow around them, unless noGlow)
+local function castFrom(shader, settings, layer, silhouettes, noGlow)
     shader:send('casterDepth', layer.z)
     for _, one in ipairs(settings.lights or { { light = settings.light } }) do
         local light = one.light
         shader:send('light', { light.x, light.h, light.z })
         shader:send('isSun', light.kind == 'sun' and 1 or 0)
         shader:send('softness', one.softness or settings.softness or 0)
-        shader:send('strength', one.strength or settings.strength or 0.5)
-        shader:send('colour', one.colour or settings.colour or { 0, 0, 0 })
-        love.graphics.draw(silhouettes, 0, 0)
+        local strength = one.strength or settings.strength or 0.5
+        if one.glow and not noGlow and light.kind ~= 'sun' then
+            shader:send('glowing', 1)
+            shader:send('glow', one.glow)
+            shader:send('glowRange', one.glowRange or 800)
+            love.graphics.setBlendMode('add')
+            love.graphics.draw(silhouettes, 0, 0)
+            love.graphics.setBlendMode('alpha')
+        end
+        if strength > 0 then
+            shader:send('glowing', 0)
+            shader:send('strength', strength)
+            shader:send('colour', one.colour or settings.colour or { 0, 0, 0 })
+            love.graphics.draw(silhouettes, 0, 0)
+        end
     end
 end
 
--- onto the wall, the floor and the boards: before the things are drawn
-function lib.draw(world)
-    local settings = state.projectedShadows
-    if not settings or not settings.area or not (settings.light or settings.lights) or not world then return end
+-- onto the wall, the floor and the boards (`area`, or another shape): before the things are drawn
+local function castOnto(world, settings, area, boards)
     local layers = layersOf(settings)
     local canvases = {}
     for i = 1, #layers do canvases[i] = silhouettesFor(world, settings, i) end
     local w, h = canvases[1]:getDimensions()
 
     local compare, value = love.graphics.getStencilTest()
-    love.graphics.stencil(settings.area, 'replace', 1)
+    love.graphics.stencil(area, 'replace', 1)
     love.graphics.setStencilTest('greater', 0)
     local shader = projectorShader()
     sendCommon(shader, settings, w, h)
     love.graphics.push()
     love.graphics.origin()
     love.graphics.setShader(shader)
-    local boards = settings.boards or {}
     local packed = {}
     for i = 1, 4 do
         local b = boards[i]
@@ -222,6 +249,21 @@ function lib.draw(world)
     love.graphics.setShader()
     love.graphics.pop()
     if compare then love.graphics.setStencilTest(compare, value) else love.graphics.setStencilTest() end
+end
+
+function lib.draw(world)
+    local settings = state.projectedShadows
+    if not settings or not settings.area or not (settings.light or settings.lights) or not world then return end
+    castOnto(world, settings, settings.area, settings.boards or {})
+end
+
+-- onto a ground the scene draws later than the shadows (in a draw split, over the ground's plain shape):
+-- the floor in front of the things, `area` its shape. Shadows land there from a light behind the things
+-- (a lamp between them and the wall, a sun from behind). Called from the scene, after it drew that ground.
+function lib.drawFront(world, area)
+    local settings = state.projectedShadows
+    if not settings or not area or not (settings.light or settings.lights) or not world then return end
+    castOnto(world, settings, area, {})
 end
 
 -- onto the things further back: after the textured world (only with more than one layer)
@@ -261,7 +303,7 @@ function lib.drawOnThings(world)
     shader:send('depthPicture', picture)
     shader:send('maxDepth', maxDepth)
     love.graphics.setColor(1, 1, 1, 1)
-    for i = 2, #layers do castFrom(shader, settings, layers[i], canvases[i]) end
+    for i = 2, #layers do castFrom(shader, settings, layers[i], canvases[i], true) end
     love.graphics.setShader()
     love.graphics.pop()
 end
