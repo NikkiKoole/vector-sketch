@@ -566,9 +566,56 @@ local lightGroundBuf = {}
 for i = 1, MAX_LIGHTS do lightGroundBuf[i] = { 0, 0, 0 } end
 local LIGHT_TYPES = { directional = 0, point = 1, sky = 2, back = 3 }
 
+-- Uniforms sent only when they differ from what that shader last got (most lit parts share the clay's
+-- defaults and the frame's lights; sending every one for every part was two thirds of setSurfaceShader
+-- on an iPhone SE 2 once the lights were cached, LIGHT-AND-SHADOW LS23). Per shader: a uniform keeps
+-- its value until sent again. Tables are compared by their numbers and kept as a copy.
+local sentTo = setmetatable({}, { __mode = 'k' })
+local function send(shader, name, v)
+    local sent = sentTo[shader]
+    if not sent then
+        sent = {}
+        sentTo[shader] = sent
+    end
+    local old = sent[name]
+    if type(v) == 'table' then
+        if old and #old == #v then
+            local same = true
+            for i = 1, #v do
+                if old[i] ~= v[i] then same = false; break end
+            end
+            if same then return end
+        end
+        old = old or {}
+        for i = 1, #v do old[i] = v[i] end
+        for i = #v + 1, #old do old[i] = nil end
+        sent[name] = old
+    else
+        if old == v then return end
+        sent[name] = v
+    end
+    shader:send(name, v)
+end
+
+-- a colour string's numbers, parsed once
+local hexColours = {}
+local function hexColour(hex)
+    local c = hexColours[hex]
+    if not c then
+        c = { color.hexToColor(hex) }
+        c[4] = nil
+        hexColours[hex] = c
+    end
+    return c
+end
+
 -- Send light arrays to any shader that exposes the standard light uniforms.
 -- Honors the legacy per-fixture `extra.plasticineLight` override.
+-- The way to each light and its place differ per part (its own frame); the lights' colours, strengths,
+-- types, ranges and ground colours are the same for every part in a frame: sent once a frame per shader.
 local function sendLightsToShader(shader, body, extra)
+    local sent = sentTo[shader] or {}
+    sentTo[shader] = sent
     if extra.plasticineLight then
         lightDirBuf[1][1]   = extra.plasticineLight[1]
         lightDirBuf[1][2]   = extra.plasticineLight[2]
@@ -580,18 +627,25 @@ local function sendLightsToShader(shader, body, extra)
         lightPosBuf[1][1]   = 0
         lightPosBuf[1][2]   = 0
         lightRangeBuf[1]    = 1
-        shader:send('lightCount', 1)
+        send(shader, 'lightCount', 1)
+        sent.lightVersion = nil -- the buffers aren't the frame's lights: send them all, and next time too
     else
         local fx = (extra.main and extra.main.fx) or 1
         local fy = (extra.main and extra.main.fy) or 1
-        local count = lib.gatherLightsForBody(body, fx, fy)
-        shader:send('lightCount', count)
+        local count, _, _, _, version = lib.gatherLightsForBody(body, fx, fy)
+        send(shader, 'lightCount', count)
+        shader:send('lightDir',      unpack(lightDirBuf))
+        shader:send('lightLocalPos', unpack(lightPosBuf))
+        if sent.lightVersion == version then return end
+        sent.lightVersion = version
     end
-    shader:send('lightDir',       unpack(lightDirBuf))
+    if extra.plasticineLight then
+        shader:send('lightDir',      unpack(lightDirBuf))
+        shader:send('lightLocalPos', unpack(lightPosBuf))
+    end
     shader:send('lightColor',     unpack(lightColorBuf))
     shader:send('lightIntensity', unpack(lightInBuf))
     shader:send('lightType',      unpack(lightTypeBuf))
-    shader:send('lightLocalPos',  unpack(lightPosBuf))
     shader:send('lightRange',     unpack(lightRangeBuf))
     shader:send('lightGround',    unpack(lightGroundBuf))
 end
@@ -600,19 +654,17 @@ end
 local function sendSharedLighting(shader, body, extra)
     local useLit = (extra.plasticineUseLighting ~= false) and
                    (lib.plasticineUseLighting ~= false)
-    shader:send('useLighting',   useLit and 1 or 0)
-    shader:send('specPow',       extra.plasticineSpecPow      or lib.plasticineSpecPow)
-    shader:send('specStrength',  extra.plasticineSpecStrength or lib.plasticineSpecStrength)
-    shader:send('sssPow',        extra.plasticineSSSpow       or lib.plasticineSSSpow)
-    shader:send('sssStrength',   extra.plasticineSSSstrength  or lib.plasticineSSSstrength)
-    shader:send('terminatorPow', extra.plasticineTerminator   or lib.plasticineTerminator)
-    shader:send('lightZ',        extra.plasticineLightZ       or lib.plasticineLightZ)
-    shader:send('lightGain',     extra.plasticineLightGain    or lib.plasticineLightGain)
-    shader:send('lightAdd',      extra.plasticineLightAdd and 1 or 0)
-    local wr, wg, wb = color.hexToColor(extra.plasticineWarmHex or lib.plasticineWarmHex)
-    local cr, cg, cb = color.hexToColor(extra.plasticineCoolHex or lib.plasticineCoolHex)
-    shader:send('warmColor', {wr, wg, wb})
-    shader:send('coolColor', {cr, cg, cb})
+    send(shader, 'useLighting',   useLit and 1 or 0)
+    send(shader, 'specPow',       extra.plasticineSpecPow      or lib.plasticineSpecPow)
+    send(shader, 'specStrength',  extra.plasticineSpecStrength or lib.plasticineSpecStrength)
+    send(shader, 'sssPow',        extra.plasticineSSSpow       or lib.plasticineSSSpow)
+    send(shader, 'sssStrength',   extra.plasticineSSSstrength  or lib.plasticineSSSstrength)
+    send(shader, 'terminatorPow', extra.plasticineTerminator   or lib.plasticineTerminator)
+    send(shader, 'lightZ',        extra.plasticineLightZ       or lib.plasticineLightZ)
+    send(shader, 'lightGain',     extra.plasticineLightGain    or lib.plasticineLightGain)
+    send(shader, 'lightAdd',      extra.plasticineLightAdd and 1 or 0)
+    send(shader, 'warmColor', hexColour(extra.plasticineWarmHex or lib.plasticineWarmHex))
+    send(shader, 'coolColor', hexColour(extra.plasticineCoolHex or lib.plasticineCoolHex))
     sendLightsToShader(shader, body, extra)
 end
 
@@ -627,45 +679,47 @@ local function setSurfaceShader(extra, body)
     -- (it lit every part a second time, LIGHT-AND-SHADOW LS23)
     if state.drawingOutlines then return false end
     if extra.hairs then
-        love.graphics.setShader(hairsShader)
-        hairsShader:send('strength',       extra.hairsStrength            or lib.hairsStrength)
-        hairsShader:send('density',        extra.hairsDensity             or lib.hairsDensity)
-        hairsShader:send('fuzz',           extra.hairsFuzz                or lib.hairsFuzz)
-        hairsShader:send('bush',           extra.hairsBush                or lib.hairsBush)
-        hairsShader:send('formRadius',     extra.plasticineFormRadius     or lib.plasticineFormRadius)
-        hairsShader:send('formStrength',   extra.plasticineFormStrength   or lib.plasticineFormStrength)
-        hairsShader:send('mottleStrength', extra.plasticineMottleStrength or lib.plasticineMottleStrength)
-        hairsShader:send('mottleScale',    extra.plasticineMottleScale    or lib.plasticineMottleScale)
-        sendSharedLighting(hairsShader, body, extra)
+        local sh = hairsShader
+        love.graphics.setShader(sh)
+        send(sh, 'strength',       extra.hairsStrength            or lib.hairsStrength)
+        send(sh, 'density',        extra.hairsDensity             or lib.hairsDensity)
+        send(sh, 'fuzz',           extra.hairsFuzz                or lib.hairsFuzz)
+        send(sh, 'bush',           extra.hairsBush                or lib.hairsBush)
+        send(sh, 'formRadius',     extra.plasticineFormRadius     or lib.plasticineFormRadius)
+        send(sh, 'formStrength',   extra.plasticineFormStrength   or lib.plasticineFormStrength)
+        send(sh, 'mottleStrength', extra.plasticineMottleStrength or lib.plasticineMottleStrength)
+        send(sh, 'mottleScale',    extra.plasticineMottleScale    or lib.plasticineMottleScale)
+        sendSharedLighting(sh, body, extra)
         return true
     end
     if extra.plasticine or extra.material then
-        love.graphics.setShader(plasticineShader)
+        local sh = plasticineShader
+        love.graphics.setShader(sh)
         -- a material instead of clay (src/render/materials.lua), and what's wet (src/wet.lua)
         local m = materials.uniforms(extra.material)
-        plasticineShader:send('matKind', m and m.kind or 0)
+        send(sh, 'matKind', m and m.kind or 0)
         if m then
-            plasticineShader:send('matSpec', m.spec)
-            plasticineShader:send('matSurf', m.surf)
-            plasticineShader:send('matTint', m.tint)
+            send(sh, 'matSpec', m.spec)
+            send(sh, 'matSurf', m.surf)
+            send(sh, 'matTint', m.tint)
         end
         local wetCount, wetSpots = wet.shaderSpots(body)
-        plasticineShader:send('wetCount', wetCount)
-        if wetCount > 0 then plasticineShader:send('wetSpot', unpack(wetSpots)) end
+        send(sh, 'wetCount', wetCount)
+        if wetCount > 0 then sh:send('wetSpot', unpack(wetSpots)) end
         local formMap = extra.plasticineFormBaked and formBake.map(extra, extra.plasticineFormRise)
-        if formMap then plasticineShader:send('formMap', formMap) end
-        plasticineShader:send('useFormMap', formMap and 1 or 0)
-        plasticineShader:send('strength',       extra.plasticineStrength       or lib.plasticineStrength)
-        plasticineShader:send('scale',          extra.plasticineScale          or lib.plasticineScale)
-        plasticineShader:send('edgeDark',       extra.plasticineEdge           or lib.plasticineEdge)
-        plasticineShader:send('bumpAmp',        extra.plasticineBump           or lib.plasticineBump)
-        plasticineShader:send('formStrength',   extra.plasticineFormStrength   or lib.plasticineFormStrength)
-        plasticineShader:send('formRadius',     extra.plasticineFormRadius     or lib.plasticineFormRadius)
-        plasticineShader:send('mottleStrength', extra.plasticineMottleStrength or lib.plasticineMottleStrength)
-        plasticineShader:send('mottleScale',    extra.plasticineMottleScale    or lib.plasticineMottleScale)
-        plasticineShader:send('useForm',        (extra.plasticineForm ~= false) and 1 or 0)
-        plasticineShader:send('rimStyle',       rimStyles[extra.plasticineRimStyle or 'silhouette'])
-        sendSharedLighting(plasticineShader, body, extra)
+        if formMap then send(sh, 'formMap', formMap) end
+        send(sh, 'useFormMap', formMap and 1 or 0)
+        send(sh, 'strength',       extra.plasticineStrength       or lib.plasticineStrength)
+        send(sh, 'scale',          extra.plasticineScale          or lib.plasticineScale)
+        send(sh, 'edgeDark',       extra.plasticineEdge           or lib.plasticineEdge)
+        send(sh, 'bumpAmp',        extra.plasticineBump           or lib.plasticineBump)
+        send(sh, 'formStrength',   extra.plasticineFormStrength   or lib.plasticineFormStrength)
+        send(sh, 'formRadius',     extra.plasticineFormRadius     or lib.plasticineFormRadius)
+        send(sh, 'mottleStrength', extra.plasticineMottleStrength or lib.plasticineMottleStrength)
+        send(sh, 'mottleScale',    extra.plasticineMottleScale    or lib.plasticineMottleScale)
+        send(sh, 'useForm',        (extra.plasticineForm ~= false) and 1 or 0)
+        send(sh, 'rimStyle',       rimStyles[extra.plasticineRimStyle or 'silhouette'])
+        sendSharedLighting(sh, body, extra)
         return true
     end
     return false
@@ -718,6 +772,7 @@ local function refreshFrameLights(list)
         end
     end
     frameLights.count, frameLights.skipped, frameLights.stale = count, skipped, false
+    frameLights.version = (frameLights.version or 0) + 1 -- the shaders send the lights' colours etc. again
     frameLights.list, frameLights.listLength = list, #list
 end
 
@@ -763,7 +818,7 @@ function lib.gatherLightsForBody(body, fx, fy)
         count = 1
         lightInBuf[1], lightTypeBuf[1], lightRangeBuf[1] = 0, 0, 0
     end
-    return count, lightDirBuf, lightColorBuf, lightInBuf
+    return count, lightDirBuf, lightColorBuf, lightInBuf, frameLights.version
 end
 
 

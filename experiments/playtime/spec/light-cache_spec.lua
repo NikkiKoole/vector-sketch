@@ -82,3 +82,38 @@ describe('lights worked out once a frame', function()
         same(fresh, snapshot(part.body))
     end)
 end)
+
+describe('uniforms sent only when they change', function()
+    after_each(function()
+        shaders.frameCaching = nil
+        if state.physicsWorld then state.physicsWorld:destroy() end
+        state.physicsWorld = nil
+        registry.reset()
+    end)
+
+    -- one part drawn alone vs after a run of differently set parts: the same pixels, so a skipped
+    -- send never leaves a part with another's setting
+    it('a part draws the same after other parts with other settings', function()
+        registry.reset()
+        state.physicsWorld = love.physics.newWorld(0, 0, true)
+        lamp(-300, -200, 0.7, { lightType = 'directional', intensity = 1.2, colorHex = 'ffd890ff' })
+        local img = love.graphics.newImage('textures/mipo/body/body-03-mask.png')
+        local canvas = love.graphics.newCanvas(64, 64)
+        local function drawWith(extra)
+            love.graphics.setCanvas(canvas)
+            love.graphics.clear(0, 0, 0, 0)
+            love.graphics.setColor(0.8, 0.5, 0.4, 1)
+            local shaded = shaders.setSurfaceShader(extra, nil)
+            love.graphics.draw(img, 0, 0, 0, 64 / img:getWidth(), 64 / img:getHeight())
+            if shaded then love.graphics.setShader() end
+            love.graphics.setCanvas()
+            return canvas:newImageData():encode('png'):getString()
+        end
+        local target = { plasticine = true, plasticineStrength = 0.3, plasticineWarmHex = 'ffaa88ff' }
+        local alone = drawWith(target)
+        drawWith({ plasticine = true, plasticineStrength = 0.05, plasticineWarmHex = '88aaffff', material = 'brass' })
+        drawWith({ hairs = true })
+        drawWith({ material = 'velvet', plasticineLightAdd = true })
+        assert.are.equal(alone, drawWith(target))
+    end)
+end)
