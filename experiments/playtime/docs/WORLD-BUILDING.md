@@ -221,7 +221,13 @@ It grows out of the click-in stacking above:
   roots up and down along noise whose second axis is the depth, so neighbouring rows share their
   hills. Only drawn: the body the Mipos stand on stays flat. 1 row and no bumps place exactly as before
   (spec). Every row is another full set of blades swayed per frame; not measured on the phone yet.
-  `light-grass-check` uses 4 rows, 60 deep, bumps 25.
+  Front `swayRows` (3) sway per blade on the CPU as before; the rows behind sway in a vertex shader
+  (each corner carries its height above the root and the blade's phase, set once at build, so the
+  same two waves cost nothing per frame), only when no other shader is on. Desktop, 2500 units of
+  ground with bumps: 32 rows (6400 blades) 0.25 ms a frame, same as 1 row; all swaying on the CPU
+  it was 2.2 ms. Nikki, seeing 16 rows: "sexy". Not measured on the phone yet (fill of many
+  overlapping blades). Grass on a turning body still rebuilds every frame, so keep it at 1 row there.
+  `light-grass-check`: the ground 16 rows, 120 deep, bumps 25; the spinning turf 1 row.
   - Open: should a finger or mouse dragged through the grass part it too (the pointer as one more pusher)?
 - [ ] **G3. tile-repeat as a ground skin.** An alpha setting instead of the fixed 140 (old
   scenes keep 140). An optional top band: a strip texture along the up-facing edges with the

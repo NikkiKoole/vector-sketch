@@ -43,6 +43,7 @@ lib.defaults = {
     -- a bumpy ground under the roots: noise moves every root up/down, rows share the hills
     bumps = 0,           -- world units up and down, 0 = flat
     bumpSize = 200,      -- world units, about one hill
+    swayRows = 3,        -- the front rows sway one by one on the CPU; the ones behind sway in a shader
 }
 
 local function noise(...)
@@ -89,6 +90,7 @@ function lib.placeBlades(vertices, angle, extra)
     local shrink = setting(extra, 'bandShrink')
     local bumps = setting(extra, 'bumps')
     local bumpSize = math.max(1, setting(extra, 'bumpSize'))
+    local swayRows = setting(extra, 'swayRows')
     -- 'down in the world' in body space: rows and bumps move roots along it
     local downX, downY = sinA, cosA
 
@@ -136,6 +138,7 @@ function lib.placeBlades(vertices, angle, extra)
                             phase = hash(ex, hy, seed + 3) * math.pi * 2,
                             front = front,
                             shade = bands > 1 and depth or nil, -- colour between back and front
+                            still = band <= bands - swayRows,
                         }
                     end
                 end
@@ -162,7 +165,7 @@ local function loadAtlas()
 end
 
 local SIGNATURE_KEYS = { 'density', 'height', 'heightVariation', 'width', 'frontShare', 'maxSlope',
-    'colorBack', 'colorFront', 'seed', 'bands', 'bandSpread', 'bandShrink', 'bumps', 'bumpSize' }
+    'colorBack', 'colorFront', 'seed', 'bands', 'bandSpread', 'bandShrink', 'bumps', 'bumpSize', 'swayRows' }
 
 local function signature(extra, vertices, angle)
     local parts = { tostring(vertices), #vertices, string.format('%.3f', angle) }
@@ -172,10 +175,45 @@ end
 
 local hexColor = require('src.color').hexToColor
 
+-- The far rows' sway, in a vertex shader: each corner carries how far above the root it sits
+-- (SwayData.x, 0 at the root) and the blade's phase (SwayData.y), set once at build. The same two
+-- waves as setBlade's, as a bend sideways in the world (`right`, in the batch's own space).
+local SWAY_SHADER = [[
+attribute vec2 SwayData;
+uniform float time;
+uniform float amount;
+uniform vec2 right;
+vec4 position(mat4 transform_projection, vec4 vertex_position) {
+    float bend = amount * (sin(time * 1.7 + SwayData.y) * 0.06 + sin(time * 0.6 + SwayData.y * 0.3) * 0.04);
+    vertex_position.xy += right * SwayData.x * bend;
+    return transform_projection * vertex_position;
+}
+]]
+local swayShader
+local function getSwayShader()
+    if swayShader == nil then
+        local ok, shader = pcall(love.graphics.newShader, SWAY_SHADER)
+        swayShader = ok and shader or false
+    end
+    return swayShader
+end
+
+-- A sprite's four corners in LÖVE 11's order: top-left, bottom-left, top-right, bottom-right.
+local function addSwayCorners(vertices, id, blade, extra)
+    local q = lib.QUADS[blade.quad]
+    local s = setting(extra, 'height') * blade.scale / q[4]
+    local top = blade.still and q[6] * s or 0 -- the pivot is the root: the top is pivotY above it
+    local base = (id - 1) * 4
+    vertices[base + 1] = { top, blade.phase }
+    vertices[base + 2] = { 0, blade.phase }
+    vertices[base + 3] = { top, blade.phase }
+    vertices[base + 4] = { 0, blade.phase }
+end
+
 local function setBlade(batch, id, blade, extra, angle, time)
     local q = lib.QUADS[blade.quad]
     local s = setting(extra, 'height') * blade.scale / q[4]
-    local sway = setting(extra, 'sway') * (math.sin(time * 1.7 + blade.phase) * 0.06
+    local sway = blade.still and 0 or setting(extra, 'sway') * (math.sin(time * 1.7 + blade.phase) * 0.06
         + math.sin(time * 0.6 + blade.phase * 0.3) * 0.04)
     if blade.r then batch:setColor(blade.r, blade.g, blade.b, blade.a) end
     -- grass grows up in the world, whatever the body's angle
@@ -208,7 +246,7 @@ local function build(extra, thing, angle)
         local batch = love.graphics.newSpriteBatch(atlas, math.max(1, #blades), 'dynamic')
         local r, g, b, a = hexColor(setting(extra, layer == 'front' and 'colorFront' or 'colorBack'))
         batch:setColor(r, g, b, a)
-        local ids = {}
+        local ids, moving, corners, anyStill = {}, {}, {}, false
         for i, blade in ipairs(blades) do
             if blade.front == (layer == 'front') then
                 if blade.shade then
@@ -216,9 +254,25 @@ local function build(extra, thing, angle)
                     batch:setColor(blade.r, blade.g, blade.b, blade.a)
                 end
                 ids[i] = batch:add(quads[blade.quad], blade.x, blade.y)
+                if blade.still then
+                    setBlade(batch, ids[i], blade, extra, angle, 0)
+                    anyStill = true
+                else
+                    moving[i] = ids[i]
+                end
+                addSwayCorners(corners, ids[i], blade, extra)
             end
         end
-        entry[layer] = { batch = batch, ids = ids }
+        local swaying = false
+        if anyStill and getSwayShader() then
+            local mesh = love.graphics.newMesh({ { 'SwayData', 'float', 2 } }, math.max(1, #blades) * 4,
+                'points', 'static')
+            for k = 1, math.max(1, #blades) * 4 do corners[k] = corners[k] or { 0, 0 } end
+            mesh:setVertices(corners)
+            batch:attachAttribute('SwayData', mesh)
+            swaying = true
+        end
+        entry[layer] = { batch = batch, ids = ids, moving = moving, shaderSway = swaying }
     end
     cache[extra] = entry
     return entry
@@ -235,11 +289,23 @@ function lib.draw(extra, thing, body, layer)
     end
     local part = entry[layer]
     local time = love.timer.getTime()
-    for i, id in pairs(part.ids) do
+    for i, id in pairs(part.moving) do
         setBlade(part.batch, id, entry.blades[i], extra, angle, time)
     end
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.draw(part.batch, body:getX(), body:getY(), angle)
+    -- the far rows sway in the shader, only when no other shader is on (a lit or shadow pass keeps its own)
+    local amount = setting(extra, 'sway')
+    if part.shaderSway and amount > 0 and love.graphics.getShader() == nil then
+        local shader = getSwayShader()
+        shader:send('time', time)
+        shader:send('amount', amount)
+        shader:send('right', { math.cos(angle), -math.sin(angle) })
+        love.graphics.setShader(shader)
+        love.graphics.draw(part.batch, body:getX(), body:getY(), angle)
+        love.graphics.setShader()
+    else
+        love.graphics.draw(part.batch, body:getX(), body:getY(), angle)
+    end
 end
 
 return lib

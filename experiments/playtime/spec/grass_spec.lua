@@ -85,4 +85,14 @@ describe("src.grass placeBlades", function()
             assert.is_true(math.abs(blade.y - 50) < 21 and math.abs(blade.y - 50) > 19)
         end
     end)
+
+    it("swayRows: only the front rows sway, the ones behind stand still", function()
+        local blades = grass.placeBlades(rect, 0, { density = 10, bands = 5, bandSpread = 40, swayRows = 2 })
+        for _, blade in ipairs(blades) do
+            assert.are.equal(blade.shade < 0.7, blade.still) -- rows at depth 0, .25, .5 still; .75, 1 sway
+        end
+        for _, blade in ipairs(grass.placeBlades(rect, 0, { density = 10 })) do
+            assert.is_false(blade.still)
+        end
+    end)
 end)
