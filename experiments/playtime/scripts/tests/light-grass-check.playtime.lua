@@ -6,7 +6,9 @@
 -- src/render/form-bake.lua; 0 shows them as other scenes draw them).
 -- play mode (tab): drag the warm and the cool lamp about.
 -- keys:
---   1 day   2 evening   3 night   4 only the turning lamp (its range: r 5000 / 500)
+--   d the day-night cycle (a day in DAY_SECONDS: the sun rises on the left at 6, sets on the right at 18,
+--     the moon the other way round the night; night, dawn, day, golden hour and dusk blended by the hour)
+--   , . an hour back / on   1 noon   2 dusk (19:00)   3 midnight   4 only the turning lamp (r: its range)
 --   m the Mipos lit like the shapes / as drawn (their picture parts, limbs and torso; not the face)
 --   c the Mipos' clay (grain, dents, sheen) off / on (on to start): off, the light and roundness only
 --   h contact shadows off / on (src/contact-shadows.lua; how dark goes with the time of day)
@@ -21,40 +23,39 @@
 
 local s = {}
 
--- the times of day: the sky, then per light its colour, intensity, (the sun) where it shines to and
--- where it is, (the sky light) its ground colour
-local MOODS = {
-    day = { sky = { 0.62, 0.78, 0.92 },
-        sun = { 'fff2d9ff', 1.2, math.rad(60), -1250, -650 }, ['warm lamp'] = { 'ffb060ff', 0 },
-        ['cool lamp'] = { '80a8ffff', 0 }, ['turning lamp'] = { 'ffffffff', 0 },
-        ['sky light'] = { '9cc8ffff', 0.6, nil, nil, nil, '8a7a50ff' },
-        ['back light'] = { 'ffffffff', 0.6, math.rad(135) } },
-    evening = { sky = { 0.93, 0.62, 0.45 },
-        sun = { 'ff8a3cff', 0.9, math.rad(12), -1450, -100 }, ['warm lamp'] = { 'ffb060ff', 1.2 },
-        ['cool lamp'] = { '80a8ffff', 0 }, ['turning lamp'] = { 'ffffffff', 0 },
-        ['sky light'] = { 'ffa080ff', 0.5, nil, nil, nil, '5a3848ff' },
-        ['back light'] = { 'ffa050ff', 2.4, math.rad(10) } },
-    night = { sky = { 0.08, 0.1, 0.22 },
-        sun = { 'a8c0ffff', 0.35, math.rad(120), 600, -650 }, ['warm lamp'] = { 'ffb060ff', 2.0 },
-        ['cool lamp'] = { '80a8ffff', 1.6 }, ['turning lamp'] = { 'ffffffff', 0 },
-        ['sky light'] = { '3a4a80ff', 0.3, nil, nil, nil, '141420ff' },
-        ['back light'] = { 'a8c0ffff', 1.8, math.rad(120) } },
-    lamp = { sky = nil,
-        sun = { 'fff2d9ff', 0, math.rad(60) }, ['warm lamp'] = { 'ffb060ff', 0 },
-        ['cool lamp'] = { '80a8ffff', 0 }, ['turning lamp'] = { 'fff2d9ff', 1.0 },
-        ['sky light'] = { '9cc8ffff', 0, nil, nil, nil, '8a7a50ff' },
-        ['back light'] = { 'ffffffff', 0 } },
+-- The day: five looks (after ../sky-atmosphere's timeline, WORLD-BUILDING G5, plus a golden hour), blended
+-- by the hour. Each
+-- sets the sky, the sun's and the moon's colour and strength (at their highest), the lamps, the sky
+-- light (colour, ground colour, strength), the back light, and how dark the contact and wall shadows are.
+local LOOKS = {
+    night = { sky = { 0.08, 0.1, 0.22 }, sun = { 'fff2d9', 0 }, moon = { 'a8c0ff', 0.35 }, warm = 2.0, cool = 1.6,
+        skyLight = { '3a4a80', '141420', 0.3 }, back = { 'a8c0ff', 1.8 }, shadows = 0.3, wallShadows = 0.2 },
+    dawn = { sky = { 0.97, 0.68, 0.6 }, sun = { 'ffb070', 0.8 }, moon = { 'a8c0ff', 0.15 }, warm = 0.6, cool = 0,
+        skyLight = { 'ffb0a0', '604050', 0.45 }, back = { 'ffc080', 2.0 }, shadows = 0.4, wallShadows = 0.3 },
+    day = { sky = { 0.62, 0.78, 0.92 }, sun = { 'fff2d9', 1.2 }, moon = { 'a8c0ff', 0 }, warm = 0, cool = 0,
+        skyLight = { '9cc8ff', '8a7a50', 0.6 }, back = { 'ffffff', 0.6 }, shadows = 0.5, wallShadows = 0.35 },
+    -- the golden hour, between day and dusk: blue straight to orange went through a muddy grey
+    golden = { sky = { 0.98, 0.84, 0.62 }, sun = { 'ffd890', 1.1 }, moon = { 'a8c0ff', 0 }, warm = 0.3, cool = 0,
+        skyLight = { 'ffe0b0', '7a6040', 0.55 }, back = { 'ffd080', 1.8 }, shadows = 0.45, wallShadows = 0.33 },
+    dusk = { sky = { 0.93, 0.62, 0.45 }, sun = { 'ff8a3c', 0.9 }, moon = { 'a8c0ff', 0.1 }, warm = 1.2, cool = 0,
+        skyLight = { 'ffa080', '5a3848', 0.5 }, back = { 'ffa050', 2.4 }, shadows = 0.4, wallShadows = 0.3 },
 }
-local MOOD_KEYS = { ['1'] = 'day', ['2'] = 'evening', ['3'] = 'night', ['4'] = 'lamp' }
--- contact shadows (src/contact-shadows.lua) per time of day: how dark
-local SHADOWS = { day = 0.5, evening = 0.4, night = 0.3, lamp = 0.45 }
+local TIMELINE = { { 0, 'night' }, { 5, 'night' }, { 6.5, 'dawn' }, { 8.5, 'day' }, { 17, 'day' }, { 18, 'golden' },
+    { 19, 'dusk' }, { 20.5, 'night' }, { 24, 'night' } }
+local HOUR_KEYS = { ['1'] = 12, ['2'] = 19, ['3'] = 0 } -- day, dusk, night
+local DAY_SECONDS = 120 -- a whole day, with the cycle running
+-- the sun and the moon on an arc over the scene: rising on the left, setting on the right, shining at
+-- its middle
+local ARC = { x = -300, y = 450, r = 1150, squash = 0.8 }
+-- 4: only the turning lamp, no sky
+local LAMP_ONLY = { shadows = 0.45, wallShadows = 0.3 }
+
 -- the back wall (backdrop shadows fall on it, src/backdrop-shadows.lua; not on the open sky), and how
 -- far it is behind the things in front of it (how far their shadows shift), per time of day how dark
 local WALL = { x = -1550, y = -700, w = 2200, h = 1150, colour = { 0.91, 0.86, 0.75 } }
 local WALL_BEHIND = 90
-local BACKDROP_SHADOWS = { day = 0.35, evening = 0.3, night = 0.2, lamp = 0.3 }
 local function wallShape() love.graphics.rectangle('fill', WALL.x, WALL.y, WALL.w, WALL.h) end
-local LIGHTS = { 'sun', 'warm lamp', 'cool lamp', 'turning lamp', 'sky light', 'back light' }
+local LIGHTS = { 'sun', 'moon', 'warm lamp', 'cool lamp', 'turning lamp', 'sky light', 'back light' }
 
 -- each key steps through these on every shape; the first is how other scenes draw them
 local TRIES = {
@@ -128,37 +129,110 @@ local function step(try)
     setAll(try, nextValue)
 end
 
--- the backdrop shadows' shift: the way the sun (or moon) shines, else the turning lamp's, WALL_BEHIND far
-local function wallShadowOffset()
-    for _, label in ipairs({ 'sun', 'turning lamp' }) do
+-- the strongest of these lights that's on: its body
+local function strongest(labels)
+    local best, bestBody = 0, nil
+    for _, label in ipairs(labels) do
         local body, extra = lightOf(label)
-        if body and (extra.intensity or 1) > 0 then
-            local a = body:getAngle()
-            return { math.cos(a) * WALL_BEHIND, math.sin(a) * WALL_BEHIND }
-        end
+        if body and (extra.intensity or 1) > best then best, bestBody = extra.intensity or 1, body end
     end
+    return bestBody
+end
+
+-- the backdrop shadows' shift: the way the sun or moon (the stronger) shines, else the turning lamp's
+local function wallShadowOffset()
+    local body = strongest({ 'sun', 'moon' }) or strongest({ 'turning lamp' })
+    if not body then return nil end
+    local a = body:getAngle()
+    return { math.cos(a) * WALL_BEHIND, math.sin(a) * WALL_BEHIND }
 end
 
 local function look()
-    state.lightLab = state.lightLab or { mood = 'day', made = 0, perSecond = 0, time = 0 }
-    return state.lightLab
+    state.lightLab = state.lightLab or { hour = 12, made = 0, perSecond = 0, time = 0 }
+    local c = state.lightLab
+    c.hour = c.hour or 12 -- a state from before the clock
+    return c
 end
 
-local function setMood(name)
-    local mood = MOODS[name]
-    look().mood = name
-    for _, label in ipairs(LIGHTS) do
-        local body, extra = lightOf(label)
-        local m = mood[label]
-        if extra and m then
-            extra.colorHex, extra.intensity = m[1], m[2]
-            if label == 'sky light' and look().skyOff then extra.intensity = 0 end
-            if label == 'back light' and look().backOff then extra.intensity = 0 end
-            if m[6] then extra.groundHex = m[6] end
-            if m[3] and body then body:setAngle(m[3]) end
-            if m[4] and body then body:setPosition(m[4], m[5]) end
+local function rgb(hex)
+    return { tonumber(hex:sub(1, 2), 16) / 255, tonumber(hex:sub(3, 4), 16) / 255, tonumber(hex:sub(5, 6), 16) / 255 }
+end
+
+local function hex(c)
+    local function byte(v) return math.floor(math.max(0, math.min(1, v)) * 255 + 0.5) end
+    return string.format('%02x%02x%02xff', byte(c[1]), byte(c[2]), byte(c[3]))
+end
+
+local function mixColours(a, b, t)
+    local ca, cb = rgb(a), rgb(b)
+    return hex({ ca[1] + (cb[1] - ca[1]) * t, ca[2] + (cb[2] - ca[2]) * t, ca[3] + (cb[3] - ca[3]) * t })
+end
+
+-- two looks blended: numbers, colours (hex strings) and lists of them (no `type` in a scene script)
+local function blend(a, b, t)
+    if tonumber(a) == a then return a + (b - a) * t end
+    local meta = getmetatable(a)
+    if meta and meta.__index == string then return mixColours(a, b, t) end
+    local out = {}
+    for k, v in pairs(a) do out[k] = blend(v, b[k], t) end
+    return out
+end
+
+-- the look at an hour (0..24)
+local function lookAt(hour)
+    for i = 1, #TIMELINE - 1 do
+        local h0, h1 = TIMELINE[i][1], TIMELINE[i + 1][1]
+        if hour >= h0 and hour <= h1 then
+            local t = h1 > h0 and (hour - h0) / (h1 - h0) or 0
+            t = t * t * (3 - 2 * t)
+            return blend(LOOKS[TIMELINE[i][2]], LOOKS[TIMELINE[i + 1][2]], t)
         end
     end
+    return LOOKS.night
+end
+
+-- where on the arc at theta (0 rising on the left, pi setting on the right), the way it shines (at the
+-- scene's middle), and how much it's up (0 at the horizon or below, 1 well up)
+local function onArc(theta)
+    local x = ARC.x - ARC.r * math.cos(theta)
+    local y = ARC.y - ARC.r * ARC.squash * math.sin(theta)
+    local up = math.max(0, math.min(1, (math.sin(theta) + 0.05) / 0.2))
+    return x, y, math.atan2(ARC.y - 200 - y, ARC.x - x), up * up * (3 - 2 * up)
+end
+
+local function setLight(label, colour, intensity, x, y, angle)
+    local body, extra = lightOf(label)
+    if not extra then return end
+    if colour then extra.colorHex = colour end
+    extra.intensity = intensity
+    if x and body then body:setPosition(x, y) end
+    if angle and body then body:setAngle(angle) end
+end
+
+-- everything at the clock's hour (or only the turning lamp)
+local function applyTime()
+    local c = look()
+    if c.lampOnly then
+        for _, label in ipairs(LIGHTS) do setLight(label, nil, 0) end
+        setLight('turning lamp', 'fff2d9ff', 1.0)
+        c.now = nil
+        return
+    end
+    local L = lookAt(c.hour)
+    c.now = L
+    local sx, sy, sa, sunUp = onArc((c.hour - 6) / 12 * math.pi)
+    local mx, my, ma, moonUp = onArc(((c.hour - 18) % 24) / 12 * math.pi)
+    setLight('sun', L.sun[1] .. 'ff', L.sun[2] * sunUp, sx, sy, sa)
+    setLight('moon', L.moon[1] .. 'ff', L.moon[2] * moonUp, mx, my, ma)
+    setLight('warm lamp', nil, L.warm)
+    setLight('cool lamp', nil, L.cool)
+    setLight('turning lamp', nil, 0)
+    setLight('sky light', L.skyLight[1] .. 'ff', c.skyOff and 0 or L.skyLight[3])
+    local _, skyExtra = lightOf('sky light')
+    if skyExtra then skyExtra.groundHex = L.skyLight[2] .. 'ff' end
+    -- the back light comes from wherever the sun or the moon is (the stronger)
+    local backAngle = (L.sun[2] * sunUp >= L.moon[2] * moonUp) and sa or ma
+    setLight('back light', L.back[1] .. 'ff', c.backOff and 0 or L.back[2], nil, nil, backAngle)
 end
 
 function s.onStart()
@@ -172,7 +246,7 @@ function s.onStart()
             for _, fixture in ipairs(thing.body:getFixtures()) do fixture:setSensor(true) end
         end
     end
-    setMood(look().mood)
+    applyTime()
     -- counting SpriteBatches made, per second (wrapped once; put back on unload)
     local c = look()
     if not c.original then
@@ -214,12 +288,15 @@ local function lightMipos()
 end
 
 function s.update(dt)
-    lightMipos()
-    state.contactShadows = not look().shadowsOff and { strength = SHADOWS[look().mood] or 0.45 } or nil
-    local offset = wallShadowOffset()
-    state.backdropShadows = (not look().wallShadowsOff and offset) and { wall = wallShape, offset = offset,
-        blur = 10, strength = BACKDROP_SHADOWS[look().mood] or 0.3 } or nil
     local c = look()
+    if c.cycle and not c.lampOnly then c.hour = (c.hour + (dt or 0) * 24 / DAY_SECONDS) % 24 end
+    applyTime()
+    lightMipos()
+    local L = c.now or LAMP_ONLY
+    state.contactShadows = not c.shadowsOff and { strength = L.shadows } or nil
+    local offset = wallShadowOffset()
+    state.backdropShadows = (not c.wallShadowsOff and offset) and { wall = wallShape, offset = offset,
+        blur = 10, strength = L.wallShadows } or nil
     c.time = c.time + (dt or 0)
     if c.time >= 1 then
         c.perSecond, c.made, c.time = c.made, 0, c.time - 1
@@ -227,8 +304,17 @@ function s.update(dt)
 end
 
 function s.onKeyPress(key)
-    if MOOD_KEYS[key] then
-        setMood(MOOD_KEYS[key])
+    local c = look()
+    if HOUR_KEYS[key] then
+        c.hour, c.lampOnly = HOUR_KEYS[key], false
+    elseif key == '4' then
+        c.lampOnly = true
+    elseif key == 'd' then
+        c.cycle, c.lampOnly = not c.cycle, false
+    elseif key == ',' then
+        c.hour = (c.hour - 1) % 24
+    elseif key == '.' then
+        c.hour = (c.hour + 1) % 24
     elseif TRIES[key] then
         step(TRIES[key])
     elseif key == '0' then
@@ -243,10 +329,8 @@ function s.onKeyPress(key)
         look().mipoClayOff = not look().mipoClayOff
     elseif key == 'l' then
         look().backOff = not look().backOff
-        setMood(look().mood)
     elseif key == 'k' then
         look().skyOff = not look().skyOff
-        setMood(look().mood)
     elseif key == 'r' then
         local _, extra = lightOf('turning lamp')
         if extra then extra.range = (extra.range or 500) == 500 and 5000 or 500 end
@@ -258,10 +342,11 @@ function s.onKeyPress(key)
     end
 end
 
--- the sky behind everything, in the mood's colour
+-- the sky behind everything, in the hour's colour
 function s.drawBelow()
-    local sky = MOODS[look().mood].sky
-    if not sky then return end
+    local now = look().now
+    if not now then return end
+    local sky = now.sky
     local x0, y0 = cam:getWorldCoordinates(0, 0)
     local x1, y1 = cam:getWorldCoordinates(love.graphics.getWidth(), love.graphics.getHeight())
     love.graphics.setColor(sky[1], sky[2], sky[3], 1)
@@ -274,11 +359,9 @@ function s.drawBelow()
     love.graphics.setColor(1, 1, 1, 1)
 end
 
-local function hexColor(hex)
-    local r = tonumber(hex:sub(1, 2), 16) / 255
-    local g = tonumber(hex:sub(3, 4), 16) / 255
-    local b = tonumber(hex:sub(5, 6), 16) / 255
-    return r, g, b
+local function hexColor(text)
+    local c = rgb(text)
+    return c[1], c[2], c[3]
 end
 
 -- each light that's on: a glow in its colour, and (directional) the way it shines
@@ -294,7 +377,7 @@ function s.draw()
             end
             love.graphics.setColor(r, g, b, 1)
             love.graphics.circle('fill', x, y, 26)
-            if extra.lightType ~= 'point' then
+            if extra.lightType ~= 'point' and label ~= 'sun' and label ~= 'moon' then
                 local a = body:getAngle()
                 love.graphics.setLineWidth(8)
                 love.graphics.line(x, y, x + math.cos(a) * 260, y + math.sin(a) * 260)
@@ -312,8 +395,11 @@ function s.drawUI()
         tries[#tries + 1] = string.format('%s %s %s', k, TRIES[k].name, tostring(current(TRIES[k])))
     end
     local lines = {
-        '1 day 2 evening 3 night 4 lamp (r)  k sky  l back  h shadows  w wall  m Mipos lit  c clay  tab: play  s turf',
-        'now: ' .. c.mood .. (c.skyOff and ', sky light off' or ', sky light on')
+        'd day-night  , . an hour  1 day 2 dusk 3 night 4 lamp (r)  k sky  l back  h shadows  w wall  m Mipos  c clay',
+        'now: ' .. (c.lampOnly and 'the turning lamp'
+            or string.format('%02d:%02d%s', math.floor(c.hour), math.floor(c.hour % 1 * 60),
+                c.cycle and ' (cycle)' or ''))
+            .. (c.skyOff and ', sky light off' or ', sky light on')
             .. (c.shadowsOff and ', no shadows' or ', shadows')
             .. (c.wallShadowsOff and ', none on the wall' or ', on the wall')
             .. (c.backOff and ', no back light' or ', back light')
