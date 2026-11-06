@@ -204,7 +204,20 @@ function lib.recreateThingFromBody(body, newSettings)
 
             local abs = oldF:getShape()
             local centerX, centerY = mathutils.getCenterOfPoints(points)
-            if (thing.vertices) then
+            local userData = utils.shallowCopy(oldF:getUserData())
+            local s = newSettings.sfixtureScale
+            if s then
+                -- the whole body grows (lib.scaleThing): the sfixture and its picture with it,
+                -- all about the body's origin
+                for p = 1, #points do points[p] = points[p] * s end
+                abs = shapes.newPolygon(points)
+                if userData.extra and userData.extra.vertices then
+                    userData.extra = utils.shallowCopy(userData.extra)
+                    local scaled = {}
+                    for p = 1, #userData.extra.vertices do scaled[p] = userData.extra.vertices[p] * s end
+                    userData.extra.vertices = scaled
+                end
+            elseif (thing.vertices) then
                 -- we are repositioning special fixtures (anchors, snappoints)
                 -- and doing our best to set them at a decent position.
                 -- this is fine for all sort of editor made things,
@@ -229,7 +242,9 @@ function lib.recreateThingFromBody(body, newSettings)
             local newFixture = love.physics.newFixture(newBody, abs, oldF:getDensity())
             newFixture:setRestitution(oldF:getRestitution())
             newFixture:setFriction(oldF:getFriction())
-            newFixture:setUserData(utils.shallowCopy(oldF:getUserData()))
+            newFixture:setSensor(oldF:isSensor()) -- else a rebuilt picture collided
+            newFixture:setFilterData(oldF:getFilterData())
+            newFixture:setUserData(userData)
 
             registry.registerSFixture(oldF:getUserData().id, newFixture)
         end
@@ -295,6 +310,30 @@ function lib.recreateThingFromBody(body, newSettings)
     body:destroy()
 
     return thing
+end
+
+-- Make a body s times bigger (s < 1 smaller), about its origin: every size field, its outline,
+-- its sfixtures and their pictures, its Steiner points; joints keep their place on the outline.
+-- The editor's scale handle (src/transform-handles.lua). Returns the thing (same table, new body).
+local VERTEX_SHAPES = { custom = true, shape8 = true, ribbon = true }
+function lib.scaleThing(thing, s)
+    if not thing or not thing.body or thing.body:isDestroyed() or not s or s <= 0 then return thing end
+    local settings = { sfixtureScale = s }
+    for _, key in ipairs(shapes.DIM_KEYS) do
+        -- width2 is a capsule's corner divisor, not a length
+        if thing[key] and not (key == 'width2' and thing.shapeType == 'capsule') then
+            settings[key] = thing[key] * s
+        end
+    end
+    if thing.vertices and VERTEX_SHAPES[thing.shapeType] then
+        local scaled = {}
+        for i = 1, #thing.vertices do scaled[i] = thing.vertices[i] * s end
+        settings.optionalVertices = scaled
+    end
+    if thing.extraSteiner then
+        for i = 1, #thing.extraSteiner do thing.extraSteiner[i] = thing.extraSteiner[i] * s end
+    end
+    return lib.recreateThingFromBody(thing.body, settings)
 end
 
 function lib.destroyBody(body)

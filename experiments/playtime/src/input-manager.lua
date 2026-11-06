@@ -16,6 +16,7 @@ local selectrect = require('src.selection-rect')
 local polyEdit = require('src.poly-edit')
 local meshusertBind = require('src.meshusert-bind')
 local state = require('src.state')
+local transformHandles = require('src.transform-handles')
 local modes = require('src.modes')
 local ui = require('src.ui.all')
 local fixtures = require('src.fixtures')
@@ -497,6 +498,7 @@ local function handlePointer(x, y, id, action, button)
 
         if modes.is(modes.PLACE_STEINER) then return pressedPlaceSteiner(x, y, button) end
         if pressedOnPanel(x, y) then return end
+        if transformHandles.pressed(x, y) then return end -- the turn knob / size square
 
         local startSelection = love.keyboard.isDown('lshift')
         if (startSelection) then
@@ -539,6 +541,7 @@ local function handlePointer(x, y, id, action, button)
         if steinerDragIdx > 0 and not modes.is(modes.PLACE_STEINER) then releasedPlaceSteiner() end
         if modes.is(modes.EDIT_MESH_TRIS) then return end
         if modes.is(modes.PLACE_STEINER) then return releasedPlaceSteiner() end
+        if transformHandles.released() then return end
 
         -- Handle release logic
         releasePointer(x, y, id)
@@ -743,6 +746,7 @@ function lib.handleMouseMoved(x, y, dx, dy)
         return
     end
     modes.dropWhatsGone()
+    if transformHandles.moved(x, y) then return end
 
     -- Steiner drag: live-update the grabbed point's body-local position.
     -- RESOURCE refresh runs on release so we don't thrash bind data per

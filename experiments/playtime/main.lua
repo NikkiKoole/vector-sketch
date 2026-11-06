@@ -155,6 +155,7 @@ local synth = require('src.synth')
 require('src.physics.physics-callbacks') -- fills state.physicsCallbacks, wired up in love.load
 local sceneLoader = require('src.scene-loader')
 local editorRenderer = require('src.editor-render')
+local transformHandles = require('src.transform-handles')
 local rightColumn = require('src.ui.right-column')
 
 -- Request window focus so mouse events work when launched from terminal
@@ -388,6 +389,7 @@ function love.draw()
         editorRenderer.renderActiveEditorThings()
         editorRenderer.renderSteinerOverlay()
         editorRenderer.renderSelectionBox()
+        transformHandles.draw()
         if state.world.paused then
             local selected = state.selection.selectedObj and state.selection.selectedObj.body
             signals.drawWires(selected)

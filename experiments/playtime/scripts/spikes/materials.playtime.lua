@@ -397,9 +397,24 @@ local quad = love.graphics.newMesh({
 
 ---------------------------------------------------------------- things
 
+local function sizeOf(thing) return thing.radius or thing.width end
+
+-- a thing rebuilt in the editor (the size square, src/transform-handles.lua) has a new body and
+-- size: follow it, and grow the paint by as much
+local function follow(t)
+    local thing = t.thing
+    if not thing or not thing.body or thing.body == t.body or thing.body:isDestroyed() then return end
+    t.body = thing.body
+    local f = sizeOf(thing) / t.baseSize
+    t.baseSize = sizeOf(thing)
+    t.hw, t.hh, t.rr = t.hw * f, t.hh * f, t.rr * f
+    if t.puff then t.puff = t.puff * f end
+end
+
 local function alive(list)
     local out = {}
     for _, t in ipairs(list) do
+        follow(t)
         if t.body and not t.body:isDestroyed() then out[#out + 1] = t end
     end
     return out
@@ -431,7 +446,7 @@ local function add(b, kind, x, y, look)
         look.rr, look.shapeN = look.rr or 8, 1
     end
     if not thing then return end
-    look.body, look.kind = thing.body, kind
+    look.body, look.kind, look.thing, look.baseSize = thing.body, kind, thing, sizeOf(thing)
     look.seed = look.seed or love.math.random() * 50
     b.things[#b.things + 1] = look
 end
@@ -621,11 +636,10 @@ function s.drawBelow()
     end
     love.graphics.setBlendMode('alpha')
     love.graphics.setShader()
-    -- the Mipos draw themselves; the plain outlines of our things would show
-    if state.playMode then
-        b.savedDrawBodies = state.world.debugDrawBodies
-        state.world.debugDrawBodies = false
-    end
+    -- the Mipos draw themselves; the plain outlines of our things would show (in the editor too:
+    -- there they covered the materials while sizing and turning things)
+    b.savedDrawBodies = state.world.debugDrawBodies
+    state.world.debugDrawBodies = false
     b.drawing = true
 end
 
