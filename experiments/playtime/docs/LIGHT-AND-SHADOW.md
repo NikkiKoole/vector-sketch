@@ -289,6 +289,14 @@ fade, a sun: the panel's `fades` switch, LS4).
   'shadows every other frame', on in light-grass-check): 20 lit Mipos + 3D, each twice, draw 29.7 / 28.6
   ms every frame -> 25.0 / 24.2 every other, ~4.5 ms back. (That run's Mipos were still moving, 312 of
   322 bodies awake, update ~11 ms, so its totals are higher than the at-rest run's.)
+  The lights worked out once a frame (the materials session, a006a2bd: shaders.newFrame; per part only
+  the body's turn): same 20 Mipos, physics paused, the cache switched off and on from the bridge, each
+  twice: lit, no shadows, draw 19.6 / 19.6 ms the old way, 15.9 / 16.2 cached, as drawn 9.8: lighting
+  20 Mipos ~9.8 -> ~6.2 ms. What's left in setSurfaceShader: the scalar and material sends ~37%, the
+  light arrays ~34%, the other shared uniforms ~28%: next, send only what changed (the materials session).
+  Note: these phone runs were in the editor (the device build starts there), so box2d-draw's debug
+  shapes (~18% of the draw) are in them; play mode doesn't draw those. Compare runs only within one
+  install: how many Mipos land on screen changes the totals (paused is steadiest).
 - [ ] **LS24. Draw once for the screen and the shadows.** The outlines for the shadows are the world
   drawn a second time (~6 ms with 20 lit Mipos on the phone; every other frame halves it, LS23). The GPU
   can write two pictures in one pass (several canvases at once, `love.graphics.setCanvas` with a list;
