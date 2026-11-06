@@ -769,6 +769,35 @@ local function drawTraceVertices(d)
     end
 end
 
+-- A face decal (an eye, a pupil, the nose) in a material (extra.material, src/render/materials.lua;
+-- docs/MATERIALS.md MT6c): drawn as a quad in the head's own frame, as the head's picture is, so the
+-- lights reach it the same way (an image draw hands the shader the picture's own pixels). Only when
+-- a material is set; a quad kept per decal.
+local decalQuads = setmetatable({}, { __mode = 'k' })
+local quadVerts = { { 0, 0, 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 1, 1 }, { 0, 0, 0, 1 } }
+local function drawDecalLit(extra, body, img, ox, oy, dw, dh, mirrorX)
+    local rot = extra.rot or 0
+    local c, s = math.cos(rot), math.sin(rot)
+    local hw, hh = dw / 2, dh / 2
+    local corners = { { -hw, -hh }, { hw, -hh }, { hw, hh }, { -hw, hh } }
+    for i = 1, 4 do
+        local px, py = corners[i][1] * mirrorX, corners[i][2]
+        quadVerts[i][1] = ox + c * px - s * py
+        quadVerts[i][2] = oy + s * px + c * py
+    end
+    local mesh = decalQuads[extra]
+    if not mesh then
+        mesh = love.graphics.newMesh(4, 'fan', 'stream')
+        decalQuads[extra] = mesh
+    end
+    mesh:setVertices(quadVerts)
+    mesh:setTexture(img)
+    local shaded = setSurfaceShader(extra, body)
+    local bx, by = body:getPosition()
+    love.graphics.draw(mesh, bx, by, body:getAngle())
+    if shaded then love.graphics.setShader() end
+end
+
 local function drawDecal(d)
     local extra = d.extra
     local body = d.body
@@ -820,7 +849,11 @@ local function drawDecal(d)
             local sx = dw / imgw * mirrorX
             local sy = dh / imgh
             love.graphics.setColor(1, 1, 1, 1)
-            love.graphics.draw(img, wx, wy, angle, sx, sy, imgw / 2, imgh / 2)
+            if extra.material then
+                drawDecalLit(extra, body, img, ox, oy, dw, dh, mirrorX)
+            else
+                love.graphics.draw(img, wx, wy, angle, sx, sy, imgw / 2, imgh / 2)
+            end
         elseif extra.bgURL and extra.bgURL ~= '' then
             -- Simple single-color tinted image (no mask)
             local img, imgw, imgh = getLoveImage('textures/' .. extra.bgURL)
@@ -829,7 +862,11 @@ local function drawDecal(d)
                 local sy = dh / imgh
                 local r, g, b, a = color.hexToColor(extra.bgHex or 'ffffffff')
                 love.graphics.setColor(r, g, b, a)
-                love.graphics.draw(img, wx, wy, angle, sx, sy, imgw / 2, imgh / 2)
+                if extra.material then
+                    drawDecalLit(extra, body, img, ox, oy, dw, dh, mirrorX)
+                else
+                    love.graphics.draw(img, wx, wy, angle, sx, sy, imgw / 2, imgh / 2)
+                end
             end
         end
     end

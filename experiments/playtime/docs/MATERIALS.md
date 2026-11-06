@@ -165,6 +165,11 @@ Kinds of material, by what the shader does differently:
   (as is, black, dark red, pink, deep blue). Gold teeth, candy lips, a glazed inside read well.
   Wet spots reach the mouth only where it has a material (it's drawn without the shader otherwise).
   Found on the way: the script sandbox has no setmetatable (a scene script that uses it fails to load).
+- [~] **MT6c. Eyes, pupils, nose** (2026-11-06, Nikki: "eyes too"): a face decal with `extra.material`
+  is drawn as a quad in the head's own frame (src/physics/box2d-draw-textured.lua drawDecalLit), so
+  the lights reach it as they reach the head; without a material, the plain image draw as before.
+  mipo-materials: eyes, pupils, nose rows (glazed eyes, plastic pupils, a gold nose). The brows not
+  yet (a bent strip, like the lips).
 - [ ] **MT6. Into the engine**: a material as a texfixture setting, next to plasticine (SHADER-LOOKS'
   "looks on shapes"), if any of it earns a place.
 

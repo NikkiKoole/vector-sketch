@@ -23,7 +23,9 @@ local GROUPS = {
     { name = 'feet', labels = { lfoot = true, rfoot = true } },
 }
 -- the mouth's parts (on the head, by their mouthCurve): the lips, the teeth, the inside
-local MOUTH_GROUPS = { 'lips', 'teeth', 'inside' }
+local MOUTH_GROUPS = { 'eyes', 'pupils', 'nose', 'lips', 'teeth', 'inside' }
+-- the face's stickers (decals) by their label
+local DECAL_PART = { leye = 'eyes', reye = 'eyes', lpupil = 'pupils', rpupil = 'pupils', nose = 'nose' }
 local MOUTH_PART = { upper = 'lips', lower = 'lips', teeth = 'teeth' }
 -- the inside's colour: as the Mipo has it, then a few
 local INSIDE_COLOURS = { false, '000000cc', '5a1e2acc', 'b5546acc', '2a3a6acc' }
@@ -104,7 +106,11 @@ local function dressMipos()
                 local ud = fixture:getUserData()
                 local extra = ud and ud.extra
                 local mouthGroup = extra and MOUTH_PART[extra.mouthCurve]
-                if mouthGroup then
+                local decalGroup = ud and ud.subtype == 'decal' and DECAL_PART[ud.label]
+                if decalGroup then
+                    for k, v in pairs(MOUTH_LIT) do extra[k] = v end
+                    extra.material = CHOICES[choiceFor(thing.mipoId, decalGroup)] or nil
+                elseif mouthGroup then
                     for k, v in pairs(MOUTH_LIT) do extra[k] = v end
                     extra.material = CHOICES[choiceFor(thing.mipoId, mouthGroup)] or nil
                     if extra.mouthCurve == 'lower' then
