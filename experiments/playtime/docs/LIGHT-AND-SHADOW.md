@@ -127,6 +127,14 @@ fade, a sun: the panel's `fades` switch, LS4).
   per pixel. `./playtime.sh device` and `./playtime.sh bench device` (`--parts` for love.update), with
   light-grass-check and a room of ~20 lit Mipos; each part switched off in turn (its keys) to see
   what it costs. Write the numbers here; decide what a real scene can afford.
+  First numbers (2026-11-06, iPhone SE 2, light-grass-check, 3 Mipos, everything lit as o, 16:00, draw ms
+  p50, 6 s each): no shadows 5.4; + contact 6.0; + soft wall 10.9; contact + 3D hard (sun) 10.9; 3D with
+  sun and both lamps 10.9; the same with the big soft lamp (13 rays) 10.5; contact + 3D + soft wall 15.2.
+  So a shadow costs ~5 ms, all of it drawing the textured world again (CPU); the 3D rays, more lights
+  and soft edges are lost in the noise. Soft and 3D together draw it twice more: sharing one silhouette
+  canvas between them would save ~4-5 ms. The bigger cost isn't the shadows: the scene script's update
+  is 17.7 ms a frame (~9 ms a physics step: lighting every Mipo part, looking lights up by label, every
+  step), the frame 30-35 ms, ~30 fps. LS13 (moving it into src, once a frame, cached) is where that goes.
 - [ ] **LS13. Light as a scene setting.** So any room gets it without a script: a light section in the
   world settings, saved with the scene: the sky (a colour, or a time of day with the cycle; G5's open
   question in WORLD-BUILDING, a sky per scene), sun and moon, sky light, back light, contact and wall
