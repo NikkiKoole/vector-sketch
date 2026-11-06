@@ -606,7 +606,22 @@ local LIGHT_SETS = {
     { name = 'the warm lamp', warm = true },
     { name = 'the sun or moon and the warm lamp', sun = true, warm = true },
     { name = 'the sun or moon and both lamps', sun = true, warm = true, cool = true },
+    { name = 'both lamps', warm = true, cool = true },
 }
+
+-- Lamps circling round the scene in 3D (Nikki 2026-11-06: "more lights ... circling around differently"):
+-- on a ring round the things, in front of them, past the side and behind them (between them and the
+-- wall), so their shadows swing from the wall round onto the ground in front and back. On screen the ring
+-- is an ellipse (further back is higher up the floor); a lamp behind the things is drawn behind them.
+-- The circling lamp (the turning lamp's light, pink) throws shadows whenever it circles; the warm and cool
+-- lamps circle too with 'lamps circle too', at other heights and a third of the way round.
+local ORBIT = { cx = -100, rx = 1500, cz = 470, rz = 420 } -- z from 50 (near the wall) to 890 (near you)
+local ORBITERS = {
+    { label = 'turning lamp', phase = 0, h = 520 },
+    { label = 'warm lamp', phase = 2.1, h = 300 },
+    { label = 'cool lamp', phase = 4.2, h = 700 },
+}
+local CIRCLING_COLOUR = 'ffa0d8ff'
 -- how light a coloured shadow's colour is (0 black, 1 the other lights' colour itself)
 local SHADOW_TINT = 0.4
 local COOL_LAMP_DEPTH = 700 -- the cool lamp's distance in front of the things (the warm one's: [ ])
@@ -621,7 +636,8 @@ local function lampLight(label, inFront)
     local body = lightOf(label)
     if not body then return nil end
     local x, y = body:getPosition()
-    local z = SOLID_DEPTH + inFront
+    local circling = look().circlingZ
+    local z = (circling and circling[label]) or (SOLID_DEPTH + inFront)
     -- on screen the lamp sits at y = FLOOR_Y + z - h
     return { kind = 'point', x = x, h = math.max(4, FLOOR_Y + z - y), z = z }
 end
@@ -666,7 +682,8 @@ local function solidLights(wallShadows)
                 lightColour = rgb(extra and extra.colorHex or 'ffffff') }
         end
     end
-    local lamps = { { set.warm, 'warm lamp', c.lampDepth or LAMP_DEPTH }, { set.cool, 'cool lamp', COOL_LAMP_DEPTH } }
+    local lamps = { { set.warm, 'warm lamp', c.lampDepth or LAMP_DEPTH }, { set.cool, 'cool lamp', COOL_LAMP_DEPTH },
+        { c.circling, 'turning lamp', 0 } }
     for _, lamp in ipairs(lamps) do
         local light = lamp[1] and lampLight(lamp[2], lamp[3])
         if light then
@@ -731,9 +748,17 @@ local function applyTime()
     setLight('moon', L.moon[1] .. 'ff', L.moon[2] * moonUp, mx, my, ma)
     -- the warm lamp throwing the 3D shadows is on, whatever the hour
     local set = lightSet()
-    setLight('warm lamp', nil, (c.solid and set.warm) and math.max(1.4, L.warm) or L.warm)
-    setLight('cool lamp', nil, (c.solid and set.cool) and math.max(1.2, L.cool) or L.cool)
-    setLight('turning lamp', nil, 0)
+    local warmOn = (c.solid and set.warm) or (c.lampsCircle and c.circlingZ and c.circlingZ['warm lamp'])
+    local coolOn = (c.solid and set.cool) or (c.lampsCircle and c.circlingZ and c.circlingZ['cool lamp'])
+    setLight('warm lamp', nil, warmOn and math.max(1.4, L.warm) or L.warm)
+    setLight('cool lamp', nil, coolOn and math.max(1.2, L.cool) or L.cool)
+    -- the circling lamp: a point light while it circles, the turning lamp's own way again after
+    local _, turning = lightOf('turning lamp')
+    if turning then
+        turning.lightType = c.circling and 'point' or 'directional'
+        turning.range = c.circling and 1400 or 5000
+    end
+    setLight('turning lamp', c.circling and CIRCLING_COLOUR or 'fff2d9ff', c.circling and 1.4 or 0)
     setLight('sky light', L.skyLight[1] .. 'ff', c.skyOff and 0 or L.skyLight[3])
     local _, skyExtra = lightOf('sky light')
     if skyExtra then skyExtra.groundHex = L.skyLight[2] .. 'ff' end
@@ -819,15 +844,36 @@ function s.update(dt)
     local c = look()
     local daySeconds = DAY_SPEEDS[c.daySpeed or 1] or DAY_SECONDS
     if c.cycle and not c.lampOnly then c.hour = (c.hour + (dt or 0) * 24 / daySeconds) % 24 end
+    if c.circling or c.lampsCircle then
+        c.circleAngle = ((c.circleAngle or 0) + (dt or 0) * (c.circleSpeed or 0.35)) % (2 * math.pi)
+    end
     c.time = c.time + (dt or 0)
     if c.time >= 1 then
         c.perSecond, c.made, c.time = c.made, 0, c.time - 1
     end
 end
 
+-- the lamps on their ring: where each is (and how far in front of the wall: c.circlingZ)
+local function circle(c)
+    c.circlingZ = nil
+    for _, o in ipairs(ORBITERS) do
+        local on = (o.label == 'turning lamp' and c.circling) or (o.label ~= 'turning lamp' and c.lampsCircle)
+        local body = on and lightOf(o.label)
+        if body then
+            local t = (c.circleAngle or 0) + o.phase
+            local x, z = ORBIT.cx + ORBIT.rx * math.cos(t), ORBIT.cz + ORBIT.rz * math.sin(t)
+            body:setPosition(x, FLOOR_Y + z - o.h)
+            body:setLinearVelocity(0, 0)
+            c.circlingZ = c.circlingZ or {}
+            c.circlingZ[o.label] = z
+        end
+    end
+end
+
 local function everyFrame()
     local c = look()
     freshen()
+    circle(c)
     applyTime()
     lightMipos()
     local L = c.now or LAMP_ONLY
@@ -915,6 +961,42 @@ function s.onKeyPress(key)
 end
 
 -- the sky behind everything, in the hour's colour
+local function hexColor(text)
+    local c = rgb(text)
+    return c[1], c[2], c[3]
+end
+
+-- each light that's on: a glow in its colour, and (directional) the way it shines. A circling lamp behind
+-- the things is drawn behind them (behind = true, from drawBelow), in front of them over them; nearer you
+-- it's bigger
+local function drawLampGlows(behind)
+    local circling = look().circlingZ or {}
+    for _, label in ipairs(LIGHTS) do
+        local body, extra = lightOf(label)
+        local z = circling[label]
+        local isBehind = z ~= nil and z < SOLID_DEPTH
+        if body and (extra.intensity or 1) > 0 and extra.lightType ~= 'sky' and extra.lightType ~= 'back'
+            and isBehind == behind then
+            local x, y = body:getPosition()
+            local size = z and (0.5 + 0.8 * z / (ORBIT.cz + ORBIT.rz)) or 1
+            local r, g, b = hexColor(extra.colorHex or 'ffffffff')
+            for k = 4, 1, -1 do
+                love.graphics.setColor(r, g, b, 0.12 * (extra.intensity or 1))
+                love.graphics.circle('fill', x, y, (30 + k * 28) * size)
+            end
+            love.graphics.setColor(r, g, b, 1)
+            love.graphics.circle('fill', x, y, 26 * size)
+            if extra.lightType ~= 'point' and label ~= 'sun' and label ~= 'moon' then
+                local a = body:getAngle()
+                love.graphics.setLineWidth(8)
+                love.graphics.line(x, y, x + math.cos(a) * 260, y + math.sin(a) * 260)
+                love.graphics.setLineWidth(1)
+            end
+        end
+    end
+    love.graphics.setColor(1, 1, 1, 1)
+end
+
 local plaster -- below: a shape in plaster
 function s.drawBelow()
     -- how long the once-a-frame work takes (ms, smoothed; on the status line)
@@ -954,6 +1036,7 @@ function s.drawBelow()
             end
         end
     end
+    drawLampGlows(true) -- circling lamps behind the things
     love.graphics.setColor(1, 1, 1, 1)
 end
 
@@ -987,32 +1070,10 @@ plaster = function(drawShape, c, sky, grit)
     love.graphics.setShader()
 end
 
-local function hexColor(text)
-    local c = rgb(text)
-    return c[1], c[2], c[3]
-end
 
 -- each light that's on: a glow in its colour, and (directional) the way it shines
 function s.draw()
-    for _, label in ipairs(LIGHTS) do
-        local body, extra = lightOf(label)
-        if body and (extra.intensity or 1) > 0 and extra.lightType ~= 'sky' and extra.lightType ~= 'back' then
-            local x, y = body:getPosition()
-            local r, g, b = hexColor(extra.colorHex or 'ffffffff')
-            for k = 4, 1, -1 do
-                love.graphics.setColor(r, g, b, 0.12 * (extra.intensity or 1))
-                love.graphics.circle('fill', x, y, 30 + k * 28)
-            end
-            love.graphics.setColor(r, g, b, 1)
-            love.graphics.circle('fill', x, y, 26)
-            if extra.lightType ~= 'point' and label ~= 'sun' and label ~= 'moon' then
-                local a = body:getAngle()
-                love.graphics.setLineWidth(8)
-                love.graphics.line(x, y, x + math.cos(a) * 260, y + math.sin(a) * 260)
-                love.graphics.setLineWidth(1)
-            end
-        end
-    end
+    drawLampGlows(false)
     -- each stone's and the fence's roughness, small under it
     local font = love.graphics.getFont()
     for _, label in ipairs({ 'lit box', 'fence post' }) do
@@ -1037,7 +1098,7 @@ end
 -- sliders and buttons; the keys still work. Folds away with its – button.
 local PANEL = '•• light and shadow ••'
 local ROW, COL_W = 34, 380
-local PANEL_ROWS = 14
+local PANEL_ROWS = 15
 
 local function check(x, y, on, label)
     local clicked, now = ui.checkbox(x, y, on, label)
@@ -1105,6 +1166,13 @@ local function drawPanel(c)
         c.mipoClayOff = not on
         row()
         if stepper(x, y, COL_W - 30, 'wall: ' .. GRITS[c.grit or 2].name) then c.grit = (c.grit or 2) % #GRITS + 1 end
+        row()
+        c.circling = toggle(x, y, c.circling, 'a lamp circling round (3D)')
+        row()
+        c.lampsCircle = toggle(x, y, c.lampsCircle, 'warm and cool lamps circle too')
+        row()
+        local speed = slider('circle', x, y, 0, 1.5, c.circleSpeed or 0.35, 'circling speed')
+        if speed then c.circleSpeed = speed end
         row()
         if stepper(x, y, COL_W - 30, 'back to the liked settings') then s.onKeyPress('o') end
 

@@ -217,6 +217,12 @@ fade, a sun: the panel's `fades` switch, LS4).
   now lights the wall, floor, boards and ground around it, added on and falling off with distance,
   except where its shadows are: at night the shadows are holes in its light (light-grass-check mixes
   glow and darkening by how dark the sky is).
+  Circling lamps (Nikki: "more lights ... circling around differently"): a lamp on a ring round the
+  scene in 3D (light-grass-check: the turning lamp's light, pink, 'a lamp circling round'), in front of
+  the things, past the side and behind them, so its shadows swing from the wall round onto the ground in
+  front; on screen an ellipse, drawn behind the things while it's behind them, bigger nearer you. 'warm
+  and cool lamps circle too' puts those on the ring a third of the way round at other heights;
+  'circling speed'; the light set 'both lamps'.
   Not yet: within a lane one depth (a Mipo's own parts, LS20) (per-thing depth,
   LS16/LS18), nothing on the floor in front of the things, the same cost as the wall shadows (LS12).
 - [ ] **LS15. Small ones:** should a new directional light be a sun (not fade) by default; the back
