@@ -13,7 +13,8 @@
 --   c the Mipos' clay (grain, dents, sheen) off / on (on to start): off, the light and roundness only
 --   h contact shadows off / on (src/contact-shadows.lua; how dark goes with the time of day)
 --   w shadows on the back wall off / on (src/backdrop-shadows.lua: shifted the way the sun or moon
---     shines, soft; only on the wall, none on the open sky)
+--     shines, short and crisp at noon, long and soft when it's low, fading with its light; only on the
+--     wall, none on the open sky)
 --   l the back light off / on (from behind: the edges glow; evening orange, night the moon's blue)
 --   k the sky light off / on (light from all of above in the sky's colour, from below in the ground's)
 --   g light swing   z how much the light comes from the front   f the quick form's depth
@@ -139,12 +140,20 @@ local function strongest(labels)
     return bestBody
 end
 
--- the backdrop shadows' shift: the way the sun or moon (the stronger) shines, else the turning lamp's
-local function wallShadowOffset()
+-- the backdrop shadows from the sun or moon (the stronger), else the turning lamp: the way it shines, and
+-- by how high it is: a high sun throws short shadows, almost straight down, crisp; a low one long and
+-- sideways, softer; and as its light fades at the horizon, so does the shadow. Returns the offset, the
+-- blur and how much of the shadow's darkness is left (0..1).
+local function wallShadow()
     local body = strongest({ 'sun', 'moon' }) or strongest({ 'turning lamp' })
     if not body then return nil end
+    local _, extra = lightOf((body:getUserData().thing or {}).label)
     local a = body:getAngle()
-    return { math.cos(a) * WALL_BEHIND, math.sin(a) * WALL_BEHIND }
+    local down = math.max(0, math.sin(a)) -- 1: shining straight down (high), 0: sideways (on the horizon)
+    local length = WALL_BEHIND * math.min(4, 1 / (down + 0.25))
+    local fade = math.min(1, (extra and extra.intensity or 1) / 0.6)
+    -- never up the wall: a low sun aimed at the scene's middle shines a little upward
+    return { math.cos(a) * length, down * length }, 5 + length * 0.06, fade
 end
 
 local function look()
@@ -294,9 +303,9 @@ function s.update(dt)
     lightMipos()
     local L = c.now or LAMP_ONLY
     state.contactShadows = not c.shadowsOff and { strength = L.shadows } or nil
-    local offset = wallShadowOffset()
+    local offset, blur, fade = wallShadow()
     state.backdropShadows = (not c.wallShadowsOff and offset) and { wall = wallShape, offset = offset,
-        blur = 10, strength = L.wallShadows } or nil
+        blur = blur, strength = L.wallShadows * fade } or nil
     c.time = c.time + (dt or 0)
     if c.time >= 1 then
         c.perSecond, c.made, c.time = c.made, 0, c.time - 1
