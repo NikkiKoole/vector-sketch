@@ -121,7 +121,9 @@ local function lab()
         back = false, frozen = false, light = 1, painted = false, outlines = true, shape = 1, leaves = 1,
         smoke = 1, wind = 0, rise = 1, puffs = {}, spawn = 0, lx = 0, ly = -900,
     }
-    -- added later: a live state lacks them
+    -- added later: a live state lacks them (and time: a phone draws once before the first update)
+    state.materialCheck.time = state.materialCheck.time or 0
+    state.materialCheck.sinceFrame = state.materialCheck.sinceFrame or 0
     state.materialCheck.slide = state.materialCheck.slide == nil and true or state.materialCheck.slide
     state.materialCheck.behindX = state.materialCheck.behindX or BEHIND.x
     state.materialCheck.behindY = state.materialCheck.behindY or BEHIND.y

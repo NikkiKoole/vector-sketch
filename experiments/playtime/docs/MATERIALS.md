@@ -183,3 +183,19 @@ Other ways, in our pipeline:
   stone, ice) ~0.9-1.0 (x4-5: nine cell points looked up three times for the relief). All of it is cheap
   here; the phone is what counts (LS12): measure there before choosing, and if the cell grains are too
   dear, bake the grain once into a picture.
+
+**On the iPhone SE 2** (2026-11-06, `./playtime.sh device material-check`, x over the bridge; its screen
+is 1334x750 = 1.0 MP, so ms/MP = ms for a full-screen layer; a frame has 16.7 ms). The scene itself
+runs at ~53-60 fps with all 36 on screen. About 6-12 times the Mac:
+- **~1.2-1.8**: as drawn 1.15, leaf 1.40, smoke 1.78
+- **~2-3** (x2-2.7): metals 2.0, velvet 2.2, wax, glaze, satin, plastic, candy, glass, clear candy,
+  amber, pearl, bubble 2.6-3.1
+- **~3.4-6.4** (x3-5.5): clay 3.4, plaster 3.8, iron 4.4, rubber, jade, wood, varnished, fur ~5, paper,
+  felt, cotton, suede ~6
+- **~8.5-11.4** (x7-10): the cell grains: stucco 8.5, tin 9.5, stone, mud 9.9, leather 10.1, wet stone
+  10.9, ice 11.4
+What it means: a thing covers a small part of the screen (a Mipo ~5%), so even ice on a Mipo is
+~0.6 ms; a wall or the ground in a cell grain (a third of the screen) would be ~3-4 ms, too much next to
+everything else. So: lights, metal, gloss, see-through and velvet are affordable anywhere; the
+noise grains on things, not on big areas; the cell grains (pebble, crackle) baked into a picture
+once, or only on small things.
