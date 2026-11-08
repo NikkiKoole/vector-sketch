@@ -1,4 +1,4 @@
--- wearables: things Mipos wear as loose toys: glasses (glass lenses), underpants (boxers, knickers, briefs)
+-- wearables: things Mipos wear as loose toys: glasses (glass lenses), underpants, hats
 -- Each is a light body of its own. Let go of it near its spot (glasses: the eyes, pants: the hips)
 -- and it goes on (src/wearables.lua): a jolt (a landing, a throw) or a grab with the pointer and
 -- it comes off.
@@ -13,8 +13,12 @@
 -- the legs, under the feet, the nose and the arms. Greybox, to be swapped for Nikki's drawings.
 --
 -- play mode (tab): drag glasses onto faces and pants onto hips, throw Mipos about.
--- keys: g a pair of glasses (the next kind)   u underpants (the next kind)   m a Mipo
---       w glasses on every Mipo   n pants on every Mipo   o all off   r start over   p the panel
+-- Hats sit on the head's top (where its skin's mask starts), as wide as the head is at the brim
+-- (a row of the mask), drawn in the Mipo's own layers over the hair (220), so hair sticks out
+-- under and round them (Nikki 2026-11-08), the ears behind, the arms in front.
+--
+-- keys: g a pair of glasses   u underpants   h a hat (each the next kind)   m a Mipo
+--       w glasses, n pants, y a hat on every Mipo   o all off   r start over   p the panel
 
 local s = {}
 
@@ -45,6 +49,51 @@ local PANTS = {
     { name = 'briefs', waist = 0.6, leg = 0.1, legW = 0.3, flare = 1, base = { 0.97, 0.97, 0.97 },
       band = { 0.25, 0.45, 0.85 } },
 }
+-- hats, drawn in units of their width at the brim (y = 0 the brim, up is negative): parts in
+-- draw order, a polygon or a circle each. sink: how far down the head the brim sits (a part of the
+-- head's height); fit: the width at the brim over the head's width there
+local function arc(cx, cy, rx, ry, a0, a1, n)
+    local pts = {}
+    for i = 0, n do
+        local a = a0 + (a1 - a0) * i / n
+        pts[#pts + 1] = cx + math.cos(a) * rx
+        pts[#pts + 1] = cy + math.sin(a) * ry
+    end
+    return pts
+end
+local function rect(x0, y0, x1, y1) return { x0, y0, x1, y0, x1, y1, x0, y1 } end
+local HATS = {
+    { name = 'beanie', sink = 0.22, fit = 1.08, parts = {
+        { poly = arc(0, -0.08, 0.52, 0.6, math.pi, 2 * math.pi, 20), color = { 0.85, 0.25, 0.25 } },
+        { poly = rect(-0.55, -0.18, 0.55, 0.04), color = { 0.65, 0.15, 0.18 } },
+        { circle = { 0, -0.74, 0.13 }, color = { 0.97, 0.95, 0.9 } } } },
+    { name = 'top hat', sink = 0.07, fit = 0.95, parts = {
+        { poly = rect(-0.36, -0.95, 0.36, -0.03), color = { 0.16, 0.14, 0.16 } },
+        { poly = rect(-0.36, -0.24, 0.36, -0.1), color = { 0.8, 0.15, 0.2 } },
+        { poly = rect(-0.62, -0.06, 0.62, 0.03), color = { 0.16, 0.14, 0.16 } } } },
+    { name = 'cap', sink = 0.15, fit = 1.04, parts = {
+        { poly = { 0.25, -0.06, 0.9, -0.01, 0.9, 0.05, 0.25, 0.05 }, color = { 0.15, 0.32, 0.7 } },
+        { poly = arc(0, 0.02, 0.5, 0.52, math.pi, 2 * math.pi, 20), color = { 0.25, 0.45, 0.9 } },
+        { circle = { 0, -0.5, 0.05 }, color = { 0.15, 0.32, 0.7 } } } },
+    { name = 'party', sink = 0.03, fit = 0.75, parts = {
+        { poly = { -0.45, 0, 0.45, 0, 0, -1.3 }, color = { 0.98, 0.82, 0.25 } },
+        { circle = { -0.15, -0.25, 0.07 }, color = { 0.95, 0.4, 0.6 } },
+        { circle = { 0.18, -0.4, 0.07 }, color = { 0.3, 0.6, 0.95 } },
+        { circle = { -0.04, -0.7, 0.06 }, color = { 0.95, 0.4, 0.6 } },
+        { circle = { 0, -1.32, 0.11 }, color = { 0.95, 0.4, 0.6 } } } },
+    { name = 'sun hat', sink = 0.12, fit = 1.0, parts = {
+        { poly = arc(0, -0.03, 0.88, 0.14, 0, 2 * math.pi, 28), color = { 0.93, 0.8, 0.45 } },
+        { poly = arc(0, -0.03, 0.42, 0.45, math.pi, 2 * math.pi, 16), color = { 0.95, 0.84, 0.5 } },
+        { poly = rect(-0.42, -0.17, 0.42, -0.05), color = { 0.95, 0.45, 0.6 } } } },
+    { name = 'crown', sink = 0.04, fit = 0.85, parts = {
+        { poly = { -0.42, 0, 0.42, 0, 0.48, -0.5, 0.24, -0.26, 0, -0.58, -0.24, -0.26, -0.48, -0.5 },
+          color = { 0.98, 0.78, 0.2 } },
+        { circle = { -0.22, -0.1, 0.06 }, color = { 0.85, 0.15, 0.2 } },
+        { circle = { 0, -0.1, 0.07 }, color = { 0.2, 0.45, 0.9 } },
+        { circle = { 0.22, -0.1, 0.06 }, color = { 0.85, 0.15, 0.2 } } } },
+}
+local HAT_Z = 380 -- in a Mipo's own layers: over the face (250s) and the hair (220), under the arms (402)
+local HAT_LOOSE = 170 -- a loose hat's width
 local PANTS_Z = 302 -- in a Mipo's own layers: over the legs (300, 301), under the nose (350), feet (399), arms (402)
 local OUTLINE = { 0.12, 0.1, 0.12 }
 local GROUND = { x = 0, w = 4200, h = 140 } -- its top at y = 0
@@ -53,8 +102,9 @@ local MASK = 128                            -- a lens mask's longer side, in pix
 
 local function room()
     state.wearables = state.wearables or {
-        items = {}, statics = {}, mipos = {}, nextGlasses = 1, nextPants = 1, showPanel = true, peak = 0,
-        settings = { lens = 1, bend = 1, shine = 1, glint = 1, grip = 1300, pantsGrip = 1600, snap = 0.9 },
+        items = {}, statics = {}, mipos = {}, nextGlasses = 1, nextPants = 1, nextHat = 1, showPanel = true, peak = 0,
+        settings = { lens = 1, bend = 1, shine = 1, glint = 1, grip = 1300, pantsGrip = 1600, hatGrip = 1100,
+            snap = 0.9 },
     }
     return state.wearables
 end
@@ -273,7 +323,8 @@ local function hipTorso(inst)
     end
 end
 
--- the torso's skin as drawn: its mask picture (white inside), laid over the box of its texfixture
+-- a part's skin as drawn (the torso's, the head's): its mask picture (white inside), laid over
+-- the box of its texfixture
 -- (the picture is the shape8 document * 1.1, margins and all: the 8-point outline is only roughly
 -- where the torso shows), the flips, and the rows where the mask has something (0..1 down the picture)
 local masks = {}
@@ -283,24 +334,31 @@ local function maskOf(url)
         if not ok then masks[url] = false; return nil end
         local iw, ih = data:getDimensions()
         local first, last
-        for py = 0, ih - 1, 2 do
-            for px = 0, iw - 1, 4 do
-                local r, _, _, al = data:getPixel(px, py)
-                if r * al > 0.5 then
-                    first = first or py
-                    last = py
-                    break
+        local rows = {} -- [row] = { left, right } (0..1 across), every 4th pixel row
+        for py = 0, ih - 1, 4 do
+            local l, r
+            for px = 0, iw - 1, 3 do
+                local red, _, _, al = data:getPixel(px, py)
+                if red * al > 0.5 then
+                    l = l or px
+                    r = px
                 end
+            end
+            if l then
+                first = first or py
+                last = py
+                rows[#rows + 1] = { py / ih, l / iw, r / iw }
             end
         end
         local img = love.graphics.newImage(data)
         img:setFilter('linear', 'linear')
-        masks[url] = { img = img, w = iw, h = ih, top = (first or 0) / ih, bottom = (last or ih) / ih }
+        masks[url] = { img = img, w = iw, h = ih, rows = rows,
+            top = (first or 0) / ih, bottom = (last or ih) / ih }
     end
     return masks[url] or nil
 end
 
-local function torsoSkin(torso)
+local function skinOf(torso)
     for _, f in ipairs(torso:getFixtures()) do
         local ud = f:getUserData()
         local main = ud and ud.subtype == 'texfixture' and ud.extra and ud.extra.main
@@ -352,7 +410,7 @@ local function pantsOn(inst, kind)
     if not torso then return nil end
     -- the picture is on torso1 (a spine's too); the legs hang from the last band
     local skinBody = partBody(inst, 'torso1')
-    local skin = skinBody and torsoSkin(skinBody)
+    local skin = skinBody and skinOf(skinBody)
     if not skin then return nil end
     local w, h = skin.x1 - skin.x0, skin.bottom - skin.top
     local waist = skin.top + h * kind.waist
@@ -379,9 +437,40 @@ local function hipsOf(inst)
     return torso, wx, wy, torso:getAngle(), math.max(60, math.abs(rx - lx) * 1.5)
 end
 
+-- where a hat sits on this Mipo: the head (a potato head's torso1), its brim's middle and width
+-- in the head's frame (the mask's row at the sink: how wide the head is there), or nil
+local function hatOn(inst, kind)
+    local head = headOf(inst)
+    local skin = head and skinOf(head)
+    if not skin then return nil end
+    local h = skin.bottom - skin.top
+    local y = skin.top + h * kind.sink
+    -- that row in the picture (flipped when the skin is)
+    local v = (y - skin.y0) / (skin.y1 - skin.y0)
+    if skin.fy < 0 then v = 1 - v end
+    local row, widest = nil, 0
+    for _, r in ipairs(skin.mask.rows) do
+        if not row or math.abs(r[1] - v) < math.abs(row[1] - v) then row = r end
+        widest = math.max(widest, r[3] - r[2])
+    end
+    if not row then return nil end
+    local l, r = row[2], row[3]
+    if skin.fx < 0 then l, r = 1 - r, 1 - l end
+    local w = skin.x1 - skin.x0
+    local x0, x1 = skin.x0 + l * w, skin.x0 + r * w
+    -- at least half the head's widest: a pointy head's top made a party hat a thimble
+    return head, (x0 + x1) / 2, y, math.max(x1 - x0, widest * w * 0.5) * kind.fit
+end
+
 ---------------------------------------------------------------- items
 
 local function spot(item, inst)
+    if item.sort == 'hat' then
+        local head, x, y, w = hatOn(inst, HATS[item.kind or 1])
+        if not head then return nil end
+        local wx, wy = head:getWorldPoint(x, y)
+        return head, wx, wy, head:getAngle(), math.max(60, w) * state.wearables.settings.snap
+    end
     if item.sort == 'pants' then
         local torso, wx, wy, a, reach = hipsOf(inst)
         if torso then return torso, wx, wy, a, reach * state.wearables.settings.snap end
@@ -401,13 +490,14 @@ local function wornBy(b, sort, inst)
 end
 
 local function addItem(b, sort, x, y, kindIndex)
-    local list = sort == 'pants' and PANTS or KINDS
-    local key = sort == 'pants' and 'nextPants' or 'nextGlasses'
-    kindIndex = kindIndex or b[key]
+    local list = sort == 'pants' and PANTS or sort == 'hat' and HATS or KINDS
+    local key = sort == 'pants' and 'nextPants' or sort == 'hat' and 'nextHat' or 'nextGlasses'
+    kindIndex = kindIndex or b[key] or 1 -- a state from before a sort was added lacks its key
     b[key] = kindIndex % #list + 1
     local kind = list[kindIndex]
     local w, h = 150, 110 -- pants
     if sort == 'glasses' then w, h = E0 + kind.w, kind.h * 0.8 end
+    if sort == 'hat' then w, h = HAT_LOOSE * 0.9, HAT_LOOSE * 0.5 end
     local thing = objectManager.addThing('rectangle', { x = x, y = y, width = w, height = h,
         bodyType = 'dynamic', label = sort, density = 0.3 })
     if not thing then return end
@@ -475,6 +565,7 @@ local function stock(b)
     b.items = {}
     for i = 1, #KINDS do addItem(b, 'glasses', -900 + (i - 1) * 450, -200, i) end
     for i = 1, #PANTS do addItem(b, 'pants', -700 + (i - 1) * 450, -100, i) end
+    for i = 1, #HATS do addItem(b, 'hat', -1100 + (i - 1) * 400, -300, i) end
 end
 
 ---------------------------------------------------------------- hooks
@@ -509,6 +600,7 @@ function s.update(dt)
     local optsFor = {
         glasses = { mipos = mipos, spot = spot, grip = set.grip },
         pants = { mipos = mipos, spot = spot, grip = set.pantsGrip },
+        hat = { mipos = mipos, spot = spot, grip = set.hatGrip or 1100 },
     }
     for _, opts in pairs(optsFor) do
         opts.taken = function(item, inst) return wornBy(b, item.sort, inst) ~= nil end
@@ -529,6 +621,8 @@ function s.onKeyPress(key)
     local mx, my = mouseWorldPos()
     if key == 'g' then addItem(b, 'glasses', mx, my)
     elseif key == 'u' then addItem(b, 'pants', mx, my)
+    elseif key == 'h' then addItem(b, 'hat', mx, my)
+    elseif key == 'y' then dressAll(b, 'hat')
     elseif key == 'm' then spawnMipo(b, mx, my)
     elseif key == 'r' then stock(b)
     elseif key == 'p' then b.showPanel = not b.showPanel
@@ -781,6 +875,48 @@ local function drawPantsOn(item)
     end
 end
 
+-- a hat in its own units (brim middle at 0, 0), w wide: every part's outline, then the fills
+local function drawHat(kind, w)
+    love.graphics.push()
+    love.graphics.scale(w, w)
+    love.graphics.setLineJoin('bevel')
+    love.graphics.setLineWidth(0.07)
+    love.graphics.setColor(OUTLINE)
+    for _, part in ipairs(kind.parts) do
+        if part.poly then love.graphics.polygon('line', part.poly)
+        else love.graphics.circle('line', part.circle[1], part.circle[2], part.circle[3], 24) end
+    end
+    for _, part in ipairs(kind.parts) do
+        love.graphics.setColor(part.color)
+        if part.poly then fillPoly(part.poly)
+        else love.graphics.circle('fill', part.circle[1], part.circle[2], part.circle[3], 24) end
+    end
+    love.graphics.setLineWidth(1)
+    love.graphics.pop()
+end
+
+-- a worn hat, on its head (a potato head's spine torso1: carried along the bend, as a face is)
+local function drawHatOn(item)
+    local kind = HATS[item.kind]
+    local head, x, y, w = hatOn(item.wearer, kind)
+    if not head then return end
+    local bend = spineSkin.transformAt(head, x, y)
+    love.graphics.push()
+    if bend then love.graphics.applyTransform(bend) end
+    onBody(head, function()
+        love.graphics.translate(x, y)
+        drawHat(kind, w)
+    end)
+    love.graphics.pop()
+end
+
+local function drawLooseHat(item)
+    onBody(item.body, function()
+        love.graphics.translate(0, HAT_LOOSE * 0.25)
+        drawHat(HATS[item.kind], HAT_LOOSE * 0.9)
+    end)
+end
+
 -- loose pants: a flat pair, front on, on their own body
 local LOOSE = {
     seat = { -75, -50, 75, -50, 80, 12, -80, 12 },
@@ -814,6 +950,9 @@ function s.drawBelow()
         if item.sort == 'pants' and item.joint and item.wearer then
             splits[#splits + 1] = { z = (item.wearer.zGroupOffset or 0) * 1000 + PANTS_Z,
                 fn = function() drawPantsOn(item) end }
+        elseif item.sort == 'hat' and item.joint and item.wearer then
+            splits[#splits + 1] = { z = (item.wearer.zGroupOffset or 0) * 1000 + HAT_Z,
+                fn = function() drawHatOn(item) end }
         end
     end
     table.sort(splits, function(p, q) return p.z < q.z end)
@@ -855,6 +994,8 @@ function s.draw()
     for _, item in ipairs(aliveItems(b)) do
         if item.sort == 'pants' then
             if not item.joint then drawLoosePants(item) end
+        elseif item.sort == 'hat' then
+            if not item.joint then drawLooseHat(item) end
         else
             local wx, wy, a, sx, sy
             if item.host and not item.host:isDestroyed() then
@@ -870,7 +1011,7 @@ function s.draw()
         if item.near then
             love.graphics.setColor(1, 1, 1, 0.5 + 0.3 * math.sin(love.timer.getTime() * 8))
             love.graphics.setLineWidth(4)
-            love.graphics.circle('line', item.near.x, item.near.y, item.sort == 'pants' and 90 or 70)
+            love.graphics.circle('line', item.near.x, item.near.y, item.sort == 'glasses' and 70 or 90)
             love.graphics.setLineWidth(1)
         end
     end
@@ -883,7 +1024,7 @@ function s.drawUI()
     ui.startFrame()
     local BH, pad, w = 34, 6, 400
     local rows = { { 'lens', -0.5, 3 }, { 'bend', 0, 3 }, { 'shine', 0, 2 }, { 'glint', 0, 2 },
-        { 'grip', 100, 3000 }, { 'pantsGrip', 100, 3000 }, { 'snap', 0.2, 2 } }
+        { 'grip', 100, 3000 }, { 'pantsGrip', 100, 3000 }, { 'hatGrip', 100, 3000 }, { 'snap', 0.2, 2 } }
     local h = (BH + pad) * (#rows + 2) + pad + 24
     local _, sh = love.graphics.getDimensions()
     local x0, y0 = 20, sh - h - 20
@@ -899,7 +1040,7 @@ function s.drawUI()
         local x, y = ui.nextLayoutPosition(layout, w - 20, BH)
         ui.label(x, y, string.format('jolt now %d px/s (off over grip)', math.floor(b.peak)))
         x, y = ui.nextLayoutPosition(layout, w - 20, BH)
-        ui.label(x, y, 'g glasses u pants m Mipo w/n all on o off r p')
+        ui.label(x, y, 'g u h: glasses pants hat  w n y: on all  m o r p')
     end)
 end
 
