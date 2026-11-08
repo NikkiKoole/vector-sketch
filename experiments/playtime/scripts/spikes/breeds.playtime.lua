@@ -119,6 +119,7 @@ end
 local function patchSettings()
     local c = check()
     c.patches = c.patches or facePatches.defaults()
+    if c.patches.snoutPink == nil then c.patches.snoutPink = facePatches.defaults().snoutPink end -- kept from before
     return c.patches
 end
 
@@ -210,7 +211,7 @@ end
 local PATCH_SLIDERS = {
     { 'eyeDark', 'hollows dark', 0, 1 }, { 'eyeSize', 'hollows size', 1, 3 },
     { 'cheekBlush', 'cheeks blush', 0, 1 }, { 'cheekSize', 'cheeks size', 0.5, 2.5 },
-    { 'snoutLight', 'snout light', 0, 1 }, { 'snoutSize', 'snout size', 0.5, 2 },
+    { 'snoutLight', 'snout light', 0, 1 }, { 'snoutPink', 'snout pink', 0, 1 }, { 'snoutSize', 'snout size', 0.5, 2 },
     { 'alpha', 'opacity', 0.1, 1 },
 }
 local function drawPatchPanel()

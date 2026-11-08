@@ -19,7 +19,8 @@ lib.SHAPES = { 'mipo/patch/patch-01', 'mipo/patch/patch-02', 'mipo/patch/patch-0
 
 function lib.defaults()
     return { eyes = true, cheeks = false, snout = true, shape = 1, alpha = 0.9,
-        eyeDark = 0.35, eyeSize = 1.8, cheekBlush = 0.5, cheekSize = 1.0, snoutLight = 0.35, snoutSize = 1.0 }
+        eyeDark = 0.35, eyeSize = 1.8, cheekBlush = 0.5, cheekSize = 1.0, snoutLight = 0.35, snoutSize = 1.0,
+        snoutPink = 0.5 }
 end
 
 local function clamp01(v) return math.max(0, math.min(1, v)) end
@@ -60,14 +61,17 @@ local function tint(h, s, l, a)
     return { r, g, b, a }
 end
 
--- the colours from the skin's fill: darker hollows, warmer (toward red) cheeks, a lighter snout
+-- the colours from the skin's fill: darker hollows, warmer (toward red) cheeks, a lighter snout,
+-- pinker by snoutPink (toward a pink's hue, and its colour kept as it lightens)
 local function tints(skinHex, set)
     local h, s, l = rgbToHsl(hexRGB(skinHex or 'A07744FF'))
     local toRed = ((350 - h + 540) % 360) - 180
+    local pink = set.snoutPink or 0
     return {
         eye = tint(h, s, l * (1 - set.eyeDark), set.alpha),
         cheek = tint(h + toRed * set.cheekBlush, s + 0.35 * set.cheekBlush, l + 0.05 * set.cheekBlush, set.alpha),
-        snout = tint(h, s * (1 - 0.4 * set.snoutLight), l + (1 - l) * set.snoutLight, set.alpha),
+        snout = tint(h + toRed * pink, s * (1 - 0.4 * set.snoutLight) * (1 - pink) + math.max(s, 0.55) * pink,
+            l + (1 - l) * set.snoutLight, set.alpha),
     }
 end
 
