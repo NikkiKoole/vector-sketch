@@ -193,10 +193,11 @@ hair, for now).
   one at a time.
 - [ ] **B10. Face patches** (spike in `breeds`, right panel, 2026-11-08): skin colouring on the face,
   under the hair, the eyes on top, as a teddy's: eye hollows (darker), cheeks (warmer), a snout
-  (lighter), coloured from the Mipo's skin. Decals at z 205 in the Mipo's z group, placed from the
-  face's own eye/nose/mouth decals, so they follow the face and its turn; baked white, tinted when
-  drawn. Nikki tries it: keep, tune, which breed gets what? Not clipped to the head's outline yet; the
-  torso (breast, belly) later.
+  (lighter), coloured from the Mipo's skin. Painted into the face's skin picture (patch1..5, 5 slots
+  since this), so they stay inside the skin and under its outline (tried as decals first, same day:
+  unclipped, over the outline). Placed from the face's eye/nose/mouth decals, mapped onto the skin
+  picture's fan. Baked: a turned head's face slides off them. Nikki tries it: keep, tune, which
+  breed gets what? The torso (breast, belly) later.
 - [ ] **B9. Phone bench: the pupil clip.** Pupils are clipped to the eye's white since 2026-11-08
   (a stencil per pupil, `clipToEye` in `src/physics/box2d-draw-textured.lua`, 713e996c). On the Mac
   it costs ~0.1 ms draw for 12 pupils (1.74 vs 1.64 ms); the bench is CPU time, so the stencil's GPU

@@ -1,5 +1,7 @@
 -- src/render/omp-bake.lua (split from physics/box2d-draw-textured.lua, SPLIT1)
 local lib = {}
+-- skin patches per picture: patch1..patch5 (face patches: two eye hollows, a snout, two cheeks)
+lib.PATCH_SLOTS = 5
 local registry = require('src.registry')
 local ribbon = require('src.render.ribbon')
 local state = require('src.state')
@@ -337,10 +339,8 @@ function lib.makeCombinedImages()
         local ud = not fixtures[i]:isDestroyed() and fixtures[i]:getUserData()
         if ud and type(ud) == 'table' and ud.extra and ud.extra.OMP and ud.extra.dirty then
             repeat -- break = done (no goto: the web build's Lua 5.1 has none)
-            local patch1 = makePatch('patch1', ud)
-            local patch2 = makePatch('patch2', ud)
-            local patch3 = makePatch('patch3', ud)
-            local patches = { patch1 or false, patch2 or false, patch3 or false } -- avoid sparse table
+            local patches = {} -- false for an empty slot: not a sparse table
+            for k = 1, lib.PATCH_SLOTS do patches[k] = makePatch('patch' .. k, ud) or false end
             local main = ud.extra.main
             if ud.extra.ompImage then
                 replaced = replaced or {}

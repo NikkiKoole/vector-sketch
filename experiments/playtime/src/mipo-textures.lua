@@ -124,14 +124,9 @@ local function addSkinTexture(body, partData, skinData, scale)
         ud.extra.main.fx = -1
     end
 
-    if skinData.patch1 then
-        ud.extra.patch1 = utils.deepCopy(skinData.patch1)
-    end
-    if skinData.patch2 then
-        ud.extra.patch2 = utils.deepCopy(skinData.patch2)
-    end
-    if skinData.patch3 then
-        ud.extra.patch3 = utils.deepCopy(skinData.patch3)
+    for k = 1, 5 do -- omp-bake PATCH_SLOTS
+        local patch = skinData['patch' .. k]
+        if patch then ud.extra['patch' .. k] = utils.deepCopy(patch) end
     end
 end
 
