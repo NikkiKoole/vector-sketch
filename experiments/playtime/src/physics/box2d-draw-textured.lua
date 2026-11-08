@@ -798,6 +798,52 @@ local function drawDecalLit(extra, body, img, ox, oy, dw, dh, mirrorX)
     if shaded then love.graphics.setShader() end
 end
 
+-- A pupil drawn only inside its eye's white, not over the eye's outline: a stencil of the eye's mask
+-- (white where the white is) less the eye's outline, placed as the eye is drawn (its turn, tilt,
+-- mirror and blink). Returns the stencil test to put back after the pupil, or nil when there's no
+-- clip (no eye white, a mask picture missing, or a canvas without a stencil, e.g. a depth picture).
+local eyeMaskCut, eyeLineCut
+local eyeClip = {}
+local function clipToEye(extra, body)
+    local mask, mw, mh = getLoveImage('textures/' .. extra.eyeMaskURL)
+    if not mask then return nil end
+    local line, lw, lh = getLoveImage('textures/' .. (extra.eyeMaskURL:gsub('%-mask%.png$', '.png')))
+    eyeMaskCut = eyeMaskCut or love.graphics.newShader([[
+        vec4 effect(vec4 color, Image tex, vec2 uv, vec2 fc) {
+            vec4 c = Texel(tex, uv);
+            if (c.r * c.a < 0.5) discard;
+            return c;
+        }
+    ]])
+    eyeLineCut = eyeLineCut or love.graphics.newShader([[
+        vec4 effect(vec4 color, Image tex, vec2 uv, vec2 fc) {
+            if (Texel(tex, uv).a < 0.5) discard;
+            return vec4(1.0);
+        }
+    ]])
+    local thing = utils.thingOf(body)
+    local eyesOpen = (thing and thing.eyesOpen) or 1
+    local wx, wy = body:getWorldPoint(extra.ox or 0, extra.oy or 0) -- the eye's centre (before the gaze)
+    local angle = body:getAngle() + (extra.eyeRot or 0)
+    local w, h = extra.eyeW * (extra.eyeMirror and -1 or 1), extra.eyeH * eyesOpen
+    local shader = love.graphics.getShader()
+    local ok = pcall(love.graphics.stencil, function()
+        love.graphics.setShader(eyeMaskCut)
+        love.graphics.draw(mask, wx, wy, angle, w / mw, h / mh, mw / 2, mh / 2)
+    end, 'replace', 1)
+    if ok and line then
+        pcall(love.graphics.stencil, function()
+            love.graphics.setShader(eyeLineCut)
+            love.graphics.draw(line, wx, wy, angle, w / lw, h / lh, lw / 2, lh / 2)
+        end, 'replace', 0, true)
+    end
+    love.graphics.setShader(shader)
+    if not ok then return nil end
+    eyeClip.compare, eyeClip.value = love.graphics.getStencilTest()
+    love.graphics.setStencilTest('greater', 0)
+    return eyeClip
+end
+
 local function drawDecal(d)
     local extra = d.extra
     local body = d.body
@@ -848,6 +894,7 @@ local function drawDecal(d)
             local eyesOpen = (bodyThing and bodyThing.eyesOpen) or 1
             dh = dh * eyesOpen
         end
+        local clip = extra.eyeMaskURL and extra.eyeW and clipToEye(extra, body)
 
         if extra.OMP and extra.ompImage then
             -- Pre-composited OMP image (has proper alpha)
@@ -875,6 +922,10 @@ local function drawDecal(d)
                     love.graphics.draw(img, wx, wy, angle, sx, sy, imgw / 2, imgh / 2)
                 end
             end
+        end
+        if clip then
+            if clip.compare then love.graphics.setStencilTest(clip.compare, clip.value)
+            else love.graphics.setStencilTest() end
         end
     end
 end
