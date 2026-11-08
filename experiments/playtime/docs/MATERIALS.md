@@ -177,6 +177,12 @@ Kinds of material, by what the shader does differently:
   "looks on shapes"), if any of it earns a place.
   Already drawn by the engine since MT6a-c (`extra.material` on a texfixture, limb, torso, decal);
   what's left is setting it in the editor, for the materials MT2 keeps. After MT2 (ENGINE-MERGE.md).
+  2026-11-08: set in the editor before MT2 (Nikki: unused presets in a picker cost nothing; a dropped
+  preset's name draws as clay). A texfixture's texture section has a material row, saved in `extra`.
+  A Mipo's is in its DNA: `material` on the skin, connected-skin, bodyhair and haircut blocks, copied to
+  the fixtures by mipo-textures, a row in each of those Mipo editor accordions (with the mirror); a
+  re-roll keeps it. Not yet: the face (eyes, nose, mouth; mipo-materials still sets those per frame),
+  connected hair, breeds choosing one.
 
 ## Fur (Nikki's follow-up talk, 2026-11-06)
 

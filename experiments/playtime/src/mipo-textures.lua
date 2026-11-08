@@ -116,6 +116,7 @@ local function addSkinTexture(body, partData, skinData, scale)
     ud.extra.main.bgURL = picture
     ud.extra.main.fgURL = picture:gsub('.png', '-mask.png')
     ud.extra.zOffset = skinData.zOffset or 0
+    ud.extra.material = skinData.material -- a material instead of clay (src/render/materials.lua)
     if partData.dims.sy ~= nil and partData.dims.sy < 0 then
         ud.extra.main.fy = -1
     end
@@ -146,6 +147,7 @@ local function addBodyhairTexture(body, partName, partData, bodyhairData, scale)
     ud.extra.zOffset = skinZ + (partName:find('^torso%d') and TORSO_HAIR_ABOVE_SKIN or 10)
     ud.extra.dirty = true
     ud.extra.main = utils.deepCopy(bodyhairData.main)
+    ud.extra.material = bodyhairData.material
 
     local raw = shape8Dict[partData.shape8URL].vertices
     local vertices = makeTransformedVertices(raw, (partData.dims.sx or 1) * growfactor * scale,
@@ -223,6 +225,7 @@ local function addConnectedTexture(body, partName, _partData, connData, instance
         dirty = true,
         main = utils.deepCopy(connData.main),
         zOffset = connData.zOffset or 0,
+        material = connData.material,
         nodes = {},
         growExtra = 20 * scale,
     }
@@ -271,6 +274,7 @@ local function addHaircutTexture(body, partName, partData, haircutData, instance
         ud.extra.zOffset = 220
         ud.extra.dirty = true
         ud.extra.main = utils.deepCopy(haircutData.main)
+        ud.extra.material = haircutData.material
         ud.extra.width = (haircutData.width or 250) * scale
         ud.extra.startIndex = haircutData.startIndex
         ud.extra.endIndex = haircutData.endIndex

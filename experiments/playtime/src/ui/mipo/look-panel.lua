@@ -56,6 +56,15 @@ function lib.drawSkin(p, y)
                     else
                         ui.label(x, y, patch)
                         y = y + ROW
+                        widgets.drawMaterialRow(instance, x, y, skin.material, function()
+                            local blocks = {}
+                            for _, name in ipairs(widgets.partAndMirror(instance, partName)) do
+                                local a = instance.dna.parts[name].appearance
+                                if a and a.skin then blocks[#blocks + 1] = a.skin end
+                            end
+                            return blocks
+                        end)
+                        y = y + ROW
                     end
 
                     if showPatch then
@@ -182,6 +191,15 @@ function lib.drawBodyhair(p, y)
                 ui.alignedLabel(x + 180, y, 'fill')
                 y = y + ROW
 
+                widgets.drawMaterialRow(instance, x, y, bh.material, function()
+                    local blocks = {}
+                    for _, name in ipairs(bodyhairParts(instance, partName)) do
+                        blocks[#blocks + 1] = instance.dna.parts[name].appearance['bodyhair']
+                    end
+                    return blocks
+                end)
+                y = y + ROW
+
                 -- Growfactor slider (how much bigger bodyhair is relative to the body)
                 local currentGrow = bh.growfactor or 1.2
                 ui.alignedLabel(x, y, 'grow')
@@ -274,6 +292,9 @@ function lib.drawHaircut(p, y)
                         CharacterManager.rebuildTextures(instance)
                     end)
                 ui.alignedLabel(x + 180, y, 'outline')
+                y = y + ROW
+
+                widgets.drawMaterialRow(instance, x, y, hc.material, function() return { hc } end)
                 y = y + ROW
 
                 -- OMP controls (fill + pattern) only for masked hair textures
@@ -377,6 +398,17 @@ function lib.drawConnectedSkin(p, y)
                         setConnectedSkin({ fgHex = color })
                     end)
                 ui.alignedLabel(x + 180, y, 'fill')
+                y = y + ROW
+
+                widgets.drawMaterialRow(instance, x, y, connSkinData.appearance['connected-skin'].material,
+                    function()
+                        local blocks = {}
+                        for _, name in ipairs(widgets.partAndMirror(instance, connSkinOwner)) do
+                            local a = instance.dna.parts[name].appearance
+                            if a and a['connected-skin'] then blocks[#blocks + 1] = a['connected-skin'] end
+                        end
+                        return blocks
+                    end)
                 y = y + ROW
 
                 y = drawPatternControls(cs, 'mipo_cs_pat_' .. partName, panelX, y,

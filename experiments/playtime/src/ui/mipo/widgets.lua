@@ -29,6 +29,7 @@ local CharacterManager = require('src.character-manager')
 local colors = require('src.color')
 
 local C = require('src.shape-catalogs')
+local materials = require('src.render.materials')
 
 local PANEL_WIDTH = ui.theme.panelWidth
 local BUTTON_HEIGHT = ui.theme.lineHeight
@@ -242,6 +243,26 @@ local function drawPatternControls(block, idPrefix, panelX, startY, onUpdate)
     return yy
 end
 
+-- A part's material instead of clay (src/render/materials.lua, MATERIALS MT6): '<' name '>' at x, y,
+-- clicking the name steps on too. blocks(): the DNA appearance blocks to set (the part, its mirror);
+-- the textures are rebuilt after, the fixtures copying `material` from the block (mipo-textures).
+local function drawMaterialRow(instance, x, y, current, blocks)
+    local names = materials.NAMES
+    local i = 0 -- 0: none (clay)
+    for k, name in ipairs(names) do if name == current then i = k end end
+    local step
+    if ui.button(x + 30, y, 22, '<', BUTTON_HEIGHT) then step = -1 end
+    if ui.button(x + 54, y, 100, names[i] or 'none', BUTTON_HEIGHT) then step = 1 end
+    if ui.button(x + 156, y, 22, '>', BUTTON_HEIGHT) then step = 1 end
+    ui.alignedLabel(x + 182, y, 'material')
+    if step then
+        local picked = names[(i + step) % (#names + 1)] -- names[0] is nil: none
+        for _, block in ipairs(blocks()) do block.material = picked end
+        CharacterManager.rebuildTextures(instance)
+        if editing then mipoVoice.edited(editing) end
+    end
+end
+
 -- The panel's accordions: a header row that opens and closes `key`, open state kept here.
 function lib.accordionHeader(p, y, key)
     local clicked = ui.header_button(p.x, y, p.panelWidth - 40, (accordionStates[key] and " ÷  " or " •") ..
@@ -264,6 +285,7 @@ lib.bodyhairParts = bodyhairParts
 lib.drawThumbnailGrid = drawThumbnailGrid
 lib.handlePaletteButton = handlePaletteButton
 lib.drawPatternControls = drawPatternControls
+lib.drawMaterialRow = drawMaterialRow
 lib.patchShapes = patchShapes
 lib.ui = ui
 lib.accordionStates = accordionStates
