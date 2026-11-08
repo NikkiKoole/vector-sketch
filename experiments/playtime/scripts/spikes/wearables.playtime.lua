@@ -317,7 +317,7 @@ local function torsoSkin(torso)
                 -- where the torso shows, top to bottom, in the body's frame
                 local ta, tb = mask.top, mask.bottom
                 if fy < 0 then ta, tb = 1 - tb, 1 - ta end
-                return { mask = mask, x0 = x0, y0 = y0, x1 = x1, y1 = y1, fx = main.fx or 1, fy = fy,
+                return { mask = mask, corners = verts, x0 = x0, y0 = y0, x1 = x1, y1 = y1, fx = main.fx or 1, fy = fy,
                     top = y0 + (y1 - y0) * ta, bottom = y0 + (y1 - y0) * tb }
             end
         end
@@ -348,20 +348,22 @@ end
 -- the pants on this Mipo: the seat (the torso's skin below the waist), a tube per upper leg, the
 -- band; or nil
 local function pantsOn(inst, kind)
-    local name, torso = hipTorso(inst)
+    local _, torso = hipTorso(inst)
     if not torso then return nil end
-    local skin = torsoSkin(torso)
-    if not skin or inst.dna.parts[name].spineBand then return nil end -- a spine torso bends: not yet
+    -- the picture is on torso1 (a spine's too); the legs hang from the last band
+    local skinBody = partBody(inst, 'torso1')
+    local skin = skinBody and torsoSkin(skinBody)
+    if not skin then return nil end
     local w, h = skin.x1 - skin.x0, skin.bottom - skin.top
     local waist = skin.top + h * kind.waist
     -- a potato head: the waistband stays below the mouth
-    local lip = name == 'torso1' and inst.dna.creation.isPotatoHead and decal(torso, 'lowerlip')
+    local lip = inst.dna.creation.isPotatoHead and decal(skinBody, 'lowerlip')
     if lip and lip.oy then waist = math.max(waist, lip.oy + h * 0.12) end
     local legs = {}
     for _, legName in ipairs({ 'luleg', 'ruleg' }) do
         legs[#legs + 1] = legTube(inst, torso, legName, kind, w * 0.85)
     end
-    return { torso = torso, skin = skin, waist = waist, bandH = h * 0.07, legs = legs, w = w * 0.85 }
+    return { body = skinBody, skin = skin, waist = waist, bandH = h * 0.07, legs = legs, w = w * 0.85 }
 end
 
 -- where pants go on this Mipo: between its hips
@@ -663,50 +665,71 @@ local function drawPattern(kind, poly, size)
     end
 end
 
--- a mask picture as a shape, only the rows between vMin and vMax (0..1 down the picture)
+-- a mask picture as a shape, only the rows between vMin and vMax (0..1 down the picture), its
+-- edge (olStep in from it, in picture units) in lineColor. flip: the picture mirrored (the torso's
+-- fx / fy), so the cut and the edge are where the drawn torso has them.
 local cutShader = love.graphics.newShader([[
 uniform float vMin;
 uniform float vMax;
+uniform vec2 olStep;
+uniform vec4 lineColor;
+uniform vec2 flip;
+float inside(Image tex, vec2 p) { vec4 m = Texel(tex, p); return step(0.5, m.r * m.a); }
 vec4 effect(vec4 color, Image tex, vec2 uv, vec2 pc) {
-    vec4 m = Texel(tex, uv);
-    if (m.r * m.a < 0.5 || uv.y < vMin || uv.y > vMax) discard;
-    return color;
+    vec2 p = mix(uv, 1.0 - uv, flip);
+    if (inside(tex, p) < 0.5 || p.y < vMin || p.y > vMax) discard;
+    float edge = 0.0;
+    for (int i = 0; i < 8; i++) {
+        float a = float(i) * 0.7854;
+        edge = max(edge, 1.0 - inside(tex, p + vec2(cos(a), sin(a)) * olStep));
+    }
+    return mix(color, lineColor, edge);
 }
 ]])
 
--- the torso's mask between local rows ya and yb, grown a little round its middle (an outline)
-local function drawSkinCut(skin, ya, yb, grow)
-    local h = skin.y1 - skin.y0
+-- the torso's mask between rows ya and yb (the body's frame, at rest), in the current colour, its
+-- edge ol wide in lineColor. Bent like the torso picture when the torso is (lobes, a spine: the
+-- same spineSkin grid the skin is drawn with, so the pants stay on what you see); else laid flat.
+local function drawSeat(seat, ya, yb, lineColor, ol)
+    local skin = seat.skin
+    local w, h = skin.x1 - skin.x0, skin.y1 - skin.y0
     local va, vb = (ya - skin.y0) / h, (yb - skin.y0) / h
     if skin.fy < 0 then va, vb = 1 - vb, 1 - va end
     love.graphics.setShader(cutShader)
     cutShader:send('vMin', va)
     cutShader:send('vMax', vb)
+    cutShader:send('olStep', { ol / w, ol / h })
+    cutShader:send('lineColor', lineColor or { 0, 0, 0, 0 })
+    cutShader:send('flip', { skin.fx < 0 and 1 or 0, skin.fy < 0 and 1 or 0 })
     local m = skin.mask
-    local sx = (skin.x1 - skin.x0) * grow / m.w * skin.fx
-    local sy = h * grow / m.h * skin.fy
-    love.graphics.draw(m.img, (skin.x0 + skin.x1) / 2, (skin.y0 + skin.y1) / 2, 0, sx, sy, m.w / 2, m.h / 2)
+    local bones = spineSkin.torsoBones(seat.body)
+    if bones and #skin.corners == 8 then
+        if not lineColor then cutShader:send('lineColor', { love.graphics.getColor() }) end
+        spineSkin.drawGrid(m.img, skin.corners, bones, seat.body, seat.key)
+    else
+        if not lineColor then cutShader:send('lineColor', { love.graphics.getColor() }) end
+        onBody(seat.body, function()
+            love.graphics.draw(m.img, (skin.x0 + skin.x1) / 2, (skin.y0 + skin.y1) / 2, 0,
+                w / m.w * skin.fx, h / m.h * skin.fy, m.w / 2, m.h / 2)
+        end)
+    end
     love.graphics.setShader()
 end
 
 -- one garment: the leg pieces { body, poly } and, worn, the seat (the torso's skin below the
--- waist) or, loose, a polygon seat and band. The outline first (every piece's, a little bigger),
--- the fills over it (so the seams between pieces don't show), the pattern clipped to each piece,
+-- waist) or, loose, a polygon seat and band. The legs' outlines first, the seat (its edge its
+-- outline), the legs' fills over it (so the seams don't show), the pattern clipped to each piece,
 -- the band.
 local function drawGarment(kind, g)
     local ol = g.size * 0.035
     local seat = g.seat
+    local line = { OUTLINE[1], OUTLINE[2], OUTLINE[3], 1 }
     love.graphics.setLineJoin('bevel')
     love.graphics.setColor(OUTLINE)
     love.graphics.setLineWidth(ol * 2)
     for _, p in ipairs(g.pieces) do onBody(p.body, function() love.graphics.polygon('line', p.poly) end) end
-    if seat then
-        onBody(seat.torso, function()
-            drawSkinCut(seat.skin, seat.waist, seat.skin.y1, 1 + 2 * ol / (seat.skin.x1 - seat.skin.x0))
-        end)
-    end
     love.graphics.setColor(kind.base)
-    if seat then onBody(seat.torso, function() drawSkinCut(seat.skin, seat.waist, seat.skin.y1, 1) end) end
+    if seat then drawSeat(seat, seat.waist, seat.skin.y1, line, ol) end
     for _, p in ipairs(g.pieces) do onBody(p.body, function() fillPoly(p.poly) end) end
     if kind.pattern then
         for _, p in ipairs(g.pieces) do
@@ -718,24 +741,23 @@ local function drawGarment(kind, g)
             end)
         end
         if seat then
-            onBody(seat.torso, function()
-                local sk = seat.skin
-                love.graphics.stencil(function() drawSkinCut(sk, seat.waist, sk.y1, 1) end, 'replace', 1)
-                love.graphics.setStencilTest('greater', 0)
+            local sk = seat.skin
+            love.graphics.stencil(function() drawSeat(seat, seat.waist, sk.y1, nil, 0) end, 'replace', 1)
+            love.graphics.setStencilTest('greater', 0)
+            -- the pattern doesn't bend with the torso; the stencil does (a seam where it's pulled)
+            onBody(seat.body, function()
                 drawPattern(kind, { sk.x0, seat.waist, sk.x1, seat.waist, sk.x1, sk.y1, sk.x0, sk.y1 }, g.size)
-                love.graphics.setStencilTest()
             end)
+            love.graphics.setStencilTest()
+            -- the edge again over the pattern
+            love.graphics.setColor(1, 1, 1, 0)
+            drawSeat(seat, seat.waist, sk.y1, line, ol)
         end
     end
-    -- the waistband, a dark line under it
+    -- the waistband, its edge dark
     if seat then
-        onBody(seat.torso, function()
-            local top, bottom = seat.waist, seat.waist + seat.bandH
-            love.graphics.setColor(kind.band)
-            drawSkinCut(seat.skin, top, bottom, 1)
-            love.graphics.setColor(OUTLINE)
-            drawSkinCut(seat.skin, bottom, bottom + ol, 1)
-        end)
+        love.graphics.setColor(kind.band)
+        drawSeat(seat, seat.waist, seat.waist + seat.bandH, line, ol * 0.6)
     elseif g.band then
         onBody(g.bandBody, function()
             love.graphics.setColor(kind.band)
@@ -749,12 +771,13 @@ local function drawGarment(kind, g)
 end
 
 local function drawPantsOn(item)
+    item.gridKey = item.gridKey or {} -- spineSkin.drawGrid keeps a mesh per key: the pants' own
     local inst = item.wearer
     local kind = PANTS[item.kind]
     local on = inst and pantsOn(inst, kind)
     if on then
         drawGarment(kind, { pieces = on.legs, size = on.w,
-            seat = { torso = on.torso, skin = on.skin, waist = on.waist, bandH = on.bandH } })
+            seat = { body = on.body, skin = on.skin, waist = on.waist, bandH = on.bandH, key = item.gridKey } })
     end
 end
 

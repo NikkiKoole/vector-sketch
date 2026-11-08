@@ -38,9 +38,12 @@ hip joints) and they go on; `pantsGrip` (default 1600) for the jolt.
   toward the knee (`leg`: boxers 0.5, knickers 0.06), flared. A waistband, a dark line under it.
 - Drawn in the Mipo's own layers (`state.drawSplits`, z +302): over the torso and legs, under the
   nose, feet and arms. A potato head's waist stays below its mouth.
-- Not yet: spine torsos (the picture bends over bands; no pants), soft torsos (the seat doesn't
-  squish with the lobes), the outline round the seat looked faint, loose pants are a flat greybox
-  shape drawn over everything.
+- Soft and spine torsos: the seat is drawn through the torso picture's own grid
+  (`spineSkin.drawGrid` with the torso's bones), so it bends and squishes with what you see. Laid
+  flat on the torso body it slid off a soft torso being pulled (Nikki 2026-11-08: "much better").
+  Its outline is the mask's edge darkened in the shader, so it bends too.
+- Not yet: the dots and stripes don't bend with the torso (the stencil does), loose pants are a
+  flat greybox shape drawn over everything.
 
 Steps:
 - [ ] WR1. Nikki plays with the glasses: the fit, the jolt, the lens look. Keep, change or park?
@@ -52,5 +55,5 @@ Steps:
       (Nikki 2026-11-08), ears in front or behind by kind
 - [ ] WR5. A headscarf: drawn layer hugging the head + cloth ends (CLOTH.md pins riding a body)
 - [ ] WR6. Underpants: Nikki plays with them (the cut, the waist heights, the drop on the hips).
-      Then spine and soft torsos, the seat's outline
+      Soft torsos done 2026-11-08
 - [x] WR7. The wear/jolt code in `src/wearables.lua` (2026-11-08, with the underpants)
