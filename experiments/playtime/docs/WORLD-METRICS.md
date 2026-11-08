@@ -33,6 +33,9 @@ rule on), standing on a flat floor with friction 0.9. World units.
 - **Heights to sit or climb**: a Mipo is 360-950 tall, so a slide top at 700 is about
   one Mipo high.
 - **Toys to hold or throw**: balls 55-130 radius feel right next to a 200-wide foot.
+- **Trees** (storybook scale, 2026-11-08, BARK.md): 2.5-6 Mipos tall (olive ~1650, birch and aspen ~2600,
+  oak ~3000, beech, plane, elm ~3300, pine and poplar ~3950); trunks 240-520 wide, an old oak's wider than
+  a Mipo. Real trees would be 15-20 Mipos: a whole tree never on screen.
 
 ## How many Mipos a room can hold
 

@@ -7,8 +7,10 @@
 -- life, the sign its way: it leans with it, its crown combed to the lee side), sun -1..1 (where its light
 -- came from: left, overhead, right; it reaches for it), crowd 0..1 with left/right (how much room to the
 -- next tree on each side, world units; nil: none): its branches keep out of a neighbour's space, turning
--- up instead; age 0..2 (0 a sapling, 1 grown, 2 ancient: see agedKind). grow returns the branches and the
--- kind as aged (for placing the eyes on it). From the bark spike (docs/BARK.md: BK1d-BK10).
+-- up instead; age 0..2 (0 a sapling, 1 grown, 2 ancient: see agedKind); storybook (default on): scaled up
+-- to the kind's height in Mipos (stretch, thicken in tree-kinds.lua), false: the old size. grow returns
+-- the branches and the kind as aged (for placing the eyes on it). From the bark spike (docs/BARK.md:
+-- BK1d-BK10).
 local lib = {}
 
 local STEP_LEN = 26 -- world units per step along a branch
@@ -249,11 +251,25 @@ function lib.grow(kind, rng, x, y, angle, scale, env)
     env = env or {}
     local age = env.age or 1
     local k, tall, thick = agedKind(kind, age)
+    -- storybook size: grown at the old size (its crookedness and zigzags are in world units), then scaled
+    local stretch = (env.storybook ~= false and kind.stretch) or 1
+    local thicken = (env.storybook ~= false and kind.thicken) or 1
     local trunkLen = kind.trunk * scale * tall
     env = { organic = env.organic or 1, wind = env.wind or 0, sun = env.sun or 0, crowd = env.crowd or 0,
-        left = env.left, right = env.right, x0 = x, y0 = y, age = age,
+        left = env.left and env.left / stretch, right = env.right and env.right / stretch, x0 = x, y0 = y,
+        age = age,
         tall = trunkLen * (k.fork and 1.9 or 1.05) } -- about how tall the whole tree stands (the dead top)
     grow(k, rng, branches, x, y, angle, trunkLen, kind.w * scale * thick, 0, true, scale, env)
+    if stretch ~= 1 or thicken ~= 1 then
+        for _, br in ipairs(branches) do
+            for _, p in ipairs(br.pts) do
+                p.x, p.y, p.along = x + (p.x - x) * stretch, y + (p.y - y) * stretch, p.along * stretch
+                p.w = TWIG + (p.w - TWIG) * thicken
+                p.wl = TWIG + (p.wl - TWIG) * thicken
+                p.wr = TWIG + (p.wr - TWIG) * thicken
+            end
+        end
+    end
     return branches, k
 end
 

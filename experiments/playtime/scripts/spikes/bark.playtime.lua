@@ -32,9 +32,14 @@ local treeGrow = love.filesystem.load('scripts/spikes/tree-grow.lua')()
 local treeMesh = love.filesystem.load('scripts/spikes/tree-mesh.lua')()
 local barkLook = love.filesystem.load('scripts/spikes/bark-look.lua')()
 
--- the two rows' ground lines (world y) and where they start; trunks every STEP
-local ROWS = { { ground = 0, x = -3120, count = 9 }, { ground = 1750, x = -3120, count = 9 } }
-local STEP = 780
+-- the two rows' ground lines (world y) and where they start; trunks every STEP. Storybook trees (tree-kinds'
+-- stretch: 2.5-6 Mipos tall) need room; the wide ones' crowns still overlap a little, like a wood's edge.
+local ROWS = { { ground = 0, x = -10400, count = 9 }, { ground = 4800, x = -10400, count = 9 } }
+local STEP = 2600
+-- Mipos standing by some trees for the scale (a median Mipo is 658 tall): which tree, how far to its right
+local RULERS = { { tree = 1, dx = 700 }, { tree = 2, dx = 900 }, { tree = 5, dx = 650 }, { tree = 10, dx = 700 },
+    { tree = 12, dx = 900 }, { tree = 13, dx = 600 } }
+local LABEL_SCALE = 7
 local LOOKS = { 'photo', 'tinted', 'relief' }
 local DETAILS = { { 'flat', 0 }, { 'soft', 0.6 }, { 'normal', 1.1 }, { 'deep', 2 } }
 local SIZES = { { 'small', 220 }, { 'middle', 340 }, { 'big', 520 } } -- world units per bark picture's width
@@ -125,11 +130,48 @@ local function overPanel()
     return mx >= r[1] and mx <= r[1] + r[3] and my >= r[2] and my <= r[2] + r[4]
 end
 
+-- a floor under each row and the ruler Mipos, made once (kept over a scene reload while they're alive)
+local function makeFloorsAndRulers(c)
+    c.statics = c.statics or {}
+    local floorsAlive = #c.statics > 0
+    for _, st in ipairs(c.statics) do
+        if st:isDestroyed() then floorsAlive = false end
+    end
+    if not floorsAlive then
+        c.statics = {}
+        for _, row in ipairs(ROWS) do
+            local floor = objectManager.addThing('rectangle', { x = 0, y = row.ground + 60, width = 26000,
+                height = 120, bodyType = 'static', label = 'bark-floor' })
+            if floor then c.statics[#c.statics + 1] = floor.body end
+        end
+    end
+    c.rulers = c.rulers or {}
+    local alive = {}
+    for _, inst in ipairs(c.rulers) do
+        local torso = inst.parts and inst.parts.torso1
+        if torso and torso.body and not torso.body:isDestroyed() then alive[#alive + 1] = inst end
+    end
+    c.rulers = alive
+    if #c.rulers == 0 then
+        for _, r in ipairs(RULERS) do
+            local row = r.tree <= ROWS[1].count and ROWS[1] or ROWS[2]
+            local col = r.tree <= ROWS[1].count and r.tree or r.tree - ROWS[1].count
+            local inst = characterManager.createCharacter('humanoid', row.x + (col - 1) * STEP + r.dx,
+                row.ground - 900, 0.3)
+            if inst then
+                characterManager.randomizeMipoConstrained(inst)
+                c.rulers[#c.rulers + 1] = inst
+            end
+        end
+    end
+end
+
 function s.onStart()
     worldState.paused = false
-    cam:setScale(0.135)
-    cam:setTranslation(0, 200)
+    cam:setScale(0.05)
+    cam:setTranslation(0, 300)
     local c = lab()
+    makeFloorsAndRulers(c)
     build({ organic = c.organic, wind = c.wind, sun = c.sun, crowd = c.crowd, age = c.age })
 end
 
@@ -158,31 +200,10 @@ function s.onKeyPress(key)
     end
 end
 
--- the paper wall, the ground under each row
+-- the paper wall, the ground under each row, and the trees (behind the Mipos, drawn by the engine after)
 function s.drawBelow()
-    local L = LIGHTS[lab().light]
-    local x0, y0 = cam:getWorldCoordinates(0, 0)
-    local x1, y1 = cam:getWorldCoordinates(love.graphics.getWidth(), love.graphics.getHeight())
-    love.graphics.setColor(L.wall[1], L.wall[2], L.wall[3], 1)
-    love.graphics.rectangle('fill', x0, y0, x1 - x0, y1 - y0)
-    for _, row in ipairs(ROWS) do
-        love.graphics.setColor(L.ground[1], L.ground[2], L.ground[3], 1)
-        love.graphics.rectangle('fill', x0, row.ground - 10, x1 - x0, 130)
-    end
-    love.graphics.setColor(1, 1, 1, 1)
-end
-
-local function label(text, x, y)
-    local font = love.graphics.getFont()
-    love.graphics.setColor(0, 0, 0, 0.5)
-    love.graphics.print(text, x - font:getWidth(text) * 1.25 + 3, y + 3, 0, 2.5, 2.5)
-    love.graphics.setColor(1, 0.97, 0.9, 1)
-    love.graphics.print(text, x - font:getWidth(text) * 1.25, y, 0, 2.5, 2.5)
-end
-
-function s.draw()
     local c = lab()
-    -- a regrow takes ~0.1 s: while a slider (organic, wind) moves, wait until it rests a moment
+    -- a regrow takes ~0.1 s: while a slider (organic, wind, ...) moves, wait until it rests a moment
     local now = love.timer.getTime()
     local key = table.concat({ c.organic, c.wind, c.sun, c.crowd, c.age }, '|')
     if key ~= c.growSeen then c.growSeen, c.growAt = key, now end
@@ -190,18 +211,49 @@ function s.draw()
         build({ organic = c.organic, wind = c.wind, sun = c.sun, crowd = c.crowd, age = c.age })
     end
     local L = LIGHTS[c.light]
+    local x0, y0 = cam:getWorldCoordinates(0, 0)
+    local x1, y1 = cam:getWorldCoordinates(love.graphics.getWidth(), love.graphics.getHeight())
+    love.graphics.setColor(L.wall[1], L.wall[2], L.wall[3], 1)
+    love.graphics.rectangle('fill', x0, y0, x1 - x0, y1 - y0)
+    for _, row in ipairs(ROWS) do
+        love.graphics.setColor(L.ground[1], L.ground[2], L.ground[3], 1)
+        love.graphics.rectangle('fill', x0, row.ground - 10, x1 - x0, 300)
+    end
+    love.graphics.setColor(1, 1, 1, 1)
     barkLook.begin({ lightPos = { c.lx, c.ly, c.lightUp }, lightColour = L.colour, ambient = L.ambient,
         detail = DETAILS[c.detail][2], look = c.look - 1, bands = c.painted and 4 or 0, debugView = c.debug - 1,
         barkWidth = SIZES[c.size][2] })
     local opts = { eyes = c.eyes, mipoEyes = c.mipoEyes, outlines = c.outlines }
     for _, tree in ipairs(built) do barkLook.drawTree(tree, opts) end
+    love.graphics.setColor(1, 1, 1, 1)
+end
+
+local function label(text, x, y)
+    local font = love.graphics.getFont()
+    love.graphics.setColor(0, 0, 0, 0.5)
+    local sc = LABEL_SCALE
+    love.graphics.print(text, x - font:getWidth(text) * sc / 2 + 8, y + 8, 0, sc, sc)
+    love.graphics.setColor(1, 0.97, 0.9, 1)
+    love.graphics.print(text, x - font:getWidth(text) * sc / 2, y, 0, sc, sc)
+end
+
+-- over the Mipos: the ground again from its top down (it hides the floor bodies the engine draws there; the
+-- Mipos' feet stand above it), the names, the light
+function s.draw()
+    local c = lab()
+    if not built then return end
+    local L = LIGHTS[c.light]
+    local x0 = cam:getWorldCoordinates(0, 0)
+    local x1 = cam:getWorldCoordinates(love.graphics.getWidth(), 0)
+    love.graphics.setColor(L.ground[1], L.ground[2], L.ground[3], 1)
+    for _, row in ipairs(ROWS) do love.graphics.rectangle('fill', x0, row.ground, x1 - x0, 290) end
     for _, tree in ipairs(built) do
         local id = tree.def.bark
-        label(id:match('^%d') and (id .. ' ' .. tree.def.name) or tree.def.name, tree.x, tree.ground + 30)
+        label(id:match('^%d') and (id .. ' ' .. tree.def.name) or tree.def.name, tree.x, tree.ground + 60)
     end
     -- the light: a small sun where the mouse is
     love.graphics.setColor(L.colour[1], L.colour[2], L.colour[3], 0.9)
-    love.graphics.circle('fill', c.lx, c.ly, 28)
+    love.graphics.circle('fill', c.lx, c.ly, 90)
     love.graphics.setColor(1, 1, 1, 1)
 end
 

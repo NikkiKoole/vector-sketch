@@ -82,6 +82,15 @@ and place; the birch's mirror-repeat shows as mirrored pairs of marks (a longer 
   itself; a regrow takes ~0.1 s, so it waits until the slider rests.
 - [ ] **BK2. Nikki judges**: which look (photo / tinted / relief) sits with the drawn Mipos, which
   barks to keep. A Mipo next to a trunk for the scale (WORLD-METRICS.md).
+  Scale, 2026-11-08 (Nikki: "the trees should grow taller ... how tall are we aiming for"): measured, they
+  were 1-2.7 Mipos tall (a median Mipo 658; the olive no taller than one), real trees are 15-20 people.
+  Chosen: **storybook scale**, as picture books do: olive 2.5 Mipos, birch and aspen 4, oak 4.5 (its trunk
+  ~520, wider than a Mipo), beech, plane, elm 5, pine and poplar 6; the kinds keep their real proportions to
+  each other. Each tree grows at the old size (its crookedness is in world units) and is then scaled from
+  its foot (`stretch`, `thicken` per kind in tree-kinds.lua; twigs stay thin). The scene: trees every 2600,
+  rows 4800 apart, a zoomed-out start (scale 0.05; the wheel zooms; camera follow off, min zoom 0.04 in the
+  scene's settings), six Mipos standing by trees as rulers on invisible floors, the trees drawn behind them
+  (drawBelow). Seen: the oak about 4 Mipos over two Mipos, the pine about 5.
 - [ ] **BK3. Into the engine, if kept**: a bark as a material on a ribbon (connected-texture) or a
   texfixture, through the plasticine shader (MATERIALS.md), the scene's lights instead of the mouse.
 

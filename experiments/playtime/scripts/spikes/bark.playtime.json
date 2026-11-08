@@ -1,9 +1,13 @@
 {
   "camera": {
-    "scale": 0.135,
+    "scale": 0.05,
     "rotation": 0,
     "x": 0,
-    "y": 200
+    "y": 300,
+    "settings": {
+      "follow": false,
+      "minZoom": 0.04
+    }
   },
   "bodies": [],
   "joints": [],
