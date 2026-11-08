@@ -54,37 +54,49 @@ local eyeAtlas
 --   kids      side branches per branch (min, max), from how far along (the trunk's own: trunkKids, bare below
 --             trunkStart: aspens and birches drop their lower branches, the eyes are where they were)
 --   spread    angle from the parent (min, max, radians), len a child's length over its parent's, cone: shorter
---             toward the top (a pine), width a child's width over its parent's where it starts
+--             toward the top (a pine), share how much of its parent's wood a side branch takes (its width is
+--             the parent's times the square root: widths add up, da Vinci's rule)
 --   depth     how many times branches branch; up: how much a branch turns toward the sky, droop: toward the
---             ground (more on thinner ones: weeping twigs), wander: crookedness per step
+--             ground (more on thinner ones: weeping twigs), wander: slow crookedness
+--   sag       how much a limb sags as it reaches out (its weight); recover: how much its tip turns back up
+--             past recoverFrom (the elbow)
 local KINDS = {
     oak = { trunk = 560, w = 250, flare = 0.7, trunkWander = 0.08, fork = { 3, 0.55, 0.85 },
         trunkKids = { 1, 2 }, trunkStart = 0.45, kids = { 2, 3 }, start = 0.25, spread = { 0.55, 1.05 },
-        len = 0.62, width = 0.55, depth = 4, up = 0.03, droop = 0.03, wander = 0.32 },
+        len = 0.62, share = 0.35, depth = 4, up = 0.03, droop = 0.03, wander = 0.32,
+        sag = 0.05, recover = 0.07, recoverFrom = 0.5 },
     elm = { trunk = 480, w = 190, flare = 0.4, trunkWander = 0.05, fork = { 4, 0.2, 1.3 },
         trunkKids = { 0, 1 }, trunkStart = 0.5, kids = { 2, 2 }, start = 0.35, spread = { 0.35, 0.6 },
-        len = 0.55, width = 0.55, depth = 4, up = 0.035, droop = 0.05, wander = 0.14 },
+        len = 0.55, share = 0.3, depth = 4, up = 0.035, droop = 0.05, wander = 0.14,
+        sag = 0.012, recover = 0.06, recoverFrom = 0.35 },
     beech = { trunk = 620, w = 190, flare = 0.55, trunkWander = 0.04, fork = { 2, 0.5, 0.95 },
         trunkKids = { 1, 2 }, trunkStart = 0.5, kids = { 3, 3 }, start = 0.25, spread = { 0.5, 0.85 },
-        len = 0.55, width = 0.5, depth = 4, up = 0.06, droop = 0.02, wander = 0.12 },
+        len = 0.55, share = 0.3, depth = 4, up = 0.06, droop = 0.02, wander = 0.12,
+        sag = 0.03, recover = 0.05, recoverFrom = 0.5 },
     plane = { trunk = 580, w = 180, flare = 0.35, trunkWander = 0.1, fork = { 3, 0.65, 0.85 },
         trunkKids = { 1, 1 }, trunkStart = 0.55, kids = { 2, 3 }, start = 0.25, spread = { 0.6, 1.1 },
-        len = 0.58, width = 0.52, depth = 4, up = 0.02, droop = 0.03, wander = 0.38 },
-    olive = { trunk = 380, w = 260, flare = 0.5, trunkWander = 0.35, fork = { 3, 0.8, 0.95 },
+        len = 0.58, share = 0.33, depth = 4, up = 0.02, droop = 0.03, wander = 0.38,
+        sag = 0.05, recover = 0.06, recoverFrom = 0.5 },
+    olive = { trunk = 380, w = 260, flare = 0.5, trunkWander = 0.18, fork = { 3, 0.8, 0.95 },
         trunkKids = { 0, 1 }, trunkStart = 0.5, kids = { 2, 3 }, start = 0.25, spread = { 0.6, 1.15 },
-        len = 0.52, width = 0.5, depth = 3, up = 0.02, droop = 0.05, wander = 0.42 },
+        len = 0.52, share = 0.35, depth = 3, up = 0.02, droop = 0.05, wander = 0.42,
+        sag = 0.06, recover = 0.04, recoverFrom = 0.55 },
     pine = { trunk = 1450, w = 170, flare = 0.3, trunkWander = 0.02, trunkKids = { 14, 16 }, trunkStart = 0.35,
         kids = { 4, 5 }, start = 0.15, spread = { 0.6, 0.9 }, firstSpread = { 1.3, 1.55 }, len = 0.4, cone = true,
-        width = 0.35, depth = 2, up = 0.0, droop = 0.025, wander = 0.08 },
+        share = 0.1, depth = 2, up = 0.0, droop = 0.025, wander = 0.08,
+        sag = 0.04, recover = 0.08, recoverFrom = 0.6 },
     poplar = { trunk = 1450, w = 140, flare = 0.2, trunkWander = 0.03, trunkKids = { 11, 13 }, trunkStart = 0.22,
         kids = { 1, 2 }, start = 0.3, spread = { 0.2, 0.35 }, len = 0.42, cone = true, coneTop = 0.55,
-        width = 0.4, depth = 2, up = 0.1, droop = 0.0, wander = 0.08 },
+        share = 0.1, depth = 2, up = 0.1, droop = 0.0, wander = 0.08,
+        sag = 0.01, recover = 0.02, recoverFrom = 0.5 },
     aspen = { trunk = 1400, w = 150, flare = 0.15, trunkWander = 0.03, trunkKids = { 8, 10 }, trunkStart = 0.55,
         kids = { 2, 3 }, start = 0.3, spread = { 0.45, 0.8 }, len = 0.5, cone = true, coneTop = 0.6,
-        width = 0.4, depth = 3, up = 0.1, droop = 0.0, wander = 0.15 },
+        share = 0.13, depth = 3, up = 0.1, droop = 0.0, wander = 0.15,
+        sag = 0.02, recover = 0.04, recoverFrom = 0.5 },
     birch = { trunk = 1350, w = 170, flare = 0.3, trunkWander = 0.04, trunkKids = { 7, 9 }, trunkStart = 0.45,
         kids = { 2, 3 }, start = 0.3, spread = { 0.55, 0.9 }, len = 0.42, cone = true, coneTop = 0.45,
-        width = 0.38, depth = 3, up = 0.04, droop = 0.16, wander = 0.15 },
+        share = 0.15, depth = 3, up = 0.04, droop = 0.16, wander = 0.15,
+        sag = 0.05, recover = 0.0, recoverFrom = 1 },
 }
 
 -- The trees: which bark, a name for it, how it grows (KINDS), its own lean, and the eyes (how many
@@ -266,31 +278,54 @@ local function turnToward(a, target, k)
     return a + d * k
 end
 
--- One branch: walked from (x, y) at angle a for len, w0 to w1 wide, turning toward the sky (up) or the
--- ground (droop, more on thin ones) and wandering a little each step; then its side branches and, for a
--- trunk that forks, its limbs. Every branch goes into out: its middle line (points with width and length
--- so far) and depth.
-local function grow(k, rng, out, x, y, a, len, w0, w1, depth, isTrunk, scale)
+-- One branch, walked from (x, y) at angle a for len, w0 wide at its foot; then its side branches and, for a
+-- trunk that forks, its limbs. Every branch goes into out: its middle line (points with width and length so
+-- far) and depth.
+-- Widths add up (da Vinci's rule, BARK BK4): each side branch takes its share of the wood where it leaves,
+-- the branch goes on with what's left (a child's width is the parent's times the square root of its share),
+-- and a fork splits what's left between its limbs. Bends have reasons (BK5): a limb sags more the further
+-- out it reaches (its weight, more if thin), past recoverFrom its tip turns back up toward the light (the
+-- elbow), thin tips can hang (droop: weeping); the slow wander is a little on top.
+local function grow(k, rng, out, x, y, a, len, w0, depth, isTrunk, scale)
     if #out >= MAX_BRANCHES then return end
     local n = math.max(3, math.floor(len / STEP_LEN))
     local wander = (isTrunk and k.trunkWander or k.wander) * organic
     local thin = 1 - math.min(1, w0 / (k.w * scale))
+    local bends = math.min(1.5, organic) -- the sag and the elbow, with the slider (0: straight)
+    -- its side branches first, where they leave and how much wood each takes: the widths come from them
+    local kids = {}
+    if depth < k.depth and w0 > TWIG * 2 then
+        local range = isTrunk and k.trunkKids or k.kids
+        local count = rng:random(range[1], range[2])
+        local from = isTrunk and k.trunkStart or k.start
+        local side = rng:random() < 0.5 and 1 or -1
+        for c = 1, count do
+            local t = from + (1 - from) * (c - 1 + 0.3 + rng:random() * 0.5) / count
+            if not k.fork and isTrunk then t = math.min(t, 0.96) end
+            kids[#kids + 1] = { t = t, side = side, share = k.share * (0.7 + 0.6 * rng:random()) }
+            side = -side
+        end
+    end
     -- a side branch starts a little inside its parent, so its collar grows out of the wood
     if not isTrunk then
-        x, y = x - math.cos(a) * w0 * 0.4 * math.min(1, organic), y - math.sin(a) * w0 * 0.4 * math.min(1, organic)
+        local back = w0 * 0.4 * math.min(1, organic)
+        x, y = x - math.cos(a) * back, y - math.sin(a) * back
     end
-    -- the walk: it turns slowly (smooth noise along its length, not a kink per step), toward the sky or the
-    -- ground
+    -- the walk
     local seed = rng:random() * 1000
     local line = { { x, y } }
     local step = len / n
     for i = 1, n do
-        local along = (i - 1) * step
-        local bend = (love.math.noise(seed, along / 220) - 0.5) * 2.2 + (rng:random() - 0.5) * 0.25
+        local u = (i - 1) / n
+        local bend = (love.math.noise(seed, (i - 1) * step / 220) - 0.5) * 2.2 + (rng:random() - 0.5) * 0.25
         if organic == 0 then bend = 0 end
         a = a + bend * wander
         a = turnToward(a, -math.pi / 2, k.up * (isTrunk and 3 or 1))
-        if not isTrunk then a = turnToward(a, math.pi / 2, k.droop * thin) end
+        if not isTrunk then
+            a = turnToward(a, math.pi / 2, k.sag * bends * u * (0.5 + thin)) -- its weight
+            if u > k.recoverFrom then a = turnToward(a, -math.pi / 2, k.recover * bends) end -- the tip back up
+            a = turnToward(a, math.pi / 2, k.droop * thin) -- thin tips hanging
+        end
         x, y = x + math.cos(a) * step, y + math.sin(a) * step
         line[#line + 1] = { x, y }
     end
@@ -305,9 +340,6 @@ local function grow(k, rng, out, x, y, a, len, w0, w1, depth, isTrunk, scale)
         sm[#sm + 1] = line[#line]
         line = sm
     end
-    -- the points: way, length so far, width; the width eases off (thick for longer, then thin), the roots
-    -- flare, a side branch swells into a collar where it leaves its parent, and each edge has its own slow
-    -- bumps (a branch is never quite even, nor mirror-alike)
     local pts, along = {}, 0
     for i, q in ipairs(line) do
         if i > 1 then
@@ -319,9 +351,21 @@ local function grow(k, rng, out, x, y, a, len, w0, w1, depth, isTrunk, scale)
         pts[i] = { x = q[1], y = q[2], along = along, a = math.atan2(nx[2] - pv[2], nx[1] - pv[1]) }
     end
     local total = math.max(1, along)
+    -- the wood left at u: after each side branch it's (1 - share) of what it was (eased over a short
+    -- stretch, no step); the wood itself thins a little along the way
+    local function woodAt(u)
+        local rem = 1
+        for _, kid in ipairs(kids) do
+            local e = math.max(0, math.min(1, (u - kid.t + 0.03) / 0.06))
+            rem = rem * (1 - kid.share * e * e * (3 - 2 * e))
+        end
+        return rem
+    end
+    local function widthAt(u) return w0 * math.sqrt(woodAt(u)) * (1 - 0.2 * u) end
     for _, p in ipairs(pts) do
         local u = p.along / total
-        local w = w0 + (w1 - w0) * u ^ 0.75
+        local w = widthAt(u)
+        if not (isTrunk and k.fork) then w = w * (1 - 0.65 * math.max(0, (u - 0.7) / 0.3) ^ 2) end -- the tip
         if isTrunk then
             w = w * (1 + k.flare * (1 - math.min(1, u * 6)) ^ 2) -- roots flaring at the foot
         else
@@ -333,6 +377,7 @@ local function grow(k, rng, out, x, y, a, len, w0, w1, depth, isTrunk, scale)
         p.wr = w * (1 + 0.16 * organic * (love.math.noise(seed + 13, p.along / 90) - 0.5))
     end
     a = pts[#pts].a
+    local wEnd = widthAt(1)
     -- a trunk that forks narrows to a point in its last stretch, hidden between its limbs (a crotch, not a
     -- flat top)
     if isTrunk and k.fork and #pts >= 3 then
@@ -344,35 +389,28 @@ local function grow(k, rng, out, x, y, a, len, w0, w1, depth, isTrunk, scale)
     n = #pts - 1
     -- (its outline stops where it narrows: else the outline draws a V across the limbs)
     out[#out + 1] = { pts = pts, depth = depth, isTrunk = isTrunk, outlineTrim = (isTrunk and k.fork) and 4 or 0 }
-    if depth >= k.depth or w1 <= TWIG then return end
-    -- side branches, alternating sides, spaced along it (the trunk's: bare below trunkStart)
-    local range = isTrunk and k.trunkKids or k.kids
-    local count = rng:random(range[1], range[2])
-    local from = isTrunk and k.trunkStart or k.start
-    local side = rng:random() < 0.5 and 1 or -1
-    for c = 1, count do
-        local t = from + (1 - from) * (c - 1 + 0.3 + rng:random() * 0.5) / count
-        if not k.fork and isTrunk then t = math.min(t, 0.96) end
-        local p = pts[math.floor(t * n) + 1]
+    -- the side branches, each as wide as its share of the wood there
+    for _, kid in ipairs(kids) do
+        local p = pts[math.floor(kid.t * n) + 1]
         local spread = (isTrunk and k.firstSpread) or k.spread
-        local ca = p.a + side * (spread[1] + (spread[2] - spread[1]) * rng:random())
+        local ca = p.a + kid.side * (spread[1] + (spread[2] - spread[1]) * rng:random())
         local clen = len * k.len * (0.8 + 0.4 * rng:random())
-        if k.cone and isTrunk then clen = clen * (1 - t * (k.coneTop or 0.85)) end -- shorter toward the top
-        local cw = p.w * k.width
-        grow(k, rng, out, p.x, p.y, ca, clen, cw, math.max(TWIG, cw * 0.35), depth + 1, false, scale)
-        side = -side
+        if k.cone and isTrunk then clen = clen * (1 - kid.t * (k.coneTop or 0.85)) end -- shorter toward the top
+        local cw = widthAt(kid.t - 0.04) * math.sqrt(kid.share)
+        grow(k, rng, out, p.x, p.y, ca, clen, math.max(TWIG, cw), depth + 1, false, scale)
     end
-    -- a trunk that forks: its limbs from the top, fanned out
+    -- a trunk that forks: what's left of its wood split between its limbs, fanned out from a step below the
+    -- top (they overlap the trunk's end: no notch)
     if isTrunk and k.fork then
         local nf, fan, flen = k.fork[1], k.fork[2], k.fork[3]
-        -- from a step below the top, so the limbs overlap the trunk's end (no notch where they meet)
         local top = pts[math.max(1, #pts - 1)]
-        x, y = top.x, top.y
+        local weights, sum = {}, 0
+        for f = 1, nf do weights[f] = 0.7 + 0.6 * rng:random(); sum = sum + weights[f] end
         for f = 1, nf do
             local fa = a + (f - (nf + 1) / 2) * fan + (rng:random() - 0.5) * 0.2
-            local fw = w1 * (0.75 + 0.1 * rng:random())
-            grow(k, rng, out, x, y, fa, len * flen * (0.85 + 0.3 * rng:random()), fw, math.max(TWIG, fw * 0.3),
-                depth + 1, false, scale)
+            local fw = wEnd * math.sqrt(weights[f] / sum)
+            grow(k, rng, out, top.x, top.y, fa, len * flen * (0.85 + 0.3 * rng:random()), fw, depth + 1, false,
+                scale)
         end
     end
 end
@@ -430,8 +468,7 @@ local function build(howOrganic)
             local rng = love.math.newRandomGenerator(i * 7919 + 13)
             local branches = {}
             local trunkLen = k.trunk * scale
-            grow(k, rng, branches, x0, row.ground, -math.pi / 2 + t.lean, trunkLen, k.w * scale,
-                k.w * scale * (k.fork and 0.7 or 0.12), 0, true, scale)
+            grow(k, rng, branches, x0, row.ground, -math.pi / 2 + t.lean, trunkLen, k.w * scale, 0, true, scale)
             local byDepth, maxDepth = {}, 0
             for b, br in ipairs(branches) do
                 local d = br.depth

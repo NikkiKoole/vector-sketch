@@ -84,5 +84,43 @@ and place; the birch's mirror-repeat shows as mirrored pairs of marks (a longer 
   barks to keep. A Mipo next to a trunk for the scale (WORLD-METRICS.md).
 - [ ] **BK3. Into the engine, if kept**: a bark as a material on a ribbon (connected-texture) or a
   texfixture, through the plasticine shader (MATERIALS.md), the scene's lights instead of the mouse.
-- Later, if it earns it: the crown (leaf blobs, PLANTS.md), branches that fork, bark drawn by Nikki
-  as a height sheet (MATERIALS MT11) next to the scans.
+
+### Why trees gnarl (2026-11-08)
+
+Ours bent by noise; real ones bend for reasons, and giving each bend a cause makes them look grown.
+Why: **weight** (a limb sags as it lengthens, then its tip turns back up: the old oak's elbow), **light**
+(branches reach for open sky, away from neighbours; an edge tree leans out, its crown lopsided), **wind**
+(the whole tree leans, the windward side stays short), **how the kind grows** (pine and poplar keep one
+leading shoot: straight; oak, elm, plane lose their tip bud each year and a side bud takes over: zigzag
+twigs), **damage** (a broken top or limb: a side branch takes over, a dog-leg). Afterwards: wounds heal as
+rolls of bark (the aspen's eyes are where branches were), stubs, dead limbs, a dead top on an old oak,
+hollows, water sprouts round a wound, lower branches dying off in the crown's shade (young trees are
+cones, old ones broad on a bare trunk), moss on the damp shady side.
+
+- [x] **BK4. Widths that add up** (da Vinci's rule): a parent's cross-section about equals its children's
+  together; each side branch takes its share of the parent's wood where it leaves, the parent goes on
+  thinner. Forks look right instead of guessed.
+  Done 2026-11-08: a branch picks its side branches first (where, which side, `share` per kind: 0.1 for a
+  pine's many whorls, 0.35 for an oak's few limbs), each as wide as the parent there times the square
+  root of its share; the parent goes on with what's left (eased, no step); a fork splits what's left
+  between its limbs. Trunks thin visibly as limbs leave.
+- [x] **BK5. Sag and recover**: a limb droops more as it lengthens (its weight), and its tip turns back up
+  (the elbow); pine tips curving up, the birch still weeping. Bends with a reason, the random wander
+  only a little on top.
+  Done 2026-11-08: `sag` (more the further out and the thinner), `recover` past `recoverFrom` per kind; the
+  organic slider scales both (0: straight). Seen: the oaks reach out, sag and turn up into elbows, pine
+  tips curve up, the birch arches down. The elm's long limbs sagged into flat arcs: less sag, an
+  earlier upturn (a wide vase now). The olive's trunk wander halved (it keeled over); olive and cork lean.
+- [ ] **BK6. Zigzag or straight** by how the kind grows: oak, elm, plane twigs zigzag (a side bud takes over
+  each year), pine and poplar keep one straight leader.
+- [ ] **BK7. Wind**: one direction and strength for the scene; trees lean with it, windward branches stay
+  short (a combed crown).
+- [ ] **BK8. Light**: crowns reach toward the scene's sun and away from the trees next to them (a row
+  shapes itself).
+- [ ] **BK9. A history per tree**: a broken top becomes a dog-leg; a lost limb leaves a stub with a scar eye
+  and water sprouts round it. The eyes then sit where branches really were.
+- [ ] **BK10. An age slider**: a young cone to an old giant; lower branches dropping off (leaving eyes), the
+  crown broadening, a dead top, a hollow (a Mipo's home?). With PLANTS' growing over time; brings BK9.
+- [ ] **BK11. Moss on the shady side**: bark facing away from the light greener (in the shader).
+- Later, if it earns it: the crown (leaf blobs, PLANTS.md), bark drawn by Nikki as a height sheet
+  (MATERIALS MT11) next to the scans.
