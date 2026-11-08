@@ -66,6 +66,20 @@ top of a head and it goes on; `hatGrip` (default 1100: hats come off easier than
 - Not yet: ears in front of a hat by kind (a beanie with ears poking through), lobes on a potato
   head (the hat doesn't follow them), the cap's bill always points right.
 
+## Scarves (2026-11-08)
+
+Stripes, dots, gingham, velvet (the cloth spike's fabrics). Let go of one over the neck (the head's
+joint on torso1) and it goes on; `scarfGrip` (default 2000: scarves stay on). Not on potato heads
+(no neck).
+- The wrap: a rounded band round the neck and a knot, filled with the fabric, drawn in the Mipo's
+  layers at z +390 (over the chin and the pants, under the arms). As wide as the torso at the
+  neck, at least 55% of its widest.
+- The tails: two `cloth.new` strips (4 columns), pinned along their top to torso1 (`pinBody`),
+  one longer, hanging down the front and swinging; `collide = false` so far.
+- Taller (Nikki 2026-11-08: "the scarfs can be taller"): `scarfTall` (default 1.6) times the
+  wrap's and knot's first heights; the tails hang from the lower knot (made when it goes on).
+- Not yet: the tails pass through the Mipo (collide off), potato heads.
+
 Steps:
 - [ ] WR1. Nikki plays with the glasses: the fit, the jolt, the lens look. Keep, change or park?
 - [ ] WR2. Drawn frames: scan glasses (front view, outline + mask like the Mipo parts, the lens
@@ -75,7 +89,8 @@ Steps:
 - [x] WR4. Hats, stacking (Nikki 2026-11-08: "hats feel nice")
 - [ ] WR8. Hat leftovers: ears in front by kind, the cap's bill the way the Mipo faces, a soft
       potato head's lobes
-- [ ] WR5. A headscarf: drawn layer hugging the head + cloth ends (CLOTH.md pins riding a body)
+- [ ] WR5. Scarves built 2026-11-08: Nikki plays with them. Then a headscarf: the head's mask grown,
+      a face opening cut out, over hair and ears, a cloth drape behind (on Nikki's first list)
 - [ ] WR6. Underpants: Nikki plays with them (the cut, the waist heights, the drop on the hips).
       Soft torsos done 2026-11-08
 - [x] WR7. The wear/jolt code in `src/wearables.lua` (2026-11-08, with the underpants)

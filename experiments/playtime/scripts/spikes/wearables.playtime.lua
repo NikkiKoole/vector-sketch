@@ -17,8 +17,11 @@
 -- (a row of the mask), drawn in the Mipo's own layers over the hair (220), so hair sticks out
 -- under and round them (Nikki 2026-11-08), the ears behind, the arms in front.
 --
--- keys: g a pair of glasses   u underpants   h a hat (each the next kind)   m a Mipo
---       w glasses, n pants, y a hat on every Mipo   o all off   r start over   p the panel
+-- Scarves wrap the neck (the head's joint on torso1): a band drawn in the Mipo's layers, over the
+-- chin, and two tails of cloth (src/cloth.lua) pinned to torso1 that hang and swing.
+--
+-- keys: g a pair of glasses   u underpants   h a hat   k a scarf (each the next kind)   m a Mipo
+--       w glasses, n pants, y a hat, j a scarf on every Mipo   o all off   r start over   p the panel
 
 local s = {}
 
@@ -96,6 +99,17 @@ local HATS = {
 local HAT_Z = 380 -- in a Mipo's own layers: over the face (250s) and the hair (220), under the arms (402)
 local HAT_LOOSE = 170 -- a loose hat's width
 local HAT_STACK = 6   -- hats on one head at most
+-- scarves: a fabric of src/cloth.lua for the tails, the wrap drawn in the same (its colours: base,
+-- stripe), the tails' length (a part of the wrap's width)
+local SCARVES = {
+    { name = 'stripes', fabric = 'stripes', base = { 0.86, 0.36, 0.32 }, stripe = { 0.95, 0.9, 0.8 }, len = 1.1 },
+    { name = 'dots', fabric = 'dots', base = { 0.32, 0.45, 0.62 }, dot = { 0.96, 0.92, 0.78 }, len = 0.9 },
+    { name = 'gingham', fabric = 'gingham', base = { 0.97, 0.95, 0.9 }, check = { 0.35, 0.5, 0.75, 0.55 },
+      len = 1.0 },
+    { name = 'velvet', fabric = 'velvet', base = { 0.55, 0.12, 0.18 }, len = 1.4 },
+}
+local SCARF_Z = 390 -- over the chin and the pants, under the feet (399) and the arms (402)
+local SCARF_LOOSE = 220
 local PANTS_Z = 302 -- in a Mipo's own layers: over the legs (300, 301), under the nose (350), feet (399), arms (402)
 local OUTLINE = { 0.12, 0.1, 0.12 }
 local GROUND = { x = 0, w = 4200, h = 140 } -- its top at y = 0
@@ -104,9 +118,10 @@ local MASK = 128                            -- a lens mask's longer side, in pix
 
 local function room()
     state.wearables = state.wearables or {
-        items = {}, statics = {}, mipos = {}, nextGlasses = 1, nextPants = 1, nextHat = 1, showPanel = true, peak = 0,
-        settings = { lens = 1, bend = 1, shine = 1, glint = 1, grip = 1300, pantsGrip = 1600, hatGrip = 1100,
-            snap = 0.9 },
+        items = {}, statics = {}, mipos = {}, showPanel = true, peak = 0,
+        nextGlasses = 1, nextPants = 1, nextHat = 1, nextScarf = 1,
+        settings = { lens = 1, bend = 1, shine = 1, glint = 1, snap = 0.9,
+            grip = 1300, pantsGrip = 1600, hatGrip = 1100, scarfGrip = 2000, scarfTall = 1.6 },
     }
     return state.wearables
 end
@@ -441,12 +456,8 @@ end
 
 -- where a hat sits on this Mipo: the head (a potato head's torso1), its brim's middle and width
 -- in the head's frame (the mask's row at the sink: how wide the head is there), or nil
-local function hatOn(inst, kind)
-    local head = headOf(inst)
-    local skin = head and skinOf(head)
-    if not skin then return nil end
-    local h = skin.bottom - skin.top
-    local y = skin.top + h * kind.sink
+-- the skin's left and right at row y (the body's frame), and its widest, or nil
+local function rowAt(skin, y)
     -- that row in the picture (flipped when the skin is)
     local v = (y - skin.y0) / (skin.y1 - skin.y0)
     if skin.fy < 0 then v = 1 - v end
@@ -459,9 +470,32 @@ local function hatOn(inst, kind)
     local l, r = row[2], row[3]
     if skin.fx < 0 then l, r = 1 - r, 1 - l end
     local w = skin.x1 - skin.x0
-    local x0, x1 = skin.x0 + l * w, skin.x0 + r * w
+    return skin.x0 + l * w, skin.x0 + r * w, widest * w
+end
+
+local function hatOn(inst, kind)
+    local head = headOf(inst)
+    local skin = head and skinOf(head)
+    if not skin then return nil end
+    local y = skin.top + (skin.bottom - skin.top) * kind.sink
+    local x0, x1, widest = rowAt(skin, y)
+    if not x0 then return nil end
     -- at least half the head's widest: a pointy head's top made a party hat a thimble
-    return head, (x0 + x1) / 2, y, math.max(x1 - x0, widest * w * 0.5) * kind.fit
+    return head, (x0 + x1) / 2, y, math.max(x1 - x0, widest * 0.5) * kind.fit
+end
+
+-- where a scarf wraps this Mipo: torso1, the neck (the head's joint on it) in torso1's frame, the
+-- wrap's width (the torso there, at least half its widest); nil for a potato head (no neck)
+local function scarfOn(inst)
+    if inst.dna.creation.isPotatoHead then return nil end
+    local torso, head = partBody(inst, 'torso1'), partBody(inst, 'head')
+    if not (torso and head) then return nil end
+    local nx, ny = jointBetween(torso, head)
+    local skin = skinOf(torso)
+    if not (nx and skin) then return nil end
+    local x0, x1, widest = rowAt(skin, math.max(ny, skin.top))
+    if not x0 then return nil end
+    return torso, nx, ny, math.max(x1 - x0, widest * 0.55) * 0.95
 end
 
 -- Hats stack (Nikki 2026-11-08): a worn hat sits on the head (stackBelow nil) or on the hat
@@ -514,9 +548,39 @@ hatPlace = function(item)
     return hatOn(item.wearer, kind)
 end
 
+-- how tall the wrap is, times its first height (Nikki 2026-11-08: "the scarfs can be taller")
+local function scarfTall() return state.wearables.settings.scarfTall or 1.6 end
+
+-- a worn scarf's two tails: cloth pinned along its top to torso1 just under the wrap, one a little
+-- longer, both hanging down the front
+local function makeTails(item)
+    local inst = item.wearer
+    local torso, nx, ny, w = scarfOn(inst)
+    if not torso then return end
+    local kind = SCARVES[item.kind]
+    local tailW = w * 0.26
+    local cols = 4
+    local sp = tailW / (cols - 1)
+    item.tails = {}
+    for i, side in ipairs({ { x = -0.18, len = kind.len }, { x = 0.14, len = kind.len * 0.8 } }) do
+        local tx, ty = nx + side.x * w, ny + w * 0.14 * scarfTall()
+        local wx, wy = torso:getWorldPoint(tx - tailW / 2, ty)
+        local rows = math.max(4, math.floor(w * side.len / sp + 0.5))
+        item.tails[i] = cloth.new({ x = wx, y = wy, cols = cols, rows = rows, spacing = sp, pin = 'top',
+            pinBody = torso, fabric = kind.fabric, fabricScale = 0.35, collide = false,
+            outline = OUTLINE, outlineWidth = math.max(1.5, w * 0.025), substeps = 10, bend = 0.08 })
+    end
+end
+
 ---------------------------------------------------------------- items
 
 local function spot(item, inst)
+    if item.sort == 'scarf' then
+        local torso, x, y, w = scarfOn(inst)
+        if not torso then return nil end
+        local wx, wy = torso:getWorldPoint(x, y)
+        return torso, wx, wy, torso:getAngle(), math.max(60, w) * state.wearables.settings.snap
+    end
     if item.sort == 'hat' then
         local kind = HATS[item.kind or 1]
         local top = topHat(inst)
@@ -546,14 +610,15 @@ local function wornBy(b, sort, inst)
 end
 
 local function addItem(b, sort, x, y, kindIndex)
-    local list = sort == 'pants' and PANTS or sort == 'hat' and HATS or KINDS
-    local key = sort == 'pants' and 'nextPants' or sort == 'hat' and 'nextHat' or 'nextGlasses'
+    local list = ({ pants = PANTS, hat = HATS, scarf = SCARVES })[sort] or KINDS
+    local key = ({ pants = 'nextPants', hat = 'nextHat', scarf = 'nextScarf' })[sort] or 'nextGlasses'
     kindIndex = kindIndex or b[key] or 1 -- a state from before a sort was added lacks its key
     b[key] = kindIndex % #list + 1
     local kind = list[kindIndex]
     local w, h = 150, 110 -- pants
     if sort == 'glasses' then w, h = E0 + kind.w, kind.h * 0.8 end
     if sort == 'hat' then w, h = HAT_LOOSE * 0.9, HAT_LOOSE * 0.5 end
+    if sort == 'scarf' then w, h = SCARF_LOOSE, SCARF_LOOSE * 0.22 end
     local thing = objectManager.addThing('rectangle', { x = x, y = y, width = w, height = h,
         bodyType = 'dynamic', label = sort, density = 0.3 })
     if not thing then return end
@@ -623,6 +688,7 @@ local function stock(b)
     for i = 1, #KINDS do addItem(b, 'glasses', -900 + (i - 1) * 450, -200, i) end
     for i = 1, #PANTS do addItem(b, 'pants', -700 + (i - 1) * 450, -100, i) end
     for i = 1, #HATS do addItem(b, 'hat', -1100 + (i - 1) * 400, -300, i) end
+    for i = 1, #SCARVES do addItem(b, 'scarf', -800 + (i - 1) * 500, -400, i) end
 end
 
 ---------------------------------------------------------------- hooks
@@ -658,6 +724,7 @@ function s.update(dt)
         glasses = { mipos = mipos, spot = spot, grip = set.grip },
         pants = { mipos = mipos, spot = spot, grip = set.pantsGrip },
         hat = { mipos = mipos, spot = spot, grip = set.hatGrip or 1100 },
+        scarf = { mipos = mipos, spot = spot, grip = set.scarfGrip or 2000 },
     }
     for _, opts in pairs(optsFor) do
         opts.taken = function(item, inst) return wornBy(b, item.sort, inst) ~= nil end
@@ -673,6 +740,11 @@ function s.update(dt)
         local knocked = wearables.update(item, dt, opts)
         if item.sort == 'hat' and item.joint and not item.stackSet then
             item.stackBelow, item.stackSet = topHat(item.wearer), true
+        end
+        if item.sort == 'scarf' then
+            if item.joint and not item.tails then makeTails(item) end
+            if not item.joint then item.tails = nil end
+            for _, c in ipairs(item.tails or {}) do cloth.update(c, dt) end
         end
         if knocked then print(string.format('[wearables] %s off: jolt %d', item.sort, knocked)) end
     end
@@ -704,6 +776,8 @@ function s.onKeyPress(key)
     elseif key == 'u' then addItem(b, 'pants', mx, my)
     elseif key == 'h' then addItem(b, 'hat', mx, my)
     elseif key == 'y' then dressAll(b, 'hat')
+    elseif key == 'k' then addItem(b, 'scarf', mx, my)
+    elseif key == 'j' then dressAll(b, 'scarf')
     elseif key == 'm' then spawnMipo(b, mx, my)
     elseif key == 'r' then stock(b)
     elseif key == 'p' then b.showPanel = not b.showPanel
@@ -991,6 +1065,72 @@ local function drawHatOn(item)
     love.graphics.pop()
 end
 
+-- a polygon filled with a cloth fabric (tiled, `scale` px a pattern), outlined
+local function drawFabricPoly(fabric, poly, ol, scale)
+    local img = cloth.fabric(fabric)
+    local x0, y0, x1, y1 = math.huge, math.huge, -math.huge, -math.huge
+    for i = 1, #poly, 2 do
+        x0, x1 = math.min(x0, poly[i]), math.max(x1, poly[i])
+        y0, y1 = math.min(y0, poly[i + 1]), math.max(y1, poly[i + 1])
+    end
+    love.graphics.setColor(OUTLINE)
+    love.graphics.setLineWidth(ol * 2)
+    love.graphics.setLineJoin('bevel')
+    love.graphics.polygon('line', poly)
+    love.graphics.stencil(function() fillPoly(poly) end, 'replace', 1)
+    love.graphics.setStencilTest('greater', 0)
+    love.graphics.setColor(1, 1, 1, 1)
+    local iw, ih = img:getDimensions()
+    local k = scale / iw
+    local quad = love.graphics.newQuad(0, 0, (x1 - x0) / k, (y1 - y0) / k, iw, ih)
+    love.graphics.draw(img, quad, x0, y0, 0, k, k)
+    love.graphics.setStencilTest()
+    love.graphics.setLineWidth(1)
+end
+
+-- a rounded band, cx cy its middle
+local function band(cx, cy, w, h)
+    local pts = {}
+    for i = 0, 27 do
+        local a = i / 28 * math.pi * 2
+        local c, sn = math.cos(a), math.sin(a)
+        pts[#pts + 1] = cx + (c < 0 and -1 or 1) * math.abs(c) ^ 0.5 * w / 2
+        pts[#pts + 1] = cy + (sn < 0 and -1 or 1) * math.abs(sn) ^ 0.5 * h / 2
+    end
+    return pts
+end
+
+-- a worn scarf: the tails (cloth, in the world), then the wrap round the neck and the knot over them
+local function drawScarfOn(item)
+    local kind = SCARVES[item.kind]
+    for _, c in ipairs(item.tails or {}) do cloth.draw(c) end
+    local torso, nx, ny, w = scarfOn(item.wearer)
+    if not torso then return end
+    local scale = w * 0.3
+    onBody(torso, function()
+        local tall = scarfTall()
+        drawFabricPoly(kind.fabric, band(nx, ny + w * 0.03 * tall, w, w * 0.3 * tall), w * 0.02, scale)
+        drawFabricPoly(kind.fabric, band(nx - w * 0.02, ny + w * 0.15 * tall, w * 0.34, w * 0.2 * tall),
+            w * 0.02, scale)
+    end)
+end
+
+local function drawLooseScarf(item)
+    local kind = SCARVES[item.kind]
+    onBody(item.body, function()
+        local L, H = SCARF_LOOSE, SCARF_LOOSE * 0.22
+        drawFabricPoly(kind.fabric, band(0, 0, L, H), 2.5, L * 0.12)
+        love.graphics.setColor(kind.base)
+        love.graphics.setLineWidth(3)
+        for i = -2, 2 do -- fringes
+            local y = i * H * 0.16
+            love.graphics.line(-L / 2 - 2, y, -L / 2 - 14, y)
+            love.graphics.line(L / 2 + 2, y, L / 2 + 14, y)
+        end
+        love.graphics.setLineWidth(1)
+    end)
+end
+
 local function drawLooseHat(item)
     onBody(item.body, function()
         love.graphics.translate(0, HAT_LOOSE * 0.25)
@@ -1031,6 +1171,9 @@ function s.drawBelow()
         if item.sort == 'pants' and item.joint and item.wearer then
             splits[#splits + 1] = { z = (item.wearer.zGroupOffset or 0) * 1000 + PANTS_Z,
                 fn = function() drawPantsOn(item) end }
+        elseif item.sort == 'scarf' and item.joint and item.wearer then
+            splits[#splits + 1] = { z = (item.wearer.zGroupOffset or 0) * 1000 + SCARF_Z,
+                fn = function() drawScarfOn(item) end }
         elseif item.sort == 'hat' and item.joint and item.wearer then
             splits[#splits + 1] = { z = (item.wearer.zGroupOffset or 0) * 1000 + HAT_Z + hatLevel(item) * 0.01,
                 fn = function() drawHatOn(item) end }
@@ -1077,6 +1220,8 @@ function s.draw()
             if not item.joint then drawLoosePants(item) end
         elseif item.sort == 'hat' then
             if not item.joint then drawLooseHat(item) end
+        elseif item.sort == 'scarf' then
+            if not item.joint then drawLooseScarf(item) end
         else
             local wx, wy, a, sx, sy
             if item.host and not item.host:isDestroyed() then
@@ -1105,7 +1250,8 @@ function s.drawUI()
     ui.startFrame()
     local BH, pad, w = 34, 6, 400
     local rows = { { 'lens', -0.5, 3 }, { 'bend', 0, 3 }, { 'shine', 0, 2 }, { 'glint', 0, 2 },
-        { 'grip', 100, 3000 }, { 'pantsGrip', 100, 3000 }, { 'hatGrip', 100, 3000 }, { 'snap', 0.2, 2 } }
+        { 'grip', 100, 3000 }, { 'pantsGrip', 100, 3000 }, { 'hatGrip', 100, 3000 },
+        { 'scarfGrip', 100, 4000 }, { 'scarfTall', 0.5, 3 }, { 'snap', 0.2, 2 } }
     local h = (BH + pad) * (#rows + 2) + pad + 24
     local _, sh = love.graphics.getDimensions()
     local x0, y0 = 20, sh - h - 20
@@ -1121,7 +1267,7 @@ function s.drawUI()
         local x, y = ui.nextLayoutPosition(layout, w - 20, BH)
         ui.label(x, y, string.format('jolt now %d px/s (off over grip)', math.floor(b.peak)))
         x, y = ui.nextLayoutPosition(layout, w - 20, BH)
-        ui.label(x, y, 'g u h: glasses pants hat  w n y: on all  m o r p')
+        ui.label(x, y, 'g u h k: glasses pants hat scarf  w n y j: all on')
     end)
 end
 
