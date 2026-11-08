@@ -51,7 +51,8 @@ local PANTS = {
 }
 -- hats, drawn in units of their width at the brim (y = 0 the brim, up is negative): parts in
 -- draw order, a polygon or a circle each. sink: how far down the head the brim sits (a part of the
--- head's height); fit: the width at the brim over the head's width there
+-- head's height); fit: the width at the brim over the head's width there. Hats stack: topH, topW
+-- the top a next hat sits on (its height and width, in the hat's units)
 local function arc(cx, cy, rx, ry, a0, a1, n)
     local pts = {}
     for i = 0, n do
@@ -63,29 +64,29 @@ local function arc(cx, cy, rx, ry, a0, a1, n)
 end
 local function rect(x0, y0, x1, y1) return { x0, y0, x1, y0, x1, y1, x0, y1 } end
 local HATS = {
-    { name = 'beanie', sink = 0.22, fit = 1.08, parts = {
+    { name = 'beanie', topH = 0.8, topW = 0.5, sink = 0.22, fit = 1.08, parts = {
         { poly = arc(0, -0.08, 0.52, 0.6, math.pi, 2 * math.pi, 20), color = { 0.85, 0.25, 0.25 } },
         { poly = rect(-0.55, -0.18, 0.55, 0.04), color = { 0.65, 0.15, 0.18 } },
         { circle = { 0, -0.74, 0.13 }, color = { 0.97, 0.95, 0.9 } } } },
-    { name = 'top hat', sink = 0.07, fit = 0.95, parts = {
+    { name = 'top hat', topH = 0.95, topW = 0.72, sink = 0.07, fit = 0.95, parts = {
         { poly = rect(-0.36, -0.95, 0.36, -0.03), color = { 0.16, 0.14, 0.16 } },
         { poly = rect(-0.36, -0.24, 0.36, -0.1), color = { 0.8, 0.15, 0.2 } },
         { poly = rect(-0.62, -0.06, 0.62, 0.03), color = { 0.16, 0.14, 0.16 } } } },
-    { name = 'cap', sink = 0.15, fit = 1.04, parts = {
+    { name = 'cap', topH = 0.5, topW = 0.55, sink = 0.15, fit = 1.04, parts = {
         { poly = { 0.25, -0.06, 0.9, -0.01, 0.9, 0.05, 0.25, 0.05 }, color = { 0.15, 0.32, 0.7 } },
         { poly = arc(0, 0.02, 0.5, 0.52, math.pi, 2 * math.pi, 20), color = { 0.25, 0.45, 0.9 } },
         { circle = { 0, -0.5, 0.05 }, color = { 0.15, 0.32, 0.7 } } } },
-    { name = 'party', sink = 0.03, fit = 0.75, parts = {
+    { name = 'party', topH = 1.3, topW = 0.2, sink = 0.03, fit = 0.75, parts = {
         { poly = { -0.45, 0, 0.45, 0, 0, -1.3 }, color = { 0.98, 0.82, 0.25 } },
         { circle = { -0.15, -0.25, 0.07 }, color = { 0.95, 0.4, 0.6 } },
         { circle = { 0.18, -0.4, 0.07 }, color = { 0.3, 0.6, 0.95 } },
         { circle = { -0.04, -0.7, 0.06 }, color = { 0.95, 0.4, 0.6 } },
         { circle = { 0, -1.32, 0.11 }, color = { 0.95, 0.4, 0.6 } } } },
-    { name = 'sun hat', sink = 0.12, fit = 1.0, parts = {
+    { name = 'sun hat', topH = 0.48, topW = 0.6, sink = 0.12, fit = 1.0, parts = {
         { poly = arc(0, -0.03, 0.88, 0.14, 0, 2 * math.pi, 28), color = { 0.93, 0.8, 0.45 } },
         { poly = arc(0, -0.03, 0.42, 0.45, math.pi, 2 * math.pi, 16), color = { 0.95, 0.84, 0.5 } },
         { poly = rect(-0.42, -0.17, 0.42, -0.05), color = { 0.95, 0.45, 0.6 } } } },
-    { name = 'crown', sink = 0.04, fit = 0.85, parts = {
+    { name = 'crown', topH = 0.5, topW = 0.85, sink = 0.04, fit = 0.85, parts = {
         { poly = { -0.42, 0, 0.42, 0, 0.48, -0.5, 0.24, -0.26, 0, -0.58, -0.24, -0.26, -0.48, -0.5 },
           color = { 0.98, 0.78, 0.2 } },
         { circle = { -0.22, -0.1, 0.06 }, color = { 0.85, 0.15, 0.2 } },
@@ -94,6 +95,7 @@ local HATS = {
 }
 local HAT_Z = 380 -- in a Mipo's own layers: over the face (250s) and the hair (220), under the arms (402)
 local HAT_LOOSE = 170 -- a loose hat's width
+local HAT_STACK = 6   -- hats on one head at most
 local PANTS_Z = 302 -- in a Mipo's own layers: over the legs (300, 301), under the nose (350), feet (399), arms (402)
 local OUTLINE = { 0.12, 0.1, 0.12 }
 local GROUND = { x = 0, w = 4200, h = 140 } -- its top at y = 0
@@ -462,11 +464,65 @@ local function hatOn(inst, kind)
     return head, (x0 + x1) / 2, y, math.max(x1 - x0, widest * w * 0.5) * kind.fit
 end
 
+-- Hats stack (Nikki 2026-11-08): a worn hat sits on the head (stackBelow nil) or on the hat
+-- below it, narrower, its brim sunk a little into that one's top.
+local function wornHats(inst)
+    local out = {}
+    for _, item in ipairs(state.wearables.items) do
+        if item.sort == 'hat' and item.joint and item.wearer == inst and item.stackSet then out[#out + 1] = item end
+    end
+    return out
+end
+
+-- the hat on top of this Mipo's stack, or nil
+local function topHat(inst)
+    local hats = wornHats(inst)
+    for _, h in ipairs(hats) do
+        local covered = false
+        for _, other in ipairs(hats) do
+            if other.stackBelow == h then covered = true end
+        end
+        if not covered then return h end
+    end
+end
+
+local function hatLevel(item)
+    local n, below = 0, item.stackBelow
+    while below and n < HAT_STACK do n, below = n + 1, below.stackBelow end
+    return n
+end
+
+-- a worn hat's place: the head, the brim's middle (the head's frame), its width
+local hatPlace
+local function above(below, _kind)
+    local head, x, y, w = hatPlace(below)
+    if not head then return nil end
+    local bk = HATS[below.kind]
+    -- a little narrower than the one below, never much (the first try, its top's width * fit,
+    -- made a tower of four end in a thimble)
+    return head, x, y - (bk.topH - 0.08) * w, w * math.max(0.8, math.min(1, bk.topW + 0.25))
+end
+hatPlace = function(item)
+    local kind = HATS[item.kind]
+    local below = item.stackBelow
+    -- the hat below came off and this one hasn't fallen yet (that's in s.update): nowhere
+    if below then
+        if not below.joint then return nil end
+        return above(below, kind)
+    end
+    if not item.wearer then return nil end
+    return hatOn(item.wearer, kind)
+end
+
 ---------------------------------------------------------------- items
 
 local function spot(item, inst)
     if item.sort == 'hat' then
-        local head, x, y, w = hatOn(inst, HATS[item.kind or 1])
+        local kind = HATS[item.kind or 1]
+        local top = topHat(inst)
+        if top and hatLevel(top) >= HAT_STACK - 1 then return nil end
+        local head, x, y, w
+        if top then head, x, y, w = above(top, kind) else head, x, y, w = hatOn(inst, kind) end
         if not head then return nil end
         local wx, wy = head:getWorldPoint(x, y)
         return head, wx, wy, head:getAngle(), math.max(60, w) * state.wearables.settings.snap
@@ -511,6 +567,7 @@ end
 
 local function putOn(item, inst)
     local host, wx, wy, a = spot(item, inst)
+    if host and item.sort == 'hat' then item.stackBelow, item.stackSet = topHat(inst), true end
     if host then
         wearables.wear(item, host, wx, wy, a)
         item.wearer = inst
@@ -520,7 +577,7 @@ end
 -- an item of this sort on every Mipo without one: a free one if there is, else a new one
 local function dressAll(b, sort)
     for _, inst in ipairs(allMipos()) do
-        if not wornBy(b, sort, inst) and spot({ sort = sort }, inst) then
+        if (sort == 'hat' or not wornBy(b, sort, inst)) and spot({ sort = sort }, inst) then
             local free
             for _, item in ipairs(aliveItems(b)) do
                 if item.sort == sort and not item.joint and not wearables.held(item) then free = item; break end
@@ -606,8 +663,32 @@ function s.update(dt)
         opts.taken = function(item, inst) return wornBy(b, item.sort, inst) ~= nil end
     end
     for _, item in ipairs(b.items) do
-        local knocked = wearables.update(item, dt, optsFor[item.sort])
+        local opts = optsFor[item.sort]
+        if item.sort == 'hat' then
+            -- one goes on the stack's top; higher ones come off easier (the tower topples from the top)
+            local grip = (set.hatGrip or 1100) * math.max(0.4, 1 - 0.12 * hatLevel(item))
+            opts = { mipos = mipos, spot = spot, grip = grip, taken = function() return false end }
+            if not item.joint then item.stackBelow, item.stackSet = nil, nil end
+        end
+        local knocked = wearables.update(item, dt, opts)
+        if item.sort == 'hat' and item.joint and not item.stackSet then
+            item.stackBelow, item.stackSet = topHat(item.wearer), true
+        end
         if knocked then print(string.format('[wearables] %s off: jolt %d', item.sort, knocked)) end
+    end
+    -- a hat whose hat below came off falls too
+    local falling = true
+    while falling do
+        falling = false
+        for _, item in ipairs(b.items) do
+            if item.sort == 'hat' and item.joint and item.stackBelow and not item.stackBelow.joint then
+                wearables.takeOff(item, true)
+                item.stackBelow, item.stackSet = nil, nil
+                falling = true
+            end
+        end
+    end
+    for _, item in ipairs(b.items) do
         if item.joint and item.vel and item.vel[1] then
             local v, old = item.vel[1], item.vel[#item.vel]
             b.peak = math.max(b.peak * 0.995, math.sqrt((v[1] - old[1]) ^ 2 + (v[2] - old[2]) ^ 2))
@@ -898,7 +979,7 @@ end
 -- a worn hat, on its head (a potato head's spine torso1: carried along the bend, as a face is)
 local function drawHatOn(item)
     local kind = HATS[item.kind]
-    local head, x, y, w = hatOn(item.wearer, kind)
+    local head, x, y, w = hatPlace(item)
     if not head then return end
     local bend = spineSkin.transformAt(head, x, y)
     love.graphics.push()
@@ -951,7 +1032,7 @@ function s.drawBelow()
             splits[#splits + 1] = { z = (item.wearer.zGroupOffset or 0) * 1000 + PANTS_Z,
                 fn = function() drawPantsOn(item) end }
         elseif item.sort == 'hat' and item.joint and item.wearer then
-            splits[#splits + 1] = { z = (item.wearer.zGroupOffset or 0) * 1000 + HAT_Z,
+            splits[#splits + 1] = { z = (item.wearer.zGroupOffset or 0) * 1000 + HAT_Z + hatLevel(item) * 0.01,
                 fn = function() drawHatOn(item) end }
         end
     end

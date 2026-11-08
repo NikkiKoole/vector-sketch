@@ -5,7 +5,7 @@
 -- A standing Mipo's parts jitter: the weld's reaction force per kilo spiked as high as a throw's
 -- (92k vs 88-127k, 2026-11-08), so the jolt is a speed change over a few steps, not a force.
 --
--- item: { body = <love body>, cooldown, joint, host, wearer, near, settle, vel, peak } (this file keeps
+-- item: { body = <love body>, cooldown, joint, host, wearer, near, settle, vel, peak, passGroup } (this file keeps
 -- those fields). spot(item, instance) -> host body, wx, wy, angle, reach (px), or nil: where the
 -- item goes on that Mipo and how near counts. Worn items touch nothing (a neighbour's head bumping
 -- them tore them off) but stay grabbable (the pointer skips sensors, so they aren't sensors).
@@ -41,12 +41,48 @@ function lib.wear(item, host, wx, wy, angle)
     item.settle = lib.SETTLE
 end
 
--- pop: a little hop and spin, as if knocked off
+local function setGroup(item, group)
+    for _, fixture in ipairs(item.body:getFixtures()) do fixture:setGroupIndex(group) end
+end
+
+-- Does the item still touch a part of the Mipo whose collision group it's in? (boxes found by
+-- their bounding boxes, then the shapes' real distance: a box alone kept a hat lying by the feet
+-- passing through that Mipo for good)
+local function stillInside(item)
+    local own = item.body:getFixtures()
+    local x0, y0, x1, y1 = math.huge, math.huge, -math.huge, -math.huge
+    for _, fixture in ipairs(own) do
+        local a, b, c, d = fixture:getBoundingBox()
+        x0, y0, x1, y1 = math.min(x0, a), math.min(y0, b), math.max(x1, c), math.max(y1, d)
+    end
+    local hit = false
+    item.body:getWorld():queryBoundingBox(x0, y0, x1, y1, function(fixture)
+        if fixture:getBody() ~= item.body and fixture:getGroupIndex() == item.passGroup and not fixture:isSensor() then
+            for _, mine in ipairs(own) do
+                if love.physics.getDistance(mine, fixture) < 1 then
+                    hit = true
+                    return false
+                end
+            end
+        end
+        return true
+    end)
+    return hit
+end
+
+-- pop: a little hop and spin, as if knocked off. It comes off inside its Mipo (a hat in the
+-- head, glasses on the face): back to colliding there, Box2D stuck it in the face (Nikki
+-- 2026-11-08), so it stays in that Mipo's collision group (never touching it) until it's clear.
 function lib.takeOff(item, pop)
     if item.joint and not item.joint:isDestroyed() then item.joint:destroy() end
+    local group = item.wearer and item.wearer.groupIndex
     item.joint, item.host, item.wearer = nil, nil, nil
     if not item.body:isDestroyed() then
         setWorn(item, false)
+        if group and group < 0 then
+            setGroup(item, group)
+            item.passGroup = group
+        end
         if pop then
             local vx, vy = item.body:getLinearVelocity()
             item.body:setLinearVelocity(vx + (love.math.random() - 0.5) * 300, vy - 250)
@@ -102,6 +138,10 @@ function lib.update(item, dt, opts)
             end
         end
         return
+    end
+    if item.passGroup and not stillInside(item) then
+        setGroup(item, 0)
+        item.passGroup = nil
     end
     item.cooldown = math.max(0, (item.cooldown or 0) - dt)
     item.near = nil

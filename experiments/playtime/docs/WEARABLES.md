@@ -16,6 +16,9 @@ nerd (rounded square, thick black, big magnified eyes), sun (dark), heart (pink)
   eye height → height; the pupils' `ox/oy/eyeH`, so a facing turn narrows them). While held over a
   face a ring says "let go". Worn, they touch nothing (`setMask` all: a neighbour's head bumping
   them tore them off) but the pointer can still grab them.
+- **Coming off inside the Mipo** (a hat in the head, glasses on the face): colliding again at once,
+  Box2D stuck it in the face (Nikki 2026-11-08). Now it stays in that Mipo's collision group until
+  its shapes are clear of the Mipo's (`love.physics.getDistance`), for every sort.
 - **Off**: grab them (pointer) or a jolt: the face's speed changing by more than `grip` px/s over
   6 steps (~0.1 s). Measured 2026-11-08: standing Mipos 100-1100, a throw and landing 1450-1750,
   default 1300. The weld's reaction force per kilo was tried first and dropped: a standing Mipo's
@@ -55,6 +58,11 @@ top of a head and it goes on; `hatGrip` (default 1100: hats come off easier than
   (`spineSkin.transformAt`, as a face does).
 - Drawn in the Mipo's layers at z +380: over the hair (220), so hair sticks out under and round it
   (Nikki 2026-11-08), the ears (190) behind, the arms (402) in front.
+- **Stacking** (Nikki 2026-11-08): let go of a hat over a hat and it sits on top, up to 6. Each
+  sits on the one below's top (`topH`), its brim sunk a little in, at least 0.8 of its width (the
+  top's width × fit made a tower of four end in a thimble). Higher hats come off easier (grip
+  -12% a level, at least 40%); a hat whose hat below comes off falls too. `y` adds one more to
+  every head.
 - Not yet: ears in front of a hat by kind (a beanie with ears poking through), lobes on a potato
   head (the hat doesn't follow them), the cap's bill always points right.
 
@@ -64,8 +72,9 @@ Steps:
       hole as its own mask) to replace the greybox lines
 - [ ] WR3. Cost on the phone: the screen canvas per frame (`./playtime.sh bench device wearables`);
       without it, lenses could tint and glint only
-- [ ] WR4. Nikki plays with the hats (built 2026-11-08): the sit, the sizes, the grip. Then ears
-      in front by kind, the cap's bill the way the Mipo faces
+- [x] WR4. Hats, stacking (Nikki 2026-11-08: "hats feel nice")
+- [ ] WR8. Hat leftovers: ears in front by kind, the cap's bill the way the Mipo faces, a soft
+      potato head's lobes
 - [ ] WR5. A headscarf: drawn layer hugging the head + cloth ends (CLOTH.md pins riding a body)
 - [ ] WR6. Underpants: Nikki plays with them (the cut, the waist heights, the drop on the hips).
       Soft torsos done 2026-11-08
