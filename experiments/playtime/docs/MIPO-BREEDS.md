@@ -205,6 +205,9 @@ hair, for now).
   ~0.7 ms at 20 Mipos (by drawable kind with 5 on screen: patches ~30 us a face, the clip ~19 us a
   pupil). The mouth hole ~50 us a mouth over the plain fill (mostly sending its outline to the
   shader each frame), ~1 ms at 20: fewer outline points if it's ever needed. Kept, all three.
+  Since measured: the pupil clip no longer cuts the eye's outline out of its stencil (that showed
+  the eye's white through the line's soft edge, a white glare on the pupil's cut edge); it clips to
+  the mask and draws the eye's outline again over the pupil, one more picture a pupil. Not benched.
 
 ## Open questions
 

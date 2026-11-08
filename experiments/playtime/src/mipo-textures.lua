@@ -365,7 +365,7 @@ local function placeEyes(body, face, box)
             ox = side.x, oy = box.eyeY, w = eyeW * pupil.wMul, h = eyeH * pupil.hMul, mirror = side.mirror,
             zOffset = FACE_Z.pupil, isEye = true, eyeW = eyeW, eyeH = eyeH,
             eyeMaskURL = eyeName and (eyeName .. '-mask.png'),
-            eyeMirror = side.mirror, eyeRot = side.rot, lookAtMouse = eye.lookAtMouse,
+            eyeMirror = side.mirror, eyeRot = side.rot, eyeLineHex = eye.bgHex, lookAtMouse = eye.lookAtMouse,
         }, textureNames.part('pupil', pupil.shape), pupil.bgHex, pupil.fgHex))
     end
 end

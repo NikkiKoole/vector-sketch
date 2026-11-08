@@ -844,21 +844,33 @@ local function endClip(clip)
     else love.graphics.setStencilTest() end
 end
 
--- A pupil drawn only inside its eye's white, not over the eye's outline: the eye's mask (white where
--- the white is) less its outline, placed as the eye is drawn (its turn, tilt, mirror and blink).
+-- A pupil drawn only inside its eye's white: clipped to the eye's mask (white where the white is),
+-- placed as the eye is drawn (its turn, tilt, mirror and blink); then the eye's outline is drawn
+-- again over it (redrawEyeLine), so the line's soft inner edge lies over the pupil. Cutting the
+-- outline out of the stencil instead left a hole where the eye's white showed through the line's
+-- see-through edge: a white glare along the pupil's cut edge (2026-11-08).
 -- nil: no clip (no eye white, a mask picture missing, no stencil).
+local eyeLine = {}
 local function clipToEye(extra, body)
     local mask, mw, mh = getLoveImage('textures/' .. extra.eyeMaskURL)
     if not mask then return nil end
-    local line, lw, lh = getLoveImage('textures/' .. (extra.eyeMaskURL:gsub('%-mask%.png$', '.png')))
     local thing = utils.thingOf(body)
     local eyesOpen = (thing and thing.eyesOpen) or 1
     local wx, wy = body:getWorldPoint(extra.ox or 0, extra.oy or 0) -- the eye's centre (before the gaze)
     local angle = body:getAngle() + (extra.eyeRot or 0)
     local w, h = extra.eyeW * (extra.eyeMirror and -1 or 1), extra.eyeH * eyesOpen
+    eyeLine.x, eyeLine.y, eyeLine.angle, eyeLine.w, eyeLine.h = wx, wy, angle, w, h
     return stencilInside(
-        function() love.graphics.draw(mask, wx, wy, angle, w / mw, h / mh, mw / 2, mh / 2) end,
-        line and function() love.graphics.draw(line, wx, wy, angle, w / lw, h / lh, lw / 2, lh / 2) end)
+        function() love.graphics.draw(mask, wx, wy, angle, w / mw, h / mh, mw / 2, mh / 2) end)
+end
+
+-- The eye's outline over its pupil, where clipToEye last placed the eye.
+local function redrawEyeLine(extra)
+    local line, lw, lh = getLoveImage('textures/' .. (extra.eyeMaskURL:gsub('%-mask%.png$', '.png')))
+    if not line then return end
+    love.graphics.setColor(color.hexToColor(extra.eyeLineHex or '000000ff'))
+    love.graphics.draw(line, eyeLine.x, eyeLine.y, eyeLine.angle, eyeLine.w / lw, eyeLine.h / lh, lw / 2, lh / 2)
+    love.graphics.setColor(1, 1, 1, 1)
 end
 
 -- The skin's picture is drawn on a fan over its corners (ribbon drawSquishableHairOver): the same fan
@@ -1019,6 +1031,7 @@ local function drawDecal(d)
             end
         end
         endClip(clip)
+        if clip then redrawEyeLine(extra) end
     end
 end
 
