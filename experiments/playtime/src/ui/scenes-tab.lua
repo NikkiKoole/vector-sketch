@@ -63,7 +63,7 @@ local function tile(scene, x, y, w, imgH, picked)
     else
         love.graphics.setColor(0, 0, 0, 0.15)
         love.graphics.rectangle('fill', x + 4, y + 4, w - 8, imgH - 4)
-        local text = scene.scriptOnly and 'script only' or 'no picture'
+        local text = scene.blank and 'start fresh' or scene.scriptOnly and 'script only' or 'no picture'
         ui.label(x + 10, y + imgH / 2 - ui.fontHeight / 2, fit(text, w - 20), DIM)
     end
     love.graphics.setColor(1, 1, 1, 1)

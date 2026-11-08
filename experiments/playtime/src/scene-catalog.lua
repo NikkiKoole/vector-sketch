@@ -37,6 +37,7 @@ end
 
 -- For scenes whose script doesn't say (or that have none).
 local NOTES = {
+    empty = 'nothing on it, to start something new', -- saving it goes to 'untitled' (src/scene-loader.lua)
     bakery = 'a room behind a door (worlds and doors)',
     treehouse = 'a room behind a door (worlds and doors)',
     overworld = 'the overworld: doors into the rooms (docs/WORLDS-AND-DOORS.md)',
@@ -58,6 +59,7 @@ local FOLDER_NOTES = { -- a scene there without a line of its own still says wha
     tech = 'one engine piece each',
 }
 lib.GROUP_ORDER = { 'rooms', 'spikes', 'tests', 'tech' }
+lib.EMPTY = 'empty' -- scripts/spikes/empty: a scene with nothing on it, to start from
 
 -- A script's first comment line, its 'name:' / 'name.playtime.lua —' prefix dropped.
 local function firstComment(path)
@@ -116,6 +118,7 @@ function lib.list()
         entry.note = (entry.lua and firstComment(entry.luaPath)) or NOTES[entry.id] or ''
         entry.group = groupOf(entry.folder, entry.note)
         entry.scriptOnly = entry.lua and not entry.json
+        entry.blank = entry.id == lib.EMPTY
         out[#out + 1] = entry
     end
     local rank = {}
@@ -124,6 +127,7 @@ function lib.list()
         local ra, rb = rank[a.group] or 99, rank[b.group] or 99
         if ra ~= rb then return ra < rb end
         if a.group ~= b.group then return a.group < b.group end
+        if a.blank ~= b.blank then return a.blank end -- the empty scene first in its group
         return a.id < b.id
     end)
     return out

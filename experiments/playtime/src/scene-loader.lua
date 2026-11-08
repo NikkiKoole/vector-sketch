@@ -74,6 +74,7 @@ end
 function lib.loadScriptAndScene(id)
     state.scene.id = id -- the room you're in (src/doors.lua)
     state.editorPreferences.saveName = id -- saving it again writes this scene (its file, src/repo-files.lua)
+    if id == 'empty' then state.editorPreferences.saveName = 'untitled' end -- a fresh start keeps empty empty
     local catalog = require('src.scene-catalog') -- the scene's folder (scripts/rooms/, spikes/, ...)
     local jsonPath = '/' .. (catalog.pathOf(id) or ('scripts/' .. id .. FEXT.SCENE_JSON))
     local luaPath = '/' .. (catalog.pathOf(id, FEXT.SCENE_LUA) or ('scripts/' .. id .. FEXT.SCENE_LUA))
