@@ -281,16 +281,28 @@ describe('dna-defaults', function()
             assert.matches('expected number, got string', issues[1].issue)
         end)
 
+        -- a complete creation: a copy of the defaults, so new creation fields don't need the tests changed
+        local function completeCreation()
+            local creation = {}
+            for k, v in pairs(D.creation) do creation[k] = v end
+            return creation
+        end
+
+        it('the creation defaults cover the schema', function()
+            for key in pairs(D.creationSchema) do assert.is_not_nil(D.creation[key], key) end
+        end)
+
         it('validateCreation passes for complete creation', function()
-            local creation = { isPotatoHead = false, torsoSegments = 1, neckSegments = 0, noseSegments = 0, noseMode = 'overlay',
-                torsoSpine = false, spineBend = 15, spineSway = 0.3 }
+            local creation = completeCreation()
             local issues = D.validateCreation(creation)
             assert.same({}, issues)
         end)
 
         it('validateCreation catches missing fields', function()
             local issues = D.validateCreation({})
-            assert.equal(8, #issues)
+            local fields = 0
+            for _ in pairs(D.creationSchema) do fields = fields + 1 end
+            assert.equal(fields, #issues)
             local paths = {}
             for _, issue in ipairs(issues) do paths[issue.path] = true end
             assert.is_true(paths['creation.torsoSpine'])
@@ -302,8 +314,8 @@ describe('dna-defaults', function()
         end)
 
         it('validateCreation catches type mismatches', function()
-            local creation = { isPotatoHead = 'yes', torsoSegments = 1, neckSegments = 0, noseSegments = 0, noseMode = 'overlay',
-                torsoSpine = false, spineBend = 15, spineSway = 0.3 }
+            local creation = completeCreation()
+            creation.isPotatoHead = 'yes'
             local issues = D.validateCreation(creation)
             assert.equal(1, #issues)
             assert.equal('creation.isPotatoHead', issues[1].path)
