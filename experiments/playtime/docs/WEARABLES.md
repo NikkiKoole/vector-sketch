@@ -66,7 +66,11 @@ top of a head and it goes on; `hatGrip` (default 1100: hats come off easier than
 - Not yet: ears in front of a hat by kind (a beanie with ears poking through), lobes on a potato
   head (the hat doesn't follow them), the cap's bill always points right.
 
-## Scarves (2026-11-08)
+## Scarves (2026-11-08) — parked
+
+Parked, tried 2026-11-08: cloth ribbon tails as clothing disliked (Nikki: "i dont really like the
+ibbons as clothing"). The code stays (`k` a scarf, `j` on every Mipo); the scene no longer stocks
+them. If picked up: drawn tails that bend with the torso (as the pants' legs), or the wrap alone.
 
 Stripes, dots, gingham, velvet (the cloth spike's fabrics). Let go of one over the neck (the head's
 joint on torso1) and it goes on; `scarfGrip` (default 2000: scarves stay on). Not on potato heads
@@ -80,6 +84,36 @@ joint on torso1) and it goes on; `scarfGrip` (default 2000: scarves stay on). No
   wrap's and knot's first heights; the tails hang from the lower knot (made when it goes on).
 - Not yet: the tails pass through the Mipo (collide off), potato heads.
 
+## Headscarves (2026-11-08)
+
+Teal, rose, cream (the cloth's new `plain` fabric, tinted), dots, gingham. Let go of one over a
+head and it goes on; `headscarfGrip` (default 2200). Not on potato heads (the hood would cover
+the whole Mipo).
+- The hood: the head's own mask drawn `hood` (1.22) times bigger, an oval cut out round the face
+  (from the eyes, brows, nose and mouth decals), filled with the fabric, its edges dark (a shader:
+  the mask, the hole, the edge, in one). Drawn at z +230: over the hair (220) and the ears (190),
+  under the face (250..254), so the eyes and mouth show in the opening.
+- The drape: one cloth sheet (9 columns, not ribbons) pinned along a line under the hood to the
+  head, hanging over the shoulders, drawn under the hood. One try (Nikki 2026-11-08), after the
+  scarves' ribbon tails were disliked.
+- Nikki 2026-11-08: "looks promising". A flipped head (`dims.sy < 0`) had its hood upside down: the
+  mask was mirrored by a negative scale and again by the shader's flip; now only the shader (the
+  pants' flat path had the same).
+- A randomized Mipo: an item whose body went goes back on at its spot on the new one (was: dropped);
+  a drape (and the parked tails) is made again when the head or its picture changes.
+
+## Shirts (2026-11-08)
+
+T-shirt (yellow), breton (horizontal stripes), tank top (no sleeves, a wider neck), sweater (sleeves
+to the elbow, dots). Drop one on the chest; `shirtGrip` (default 2200).
+- The body is the torso's skin from its top (a potato head: below the mouth) to the `hem`, a neck
+  hole where the head hangs (an oval cut in the same shader as the rows), a hem band; drawn at z
+  +305, over the pants (untucked), bending with soft and spine torsos as the pants do.
+- Sleeves: tubes down the upper arms (the pants legs' code, now `tube`), drawn at z +404, over the
+  arms (402, 403), under the hands.
+- The cut shader now outlines every cut edge (the rows, the hole), the pants' waist too.
+- A headscarf's drape (z 230) goes under a shirt.
+
 Steps:
 - [ ] WR1. Nikki plays with the glasses: the fit, the jolt, the lens look. Keep, change or park?
 - [ ] WR2. Drawn frames: scan glasses (front view, outline + mask like the Mipo parts, the lens
@@ -89,8 +123,9 @@ Steps:
 - [x] WR4. Hats, stacking (Nikki 2026-11-08: "hats feel nice")
 - [ ] WR8. Hat leftovers: ears in front by kind, the cap's bill the way the Mipo faces, a soft
       potato head's lobes
-- [ ] WR5. Scarves built 2026-11-08: Nikki plays with them. Then a headscarf: the head's mask grown,
-      a face opening cut out, over hair and ears, a cloth drape behind (on Nikki's first list)
+- [x] WR5. Scarves: built and parked 2026-11-08 (cloth ribbons as clothing disliked)
+- [ ] WR9. Headscarves: Nikki plays with them ("looks promising"); keep the drape or drop it
+- [ ] WR10. Shirts: Nikki plays with them (the hem, the sleeves, the neck hole)
 - [ ] WR6. Underpants: Nikki plays with them (the cut, the waist heights, the drop on the hips).
       Soft torsos done 2026-11-08
 - [x] WR7. The wear/jolt code in `src/wearables.lua` (2026-11-08, with the underpants)

@@ -20,8 +20,12 @@
 -- Scarves wrap the neck (the head's joint on torso1): a band drawn in the Mipo's layers, over the
 -- chin, and two tails of cloth (src/cloth.lua) pinned to torso1 that hang and swing.
 --
--- keys: g a pair of glasses   u underpants   h a hat   k a scarf (each the next kind)   m a Mipo
---       w glasses, n pants, y a hat, j a scarf on every Mipo   o all off   r start over   p the panel
+-- (Scarves are parked: cloth ribbons as clothing, disliked.) Headscarves: the head's own mask drawn
+-- bigger, a face opening cut out (from the eyes, brows, mouth), between the hair (220) and the face
+-- (250): over hair and ears, the face showing; a cloth sheet pinned under it hangs over the shoulders.
+--
+-- keys: g glasses   u underpants   h a hat   b a headscarf   k a scarf (each the next kind)   m a Mipo
+--       w glasses, n pants, y a hat, v a headscarf, j a scarf on every Mipo   o all off   r   p the panel
 
 local s = {}
 
@@ -108,8 +112,32 @@ local SCARVES = {
       len = 1.0 },
     { name = 'velvet', fabric = 'velvet', base = { 0.55, 0.12, 0.18 }, len = 1.4 },
 }
+-- headscarves: a cloth fabric and its tint (plain is white: the tint is the colour)
+local HEADSCARVES = {
+    { name = 'teal', fabric = 'plain', tint = { 0.25, 0.6, 0.62 } },
+    { name = 'rose', fabric = 'plain', tint = { 0.9, 0.55, 0.62 } },
+    { name = 'dots', fabric = 'dots', tint = { 1, 1, 1 } },
+    { name = 'gingham', fabric = 'gingham', tint = { 1, 1, 1 } },
+    { name = 'cream', fabric = 'plain', tint = { 0.95, 0.9, 0.78 } },
+}
+local HEADSCARF_Z = 230 -- over the hair (220) and the ears (190), under the face (250..254)
+local HEADSCARF_LOOSE = 180
 local SCARF_Z = 390 -- over the chin and the pants, under the feet (399) and the arms (402)
 local SCARF_LOOSE = 220
+-- shirts: hem (0 the torso's top .. 1 its bottom), sleeve (how far down the upper arm, 0 none: a
+-- tank top), sleeveW (its width, a part of the torso's), neck (the neck hole's half width, ditto)
+local SHIRTS = {
+    { name = 't-shirt', hem = 0.78, sleeve = 0.45, sleeveW = 0.3, neck = 0.16, base = { 0.98, 0.8, 0.3 },
+      band = { 0.88, 0.66, 0.2 } },
+    { name = 'breton', hem = 0.8, sleeve = 0.55, sleeveW = 0.3, neck = 0.16, base = { 0.97, 0.95, 0.9 },
+      band = { 0.97, 0.95, 0.9 }, pattern = 'hstripes', ink = { 0.2, 0.3, 0.62 } },
+    { name = 'tank top', hem = 0.74, sleeve = 0, neck = 0.26, base = { 0.95, 0.96, 0.98 },
+      band = { 0.82, 0.84, 0.9 } },
+    { name = 'sweater', hem = 0.86, sleeve = 1, sleeveW = 0.34, neck = 0.15, base = { 0.42, 0.66, 0.44 },
+      band = { 0.32, 0.52, 0.34 }, pattern = 'dots', ink = { 0.62, 0.82, 0.6 } },
+}
+local SHIRT_Z = 305  -- over the torso and the pants (302: worn untucked), under the arms (402)
+local SLEEVE_Z = 404 -- over the arms (402, 403), under the hands (500)
 local PANTS_Z = 302 -- in a Mipo's own layers: over the legs (300, 301), under the nose (350), feet (399), arms (402)
 local OUTLINE = { 0.12, 0.1, 0.12 }
 local GROUND = { x = 0, w = 4200, h = 140 } -- its top at y = 0
@@ -119,9 +147,10 @@ local MASK = 128                            -- a lens mask's longer side, in pix
 local function room()
     state.wearables = state.wearables or {
         items = {}, statics = {}, mipos = {}, showPanel = true, peak = 0,
-        nextGlasses = 1, nextPants = 1, nextHat = 1, nextScarf = 1,
+        nextGlasses = 1, nextPants = 1, nextHat = 1, nextScarf = 1, nextHeadscarf = 1, nextShirt = 1,
         settings = { lens = 1, bend = 1, shine = 1, glint = 1, snap = 0.9,
-            grip = 1300, pantsGrip = 1600, hatGrip = 1100, scarfGrip = 2000, scarfTall = 1.6 },
+            grip = 1300, pantsGrip = 1600, hatGrip = 1100, scarfGrip = 2000, scarfTall = 1.6,
+            headscarfGrip = 2200, hood = 1.22, shirtGrip = 2200 },
     }
     return state.wearables
 end
@@ -399,25 +428,71 @@ local function skinOf(torso)
     end
 end
 
--- one tube down an upper leg: from a little above the hip (into the seat) toward the knee
-local function legTube(inst, torso, legName, kind, torsoW)
-    local leg = partBody(inst, legName)
-    if not leg then return nil end
-    local _, _, hx, hy = jointBetween(torso, leg)
-    local knee = partBody(inst, legName:sub(1, 1) .. 'lleg')
+-- one tube down an upper limb (a leg, an arm): from a little above where it hangs from `parent`
+-- (into the seat or the shirt) toward its lower part, `part` of the way, `half` wide each side,
+-- the end `flare` times wider; in the limb's frame
+local function tube(inst, parent, upperName, lowerName, part, half, flare)
+    local upper = partBody(inst, upperName)
+    if not upper then return nil end
+    local _, _, hx, hy = jointBetween(parent, upper)
+    local lower = partBody(inst, lowerName)
     local kx, ky
-    if knee then kx, ky = jointBetween(leg, knee) end
+    if lower then kx, ky = jointBetween(upper, lower) end
     if not (hx and kx) then return nil end
     local dx, dy = kx - hx, ky - hy
     local len = math.max(1, math.sqrt(dx * dx + dy * dy))
     dx, dy = dx / len, dy / len
     local nx, ny = -dy, dx
-    local half = torsoW * kind.legW / 2
     local tx, ty = hx - dx * half * 0.8, hy - dy * half * 0.8
-    local bx, by = hx + dx * len * kind.leg, hy + dy * len * kind.leg
-    local f = half * kind.flare
-    return { body = leg, poly = { tx + nx * half, ty + ny * half, bx + nx * f, by + ny * f,
+    local bx, by = hx + dx * len * part, hy + dy * len * part
+    local f = half * flare
+    return { body = upper, poly = { tx + nx * half, ty + ny * half, bx + nx * f, by + ny * f,
         bx - nx * f, by - ny * f, tx - nx * half, ty - ny * half } }
+end
+
+-- one tube down an upper leg: from a little above the hip (into the seat) toward the knee
+local function legTube(inst, torso, legName, kind, torsoW)
+    return tube(inst, torso, legName, legName:sub(1, 1) .. 'lleg', kind.leg, torsoW * kind.legW / 2, kind.flare)
+end
+
+-- the torso part an upper arm hangs from
+local function shoulderTorso(inst, armName)
+    local arm = partBody(inst, armName)
+    if not arm then return nil end
+    for name, part in pairs(inst.parts) do
+        if name:match('^torso') and part.body and not part.body:isDestroyed() and jointBetween(part.body, arm) then
+            return part.body
+        end
+    end
+end
+
+-- the shirt on this Mipo: the torso's skin from the shoulders (a potato head: below its mouth) to
+-- the hem, a neck hole where the head hangs, a sleeve down each upper arm; or nil
+local function shirtOn(inst, kind)
+    local body = partBody(inst, 'torso1')
+    local skin = body and skinOf(body)
+    if not skin then return nil end
+    local w, h = skin.x1 - skin.x0, skin.bottom - skin.top
+    local top = skin.top
+    local lip = inst.dna.creation.isPotatoHead and decal(body, 'lowerlip')
+    if lip and lip.oy then top = math.max(top, lip.oy + h * 0.12) end
+    local hem = skin.top + h * kind.hem
+    if hem <= top + h * 0.1 then return nil end
+    local hole
+    local head = partBody(inst, 'head')
+    local nx, ny
+    if head then nx, ny = jointBetween(body, head) end
+    if nx then hole = { x = nx, y = ny, rx = w * kind.neck, ry = w * kind.neck * 0.7 } end
+    local sleeves = {}
+    if kind.sleeve > 0 then
+        for _, side in ipairs({ 'l', 'r' }) do
+            local torso = shoulderTorso(inst, side .. 'uarm')
+            sleeves[#sleeves + 1] = torso and tube(inst, torso, side .. 'uarm', side .. 'larm', kind.sleeve,
+                w * kind.sleeveW / 2, 1.15)
+        end
+    end
+    return { body = body, skin = skin, from = top, to = hem, hole = hole, sleeves = sleeves, w = w * 0.85,
+        band = { hem - h * 0.05, hem } }
 end
 
 -- the pants on this Mipo: the seat (the torso's skin below the waist), a tube per upper leg, the
@@ -548,6 +623,60 @@ hatPlace = function(item)
     return hatOn(item.wearer, kind)
 end
 
+-- the face on a head (its frame): the box round the eyes, brows, nose and mouth, as an oval's
+-- middle and radii; nil without eyes
+local function faceOval(head)
+    local l, r = decal(head, 'lpupil'), decal(head, 'rpupil')
+    if not (l and r) then return nil end
+    local eyeW, eyeH = l.eyeW or l.w or 20, l.eyeH or l.h or 20
+    local x0, x1 = math.min(l.ox, r.ox) - eyeW * 0.8, math.max(l.ox, r.ox) + eyeW * 0.8
+    local y0, y1 = math.min(l.oy, r.oy) - eyeH * 0.75, math.max(l.oy, r.oy) + eyeH * 0.6
+    for _, label in ipairs({ 'lbrow', 'rbrow', 'nose' }) do
+        local d = decal(head, label)
+        if d and d.oy then
+            y0 = math.min(y0, d.oy - (d.h or 0) * 0.8)
+            y1 = math.max(y1, d.oy + (d.h or 0) * 0.6)
+        end
+    end
+    local lip = decal(head, 'lowerlip')
+    if lip and lip.curvePoints then
+        for i = 1, #lip.curvePoints, 2 do
+            x0, x1 = math.min(x0, lip.curvePoints[i]), math.max(x1, lip.curvePoints[i])
+            y1 = math.max(y1, lip.curvePoints[i + 1] + (lip.mouthScaleY or 0) * 30)
+        end
+    end
+    return (x0 + x1) / 2, (y0 + y1) / 2, (x1 - x0) / 2 * 1.08, (y1 - y0) / 2 * 1.1
+end
+
+-- where a headscarf goes: the head, its skin, the face's oval; nil on a potato head (its head is its
+-- body: the hood would cover all of it)
+local function headscarfOn(inst)
+    if inst.dna.creation.isPotatoHead then return nil end
+    local head = headOf(inst)
+    local skin = head and skinOf(head)
+    if not skin then return nil end
+    local fx, fy, frx, fry = faceOval(head)
+    if not fx then return nil end
+    return head, skin, { x = fx, y = fy, rx = frx, ry = fry }
+end
+
+-- a worn headscarf's drape: a cloth sheet pinned along a line under the hood, over the shoulders
+local function makeDrape(item)
+    local head, skin = headscarfOn(item.wearer)
+    if not head then return end
+    local kind = HEADSCARVES[item.kind]
+    local w, h = skin.x1 - skin.x0, skin.bottom - skin.top
+    local cx = (skin.x0 + skin.x1) / 2
+    local width = w * 0.95
+    local cols = 9
+    local sp = width / (cols - 1)
+    local rows = math.max(4, math.floor(w * 0.7 / sp + 0.5))
+    local wx, wy = head:getWorldPoint(cx - width / 2, skin.bottom - h * 0.12)
+    item.drape = cloth.new({ x = wx, y = wy, cols = cols, rows = rows, spacing = sp, pin = 'top',
+        pinBody = head, fabric = kind.fabric, tint = kind.tint, fabricScale = 0.5, collide = false,
+        outline = OUTLINE, outlineWidth = math.max(1.5, w * 0.02), substeps = 10, bend = 0.05 })
+end
+
 -- how tall the wrap is, times its first height (Nikki 2026-11-08: "the scarfs can be taller")
 local function scarfTall() return state.wearables.settings.scarfTall or 1.6 end
 
@@ -575,6 +704,19 @@ end
 ---------------------------------------------------------------- items
 
 local function spot(item, inst)
+    if item.sort == 'shirt' then
+        local body = partBody(inst, 'torso1')
+        local skin = body and skinOf(body)
+        if not skin or not shirtOn(inst, SHIRTS[item.kind or 1]) then return nil end
+        local wx, wy = body:getWorldPoint((skin.x0 + skin.x1) / 2, skin.top + (skin.bottom - skin.top) * 0.35)
+        return body, wx, wy, body:getAngle(), (skin.x1 - skin.x0) * 0.8 * state.wearables.settings.snap
+    end
+    if item.sort == 'headscarf' then
+        local head, skin = headscarfOn(inst)
+        if not head then return nil end
+        local wx, wy = head:getWorldPoint((skin.x0 + skin.x1) / 2, (skin.top + skin.bottom) / 2)
+        return head, wx, wy, head:getAngle(), (skin.x1 - skin.x0) * 0.8 * state.wearables.settings.snap
+    end
     if item.sort == 'scarf' then
         local torso, x, y, w = scarfOn(inst)
         if not torso then return nil end
@@ -610,8 +752,10 @@ local function wornBy(b, sort, inst)
 end
 
 local function addItem(b, sort, x, y, kindIndex)
-    local list = ({ pants = PANTS, hat = HATS, scarf = SCARVES })[sort] or KINDS
-    local key = ({ pants = 'nextPants', hat = 'nextHat', scarf = 'nextScarf' })[sort] or 'nextGlasses'
+    local list = ({ pants = PANTS, hat = HATS, scarf = SCARVES, headscarf = HEADSCARVES, shirt = SHIRTS })[sort]
+        or KINDS
+    local key = ({ pants = 'nextPants', hat = 'nextHat', scarf = 'nextScarf', headscarf = 'nextHeadscarf',
+        shirt = 'nextShirt' })[sort] or 'nextGlasses'
     kindIndex = kindIndex or b[key] or 1 -- a state from before a sort was added lacks its key
     b[key] = kindIndex % #list + 1
     local kind = list[kindIndex]
@@ -619,6 +763,8 @@ local function addItem(b, sort, x, y, kindIndex)
     if sort == 'glasses' then w, h = E0 + kind.w, kind.h * 0.8 end
     if sort == 'hat' then w, h = HAT_LOOSE * 0.9, HAT_LOOSE * 0.5 end
     if sort == 'scarf' then w, h = SCARF_LOOSE, SCARF_LOOSE * 0.22 end
+    if sort == 'headscarf' then w, h = HEADSCARF_LOOSE, HEADSCARF_LOOSE * 0.45 end
+    if sort == 'shirt' then w, h = 150, 130 end
     local thing = objectManager.addThing('rectangle', { x = x, y = y, width = w, height = h,
         bodyType = 'dynamic', label = sort, density = 0.3 })
     if not thing then return end
@@ -688,7 +834,9 @@ local function stock(b)
     for i = 1, #KINDS do addItem(b, 'glasses', -900 + (i - 1) * 450, -200, i) end
     for i = 1, #PANTS do addItem(b, 'pants', -700 + (i - 1) * 450, -100, i) end
     for i = 1, #HATS do addItem(b, 'hat', -1100 + (i - 1) * 400, -300, i) end
-    for i = 1, #SCARVES do addItem(b, 'scarf', -800 + (i - 1) * 500, -400, i) end
+    -- scarves: parked (docs/WEARABLES.md), on the keys only
+    for i = 1, #HEADSCARVES do addItem(b, 'headscarf', -900 + (i - 1) * 450, -450, i) end
+    for i = 1, #SHIRTS do addItem(b, 'shirt', -700 + (i - 1) * 450, -550, i) end
 end
 
 ---------------------------------------------------------------- hooks
@@ -714,6 +862,45 @@ function s.onUnload()
     end
 end
 
+-- what a worn cloth item was fitted to: its body and the box of its skin (a randomized Mipo gets
+-- a new head or a new picture, and the drape or tails were left at the old size, pinned to the old
+-- head: "after randomizing mipo scarves are broken ish", 2026-11-08)
+local function fitOf(item)
+    local inst = item.wearer
+    if not inst then return nil end
+    local body, skin
+    if item.sort == 'headscarf' then
+        body, skin = headscarfOn(inst)
+    else
+        body = partBody(inst, 'torso1')
+        skin = body and skinOf(body)
+    end
+    if not (body and skin) then return nil end
+    return string.format('%s %d %d %d %d', tostring(body), skin.x0, skin.y0, skin.x1, skin.y1)
+end
+
+-- a worn item whose body went (a randomize rebuilt the head): back on at its spot on the new one,
+-- not dropped
+local function follow(item)
+    if not (item.joint and item.wearer) then return end
+    if item.host and not item.host:isDestroyed() and not item.joint:isDestroyed() then return end
+    local host, wx, wy, a
+    if item.sort == 'hat' then
+        local head, x, y = hatPlace(item)
+        if head then
+            host, a = head, head:getAngle()
+            wx, wy = head:getWorldPoint(x, y)
+        end
+    else
+        host, wx, wy, a = spot(item, item.wearer)
+    end
+    if not host then return end
+    if not item.joint:isDestroyed() then item.joint:destroy() end
+    local wearer = item.wearer
+    wearables.wear(item, host, wx, wy, a)
+    item.wearer = wearer
+end
+
 function s.update(dt)
     local b = state.wearables
     if not b then return end
@@ -725,11 +912,14 @@ function s.update(dt)
         pants = { mipos = mipos, spot = spot, grip = set.pantsGrip },
         hat = { mipos = mipos, spot = spot, grip = set.hatGrip or 1100 },
         scarf = { mipos = mipos, spot = spot, grip = set.scarfGrip or 2000 },
+        headscarf = { mipos = mipos, spot = spot, grip = set.headscarfGrip or 2200 },
+        shirt = { mipos = mipos, spot = spot, grip = set.shirtGrip or 2200 },
     }
     for _, opts in pairs(optsFor) do
         opts.taken = function(item, inst) return wornBy(b, item.sort, inst) ~= nil end
     end
     for _, item in ipairs(b.items) do
+        follow(item)
         local opts = optsFor[item.sort]
         if item.sort == 'hat' then
             -- one goes on the stack's top; higher ones come off easier (the tower topples from the top)
@@ -741,8 +931,19 @@ function s.update(dt)
         if item.sort == 'hat' and item.joint and not item.stackSet then
             item.stackBelow, item.stackSet = topHat(item.wearer), true
         end
+        if item.sort == 'headscarf' then
+            if item.joint and (not item.drape or item.fitted ~= fitOf(item)) then
+                makeDrape(item)
+                item.fitted = fitOf(item)
+            end
+            if not item.joint then item.drape = nil end
+            if item.drape then cloth.update(item.drape, dt) end
+        end
         if item.sort == 'scarf' then
-            if item.joint and not item.tails then makeTails(item) end
+            if item.joint and (not item.tails or item.fitted ~= fitOf(item)) then
+                makeTails(item)
+                item.fitted = fitOf(item)
+            end
             if not item.joint then item.tails = nil end
             for _, c in ipairs(item.tails or {}) do cloth.update(c, dt) end
         end
@@ -776,6 +977,10 @@ function s.onKeyPress(key)
     elseif key == 'u' then addItem(b, 'pants', mx, my)
     elseif key == 'h' then addItem(b, 'hat', mx, my)
     elseif key == 'y' then dressAll(b, 'hat')
+    elseif key == 't' then addItem(b, 'shirt', mx, my)
+    elseif key == 'i' then dressAll(b, 'shirt')
+    elseif key == 'b' then addItem(b, 'headscarf', mx, my)
+    elseif key == 'v' then dressAll(b, 'headscarf')
     elseif key == 'k' then addItem(b, 'scarf', mx, my)
     elseif key == 'j' then dressAll(b, 'scarf')
     elseif key == 'm' then spawnMipo(b, mx, my)
@@ -907,6 +1112,10 @@ local function drawPattern(kind, poly, size)
                 love.graphics.circle('fill', x, y, size * 0.03)
             end
         end
+    elseif kind.pattern == 'hstripes' then
+        for y = math.floor(y0 / step) * step, y1, step do
+            love.graphics.rectangle('fill', x0, y, x1 - x0, size * 0.05)
+        end
     elseif kind.pattern == 'stripes' then
         for x = math.floor(x0 / step) * step, x1, step do
             love.graphics.rectangle('fill', x, y0, size * 0.045, y1 - y0)
@@ -914,23 +1123,30 @@ local function drawPattern(kind, poly, size)
     end
 end
 
--- a mask picture as a shape, only the rows between vMin and vMax (0..1 down the picture), its
--- edge (olStep in from it, in picture units) in lineColor. flip: the picture mirrored (the torso's
--- fx / fy), so the cut and the edge are where the drawn torso has them.
+-- a mask picture as a shape: only its rows between vMin and vMax (0..1 down the picture), less an
+-- oval hole (holeC, holeR in the drawn 0..1; holeR.x 0: none), the edges of all that (olStep in from
+-- them) in lineColor. flip: the picture mirrored (the torso's fx / fy), so the cuts and the edges
+-- are where the drawn torso has them.
 local cutShader = love.graphics.newShader([[
 uniform float vMin;
 uniform float vMax;
 uniform vec2 olStep;
 uniform vec4 lineColor;
 uniform vec2 flip;
-float inside(Image tex, vec2 p) { vec4 m = Texel(tex, p); return step(0.5, m.r * m.a); }
-vec4 effect(vec4 color, Image tex, vec2 uv, vec2 pc) {
+uniform vec2 holeC;
+uniform vec2 holeR;
+float inside(Image tex, vec2 uv) {
     vec2 p = mix(uv, 1.0 - uv, flip);
-    if (inside(tex, p) < 0.5 || p.y < vMin || p.y > vMax) discard;
+    vec4 m = Texel(tex, p);
+    float hole = holeR.x > 0.0 ? step(1.0, length((uv - holeC) / holeR)) : 1.0;
+    return step(0.5, m.r * m.a) * step(vMin, p.y) * step(p.y, vMax) * hole;
+}
+vec4 effect(vec4 color, Image tex, vec2 uv, vec2 pc) {
+    if (inside(tex, uv) < 0.5) discard;
     float edge = 0.0;
     for (int i = 0; i < 8; i++) {
         float a = float(i) * 0.7854;
-        edge = max(edge, 1.0 - inside(tex, p + vec2(cos(a), sin(a)) * olStep));
+        edge = max(edge, 1.0 - inside(tex, uv + vec2(cos(a), sin(a)) * olStep));
     }
     return mix(color, lineColor, edge);
 }
@@ -950,6 +1166,13 @@ local function drawSeat(seat, ya, yb, lineColor, ol)
     cutShader:send('olStep', { ol / w, ol / h })
     cutShader:send('lineColor', lineColor or { 0, 0, 0, 0 })
     cutShader:send('flip', { skin.fx < 0 and 1 or 0, skin.fy < 0 and 1 or 0 })
+    local hole = seat.hole -- in the body's frame -> the drawn picture's 0..1
+    if hole then
+        cutShader:send('holeC', { (hole.x - skin.x0) / w, (hole.y - skin.y0) / h })
+        cutShader:send('holeR', { hole.rx / w, hole.ry / h })
+    else
+        cutShader:send('holeR', { 0, 0 })
+    end
     local m = skin.mask
     local bones = spineSkin.torsoBones(seat.body)
     if bones and #skin.corners == 8 then
@@ -957,9 +1180,10 @@ local function drawSeat(seat, ya, yb, lineColor, ol)
         spineSkin.drawGrid(m.img, skin.corners, bones, seat.body, seat.key)
     else
         if not lineColor then cutShader:send('lineColor', { love.graphics.getColor() }) end
+        -- laid unmirrored: the shader's flip mirrors the mask once (a negative scale too flipped it twice)
         onBody(seat.body, function()
             love.graphics.draw(m.img, (skin.x0 + skin.x1) / 2, (skin.y0 + skin.y1) / 2, 0,
-                w / m.w * skin.fx, h / m.h * skin.fy, m.w / 2, m.h / 2)
+                w / m.w, h / m.h, m.w / 2, m.h / 2)
         end)
     end
     love.graphics.setShader()
@@ -978,7 +1202,7 @@ local function drawGarment(kind, g)
     love.graphics.setLineWidth(ol * 2)
     for _, p in ipairs(g.pieces) do onBody(p.body, function() love.graphics.polygon('line', p.poly) end) end
     love.graphics.setColor(kind.base)
-    if seat then drawSeat(seat, seat.waist, seat.skin.y1, line, ol) end
+    if seat then drawSeat(seat, seat.from, seat.to, line, ol) end
     for _, p in ipairs(g.pieces) do onBody(p.body, function() fillPoly(p.poly) end) end
     if kind.pattern then
         for _, p in ipairs(g.pieces) do
@@ -991,22 +1215,22 @@ local function drawGarment(kind, g)
         end
         if seat then
             local sk = seat.skin
-            love.graphics.stencil(function() drawSeat(seat, seat.waist, sk.y1, nil, 0) end, 'replace', 1)
+            love.graphics.stencil(function() drawSeat(seat, seat.from, seat.to, nil, 0) end, 'replace', 1)
             love.graphics.setStencilTest('greater', 0)
             -- the pattern doesn't bend with the torso; the stencil does (a seam where it's pulled)
             onBody(seat.body, function()
-                drawPattern(kind, { sk.x0, seat.waist, sk.x1, seat.waist, sk.x1, sk.y1, sk.x0, sk.y1 }, g.size)
+                drawPattern(kind, { sk.x0, seat.from, sk.x1, seat.from, sk.x1, seat.to, sk.x0, seat.to }, g.size)
             end)
             love.graphics.setStencilTest()
             -- the edge again over the pattern
             love.graphics.setColor(1, 1, 1, 0)
-            drawSeat(seat, seat.waist, sk.y1, line, ol)
+            drawSeat(seat, seat.from, seat.to, line, ol)
         end
     end
-    -- the waistband, its edge dark
-    if seat then
+    -- the waistband (pants) or the hem (shirts), its edge dark
+    if seat and seat.band then
         love.graphics.setColor(kind.band)
-        drawSeat(seat, seat.waist, seat.waist + seat.bandH, line, ol * 0.6)
+        drawSeat(seat, seat.band[1], seat.band[2], line, ol * 0.6)
     elseif g.band then
         onBody(g.bandBody, function()
             love.graphics.setColor(kind.band)
@@ -1026,8 +1250,36 @@ local function drawPantsOn(item)
     local on = inst and pantsOn(inst, kind)
     if on then
         drawGarment(kind, { pieces = on.legs, size = on.w,
-            seat = { body = on.body, skin = on.skin, waist = on.waist, bandH = on.bandH, key = item.gridKey } })
+            seat = { body = on.body, skin = on.skin, from = on.waist, to = on.skin.y1, key = item.gridKey,
+                band = { on.waist, on.waist + on.bandH } } })
     end
+end
+
+-- a worn shirt: its body (the torso's skin, the neck hole, the hem) in the shirt's layer, its sleeves
+-- in theirs (over the arms)
+local function drawShirtOn(item, sleevesOnly)
+    item.gridKey = item.gridKey or {}
+    local kind = SHIRTS[item.kind]
+    local on = item.wearer and shirtOn(item.wearer, kind)
+    if not on then return end
+    if sleevesOnly then
+        if #on.sleeves > 0 then drawGarment(kind, { pieces = on.sleeves, size = on.w }) end
+        return
+    end
+    drawGarment(kind, { pieces = {}, size = on.w, seat = { body = on.body, skin = on.skin, from = on.from,
+        to = on.to, hole = on.hole, key = item.gridKey, band = on.band } })
+end
+
+-- a loose shirt: flat, front on; a tank top without sleeves
+local function drawLooseShirt(item)
+    local kind = SHIRTS[item.kind]
+    local pieces = { { body = item.body, poly = { -55, -60, -22, -60, 0, -48, 22, -60, 55, -60, 58, 62, -58, 62 } } }
+    if kind.sleeve > 0 then
+        local l = 30 + 50 * kind.sleeve
+        pieces[2] = { body = item.body, poly = { -55, -60, -55 - l, -30, -48 - l, -8, -55, -25 } }
+        pieces[3] = { body = item.body, poly = { 55, -60, 55, -25, 48 + l, -8, 55 + l, -30 } }
+    end
+    drawGarment(kind, { pieces = pieces, size = 150 })
 end
 
 -- a hat in its own units (brim middle at 0, 0), w wide: every part's outline, then the fills
@@ -1066,7 +1318,7 @@ local function drawHatOn(item)
 end
 
 -- a polygon filled with a cloth fabric (tiled, `scale` px a pattern), outlined
-local function drawFabricPoly(fabric, poly, ol, scale)
+local function drawFabricPoly(fabric, poly, ol, scale, tint)
     local img = cloth.fabric(fabric)
     local x0, y0, x1, y1 = math.huge, math.huge, -math.huge, -math.huge
     for i = 1, #poly, 2 do
@@ -1079,7 +1331,7 @@ local function drawFabricPoly(fabric, poly, ol, scale)
     love.graphics.polygon('line', poly)
     love.graphics.stencil(function() fillPoly(poly) end, 'replace', 1)
     love.graphics.setStencilTest('greater', 0)
-    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.setColor(tint or { 1, 1, 1 })
     local iw, ih = img:getDimensions()
     local k = scale / iw
     local quad = love.graphics.newQuad(0, 0, (x1 - x0) / k, (y1 - y0) / k, iw, ih)
@@ -1131,6 +1383,76 @@ local function drawLooseScarf(item)
     end)
 end
 
+-- the hood: a mask picture inside, an oval (eC, eR, in the drawn picture's 0..1) cut out, filled
+-- with a fabric (fabRep repeats across) times tint, its edges (the outline and the face opening's)
+-- olStep wide in lineColor. flip: the picture mirrored, as the skin is.
+local hoodShader = love.graphics.newShader([[
+uniform vec2 flip;
+uniform vec2 olStep;
+uniform vec4 lineColor;
+uniform vec2 eC;
+uniform vec2 eR;
+uniform Image fab;
+uniform vec2 fabRep;
+uniform vec3 tint;
+float inside(Image tex, vec2 uv) {
+    vec4 m = Texel(tex, mix(uv, 1.0 - uv, flip));
+    return step(0.5, m.r * m.a) * step(1.0, length((uv - eC) / eR));
+}
+vec4 effect(vec4 color, Image tex, vec2 uv, vec2 pc) {
+    if (inside(tex, uv) < 0.5) discard;
+    float edge = 0.0;
+    for (int i = 0; i < 8; i++) {
+        float a = float(i) * 0.7854;
+        edge = max(edge, 1.0 - inside(tex, uv + vec2(cos(a), sin(a)) * olStep));
+    }
+    vec3 c = Texel(fab, uv * fabRep).rgb * tint;
+    return vec4(mix(c, lineColor.rgb, edge), 1.0) * color;
+}
+]])
+
+-- a worn headscarf: the drape (cloth, in the world), then the hood over its top
+local function drawHeadscarfOn(item)
+    local kind = HEADSCARVES[item.kind]
+    if item.drape then cloth.draw(item.drape) end
+    local head, skin, face = headscarfOn(item.wearer)
+    if not head then return end
+    local g = state.wearables.settings.hood or 1.22
+    local w, h = skin.x1 - skin.x0, skin.y1 - skin.y0
+    local bx, by = (skin.x0 + skin.x1) / 2, (skin.y0 + skin.y1) / 2 + (skin.bottom - skin.top) * 0.04
+    -- the drawn picture's size, unmirrored: the shader's flip mirrors the mask as the skin is (a
+    -- negative scale as well flipped it twice: a flipped head's hood was upside down, 2026-11-08)
+    local dw, dh = w * g, h * g
+    local ol = (skin.x1 - skin.x0) * 0.02
+    local fab = cloth.fabric(kind.fabric)
+    local fw = fab:getDimensions()
+    love.graphics.setShader(hoodShader)
+    hoodShader:send('flip', { skin.fx < 0 and 1 or 0, skin.fy < 0 and 1 or 0 })
+    hoodShader:send('olStep', { ol / dw, ol / dh })
+    hoodShader:send('lineColor', { OUTLINE[1], OUTLINE[2], OUTLINE[3], 1 })
+    hoodShader:send('eC', { 0.5 + (face.x - bx) / dw, 0.5 + (face.y - by) / dh })
+    hoodShader:send('eR', { face.rx / dw, face.ry / dh })
+    hoodShader:send('fab', fab)
+    local rep = dw / (fw * 1.2)
+    hoodShader:send('fabRep', { rep, rep * dh / dw })
+    hoodShader:send('tint', kind.tint)
+    love.graphics.setColor(1, 1, 1, 1)
+    local m = skin.mask
+    onBody(head, function()
+        love.graphics.draw(m.img, bx, by, 0, dw / m.w, dh / m.h, m.w / 2, m.h / 2)
+    end)
+    love.graphics.setShader()
+end
+
+-- a loose headscarf: a kerchief, folded to a triangle
+local function drawLooseHeadscarf(item)
+    local kind = HEADSCARVES[item.kind]
+    local L = HEADSCARF_LOOSE
+    onBody(item.body, function()
+        drawFabricPoly(kind.fabric, { -L / 2, -L * 0.2, L / 2, -L * 0.2, 0, L * 0.25 }, 2.5, L * 0.3, kind.tint)
+    end)
+end
+
 local function drawLooseHat(item)
     onBody(item.body, function()
         love.graphics.translate(0, HAT_LOOSE * 0.25)
@@ -1171,6 +1493,13 @@ function s.drawBelow()
         if item.sort == 'pants' and item.joint and item.wearer then
             splits[#splits + 1] = { z = (item.wearer.zGroupOffset or 0) * 1000 + PANTS_Z,
                 fn = function() drawPantsOn(item) end }
+        elseif item.sort == 'shirt' and item.joint and item.wearer then
+            local base = (item.wearer.zGroupOffset or 0) * 1000
+            splits[#splits + 1] = { z = base + SHIRT_Z, fn = function() drawShirtOn(item) end }
+            splits[#splits + 1] = { z = base + SLEEVE_Z, fn = function() drawShirtOn(item, true) end }
+        elseif item.sort == 'headscarf' and item.joint and item.wearer then
+            splits[#splits + 1] = { z = (item.wearer.zGroupOffset or 0) * 1000 + HEADSCARF_Z,
+                fn = function() drawHeadscarfOn(item) end }
         elseif item.sort == 'scarf' and item.joint and item.wearer then
             splits[#splits + 1] = { z = (item.wearer.zGroupOffset or 0) * 1000 + SCARF_Z,
                 fn = function() drawScarfOn(item) end }
@@ -1222,6 +1551,10 @@ function s.draw()
             if not item.joint then drawLooseHat(item) end
         elseif item.sort == 'scarf' then
             if not item.joint then drawLooseScarf(item) end
+        elseif item.sort == 'headscarf' then
+            if not item.joint then drawLooseHeadscarf(item) end
+        elseif item.sort == 'shirt' then
+            if not item.joint then drawLooseShirt(item) end
         else
             local wx, wy, a, sx, sy
             if item.host and not item.host:isDestroyed() then
@@ -1251,7 +1584,8 @@ function s.drawUI()
     local BH, pad, w = 34, 6, 400
     local rows = { { 'lens', -0.5, 3 }, { 'bend', 0, 3 }, { 'shine', 0, 2 }, { 'glint', 0, 2 },
         { 'grip', 100, 3000 }, { 'pantsGrip', 100, 3000 }, { 'hatGrip', 100, 3000 },
-        { 'scarfGrip', 100, 4000 }, { 'scarfTall', 0.5, 3 }, { 'snap', 0.2, 2 } }
+        { 'scarfGrip', 100, 4000 }, { 'scarfTall', 0.5, 3 }, { 'headscarfGrip', 100, 4000 },
+        { 'hood', 1, 1.6 }, { 'shirtGrip', 100, 4000 }, { 'snap', 0.2, 2 } }
     local h = (BH + pad) * (#rows + 2) + pad + 24
     local _, sh = love.graphics.getDimensions()
     local x0, y0 = 20, sh - h - 20
@@ -1267,7 +1601,7 @@ function s.drawUI()
         local x, y = ui.nextLayoutPosition(layout, w - 20, BH)
         ui.label(x, y, string.format('jolt now %d px/s (off over grip)', math.floor(b.peak)))
         x, y = ui.nextLayoutPosition(layout, w - 20, BH)
-        ui.label(x, y, 'g u h k: glasses pants hat scarf  w n y j: all on')
+        ui.label(x, y, 'g u h b t: glasses pants hat headscarf shirt  w n y v i: all on')
     end)
 end
 

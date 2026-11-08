@@ -115,6 +115,12 @@ end
 
 -- name -> image, repeats (repeats: the pattern tiles over the cloth; else it's stretched once)
 local FABRICS = {
+    plain = function() -- white: the cloth's tint is its colour (a headscarf, wearables)
+        return canvasFabric(16, function(s)
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.rectangle('fill', 0, 0, s, s)
+        end), true
+    end,
     stripes = function()
         return canvasFabric(64, function(s)
             love.graphics.setColor(0.86, 0.36, 0.32)
@@ -160,7 +166,8 @@ local FABRICS = {
     end,
 }
 
-lib.fabricNames = { 'stripes', 'gingham', 'dots', 'velvet', 'banner', 'pattern', 'type1', 'bee-stripes' }
+lib.fabricNames = { 'stripes', 'gingham', 'dots', 'velvet', 'banner', 'pattern', 'type1', 'bee-stripes',
+    'plain' } -- plain last: the cloth spike picks by number
 
 -- a fabric by name: one of FABRICS, a picture in textures/pat (tiled), or a path to a picture
 -- (stretched once over the cloth)
