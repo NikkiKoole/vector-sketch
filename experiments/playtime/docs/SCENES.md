@@ -43,6 +43,7 @@ editor goes into `spikes/`, move it when it becomes a room.
 | shape8-check | a shape8 outline in the game next to another one, two Mipos per case | trying a trace before it goes in the dict (meta, below) |
 | feet-check | every foot picture on a Mipo of its own, ankles against their stop marked | how each foot stands; *spec* feet-stand checks the same |
 | breeds | a litter of six Mipos of one breed; a panel picks the breed | the MIPO-BREEDS spike: breeds as tables in the script |
+| nofeet | five random Mipos on a bumpy course; a panel sets every foot to as built, small or none (a sensor dot: the shin's round end stands) | spike: how Mipos feel without the foot boxes they get stuck on |
 | vanilla | one plain Mipo (the humanoid template, not randomized) on a floor | tweaking a Mipo by hand in the Mipo editor (n: a fresh one) |
 | feet-pile | five Mipos knotted on each other's feet and hands (saved from vanilla) | *spec* (mipo-untangle): the untangle looped here (8 in 20 s); now the wedged Mipo gives up after 4 tries |
 | hands-mess | Mipos holding hands in a big knot (saved paused from vanilla) | holding hands keeps them hooked: the untangle tries 6 times, then they rest knotted |
