@@ -195,6 +195,20 @@ snapshot for the moves, MEASURING.md) and both builds working.
   backdrops scenes use (gevaarland, stapel-met: stapelaar, tech/hoop, tech/workmoreclean) in
   `backdrops/`, their old paths in `src/texture-names.lua` PATHS (old saves migrate on load). ~17 MB
   out of the game folder; every scene draws the same pixels before and after.
+- [ ] **AB9. scan2tex: the part under the light** (idea, Nikki 2026-11-08: "create the normal maps etc and
+  check with light if good"). In the tool, the selected part drawn by the game's own `form-bake` and
+  plasticine shader (not a copy), the light at the mouse as in `material-check`, a rise slider and a
+  material picker: a brushy mask showing as ridges, a cushion where a dome was meant, creases that
+  don't show are seen while the paper is still at hand. No normal map files: the game bakes them from
+  the mask at runtime (cached); files only as a build step if the phone ever needs it (measure first).
+  With a painted height picture (MATERIALS MT11) the tool cuts it from the same sheet and the preview
+  shows the difference.
+- [ ] **AB10. scan2tex: the 8-point outline** (idea, 2026-11-08). The tool suggests the part's 8 points
+  from its mask, drawn over the part to drag right, and writes the `src/shape8-dict.lua` entry, so a
+  new drawing can be a body shaped like it (MATERIALS MT20) without tracing it on the `meta` sheet.
+  Decide first: the dict is copied by hand from the meta sheet and `spec/shape8-dict_spec.lua` checks
+  they agree, so the tool writes both, or the dict becomes the source and the sheet only a check.
+  With AB9 and MT20: paper -> photo -> scan2tex -> a lit, physical thing in the game in one pass.
 
 Later, not steps yet: the tool making the mask from the outline when they're the same shape; a
 texture atlas per Mipo part set (MIPO-DRAWING.md says it saves nothing on the phone today); Playtime

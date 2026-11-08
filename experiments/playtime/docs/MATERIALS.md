@@ -195,7 +195,8 @@ Kinds of material, by what the shader does differently:
   are made) already wearing it (OMP texfixture: picture, mask, colours) and a material, changed in the
   panel after. Lit by default through scene-light's material rule (MT6). About one function and a
   picker. Limit: only pictures with a traced outline (the 41 Mipo part drawings); a new drawing is
-  traced on the `meta` sheet first (docs/SCENES.md), or later its outline found from the mask.
+  traced on the `meta` sheet first (docs/SCENES.md), or scan2tex finds its 8 points from the mask
+  when it saves the part (ASSETS-AND-BUILDS AB10).
 
 ## Fur (Nikki's follow-up talk, 2026-11-06)
 
@@ -253,7 +254,8 @@ Other ways, in our pipeline:
   ears whose inner lines are thick and close the drawn line hides most of it. Cheap: +0.02 ms/MP
   on the Mac (~10%).
 - [ ] **MT11. A painted height picture** as an option on a part (outline + mask + height; drawing
-  them: THINGS-TO-DRAW A15).
+  them: THINGS-TO-DRAW A15). Drawn on the same sheet as the part, cut by scan2tex and judged under its
+  light preview (ASSETS-AND-BUILDS AB9).
 
 ## More from the lists (2026-11-06, in material-check)
 
