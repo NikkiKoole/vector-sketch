@@ -243,20 +243,20 @@ end
 
 
 
--- The mouth's inside as a hole: its own see-through colour (backdropHex) at the lips, going black
--- deeper in, so it reads as a cavity. "Deeper" is the distance from the lips (the mouth's outline),
--- so a curved smile darkens along its middle as a round O does in its centre: black from
--- CAVITY_REACH of the deepest point's depth. Only without a material (a lit inner mouth keeps its
--- surface shader). Outline and depth kept per mouth shape (the polygons are cached per shape).
+-- The mouth's inside as a hole: its own see-through colour (backdropHex) at the lips, black along
+-- its middle, so it reads as a cavity. How deep a spot is goes by the gap between the lips right
+-- there: its distance to the nearer lip over half the gap (the distances to the upper and the lower
+-- lip added), so the line halfway between them is black all along, at the corners too, a thin smile
+-- as a round O. Black from CAVITY_REACH of the way to that line. (Measured against the mouth's
+-- deepest point first, 2026-11-08: the thinner parts never got black.) Only without a material (a
+-- lit inner mouth keeps its surface shader). The outline kept per mouth shape.
 local CAVITY_REACH = 0.7
 local CAVITY_POINTS = 64 -- the shader's outline points, at most (the first again at the end)
 local cavityShader
-local cavities = setmetatable({}, { __mode = 'k' }) -- [polygon] = { points = {{x, y}...}, depth }
+local cavities = setmetatable({}, { __mode = 'k' }) -- [polygon] = { points = {{x, y}...}, split }
 
--- the outline (thinned to CAVITY_POINTS) and how deep the mouth's deepest point is: the outline runs
--- along the upper lip and back along the lower one, so point i faces point n + 1 - i; half the
--- widest gap between them (a grid inside the mouth was ~0.2 ms a new shape, and a talking mouth is
--- a new shape every frame)
+-- the outline thinned to CAVITY_POINTS, and where the upper lip ends in it: the outline runs along
+-- the upper lip and back along the lower one, half each
 local function cavityOf(poly)
     local cav = cavities[poly]
     if cav then return cav end
@@ -264,14 +264,9 @@ local function cavityOf(poly)
     local step = math.max(1, math.ceil(n / (CAVITY_POINTS - 1)))
     local points = {}
     for i = 1, n, step do points[#points + 1] = { poly[i * 2 - 1], poly[i * 2] } end
+    local split = math.floor(#points / 2) -- segments before this are the upper lip's
     points[#points + 1] = { points[1][1], points[1][2] }
-    local depth = 0
-    for i = 1, math.floor(n / 2) do
-        local j = n + 1 - i
-        local dx, dy = poly[j * 2 - 1] - poly[i * 2 - 1], poly[j * 2] - poly[i * 2]
-        depth = math.max(depth, math.sqrt(dx * dx + dy * dy) / 2)
-    end
-    cav = { points = points, depth = math.max(depth, 1e-3) }
+    cav = { points = points, split = split }
     cavities[poly] = cav
     return cav
 end
@@ -288,18 +283,22 @@ local function setCavityShader(poly, rimAlpha)
         #ifdef PIXEL
         uniform vec2 outline[64]; // the lips' outline, the first point again at the end
         uniform int count;
-        uniform float blackAt;    // black from this far from the lips
+        uniform int split;        // segments before this: the upper lip; from it: the lower one
+        uniform float reach;      // black from this far to the middle (0..1)
         uniform float rimAlpha;   // the see-through colour's alpha, at the lips
         vec4 effect(vec4 color, Image tex, vec2 uv, vec2 sc) {
-            float d = 1e9;
+            float up = 1e9;
+            float down = 1e9;
             for (int i = 0; i < 63; i++) {
                 if (i >= count - 1) break;
                 vec2 a = outline[i];
                 vec2 ab = outline[i + 1] - a;
                 float t = clamp(dot(localPos - a, ab) / max(dot(ab, ab), 1e-6), 0.0, 1.0);
-                d = min(d, length(localPos - a - ab * t));
+                float d = length(localPos - a - ab * t);
+                if (i < split) up = min(up, d); else down = min(down, d);
             }
-            float rim = 1.0 - smoothstep(0.0, blackAt, d); // 1 at the lips, 0 deep in
+            float middle = min(up, down) / max(0.5 * (up + down), 1e-4); // 0 at a lip, 1 halfway
+            float rim = 1.0 - smoothstep(0.0, reach, middle); // 1 at the lips, 0 deep in
             return vec4(color.rgb * rim, mix(1.0, rimAlpha, rim)); // a coloured inside goes black too
         }
         #endif
@@ -307,7 +306,8 @@ local function setCavityShader(poly, rimAlpha)
     local cav = cavityOf(poly)
     cavityShader:send('outline', unpack(cav.points))
     cavityShader:send('count', #cav.points)
-    cavityShader:send('blackAt', cav.depth * CAVITY_REACH)
+    cavityShader:send('split', cav.split)
+    cavityShader:send('reach', CAVITY_REACH)
     cavityShader:send('rimAlpha', rimAlpha)
     love.graphics.setShader(cavityShader)
 end
