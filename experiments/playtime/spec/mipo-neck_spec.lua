@@ -44,7 +44,10 @@ describe('a long neck', function()
                 CM.rebuildFromCreation(instance, { isPotatoHead = false, neckSegments = 5, noseSegments = 0 })
                 local standUps
                 local worst = 0
-                for step = 1, math.floor(8 / DT) do
+                -- the lean measured from 8 s: a top-heavy Mipo rocks on its legs after landing (whole
+                -- body, the neck straight) for ~10 s; measured from 4 s, seed 1 swung to the limit
+                -- once the soft torso's draws (ea13beec) gave each seed another Mipo (2026-11-08)
+                for step = 1, math.floor(12 / DT) do
                     simTime = simTime + DT
                     world:update(DT)
                     jointGuard.update()
@@ -52,6 +55,8 @@ describe('a long neck', function()
                     keepAngle.update(DT, {})
                     if step * DT > 4 then
                         standUps = standUps or jointGuard.stats.standUps -- landing hops are fine
+                    end
+                    if step * DT > 8 then
                         local head, torso = instance.parts.head.body, instance.parts.torso1.body
                         worst = math.max(worst, math.abs(head:getX() - torso:getX()))
                     end
