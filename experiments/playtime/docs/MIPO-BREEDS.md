@@ -204,6 +204,8 @@ hair, for now).
   it costs ~0.1 ms draw for 12 pupils (1.74 vs 1.64 ms); the bench is CPU time, so the stencil's GPU
   side is unmeasured. `./playtime.sh bench device` in a room of ~20 Mipos, clip on and off (off:
   `local clip = false and ...` in `drawDecal`, don't commit that). Keep it if the phone stays at 60.
+  Same bench for the face patches (B10: a stencil a face) and the mouth's inside as a hole (a
+  shader over each mouth, a loop over its outline per pixel, src/render/mouth.lua, 2026-11-08).
 
 ## Open questions
 
