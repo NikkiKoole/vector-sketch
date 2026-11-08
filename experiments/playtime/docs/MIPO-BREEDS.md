@@ -207,7 +207,9 @@ hair, for now).
   shader each frame), ~1 ms at 20: fewer outline points if it's ever needed. Kept, all three.
   Since measured: the pupil clip no longer cuts the eye's outline out of its stencil (that showed
   the eye's white through the line's soft edge, a white glare on the pupil's cut edge); it clips to
-  the mask and draws the eye's outline again over the pupil, one more picture a pupil. Not benched.
+  the mask and draws the eye's outline again over the pupil. The same number of draws (the line went
+  into the stencil before, on screen now), and the same cost: on the phone, A/B on the same 6 Mipos
+  (12 pupils), decals 0.449 / 0.467 ms a frame old vs 0.454 / 0.442 new, draw 4.3-4.6 ms both.
 
 ## Open questions
 
