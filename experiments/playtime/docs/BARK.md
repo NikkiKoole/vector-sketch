@@ -4,7 +4,7 @@ status: active
 
 Nikki (2026-11-08): "can we try to nail down some tree barks, fetch some assets, do the setup and
 show a variety of trees or just their main stem". Scene `bark` (`scripts/spikes/bark.playtime.lua`),
-a spike: two rows of 15 main stems, each its own shape and bark, under a light at the mouse.
+a spike: two rows of 18 bare trees, each grown by its kind in its own bark, under a light at the mouse.
 
 ## The barks
 
@@ -62,6 +62,16 @@ and place; the birch's mirror-repeat shows as mirrored pairs of marks (a longer 
   outline in ink, its inside white, pupil-01 dark in the middle), a little smaller. They sit in the bark,
   lit and curved with it, but read as drawn onto the tree, not grown in it. Not yet: pupils that follow
   the mouse or a passing Mipo, two side by side as a face.
+- [x] **BK1d. Grown trees** (2026-11-08, Nikki: "more grown, more side branches in the way that suits the
+  types of tree"): the trunks replaced by whole bare trees, grown in the scene by kind (KINDS in the
+  script; the L-system idea of `experiments/lsystem-master`, whose turtle draws only thin lines, so a
+  grower of its own: every branch makes side branches by its kind's rules, down to twigs, each a tapering
+  stem in the bark). Oak: a short thick trunk forking into three crooked limbs. Elm: a vase of four rising
+  limbs. Beech: two upward limbs, dense. Plane: crooked, zigzagging. Olive and cork: low, twisted, wide.
+  Pine: a straight trunk to the top, whorls shorter toward it, side shoots. Poplar: a narrow column.
+  Aspen: bare below (the eyes are there, where it dropped its branches), a crown on top. Birch: weeping
+  twigs. All of a depth in one mesh, drawn deepest first (twigs behind branches, branches behind the
+  trunk); a forked trunk narrows to a point between its limbs. Not yet: leaves, the trees swaying.
 - [ ] **BK2. Nikki judges**: which look (photo / tinted / relief) sits with the drawn Mipos, which
   barks to keep. A Mipo next to a trunk for the scale (WORLD-METRICS.md).
 - [ ] **BK3. Into the engine, if kept**: a bark as a material on a ribbon (connected-texture) or a

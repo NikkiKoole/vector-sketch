@@ -1,9 +1,9 @@
 {
   "camera": {
-    "scale": 0.24,
+    "scale": 0.135,
     "rotation": 0,
-    "x": -150,
-    "y": 300
+    "x": 0,
+    "y": 200
   },
   "bodies": [],
   "joints": [],

@@ -1,6 +1,6 @@
 -- bark: tree trunks in real bark (15 scanned barks: colour, normal, height), lit by the mouse's light, crayon outlines
--- BARK.md (2026-11-08). The main stems only: two rows of trunks, each its own shape (tall and slim,
--- old and thick with roots flaring, leaning, bent) wrapped in one of the barks as a round stem: the
+-- BARK.md (2026-11-08). Two rows of bare trees, each grown by its kind (KINDS: an oak's wide crooked
+-- limbs, an elm's vase, a pine's whorls, aspens bare below), every branch wrapped in the bark as a round stem: the
 -- bark squeezes toward the edges as it turns away, and its normal map takes the light on top of the
 -- stem's own roundness. The barks are CC0 scans from ambientCG (textures/world/bark/bark-NN.jpg,
 -- -normal, -height; 512 px). The outline is Nikki's crayon strokes (drawn-stroke.lua).
@@ -20,8 +20,8 @@ local s = {}
 local STROKE = love.filesystem.load('scripts/spikes/drawn-stroke.lua')()
 
 -- the two rows' ground lines (world y) and where they start; trunks every STEP
-local ROWS = { { ground = 0, x = -1880, count = 9 }, { ground = 1550, x = -1880, count = 9 } }
-local STEP = 470
+local ROWS = { { ground = 0, x = -3120, count = 9 }, { ground = 1750, x = -3120, count = 9 } }
+local STEP = 780
 local LOOKS = { 'photo', 'tinted', 'relief' }
 local DETAILS = { { 'flat', 0 }, { 'soft', 0.6 }, { 'normal', 1.1 }, { 'deep', 2 } }
 local SIZES = { { 'small', 220 }, { 'middle', 340 }, { 'big', 520 } } -- world units per bark picture's width
@@ -45,50 +45,73 @@ local EYE_CELL = 320 / 512
 local MAX_EYES = 6
 local eyeAtlas
 
--- The trees: which bark, a name for it, and the stem's shape. h height, w0 width at the ground (above
--- the flare), w1 at the top, flare (roots: how much wider at the very bottom), lean (sideways over the
--- whole height), bend (an S: sideways in the middle), branch (a stub: how far up, which side, how long).
--- tint: the colour for tinted and relief, picked from the bark's photo. eyes: how many branch-scar eyes
--- (else one tree in three gets one) and which kinds (the eye cells, 1-3); mirrored: a photo that doesn't tile,
--- repeated mirror-wise.
+-- How each kind grows (the L-system idea: every branch makes side branches by its kind's rules, those make
+-- their own, down to twigs), seen from the side, in world units:
+--   trunk     length, width at the foot, roots flaring (wider at the very bottom), how far it wanders
+--   fork      the trunk ends in this many limbs (an oak, an elm's vase), spread between them, their length;
+--             none: the trunk runs on to the top (a pine, a poplar, an aspen)
+--   kids      side branches per branch (min, max), from how far along (the trunk's own: trunkKids, bare below
+--             trunkStart: aspens and birches drop their lower branches, the eyes are where they were)
+--   spread    angle from the parent (min, max, radians), len a child's length over its parent's, cone: shorter
+--             toward the top (a pine), width a child's width over its parent's where it starts
+--   depth     how many times branches branch; up: how much a branch turns toward the sky, droop: toward the
+--             ground (more on thinner ones: weeping twigs), wander: crookedness per step
+local KINDS = {
+    oak = { trunk = 560, w = 250, flare = 0.7, trunkWander = 0.08, fork = { 3, 0.55, 0.85 },
+        trunkKids = { 1, 2 }, trunkStart = 0.45, kids = { 2, 3 }, start = 0.25, spread = { 0.55, 1.05 },
+        len = 0.62, width = 0.55, depth = 4, up = 0.03, droop = 0.03, wander = 0.32 },
+    elm = { trunk = 480, w = 190, flare = 0.4, trunkWander = 0.05, fork = { 4, 0.2, 1.3 },
+        trunkKids = { 0, 1 }, trunkStart = 0.5, kids = { 2, 2 }, start = 0.35, spread = { 0.35, 0.6 },
+        len = 0.55, width = 0.55, depth = 4, up = 0.035, droop = 0.05, wander = 0.14 },
+    beech = { trunk = 620, w = 190, flare = 0.55, trunkWander = 0.04, fork = { 2, 0.5, 0.95 },
+        trunkKids = { 1, 2 }, trunkStart = 0.5, kids = { 3, 3 }, start = 0.25, spread = { 0.5, 0.85 },
+        len = 0.55, width = 0.5, depth = 4, up = 0.06, droop = 0.02, wander = 0.12 },
+    plane = { trunk = 580, w = 180, flare = 0.35, trunkWander = 0.1, fork = { 3, 0.65, 0.85 },
+        trunkKids = { 1, 1 }, trunkStart = 0.55, kids = { 2, 3 }, start = 0.25, spread = { 0.6, 1.1 },
+        len = 0.58, width = 0.52, depth = 4, up = 0.02, droop = 0.03, wander = 0.38 },
+    olive = { trunk = 380, w = 260, flare = 0.5, trunkWander = 0.35, fork = { 3, 0.8, 0.95 },
+        trunkKids = { 0, 1 }, trunkStart = 0.5, kids = { 2, 3 }, start = 0.25, spread = { 0.6, 1.15 },
+        len = 0.52, width = 0.5, depth = 3, up = 0.02, droop = 0.05, wander = 0.42 },
+    pine = { trunk = 1450, w = 170, flare = 0.3, trunkWander = 0.02, trunkKids = { 14, 16 }, trunkStart = 0.35,
+        kids = { 4, 5 }, start = 0.15, spread = { 0.6, 0.9 }, firstSpread = { 1.3, 1.55 }, len = 0.4, cone = true,
+        width = 0.35, depth = 2, up = 0.0, droop = 0.025, wander = 0.08 },
+    poplar = { trunk = 1450, w = 140, flare = 0.2, trunkWander = 0.03, trunkKids = { 11, 13 }, trunkStart = 0.22,
+        kids = { 1, 2 }, start = 0.3, spread = { 0.2, 0.35 }, len = 0.42, cone = true, coneTop = 0.55,
+        width = 0.4, depth = 2, up = 0.1, droop = 0.0, wander = 0.08 },
+    aspen = { trunk = 1400, w = 150, flare = 0.15, trunkWander = 0.03, trunkKids = { 8, 10 }, trunkStart = 0.55,
+        kids = { 2, 3 }, start = 0.3, spread = { 0.45, 0.8 }, len = 0.5, cone = true, coneTop = 0.6,
+        width = 0.4, depth = 3, up = 0.1, droop = 0.0, wander = 0.15 },
+    birch = { trunk = 1350, w = 170, flare = 0.3, trunkWander = 0.04, trunkKids = { 7, 9 }, trunkStart = 0.45,
+        kids = { 2, 3 }, start = 0.3, spread = { 0.55, 0.9 }, len = 0.42, cone = true, coneTop = 0.45,
+        width = 0.38, depth = 3, up = 0.04, droop = 0.16, wander = 0.15 },
+}
+
+-- The trees: which bark, a name for it, how it grows (KINDS), its own lean, and the eyes (how many
+-- branch-scar eyes, else one tree in three gets one; which kinds, the eye cells 1-3). tint: the colour for
+-- tinted and relief, picked from the bark's photo; mirrored: a photo that doesn't tile, repeated
+-- mirror-wise. size scales the whole tree (an old one low and wide).
 local TREES = {
-    { bark = 'aspen-01', name = 'aspen', h = 1300, w0 = 170, w1 = 140, flare = 0.2, lean = -30, bend = 20,
-        eyes = 5, kinds = { 1, 1, 1, 2 }, mirrored = true, tint = { 0.88, 0.88, 0.84 } },
-    { bark = '01', name = 'oak', h = 1150, w0 = 270, w1 = 190, flare = 0.7, lean = 0, bend = 40,
-        branch = { at = 0.72, side = -1, len = 330 }, tint = { 0.42, 0.4, 0.37 } },
-    { bark = '02', name = 'elm', h = 1250, w0 = 190, w1 = 140, flare = 0.35, lean = 60, bend = -30,
-        tint = { 0.52, 0.45, 0.35 } },
-    { bark = '03', name = 'smooth brown', h = 1300, w0 = 150, w1 = 110, flare = 0.25, lean = -40, bend = 25,
-        branch = { at = 0.6, side = 1, len = 260 }, tint = { 0.55, 0.42, 0.3 } },
-    { bark = '04', name = 'pine', h = 1350, w0 = 170, w1 = 105, flare = 0.3, lean = 0, bend = 10,
-        tint = { 0.6, 0.5, 0.47 } },
-    { bark = '06', name = 'lichen', h = 1150, w0 = 210, w1 = 160, flare = 0.45, lean = 80, bend = -50,
-        branch = { at = 0.55, side = 1, len = 300 }, tint = { 0.55, 0.56, 0.58 } },
-    { bark = '07', name = 'cracked', h = 1250, w0 = 160, w1 = 120, flare = 0.3, lean = -60, bend = 0,
-        tint = { 0.66, 0.66, 0.5 } },
-    { bark = '08', name = 'olive', h = 1200, w0 = 230, w1 = 120, flare = 0.5, lean = 30, bend = 70,
-        branch = { at = 0.8, side = -1, len = 240 }, tint = { 0.56, 0.5, 0.28 } },
-    { bark = '09', name = 'plane', h = 1300, w0 = 180, w1 = 140, flare = 0.3, lean = -20, bend = -35,
-        tint = { 0.8, 0.8, 0.66 } },
-    { bark = 'birch-01', name = 'birch', h = 1250, w0 = 180, w1 = 130, flare = 0.35, lean = 50, bend = -30,
-        eyes = 3, kinds = { 2, 3 }, mirrored = true, tint = { 0.9, 0.89, 0.86 } },
-    { bark = 'aspen-01', name = 'aspen', h = 1350, w0 = 150, w1 = 115, flare = 0.15, lean = 20, bend = -15,
-        branch = { at = 0.78, side = 1, len = 220 }, eyes = 4, kinds = { 1, 1, 3 }, mirrored = true,
-        tint = { 0.86, 0.87, 0.84 } },
-    { bark = '10', name = 'beech', h = 1300, w0 = 200, w1 = 160, flare = 0.55, lean = 0, bend = 15,
-        branch = { at = 0.65, side = -1, len = 280 }, tint = { 0.58, 0.6, 0.53 } },
-    { bark = '11', name = 'grey', h = 1250, w0 = 140, w1 = 100, flare = 0.2, lean = 70, bend = 20,
-        tint = { 0.62, 0.64, 0.6 } },
-    { bark = '12', name = 'cork', h = 1150, w0 = 250, w1 = 180, flare = 0.6, lean = -30, bend = -40,
-        tint = { 0.56, 0.45, 0.28 } },
-    { bark = '13', name = 'mossy', h = 1200, w0 = 230, w1 = 170, flare = 0.65, lean = 20, bend = 50,
-        branch = { at = 0.5, side = 1, len = 320 }, tint = { 0.47, 0.5, 0.33 } },
-    { bark = '14', name = 'red', h = 1300, w0 = 190, w1 = 130, flare = 0.4, lean = -50, bend = 0,
-        tint = { 0.5, 0.33, 0.26 } },
-    { bark = '15', name = 'striped', h = 1250, w0 = 200, w1 = 150, flare = 0.4, lean = 40, bend = -25,
-        tint = { 0.55, 0.47, 0.33 } },
-    { bark = '16', name = 'old mossy', h = 1100, w0 = 290, w1 = 200, flare = 0.8, lean = -10, bend = 60,
-        branch = { at = 0.7, side = 1, len = 300 }, tint = { 0.4, 0.4, 0.3 } },
+    { bark = 'aspen-01', name = 'aspen', kind = 'aspen', lean = -0.04, eyes = 5, kinds = { 1, 1, 1, 2 },
+        mirrored = true, tint = { 0.88, 0.88, 0.84 } },
+    { bark = '01', name = 'oak', kind = 'oak', lean = 0.03, tint = { 0.42, 0.4, 0.37 } },
+    { bark = '02', name = 'elm', kind = 'elm', lean = 0.02, tint = { 0.52, 0.45, 0.35 } },
+    { bark = '03', name = 'smooth brown', kind = 'beech', lean = -0.05, tint = { 0.55, 0.42, 0.3 } },
+    { bark = '04', name = 'pine', kind = 'pine', lean = 0.0, tint = { 0.6, 0.5, 0.47 } },
+    { bark = '06', name = 'lichen', kind = 'oak', lean = 0.07, size = 0.9, tint = { 0.55, 0.56, 0.58 } },
+    { bark = '07', name = 'cracked', kind = 'elm', lean = -0.06, tint = { 0.66, 0.66, 0.5 } },
+    { bark = '08', name = 'olive', kind = 'olive', lean = 0.05, tint = { 0.56, 0.5, 0.28 } },
+    { bark = '09', name = 'plane', kind = 'plane', lean = -0.03, tint = { 0.8, 0.8, 0.66 } },
+    { bark = 'birch-01', name = 'birch', kind = 'birch', lean = 0.05, eyes = 3, kinds = { 2, 3 },
+        mirrored = true, tint = { 0.9, 0.89, 0.86 } },
+    { bark = 'aspen-01', name = 'aspen', kind = 'aspen', lean = 0.03, eyes = 4, kinds = { 1, 1, 3 },
+        mirrored = true, size = 0.9, tint = { 0.86, 0.87, 0.84 } },
+    { bark = '10', name = 'beech', kind = 'beech', lean = 0.0, tint = { 0.58, 0.6, 0.53 } },
+    { bark = '11', name = 'grey', kind = 'poplar', lean = 0.04, tint = { 0.62, 0.64, 0.6 } },
+    { bark = '12', name = 'cork', kind = 'olive', lean = -0.04, size = 1.15, tint = { 0.56, 0.45, 0.28 } },
+    { bark = '13', name = 'mossy', kind = 'oak', lean = -0.02, tint = { 0.47, 0.5, 0.33 } },
+    { bark = '14', name = 'red', kind = 'pine', lean = -0.03, size = 0.95, tint = { 0.5, 0.33, 0.26 } },
+    { bark = '15', name = 'striped', kind = 'beech', lean = 0.05, tint = { 0.55, 0.47, 0.33 } },
+    { bark = '16', name = 'old mossy', kind = 'oak', lean = -0.05, size = 0.8, tint = { 0.4, 0.4, 0.3 } },
 }
 
 local function lab()
@@ -221,109 +244,164 @@ local barkShader = love.graphics.newShader([[
     }
 ]])
 
----------------------------------------------------------------- the stems
+---------------------------------------------------------------- the trees
 
 local MESH_FORMAT = {
     { 'VertexPosition', 'float', 2 },
     { 'Across', 'float', 2 },
     { 'Frame', 'float', 4 },
 }
-local SEGMENTS = 48
+local STEP_LEN = 36 -- world units per step along a branch
+local MAX_BRANCHES = 400
+local TWIG = 5 -- thinnest a branch gets (world units)
 
--- the middle line from the ground up: points, the width at each, how far up it is
-local function stemLine(t, x0, y0)
-    local pts = {}
-    for i = 0, SEGMENTS do
-        local u = i / SEGMENTS
-        local x = x0 + t.lean * u + t.bend * math.sin(u * math.pi) + t.bend * 0.3 * math.sin(u * math.pi * 2.3)
-        local y = y0 - t.h * u
-        local width = t.w0 + (t.w1 - t.w0) * u ^ 0.8
-        width = width * (1 + t.flare * (1 - math.min(1, u * 7)) ^ 2) -- the roots flaring out at the foot
-        pts[#pts + 1] = { x = x, y = y, w = width }
-    end
-    return pts
+-- turn angle a toward target by k of the way (the short way round)
+local function turnToward(a, target, k)
+    local d = math.atan2(math.sin(target - a), math.cos(target - a))
+    return a + d * k
 end
 
--- a stub: from a point on the stem, out and up, thinning
-local function branchLine(t, stem)
-    local b = t.branch
-    local i0 = math.floor(b.at * SEGMENTS)
-    local start = stem[i0 + 1]
-    local w0 = start.w * 0.45
-    local pts = {}
-    local n = 16
+-- One branch: walked from (x, y) at angle a for len, w0 to w1 wide, turning toward the sky (up) or the
+-- ground (droop, more on thin ones) and wandering a little each step; then its side branches and, for a
+-- trunk that forks, its limbs. Every branch goes into out: its middle line (points with width and length
+-- so far) and depth.
+local function grow(k, rng, out, x, y, a, len, w0, w1, depth, isTrunk, scale)
+    if #out >= MAX_BRANCHES then return end
+    local n = math.max(2, math.floor(len / STEP_LEN))
+    local pts, along = {}, 0
+    local wander = isTrunk and k.trunkWander or k.wander
+    local thin = 1 - math.min(1, w0 / (k.w * scale))
     for i = 0, n do
         local u = i / n
-        local x = start.x + b.side * (b.len * u + 20 * math.sin(u * 3))
-        local y = start.y - b.len * 0.75 * u ^ 1.3
-        pts[#pts + 1] = { x = x, y = y, w = w0 * (1 - 0.55 * u) }
+        local w = w0 + (w1 - w0) * u
+        if isTrunk then w = w * (1 + k.flare * (1 - math.min(1, u * 6)) ^ 2) end -- roots flaring at the foot
+        pts[#pts + 1] = { x = x, y = y, w = math.max(TWIG, w), along = along, a = a }
+        if i < n then
+            a = a + (rng:random() - 0.5) * wander
+            a = turnToward(a, -math.pi / 2, k.up * (isTrunk and 3 or 1))
+            if not isTrunk then a = turnToward(a, math.pi / 2, k.droop * thin) end
+            local step = len / n
+            x, y = x + math.cos(a) * step, y + math.sin(a) * step
+            along = along + step
+        end
     end
-    return pts
+    -- a trunk that forks narrows to a point in its last stretch, hidden between its limbs (a crotch, not a
+    -- flat top)
+    if isTrunk and k.fork and #pts >= 3 then
+        pts[#pts].w = pts[#pts].w * 0.3
+        pts[#pts - 1].w = pts[#pts - 1].w * 0.8
+    end
+    out[#out + 1] = { pts = pts, depth = depth, isTrunk = isTrunk }
+    if depth >= k.depth or w1 <= TWIG then return end
+    -- side branches, alternating sides, spaced along it (the trunk's: bare below trunkStart)
+    local range = isTrunk and k.trunkKids or k.kids
+    local count = rng:random(range[1], range[2])
+    local from = isTrunk and k.trunkStart or k.start
+    local side = rng:random() < 0.5 and 1 or -1
+    for c = 1, count do
+        local t = from + (1 - from) * (c - 1 + 0.3 + rng:random() * 0.5) / count
+        if not k.fork and isTrunk then t = math.min(t, 0.96) end
+        local p = pts[math.floor(t * n) + 1]
+        local spread = (isTrunk and k.firstSpread) or k.spread
+        local ca = p.a + side * (spread[1] + (spread[2] - spread[1]) * rng:random())
+        local clen = len * k.len * (0.8 + 0.4 * rng:random())
+        if k.cone and isTrunk then clen = clen * (1 - t * (k.coneTop or 0.85)) end -- shorter toward the top
+        local cw = p.w * k.width
+        grow(k, rng, out, p.x, p.y, ca, clen, cw, math.max(TWIG, cw * 0.35), depth + 1, false, scale)
+        side = -side
+    end
+    -- a trunk that forks: its limbs from the top, fanned out
+    if isTrunk and k.fork then
+        local nf, fan, flen = k.fork[1], k.fork[2], k.fork[3]
+        -- from a step below the top, so the limbs overlap the trunk's end (no notch where they meet)
+        local top = pts[math.max(1, #pts - 1)]
+        x, y = top.x, top.y
+        for f = 1, nf do
+            local fa = a + (f - (nf + 1) / 2) * fan + (rng:random() - 0.5) * 0.2
+            local fw = w1 * (0.75 + 0.1 * rng:random())
+            grow(k, rng, out, x, y, fa, len * flen * (0.85 + 0.3 * rng:random()), fw, math.max(TWIG, fw * 0.3),
+                depth + 1, false, scale)
+        end
+    end
 end
 
--- the strip: two vertices per point, its way up and its length so far; the edges for the outline
-local function stripMesh(pts, seed)
-    local verts, left, right = {}, {}, {}
-    local along = 0
+-- a branch's strip as triangles into verts (two vertices per point, its way up and its length so far), its
+-- edges as lines for the outline (no line across its end: a trunk's limbs grow out of it there)
+local function addStrip(pts, seed, verts, lines)
+    local left, right = {}, {}
+    local prevL, prevR
     for i, p in ipairs(pts) do
         local a, b = pts[math.max(1, i - 1)], pts[math.min(#pts, i + 1)]
         local ux, uy = b.x - a.x, b.y - a.y
         local len = math.sqrt(ux * ux + uy * uy)
         ux, uy = ux / len, uy / len
-        if i > 1 then
-            local q = pts[i - 1]
-            along = along + math.sqrt((p.x - q.x) ^ 2 + (p.y - q.y) ^ 2)
-        end
         local rx, ry = -uy, ux -- the strip's right (as the shader's)
         local half = p.w / 2
-        verts[#verts + 1] = { p.x - rx * half, p.y - ry * half, -1, half, ux, uy, along, seed }
-        verts[#verts + 1] = { p.x + rx * half, p.y + ry * half, 1, half, ux, uy, along, seed }
-        left[#left + 1] = { p.x - rx * half, p.y - ry * half }
-        right[#right + 1] = { p.x + rx * half, p.y + ry * half }
+        local L = { p.x - rx * half, p.y - ry * half, -1, half, ux, uy, p.along, seed }
+        local R = { p.x + rx * half, p.y + ry * half, 1, half, ux, uy, p.along, seed }
+        if prevL then
+            verts[#verts + 1] = prevL; verts[#verts + 1] = prevR; verts[#verts + 1] = L
+            verts[#verts + 1] = prevR; verts[#verts + 1] = R; verts[#verts + 1] = L
+        end
+        prevL, prevR = L, R
+        left[#left + 1] = { L[1], L[2] }
+        right[#right + 1] = { R[1], R[2] }
     end
-    local mesh = love.graphics.newMesh(MESH_FORMAT, verts, 'strip', 'static')
-    return mesh, left, right
+    -- the crayon line as thick as suits the branch (a twig's thinner, the thinnest none)
+    local w = math.min(13, pts[1].w * 0.1)
+    if w >= 2.5 then
+        lines[#lines + 1] = { pts = left, width = w }
+        lines[#lines + 1] = { pts = right, width = w }
+    end
 end
 
--- every tree's meshes and outline, made once (the bark's size changes only the shader's numbers)
+-- every tree grown and made into meshes once: one part per depth (all its branches in one mesh, one
+-- outline), drawn deepest first, so twigs go behind their branches and branches behind the trunk
 local built
 local function build()
     built = {}
     local i = 0
     for _, row in ipairs(ROWS) do
-        for k = 1, row.count do
+        for col = 1, row.count do
             i = i + 1
             local t = TREES[i]
             if not t then break end
-            local x0 = row.x + (k - 1) * STEP
-            local stem = stemLine(t, x0, row.ground)
-            -- each part with its own outline, drawn in order (the branch, then the stem over it: the
-            -- branch's outline where it goes into the stem is hidden behind it)
-            local tree = { def = t, x = x0, ground = row.ground, parts = {} }
-            local function add(pts, seed)
-                local mesh, left, right = stripMesh(pts, seed)
-                local w = 13
-                tree.parts[#tree.parts + 1] = { mesh = mesh, lines = {
-                    { pts = left, width = w },
-                    { pts = right, width = w },
-                    { pts = { left[#left], right[#right] }, width = w }, -- the cut across the top
-                } }
-            end
-            if t.branch then add(branchLine(t, stem), i * 0.37 + 0.5) end
-            add(stem, i * 0.61)
-            tree.parts[#tree.parts].isStem = true
-            -- its eyes, the same every time (seeded by its place): up the stem, round it a little, about as
-            -- wide as the stem there (laid round the curve, so they show a little narrower)
+            local k = KINDS[t.kind]
+            local scale = t.size or 1
+            local x0 = row.x + (col - 1) * STEP
             local rng = love.math.newRandomGenerator(i * 7919 + 13)
+            local branches = {}
+            local trunkLen = k.trunk * scale
+            grow(k, rng, branches, x0, row.ground, -math.pi / 2 + t.lean, trunkLen, k.w * scale,
+                k.w * scale * (k.fork and 0.7 or 0.12), 0, true, scale)
+            local byDepth, maxDepth = {}, 0
+            for b, br in ipairs(branches) do
+                local d = br.depth
+                maxDepth = math.max(maxDepth, d)
+                byDepth[d] = byDepth[d] or { verts = {}, lines = {} }
+                addStrip(br.pts, i * 0.61 + b * 0.173, byDepth[d].verts, byDepth[d].lines)
+            end
+            local tree = { def = t, x = x0, ground = row.ground, parts = {}, branchCount = #branches }
+            for d = maxDepth, 0, -1 do
+                local g = byDepth[d]
+                if g and #g.verts >= 3 then
+                    tree.parts[#tree.parts + 1] = {
+                        mesh = love.graphics.newMesh(MESH_FORMAT, g.verts, 'triangles', 'static'),
+                        strokes = STROKE.meshes(g.lines, 0.6, 0, true), isStem = d == 0 }
+                end
+            end
+            -- its eyes, the same every time: up the trunk (the bare part, where branches were), round it
+            -- either way, about as wide as the trunk there (laid round the curve, they show narrower)
+            local trunk = branches[1].pts
             local count = t.eyes or (rng:random() < 0.35 and 1 or 0)
+            local top = k.fork and 0.9 or (k.trunkStart + 0.1)
             tree.eyes, tree.mipoEyes = {}, {}
             for e = 1, math.min(count, MAX_EYES) do
-                -- scattered: a slot each up the stem, anywhere in it, and round the stem either way
-                local u = 0.1 + 0.8 * (e - 1 + rng:random()) / math.max(1, count)
-                local p = stem[math.floor(u * SEGMENTS) + 1]
+                local u = 0.1 + (top - 0.1) * (e - 1 + rng:random()) / math.max(1, count)
+                local p = trunk[math.floor(u * (#trunk - 1)) + 1]
                 local kinds = t.kinds or { 1, 2, 3 }
-                local eye = { (rng:random() - 0.5) * 1.7, u * t.h,
-                    p.w * (0.7 + 0.8 * rng:random()), kinds[rng:random(1, #kinds)] - 1 }
+                local eye = { (rng:random() - 0.5) * 1.7, p.along, p.w * (0.7 + 0.8 * rng:random()),
+                    kinds[rng:random(1, #kinds)] - 1 }
                 tree.eyes[#tree.eyes + 1] = eye
                 -- the same eye as a Mipo's (m): a little smaller, they're rounder than the scars
                 tree.mipoEyes[#tree.mipoEyes + 1] = { eye[1], eye[2], eye[3] * 0.8,
@@ -331,9 +409,6 @@ local function build()
             end
             built[#built + 1] = tree
         end
-    end
-    for _, tree in ipairs(built) do
-        for _, part in ipairs(tree.parts) do part.strokes = STROKE.meshes(part.lines, 0.6, 0, true) end
     end
 end
 
@@ -348,8 +423,8 @@ end
 
 function s.onStart()
     worldState.paused = false
-    cam:setScale(0.24)
-    cam:setTranslation(-150, 300)
+    cam:setScale(0.135)
+    cam:setTranslation(0, 200)
     build()
 end
 
