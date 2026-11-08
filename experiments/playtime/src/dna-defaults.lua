@@ -119,8 +119,10 @@ lib.randomRanges = {
     legH          = { min = 60, max = 800 },
     armH          = { min = 60, max = 800 },
     earScale      = { min = 0.5, max = 2 },
-    feetScale     = { min = 1, max = 2 },
-    handScale     = { min = 1, max = 2 },
+    -- feet 1-1.2, hands 0.65-0.85: Nikki's picks in the nofeet spike (2026-11-08); were both 1-2,
+    -- the big feet were boxes Mipos got stuck on
+    feetScale     = { min = 1, max = 1.2 },
+    handScale     = { min = 0.65, max = 0.85 },
     haircutWidth  = { min = 100, max = 400 },
     eyeY          = { min = 0.3, max = 0.6 },
     eyeX          = { min = 0.1, max = 0.4 },
