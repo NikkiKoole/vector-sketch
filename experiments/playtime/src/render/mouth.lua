@@ -243,6 +243,75 @@ end
 
 
 
+-- The mouth's inside as a hole: its own see-through colour (backdropHex) at the lips, going black
+-- deeper in, so it reads as a cavity. "Deeper" is the distance from the lips (the mouth's outline),
+-- so a curved smile darkens along its middle as a round O does in its centre: black from
+-- CAVITY_REACH of the deepest point's depth. Only without a material (a lit inner mouth keeps its
+-- surface shader). Outline and depth kept per mouth shape (the polygons are cached per shape).
+local CAVITY_REACH = 0.7
+local CAVITY_POINTS = 64 -- the shader's outline points, at most (the first again at the end)
+local cavityShader
+local cavities = setmetatable({}, { __mode = 'k' }) -- [polygon] = { points = {{x, y}...}, depth }
+
+-- the outline (thinned to CAVITY_POINTS) and how deep the mouth's deepest point is: the outline runs
+-- along the upper lip and back along the lower one, so point i faces point n + 1 - i; half the
+-- widest gap between them (a grid inside the mouth was ~0.2 ms a new shape, and a talking mouth is
+-- a new shape every frame)
+local function cavityOf(poly)
+    local cav = cavities[poly]
+    if cav then return cav end
+    local n = #poly / 2
+    local step = math.max(1, math.ceil(n / (CAVITY_POINTS - 1)))
+    local points = {}
+    for i = 1, n, step do points[#points + 1] = { poly[i * 2 - 1], poly[i * 2] } end
+    points[#points + 1] = { points[1][1], points[1][2] }
+    local depth = 0
+    for i = 1, math.floor(n / 2) do
+        local j = n + 1 - i
+        local dx, dy = poly[j * 2 - 1] - poly[i * 2 - 1], poly[j * 2] - poly[i * 2]
+        depth = math.max(depth, math.sqrt(dx * dx + dy * dy) / 2)
+    end
+    cav = { points = points, depth = math.max(depth, 1e-3) }
+    cavities[poly] = cav
+    return cav
+end
+
+local function setCavityShader(poly, rimAlpha)
+    cavityShader = cavityShader or love.graphics.newShader([[
+        varying vec2 localPos;
+        #ifdef VERTEX
+        vec4 position(mat4 transform_projection, vec4 vertex_position) {
+            localPos = vertex_position.xy;
+            return transform_projection * vertex_position;
+        }
+        #endif
+        #ifdef PIXEL
+        uniform vec2 outline[64]; // the lips' outline, the first point again at the end
+        uniform int count;
+        uniform float blackAt;    // black from this far from the lips
+        uniform float rimAlpha;   // the see-through colour's alpha, at the lips
+        vec4 effect(vec4 color, Image tex, vec2 uv, vec2 sc) {
+            float d = 1e9;
+            for (int i = 0; i < 63; i++) {
+                if (i >= count - 1) break;
+                vec2 a = outline[i];
+                vec2 ab = outline[i + 1] - a;
+                float t = clamp(dot(localPos - a, ab) / max(dot(ab, ab), 1e-6), 0.0, 1.0);
+                d = min(d, length(localPos - a - ab * t));
+            }
+            float rim = 1.0 - smoothstep(0.0, blackAt, d); // 1 at the lips, 0 deep in
+            return vec4(color.rgb * rim, mix(1.0, rimAlpha, rim)); // a coloured inside goes black too
+        }
+        #endif
+    ]])
+    local cav = cavityOf(poly)
+    cavityShader:send('outline', unpack(cav.points))
+    cavityShader:send('count', #cav.points)
+    cavityShader:send('blackAt', cav.depth * CAVITY_REACH)
+    cavityShader:send('rimAlpha', rimAlpha)
+    love.graphics.setShader(cavityShader)
+end
+
     -- Mouth backdrop: dark interior fill. Drawn below teeth (z = mouth-lower - 2)
     -- so teeth always render on top of the void.
 local function drawMouthBackdrop(d)
@@ -263,10 +332,13 @@ local function drawMouthBackdrop(d)
         -- pass per mouth was ~50 µs each on an iPhone SE 2 (2026-10-31).
         local mesh = cleaned and mouthMesh(extra, 'backdrop', cleaned)
         if mesh then
-            love.graphics.setColor(color.hexToColor(extra.backdropHex or '00000099'))
+            local r, g, b, a = color.hexToColor(extra.backdropHex or '00000099')
+            love.graphics.setColor(r, g, b, a)
+            local before = love.graphics.getShader()
             local shaded = shadeAs(extra, body, extra.innerMaterial)
+            if not shaded then setCavityShader(cleaned, a) end
             love.graphics.draw(mesh)
-            if shaded then love.graphics.setShader() end
+            love.graphics.setShader(not shaded and before or nil)
         end
 
         love.graphics.pop()
