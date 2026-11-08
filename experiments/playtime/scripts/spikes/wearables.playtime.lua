@@ -24,8 +24,12 @@
 -- bigger, a face opening cut out (from the eyes, brows, mouth), between the hair (220) and the face
 -- (250): over hair and ears, the face showing; a cloth sheet pinned under it hangs over the shoulders.
 --
--- keys: g glasses   u underpants   h a hat   b a headscarf   k a scarf (each the next kind)   m a Mipo
---       w glasses, n pants, y a hat, v a headscarf, j a scarf on every Mipo   o all off   r   p the panel
+-- Masks: an eye band (hero, bandit) or an animal face (cat, bear, frog) laid over the face from its
+-- own eyes and face oval, drawn over the face's parts (250..254) with holes where the eyes are, so
+-- the Mipo's own eyes look out.
+--
+-- keys: g glasses  u underpants  h a hat  b a headscarf  t a shirt  x a mask  k a scarf (the next kind)
+--       w n y v i z j: one of those on every Mipo   m a Mipo   o all off   r   p the panel
 
 local s = {}
 
@@ -136,6 +140,15 @@ local SHIRTS = {
     { name = 'sweater', hem = 0.86, sleeve = 1, sleeveW = 0.34, neck = 0.15, base = { 0.42, 0.66, 0.44 },
       band = { 0.32, 0.52, 0.34 }, pattern = 'dots', ink = { 0.62, 0.82, 0.6 } },
 }
+-- masks: 'eye' a band over the eyes with ties, 'face' an oval over the whole face with ears and a snout
+local MASKS = {
+    { name = 'hero', type = 'eye', color = { 0.85, 0.15, 0.2 } },
+    { name = 'bandit', type = 'eye', color = { 0.14, 0.12, 0.15 } },
+    { name = 'cat', type = 'face', color = { 0.98, 0.72, 0.32 }, ears = 'cat' },
+    { name = 'bear', type = 'face', color = { 0.6, 0.4, 0.25 }, ears = 'bear' },
+    { name = 'frog', type = 'face', color = { 0.42, 0.74, 0.36 }, ears = 'frog' },
+}
+local MASK_Z = 256 -- over the face's parts (eyes 250 .. nose 254), under hats (380) and the arms (402)
 local SHIRT_Z = 305  -- over the torso and the pants (302: worn untucked), under the arms (402)
 local SLEEVE_Z = 404 -- over the arms (402, 403), under the hands (500)
 local PANTS_Z = 302 -- in a Mipo's own layers: over the legs (300, 301), under the nose (350), feet (399), arms (402)
@@ -147,10 +160,10 @@ local MASK = 128                            -- a lens mask's longer side, in pix
 local function room()
     state.wearables = state.wearables or {
         items = {}, statics = {}, mipos = {}, showPanel = true, peak = 0,
-        nextGlasses = 1, nextPants = 1, nextHat = 1, nextScarf = 1, nextHeadscarf = 1, nextShirt = 1,
+        nextGlasses = 1, nextPants = 1, nextHat = 1, nextScarf = 1, nextHeadscarf = 1, nextShirt = 1, nextMask = 1,
         settings = { lens = 1, bend = 1, shine = 1, glint = 1, snap = 0.9,
             grip = 1300, pantsGrip = 1600, hatGrip = 1100, scarfGrip = 2000, scarfTall = 1.6,
-            headscarfGrip = 2200, hood = 1.22, shirtGrip = 2200 },
+            headscarfGrip = 2200, hood = 1.22, shirtGrip = 2200, maskGrip = 1800 },
     }
     return state.wearables
 end
@@ -648,6 +661,16 @@ local function faceOval(head)
     return (x0 + x1) / 2, (y0 + y1) / 2, (x1 - x0) / 2 * 1.08, (y1 - y0) / 2 * 1.1
 end
 
+-- a face for a mask (the head's frame): the eyes (middle, spacing, size, each eye) and the face oval
+local function maskFace(head)
+    local l, r = decal(head, 'lpupil'), decal(head, 'rpupil')
+    local ox, oy, orx, ory = faceOval(head)
+    if not (l and r and ox) then return nil end
+    return { mx = (l.ox + r.ox) / 2, my = (l.oy + r.oy) / 2, E = math.max(10, math.abs(r.ox - l.ox)),
+        eyeW = l.eyeW or l.w or 20, eyeH = l.eyeH or l.h or 20,
+        eyes = { { l.ox, l.oy }, { r.ox, r.oy } }, ox = ox, oy = oy, orx = orx, ory = ory }
+end
+
 -- where a headscarf goes: the head, its skin, the face's oval; nil on a potato head (its head is its
 -- body: the hood would cover all of it)
 local function headscarfOn(inst)
@@ -704,6 +727,13 @@ end
 ---------------------------------------------------------------- items
 
 local function spot(item, inst)
+    if item.sort == 'mask' then
+        local head = headOf(inst)
+        local f = head and maskFace(head)
+        if not f then return nil end
+        local wx, wy = head:getWorldPoint(f.ox, f.oy)
+        return head, wx, wy, head:getAngle(), f.E * 1.5 * state.wearables.settings.snap
+    end
     if item.sort == 'shirt' then
         local body = partBody(inst, 'torso1')
         local skin = body and skinOf(body)
@@ -752,10 +782,11 @@ local function wornBy(b, sort, inst)
 end
 
 local function addItem(b, sort, x, y, kindIndex)
-    local list = ({ pants = PANTS, hat = HATS, scarf = SCARVES, headscarf = HEADSCARVES, shirt = SHIRTS })[sort]
+    local list = ({ pants = PANTS, hat = HATS, scarf = SCARVES, headscarf = HEADSCARVES, shirt = SHIRTS,
+        mask = MASKS })[sort]
         or KINDS
     local key = ({ pants = 'nextPants', hat = 'nextHat', scarf = 'nextScarf', headscarf = 'nextHeadscarf',
-        shirt = 'nextShirt' })[sort] or 'nextGlasses'
+        shirt = 'nextShirt', mask = 'nextMask' })[sort] or 'nextGlasses'
     kindIndex = kindIndex or b[key] or 1 -- a state from before a sort was added lacks its key
     b[key] = kindIndex % #list + 1
     local kind = list[kindIndex]
@@ -765,6 +796,7 @@ local function addItem(b, sort, x, y, kindIndex)
     if sort == 'scarf' then w, h = SCARF_LOOSE, SCARF_LOOSE * 0.22 end
     if sort == 'headscarf' then w, h = HEADSCARF_LOOSE, HEADSCARF_LOOSE * 0.45 end
     if sort == 'shirt' then w, h = 150, 130 end
+    if sort == 'mask' then w, h = 150, 90 end
     local thing = objectManager.addThing('rectangle', { x = x, y = y, width = w, height = h,
         bodyType = 'dynamic', label = sort, density = 0.3 })
     if not thing then return end
@@ -837,6 +869,7 @@ local function stock(b)
     -- scarves: parked (docs/WEARABLES.md), on the keys only
     for i = 1, #HEADSCARVES do addItem(b, 'headscarf', -900 + (i - 1) * 450, -450, i) end
     for i = 1, #SHIRTS do addItem(b, 'shirt', -700 + (i - 1) * 450, -550, i) end
+    for i = 1, #MASKS do addItem(b, 'mask', -900 + (i - 1) * 450, -650, i) end
 end
 
 ---------------------------------------------------------------- hooks
@@ -914,6 +947,7 @@ function s.update(dt)
         scarf = { mipos = mipos, spot = spot, grip = set.scarfGrip or 2000 },
         headscarf = { mipos = mipos, spot = spot, grip = set.headscarfGrip or 2200 },
         shirt = { mipos = mipos, spot = spot, grip = set.shirtGrip or 2200 },
+        mask = { mipos = mipos, spot = spot, grip = set.maskGrip or 1800 },
     }
     for _, opts in pairs(optsFor) do
         opts.taken = function(item, inst) return wornBy(b, item.sort, inst) ~= nil end
@@ -977,6 +1011,8 @@ function s.onKeyPress(key)
     elseif key == 'u' then addItem(b, 'pants', mx, my)
     elseif key == 'h' then addItem(b, 'hat', mx, my)
     elseif key == 'y' then dressAll(b, 'hat')
+    elseif key == 'x' then addItem(b, 'mask', mx, my)
+    elseif key == 'z' then dressAll(b, 'mask')
     elseif key == 't' then addItem(b, 'shirt', mx, my)
     elseif key == 'i' then dressAll(b, 'shirt')
     elseif key == 'b' then addItem(b, 'headscarf', mx, my)
@@ -1270,6 +1306,123 @@ local function drawShirtOn(item, sleevesOnly)
         to = on.to, hole = on.hole, key = item.gridKey, band = on.band } })
 end
 
+-- a mask's pieces on a face f (maskFace's): shapes (behind first), details on top, eye holes
+local function maskParts(kind, f)
+    local shapes, details, holes = {}, {}, {}
+    local function poly(pts, color, list) (list or shapes)[#(list or shapes) + 1] = { poly = pts, color = color } end
+    local function circle(x, y, r, color, list)
+        (list or shapes)[#(list or shapes) + 1] = { circle = { x, y, r }, color = color }
+    end
+    local col = kind.color
+    local light = { col[1] * 0.6 + 0.4, col[2] * 0.6 + 0.4, col[3] * 0.6 + 0.4 }
+    if kind.type == 'eye' then
+        -- in units: x of the eye spacing from the eyes' middle, y of the eye's height
+        local function at(units)
+            local out = {}
+            for i = 1, #units, 2 do
+                out[i] = f.mx + units[i] * f.E
+                out[i + 1] = f.my + units[i + 1] * f.eyeH
+            end
+            return out
+        end
+        poly(at({ -1.15, -0.5, -1.55, -0.2, -1.5, 0.05, -1.05, -0.15 }), col) -- the ties
+        poly(at({ 1.15, -0.5, 1.05, -0.15, 1.5, 0.05, 1.55, -0.2 }), col)
+        poly(at({ -1.15, -0.5, -0.6, -0.85, -0.15, -0.7, 0, -0.55, 0.15, -0.7, 0.6, -0.85, 1.15, -0.5,
+            0.9, 0.35, 0.5, 0.7, 0.15, 0.45, 0, 0.3, -0.15, 0.45, -0.5, 0.7, -0.9, 0.35 }), col)
+    else
+        local ox, oy, rx, ry = f.ox, f.oy, f.orx * 1.12, f.ory * 1.18
+        if kind.ears == 'cat' then
+            for _, sx in ipairs({ -1, 1 }) do
+                poly({ ox + sx * rx * 0.95, oy - ry * 0.5, ox + sx * rx * 0.8, oy - ry * 1.45,
+                    ox + sx * rx * 0.25, oy - ry * 0.92 }, col)
+            end
+        elseif kind.ears == 'bear' then
+            for _, sx in ipairs({ -1, 1 }) do
+                circle(ox + sx * rx * 0.78, oy - ry * 0.88, rx * 0.34, col)
+                circle(ox + sx * rx * 0.78, oy - ry * 0.88, rx * 0.18, light, details)
+            end
+        elseif kind.ears == 'frog' then
+            for _, sx in ipairs({ -1, 1 }) do circle(ox + sx * rx * 0.5, oy - ry * 0.95, rx * 0.32, col) end
+        end
+        poly(arc(ox, oy, rx, ry, 0, 2 * math.pi, 36), col)
+        local below = oy + ry * 0.38
+        if kind.ears == 'cat' then
+            poly({ ox - rx * 0.1, below - ry * 0.08, ox + rx * 0.1, below - ry * 0.08, ox, below + ry * 0.06 },
+                { 0.95, 0.5, 0.6 }, details)
+            for _, sx in ipairs({ -1, 1 }) do
+                for k = -1, 1 do
+                    details[#details + 1] = { line = { ox + sx * rx * 0.18, below + k * ry * 0.06,
+                        ox + sx * rx * 0.7, below + k * ry * 0.12 - ry * 0.05 } }
+                end
+            end
+        elseif kind.ears == 'bear' then
+            circle(ox, below + ry * 0.08, rx * 0.36, light, details)
+            poly(arc(ox, below - ry * 0.02, rx * 0.12, ry * 0.07, 0, 2 * math.pi, 14), OUTLINE, details)
+        elseif kind.ears == 'frog' then
+            circle(ox - rx * 0.55, below, rx * 0.12, { 0.95, 0.55, 0.6 }, details)
+            circle(ox + rx * 0.55, below, rx * 0.12, { 0.95, 0.55, 0.6 }, details)
+            details[#details + 1] = { line = arc(ox, below - ry * 0.15, rx * 0.5, ry * 0.25, 0.2, math.pi - 0.2, 14) }
+        end
+    end
+    for _, e in ipairs(f.eyes) do holes[#holes + 1] = { e[1], e[2], f.eyeW * 0.6, f.eyeH * 0.6 } end
+    return shapes, details, holes
+end
+
+-- a mask on face f: the eye holes kept out (a stencil), every shape's outline, the fills, the
+-- details, then the holes' rims
+local function drawMask(kind, f)
+    local shapes, details, holes = maskParts(kind, f)
+    local ol = f.E * 0.06
+    local function hole(h, mode) love.graphics.ellipse(mode, h[1], h[2], h[3], h[4], 24) end
+    love.graphics.stencil(function() for _, h in ipairs(holes) do hole(h, 'fill') end end, 'replace', 1)
+    love.graphics.setStencilTest('equal', 0)
+    love.graphics.setLineJoin('bevel')
+    love.graphics.setLineWidth(ol * 2)
+    love.graphics.setColor(OUTLINE)
+    for _, sh in ipairs(shapes) do
+        if sh.poly then love.graphics.polygon('line', sh.poly)
+        else love.graphics.circle('line', sh.circle[1], sh.circle[2], sh.circle[3], 24) end
+    end
+    for _, list in ipairs({ shapes, details }) do
+        for _, sh in ipairs(list) do
+            if sh.poly then
+                love.graphics.setColor(sh.color); fillPoly(sh.poly)
+            elseif sh.circle then
+                love.graphics.setColor(sh.color)
+                love.graphics.circle('fill', sh.circle[1], sh.circle[2], sh.circle[3], 24)
+            elseif sh.line then
+                love.graphics.setColor(OUTLINE)
+                love.graphics.setLineWidth(ol)
+                love.graphics.line(sh.line)
+            end
+        end
+    end
+    love.graphics.setStencilTest()
+    love.graphics.setColor(OUTLINE)
+    love.graphics.setLineWidth(ol)
+    for _, h in ipairs(holes) do hole(h, 'line') end
+    love.graphics.setLineWidth(1)
+end
+
+-- a worn mask, on its head (a potato head's spine torso1: along the bend, as a face is)
+local function drawMaskOn(item)
+    local head = item.wearer and headOf(item.wearer)
+    local f = head and maskFace(head)
+    if not f then return end
+    local bend = spineSkin.transformAt(head, f.ox, f.oy)
+    love.graphics.push()
+    if bend then love.graphics.applyTransform(bend) end
+    onBody(head, function() drawMask(MASKS[item.kind], f) end)
+    love.graphics.pop()
+end
+
+-- a loose mask: on a face of its own size, empty eye holes
+local LOOSE_FACE = { mx = 0, my = -5, E = 60, eyeW = 34, eyeH = 34, eyes = { { -30, -5 }, { 30, -5 } },
+    ox = 0, oy = 5, orx = 55, ory = 48 }
+local function drawLooseMask(item)
+    onBody(item.body, function() drawMask(MASKS[item.kind], LOOSE_FACE) end)
+end
+
 -- a loose shirt: flat, front on; a tank top without sleeves
 local function drawLooseShirt(item)
     local kind = SHIRTS[item.kind]
@@ -1493,6 +1646,9 @@ function s.drawBelow()
         if item.sort == 'pants' and item.joint and item.wearer then
             splits[#splits + 1] = { z = (item.wearer.zGroupOffset or 0) * 1000 + PANTS_Z,
                 fn = function() drawPantsOn(item) end }
+        elseif item.sort == 'mask' and item.joint and item.wearer then
+            splits[#splits + 1] = { z = (item.wearer.zGroupOffset or 0) * 1000 + MASK_Z,
+                fn = function() drawMaskOn(item) end }
         elseif item.sort == 'shirt' and item.joint and item.wearer then
             local base = (item.wearer.zGroupOffset or 0) * 1000
             splits[#splits + 1] = { z = base + SHIRT_Z, fn = function() drawShirtOn(item) end }
@@ -1555,6 +1711,8 @@ function s.draw()
             if not item.joint then drawLooseHeadscarf(item) end
         elseif item.sort == 'shirt' then
             if not item.joint then drawLooseShirt(item) end
+        elseif item.sort == 'mask' then
+            if not item.joint then drawLooseMask(item) end
         else
             local wx, wy, a, sx, sy
             if item.host and not item.host:isDestroyed() then
@@ -1585,7 +1743,7 @@ function s.drawUI()
     local rows = { { 'lens', -0.5, 3 }, { 'bend', 0, 3 }, { 'shine', 0, 2 }, { 'glint', 0, 2 },
         { 'grip', 100, 3000 }, { 'pantsGrip', 100, 3000 }, { 'hatGrip', 100, 3000 },
         { 'scarfGrip', 100, 4000 }, { 'scarfTall', 0.5, 3 }, { 'headscarfGrip', 100, 4000 },
-        { 'hood', 1, 1.6 }, { 'shirtGrip', 100, 4000 }, { 'snap', 0.2, 2 } }
+        { 'hood', 1, 1.6 }, { 'shirtGrip', 100, 4000 }, { 'maskGrip', 100, 4000 }, { 'snap', 0.2, 2 } }
     local h = (BH + pad) * (#rows + 2) + pad + 24
     local _, sh = love.graphics.getDimensions()
     local x0, y0 = 20, sh - h - 20
@@ -1601,7 +1759,7 @@ function s.drawUI()
         local x, y = ui.nextLayoutPosition(layout, w - 20, BH)
         ui.label(x, y, string.format('jolt now %d px/s (off over grip)', math.floor(b.peak)))
         x, y = ui.nextLayoutPosition(layout, w - 20, BH)
-        ui.label(x, y, 'g u h b t: glasses pants hat headscarf shirt  w n y v i: all on')
+        ui.label(x, y, 'g u h b t x: glasses pants hat headscarf shirt mask; w n y v i z: all')
     end)
 end
 

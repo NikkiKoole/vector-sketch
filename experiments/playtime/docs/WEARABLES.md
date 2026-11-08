@@ -1,9 +1,9 @@
-# Wearables — glasses, hats, headscarves, shirts, underpants for Mipos
+# Wearables — glasses, hats, headscarves, shirts, masks, underpants for Mipos
 
 status: parked — Nikki 2026-11-08: "good as an experiment to come back later to". Hats liked ("feel nice"), pants and headscarves promising; scarves' cloth ribbons disliked. Scene `wearables`, code in src/wearables.lua
 
-**Coming back to it:** load the scene `wearables`, tab to play. g u h b t: glasses, pants, hat,
-headscarf, shirt at the mouse; w n y v i: one on every Mipo; o all off. Next would be Nikki's
+**Coming back to it:** load the scene `wearables`, tab to play. g u h b t x: glasses, pants, hat,
+headscarf, shirt, mask at the mouse; w n y v i z: one on every Mipo; o all off. Next would be Nikki's
 verdicts (WR1, WR6, WR9, WR10), then her drawings for the greybox (WR2), the phone cost (WR3).
 
 Things a Mipo wears, as **loose toys** (Nikki 2026-11-08): you put them on and take them off by
@@ -118,6 +118,17 @@ to the elbow, dots). Drop one on the chest; `shirtGrip` (default 2200).
 - The cut shader now outlines every cut edge (the rows, the hole), the pants' waist too.
 - A headscarf's drape (z 230) goes under a shirt.
 
+## Masks (2026-11-08, not seen yet)
+
+Eye bands (hero red, bandit black, with ties) and animal faces (cat with pointed ears, nose and
+whiskers; bear with round ears and a muzzle; frog with eye bumps, cheeks and a smile). Drop one on
+a face; `maskGrip` (default 1800).
+- Laid over the face from its own parts: the band from the eyes' middle, spacing and height, the
+  animal face from the face oval (the headscarf's: eyes, brows, nose, mouth). Holes where the eyes
+  are (a stencil), so the Mipo's own eyes look out; drawn at z +256, over the face's parts (250..254),
+  under hats and arms. Potato heads too (on a spine torso1 along the bend, as hats).
+- Built while the game was on another scene: lint-clean, never drawn yet.
+
 Steps:
 - [ ] WR1. Nikki plays with the glasses: the fit, the jolt, the lens look. Keep, change or park?
 - [ ] WR2. Drawn frames: scan glasses (front view, outline + mask like the Mipo parts, the lens
@@ -130,6 +141,7 @@ Steps:
 - [x] WR5. Scarves: built and parked 2026-11-08 (cloth ribbons as clothing disliked)
 - [ ] WR9. Headscarves: Nikki plays with them ("looks promising"); keep the drape or drop it
 - [ ] WR10. Shirts: Nikki plays with them (the hem, the sleeves, the neck hole)
+- [ ] WR11. Masks built 2026-11-08, not seen yet: x a mask, z on every Mipo
 - [ ] WR6. Underpants: Nikki plays with them (the cut, the waist heights, the drop on the hips).
       Soft torsos done 2026-11-08
 - [x] WR7. The wear/jolt code in `src/wearables.lua` (2026-11-08, with the underpants)
