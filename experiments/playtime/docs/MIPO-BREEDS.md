@@ -191,6 +191,11 @@ hair, for now).
 - [ ] **B7. Families:** "a child of this one" (`mutateSizes` + small draws, same breed).
 - [~] **B8. New parts** for cat/dog/mouse (tail, snout, whiskers, floppy ears): only after B4,
   one at a time.
+- [ ] **B9. Phone bench: the pupil clip.** Pupils are clipped to the eye's white since 2026-11-08
+  (a stencil per pupil, `clipToEye` in `src/physics/box2d-draw-textured.lua`, 713e996c). On the Mac
+  it costs ~0.1 ms draw for 12 pupils (1.74 vs 1.64 ms); the bench is CPU time, so the stencil's GPU
+  side is unmeasured. `./playtime.sh bench device` in a room of ~20 Mipos, clip on and off (off:
+  `local clip = false and ...` in `drawDecal`, don't commit that). Keep it if the phone stays at 60.
 
 ## Open questions
 

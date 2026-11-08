@@ -18,6 +18,8 @@ and `FACE-SYSTEM-PLAN.md` (gaze, blink, brows done). Checked against the code 20
   `randValue(min, max, step, preferMiddle)`).
 - [ ] **E6. Screenshot export** of a Mipo at a few sizes.
 - [ ] **E7. Pupil look-at polish**: how the movement feels, masking pupils by the eye shape.
+  Masking done 2026-11-08: pupils clipped to the eye's white (mask less outline), offset in the
+  eye's tilted frame and shrinking with blinks, `pupilRange` 0.6; phone cost is MIPO-BREEDS B9.
 - [ ] **E8. Feet that bend.** A foot in two shapes, heel and toes, on a springy joint, so it
   rolls over its toes and lands softer instead of a stiff plank (idea, 2026-11-01; not for now).
   The feet hang from their ankle point (`ankle` in `src/shape8-dict.lua`) and rest on their
