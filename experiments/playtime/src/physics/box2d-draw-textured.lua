@@ -821,14 +821,21 @@ local function drawDecal(d)
                 t = math.max(0, 1 - dist / gazeRadius)
             end
             if t > 0 then
-                local angle = math.atan2(dy, dx)
-                local localAngle = angle - body:getAngle()
+                -- the offset is worked out in the eye's own frame (it's drawn turned by eyeRot), so a
+                -- tilted eye's pupil moves along the eye; a blink squashes the eye toward its centre,
+                -- so the pupil's offset across the eye shrinks with it
+                local eyeRot = extra.eyeRot or 0
+                local eyeAngle = math.atan2(dy, dx) - body:getAngle() - eyeRot
                 local dw = extra.w or 0
                 local dh = extra.h or 0
                 local maxX = math.max(0, (extra.eyeW - dw) / 2) * 0.8
                 local maxY = math.max(0, (extra.eyeH - dh) / 2) * 0.8
-                ox = ox + math.cos(localAngle) * maxX * t
-                oy = oy + math.sin(localAngle) * maxY * t
+                local eyesOpen = (gazeThing and gazeThing.eyesOpen) or 1
+                local ex = math.cos(eyeAngle) * maxX * t
+                local ey = math.sin(eyeAngle) * maxY * t * eyesOpen
+                local c, s = math.cos(eyeRot), math.sin(eyeRot)
+                ox = ox + ex * c - ey * s
+                oy = oy + ex * s + ey * c
             end
         end
         local wx, wy = body:getWorldPoint(ox, oy)
