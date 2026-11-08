@@ -5,7 +5,8 @@
 --   begin(settings) once a frame: lightPos {x, y, out}, lightColour, ambient, detail, look (0 photo,
 --     1 tinted, 2 relief), bands (0 smooth), debugView (0 off, 1 normals, 2 light), barkWidth
 --   drawTree(tree, { eyes = bool, mipoEyes = bool, outlines = bool })
---   placeEyes(def, kind, trunkPts, rng) -> eyes, mipoEyes (on the bare trunk, where branches were)
+--   placeEyes(def, kind, trunkPts, rng, age) -> eyes, mipoEyes (on the bare trunk, where branches were; none
+--     on a young tree, more on an old one)
 --   reset() drops the loaded pictures (a scene's onUnload)
 -- From the bark spike (docs/BARK.md).
 local lib = {}
@@ -139,11 +140,15 @@ local barkShader = love.graphics.newShader([[
     }
 ]])
 
-function lib.placeEyes(t, k, trunk, rng)
+function lib.placeEyes(t, k, trunk, rng, age)
     local eyes, mipoEyes = {}, {}
+    age = age or 1
     -- its eyes, the same every time: up the trunk (the bare part, where branches were), round it
     -- either way, about as wide as the trunk there (laid round the curve, they show narrower)
     local count = t.eyes or (rng:random() < 0.35 and 1 or 0)
+    -- a young tree has shed no branches yet; an old one more
+    if age < 1 then count = math.floor(count * age) end
+    if age > 1 then count = count + math.floor((age - 1) * (t.eyes and 3 or 1) + 0.5) end -- aspens, birches most
     local top = k.fork and 0.9 or (k.trunkStart + 0.1)
     for e = 1, math.min(count, MAX_EYES) do
         local u = 0.1 + (top - 0.1) * (e - 1 + rng:random()) / math.max(1, count)

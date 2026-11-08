@@ -7,7 +7,8 @@
 -- life, the sign its way: it leans with it, its crown combed to the lee side), sun -1..1 (where its light
 -- came from: left, overhead, right; it reaches for it), crowd 0..1 with left/right (how much room to the
 -- next tree on each side, world units; nil: none): its branches keep out of a neighbour's space, turning
--- up instead. From the bark spike (docs/BARK.md: BK1d-BK8).
+-- up instead; age 0..2 (0 a sapling, 1 grown, 2 ancient: see agedKind). grow returns the branches and the
+-- kind as aged (for placing the eyes on it). From the bark spike (docs/BARK.md: BK1d-BK10).
 local lib = {}
 
 local STEP_LEN = 26 -- world units per step along a branch
@@ -30,7 +31,7 @@ end
 -- elbow), thin tips can hang (droop: weeping); the slow wander is a little on top. Wind (BK7): the tree
 -- grows toward a sky leaning downwind, its branches combed to the lee side, those reaching into the wind
 -- shorter, those downwind longer.
-local function grow(k, rng, out, x, y, a, len, w0, depth, isTrunk, scale, env)
+local function grow(k, rng, out, x, y, a, len, w0, depth, isTrunk, scale, env, broken)
     if #out >= MAX_BRANCHES then return end
     local organic, wind, sun, crowd = env.organic, env.wind, env.sun, env.crowd
     local sky = -math.pi / 2 + wind * 0.35 + sun * 0.15 -- where 'up' is for a tree in this wind and light
@@ -52,7 +53,7 @@ local function grow(k, rng, out, x, y, a, len, w0, depth, isTrunk, scale, env)
     local bends = math.min(1.5, organic) -- the sag and the elbow, with the slider (0: straight)
     -- its side branches first, where they leave and how much wood each takes: the widths come from them
     local kids = {}
-    if depth < k.depth and w0 > TWIG * 2 then
+    if depth < k.depth and w0 > TWIG * 2 and not broken then
         local range = isTrunk and k.trunkKids or k.kids
         local count = rng:random(range[1], range[2])
         local from = isTrunk and k.trunkStart or k.start
@@ -143,7 +144,7 @@ local function grow(k, rng, out, x, y, a, len, w0, depth, isTrunk, scale, env)
     for _, p in ipairs(pts) do
         local u = p.along / total
         local w = widthAt(u)
-        if not (isTrunk and k.fork) then w = w * (1 - 0.65 * math.max(0, (u - 0.7) / 0.3) ^ 2) end -- the tip
+        if not (isTrunk and k.fork) and not broken then w = w * (1 - 0.65 * math.max(0, (u - 0.7) / 0.3) ^ 2) end
         if isTrunk then
             w = w * (1 + k.flare * (1 - math.min(1, u * 6)) ^ 2) -- roots flaring at the foot
         else
@@ -178,7 +179,14 @@ local function grow(k, rng, out, x, y, a, len, w0, depth, isTrunk, scale, env)
         if sun ~= 0 then clen = clen * (1 + 0.5 * sun * math.cos(ca)) end -- long on the sunny side (lopsided)
         clen = clen * roomFor(p.x, ca, clen)
         local cw = widthAt(kid.t - 0.04) * math.sqrt(kid.share)
-        grow(k, rng, out, p.x, p.y, ca, clen, math.max(TWIG, cw), depth + 1, false, scale, env)
+        -- an old tree's: some limbs broken off to a stub, and high up a dead top (bare limbs, no twigs)
+        local kidBroken
+        if k.stubs and depth <= 1 and rng:random() < k.stubs then
+            kidBroken, clen = true, clen * (0.1 + 0.12 * rng:random())
+        elseif k.deadTop and env.y0 - p.y > env.tall * 0.62 and rng:random() < k.deadTop then
+            kidBroken, clen = true, clen * 0.75
+        end
+        grow(k, rng, out, p.x, p.y, ca, clen, math.max(TWIG, cw), depth + 1, false, scale, env, kidBroken)
     end
     -- a trunk that forks: what's left of its wood split between its limbs, fanned out from a step below the
     -- top (they overlap the trunk's end: no notch)
@@ -199,14 +207,54 @@ local function grow(k, rng, out, x, y, a, len, w0, depth, isTrunk, scale, env)
     end
 end
 
+-- The kind as it is at this age (BK10), 1: the kind itself. Young (toward 0): fewer branchings, branches
+-- low on the trunk, and a kind that forks when grown still a cone on one leading shoot. Old (toward 2): the
+-- lower branches shed (a longer bare trunk), a broader crown of longer limbs that sag more, more crooked,
+-- some limbs broken to stubs, and past 1.4 a dead top on the kinds that fork. Also how tall and how thick
+-- it is for its age: an old trunk thickens far more than it grows.
+local function agedKind(k, age)
+    if age == 1 then return k, 1, 1 end
+    local a = {}
+    for key, v in pairs(k) do a[key] = v end
+    local grown = math.min(1, age)
+    if age < 1 then
+        local young = 1 - age
+        a.depth = math.max(1, k.depth - math.floor(young * 2.5 + 0.5))
+        a.trunkStart = k.trunkStart * (0.5 + 0.5 * age)
+        if k.fork and age < 0.5 then
+            a.fork, a.cone, a.coneTop = nil, true, 0.7
+            a.trunkKids = { 4, 6 }
+        end
+    else
+        local old = age - 1
+        a.trunkStart = math.min(0.85, k.trunkStart + 0.15 * old)
+        a.len = k.len * (1 + 0.25 * old)
+        a.spread = { k.spread[1] * (1 + 0.2 * old), k.spread[2] * (1 + 0.2 * old) }
+        a.sag = k.sag * (1 + 0.8 * old)
+        a.wander = k.wander * (1 + 0.4 * old)
+        a.trunkWander = k.trunkWander * (1 + 0.5 * old)
+        a.stubs = 0.3 * old
+        -- a dead top is the broad old crown's (an oak gone stag-headed), not a single stem's
+        a.deadTop = (k.fork and old > 0.4) and (old - 0.4) / 0.6 * 0.5 or nil
+    end
+    local tall = (0.35 + 0.65 * grown) * (1 + 0.08 * math.max(0, age - 1))
+    local thick = (0.25 + 0.75 * grown) * (1 + 0.45 * math.max(0, age - 1))
+    return a, tall, thick
+end
+lib.agedKind = agedKind
+
 function lib.grow(kind, rng, x, y, angle, scale, env)
     local branches = {}
     scale = scale or 1
     env = env or {}
+    local age = env.age or 1
+    local k, tall, thick = agedKind(kind, age)
+    local trunkLen = kind.trunk * scale * tall
     env = { organic = env.organic or 1, wind = env.wind or 0, sun = env.sun or 0, crowd = env.crowd or 0,
-        left = env.left, right = env.right, x0 = x }
-    grow(kind, rng, branches, x, y, angle, kind.trunk * scale, kind.w * scale, 0, true, scale, env)
-    return branches
+        left = env.left, right = env.right, x0 = x, y0 = y, age = age,
+        tall = trunkLen * (k.fork and 1.9 or 1.05) } -- about how tall the whole tree stands (the dead top)
+    grow(k, rng, branches, x, y, angle, trunkLen, kind.w * scale * thick, 0, true, scale, env)
+    return branches, k
 end
 
 lib.TWIG = TWIG

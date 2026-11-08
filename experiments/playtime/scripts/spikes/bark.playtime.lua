@@ -18,7 +18,8 @@
 -- the panel's 'organic' slider: 0 straight, even branches, 1 as tuned (slow turns, collars, bumpy edges), 2 wild;
 -- 'wind': the wind the trees grew up in (-1 from the right .. 1 from the left): leaning, combed crowns;
 -- 'sun': where their light came from (-1 left, 0 overhead, 1 right): they reach for it; 'crowd' 0..1: how
--- much they keep out of each other's space (crowded trees grow up, narrow)
+-- much they keep out of each other's space (crowded trees grow up, narrow); 'age' 0 a sapling, 1 grown, 2
+-- ancient (bare lower trunk with eyes, broad sagging crown, broken stubs, a dead top)
 -- The trees come from modules any scene can load (docs/BARK.md): tree-kinds.lua (how each kind grows),
 -- tree-grow.lua (a kind + a seed -> branches), tree-mesh.lua (branches -> meshes, crayon outlines),
 -- bark-look.lua (the bark pictures, the shader, the eyes). This scene is the layout, the panel, the light.
@@ -83,6 +84,7 @@ local function lab()
     state.barkSpike.wind = state.barkSpike.wind or 0
     state.barkSpike.sun = state.barkSpike.sun or 0
     state.barkSpike.crowd = state.barkSpike.crowd or 0
+    state.barkSpike.age = state.barkSpike.age or 1
     return state.barkSpike
 end
 
@@ -91,7 +93,7 @@ end
 -- every tree grown and made into meshes once (again when the organic slider moves)
 local built
 local function build(env)
-    built = { key = table.concat({ env.organic, env.wind, env.sun, env.crowd }, '|') }
+    built = { key = table.concat({ env.organic, env.wind, env.sun, env.crowd, env.age }, '|') }
     local i = 0
     for _, row in ipairs(ROWS) do
         for col = 1, row.count do
@@ -103,11 +105,12 @@ local function build(env)
             local rng = love.math.newRandomGenerator(i * 7919 + 13)
             -- the room to the next tree on each side: half the gap (none at a row's ends)
             local treeEnv = { organic = env.organic, wind = env.wind, sun = env.sun, crowd = env.crowd,
-                left = col > 1 and STEP / 2 or nil, right = col < row.count and STEP / 2 or nil }
-            local branches = treeGrow.grow(k, rng, x0, row.ground, -math.pi / 2 + t.lean, t.size or 1, treeEnv)
+                age = env.age, left = col > 1 and STEP / 2 or nil, right = col < row.count and STEP / 2 or nil }
+            local branches, aged = treeGrow.grow(k, rng, x0, row.ground, -math.pi / 2 + t.lean, t.size or 1,
+                treeEnv)
             local tree = { def = t, x = x0, ground = row.ground, parts = treeMesh.parts(branches, i * 0.61),
                 branchCount = #branches }
-            tree.eyes, tree.mipoEyes = barkLook.placeEyes(t, k, branches[1].pts, rng)
+            tree.eyes, tree.mipoEyes = barkLook.placeEyes(t, aged, branches[1].pts, rng, env.age)
             built[#built + 1] = tree
         end
     end
@@ -127,7 +130,7 @@ function s.onStart()
     cam:setScale(0.135)
     cam:setTranslation(0, 200)
     local c = lab()
-    build({ organic = c.organic, wind = c.wind, sun = c.sun, crowd = c.crowd })
+    build({ organic = c.organic, wind = c.wind, sun = c.sun, crowd = c.crowd, age = c.age })
 end
 
 function s.onUnload()
@@ -181,10 +184,10 @@ function s.draw()
     local c = lab()
     -- a regrow takes ~0.1 s: while a slider (organic, wind) moves, wait until it rests a moment
     local now = love.timer.getTime()
-    local key = table.concat({ c.organic, c.wind, c.sun, c.crowd }, '|')
+    local key = table.concat({ c.organic, c.wind, c.sun, c.crowd, c.age }, '|')
     if key ~= c.growSeen then c.growSeen, c.growAt = key, now end
     if not built or (built.key ~= key and now - (c.growAt or 0) > 0.15) then
-        build({ organic = c.organic, wind = c.wind, sun = c.sun, crowd = c.crowd })
+        build({ organic = c.organic, wind = c.wind, sun = c.sun, crowd = c.crowd, age = c.age })
     end
     local L = LIGHTS[c.light]
     barkLook.begin({ lightPos = { c.lx, c.ly, c.lightUp }, lightColour = L.colour, ambient = L.ambient,
@@ -208,7 +211,7 @@ function s.drawUI()
     local c = lab()
     ui.startFrame()
     local sw, sh = love.graphics.getDimensions()
-    local w, h = PANEL.w, PANEL.row * 11 + 34
+    local w, h = PANEL.w, PANEL.row * 12 + 34
     local x0, y0 = sw - w - 12, math.max(12, sh - h - 12)
     c.panelRect = { x0, y0, w, h, folded = ui.isPanelFolded('•• bark ••') }
     local half = (w - PANEL.pad * 3) / 2
@@ -256,6 +259,10 @@ function s.drawUI()
         ui.label(x, y + 4, 'crowd')
         local cv = ui.sliderWithInput('bark-crowd', x + 118, y - 2, 120, 0, 1, c.crowd, nil, 0.05)
         if cv then c.crowd = cv + 0 end
+        x, y = row()
+        ui.label(x, y + 4, 'age')
+        local av = ui.sliderWithInput('bark-age', x + 118, y - 2, 120, 0, 2, c.age, nil, 0.05)
+        if av then c.age = av + 0 end
     end)
 end
 

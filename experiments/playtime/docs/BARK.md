@@ -122,7 +122,7 @@ cones, old ones broad on a bare trunk), moss on the damp shady side.
 engine left alone: moving into src/ is ENGINE-MERGE's call). Next to the scene, loaded like drawn-stroke.lua
 (`love.filesystem.load(path)()`), so any scene can plant a tree:
 - `scripts/spikes/tree-kinds.lua`: how each kind grows (the data; tune a kind here)
-- `scripts/spikes/tree-grow.lua`: `grow(kind, rng, x, y, angle, scale, env)` -> branches (env: organic, wind, sun, crowd, left/right room)
+- `scripts/spikes/tree-grow.lua`: `grow(kind, rng, x, y, angle, scale, env)` -> branches (env: organic, wind, sun, crowd, left/right room, age)
 - `scripts/spikes/tree-mesh.lua`: `parts(branches, seed)` -> a mesh and crayon outline per depth
 - `scripts/spikes/bark-look.lua`: `begin(settings)` once a frame, `drawTree(tree, opts)`, `placeEyes`, `reset`
 The bark scene is now its layout, panel and light (254 lines, was ~690). Checked with a one-off fingerprint
@@ -148,8 +148,17 @@ identical before and after.
   differed where a slider was moved during it).
 - [ ] **BK9. A history per tree**: a broken top becomes a dog-leg; a lost limb leaves a stub with a scar eye
   and water sprouts round it. The eyes then sit where branches really were.
-- [ ] **BK10. An age slider**: a young cone to an old giant; lower branches dropping off (leaving eyes), the
+- [x] **BK10. An age slider**: a young cone to an old giant; lower branches dropping off (leaving eyes), the
   crown broadening, a dead top, a hollow (a Mipo's home?). With PLANTS' growing over time; brings BK9.
+  Done 2026-11-08: the panel's **age** slider, 0 a sapling, 1 grown (the trees as before: fingerprint), 2
+  ancient; `tree-grow`'s agedKind(kind, age) makes the kind as it is at that age. Young: smaller and thin for
+  its height, fewer branchings, branches low on the trunk, the kinds that fork still a cone on one leader
+  (under 0.5). Old: the trunk far thicker (x1.45 at 2) but barely taller, lower branches shed (bare trunk
+  longer, more eyes: aspen and birch +3, others +1), a broader crown of longer, saggier, more crooked limbs,
+  limbs broken to blunt stubs (30% at 2), and past 1.4 a dead top on the kinds that fork (bare limbs high
+  up). Seen: saplings at 0.3; at 2 massive gnarled oaks and elms with stubs and dead tops, tall aspens full
+  of eyes. First try hit aspens with the dead top (crowns gone) and too many stubs and eyes: tamed.
+  Not yet: a hollow (needs its own picture), BK9's broken top and water sprouts.
 - [ ] **BK11. Moss on the shady side**: bark facing away from the light greener (in the shader).
 - Later, if it earns it: the crown (leaf blobs, PLANTS.md), bark drawn by Nikki as a height sheet
   (MATERIALS MT11) next to the scans.
