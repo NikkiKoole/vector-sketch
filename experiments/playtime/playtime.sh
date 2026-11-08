@@ -1,8 +1,10 @@
 #!/bin/bash
 # Helper script for managing the playtime LÖVE app
-# Usage: ./playtime.sh [start|play|stop|restart|status|log|errors|todo|tried|audio|bench|device] [scene]
+# Usage: ./playtime.sh [start|play|stop|restart|status|log|errors|todo|tried|audio|bench|device|thumbs] [scene]
 #   todo [--all]: the work board from the docs' status lines and checkboxes (docs/readme.md)
 #   play <scene>: start straight in play mode (no editor; tab goes to the editor)
+#   thumbs [scenes]: the scenes tab's pictures, scripts/thumbs/<name>.png (src/scene-thumbs.lua);
+#                    an off-screen second window without the bridge, the game can keep running
 
 LOVE="/Applications/love115.app/Contents/MacOS/love"
 DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -191,5 +193,6 @@ case "${1:-status}" in
     audio)   do_audio ;;
     bench)   do_bench "${2:-}" "${3:-}" "${4:-}" ;;
     device)  shift; "$DIR/native/ios/device.sh" "$@" ;;
-    *)       echo "Usage: $0 [start|play|stop|restart|status|log|errors|todo|tried|audio|bench|device] [scene]" ;;
+    thumbs)  shift; (cd "$DIR" && "$LOVE" . --thumbs "$@" 2>&1 | grep -a --line-buffered '\[thumbs\]') ;;
+    *)       echo "Usage: $0 [start|play|stop|restart|status|log|errors|todo|tried|audio|bench|device|thumbs] [scene]" ;;
 esac

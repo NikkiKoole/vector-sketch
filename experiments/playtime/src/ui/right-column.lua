@@ -18,11 +18,15 @@ function lib.rect()
     return w - width - 20, top, width, h - top - 20
 end
 
+-- how much wider than the column a tab's panel is (the tab bar stays put, the panel reaches left)
+local WIDER = { scenes = 160 } -- two columns of scene pictures
+
 -- the area under the tab bar, where a tab draws its panel
 function lib.contentRect()
     local x, y, w, h = lib.rect()
     local tabH = ui.theme.button.height + ui.theme.spacing
-    return x, y + tabH, w, h - tabH
+    local extra = WIDER[state.rightColumn.tab] or 0
+    return x - extra, y + tabH, w + extra, h - tabH
 end
 
 local function drawTabBar()

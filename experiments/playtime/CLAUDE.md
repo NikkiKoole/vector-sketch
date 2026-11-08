@@ -10,6 +10,8 @@
 ./playtime.sh status   # check if running
 ./playtime.sh log      # show stdout/stderr log
 ./playtime.sh errors   # show startup errors + bridge /errors
+./playtime.sh thumbs [scenes]  # the scenes tab's pictures -> scripts/thumbs/<name>.png, off-screen beside the game;
+                               # a scene its own camera shows badly gets a view in src/scene-thumbs.lua FRAMES
 ./playtime.sh todo     # the work board: active plans + next steps, parked plans, drift warnings
 ./playtime.sh tried <word>  # was it tried before? doc lines + commits naming it, dropped/parked first
 ./playtime.sh bench [device] [secs] [--parts]  # frame timing: update/draw/frame ms, the slow frames and why;
@@ -148,7 +150,7 @@ into named steps, checked by a snapshot or the music trace before and after.
 
 **UI:**
 - `src/playtime-ui.lua` — editor UI orchestrator (~500 lines)
-- `src/ui/` — extracted UI panels: all.lua (theme), textinput.lua, inspector.lua (generic panel from declared `params`), body-editor.lua, sfixture-editor.lua, joint-update.lua, mipo-editor.lua, world-settings.lua, tool-rail.lua (left rail: play/shape/draw/joint/attach/mipo/settings), right-column.lua (tabs properties | on stage | library | scenes), library-tab.lua, on-stage.lua, scenes-tab.lua (every scene in scripts/, from `src/scene-catalog.lua`: a scene's script's first comment line is its description, so start new scene scripts with `-- <name>: what it is`), recording-panel.lua
+- `src/ui/` — extracted UI panels: all.lua (theme), textinput.lua, inspector.lua (generic panel from declared `params`), body-editor.lua, sfixture-editor.lua, joint-update.lua, mipo-editor.lua, world-settings.lua, tool-rail.lua (left rail: play/shape/draw/joint/attach/mipo/settings), right-column.lua (tabs properties | on stage | library | scenes), library-tab.lua, on-stage.lua, scenes-tab.lua (every scene in scripts/, from `src/scene-catalog.lua`: a scene's script's first comment line is its description, so start new scene scripts with `-- <name>: what it is`; its picture in the tab: `./playtime.sh thumbs <name>` once the scene is made, and again when it changes a lot), recording-panel.lua
 
 **Physics & rendering:**
 - `src/physics/` — Box2D modules (box2d-draw, box2d-draw-textured, box2d-pointerjoints, physics-callbacks, snap)

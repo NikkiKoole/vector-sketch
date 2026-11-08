@@ -28,6 +28,11 @@ Scenes live in `scripts/rooms/` (what the game is made of), `scripts/spikes/` (t
 2026-11-03 (docs/ASSETS-AND-BUILDS.md AB7). They're called by name alone; a new scene saved from the
 editor goes into `spikes/`, move it when it becomes a room.
 
+**After making a scene**, make its picture for the editor's scenes tab: `./playtime.sh thumbs <name>`
+(`scripts/thumbs/<name>.png`, src/scene-thumbs.lua; runs beside the game). Look at it: when the scene's
+own camera shows it badly, give it a view in `FRAMES` there ('fit', 'crowd' or `{ x, y, w, h }`) and
+run it again. Commit the picture with the scene. A scene moved or renamed: its picture follows the name.
+
 | scene | what | why |
 |---|---|---|
 | dollhouse | the doll-play test room | the focus plan's room; *spec* |

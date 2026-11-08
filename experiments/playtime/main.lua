@@ -87,6 +87,9 @@ else
     bridge = require('src.web-bridge') -- eval from the page: playtime.eval(code)
     lurker = { update = function() end }
 end
+for _, a in ipairs(arg) do -- --thumbs (src/scene-thumbs.lua) runs beside the game: no bridge port to clash
+    if a == '--thumbs' then bridge = { update = function() end, recordError = function() end } end
+end
 local _logger = require('src.logger')      -- luacheck: ignore 211
 local _inspect = require('vendor.inspect') -- luacheck: ignore 211
 local prof = require('vendor.jprof')
@@ -123,6 +126,7 @@ local torsoJiggle = require('src.torso-jiggle')
 local spineSkin = require('src.spine-skin')
 local fabuland = require('src.fabuland')
 local sceneCatalog = require('src.scene-catalog')
+local sceneThumbs = require('src.scene-thumbs')
 local blobs = require('src.blob') -- blob rims (SOFTBODY sfixtures)
 local contactShadows = require('src.contact-shadows') -- off unless a scene sets state.contactShadows
 local backdropShadows = require('src.backdrop-shadows') -- off unless a scene sets state.backdropShadows
@@ -211,6 +215,7 @@ function love.load(_args)
     -- the editor starts quiet (Nikki 2026-11-04); the music panel's 'music' row turns it on.
     -- Straight into play mode, the music plays.
     if not playScene then require('src.music').enabled = false end
+    if sceneThumbs.fromArgs(arg) then return end -- --thumbs: the scenes tab's pictures (src/scene-thumbs.lua)
     sceneLoader.loadScriptAndScene(playScene or startScene)
     if playScene then playMode.enter() end
 end
@@ -233,6 +238,7 @@ function love.update(dt)
     sceneLoader.maybeHotReload(dt)
     doors.update(dt) -- going through a door happens here, outside input and physics
     sceneCatalog.update() -- a scene picked in the scenes tab loads here, not mid-draw
+    sceneThumbs.update(dt) -- love . --thumbs
 
     local scaled_dt = dt * state.world.speedMultiplier
     prof.push('physics-update')
@@ -348,7 +354,7 @@ function love.draw()
     end
 
     -- Grid draws over backdrops, under bodies.
-    local editing = not playMode.isOn()
+    local editing = not playMode.isOn() and not sceneThumbs.capturing() -- a scene's picture: no editor
     if editing and state.editorPreferences.showGrid then
         editorRenderer.drawGrid(state.world.darkMode and { 1, 1, 1, .1 } or { 0, 0, 1, .1 })
     end
@@ -413,9 +419,11 @@ function love.draw()
         playtimeui.drawUI()
         love.graphics.pop()
     end
-    script.call('drawUI')
-    playMode.drawHint()
-    playMode.drawExitButton() -- phones: the way back to the editor
+    if not sceneThumbs.capturing() then
+        script.call('drawUI')
+        playMode.drawHint()
+        playMode.drawExitButton() -- phones: the way back to the editor
+    end
 
     if editing and recorder.isRecording then
         love.graphics.setColor(1, 0, 0)
