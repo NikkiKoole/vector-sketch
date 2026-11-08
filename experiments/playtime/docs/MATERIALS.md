@@ -183,6 +183,9 @@ Kinds of material, by what the shader does differently:
   the fixtures by mipo-textures, a row in each of those Mipo editor accordions (with the mirror); a
   re-roll keeps it. Not yet: the face (eyes, nose, mouth; mipo-materials still sets those per frame),
   connected hair, breeds choosing one.
+  The lit look by default (Nikki 2026-11-08: "the way the Mipos are set up in light and shadow"): at the
+  scene light level off, a Mipo part in a material gets the lit level's Mipo settings anyway (baked
+  roundness, lights adding up, clay off; src/scene-light.lua), taken off before a save like the others.
 
 ## Fur (Nikki's follow-up talk, 2026-11-06)
 

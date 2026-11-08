@@ -7,7 +7,8 @@
 -- stand (standY) and how far in front of the wall (depth), as light-grass-check's GROUND_TOP and SOLID_DEPTH.
 -- One floor per scene: a room with storeys (the dollhouse) leaves it unset.
 -- A level is a table of settings (lib.LEVELS), so tuning one is editing data here.
--- Off touches nothing: scenes that light themselves (light-grass-check, mipo-materials) work as before;
+-- Off touches nothing but a Mipo part in a material (the lit look on it): scenes that light themselves
+-- (light-grass-check, mipo-materials) work as before;
 -- a level only sets what the scene hasn't set itself (lib.SHARED), and takes off only what it set.
 -- The settings put on a part are taken off again (the part's own values back) when the level drops and
 -- before a save (lib.unapply), so they never end up in a scene file.
@@ -133,7 +134,10 @@ local function fullShared(settings)
 end
 
 lib.LEVELS = {
-    { name = 'off' },
+    -- off: as drawn, except a Mipo part in a material (src/render/materials.lua) gets the lit Mipos' look
+    -- (Nikki 2026-11-08: the light-and-shadow Mipos as the materials' default); the scene's lights stay
+    -- its own (none: the shader's own light)
+    { name = 'off', materialParts = LIT.mipoParts },
     LIT,
     SHADOWS,
     { name = 'full', mipoParts = CLAY, shared = fullShared },
@@ -246,17 +250,13 @@ end
 -- rebuilt or added has new parts; one already lit is skipped)
 function lib.apply()
     local level = lib.level()
-    if level.name == 'off' then
-        if next(litParts()) or next(owned()) then lib.unapply() end
-        state.sceneLightApplied = nil
-        return
-    end
     if state.sceneLightApplied ~= level.name then
         lib.unapply() -- another level: its settings off first
         state.sceneLightApplied = level.name
     end
     local lit = litParts()
-    local values = level.mipoParts
+    local values = level.mipoParts or level.materialParts
+    local onlyMaterials = level.mipoParts == nil -- off: only the parts in a material
     -- look for parts again only when an sfixture came or went (a Mipo added or rerolled: lit in that
     -- frame), or once a second (a part's picture remade on the same fixture); walking every Mipo's
     -- fixtures each frame was ~4% of a lit frame on the phone with 20 Mipos
@@ -267,7 +267,7 @@ function lib.apply()
     if values and due then
         state.sceneLightScan = { version = version, at = now, level = level.name }
         eachMipoPartExtra(function(extra)
-            if lit[extra] then return end
+            if lit[extra] or (onlyMaterials and not extra.material) then return end
             local before = {}
             for key, v in pairs(values) do
                 if extra[key] == nil then before[key] = false else before[key] = extra[key] end
