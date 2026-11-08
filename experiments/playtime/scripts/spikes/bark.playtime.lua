@@ -251,7 +251,7 @@ local MESH_FORMAT = {
     { 'Across', 'float', 2 },
     { 'Frame', 'float', 4 },
 }
-local STEP_LEN = 36 -- world units per step along a branch
+local STEP_LEN = 26 -- world units per step along a branch
 local MAX_BRANCHES = 400
 local TWIG = 5 -- thinnest a branch gets (world units)
 
@@ -267,31 +267,77 @@ end
 -- so far) and depth.
 local function grow(k, rng, out, x, y, a, len, w0, w1, depth, isTrunk, scale)
     if #out >= MAX_BRANCHES then return end
-    local n = math.max(2, math.floor(len / STEP_LEN))
-    local pts, along = {}, 0
+    local n = math.max(3, math.floor(len / STEP_LEN))
     local wander = isTrunk and k.trunkWander or k.wander
     local thin = 1 - math.min(1, w0 / (k.w * scale))
-    for i = 0, n do
-        local u = i / n
-        local w = w0 + (w1 - w0) * u
-        if isTrunk then w = w * (1 + k.flare * (1 - math.min(1, u * 6)) ^ 2) end -- roots flaring at the foot
-        pts[#pts + 1] = { x = x, y = y, w = math.max(TWIG, w), along = along, a = a }
-        if i < n then
-            a = a + (rng:random() - 0.5) * wander
-            a = turnToward(a, -math.pi / 2, k.up * (isTrunk and 3 or 1))
-            if not isTrunk then a = turnToward(a, math.pi / 2, k.droop * thin) end
-            local step = len / n
-            x, y = x + math.cos(a) * step, y + math.sin(a) * step
-            along = along + step
-        end
+    -- a side branch starts a little inside its parent, so its collar grows out of the wood
+    if not isTrunk then
+        x, y = x - math.cos(a) * w0 * 0.4, y - math.sin(a) * w0 * 0.4
     end
+    -- the walk: it turns slowly (smooth noise along its length, not a kink per step), toward the sky or the
+    -- ground
+    local seed = rng:random() * 1000
+    local line = { { x, y } }
+    local step = len / n
+    for i = 1, n do
+        local along = (i - 1) * step
+        local bend = (love.math.noise(seed, along / 220) - 0.5) * 2.2 + (rng:random() - 0.5) * 0.25
+        a = a + bend * wander
+        a = turnToward(a, -math.pi / 2, k.up * (isTrunk and 3 or 1))
+        if not isTrunk then a = turnToward(a, math.pi / 2, k.droop * thin) end
+        x, y = x + math.cos(a) * step, y + math.sin(a) * step
+        line[#line + 1] = { x, y }
+    end
+    -- rounded off (corners cut twice, the ends kept)
+    for _ = 1, 2 do
+        local sm = { line[1] }
+        for i = 1, #line - 1 do
+            local p, q = line[i], line[i + 1]
+            if i > 1 then sm[#sm + 1] = { p[1] * 0.75 + q[1] * 0.25, p[2] * 0.75 + q[2] * 0.25 } end
+            if i < #line - 1 then sm[#sm + 1] = { p[1] * 0.25 + q[1] * 0.75, p[2] * 0.25 + q[2] * 0.75 } end
+        end
+        sm[#sm + 1] = line[#line]
+        line = sm
+    end
+    -- the points: way, length so far, width; the width eases off (thick for longer, then thin), the roots
+    -- flare, a side branch swells into a collar where it leaves its parent, and each edge has its own slow
+    -- bumps (a branch is never quite even, nor mirror-alike)
+    local pts, along = {}, 0
+    for i, q in ipairs(line) do
+        if i > 1 then
+            local o = line[i - 1]
+            along = along + math.sqrt((q[1] - o[1]) ^ 2 + (q[2] - o[2]) ^ 2)
+        end
+        local nx = line[math.min(#line, i + 1)]
+        local pv = line[math.max(1, i - 1)]
+        pts[i] = { x = q[1], y = q[2], along = along, a = math.atan2(nx[2] - pv[2], nx[1] - pv[1]) }
+    end
+    local total = math.max(1, along)
+    for _, p in ipairs(pts) do
+        local u = p.along / total
+        local w = w0 + (w1 - w0) * u ^ 0.75
+        if isTrunk then
+            w = w * (1 + k.flare * (1 - math.min(1, u * 6)) ^ 2) -- roots flaring at the foot
+        else
+            w = w * (1 + 0.45 * (1 - math.min(1, u * 5)) ^ 2) -- the collar
+        end
+        w = math.max(TWIG, w)
+        p.w = w
+        p.wl = w * (1 + 0.16 * (love.math.noise(seed + 7, p.along / 90) - 0.5))
+        p.wr = w * (1 + 0.16 * (love.math.noise(seed + 13, p.along / 90) - 0.5))
+    end
+    a = pts[#pts].a
     -- a trunk that forks narrows to a point in its last stretch, hidden between its limbs (a crotch, not a
     -- flat top)
     if isTrunk and k.fork and #pts >= 3 then
-        pts[#pts].w = pts[#pts].w * 0.3
-        pts[#pts - 1].w = pts[#pts - 1].w * 0.8
+        for j, f in ipairs({ 0.3, 0.6, 0.85 }) do
+            local p = pts[#pts - j + 1]
+            p.w, p.wl, p.wr = p.w * f, p.wl * f, p.wr * f
+        end
     end
-    out[#out + 1] = { pts = pts, depth = depth, isTrunk = isTrunk }
+    n = #pts - 1
+    -- (its outline stops where it narrows: else the outline draws a V across the limbs)
+    out[#out + 1] = { pts = pts, depth = depth, isTrunk = isTrunk, outlineTrim = (isTrunk and k.fork) and 4 or 0 }
     if depth >= k.depth or w1 <= TWIG then return end
     -- side branches, alternating sides, spaced along it (the trunk's: bare below trunkStart)
     local range = isTrunk and k.trunkKids or k.kids
@@ -327,7 +373,7 @@ end
 
 -- a branch's strip as triangles into verts (two vertices per point, its way up and its length so far), its
 -- edges as lines for the outline (no line across its end: a trunk's limbs grow out of it there)
-local function addStrip(pts, seed, verts, lines)
+local function addStrip(pts, seed, verts, lines, trim)
     local left, right = {}, {}
     local prevL, prevR
     for i, p in ipairs(pts) do
@@ -336,9 +382,10 @@ local function addStrip(pts, seed, verts, lines)
         local len = math.sqrt(ux * ux + uy * uy)
         ux, uy = ux / len, uy / len
         local rx, ry = -uy, ux -- the strip's right (as the shader's)
-        local half = p.w / 2
-        local L = { p.x - rx * half, p.y - ry * half, -1, half, ux, uy, p.along, seed }
-        local R = { p.x + rx * half, p.y + ry * half, 1, half, ux, uy, p.along, seed }
+        local hl, hr = (p.wl or p.w) / 2, (p.wr or p.w) / 2
+        local half = (hl + hr) / 2
+        local L = { p.x - rx * hl, p.y - ry * hl, -1, half, ux, uy, p.along, seed }
+        local R = { p.x + rx * hr, p.y + ry * hr, 1, half, ux, uy, p.along, seed }
         if prevL then
             verts[#verts + 1] = prevL; verts[#verts + 1] = prevR; verts[#verts + 1] = L
             verts[#verts + 1] = prevR; verts[#verts + 1] = R; verts[#verts + 1] = L
@@ -349,6 +396,10 @@ local function addStrip(pts, seed, verts, lines)
     end
     -- the crayon line as thick as suits the branch (a twig's thinner, the thinnest none)
     local w = math.min(13, pts[1].w * 0.1)
+    for _ = 1, math.min(trim or 0, #left - 2) do
+        left[#left] = nil
+        right[#right] = nil
+    end
     if w >= 2.5 then
         lines[#lines + 1] = { pts = left, width = w }
         lines[#lines + 1] = { pts = right, width = w }
@@ -379,7 +430,7 @@ local function build()
                 local d = br.depth
                 maxDepth = math.max(maxDepth, d)
                 byDepth[d] = byDepth[d] or { verts = {}, lines = {} }
-                addStrip(br.pts, i * 0.61 + b * 0.173, byDepth[d].verts, byDepth[d].lines)
+                addStrip(br.pts, i * 0.61 + b * 0.173, byDepth[d].verts, byDepth[d].lines, br.outlineTrim)
             end
             local tree = { def = t, x = x0, ground = row.ground, parts = {}, branchCount = #branches }
             for d = maxDepth, 0, -1 do

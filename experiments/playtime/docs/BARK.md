@@ -72,6 +72,11 @@ and place; the birch's mirror-repeat shows as mirrored pairs of marks (a longer 
   Aspen: bare below (the eyes are there, where it dropped its branches), a crown on top. Birch: weeping
   twigs. All of a depth in one mesh, drawn deepest first (twigs behind branches, branches behind the
   trunk); a forked trunk narrows to a point between its limbs. Not yet: leaves, the trees swaying.
+- [x] **BK1e. Less polygon** (2026-11-08, Nikki: "still looks very much like polygons ... more organic"): a
+  branch turns slowly (smooth noise along it, not a random kink per step) and its middle line is rounded
+  off; its width eases off (thick for longer, then thin); a side branch starts inside its parent and swells
+  into a collar there; each edge has its own slow bumps (never mirror-alike). Seen: much more grown, the oak
+  old and gnarled; olive and cork (wander 0.35) now twist into S-shapes, maybe too far.
 - [ ] **BK2. Nikki judges**: which look (photo / tinted / relief) sits with the drawn Mipos, which
   barks to keep. A Mipo next to a trunk for the scale (WORLD-METRICS.md).
 - [ ] **BK3. Into the engine, if kept**: a bark as a material on a ribbon (connected-texture) or a
