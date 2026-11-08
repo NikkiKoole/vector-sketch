@@ -87,6 +87,7 @@ local baseEnv = {
     mipoTextures             = require('src.mipo-textures'), -- addFaceDecals: a Mipo face on a script's body (garden)
     mipoRegistry             = require('src.mipo-registry'),
     mipoFacing               = require('src.mipo-facing'), -- facing left / front / right (facing spike)
+    facePatches              = require('src.face-patches'), -- eye hollows, cheeks, a snout (breeds, facing)
     props                    = props,
     signals                  = signals,
     snap                     = snap,

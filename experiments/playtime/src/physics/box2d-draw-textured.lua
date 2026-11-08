@@ -801,55 +801,147 @@ local function drawDecalLit(extra, body, img, ox, oy, dw, dh, mirrorX)
     if shaded then love.graphics.setShader() end
 end
 
--- A pupil drawn only inside its eye's white, not over the eye's outline: a stencil of the eye's mask
--- (white where the white is) less the eye's outline, placed as the eye is drawn (its turn, tilt,
--- mirror and blink). Returns the stencil test to put back after the pupil, or nil when there's no
--- clip (no eye white, a mask picture missing, or a canvas without a stencil, e.g. a depth picture).
-local eyeMaskCut, eyeLineCut
-local eyeClip = {}
-local function clipToEye(extra, body)
-    local mask, mw, mh = getLoveImage('textures/' .. extra.eyeMaskURL)
-    if not mask then return nil end
-    local line, lw, lh = getLoveImage('textures/' .. (extra.eyeMaskURL:gsub('%-mask%.png$', '.png')))
-    eyeMaskCut = eyeMaskCut or love.graphics.newShader([[
+-- A stencil of a picture's inside: where its mask is white, less where its outline is drawn
+-- (drawMask / drawLine draw them, in place, with the shader they're handed). Returns the stencil
+-- test to put back after, or nil when it couldn't (a canvas without a stencil, e.g. a depth picture).
+local maskCut, lineCut
+local clipState = {}
+local function stencilInside(drawMask, drawLine)
+    maskCut = maskCut or love.graphics.newShader([[
         vec4 effect(vec4 color, Image tex, vec2 uv, vec2 fc) {
             vec4 c = Texel(tex, uv);
             if (c.r * c.a < 0.5) discard;
             return c;
         }
     ]])
-    eyeLineCut = eyeLineCut or love.graphics.newShader([[
+    lineCut = lineCut or love.graphics.newShader([[
         vec4 effect(vec4 color, Image tex, vec2 uv, vec2 fc) {
             if (Texel(tex, uv).a < 0.5) discard;
             return vec4(1.0);
         }
     ]])
+    local shader = love.graphics.getShader()
+    local ok = pcall(love.graphics.stencil, function()
+        love.graphics.setShader(maskCut)
+        drawMask()
+    end, 'replace', 1)
+    if ok and drawLine then
+        pcall(love.graphics.stencil, function()
+            love.graphics.setShader(lineCut)
+            drawLine()
+        end, 'replace', 0, true)
+    end
+    love.graphics.setShader(shader)
+    if not ok then return nil end
+    clipState.compare, clipState.value = love.graphics.getStencilTest()
+    love.graphics.setStencilTest('greater', 0)
+    return clipState
+end
+
+local function endClip(clip)
+    if not clip then return end
+    if clip.compare then love.graphics.setStencilTest(clip.compare, clip.value)
+    else love.graphics.setStencilTest() end
+end
+
+-- A pupil drawn only inside its eye's white, not over the eye's outline: the eye's mask (white where
+-- the white is) less its outline, placed as the eye is drawn (its turn, tilt, mirror and blink).
+-- nil: no clip (no eye white, a mask picture missing, no stencil).
+local function clipToEye(extra, body)
+    local mask, mw, mh = getLoveImage('textures/' .. extra.eyeMaskURL)
+    if not mask then return nil end
+    local line, lw, lh = getLoveImage('textures/' .. (extra.eyeMaskURL:gsub('%-mask%.png$', '.png')))
     local thing = utils.thingOf(body)
     local eyesOpen = (thing and thing.eyesOpen) or 1
     local wx, wy = body:getWorldPoint(extra.ox or 0, extra.oy or 0) -- the eye's centre (before the gaze)
     local angle = body:getAngle() + (extra.eyeRot or 0)
     local w, h = extra.eyeW * (extra.eyeMirror and -1 or 1), extra.eyeH * eyesOpen
+    return stencilInside(
+        function() love.graphics.draw(mask, wx, wy, angle, w / mw, h / mh, mw / 2, mh / 2) end,
+        line and function() love.graphics.draw(line, wx, wy, angle, w / lw, h / lh, lw / 2, lh / 2) end)
+end
+
+-- The skin's picture is drawn on a fan over its corners (ribbon drawSquishableHairOver): the same fan
+-- with the skin's mask and outline, for a stencil of the skin's inside. Its UVs follow the bake's
+-- flips (omp-bake getDrawParams mirrors the outline and mask in the picture). Kept per skin.
+local RING_UV = {
+    [4] = { { 0, 0 }, { 1, 0 }, { 1, 1 }, { 0, 1 } },
+    [8] = { { 0, 0 }, { .5, 0 }, { 1, 0 }, { 1, .5 }, { 1, 1 }, { .5, 1 }, { 0, 1 }, { 0, .5 } },
+}
+local skinFans = setmetatable({}, { __mode = 'k' })
+local function skinFan(skin)
+    local vertices = skin.vertices
+    local n = vertices and #vertices / 2
+    local uvs = n and RING_UV[n]
+    if not uvs then return nil end
+    local fx, fy = skin.main.fx == -1, skin.main.fy == -1
+    local rec = skinFans[skin]
+    if rec and rec.vertices == vertices and rec.fx == fx and rec.fy == fy then return rec.mesh end
+    local cx, cy = mathutils.getCenterOfPoints(vertices)
+    local verts = { { cx, cy, 0.5, 0.5 } }
+    for i = 1, n + 1 do
+        local k = (i - 1) % n + 1
+        local u, v = uvs[k][1], uvs[k][2]
+        verts[i + 1] = { vertices[k * 2 - 1], vertices[k * 2], fx and 1 - u or u, fy and 1 - v or v }
+    end
+    if rec then rec.mesh:release() end
+    local mesh = love.graphics.newMesh(verts, 'fan', 'static')
+    skinFans[skin] = { mesh = mesh, vertices = vertices, fx = fx, fy = fy }
+    return mesh
+end
+
+local function clipToSkin(skin, body)
+    local mask = skin.main.fgURL and skin.main.fgURL ~= '' and getLoveImage('textures/' .. skin.main.fgURL)
+    local mesh = mask and skinFan(skin)
+    if not mesh then return nil end
+    local line = getLoveImage('textures/' .. skin.main.bgURL)
+    local bx, by = body:getPosition()
+    local angle = body:getAngle()
+    return stencilInside(
+        function() mesh:setTexture(mask) love.graphics.draw(mesh, bx, by, angle) end,
+        line and function() mesh:setTexture(line) love.graphics.draw(mesh, bx, by, angle) end)
+end
+
+-- Face patches (eye hollows, cheeks, a snout): skin colouring under the hair, the eyes on top. One
+-- decal per face holds them all (extra.facePatches: { ox, oy, w, h, mirror, url, tint }, turned
+-- with the face by mipo-facing applyFace), drawn inside the skin and off its outline with one
+-- stencil. Each picture is a mask (white where the patch is), its red as the alpha.
+local patchShader
+local function drawFacePatches(extra, body)
+    local skinFixture = extra.skinFixture
+    if not skinFixture or skinFixture:isDestroyed() then return end
+    local skin = skinFixture:getUserData().extra
+    patchShader = patchShader or love.graphics.newShader([[
+        vec4 effect(vec4 color, Image tex, vec2 uv, vec2 fc) {
+            vec4 t = Texel(tex, uv);
+            return vec4(color.rgb, color.a * t.r * t.a);
+        }
+    ]])
+    local clip = clipToSkin(skin, body)
     local shader = love.graphics.getShader()
-    local ok = pcall(love.graphics.stencil, function()
-        love.graphics.setShader(eyeMaskCut)
-        love.graphics.draw(mask, wx, wy, angle, w / mw, h / mh, mw / 2, mh / 2)
-    end, 'replace', 1)
-    if ok and line then
-        pcall(love.graphics.stencil, function()
-            love.graphics.setShader(eyeLineCut)
-            love.graphics.draw(line, wx, wy, angle, w / lw, h / lh, lw / 2, lh / 2)
-        end, 'replace', 0, true)
+    love.graphics.setShader(patchShader)
+    local angle = body:getAngle()
+    for _, patch in ipairs(extra.facePatches) do
+        local img, iw, ih = getLoveImage('textures/' .. patch.url)
+        if img then
+            local wx, wy = body:getWorldPoint(patch.ox, patch.oy)
+            love.graphics.setColor(patch.tint)
+            local sx = patch.w / iw * (patch.mirror and -1 or 1)
+            love.graphics.draw(img, wx, wy, angle, sx, patch.h / ih, iw / 2, ih / 2)
+        end
     end
     love.graphics.setShader(shader)
-    if not ok then return nil end
-    eyeClip.compare, eyeClip.value = love.graphics.getStencilTest()
-    love.graphics.setStencilTest('greater', 0)
-    return eyeClip
+    love.graphics.setColor(1, 1, 1, 1)
+    endClip(clip)
 end
 
 local function drawDecal(d)
     local extra = d.extra
     local body = d.body
+    if extra.facePatches then
+        if body and not body:isDestroyed() then drawFacePatches(extra, body) end
+        return
+    end
     if body and not body:isDestroyed() then
         local ox, oy = extra.ox or 0, extra.oy or 0
         if extra.lookAtMouse and extra.eyeW then
@@ -926,10 +1018,7 @@ local function drawDecal(d)
                 end
             end
         end
-        if clip then
-            if clip.compare then love.graphics.setStencilTest(clip.compare, clip.value)
-            else love.graphics.setStencilTest() end
-        end
+        endClip(clip)
     end
 end
 

@@ -10,6 +10,7 @@
 --       b: switch the body in place, or rebuild the whole Mipo (to compare)
 --       f: the turning foot leans round, or flips   w: autowalk when dragged along the floor
 --       t: turning by itself   p: pause   h: panel
+--       c: face patches on/off (src/face-patches.lua: eye hollows and a snout, turning with the face)
 
 local s = {}
 
@@ -51,6 +52,18 @@ end
 
 local function xOf(i) return (i - 2) * SPACING end
 
+-- face patches on every Mipo, or none (c)
+local function placePatches()
+    local c = check()
+    if c.patches == nil then c.patches = true end
+    for _, inst in pairs(c.mipos) do
+        if alive(inst) then
+            inst.facePatches = c.patches and facePatches.defaults() or nil
+            facePatches.place(inst, true)
+        end
+    end
+end
+
 local function newMipos()
     local c = check()
     removeStools()
@@ -64,6 +77,7 @@ local function newMipos()
         first.dna.facing = side -- createCharacterFromJustDNA builds on a copy
         c.mipos[i] = characterManager.createCharacterFromJustDNA(first.dna, xOf(i), GROUND_Y - 500, SCALE)
     end
+    placePatches()
 end
 
 -- arms on/off: the same Mipos rebuilt
@@ -197,7 +211,7 @@ function s.onStart()
     local c = check()
     local any = false
     for _, inst in pairs(c.mipos) do any = any or alive(inst) end
-    if not any then newMipos() end
+    if not any then newMipos() else placePatches() end
     lookAtAll()
 end
 
@@ -687,6 +701,7 @@ function s.onKeyPress(key)
     if key == 'w' then c.walk = c.walk == false end
     if key == 'p' then worldState.paused = not worldState.paused end
     if key == 'h' then c.showPanel = not c.showPanel end
+    if key == 'c' then c.patches = not c.patches placePatches() end
 end
 
 function s.drawUI()

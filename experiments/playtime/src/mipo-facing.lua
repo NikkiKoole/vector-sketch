@@ -115,6 +115,15 @@ function lib.applyFace(instance)
     for _, fixture in ipairs(part.body:getFixtures()) do
         local ud = fixture:getUserData()
         local e = ud and ud.subtype == 'decal' and ud.extra
+        if e and e.facePatches then -- one decal, several patches (breeds spike's face patches)
+            for _, patch in ipairs(e.facePatches) do
+                if angle ~= 0 or patch.baseOx then
+                    if not patch.baseOx then patch.baseOx, patch.baseW = patch.ox, patch.w end
+                    local ox, width = lib.turnX(instance, patch.baseOx, cx, r, angle)
+                    patch.ox, patch.w = ox, patch.baseW * width
+                end
+            end
+        end
         if e and e.ox and (angle ~= 0 or e.baseOx) then
             if not e.baseOx then e.baseOx, e.baseW, e.baseEyeW = e.ox, e.w, e.eyeW end
             local ox, width = lib.turnX(instance, e.baseOx, cx, r, angle)
