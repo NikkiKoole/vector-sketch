@@ -199,13 +199,12 @@ hair, for now).
   but a turning face (facing, autowalk) slid off them; kept the 5 slots for torso patches (breast,
   belly: the torso stays front-on). A Mipo has them while `instance.facePatches` holds settings; not
   saved yet. Nikki tries it: keep, tune, which breed gets what? Phone cost with B9.
-- [ ] **B9. Phone bench: the pupil clip.** Pupils are clipped to the eye's white since 2026-11-08
-  (a stencil per pupil, `clipToEye` in `src/physics/box2d-draw-textured.lua`, 713e996c). On the Mac
-  it costs ~0.1 ms draw for 12 pupils (1.74 vs 1.64 ms); the bench is CPU time, so the stencil's GPU
-  side is unmeasured. `./playtime.sh bench device` in a room of ~20 Mipos, clip on and off (off:
-  `local clip = false and ...` in `drawDecal`, don't commit that). Keep it if the phone stays at 60.
-  Same bench for the face patches (B10: a stencil a face) and the mouth's inside as a hole (a
-  shader over each mouth, a loop over its outline per pixel, src/render/mouth.lua, 2026-11-08).
+- [x] **B9. Phone bench: the pupil clip, face patches, the mouth hole** (2026-11-08, iPhone SE 2,
+  breeds with the litter at 20, all on screen). All on: 60 fps steady, draw 4.73 ms mean / 6.35 p95,
+  frames max 17.1 ms, none over 20. Patches and pupil clip off: draw 4.06 / 5.64, so the two cost
+  ~0.7 ms at 20 Mipos (by drawable kind with 5 on screen: patches ~30 us a face, the clip ~19 us a
+  pupil). The mouth hole ~50 us a mouth over the plain fill (mostly sending its outline to the
+  shader each frame), ~1 ms at 20: fewer outline points if it's ever needed. Kept, all three.
 
 ## Open questions
 
