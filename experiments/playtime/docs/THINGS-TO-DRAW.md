@@ -130,6 +130,16 @@ can't. Try each on two or three pictures first: the scene shows straight away if
   - Draw: outline + mask, about 200×200, **six or more**: round puffs, lumpy ones (three bumps), a
     small curl, a long wisp, a torn bit for the end of the trail. Loose, soft line. The boat
     scenes' vector puffs (walter-boat) are the look.
+- [ ] **A18. Bark, hand-drawn** (`BARK.md` BK12; Nikki 2026-11-08: "the barks are nice, but it might
+  be better if I hand-draw some of it"). The `bark` spike's trees now wear photo scans.
+  - Draw first: **bark tiles**, one or two kinds (oak furrows, birch, aspen), in colour, about 512
+    wide (around the stem) by any height (up the trunk). It repeats upward, so top and bottom should
+    meet (or it gets mirror-repeated). Draw it flat: the round stem squeezes the sides itself.
+  - Optional: a **grey height sheet** of the same tile (white sticks out, dark is a groove), when
+    the bumps should be yours; otherwise they're worked out from the colour (A15 is the same idea).
+  - Then: **eyes, knots, scars, branch collars** as stamps, 512×320 each, transparent around
+    (they go in `bark-eyes.png`'s cells next to the photo scars).
+  - Maybe, after the tiles: a drawn **trunk edge** instead of the computed outline (like A1).
 - A12's leaves: **a vein down the middle (and side veins)** shows well now: with the light behind
   a leaf (material-check, b), the veins in the outline come out dark against the glow.
 - A3's hair tufts would also give **fur an edge** (tufts sticking out past the outline instead of a

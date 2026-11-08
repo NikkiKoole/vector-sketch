@@ -169,5 +169,11 @@ identical before and after.
   of eyes. First try hit aspens with the dead top (crowns gone) and too many stubs and eyes: tamed.
   Not yet: a hollow (needs its own picture), BK9's broken top and water sprouts.
 - [ ] **BK11. Moss on the shady side**: bark facing away from the light greener (in the shader).
-- Later, if it earns it: the crown (leaf blobs, PLANTS.md), bark drawn by Nikki as a height sheet
-  (MATERIALS MT11) next to the scans.
+- [ ] **BK12. Hand-drawn bark** (Nikki 2026-11-08: "the barks are nice, but it might be better if I
+  hand-draw some of it"; what to draw: THINGS-TO-DRAW A18). A bark is three pictures in
+  `textures/world/bark/`: `<name>.jpg` (colour), `-normal.jpg`, `-height.jpg`; a drawing needs only
+  the colour, the other two are worked out from it as for aspen and birch (or from Nikki's own grey
+  height sheet). Order: (1) a tile or two, added to the bark picker next to the scans, judged in the
+  three looks (with BK2); (2) drawn eyes, knots, scars as cells in `bark-eyes.png`; (3) maybe a drawn
+  trunk edge instead of the computed outline. Start with 1.
+- Later, if it earns it: the crown (leaf blobs, PLANTS.md).
