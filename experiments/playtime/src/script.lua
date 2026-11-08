@@ -108,6 +108,7 @@ local baseEnv = {
     fixtures                 = fixtures, -- sfixtures on a script's own bodies (burrow's OMP rocks)
     liquid                   = require('src.liquid'), -- water in cups: spill, water, mouthPoint (seaside)
     cloth                    = require('src.cloth'), -- curtains, flags, sheets: a verlet grid drawn as a mesh (cloth)
+    wearables                = require('src.wearables'), -- glasses, pants: on at a spot, off by a jolt (wearables)
     -- the textured world pass with `only` (a scene drawing some Mipos itself, in its own transform:
     -- tracks); looked up at the call (box2d-draw-textured loads after this file)
     drawTexturedWorld        = function(...)
