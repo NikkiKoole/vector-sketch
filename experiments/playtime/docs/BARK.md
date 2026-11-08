@@ -111,8 +111,12 @@ cones, old ones broad on a bare trunk), moss on the damp shady side.
   organic slider scales both (0: straight). Seen: the oaks reach out, sag and turn up into elbows, pine
   tips curve up, the birch arches down. The elm's long limbs sagged into flat arcs: less sag, an
   earlier upturn (a wide vase now). The olive's trunk wander halved (it keeled over); olive and cork lean.
-- [ ] **BK6. Zigzag or straight** by how the kind grows: oak, elm, plane twigs zigzag (a side bud takes over
+- [x] **BK6. Zigzag or straight** by how the kind grows: oak, elm, plane twigs zigzag (a side bud takes over
   each year), pine and poplar keep one straight leader.
+  Done 2026-11-08: a branch kinks at each year's growth (a fifth of its length, 45-130 units), the other
+  way each time, more on thin wood (on old limbs the bark has grown over it); `zigzag` per kind: elm 0.45,
+  plane 0.38, oak 0.35, beech 0.3, olive 0.2, birch 0.15, aspen 0.1, pine and poplar 0. The organic slider
+  scales it. Seen: the oak's and elm's twigs zigzag, their limbs stay smooth.
 - [ ] **BK7. Wind**: one direction and strength for the scene; trees lean with it, windward branches stay
   short (a combed crown).
 - [ ] **BK8. Light**: crowns reach toward the scene's sun and away from the trees next to them (a row
