@@ -2,7 +2,7 @@
 -- when the big foot boxes they get stuck on are gone. The panel switches every Mipo's feet:
 -- as built (their random feet), small (scaled down, still standing on them) or none (the foot
 -- shrunk to a dot and turned into a sensor: the shin's round capsule end touches the ground).
--- The feet are only changed here, in this scene; no DNA option yet.
+-- The hands too, on their own row (none: the arm's round end). Only in this scene; no DNA option yet.
 -- keys: d: drop them all again   r: new Mipos   p: pause the world   h: hide/show the panel
 
 local s = {}
@@ -12,13 +12,15 @@ local SPACING = 420
 local GROUND_Y = 900
 local ZOOM = 0.4
 local NONE_SCALE = 0.08 -- a foot at 'none': a dot under the leg's end, and a sensor
-local FEET = { 'lfoot', 'rfoot' }
+local KINDS = {
+    { key = 'feet', label = 'feet', parts = { 'lfoot', 'rfoot' } },
+    { key = 'hands', label = 'hands', parts = { 'lhand', 'rhand' } },
+}
 
 local function check() -- on state: a script hot reload keeps the Mipos
     state.noFeet = state.noFeet or { mipos = {}, statics = {}, orig = {} }
     local c = state.noFeet
-    c.mode = c.mode or 'none'
-    c.small = c.small or 0.4
+    c.kinds = c.kinds or { feet = { mode = 'none', small = 0.4 }, hands = { mode = 'built', small = 0.4 } }
     if c.showPanel == nil then c.showPanel = true end
     return c
 end
@@ -53,8 +55,8 @@ local function makeCourse()
     block(x0 + 2800, GROUND_Y - 160, 120, 40, -0.4)      -- a ledge sticking out
 end
 
-local function setSensors(inst, on)
-    for _, name in ipairs(FEET) do
+local function setSensors(inst, kind, on)
+    for _, name in ipairs(kind.parts) do
         local body = inst.parts[name] and inst.parts[name].body
         if body and not body:isDestroyed() then
             for _, fixture in ipairs(body:getFixtures()) do
@@ -64,21 +66,30 @@ local function setSensors(inst, on)
     end
 end
 
--- every Mipo's feet to the panel's mode; as built is the scale the randomizer gave it
-local function applyFeet(inst)
+-- a Mipo's feet or hands to the panel's mode; as built is the scale the randomizer gave them
+local function applyKind(inst, kind)
     local c = check()
-    local orig = c.orig[inst]
+    local orig = c.orig[inst] and c.orig[inst][kind.key]
     if not orig then return end
-    local scale = (c.mode == 'small' and c.small) or (c.mode == 'none' and NONE_SCALE) or orig
-    characterManager.updatePart('lfoot', { sx = scale, sy = scale }, inst)
-    characterManager.updatePart('rfoot', { sx = -scale, sy = scale }, inst)
-    characterManager.rebuildTextures(inst)
-    setSensors(inst, c.mode == 'none')
+    local k = c.kinds[kind.key]
+    local scale = (k.mode == 'small' and k.small) or (k.mode == 'none' and NONE_SCALE) or orig
+    characterManager.updatePart(kind.parts[1], { sx = scale, sy = scale }, inst)
+    characterManager.updatePart(kind.parts[2], { sx = -scale, sy = scale }, inst)
+    setSensors(inst, kind, k.mode == 'none')
 end
 
-local function applyAll()
+local function applyMipo(inst)
+    for _, kind in ipairs(KINDS) do applyKind(inst, kind) end
+    characterManager.rebuildTextures(inst)
+    for _, kind in ipairs(KINDS) do setSensors(inst, kind, check().kinds[kind.key].mode == 'none') end
+end
+
+local function applyAll(kind)
     for _, inst in ipairs(check().mipos) do
-        if alive(inst) then applyFeet(inst) end
+        if alive(inst) then
+            applyKind(inst, kind)
+            characterManager.rebuildTextures(inst)
+        end
     end
 end
 
@@ -93,9 +104,10 @@ local function makeMipos()
         local inst = characterManager.createCharacter('humanoid', x, GROUND_Y - 500, 0.3)
         if inst then
             characterManager.randomizeMipo(inst)
-            c.orig[inst] = math.abs(inst.dna.parts.lfoot.dims.sy or 1)
+            c.orig[inst] = { feet = math.abs(inst.dna.parts.lfoot.dims.sy or 1),
+                hands = math.abs(inst.dna.parts.lhand.dims.sy or 1) }
             c.mipos[i] = inst
-            applyFeet(inst)
+            applyMipo(inst)
         end
     end
 end
@@ -127,10 +139,12 @@ end
 
 function s.update()
     local c = check()
-    -- a rebuild elsewhere (the Mipo editor, a facing switch) makes the feet solid again
-    if c.mode == 'none' then
-        for _, inst in ipairs(c.mipos) do
-            if alive(inst) then setSensors(inst, true) end
+    -- a rebuild elsewhere (the Mipo editor, a facing switch) makes the parts solid again
+    for _, kind in ipairs(KINDS) do
+        if c.kinds[kind.key].mode == 'none' then
+            for _, inst in ipairs(c.mipos) do
+                if alive(inst) then setSensors(inst, kind, true) end
+            end
         end
     end
     -- the follow camera moves the view: hold it on the Mipos until you touch, drag or zoom
@@ -173,27 +187,34 @@ function s.drawUI()
     if not (state.playMode and c.showPanel) then return end
     ui.startFrame() -- play mode draws no editor UI, so nothing else starts the frame
     local BH, pad, w = 34, 8, 380
-    local h = BH * 3 + pad * 4 + 24
+    local rows = #KINDS * 2 + 1
+    local h = BH * rows + pad * (rows + 1) + 24 + #KINDS * 20
     local _, sh = love.graphics.getDimensions()
     local x0, y0 = 20, sh - h - 20
-    ui.panel(x0, y0, w, h, '•• feet ••', function()
+    ui.panel(x0, y0, w, h, '•• feet & hands ••', function()
         local layout = ui.createLayout({ type = 'columns', spacing = pad, startX = x0 + pad, startY = y0 + pad + 20 })
-        local x, y = ui.nextLayoutPosition(layout, w - 20, BH)
-        local bw = (w - 20 - 2 * pad) / 3
-        for i, m in ipairs(MODES) do
-            local label = (c.mode == m.key and '> ' or '') .. m.label
-            if ui.button(x + (i - 1) * (bw + pad), y, bw, label) and c.mode ~= m.key then
-                c.mode = m.key
-                applyAll()
+        local x, y
+        for _, kind in ipairs(KINDS) do
+            local k = c.kinds[kind.key]
+            x, y = ui.nextLayoutPosition(layout, w - 20, 20)
+            ui.label(x, y, kind.label)
+            x, y = ui.nextLayoutPosition(layout, w - 20, BH)
+            local bw = (w - 20 - 2 * pad) / 3
+            for i, m in ipairs(MODES) do
+                local label = (k.mode == m.key and '> ' or '') .. m.label
+                if ui.button(x + (i - 1) * (bw + pad), y, bw, label) and k.mode ~= m.key then
+                    k.mode = m.key
+                    applyAll(kind)
+                end
             end
+            x, y = ui.nextLayoutPosition(layout, w - 20, BH)
+            local v = ui.sliderWithInput('noFeetSmall' .. kind.key, x, y, 160, 0.15, 1, k.small)
+            if v and math.abs(v - k.small) > 0.01 then
+                k.small = v
+                if k.mode == 'small' then applyAll(kind) end
+            end
+            ui.label(x + 260, y, 'small size')
         end
-        x, y = ui.nextLayoutPosition(layout, w - 20, BH)
-        local v = ui.sliderWithInput('noFeetSmall', x, y, 160, 0.15, 1, c.small)
-        if v and math.abs(v - c.small) > 0.01 then
-            c.small = v
-            if c.mode == 'small' then applyAll() end
-        end
-        ui.label(x + 260, y, 'small size')
         x, y = ui.nextLayoutPosition(layout, w - 20, BH)
         if ui.button(x, y, (w - 20 - pad) / 2, 'drop (d)') then dropAll() end
         if ui.button(x + (w - 20 + pad) / 2, y, (w - 20 - pad) / 2, 'new Mipos (r)') then makeMipos() end
