@@ -13,12 +13,13 @@
 --   o outlines on / off      c light: sun / candle / moon      f the light follows the mouse / stays
 --   d bark detail (how strongly the bumps take the light): flat / soft / normal / deep
 --   s the bark's size: small / middle / big      g what the shader sees: off / normals / light alone
+--   e the eyes on / off (branch scars from photos: aspens and the birch have several, other trees now and then)
 local s = {}
 
 local STROKE = love.filesystem.load('scripts/spikes/drawn-stroke.lua')()
 
 -- the two rows' ground lines (world y) and where they start; trunks every STEP
-local ROWS = { { ground = 0, x = -1650 }, { ground = 1550, x = -1450 } }
+local ROWS = { { ground = 0, x = -1880, count = 9 }, { ground = 1550, x = -1880, count = 9 } }
 local STEP = 470
 local LOOKS = { 'photo', 'tinted', 'relief' }
 local DETAILS = { { 'flat', 0 }, { 'soft', 0.6 }, { 'normal', 1.1 }, { 'deep', 2 } }
@@ -33,11 +34,22 @@ local LIGHTS = {
 }
 local DEBUGS = { 'off', 'normals', 'light alone' }
 
+-- The eyes: branch scars from photos (Wikimedia Commons, CC0: textures/world/bark/bark-eyes.png, BARK.md),
+-- three cells side by side, each eye's white made 1 so it multiplies into any bark: 1 the aspen eye, 2 the
+-- birch's big scar, 3 its small one. EYE_CELL: a cell's height over its width.
+local EYE_CELL = 320 / 512
+local MAX_EYES = 6
+local eyeAtlas
+
 -- The trees: which bark, a name for it, and the stem's shape. h height, w0 width at the ground (above
 -- the flare), w1 at the top, flare (roots: how much wider at the very bottom), lean (sideways over the
 -- whole height), bend (an S: sideways in the middle), branch (a stub: how far up, which side, how long).
--- tint: the colour for tinted and relief, picked from the bark's photo.
+-- tint: the colour for tinted and relief, picked from the bark's photo. eyes: how many branch-scar eyes
+-- (else one tree in three gets one) and which kinds (the eye cells, 1-3); mirrored: a photo that doesn't tile,
+-- repeated mirror-wise.
 local TREES = {
+    { bark = 'aspen-01', name = 'aspen', h = 1300, w0 = 170, w1 = 140, flare = 0.2, lean = -30, bend = 20,
+        eyes = 5, kinds = { 1, 1, 1, 2 }, mirrored = true, tint = { 0.88, 0.88, 0.84 } },
     { bark = '01', name = 'oak', h = 1150, w0 = 270, w1 = 190, flare = 0.7, lean = 0, bend = 40,
         branch = { at = 0.72, side = -1, len = 330 }, tint = { 0.42, 0.4, 0.37 } },
     { bark = '02', name = 'elm', h = 1250, w0 = 190, w1 = 140, flare = 0.35, lean = 60, bend = -30,
@@ -54,6 +66,11 @@ local TREES = {
         branch = { at = 0.8, side = -1, len = 240 }, tint = { 0.56, 0.5, 0.28 } },
     { bark = '09', name = 'plane', h = 1300, w0 = 180, w1 = 140, flare = 0.3, lean = -20, bend = -35,
         tint = { 0.8, 0.8, 0.66 } },
+    { bark = 'birch-01', name = 'birch', h = 1250, w0 = 180, w1 = 130, flare = 0.35, lean = 50, bend = -30,
+        eyes = 3, kinds = { 2, 3 }, mirrored = true, tint = { 0.9, 0.89, 0.86 } },
+    { bark = 'aspen-01', name = 'aspen', h = 1350, w0 = 150, w1 = 115, flare = 0.15, lean = 20, bend = -15,
+        branch = { at = 0.78, side = 1, len = 220 }, eyes = 4, kinds = { 1, 1, 3 }, mirrored = true,
+        tint = { 0.86, 0.87, 0.84 } },
     { bark = '10', name = 'beech', h = 1300, w0 = 200, w1 = 160, flare = 0.55, lean = 0, bend = 15,
         branch = { at = 0.65, side = -1, len = 280 }, tint = { 0.58, 0.6, 0.53 } },
     { bark = '11', name = 'grey', h = 1250, w0 = 140, w1 = 100, flare = 0.2, lean = 70, bend = 20,
@@ -73,22 +90,24 @@ local TREES = {
 local function lab()
     state.barkSpike = state.barkSpike or { look = 1, painted = false, outlines = true, light = 1, frozen = false,
         detail = 3, size = 2, debug = 1, lx = 0, ly = -600, lightUp = 450 }
+    if state.barkSpike.eyes == nil then state.barkSpike.eyes = true end -- added later: a live state lacks it
     return state.barkSpike
 end
 
 ---------------------------------------------------------------- the barks
 
 local barks = {}
-local function barkOf(id)
+local function barkOf(id, mirrored)
     if barks[id] then return barks[id] end
     local function load(path)
         local image = love.graphics.newImage(path, { mipmaps = true })
-        image:setWrap('repeat', 'repeat')
+        local wrap = mirrored and 'mirroredrepeat' or 'repeat'
+        image:setWrap(wrap, wrap)
         image:setMipmapFilter('linear')
         image:setFilter('linear', 'linear', 8)
         return image
     end
-    local base = 'textures/world/bark/bark-' .. id
+    local base = 'textures/world/bark/' .. (id:match('^%d') and ('bark-' .. id) or id)
     local b = { colour = load(base .. '.jpg'), normal = load(base .. '-normal.jpg'),
         height = load(base .. '-height.jpg') }
     -- its average brightness, for tinted (every bark as bright as its tint, whatever the photo's exposure)
@@ -144,6 +163,10 @@ local barkShader = love.graphics.newShader([[
     uniform float meanLum;
     uniform float bands;       // 0 smooth, else the light in this many steps
     uniform int debugView;     // 0 off, 1 normals, 2 the light alone
+    uniform Image eyeMap;      // the eyes, side by side
+    uniform vec4 eyes[6];      // round the stem (angle), up it, how wide, which
+    uniform int eyeCount;
+    uniform float eyeCell;     // a cell's height / width
     vec4 effect(vec4 color, Image tex, vec2 tc, vec2 sc) {
         float a = clamp(vAcross.x, -0.995, 0.995);
         float th = asin(a);
@@ -174,6 +197,17 @@ local barkShader = love.graphics.newShader([[
             col = tint * clamp(lum / max(meanLum, 0.05), 0.0, 1.8);
         } else {
             col = tint * mix(1.0, 0.55 + 0.45 * crack, min(detail, 1.5) * 0.6);
+        }
+        // the eyes: each in the stem's own frame, so one round the side is squeezed like the bark
+        for (int i = 0; i < 6; ++i) {
+            if (i >= eyeCount) break;
+            vec4 e = eyes[i];
+            float ex = (th - e.x) * r / e.z;
+            float ey = (vFrame.z - e.y) / (e.z * eyeCell);
+            if (abs(ex) < 0.5 && abs(ey) < 0.5) {
+                vec4 t = Texel(eyeMap, vec2((e.w + ex + 0.5) / 3.0, 0.5 - ey));
+                col *= mix(vec3(1.0), t.rgb, t.a);
+            }
         }
         vec3 light = ambient + lightColour * d * 1.1;
         if (debugView == 1) return vec4(Nw * 0.5 + 0.5, 1.0) * color.a;
@@ -251,9 +285,8 @@ local built
 local function build()
     built = {}
     local i = 0
-    for r, row in ipairs(ROWS) do
-        local count = r == 1 and 8 or 7
-        for k = 1, count do
+    for _, row in ipairs(ROWS) do
+        for k = 1, row.count do
             i = i + 1
             local t = TREES[i]
             if not t then break end
@@ -273,6 +306,20 @@ local function build()
             end
             if t.branch then add(branchLine(t, stem), i * 0.37 + 0.5) end
             add(stem, i * 0.61)
+            tree.parts[#tree.parts].isStem = true
+            -- its eyes, the same every time (seeded by its place): up the stem, round it a little, about as
+            -- wide as the stem there (laid round the curve, so they show a little narrower)
+            local rng = love.math.newRandomGenerator(i * 7919 + 13)
+            local count = t.eyes or (rng:random() < 0.35 and 1 or 0)
+            tree.eyes = {}
+            for e = 1, math.min(count, MAX_EYES) do
+                -- scattered: a slot each up the stem, anywhere in it, and round the stem either way
+                local u = 0.1 + 0.8 * (e - 1 + rng:random()) / math.max(1, count)
+                local p = stem[math.floor(u * SEGMENTS) + 1]
+                local kinds = t.kinds or { 1, 2, 3 }
+                tree.eyes[#tree.eyes + 1] = { (rng:random() - 0.5) * 1.7, u * t.h,
+                    p.w * (0.7 + 0.8 * rng:random()), kinds[rng:random(1, #kinds)] - 1 }
+            end
             built[#built + 1] = tree
         end
     end
@@ -293,12 +340,13 @@ end
 function s.onStart()
     worldState.paused = false
     cam:setScale(0.24)
-    cam:setTranslation(100, 300)
+    cam:setTranslation(-150, 300)
     build()
 end
 
 function s.onUnload()
     barks = {}
+    eyeAtlas = nil
     built = nil
 end
 
@@ -317,6 +365,7 @@ function s.onKeyPress(key)
     elseif key == 'd' then c.detail = c.detail % #DETAILS + 1
     elseif key == 's' then c.size = c.size % #SIZES + 1
     elseif key == 'g' then c.debug = c.debug % #DEBUGS + 1
+    elseif key == 'e' then c.eyes = not c.eyes
     end
 end
 
@@ -354,8 +403,16 @@ function s.draw()
     barkShader:send('bands', c.painted and 4 or 0)
     barkShader:send('debugView', c.debug - 1)
     barkShader:send('barkWidth', SIZES[c.size][2])
+    if not eyeAtlas then
+        -- no mipmaps: it's looked up only inside an eye's box, and at the box's edge the GPU picks a far
+        -- too blurred level (a faint box round every eye)
+        eyeAtlas = love.graphics.newImage('textures/world/bark/bark-eyes.png')
+        eyeAtlas:setFilter('linear', 'linear')
+    end
+    barkShader:send('eyeMap', eyeAtlas)
+    barkShader:send('eyeCell', EYE_CELL)
     for _, tree in ipairs(built) do
-        local b = barkOf(tree.def.bark)
+        local b = barkOf(tree.def.bark, tree.def.mirrored)
         barkShader:send('normalMap', b.normal)
         barkShader:send('heightMap', b.height)
         barkShader:send('aspect', b.aspect)
@@ -363,6 +420,9 @@ function s.draw()
         barkShader:send('tint', tree.def.tint)
         for _, part in ipairs(tree.parts) do
             love.graphics.setShader(barkShader)
+            local eyeCount = (part.isStem and c.eyes) and #tree.eyes or 0
+            barkShader:send('eyeCount', eyeCount)
+            if eyeCount > 0 then barkShader:send('eyes', unpack(tree.eyes)) end
             love.graphics.setColor(1, 1, 1, 1)
             part.mesh:setTexture(b.colour)
             love.graphics.draw(part.mesh)
@@ -374,7 +434,8 @@ function s.draw()
         end
     end
     for _, tree in ipairs(built) do
-        label(tree.def.bark .. ' ' .. tree.def.name, tree.x, tree.ground + 30)
+        local id = tree.def.bark
+        label(id:match('^%d') and (id .. ' ' .. tree.def.name) or tree.def.name, tree.x, tree.ground + 30)
     end
     -- the light: a small sun where the mouse is
     love.graphics.setColor(L.colour[1], L.colour[2], L.colour[3], 0.9)
@@ -388,7 +449,7 @@ function s.drawUI()
     local c = lab()
     ui.startFrame()
     local sw, sh = love.graphics.getDimensions()
-    local w, h = PANEL.w, PANEL.row * 6 + 34
+    local w, h = PANEL.w, PANEL.row * 7 + 34
     local x0, y0 = sw - w - 12, math.max(12, sh - h - 12)
     c.panelRect = { x0, y0, w, h, folded = ui.isPanelFolded('•• bark ••') }
     local half = (w - PANEL.pad * 3) / 2
@@ -409,6 +470,8 @@ function s.drawUI()
         x, y = row()
         check(x, y, 'painted', 'painted')
         check(x + half + PANEL.pad, y, 'outlines', 'outlines')
+        x, y = row()
+        check(x, y, 'eyes', 'eyes')
         x, y = row()
         local followClicked, follow = ui.checkbox(x, y, not c.frozen, 'follows mouse')
         if followClicked then c.frozen = not follow end
