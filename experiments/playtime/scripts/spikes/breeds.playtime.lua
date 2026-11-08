@@ -3,7 +3,8 @@
 -- shape lists (shape-catalogs, picked by eye: there are no tags yet, B1), a colour palette
 -- (character-manager setRandomColor) and the body's build (neck segments). Everything else
 -- stays random, so a litter shares a look and still varies.
--- keys: r: a new litter   1-8: a breed   p: pause   h: hide/show the panel
+-- Face patches (right panel): skin colouring under the hair, eyes on top: eye hollows, cheeks, a snout.
+-- keys: r: a new litter   1-8: a breed   p: pause   h: hide/show the panels
 
 local s = {}
 
@@ -113,6 +114,143 @@ local function randomizeAs(inst, breed)
     for key, list in pairs(savedLists) do shapeCatalogs[key] = list end
 end
 
+-- Face patches: skin colouring on the face, under the hair, the eyes on top (eye hollows, cheeks, a
+-- snout, as a teddy's). Decals on the face's part between the skin (z 200) and its hair (210),
+-- placed from the face's own decals (eyes, nose, mouth), so they sit where this Mipo's face is and
+-- turn with it (mipoFacing.applyFace). The picture is baked white once, coloured from the Mipo's
+-- skin when drawn (extra.tint): darker hollows, a lighter snout, warmer cheeks.
+local PATCH_Z = 205
+local PATCH_SHAPES = { 'mipo/patch/patch-01', 'mipo/patch/patch-02', 'mipo/patch/patch-03', 'mipo/patch/patch-04' }
+
+local function patchSettings()
+    local c = check()
+    c.patches = c.patches or { eyes = true, cheeks = false, snout = true, shape = 1, alpha = 0.9,
+        eyeDark = 0.35, eyeSize = 1.8, cheekBlush = 0.5, cheekSize = 1.0, snoutLight = 0.35, snoutSize = 1.0 }
+    return c.patches
+end
+
+local function hexRGB(hex)
+    return tonumber(hex:sub(1, 2), 16) / 255, tonumber(hex:sub(3, 4), 16) / 255, tonumber(hex:sub(5, 6), 16) / 255
+end
+
+local function rgbToHsl(r, g, b)
+    local mx, mn = math.max(r, g, b), math.min(r, g, b)
+    local l = (mx + mn) / 2
+    if mx == mn then return 0, 0, l end
+    local d = mx - mn
+    local s1 = l > 0.5 and d / (2 - mx - mn) or d / (mx + mn)
+    local h
+    if mx == r then h = (g - b) / d + (g < b and 6 or 0)
+    elseif mx == g then h = (b - r) / d + 2
+    else h = (r - g) / d + 4 end
+    return h * 60, s1, l
+end
+
+local function clamp01(v) return math.max(0, math.min(1, v)) end
+
+local function hslTint(h, s1, l, a)
+    local r, g, b = hexRGB(hslHex(h, clamp01(s1), clamp01(l)))
+    return { r, g, b, a }
+end
+
+local function faceOwner(inst)
+    local name = inst.dna.creation.isPotatoHead and 'torso1' or 'head'
+    return name, inst.parts[name]
+end
+
+-- the face's decals by label, with their front-on place (applyFace keeps it in base*)
+local function faceDecals(body)
+    local found, mine = {}, {}
+    for _, fixture in ipairs(body:getFixtures()) do
+        local ud = fixture:getUserData()
+        if ud and ud.subtype == 'decal' and ud.label then
+            if ud.label:find('^fpatch') then mine[ud.label] = fixture else found[ud.label] = ud.extra end
+        end
+    end
+    return found, mine
+end
+
+-- where each patch goes, front-on, in the face part's own frame: { label = {ox, oy, w, h, kind, mirror} }
+local function patchPlaces(face, set)
+    local places = {}
+    local lp, rp = face.lpupil, face.rpupil
+    if not (lp and rp) then return places end
+    local function eye(p) return p.baseOx or p.ox, p.oy, p.baseEyeW or p.eyeW, p.eyeH end
+    local lx, ly, ew, eh = eye(lp)
+    local rx, ry = eye(rp)
+    local nose, lip = face.nose, face.upperlip or face.lowerlip
+    local mouthY = lip and lip.oy or (ly + eh * 2)
+    if set.eyes then
+        places.fpatchLeye = { lx, ly, ew * set.eyeSize, eh * set.eyeSize, 'eye', true }
+        places.fpatchReye = { rx, ry, ew * set.eyeSize, eh * set.eyeSize, 'eye', false }
+    end
+    if set.cheeks then
+        local cy = ly + (mouthY - ly) * 0.75
+        local cw = ew * set.cheekSize
+        places.fpatchLcheek = { lx * 1.25, cy, cw, cw * 0.75, 'cheek', true }
+        places.fpatchRcheek = { rx * 1.25, cy, cw, cw * 0.75, 'cheek', false }
+    end
+    if set.snout and nose then
+        local gap = rx - lx
+        local noseX = nose.baseOx or nose.ox
+        local h = math.max((mouthY - nose.oy) * 2.4, gap * 0.6) * set.snoutSize
+        places.fpatchSnout = { noseX, (nose.oy + mouthY) / 2 + h * 0.1, gap * 0.9 * set.snoutSize, h, 'snout', false }
+    end
+    return places
+end
+
+local function patchTints(inst, set)
+    local _, skin = nil, inst.dna.parts[faceOwner(inst)]
+    skin = skin and skin.appearance and skin.appearance.skin and skin.appearance.skin.main
+    local h, s1, l = rgbToHsl(hexRGB(skin and skin.fgHex or 'A07744FF'))
+    local toRed = ((350 - h + 540) % 360) - 180
+    return {
+        eye = hslTint(h, s1, l * (1 - set.eyeDark), set.alpha),
+        cheek = hslTint(h + toRed * set.cheekBlush, s1 + 0.35 * set.cheekBlush, l + 0.05 * set.cheekBlush, set.alpha),
+        snout = hslTint(h, s1 * (1 - 0.4 * set.snoutLight), l + (1 - l) * set.snoutLight, set.alpha),
+    }
+end
+
+local function placePatches(inst)
+    if not alive(inst) then return end
+    local _, part = faceOwner(inst)
+    if not (part and part.body and not part.body:isDestroyed()) then return end
+    local set = patchSettings()
+    local shape = PATCH_SHAPES[set.shape]
+    local face, mine = faceDecals(part.body)
+    local places = patchPlaces(face, set)
+    local tints = patchTints(inst, set)
+    for label, fixture in pairs(mine) do -- gone, or another picture: made again
+        if not places[label] or fixture:getUserData().extra.patchShape ~= shape then
+            fixtures.destroyFixture(fixture)
+            mine[label] = nil
+        end
+    end
+    for label, at in pairs(places) do
+        local fixture = mine[label]
+        if not fixture then
+            fixture = fixtures.createSFixture(part.body, 0, 0, 'decal', { radius = 10 })
+            local ud = fixture:getUserData()
+            ud.label = label
+            local main = { bgURL = shape .. '.png', fgURL = shape .. '-mask.png', pURL = '',
+                bgHex = 'ffffff00', fgHex = 'ffffffff', pHex = 'ffffff00' }
+            ompBake.makeCached(main)
+            ud.extra.main, ud.extra.OMP, ud.extra.dirty = main, true, true
+            ud.extra.patchShape, ud.extra.zOffset = shape, PATCH_Z
+            ud.extra.zGroupOffset = face.lpupil.zGroupOffset -- each Mipo draws in its own z range
+        end
+        local e = fixture:getUserData().extra
+        e.ox, e.oy, e.w, e.h, e.mirror = at[1], at[2], at[3], at[4], at[6]
+        e.baseOx, e.baseW = nil, nil -- front-on again; applyFace turns it as the face is
+        e.tint = tints[at[5]]
+    end
+    mipoFacing.applyFace(inst)
+end
+
+local function placeAllPatches()
+    for _, inst in ipairs(check().litter) do placePatches(inst) end
+end
+
 local function litter()
     local c = check()
     for _, inst in ipairs(c.litter) do
@@ -128,6 +266,7 @@ local function litter()
             c.litter[i] = inst
         end
     end
+    placeAllPatches()
 end
 
 local function makeGround()
@@ -149,7 +288,7 @@ function s.onStart()
     local c = check()
     local any = false
     for _, inst in ipairs(c.litter) do any = any or alive(inst) end
-    if not any then litter() end
+    if not any then litter() else placeAllPatches() end
     lookAtAll()
 end
 
@@ -186,6 +325,48 @@ function s.onKeyPress(key)
     if n and BREEDS[n] then pickBreed(n) end
 end
 
+-- the face patches panel, on the right
+local PATCH_SLIDERS = {
+    { 'eyeDark', 'hollows dark', 0, 1 }, { 'eyeSize', 'hollows size', 1, 3 },
+    { 'cheekBlush', 'cheeks blush', 0, 1 }, { 'cheekSize', 'cheeks size', 0.5, 2.5 },
+    { 'snoutLight', 'snout light', 0, 1 }, { 'snoutSize', 'snout size', 0.5, 2 },
+    { 'alpha', 'opacity', 0.1, 1 },
+}
+local function drawPatchPanel()
+    local set = patchSettings()
+    local sw, sh = love.graphics.getDimensions()
+    local rowH, w = 32, 330
+    local h = rowH * (#PATCH_SLIDERS + 3) + 50
+    local x0, y0 = sw - w - 10, 10
+    local changed = false
+    ui.panel(x0, y0, w, h, '•• face patches ••', function()
+        local x, y = x0 + 10, y0 + 34
+        for _, key in ipairs({ 'eyes', 'cheeks', 'snout' }) do
+            local clicked, checked = ui.checkbox(x, y, set[key], key)
+            if clicked then set[key] = checked changed = true end
+            x = x + 105
+        end
+        x, y = x0 + 10, y + rowH
+        if ui.button(x, y, w - 20, 'picture: patch-0' .. set.shape .. ' (next)') then
+            set.shape = set.shape % #PATCH_SHAPES + 1
+            changed = true
+        end
+        y = y + rowH
+        for _, sl in ipairs(PATCH_SLIDERS) do
+            ui.alignedLabel(x, y, sl[2])
+            local v = ui.sliderWithInput('fpatch_' .. sl[1], x + 115, y, 140, sl[3], sl[4], set[sl[1]])
+            if v and v ~= set[sl[1]] then set[sl[1]] = v changed = true end
+            y = y + rowH
+        end
+        if ui.button(x, y, w - 20, 'all off / on') then
+            local on = not (set.eyes or set.cheeks or set.snout)
+            set.eyes, set.cheeks, set.snout = on, on, on
+            changed = true
+        end
+    end)
+    if changed then placeAllPatches() end
+end
+
 function s.drawUI()
     local c = check()
     if not (state.playMode and c.showPanel) then return end
@@ -208,6 +389,7 @@ function s.drawUI()
     love.graphics.setColor(0.95, 0.92, 0.8)
     love.graphics.print(breed.name .. ': ' .. breed.note, x0 + w + 20, sh - 40, 0, 1.4, 1.4)
     love.graphics.setColor(1, 1, 1)
+    drawPatchPanel()
 end
 
 return s

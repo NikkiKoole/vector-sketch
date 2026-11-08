@@ -905,7 +905,8 @@ local function drawDecal(d)
             local imgw, imgh = img:getDimensions()
             local sx = dw / imgw * mirrorX
             local sy = dh / imgh
-            love.graphics.setColor(1, 1, 1, 1)
+            local tint = extra.tint -- {r, g, b, a}: a picture baked white, coloured when drawn (face patches)
+            if tint then love.graphics.setColor(tint) else love.graphics.setColor(1, 1, 1, 1) end
             if extra.material then
                 drawDecalLit(extra, body, img, ox, oy, dw, dh, mirrorX)
             else
