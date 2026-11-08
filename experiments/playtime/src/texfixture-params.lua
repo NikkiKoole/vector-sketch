@@ -240,6 +240,9 @@ end
 
 lib.ompRows = ompRows -- the blob's look (src/sfixture-params.lua) uses the same rows
 
+local materialOptions = { 'none' }
+for _, name in ipairs(require('src.render.materials').NAMES) do materialOptions[#materialOptions + 1] = name end
+
 local function isOMP(fixture) return extraOf(fixture).OMP == true end
 local function notOMP(fixture) return not isOMP(fixture) end
 
@@ -255,6 +258,11 @@ lib.texture = concat({
       set = function(fixture, v) extraOf(fixture).OMP = (v == 'OMP') end },
     extraFlag('hairs', 'hairs'),
     extraFlag('plasticine', 'plasticine'),
+    -- a material instead of clay (src/render/materials.lua, MATERIALS MT6): drawn by the plasticine
+    -- shader with or without the plasticine flag; an unknown name (a dropped preset) draws as clay
+    { key = 'material', kind = 'choice', stepper = true, options = materialOptions,
+      get = function(fixture) return extraOf(fixture).material or 'none' end,
+      set = function(fixture, v) extraOf(fixture).material = (v ~= 'none') and v or nil end },
 }, withVisible({
     layerImage('main', 'bgURL', 'bg'),
     layerColor('main', 'bgHex', 'bg color'),

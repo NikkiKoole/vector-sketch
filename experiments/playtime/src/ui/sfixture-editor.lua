@@ -123,7 +123,7 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
             if section('texture', texfixtureParams.texture) then return end
             local e = fixture:getUserData().extra
             if e.hairs and section('hairs', texfixtureParams.hairs) then return end
-            if e.plasticine and section('plasticine', texfixtureParams.plasticine) then return end
+            if (e.plasticine or e.material) and section('plasticine', texfixtureParams.plasticine) then return end
             for _, layer in ipairs({ 'patch1', 'patch2', 'patch3' }) do
                 if section(layer, texfixtureParams.patch(layer)) then return end
             end
