@@ -20,7 +20,8 @@ local KINDS = {
 local function check() -- on state: a script hot reload keeps the Mipos
     state.noFeet = state.noFeet or { mipos = {}, statics = {}, orig = {} }
     local c = state.noFeet
-    c.kinds = c.kinds or { feet = { mode = 'none', small = 0.4 }, hands = { mode = 'built', small = 0.4 } }
+    -- Nikki's picks (2026-11-08): feet 1, hands 0.74 (the randomizer gives both 1-2)
+    c.kinds = c.kinds or { feet = { mode = 'small', small = 1 }, hands = { mode = 'small', small = 0.74 } }
     if c.showPanel == nil then c.showPanel = true end
     return c
 end
