@@ -122,14 +122,20 @@ cones, old ones broad on a bare trunk), moss on the damp shady side.
 engine left alone: moving into src/ is ENGINE-MERGE's call). Next to the scene, loaded like drawn-stroke.lua
 (`love.filesystem.load(path)()`), so any scene can plant a tree:
 - `scripts/spikes/tree-kinds.lua`: how each kind grows (the data; tune a kind here)
-- `scripts/spikes/tree-grow.lua`: `grow(kind, rng, x, y, angle, scale, organic)` -> branches
+- `scripts/spikes/tree-grow.lua`: `grow(kind, rng, x, y, angle, scale, env)` -> branches (env: organic, wind)
 - `scripts/spikes/tree-mesh.lua`: `parts(branches, seed)` -> a mesh and crayon outline per depth
 - `scripts/spikes/bark-look.lua`: `begin(settings)` once a frame, `drawTree(tree, opts)`, `placeEyes`, `reset`
 The bark scene is now its layout, panel and light (254 lines, was ~690). Checked with a one-off fingerprint
 (every branch's points, widths, eyes, mesh and outline vertex counts, 18 trees at organic 0, 1 and 2):
 identical before and after.
-- [ ] **BK7. Wind**: one direction and strength for the scene; trees lean with it, windward branches stay
+- [x] **BK7. Wind**: one direction and strength for the scene; trees lean with it, windward branches stay
   short (a combed crown).
+  Done 2026-11-08: the panel's **wind** slider (-1 from the right .. 1 from the left: the wind the trees
+  grew up in, not a sway). 'Up' for the tree leans downwind (the trunk leans, tips recover toward it),
+  branches are combed to the lee side (more if thin), and a branch's length goes with the wind (x1.45 reaching
+  downwind, x0.55 into it, forks too). tree-grow's grow now takes an env table { organic, wind } (light and
+  age to follow). Wind 0: the trees identical to before (fingerprint). Seen at 0.8: coast trees, oaks and
+  elms windswept, pine and poplar least.
 - [ ] **BK8. Light**: crowns reach toward the scene's sun and away from the trees next to them (a row
   shapes itself).
 - [ ] **BK9. A history per tree**: a broken top becomes a dog-leg; a lost limb leaves a stub with a scar eye

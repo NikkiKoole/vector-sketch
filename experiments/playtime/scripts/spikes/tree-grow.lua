@@ -1,9 +1,11 @@
 -- tree-grow: a whole tree grown from its kind (tree-kinds.lua), not a scene. Loaded with
 -- love.filesystem.load('scripts/spikes/tree-grow.lua')() -> { grow, TWIG }.
--- grow(kind, rng, x, y, angle, scale, organic) -> branches: each { pts = { {x, y, w, wl, wr, along, a}, ... },
+-- grow(kind, rng, x, y, angle, scale, env) -> branches: each { pts = { {x, y, w, wl, wr, along, a}, ... },
 -- depth (0 the trunk), isTrunk, outlineTrim }. rng a love RandomGenerator (the same seed grows the same
--- tree; the caller can go on drawing from it, as the bark scene does for the eyes); organic 0..2 (0
--- straight and even, 1 as tuned, 2 wild). From the bark spike (docs/BARK.md: BK1d-BK6).
+-- tree; the caller can go on drawing from it, as the bark scene does for the eyes). env, the world it grew
+-- up in: organic 0..2 (0 straight and even, 1 as tuned, 2 wild), wind -1..1 (the prevailing wind over its
+-- life, the sign its way: it leans with it, its crown combed to the lee side). From the bark spike
+-- (docs/BARK.md: BK1d-BK7).
 local lib = {}
 
 local STEP_LEN = 26 -- world units per step along a branch
@@ -23,9 +25,14 @@ end
 -- the branch goes on with what's left (a child's width is the parent's times the square root of its share),
 -- and a fork splits what's left between its limbs. Bends have reasons (BK5): a limb sags more the further
 -- out it reaches (its weight, more if thin), past recoverFrom its tip turns back up toward the light (the
--- elbow), thin tips can hang (droop: weeping); the slow wander is a little on top.
-local function grow(k, rng, out, x, y, a, len, w0, depth, isTrunk, scale, organic)
+-- elbow), thin tips can hang (droop: weeping); the slow wander is a little on top. Wind (BK7): the tree
+-- grows toward a sky leaning downwind, its branches combed to the lee side, those reaching into the wind
+-- shorter, those downwind longer.
+local function grow(k, rng, out, x, y, a, len, w0, depth, isTrunk, scale, env)
     if #out >= MAX_BRANCHES then return end
+    local organic, wind = env.organic, env.wind
+    local sky = -math.pi / 2 + wind * 0.35 -- where 'up' is for a tree in this wind
+    local lee = wind > 0 and 0 or math.pi
     local n = math.max(3, math.floor(len / STEP_LEN))
     local wander = (isTrunk and k.trunkWander or k.wander) * organic
     local thin = 1 - math.min(1, w0 / (k.w * scale))
@@ -69,11 +76,12 @@ local function grow(k, rng, out, x, y, a, len, w0, depth, isTrunk, scale, organi
         local bend = (love.math.noise(seed, (i - 1) * step / 220) - 0.5) * 2.2 + (rng:random() - 0.5) * 0.25
         if organic == 0 then bend = 0 end
         a = a + bend * wander
-        a = turnToward(a, -math.pi / 2, k.up * (isTrunk and 3 or 1))
+        a = turnToward(a, sky, k.up * (isTrunk and 3 or 1))
         if not isTrunk then
             a = turnToward(a, math.pi / 2, k.sag * bends * u * (0.5 + thin)) -- its weight
-            if u > k.recoverFrom then a = turnToward(a, -math.pi / 2, k.recover * bends) end -- the tip back up
+            if u > k.recoverFrom then a = turnToward(a, sky, k.recover * bends) end -- the tip back up
             a = turnToward(a, math.pi / 2, k.droop * thin) -- thin tips hanging
+            if wind ~= 0 then a = turnToward(a, lee, math.abs(wind) * 0.05 * (0.4 + thin)) end -- combed
         end
         x, y = x + math.cos(a) * step, y + math.sin(a) * step
         line[#line + 1] = { x, y }
@@ -145,8 +153,9 @@ local function grow(k, rng, out, x, y, a, len, w0, depth, isTrunk, scale, organi
         local ca = p.a + kid.side * (spread[1] + (spread[2] - spread[1]) * rng:random())
         local clen = len * k.len * (0.8 + 0.4 * rng:random())
         if k.cone and isTrunk then clen = clen * (1 - kid.t * (k.coneTop or 0.85)) end -- shorter toward the top
+        if wind ~= 0 then clen = clen * (1 + 0.45 * wind * math.cos(ca)) end -- short into the wind, long with it
         local cw = widthAt(kid.t - 0.04) * math.sqrt(kid.share)
-        grow(k, rng, out, p.x, p.y, ca, clen, math.max(TWIG, cw), depth + 1, false, scale, organic)
+        grow(k, rng, out, p.x, p.y, ca, clen, math.max(TWIG, cw), depth + 1, false, scale, env)
     end
     -- a trunk that forks: what's left of its wood split between its limbs, fanned out from a step below the
     -- top (they overlap the trunk's end: no notch)
@@ -158,16 +167,18 @@ local function grow(k, rng, out, x, y, a, len, w0, depth, isTrunk, scale, organi
         for f = 1, nf do
             local fa = a + (f - (nf + 1) / 2) * fan + (rng:random() - 0.5) * 0.2
             local fw = wEnd * math.sqrt(weights[f] / sum)
-            grow(k, rng, out, top.x, top.y, fa, len * flen * (0.85 + 0.3 * rng:random()), fw, depth + 1, false,
-                scale, organic)
+            local flenHere = len * flen * (0.85 + 0.3 * rng:random())
+            if wind ~= 0 then flenHere = flenHere * (1 + 0.45 * wind * math.cos(fa)) end
+            grow(k, rng, out, top.x, top.y, fa, flenHere, fw, depth + 1, false, scale, env)
         end
     end
 end
 
-function lib.grow(kind, rng, x, y, angle, scale, organic)
+function lib.grow(kind, rng, x, y, angle, scale, env)
     local branches = {}
     scale = scale or 1
-    grow(kind, rng, branches, x, y, angle, kind.trunk * scale, kind.w * scale, 0, true, scale, organic or 1)
+    env = { organic = env and env.organic or 1, wind = env and env.wind or 0 }
+    grow(kind, rng, branches, x, y, angle, kind.trunk * scale, kind.w * scale, 0, true, scale, env)
     return branches
 end
 

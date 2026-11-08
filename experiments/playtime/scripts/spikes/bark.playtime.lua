@@ -15,7 +15,8 @@
 --   s the bark's size: small / middle / big      g what the shader sees: off / normals / light alone
 --   e the eyes on / off (branch scars from photos: aspens and the birch have several, other trees now and then)
 --   m Mipo eyes instead of the scars (the Mipos' own eye drawings, a round pupil), in the same places
--- the panel's 'organic' slider: 0 straight, even branches, 1 as tuned (slow turns, collars, bumpy edges), 2 wild
+-- the panel's 'organic' slider: 0 straight, even branches, 1 as tuned (slow turns, collars, bumpy edges), 2 wild;
+-- 'wind': the wind the trees grew up in (-1 from the right .. 1 from the left): leaning, combed crowns
 -- The trees come from modules any scene can load (docs/BARK.md): tree-kinds.lua (how each kind grows),
 -- tree-grow.lua (a kind + a seed -> branches), tree-mesh.lua (branches -> meshes, crayon outlines),
 -- bark-look.lua (the bark pictures, the shader, the eyes). This scene is the layout, the panel, the light.
@@ -77,6 +78,7 @@ local function lab()
         detail = 3, size = 2, debug = 1, lx = 0, ly = -600, lightUp = 450 }
     if state.barkSpike.eyes == nil then state.barkSpike.eyes = true end -- added later: a live state lacks it
     state.barkSpike.organic = state.barkSpike.organic or 1
+    state.barkSpike.wind = state.barkSpike.wind or 0
     return state.barkSpike
 end
 
@@ -84,8 +86,8 @@ end
 
 -- every tree grown and made into meshes once (again when the organic slider moves)
 local built
-local function build(organic)
-    built = { organic = organic }
+local function build(env)
+    built = { key = env.organic .. '|' .. env.wind }
     local i = 0
     for _, row in ipairs(ROWS) do
         for col = 1, row.count do
@@ -95,7 +97,7 @@ local function build(organic)
             local k = KINDS[t.kind]
             local x0 = row.x + (col - 1) * STEP
             local rng = love.math.newRandomGenerator(i * 7919 + 13)
-            local branches = treeGrow.grow(k, rng, x0, row.ground, -math.pi / 2 + t.lean, t.size or 1, organic)
+            local branches = treeGrow.grow(k, rng, x0, row.ground, -math.pi / 2 + t.lean, t.size or 1, env)
             local tree = { def = t, x = x0, ground = row.ground, parts = treeMesh.parts(branches, i * 0.61),
                 branchCount = #branches }
             tree.eyes, tree.mipoEyes = barkLook.placeEyes(t, k, branches[1].pts, rng)
@@ -117,7 +119,7 @@ function s.onStart()
     worldState.paused = false
     cam:setScale(0.135)
     cam:setTranslation(0, 200)
-    build(lab().organic)
+    build({ organic = lab().organic, wind = lab().wind })
 end
 
 function s.onUnload()
@@ -169,10 +171,13 @@ end
 
 function s.draw()
     local c = lab()
-    -- a regrow takes ~0.1 s: while the slider moves, wait until it rests a moment
+    -- a regrow takes ~0.1 s: while a slider (organic, wind) moves, wait until it rests a moment
     local now = love.timer.getTime()
-    if c.organic ~= c.organicSeen then c.organicSeen, c.organicAt = c.organic, now end
-    if not built or (built.organic ~= c.organic and now - (c.organicAt or 0) > 0.15) then build(c.organic) end
+    local key = c.organic .. '|' .. c.wind
+    if key ~= c.growSeen then c.growSeen, c.growAt = key, now end
+    if not built or (built.key ~= key and now - (c.growAt or 0) > 0.15) then
+        build({ organic = c.organic, wind = c.wind })
+    end
     local L = LIGHTS[c.light]
     barkLook.begin({ lightPos = { c.lx, c.ly, c.lightUp }, lightColour = L.colour, ambient = L.ambient,
         detail = DETAILS[c.detail][2], look = c.look - 1, bands = c.painted and 4 or 0, debugView = c.debug - 1,
@@ -195,7 +200,7 @@ function s.drawUI()
     local c = lab()
     ui.startFrame()
     local sw, sh = love.graphics.getDimensions()
-    local w, h = PANEL.w, PANEL.row * 8 + 34
+    local w, h = PANEL.w, PANEL.row * 9 + 34
     local x0, y0 = sw - w - 12, math.max(12, sh - h - 12)
     c.panelRect = { x0, y0, w, h, folded = ui.isPanelFolded('•• bark ••') }
     local half = (w - PANEL.pad * 3) / 2
@@ -231,6 +236,10 @@ function s.drawUI()
         ui.label(x, y + 4, 'organic')
         local o = ui.sliderWithInput('bark-organic', x + 118, y - 2, 120, 0, 2, c.organic, nil, 0.05)
         if o then c.organic = o + 0 end
+        x, y = row()
+        ui.label(x, y + 4, 'wind')
+        local wv = ui.sliderWithInput('bark-wind', x + 118, y - 2, 120, -1, 1, c.wind, nil, 0.05)
+        if wv then c.wind = wv + 0 end
     end)
 end
 
