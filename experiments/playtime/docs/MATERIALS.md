@@ -186,6 +186,16 @@ Kinds of material, by what the shader does differently:
   The lit look by default (Nikki 2026-11-08: "the way the Mipos are set up in light and shadow"): at the
   scene light level off, a Mipo part in a material gets the lit level's Mipo settings anyway (baked
   roundness, lights adding up, clay off; src/scene-light.lua), taken off before a save like the others.
+- [ ] **MT20. A drawn thing in one go** (idea, 2026-11-08; Nikki: "don't know", written down for later).
+  Today a plain body gets a picture and a material by hand: attach tool -> looks -> texture dropped on
+  it (body-sized), the texture section set to OMP with outline, mask and colours, then the material row.
+  Fiddly, and a box body under a drawing still collides as a box. Instead start from the drawing: a
+  "drawn" entry on the tool rail, a thumbnail grid of pictures; the pick makes a body shaped like the
+  drawing (object-manager's `shape8` shape type from its `src/shape8-dict.lua` outline, as Mipo parts
+  are made) already wearing it (OMP texfixture: picture, mask, colours) and a material, changed in the
+  panel after. Lit by default through scene-light's material rule (MT6). About one function and a
+  picker. Limit: only pictures with a traced outline (the 41 Mipo part drawings); a new drawing is
+  traced on the `meta` sheet first (docs/SCENES.md), or later its outline found from the mask.
 
 ## Fur (Nikki's follow-up talk, 2026-11-06)
 
