@@ -57,6 +57,11 @@ and place; the birch's mirror-repeat shows as mirrored pairs of marks (a longer 
 - [x] **BK1. The spike** (2026-11-08): the 15 barks, the stems, the three looks, the panel.
 - [x] **BK1b. Aspens, a birch, eyes** (2026-11-08): two aspens and a birch from Commons photos, branch-scar
   eyes from the same photos on them and now and then on the others.
+- [x] **BK1c. Mipo eyes on the trees** (2026-11-08, Nikki: "curious how our own Mipos' eyes would look on the
+  aspen"): m swaps every eye for a Mipo eye in the same place (cells 4-10 of `bark-eyes.png`: eye-01..07's
+  outline in ink, its inside white, pupil-01 dark in the middle), a little smaller. They sit in the bark,
+  lit and curved with it, but read as drawn onto the tree, not grown in it. Not yet: pupils that follow
+  the mouse or a passing Mipo, two side by side as a face.
 - [ ] **BK2. Nikki judges**: which look (photo / tinted / relief) sits with the drawn Mipos, which
   barks to keep. A Mipo next to a trunk for the scale (WORLD-METRICS.md).
 - [ ] **BK3. Into the engine, if kept**: a bark as a material on a ribbon (connected-texture) or a

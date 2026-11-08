@@ -14,6 +14,7 @@
 --   d bark detail (how strongly the bumps take the light): flat / soft / normal / deep
 --   s the bark's size: small / middle / big      g what the shader sees: off / normals / light alone
 --   e the eyes on / off (branch scars from photos: aspens and the birch have several, other trees now and then)
+--   m Mipo eyes instead of the scars (the Mipos' own eye drawings, a round pupil), in the same places
 local s = {}
 
 local STROKE = love.filesystem.load('scripts/spikes/drawn-stroke.lua')()
@@ -35,8 +36,11 @@ local LIGHTS = {
 local DEBUGS = { 'off', 'normals', 'light alone' }
 
 -- The eyes: branch scars from photos (Wikimedia Commons, CC0: textures/world/bark/bark-eyes.png, BARK.md),
--- three cells side by side, each eye's white made 1 so it multiplies into any bark: 1 the aspen eye, 2 the
--- birch's big scar, 3 its small one. EYE_CELL: a cell's height over its width.
+-- cells side by side, each eye's white made 1 so it multiplies into any bark: 1 the aspen eye, 2 the
+-- birch's big scar, 3 its small one; 4-10 the Mipo eyes (eye-01..07, outline in ink, a round pupil), for
+-- m. EYE_CELL: a cell's height over its width.
+local EYE_CELLS = 10
+local MIPO_EYE_CELLS = { 4, 10 }
 local EYE_CELL = 320 / 512
 local MAX_EYES = 6
 local eyeAtlas
@@ -167,6 +171,7 @@ local barkShader = love.graphics.newShader([[
     uniform vec4 eyes[6];      // round the stem (angle), up it, how wide, which
     uniform int eyeCount;
     uniform float eyeCell;     // a cell's height / width
+    uniform float eyeCells;    // how many cells
     vec4 effect(vec4 color, Image tex, vec2 tc, vec2 sc) {
         float a = clamp(vAcross.x, -0.995, 0.995);
         float th = asin(a);
@@ -205,7 +210,7 @@ local barkShader = love.graphics.newShader([[
             float ex = (th - e.x) * r / e.z;
             float ey = (vFrame.z - e.y) / (e.z * eyeCell);
             if (abs(ex) < 0.5 && abs(ey) < 0.5) {
-                vec4 t = Texel(eyeMap, vec2((e.w + ex + 0.5) / 3.0, 0.5 - ey));
+                vec4 t = Texel(eyeMap, vec2((e.w + ex + 0.5) / eyeCells, 0.5 - ey));
                 col *= mix(vec3(1.0), t.rgb, t.a);
             }
         }
@@ -311,14 +316,18 @@ local function build()
             -- wide as the stem there (laid round the curve, so they show a little narrower)
             local rng = love.math.newRandomGenerator(i * 7919 + 13)
             local count = t.eyes or (rng:random() < 0.35 and 1 or 0)
-            tree.eyes = {}
+            tree.eyes, tree.mipoEyes = {}, {}
             for e = 1, math.min(count, MAX_EYES) do
                 -- scattered: a slot each up the stem, anywhere in it, and round the stem either way
                 local u = 0.1 + 0.8 * (e - 1 + rng:random()) / math.max(1, count)
                 local p = stem[math.floor(u * SEGMENTS) + 1]
                 local kinds = t.kinds or { 1, 2, 3 }
-                tree.eyes[#tree.eyes + 1] = { (rng:random() - 0.5) * 1.7, u * t.h,
+                local eye = { (rng:random() - 0.5) * 1.7, u * t.h,
                     p.w * (0.7 + 0.8 * rng:random()), kinds[rng:random(1, #kinds)] - 1 }
+                tree.eyes[#tree.eyes + 1] = eye
+                -- the same eye as a Mipo's (m): a little smaller, they're rounder than the scars
+                tree.mipoEyes[#tree.mipoEyes + 1] = { eye[1], eye[2], eye[3] * 0.8,
+                    rng:random(MIPO_EYE_CELLS[1], MIPO_EYE_CELLS[2]) - 1 }
             end
             built[#built + 1] = tree
         end
@@ -366,6 +375,7 @@ function s.onKeyPress(key)
     elseif key == 's' then c.size = c.size % #SIZES + 1
     elseif key == 'g' then c.debug = c.debug % #DEBUGS + 1
     elseif key == 'e' then c.eyes = not c.eyes
+    elseif key == 'm' then c.mipoEyes = not c.mipoEyes
     end
 end
 
@@ -411,6 +421,7 @@ function s.draw()
     end
     barkShader:send('eyeMap', eyeAtlas)
     barkShader:send('eyeCell', EYE_CELL)
+    barkShader:send('eyeCells', EYE_CELLS)
     for _, tree in ipairs(built) do
         local b = barkOf(tree.def.bark, tree.def.mirrored)
         barkShader:send('normalMap', b.normal)
@@ -422,7 +433,7 @@ function s.draw()
             love.graphics.setShader(barkShader)
             local eyeCount = (part.isStem and c.eyes) and #tree.eyes or 0
             barkShader:send('eyeCount', eyeCount)
-            if eyeCount > 0 then barkShader:send('eyes', unpack(tree.eyes)) end
+            if eyeCount > 0 then barkShader:send('eyes', unpack(c.mipoEyes and tree.mipoEyes or tree.eyes)) end
             love.graphics.setColor(1, 1, 1, 1)
             part.mesh:setTexture(b.colour)
             love.graphics.draw(part.mesh)
@@ -472,6 +483,7 @@ function s.drawUI()
         check(x + half + PANEL.pad, y, 'outlines', 'outlines')
         x, y = row()
         check(x, y, 'eyes', 'eyes')
+        check(x + half + PANEL.pad, y, 'mipoEyes', 'mipo eyes')
         x, y = row()
         local followClicked, follow = ui.checkbox(x, y, not c.frozen, 'follows mouse')
         if followClicked then c.frozen = not follow end
