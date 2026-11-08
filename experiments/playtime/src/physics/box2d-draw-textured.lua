@@ -26,6 +26,9 @@ local faceDrawables = { decal = true, brow = true, ['mouth-backdrop'] = true, ['
     ['mouth-tongue'] = true }
 
 local gazeRadius = 1000 -- world units; cursor within this distance → track, outside → look ahead
+-- how far a pupil moves toward the eye's edge: 1 = its edge at the eye picture's edge. The white sits
+-- inside the outline, and the pupil is clipped to the white, so below 1 keeps most of it in view
+local pupilRange = 0.6
 local mipoFace = require('src.mipo-face')
 local utils = require('src.utils')
 local mipoRegistry = require('src.mipo-registry')
@@ -874,8 +877,8 @@ local function drawDecal(d)
                 local eyeAngle = math.atan2(dy, dx) - body:getAngle() - eyeRot
                 local dw = extra.w or 0
                 local dh = extra.h or 0
-                local maxX = math.max(0, (extra.eyeW - dw) / 2) * 0.8
-                local maxY = math.max(0, (extra.eyeH - dh) / 2) * 0.8
+                local maxX = math.max(0, (extra.eyeW - dw) / 2) * pupilRange
+                local maxY = math.max(0, (extra.eyeH - dh) / 2) * pupilRange
                 local eyesOpen = (gazeThing and gazeThing.eyesOpen) or 1
                 local ex = math.cos(eyeAngle) * maxX * t
                 local ey = math.sin(eyeAngle) * maxY * t * eyesOpen
