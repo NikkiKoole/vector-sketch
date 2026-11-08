@@ -4,8 +4,10 @@
 -- depth (0 the trunk), isTrunk, outlineTrim }. rng a love RandomGenerator (the same seed grows the same
 -- tree; the caller can go on drawing from it, as the bark scene does for the eyes). env, the world it grew
 -- up in: organic 0..2 (0 straight and even, 1 as tuned, 2 wild), wind -1..1 (the prevailing wind over its
--- life, the sign its way: it leans with it, its crown combed to the lee side). From the bark spike
--- (docs/BARK.md: BK1d-BK7).
+-- life, the sign its way: it leans with it, its crown combed to the lee side), sun -1..1 (where its light
+-- came from: left, overhead, right; it reaches for it), crowd 0..1 with left/right (how much room to the
+-- next tree on each side, world units; nil: none): its branches keep out of a neighbour's space, turning
+-- up instead. From the bark spike (docs/BARK.md: BK1d-BK8).
 local lib = {}
 
 local STEP_LEN = 26 -- world units per step along a branch
@@ -30,12 +32,23 @@ end
 -- shorter, those downwind longer.
 local function grow(k, rng, out, x, y, a, len, w0, depth, isTrunk, scale, env)
     if #out >= MAX_BRANCHES then return end
-    local organic, wind = env.organic, env.wind
-    local sky = -math.pi / 2 + wind * 0.35 -- where 'up' is for a tree in this wind
+    local organic, wind, sun, crowd = env.organic, env.wind, env.sun, env.crowd
+    local sky = -math.pi / 2 + wind * 0.35 + sun * 0.15 -- where 'up' is for a tree in this wind and light
     local lee = wind > 0 and 0 or math.pi
     local n = math.max(3, math.floor(len / STEP_LEN))
     local wander = (isTrunk and k.trunkWander or k.wander) * organic
     local thin = 1 - math.min(1, w0 / (k.w * scale))
+    -- how much of a branch's length fits before the neighbour's space on its side (1: all; crowd 0: all)
+    local function roomFor(bx, ba, blen)
+        if crowd <= 0 then return 1 end
+        local dirx = math.cos(ba)
+        local room = dirx > 0 and env.right or env.left
+        if not room then return 1 end
+        local left = room - (bx - env.x0) * (dirx > 0 and 1 or -1)
+        local reach = blen * math.abs(dirx)
+        if reach <= left then return 1 end
+        return 1 - crowd * (1 - math.max(0.3, left / reach))
+    end
     local bends = math.min(1.5, organic) -- the sag and the elbow, with the slider (0: straight)
     -- its side branches first, where they leave and how much wood each takes: the widths come from them
     local kids = {}
@@ -82,6 +95,14 @@ local function grow(k, rng, out, x, y, a, len, w0, depth, isTrunk, scale, env)
             if u > k.recoverFrom then a = turnToward(a, sky, k.recover * bends) end -- the tip back up
             a = turnToward(a, math.pi / 2, k.droop * thin) -- thin tips hanging
             if wind ~= 0 then a = turnToward(a, lee, math.abs(wind) * 0.05 * (0.4 + thin)) end -- combed
+            -- in a neighbour's space (past 60% of the room on that side): up instead, the further in the more
+            if crowd > 0 then
+                local dx = x - env.x0
+                local room = dx > 0 and env.right or env.left
+                if room and math.abs(dx) > room * 0.6 then
+                    a = turnToward(a, sky, crowd * 0.12 * math.min(1, (math.abs(dx) - room * 0.6) / (room * 0.4)))
+                end
+            end
         end
         x, y = x + math.cos(a) * step, y + math.sin(a) * step
         line[#line + 1] = { x, y }
@@ -154,6 +175,8 @@ local function grow(k, rng, out, x, y, a, len, w0, depth, isTrunk, scale, env)
         local clen = len * k.len * (0.8 + 0.4 * rng:random())
         if k.cone and isTrunk then clen = clen * (1 - kid.t * (k.coneTop or 0.85)) end -- shorter toward the top
         if wind ~= 0 then clen = clen * (1 + 0.45 * wind * math.cos(ca)) end -- short into the wind, long with it
+        if sun ~= 0 then clen = clen * (1 + 0.5 * sun * math.cos(ca)) end -- long on the sunny side (lopsided)
+        clen = clen * roomFor(p.x, ca, clen)
         local cw = widthAt(kid.t - 0.04) * math.sqrt(kid.share)
         grow(k, rng, out, p.x, p.y, ca, clen, math.max(TWIG, cw), depth + 1, false, scale, env)
     end
@@ -169,6 +192,8 @@ local function grow(k, rng, out, x, y, a, len, w0, depth, isTrunk, scale, env)
             local fw = wEnd * math.sqrt(weights[f] / sum)
             local flenHere = len * flen * (0.85 + 0.3 * rng:random())
             if wind ~= 0 then flenHere = flenHere * (1 + 0.45 * wind * math.cos(fa)) end
+            if sun ~= 0 then flenHere = flenHere * (1 + 0.5 * sun * math.cos(fa)) end
+            flenHere = flenHere * roomFor(top.x, fa, flenHere)
             grow(k, rng, out, top.x, top.y, fa, flenHere, fw, depth + 1, false, scale, env)
         end
     end
@@ -177,7 +202,9 @@ end
 function lib.grow(kind, rng, x, y, angle, scale, env)
     local branches = {}
     scale = scale or 1
-    env = { organic = env and env.organic or 1, wind = env and env.wind or 0 }
+    env = env or {}
+    env = { organic = env.organic or 1, wind = env.wind or 0, sun = env.sun or 0, crowd = env.crowd or 0,
+        left = env.left, right = env.right, x0 = x }
     grow(kind, rng, branches, x, y, angle, kind.trunk * scale, kind.w * scale, 0, true, scale, env)
     return branches
 end

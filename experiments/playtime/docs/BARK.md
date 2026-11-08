@@ -122,7 +122,7 @@ cones, old ones broad on a bare trunk), moss on the damp shady side.
 engine left alone: moving into src/ is ENGINE-MERGE's call). Next to the scene, loaded like drawn-stroke.lua
 (`love.filesystem.load(path)()`), so any scene can plant a tree:
 - `scripts/spikes/tree-kinds.lua`: how each kind grows (the data; tune a kind here)
-- `scripts/spikes/tree-grow.lua`: `grow(kind, rng, x, y, angle, scale, env)` -> branches (env: organic, wind)
+- `scripts/spikes/tree-grow.lua`: `grow(kind, rng, x, y, angle, scale, env)` -> branches (env: organic, wind, sun, crowd, left/right room)
 - `scripts/spikes/tree-mesh.lua`: `parts(branches, seed)` -> a mesh and crayon outline per depth
 - `scripts/spikes/bark-look.lua`: `begin(settings)` once a frame, `drawTree(tree, opts)`, `placeEyes`, `reset`
 The bark scene is now its layout, panel and light (254 lines, was ~690). Checked with a one-off fingerprint
@@ -136,8 +136,16 @@ identical before and after.
   downwind, x0.55 into it, forks too). tree-grow's grow now takes an env table { organic, wind } (light and
   age to follow). Wind 0: the trees identical to before (fingerprint). Seen at 0.8: coast trees, oaks and
   elms windswept, pine and poplar least.
-- [ ] **BK8. Light**: crowns reach toward the scene's sun and away from the trees next to them (a row
+- [x] **BK8. Light**: crowns reach toward the scene's sun and away from the trees next to them (a row
   shapes itself).
+  Done 2026-11-08: the panel's **sun** slider (-1 left, 0 overhead, 1 right: where the light came from while
+  they grew, apart from the mouse's light) leans 'up' a little sunward (0.15 rad at full, less than wind:
+  first try 0.3 read as wind) and makes the crown lopsided (branches x1.5 toward the sun, x0.5 away). The
+  **crowd** slider (0..1): each tree gets the room to the next one on each side (half the gap; none at a
+  row's end); a branch reaching past it is shortened (to 30% at most), and past 60% of its room it turns up.
+  Seen: sun from the left, every crown reaching left; crowd 1, oaks and elms narrower and taller (forest
+  trees, not field trees). Sun 0, crowd 0: identical to before (fingerprint, two clean runs; a first run
+  differed where a slider was moved during it).
 - [ ] **BK9. A history per tree**: a broken top becomes a dog-leg; a lost limb leaves a stub with a scar eye
   and water sprouts round it. The eyes then sit where branches really were.
 - [ ] **BK10. An age slider**: a young cone to an old giant; lower branches dropping off (leaving eyes), the
