@@ -77,6 +77,9 @@ and place; the birch's mirror-repeat shows as mirrored pairs of marks (a longer 
   off; its width eases off (thick for longer, then thin); a side branch starts inside its parent and swells
   into a collar there; each edge has its own slow bumps (never mirror-alike). Seen: much more grown, the oak
   old and gnarled; olive and cork (wander 0.35) now twist into S-shapes, maybe too far.
+  The panel's **organic** slider (0..2) scales it all: 0 straight, even branches (no collars, no bumps), 1 as
+  tuned, 2 fairy-tale gnarled (olive and cork curl into knots). Each tree keeps its seed, so it stays
+  itself; a regrow takes ~0.1 s, so it waits until the slider rests.
 - [ ] **BK2. Nikki judges**: which look (photo / tinted / relief) sits with the drawn Mipos, which
   barks to keep. A Mipo next to a trunk for the scale (WORLD-METRICS.md).
 - [ ] **BK3. Into the engine, if kept**: a bark as a material on a ribbon (connected-texture) or a

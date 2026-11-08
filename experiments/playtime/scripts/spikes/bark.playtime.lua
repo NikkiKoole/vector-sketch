@@ -15,6 +15,7 @@
 --   s the bark's size: small / middle / big      g what the shader sees: off / normals / light alone
 --   e the eyes on / off (branch scars from photos: aspens and the birch have several, other trees now and then)
 --   m Mipo eyes instead of the scars (the Mipos' own eye drawings, a round pupil), in the same places
+-- the panel's 'organic' slider: 0 straight, even branches, 1 as tuned (slow turns, collars, bumpy edges), 2 wild
 local s = {}
 
 local STROKE = love.filesystem.load('scripts/spikes/drawn-stroke.lua')()
@@ -118,6 +119,7 @@ local function lab()
     state.barkSpike = state.barkSpike or { look = 1, painted = false, outlines = true, light = 1, frozen = false,
         detail = 3, size = 2, debug = 1, lx = 0, ly = -600, lightUp = 450 }
     if state.barkSpike.eyes == nil then state.barkSpike.eyes = true end -- added later: a live state lacks it
+    state.barkSpike.organic = state.barkSpike.organic or 1
     return state.barkSpike
 end
 
@@ -253,6 +255,9 @@ local MESH_FORMAT = {
 }
 local STEP_LEN = 26 -- world units per step along a branch
 local MAX_BRANCHES = 400
+-- how organic (the panel's slider, 0..2): how much branches turn and wander, their collars, their edges'
+-- bumps; 0 straight and even, 1 as tuned, 2 wild. Set before a build.
+local organic = 1
 local TWIG = 5 -- thinnest a branch gets (world units)
 
 -- turn angle a toward target by k of the way (the short way round)
@@ -268,11 +273,11 @@ end
 local function grow(k, rng, out, x, y, a, len, w0, w1, depth, isTrunk, scale)
     if #out >= MAX_BRANCHES then return end
     local n = math.max(3, math.floor(len / STEP_LEN))
-    local wander = isTrunk and k.trunkWander or k.wander
+    local wander = (isTrunk and k.trunkWander or k.wander) * organic
     local thin = 1 - math.min(1, w0 / (k.w * scale))
     -- a side branch starts a little inside its parent, so its collar grows out of the wood
     if not isTrunk then
-        x, y = x - math.cos(a) * w0 * 0.4, y - math.sin(a) * w0 * 0.4
+        x, y = x - math.cos(a) * w0 * 0.4 * math.min(1, organic), y - math.sin(a) * w0 * 0.4 * math.min(1, organic)
     end
     -- the walk: it turns slowly (smooth noise along its length, not a kink per step), toward the sky or the
     -- ground
@@ -282,6 +287,7 @@ local function grow(k, rng, out, x, y, a, len, w0, w1, depth, isTrunk, scale)
     for i = 1, n do
         local along = (i - 1) * step
         local bend = (love.math.noise(seed, along / 220) - 0.5) * 2.2 + (rng:random() - 0.5) * 0.25
+        if organic == 0 then bend = 0 end
         a = a + bend * wander
         a = turnToward(a, -math.pi / 2, k.up * (isTrunk and 3 or 1))
         if not isTrunk then a = turnToward(a, math.pi / 2, k.droop * thin) end
@@ -319,12 +325,12 @@ local function grow(k, rng, out, x, y, a, len, w0, w1, depth, isTrunk, scale)
         if isTrunk then
             w = w * (1 + k.flare * (1 - math.min(1, u * 6)) ^ 2) -- roots flaring at the foot
         else
-            w = w * (1 + 0.45 * (1 - math.min(1, u * 5)) ^ 2) -- the collar
+            w = w * (1 + 0.45 * organic * (1 - math.min(1, u * 5)) ^ 2) -- the collar
         end
         w = math.max(TWIG, w)
         p.w = w
-        p.wl = w * (1 + 0.16 * (love.math.noise(seed + 7, p.along / 90) - 0.5))
-        p.wr = w * (1 + 0.16 * (love.math.noise(seed + 13, p.along / 90) - 0.5))
+        p.wl = w * (1 + 0.16 * organic * (love.math.noise(seed + 7, p.along / 90) - 0.5))
+        p.wr = w * (1 + 0.16 * organic * (love.math.noise(seed + 13, p.along / 90) - 0.5))
     end
     a = pts[#pts].a
     -- a trunk that forks narrows to a point in its last stretch, hidden between its limbs (a crotch, not a
@@ -409,8 +415,9 @@ end
 -- every tree grown and made into meshes once: one part per depth (all its branches in one mesh, one
 -- outline), drawn deepest first, so twigs go behind their branches and branches behind the trunk
 local built
-local function build()
-    built = {}
+local function build(howOrganic)
+    organic = howOrganic or 1
+    built = { organic = organic }
     local i = 0
     for _, row in ipairs(ROWS) do
         for col = 1, row.count do
@@ -476,7 +483,7 @@ function s.onStart()
     worldState.paused = false
     cam:setScale(0.135)
     cam:setTranslation(0, 200)
-    build()
+    build(lab().organic)
 end
 
 function s.onUnload()
@@ -528,8 +535,11 @@ local function label(text, x, y)
 end
 
 function s.draw()
-    if not built then build() end
     local c = lab()
+    -- a regrow takes ~0.1 s: while the slider moves, wait until it rests a moment
+    local now = love.timer.getTime()
+    if c.organic ~= c.organicSeen then c.organicSeen, c.organicAt = c.organic, now end
+    if not built or (built.organic ~= c.organic and now - (c.organicAt or 0) > 0.15) then build(c.organic) end
     local L = LIGHTS[c.light]
     barkShader:send('lightPos', { c.lx, c.ly, c.lightUp })
     barkShader:send('lightColour', L.colour)
@@ -586,7 +596,7 @@ function s.drawUI()
     local c = lab()
     ui.startFrame()
     local sw, sh = love.graphics.getDimensions()
-    local w, h = PANEL.w, PANEL.row * 7 + 34
+    local w, h = PANEL.w, PANEL.row * 8 + 34
     local x0, y0 = sw - w - 12, math.max(12, sh - h - 12)
     c.panelRect = { x0, y0, w, h, folded = ui.isPanelFolded('•• bark ••') }
     local half = (w - PANEL.pad * 3) / 2
@@ -618,6 +628,10 @@ function s.drawUI()
         ui.label(x, y + 4, 'light out')
         local v = ui.sliderWithInput('bark-lightUp', x + 118, y - 2, 120, 60, 1500, c.lightUp, nil, 1)
         if v then c.lightUp = v + 0 end
+        x, y = row()
+        ui.label(x, y + 4, 'organic')
+        local o = ui.sliderWithInput('bark-organic', x + 118, y - 2, 120, 0, 2, c.organic, nil, 0.05)
+        if o then c.organic = o + 0 end
     end)
 end
 
