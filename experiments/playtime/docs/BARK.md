@@ -117,6 +117,17 @@ cones, old ones broad on a bare trunk), moss on the damp shady side.
   way each time, more on thin wood (on old limbs the bark has grown over it); `zigzag` per kind: elm 0.45,
   plane 0.38, oak 0.35, beech 0.3, olive 0.2, birch 0.15, aspen 0.1, pine and poplar 0. The organic slider
   scales it. Seen: the oak's and elm's twigs zigzag, their limbs stay smooth.
+
+**Modules** (2026-11-08, Nikki: "can we make our code in such a way we can modularize"; spike modules, the
+engine left alone: moving into src/ is ENGINE-MERGE's call). Next to the scene, loaded like drawn-stroke.lua
+(`love.filesystem.load(path)()`), so any scene can plant a tree:
+- `scripts/spikes/tree-kinds.lua`: how each kind grows (the data; tune a kind here)
+- `scripts/spikes/tree-grow.lua`: `grow(kind, rng, x, y, angle, scale, organic)` -> branches
+- `scripts/spikes/tree-mesh.lua`: `parts(branches, seed)` -> a mesh and crayon outline per depth
+- `scripts/spikes/bark-look.lua`: `begin(settings)` once a frame, `drawTree(tree, opts)`, `placeEyes`, `reset`
+The bark scene is now its layout, panel and light (254 lines, was ~690). Checked with a one-off fingerprint
+(every branch's points, widths, eyes, mesh and outline vertex counts, 18 trees at organic 0, 1 and 2):
+identical before and after.
 - [ ] **BK7. Wind**: one direction and strength for the scene; trees lean with it, windward branches stay
   short (a combed crown).
 - [ ] **BK8. Light**: crowns reach toward the scene's sun and away from the trees next to them (a row
