@@ -1,6 +1,10 @@
-# Wearables — glasses, hats, headscarves, scarves, underpants for Mipos
+# Wearables — glasses, hats, headscarves, shirts, underpants for Mipos
 
-status: active
+status: parked — Nikki 2026-11-08: "good as an experiment to come back later to". Hats liked ("feel nice"), pants and headscarves promising; scarves' cloth ribbons disliked. Scene `wearables`, code in src/wearables.lua
+
+**Coming back to it:** load the scene `wearables`, tab to play. g u h b t: glasses, pants, hat,
+headscarf, shirt at the mouse; w n y v i: one on every Mipo; o all off. Next would be Nikki's
+verdicts (WR1, WR6, WR9, WR10), then her drawings for the greybox (WR2), the phone cost (WR3).
 
 Things a Mipo wears, as **loose toys** (Nikki 2026-11-08): you put them on and take them off by
 hand, a bump knocks them off. Not in the DNA. Greybox first; Nikki draws the real ones. Built on
