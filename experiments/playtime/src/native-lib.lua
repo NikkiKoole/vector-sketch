@@ -24,11 +24,26 @@ local function library()
     return dylib
 end
 
+-- A library that's there but lacks a function is stale: built before that C was pulled. The
+-- callers then quietly draw in Lua (the office iMac's "ghost Mipos", docs/GHOST-MIPOS.md), so say it,
+-- once per function per run.
+local warned = {}
+local function warnStale(name)
+    if warned[name] then return end
+    warned[name] = true
+    print('[native-lib] native/desound/libdesound.dylib lacks ' .. name
+        .. ': it is older than the C in native/desound, rerun native/desound/build.sh (game stopped)')
+end
+
 function lib.load(cdef, name)
     if not ffi then return false end
     pcall(ffi.cdef, cdef) -- declaring again (a hot reload) is fine
     local C = library()
-    if not C or not pcall(function() return C[name] end) then return false end
+    if not C then return false end
+    if not pcall(function() return C[name] end) then
+        warnStale(name)
+        return false
+    end
     return C
 end
 

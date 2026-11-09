@@ -2,7 +2,7 @@
 
 status: parked — Nikki liked it as a look (2026-11-03), kept as an idea for an effect
 
-A Mipo drawn with most of its parts hidden: only its hair (chest hair, tufts) and its mouth show, so it reads as a little ghost floating there. Found by accident: on Nikki's office machine Playtime showed only "chest hair", "mouth shape" and one more part per Mipo, probably because that machine's local `native/desound/libdesound.dylib` was old (it isn't in git, and every machine builds its own; dreamengine-4d's reading, not confirmed there).
+A Mipo drawn with most of its parts hidden: only its hair (chest hair, tufts) and its mouth show, so it reads as a little ghost floating there. Found by accident: on Nikki's office machine Playtime showed only "chest hair", "mouth shape" and one more part per Mipo, probably because that machine's local `native/desound/libdesound.dylib` was old (it isn't in git, and every machine builds its own). Confirmed 2026-11-09: the office iMac's library dated from 2026-11-05, before the soft-torso / fluid / cloth C (grid_push, points_spine, ...); rebuilt with `native/desound/build.sh`, the Mipos draw whole. `src/native-lib.lua` now prints `[native-lib] ... lacks <fn>` when the library is that stale, instead of falling back to Lua without a word.
 
 tried 2026-11-03: seen as a bug, liked as a look. Not built as an effect.
 
