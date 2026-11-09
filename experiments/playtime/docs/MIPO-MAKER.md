@@ -68,15 +68,41 @@ then change it**.
 
 ## The spike (2026-11-09)
 
-Scene `maker` (`./playtime.sh play maker`): the card beside a live Mipo, in Puppetmaker 2's drawings
-(copied to `textures/ui/maker/`). The widgets are `src/ui/maker/drawn.lua` (`makerUI` in scene
-scripts): card, tape strip, icon button, slider, icon slider, paint blob, toggle, part cell.
-Six parts (body, head, eyes, nose, ears, hair), each with shapes, fill / line colours and 1-3 icon
-sliders, written through the editor's own setters; the categories sit in the scene script for now
-(MM2 moves them to the catalog). Tap a Mipo part to pick it; the grid flicks; dragged sliders rebuild
-at most every 0.12 s and once more at the release; the dice; the growl on every change.
-Not in it yet: the camera move, flicking the category row (six fit), patterns, the scene setting,
-the phone layout.
+Scene `maker` (`./playtime.sh play maker`; keys `r` new Mipo, `h` hide the card, `d` dev rows): the
+card beside a live Mipo. Widgets in `src/ui/maker/drawn.lua` (`makerUI` in scene scripts); the parts,
+their sliders and the layout still in `scripts/spikes/maker.playtime.lua` (MM2 moves the parts out).
+Every change goes through the editor's own setters. Where it got to, with what was learned:
+
+- **The card:** a slightly uneven box, a quiet shader fill and the crayon stroke outline
+  (`drawn-stroke.lua`); not Puppetmaker's paper picture (Nikki didn't like the paper).
+- **A fixed skeleton,** the same zones at the same heights for every part: region tabs (face, body,
+  limbs) + dice | the region's parts in one row | toolbar: sub-parts (Puppetmaker's child picker:
+  eyes | pupils, mouth | teeth, body | body hair, arms | arm hair, legs | leg hair) or the face patches
+  left, colour layers right | grid | paint blobs | two slider rows, the rest behind 'more' (a sheet over
+  the grid). Crayon lines between the zones, an 8-column rhythm. (Two loose rows of 19 icons, every
+  slider showing, was "a bit of a mess".)
+- **Parts:** face (head, eyes + pupils, nose, mouth + teeth, brows, ears, hair, face patches), body
+  (body + body hair, neck, build), limbs (arms + arm hair, hands, legs + leg hair, feet).
+- **The build** (potato head, torso segments, spine, lobes, jiggle, and their sliders) is a part of
+  its own with a sheet where the grid would be. Dev-only rows (spine sway, lobe and jiggle springs)
+  show with `d`.
+- **Colour layers as buttons** (Puppetmaker's uifill / uiline / uipattern), only those a part has
+  (3, 2, or none). The pattern button turns the grid into pattern circles with their sliders.
+- **Cells look as the part would:** baked by the game's own OMP bake (`omp-bake bakePreview`), in
+  update, never while drawing (baked in drawUI: half-drawn cells and a lost frame).
+- **Face patches with a look of their own** (picture, fill, outline, pattern per patch, as in
+  Puppetmaker 2), still decals that turn with the face (B10: baked into the skin they slid off);
+  baked at frame start when they have an outline or pattern. Not saved yet.
+- **Feel:** the growl on every change (pitched by a slider's value), the dice, tap a Mipo part to
+  pick it (a drag still pokes), the picked item breathing.
+- **The drawings:** 5.4 MB -> 2.2 MB (icons 128 px, grey + alpha; unused ones dropped).
+- **Found on the way:** a dragged count slider gave torsoSegments = 3.25, the head, neck and arms fell
+  off: rebuildFromCreation rounds the counts now (spec/mipo-rebuild-whole-counts_spec.lua). Scene
+  scripts got `type` and `torsoLobes`.
+
+Not in it yet: the scene setting and opening from play mode (MM1), the parts in a catalog file (MM2),
+the camera move and the tween, the phone, breeds, saving face patches, nose segments, materials,
+facing, pupils' and patches' positions.
 
 ## Steps
 
@@ -95,13 +121,13 @@ the phone layout.
 - [ ] **MM4. The card** in `src/ui/maker/`: one component laid out from the screen size, not picture
   pixels: the category row (flick, tick), the shapes grid (flick), the colour and pattern rows, the
   folded tape strip with icon sliders, the shrink-to-tab. Flick scrolling is new to our UI.
-- [ ] **MM5. Tap to pick.** In the maker a tap on a Mipo part picks its category (MM2's part list),
-  a drag still pokes; the camera moves to body / head / face by category.
-- [ ] **MM6. Part thumbnails.** Cells from `textures/mipo/<part>/` plus the mask tinted in the Mipo's
-  colour; cached by picture and colour (a cache that levels off, CLAUDE.md).
+- [x] **MM5. Tap to pick.** In the maker a tap on a Mipo part picks its category (MM2's part list),
+  a drag still pokes; the camera moves to body / head / face by category. Done 2026-11-09 in the spike, but the camera move (MM9).
+- [x] **MM6. Part thumbnails.** Cells from `textures/mipo/<part>/` plus the mask tinted in the Mipo's
+  colour; cached by picture and colour (a cache that levels off, CLAUDE.md). Done 2026-11-09: baked by the OMP bake itself (bakePreview), not the mask tinted (the masks are black).
 - [ ] **MM7. First slice, Nikki judges:** the card + tap to pick + shapes and colours for body, eyes
   and hair. Keep, change or park?
-- [ ] **MM8. The rest:** patterns, icon sliders in the fold, the other categories from the catalog.
+- [x] **MM8. The rest:** patterns, icon sliders in the fold, the other categories from the catalog. Done 2026-11-09 in the spike: patterns, the more fold, every part (and more: neck, pupils, teeth, patches, build).
 - [ ] **MM9. Feel.** The growl through `src/mipo-voice.lua`, pitched by the value; clicks and ticks;
   the camera tween (DOLL-PLAY F3's tween layer: this is the real sequence it waited for); the
   picked wobble; dice for a part / the whole Mipo with E5's prefer-the-middle randomize
@@ -113,9 +139,13 @@ the phone layout.
   a rebuild per frame may need throttling.
 - [ ] **MM12. New icons** for what Puppetmaker 2 never had: spine segments, haircut tufts,
   materials, facing, voice, breeds. Onto THINGS-TO-DRAW.md when MM8 shows which are missing.
+  Missing now (words or borrowed icons in the spike): torso segments, spine bend / sway, lobes
+  (depth, softness, springs), jiggle, potato / spine / lobes / jiggle switches, teeth 'over lip' and
+  'gum', the cheek patch (borrows the second eye patch), the region tabs (borrow head / body / arm).
 
 ## Open
 
-- Which options are dev-only: decide per row while filling the catalog (MM2, MM8).
+- Which options are dev-only: decide per row while filling the catalog (MM2, MM8). So far: spine
+  sway, lobe spring / damping, jiggle spring / damping (`dev = true`, shown with `d` in the spike).
 - What "a ship build" is for hiding them: the device and web builds, or a flag.
 - On a phone: docked right or from the bottom (MM11).
