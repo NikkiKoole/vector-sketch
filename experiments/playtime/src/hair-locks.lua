@@ -87,6 +87,44 @@ end
 local WAVE_AMP = 16  -- px: the curly wave's height at curly 1 (bangs half)
 local WAVE_SEGMENTS = 5 -- segments a wave
 
+-- How far down the head (its frame, y down) the bangs may reach: the top of the brows, else of the
+-- eyes (the face's decals on the body: lbrow / rbrow, lpupil / rpupil); nil without a face. On a
+-- potato head the face sits high on the body, and bangs as long as on a head hung to the mouth.
+local function decalExtra(body, label)
+    for _, f in ipairs(body:getFixtures()) do
+        local ud = f:getUserData()
+        if ud and ud.label == label and ud.extra then return ud.extra end
+    end
+end
+local function browLine(body)
+    local y
+    for _, label in ipairs({ 'lbrow', 'rbrow' }) do
+        local d = decalExtra(body, label)
+        if d and d.oy then y = math.min(y or math.huge, d.oy - (d.h or 0) * 0.5) end
+    end
+    if y then return y end
+    for _, label in ipairs({ 'lpupil', 'rpupil' }) do
+        local d = decalExtra(body, label)
+        if d and d.oy then y = math.min(y or math.huge, d.oy - (d.eyeH or d.h or 20) * 0.6) end
+    end
+    return y
+end
+
+-- The head's outline as it's drawn: the texfixture with the most points (a Mipo head's 8-point
+-- shape), else the body's own shape. A potato head is drawn about twice its physics shape (-185..76
+-- against -57..56 px): on the physics outline the hair grew from the middle of its face.
+local function drawnOutline(body)
+    local best
+    for _, f in ipairs(body:getFixtures()) do
+        local ud = f:getUserData()
+        local v = ud and ud.subtype == 'texfixture' and ud.extra and ud.extra.vertices
+        if v and #v >= 12 and (not best or #v > #best) then best = v end
+    end
+    if best then return best end
+    local thing = utils.thingOf(body)
+    return thing and thing.vertices
+end
+
 local function headOf(instance)
     local part = instance.parts and (instance.parts.head or instance.parts.torso1)
     return part and part.body
@@ -98,8 +136,7 @@ function lib.attach(instance, opts)
     for k, v in pairs(lib.defaults) do o[k] = (opts and opts[k] ~= nil) and opts[k] or v end
     local body = headOf(instance)
     if not body or body:isDestroyed() then return end
-    local thing = utils.thingOf(body)
-    local vertices = thing and thing.vertices
+    local vertices = drawnOutline(body)
     if not vertices or #vertices < 6 then return end
     local rng = love.math.newRandomGenerator(o.seed or 1)
     -- the head as an oval (body space) for the locks to drape over
@@ -138,15 +175,21 @@ function lib.attach(instance, opts)
         lock.n = math.max(2, math.min(40, math.floor(len / lock.segment + 0.5) + 1))
         locks[k] = lock
     end
+    local browY = browLine(body)
     for k = 1, o.bangs do
         local f = o.bangs > 1 and (k - 1) / (o.bangs - 1) or 0.5
         local angle = -math.pi / 2 + (f - 0.5) * o.bangSpread
         local rx, ry = outlinePoint(vertices, angle)
         local w = o.wild
+        local segment = o.bangSegment * (1 + w * (rng:random() - 0.5) * 0.6)
+        if browY and o.bangPoints > 1 then -- no lower than the brows: room from its root down to them
+            local room = math.max(6, browY - ry * 0.95)
+            segment = math.min(segment, room / (o.bangPoints - 1))
+        end
         locks[#locks + 1] = {
             rx = rx * 0.95, ry = ry * 0.95,
             restAngle = angle + math.pi, n = o.bangPoints, drape = false, front = true, -- inward, over the face
-            segment = o.bangSegment * (1 + w * (rng:random() - 0.5) * 0.6),
+            segment = segment,
             curl = o.curl * 0.5 * (1 - w + w * (rng:random() * 2 - 1) * 2),
             width = o.width * (1 + w * (rng:random() - 0.5) * 0.6),
             points = {}, prev = {},
@@ -278,7 +321,7 @@ local function stepLock(lock, o, body, gx, gy, dt, ovalX, ovalY, groundY)
         if len > 1e-6 then
             -- springy: only part of the way back to its length each step (between 0.9 and 1.8 L)
             local want = L
-            if o.springy > 0 then
+            if o.springy > 0 and lock.drape then -- (bangs keep their length: they end above the brows)
                 want = len + (L - len) * (1 - o.springy * 0.85)
                 want = math.max(L * 0.9, math.min(L * 1.8, want))
             end
