@@ -211,7 +211,7 @@ local function addDecal(out, ud, _, body, z)
     elseif extra.mouthCurve then
         addMouth(out, extra, body, z)
     else
-        out[#out + 1] = { type = 'decal', z = z, extra = extra, body = body }
+        out[#out + 1] = { type = 'decal', z = z, extra = extra, body = body, nose = ud.label == 'nose' }
     end
 end
 
@@ -959,6 +959,38 @@ local function drawFacePatches(extra, body)
     endClip(clip)
 end
 
+-- A nose with volume (when no material lights it already): drawn through the clay shader rounded like a
+-- dome (its form baked from its mask; without a mask, rounded at its edge), so the light catches one
+-- side and the other falls into shade, and a soft shadow of it on the face, a little away from the
+-- strongest light. state.noseFlat = true: flat as before. Nikki 2026-11-10: "a bit with a volume".
+local noseLits = setmetatable({}, { __mode = 'k' })
+local function noseLit(extra)
+    local lit = noseLits[extra]
+    if not lit then
+        lit = setmetatable({ plasticine = true, plasticineForm = true, plasticineFormBaked = true,
+            plasticineMottleStrength = 0 }, { __index = extra })
+        noseLits[extra] = lit
+    end
+    return lit
+end
+local NOSE_SHADOW = 0.12 -- of the nose's size, away from the light
+local function drawNoseShadow(body, img, ox, oy, dw, dh, mirrorX, rot)
+    local count, dirs = shaders.gatherLightsForBody(body)
+    local lx, ly = -0.7, -0.7 -- the shaders' own light without the scene's: from the upper left
+    if count > 0 and dirs[1] then lx, ly = dirs[1][1], dirs[1][2] end
+    local len = math.sqrt(lx * lx + ly * ly)
+    if len < 1e-6 then return end
+    local size = math.max(dw, dh) * NOSE_SHADOW
+    local sx, sy = ox - lx / len * size, oy - ly / len * size
+    local wx, wy = body:getWorldPoint(sx, sy)
+    local imgw, imgh = img:getDimensions()
+    local r, g, b, a = love.graphics.getColor()
+    love.graphics.setColor(0, 0, 0, 0.22 * a)
+    love.graphics.draw(img, wx, wy, body:getAngle() + (rot or 0), dw / imgw * mirrorX * 1.05, dh / imgh * 1.05,
+        imgw / 2, imgh / 2)
+    love.graphics.setColor(r, g, b, a)
+end
+
 local function drawDecal(d)
     local extra = d.extra
     local body = d.body
@@ -1022,7 +1054,10 @@ local function drawDecal(d)
             local sx = dw / imgw * mirrorX
             local sy = dh / imgh
             love.graphics.setColor(1, 1, 1, 1)
-            if extra.material then
+            if d.nose and not extra.material and not state.noseFlat and not state.drawingOutlines then
+                drawNoseShadow(body, img, ox, oy, dw, dh, mirrorX, extra.rot)
+                drawDecalLit(noseLit(extra), body, img, ox, oy, dw, dh, mirrorX)
+            elseif extra.material then
                 drawDecalLit(extra, body, img, ox, oy, dw, dh, mirrorX)
             else
                 love.graphics.draw(img, wx, wy, angle, sx, sy, imgw / 2, imgh / 2)
@@ -1035,7 +1070,10 @@ local function drawDecal(d)
                 local sy = dh / imgh
                 local r, g, b, a = color.hexToColor(extra.bgHex or 'ffffffff')
                 love.graphics.setColor(r, g, b, a)
-                if extra.material then
+                if d.nose and not extra.material and not state.noseFlat and not state.drawingOutlines then
+                    drawNoseShadow(body, img, ox, oy, dw, dh, mirrorX, extra.rot)
+                    drawDecalLit(noseLit(extra), body, img, ox, oy, dw, dh, mirrorX)
+                elseif extra.material then
                     drawDecalLit(extra, body, img, ox, oy, dw, dh, mirrorX)
                 else
                     love.graphics.draw(img, wx, wy, angle, sx, sy, imgw / 2, imgh / 2)
