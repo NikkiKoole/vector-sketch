@@ -88,6 +88,7 @@ local baseEnv = {
     mipoRegistry             = require('src.mipo-registry'),
     mipoFacing               = require('src.mipo-facing'), -- facing left / front / right (facing spike)
     facePatches              = require('src.face-patches'), -- eye hollows, cheeks, a snout (breeds, facing)
+    mipoBreeds               = require('src.mipo-breeds'), -- randomize(instance, name): a Mipo of a breed (breeds)
     props                    = props,
     signals                  = signals,
     snap                     = snap,

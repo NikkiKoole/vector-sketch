@@ -148,12 +148,14 @@ added without code.
 ## The spike (2026-11-01)
 
 `scripts/spikes/breeds` puts a litter of six Mipos of one breed on a floor; a panel (play mode) or
-keys 1-8 pick the breed, r draws a new litter. The breeds are a table at the top of the script
-(ranges, lists, palette, creation): edit it and the scene reloads, then r. It narrows the
-randomizer from outside for the draw (swaps `D.randomRanges` entries and `shape-catalogs`
-lists, puts them back after) and sets the colours through `characterManager.setRandomColor`,
-the hook for B3. Shapes are grouped by eye in the script until B1 tags them. Teddy, fat, tall,
-hairy, bad, geometric, bathhouse, and 'any' (as today) to compare.
+keys 1-9 pick the breed, r draws a new litter. Since 2026-11-09 (ENGINE-MERGE EM6) the breeds
+live in `src/mipo-breeds.lua` (`lib.breeds`, picker order `lib.order`): teddy, fat, tall, hairy,
+bad, geometric, bathhouse and rubberleg-pearbod, with 'any' (as today) in the spike to compare.
+Edit a breed there and lurker reloads it, then r. A breed swaps `D.randomRanges` entries and
+`shape-catalogs` lists in for the draw and puts them back after, and its palette gives every
+random colour of the draw (`paletteColor`, through `characterManager.setRandomColor`). Shapes
+are grouped by eye there until B1 tags them. `spec/mipo-breeds_spec.lua` checks each rolls, uses
+its lists and build, keeps its colours in their bands and leaves nothing swapped in.
 
 ## rubberleg-pearbod, the first breed (2026-11-01)
 
@@ -182,8 +184,10 @@ hair, for now).
 - [ ] **B2. Breed table + `randomizeAll(instance, breed)`.** Ranges and lists read through the
   breed with fallback to the defaults; `textureOpts`/`faceOpts` go away. Bathhouse becomes the
   first breed. Same Mipos out for the same seed when no breed is given (refactor snapshot).
-- [ ] **B3. Breed palettes.** HSL ranges instead of `randomHexColor()`, one accent.
-- [ ] **B4. First breeds:** teddy, fat, tall, then hairy, bad, geometric. Judge them by eye: 10
+- [ ] **B3. Breed palettes.** HSL ranges instead of `randomHexColor()`, one accent. The ranges are
+  in (2026-11-09: `palette = { hues = bands, sat, light }`, `lib.paletteColor`); the accent isn't.
+- [ ] **B4. First breeds:** teddy, fat, tall, then hairy, bad, geometric (in `src/mipo-breeds.lua`
+  since 2026-11-09, as the spike tried them; not judged yet). Judge them by eye: 10
   in a row on stage.
 - [ ] **B5. `dna.breed` + a breed picker** next to randomize in the Mipo editor.
 - [ ] **B6. Breed from this:** save a breed from the Mipo in the editor, with a "how alike"

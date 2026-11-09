@@ -64,7 +64,7 @@ side copies: read them for one idea, don't start from them. From a read of every
 | Plants | plants | garden's simple flowers |
 | Wearables | spikes/wearables (engine half in `src/wearables.lua`) | — |
 | Singing | choir | — |
-| Breeds | `src/mipo-breeds.lua` | spikes/breeds: 7 trial breeds + palettes on an older `randomizeAs` |
+| Breeds | `src/mipo-breeds.lua` (all 8 since EM6) | — ; spikes/breeds is its stage |
 | Facing, turning, walking | spikes/facing (MF6 plans `src/mipo-walk.lua`) | — |
 | Hair | tufts (`src/hair-tufts.lua`) | hair (`src/hair-locks.lua`, the dropped route) |
 
@@ -122,7 +122,8 @@ Not in `src/physics-units` yet: the water spikes' wave speeds and forces are raw
   a `mipoKit` (spawn / alive / isAlive) for the scene scripts, `mathutils.clamp` instead of the copies,
   drawn-stroke into `src/` with burrow's two extras (planks and burrow drop their copies), the grass
   blades from `src/grass.lua`, the Mipo pose helpers into `src/mipo-build.lua`.
-- [ ] **EM6. The 7 trial breeds** in spikes/breeds into `src/mipo-breeds.lua` with palettes
-  (MIPO-BREEDS B2-B4; that plan owns it, listed here so the spike's copy goes).
+- [x] **EM6. The 7 trial breeds** in spikes/breeds into `src/mipo-breeds.lua` with palettes
+  (MIPO-BREEDS B2-B4; that plan owns it, listed here so the spike's copy goes). Done 2026-11-09:
+  the spike's table and `randomizeAs` are gone, it reads `mipoBreeds` (in the script env).
 
 Mipo breeds stays the focus; this runs beside it.

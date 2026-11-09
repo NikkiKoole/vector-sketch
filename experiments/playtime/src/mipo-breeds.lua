@@ -1,9 +1,10 @@
 -- mipo-breeds.lua
 -- Breeds: a random Mipo of a kind (docs/MIPO-BREEDS.md). A breed narrows what the randomizer
 -- draws from for one Mipo: lists from src/shape-catalogs.lua and ranges from
--- src/dna-defaults.lua are swapped in for the draw and put back after; positioners are set
--- after it. Anything a breed doesn't name stays as random as ever. scripts/spikes/breeds tries more
--- breeds the same way.
+-- src/dna-defaults.lua are swapped in for the draw and put back after, and its palette gives
+-- every random colour of the draw; positioners and the body's build (creation) are set after
+-- it. Anything a breed doesn't name stays as random as ever. scripts/spikes/breeds puts a
+-- litter of each on a floor.
 --
 -- Also undo for the Mipo editor's random buttons: the DNA from before each roll, a few steps
 -- back, on state (a hot reload keeps it).
@@ -16,11 +17,94 @@ local state = require('src.state')
 local CharacterManager = require('src.character-manager')
 local mouthShapes = require('src.mouth-shapes')
 
+-- Shapes grouped by eye (scratch sheets of the masks, 2026-11-01), until the catalogs have tags (B1).
+local ROUND_BODY = {
+    'mipo/body/body-03', 'mipo/body/body-07', 'mipo/body/body-10', 'mipo/body/body-12', 'mipo/body/body-14',
+    'mipo/body/body-16', 'mipo/body/body-17',
+}
+local SQUARE_BODY = {
+    'mipo/body/body-04', 'mipo/body/body-05', 'mipo/body/body-08', 'mipo/body/body-09', 'mipo/body/body-13',
+    'mipo/body/body-15',
+}
+local TALL_BODY = {
+    'mipo/body/body-01', 'mipo/body/body-02', 'mipo/body/body-06', 'mipo/body/body-09', 'mipo/body/body-10',
+    'mipo/body/body-14',
+}
+local POINTY_BODY = {
+    'mipo/body/body-01', 'mipo/body/body-11', 'mipo/body/body-15', 'mipo/body/body-17',
+}
+local ROUND_EARS = {
+    'mipo/ear/ear-01', 'mipo/ear/ear-02', 'mipo/ear/ear-08', 'mipo/ear/ear-09', 'mipo/ear/ear-10',
+    'mipo/ear/ear-11', 'mipo/ear/ear-12', 'mipo/ear/ear-16',
+}
+local POINTY_EARS = {
+    'mipo/ear/ear-03', 'mipo/ear/ear-04', 'mipo/ear/ear-05', 'mipo/ear/ear-06', 'mipo/ear/ear-07',
+    'mipo/ear/ear-13', 'mipo/ear/ear-14', 'mipo/ear/ear-15',
+}
+
+-- The order for pickers (the breeds spike's keys, later the editor's, B5).
+lib.order = { 'teddy', 'fat', 'tall', 'hairy', 'bad', 'geometric', 'bathhouse', 'rubberleg-pearbod' }
+
+-- A breed's fields, all optional:
+--   ranges     entries of D.randomRanges for the draw: { min, max }, or a number for a chance
+--   lists      shape-catalogs lists for the draw ('' in a list: none, for limb hair)
+--   palette    every random colour of the draw: hues = bands of degrees to pick one from,
+--              sat and light = { lo, hi } in 0..1
+--   face       randomizeFace's options (allowedEyeShapes, allowedPupilShapes, …)
+--   creation   the body's build, set after the draw (neckSegments, isPotatoHead)
+--   positioners, teethToMouth  set after the draw
+--   constrained  roll as randomizeMipoConstrained (the Bathhouse Mipos)
+-- teddy … bathhouse came from the breeds spike (2026-11-01), as it tried them.
 lib.breeds = {
+    teddy = {
+        note = 'round, short thick limbs, small round ears, browns, no teeth',
+        ranges = { legH = { min = 60, max = 200 }, armH = { min = 60, max = 220 }, earScale = { min = 0.5, max = 0.8 },
+                   limbWMul = { min = 0.4, max = 0.5 }, teethChance = 0 },
+        lists = { torsoHeadShapes = ROUND_BODY, earShapes = ROUND_EARS },
+        palette = { hues = { { 18, 40 } }, sat = { 0.3, 0.6 }, light = { 0.3, 0.55 } },
+        creation = { neckSegments = 0 },
+    },
+    fat = {
+        note = 'big round bodies, thick short limbs, soft pastels',
+        ranges = { bodyScale = { min = 1.7, max = 2.3 }, legH = { min = 60, max = 260 }, armH = { min = 60, max = 300 },
+                   limbWMul = { min = 0.45, max = 0.6 } },
+        lists = { torsoHeadShapes = ROUND_BODY },
+        palette = { hues = { { 0, 360 } }, sat = { 0.3, 0.5 }, light = { 0.6, 0.78 } },
+        creation = { neckSegments = 0 },
+    },
+    tall = {
+        note = 'long neck, long thin legs, narrow bodies, cool colours',
+        ranges = { bodyScale = { min = 1, max = 1.3 }, legH = { min = 500, max = 800 }, armH = { min = 400, max = 700 },
+                   limbWMul = { min = 0.2, max = 0.28 } },
+        lists = { torsoHeadShapes = TALL_BODY },
+        palette = { hues = { { 170, 260 } }, sat = { 0.3, 0.6 }, light = { 0.4, 0.65 } },
+        creation = { neckSegments = 3 },
+    },
+    hairy = {
+        note = 'everything one warm colour family: skin and hair belong together',
+        ranges = { haircutWidth = { min = 300, max = 400 } },
+        palette = { hues = { { 25, 55 } }, sat = { 0.4, 0.7 }, light = { 0.25, 0.6 } },
+    },
+    bad = {
+        note = 'pointy, angry brows, teeth, sour greens and purples',
+        ranges = { browBend = { min = 8, max = 10 }, teethChance = 1, teethStickOut = 0.8 },
+        lists = { torsoHeadShapes = POINTY_BODY, earShapes = POINTY_EARS },
+        palette = { hues = { { 70, 130 }, { 265, 300 } }, sat = { 0.25, 0.5 }, light = { 0.2, 0.42 } },
+    },
+    geometric = {
+        note = 'square bodies, no pattern, bright flat colours',
+        lists = { torsoHeadShapes = SQUARE_BODY, patternTextures = { 'pat/type0' } },
+        palette = { hues = { { 0, 10 }, { 45, 55 }, { 200, 220 } }, sat = { 0.75, 0.9 }, light = { 0.45, 0.55 } },
+    },
+    bathhouse = {
+        note = "randomizeMipoConstrained, today's Bathhouse Mipos",
+        constrained = true,
+    },
     -- rope-like limbs instead of shaped ones (leg-01, leg-05); limb hair: none half the time ('' is
     -- no hair, three of them), else one of the last three; the widest leg stance; a pear body
     -- that is the head too (2026-11-01, Nikki in the vanilla scene)
     ['rubberleg-pearbod'] = {
+        note = 'a pear body that is the head too, rope legs, big eyes set wide',
         lists = {
             limbSkinTextures = { 'mipo/leg/leg-01', 'mipo/leg/leg-05' },
             limbHairTextures = { '', '', '', 'mipo/hair/hair-09', 'mipo/hair/hair-10', 'mipo/hair/hair-11' },
@@ -43,6 +127,30 @@ lib.breeds = {
     },
 }
 
+-- 'RRGGBBAA' from hue in degrees, saturation and lightness in 0..1.
+function lib.hslHex(h, s, l)
+    h = (h % 360) / 360
+    local q = l < 0.5 and l * (1 + s) or l + s - l * s
+    local p = 2 * l - q
+    local function channel(t)
+        t = t % 1
+        if t < 1 / 6 then return p + (q - p) * 6 * t end
+        if t < 1 / 2 then return q end
+        if t < 2 / 3 then return p + (q - p) * (2 / 3 - t) * 6 end
+        return p
+    end
+    local function byte(v) return math.floor(math.max(0, math.min(1, v)) * 255 + 0.5) end
+    return string.format('%02X%02X%02X%02X', byte(channel(h + 1 / 3)), byte(channel(h)), byte(channel(h - 1 / 3)), 255)
+end
+
+local function between(range) return range[1] + math.random() * (range[2] - range[1]) end
+
+-- A colour from a palette: one of its hue bands, then hue, saturation and lightness inside it.
+function lib.paletteColor(palette)
+    local band = palette.hues[math.random(#palette.hues)]
+    return lib.hslHex(between(band), between(palette.sat), between(palette.light))
+end
+
 -- Randomize the whole Mipo as one of breed `name`.
 function lib.randomize(instance, name)
     local breed = lib.breeds[name]
@@ -56,8 +164,13 @@ function lib.randomize(instance, name)
         savedLists[key] = C[key]
         C[key] = list
     end
+    if breed.palette then
+        CharacterManager.setRandomColor(function() return lib.paletteColor(breed.palette) end)
+    end
     -- face: randomizeFace's options (allowedEyeShapes, allowedPupilShapes, allowedNoseShapes, …)
-    local ok, err = pcall(CharacterManager.randomizeMipo, instance, nil, breed.face)
+    local roll = breed.constrained and CharacterManager.randomizeMipoConstrained or CharacterManager.randomizeMipo
+    local ok, err = pcall(roll, instance, nil, breed.face)
+    CharacterManager.setRandomColor(nil)
     for key, r in pairs(savedRanges) do D.randomRanges[key] = r end
     for key, list in pairs(savedLists) do C[key] = list end
     if not ok then error(err) end
