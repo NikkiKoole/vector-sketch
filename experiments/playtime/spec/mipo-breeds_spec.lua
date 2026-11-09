@@ -117,4 +117,34 @@ describe("a Mipo of each breed", function()
             end
         end)
     end
+
+    -- lips 2 and 2, and the widest resting mouth inside the head (2026-11-09)
+    it("every roll: lips 2 and 2, the mouth no wider than the head", function()
+        local mouthShapes = require('src.mouth-shapes')
+        local textures = require('src.mipo-textures')
+        local widest = 0
+        for _, n in ipairs(mouthShapes.restShapes) do
+            local s = mouthShapes.normalized[mouthShapes.indexOf(n)]
+            local a, b = math.huge, -math.huge
+            for k = 1, #s.points, 2 do a, b = math.min(a, s.points[k]), math.max(b, s.points[k]) end
+            widest = math.max(widest, b - a)
+        end
+        local names = { 'any' }
+        for _, n in ipairs(breeds.order) do names[#names + 1] = n end
+        for seed = 1, 4 do
+            for _, name in ipairs(names) do
+                math.randomseed(seed); love.math.setRandomSeed(seed)
+                local mipo = CharacterManager.createCharacter('humanoid', 0, 0, 1)
+                if name == 'any' then CharacterManager.randomizeMipo(mipo) else breeds.randomize(mipo, name) end
+                local owner = mipo.dna.creation.isPotatoHead and 'torso1' or 'head'
+                local mouth = mipo.dna.parts[owner].appearance.face.mouth
+                assert.are.equal(2, mouth.upperLipShape, name)
+                assert.are.equal(2, mouth.lowerLipShape, name)
+                local share = widest * textures.MOUTH_UNIT * mouth.wMul * (mipo.dna.faceMagnitude or 1)
+                assert.is_true(share <= randomize.mouthMaxHeadShare + 1e-9,
+                    string.format('%s seed %d: mouth %.2f of the head wide', name, seed, share))
+                assert.is_true(mouth.hMul <= 0.8 + 1e-9, name .. ': mouth hMul ' .. mouth.hMul)
+            end
+        end
+    end)
 end)

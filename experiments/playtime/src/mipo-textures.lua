@@ -394,14 +394,18 @@ local function placeNose(body, face, box)
 end
 
 -- Lower lip (draws first, stencils the inside), upper lip, and teeth clipped to the mouth.
+-- A mouth shape's unit (mouth-shapes normalized, 66-247 wide) as a share of the head's width
+-- and height, before wMul/hMul and the face magnitude.
+lib.MOUTH_UNIT = 0.004
+
 local function placeMouth(body, face, box)
     local mouth = face.mouth
     local mouthShape = mouthShapes.normalized[mouth.shape]
     if not mouthShape then return end
     local mouthX, mouthY = (box.leftX + box.rightX) / 2, lerp(box.topY, box.botY, face.positioners.mouth.y)
     -- about 40% of the head wide (wMul/hMul adjust)
-    local scaleX = (box.headW * 0.004) * mouth.wMul * box.fm
-    local scaleY = (box.headH * 0.004) * mouth.hMul * box.fm
+    local scaleX = (box.headW * lib.MOUTH_UNIT) * mouth.wMul * box.fm
+    local scaleY = (box.headH * lib.MOUTH_UNIT) * mouth.hMul * box.fm
     local curvePoints = {} -- the 8 shape points scaled and moved onto the face
     for ci = 1, 16, 2 do
         curvePoints[ci] = mouthShape.points[ci] * scaleX + mouthX

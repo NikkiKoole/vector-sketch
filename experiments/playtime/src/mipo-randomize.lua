@@ -215,6 +215,25 @@ end
 
 -- Randomize face features: eyes, pupils, brows, nose, mouth, and teeth.
 -- hairColor: shared hex color used for brow color.
+-- The mouth never wider than this share of the head (the head's box; it narrows at the mouth).
+lib.mouthMaxHeadShare = 0.85
+
+-- The widest mouthWMul for which the widest resting mouth stays inside mouthMaxHeadShare:
+-- resting mouths switch while a Mipo talks and rests, so the cap holds for all of them.
+local function mouthWMulCap(instance)
+    local widest = 0
+    for _, name in ipairs(mouthShapes.restShapes) do
+        local shape = mouthShapes.normalized[mouthShapes.indexOf(name)]
+        local minX, maxX = math.huge, -math.huge
+        for i = 1, #shape.points, 2 do
+            minX, maxX = math.min(minX, shape.points[i]), math.max(maxX, shape.points[i])
+        end
+        widest = math.max(widest, maxX - minX)
+    end
+    local fm = instance.dna.faceMagnitude or D.faceMagnitude or 1
+    return lib.mouthMaxHeadShare / (widest * textures.MOUTH_UNIT * fm)
+end
+
 local function randomizeFace(instance, hairColor, opts)
     local randomEyeY = D.randomInRangeWeighted('eyeY')
     local randomMouthY = randomEyeY + D.randomInRangeWeighted('mouthYOffset')
@@ -239,13 +258,16 @@ local function randomizeFace(instance, hairColor, opts)
         eyeFgHex = 'ffffffff',
         pupilBgHex = '000000ff',
         mouthShape = mouthShapes.indexOf(pick(mouthShapes.restShapes)),
-        mouthUpperLipShape = math.ceil(math.random() * #C.upperLipShapes),
-        mouthLowerLipShape = math.ceil(math.random() * #C.lowerLipShapes),
+        -- the default lips (2 and 2), unless the options allow others
+        mouthUpperLipShape = (opts and opts.allowedUpperLipShapes) and pick(opts.allowedUpperLipShapes)
+            or D.mouth.upperLipShape,
+        mouthLowerLipShape = (opts and opts.allowedLowerLipShapes) and pick(opts.allowedLowerLipShapes)
+            or D.mouth.lowerLipShape,
         mouthLipHex = 'cc5555ff',
         mouthBackdropHex = '00000099',
         mouthUpperLipScale = D.randomInRangeWeighted('mouthUpperLipScale'),
         mouthLowerLipScale = D.randomInRangeWeighted('mouthLowerLipScale'),
-        mouthWMul = D.randomInRangeWeighted('mouthWMul'),
+        mouthWMul = math.min(D.randomInRangeWeighted('mouthWMul'), mouthWMulCap(instance)),
         mouthHMul = D.randomInRangeWeighted('mouthHMul'),
         mouthY = randomMouthY,
         browShape = math.ceil(math.random() * #C.browShapes),

@@ -112,8 +112,10 @@ describe('dna-defaults', function()
 
         it('has mouth defaults', function()
             assert.equal(2, D.mouth.shape)
-            assert.equal(0.15, D.mouth.upperLipScale)
-            assert.equal(0.25, D.mouth.lowerLipScale)
+            assert.equal(2, D.mouth.upperLipShape)
+            assert.equal(2, D.mouth.lowerLipShape)
+            assert.equal(0.19, D.mouth.upperLipScale)
+            assert.equal(0.31, D.mouth.lowerLipScale)
             assert.equal('cc5555ff', D.mouth.lipHex)
         end)
 
