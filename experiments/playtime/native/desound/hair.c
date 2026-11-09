@@ -1,7 +1,8 @@
 // hair.c — a hair lock's strip in one call (src/hair-native.lua), the same maths as
 // src/hair-locks.lua's lockPath + stripMesh: a Catmull-Rom curve through the lock's points
-// (samples per segment by how sharply it turns, or ~10 a ringlet turn), for ringlets a
-// corkscrew around it seen a little from above (its back half darker), then a strip the
+// (samples per segment by how sharply it turns, or ~10 a ringlet turn or wave), for ringlets a
+// corkscrew around it seen a little from above (its back half darker), for curly hair a wave
+// across it, then a strip the
 // picture's width across, written as { x, y, u, v, r, g, b, a } floats (2 vertices a sample)
 // for Mesh:setVertices(ByteData). Built into libdesound with the synth (build.sh, build-ios.sh).
 #include <math.h>
@@ -25,20 +26,22 @@ static void unit_tangent(int c, int count, double *tx, double *ty) {
     if (l > 1e-6) { *tx = dx / l; *ty = dy / l; } else { *tx = 0; *ty = 1; }
 }
 
-// points: flat x, y (n of them); segment: rest length between them; radius 0 = no ringlets.
-// Returns the number of vertices written (2 a sample), 0 when there's no lock.
-int hair_strip(const float *points, int n, float segment, float radius, float pitch, float phase,
-               float tilt, float halfWidth, float *out) {
+// points: flat x, y (n of them); segment: rest length between them; radius 0 = no ringlets;
+// wave 0 = no curly wave (its height, px, and wavePitch its length). Returns the number of
+// vertices written (2 a sample), 0 when there's no lock.
+int hair_strip(const float *points, int n, float segment, float radius, float pitch, float wave,
+               float wavePitch, float phase, float tilt, float halfWidth, float *out) {
     if (n < 2) return 0;
-    double L = segment, R = radius, P = pitch < 4 ? 4 : pitch;
+    double L = segment, R = radius, P = pitch < 4 ? 4 : pitch, W = wave, WP = wavePitch;
     int maxPer = (HAIR_MAX_SAMPLES - 1) / (n - 1);
     if (maxPer < 1) maxPer = 1;
     int ringPer = 0;
     if (R > 0) {
         ringPer = (int)ceil(L / P * 10);
         if (ringPer < 3) ringPer = 3;
-        if (ringPer > maxPer) ringPer = maxPer;
     }
+    if (W > 0 && ringPer < 2) ringPer = 2; // ceil(10 / WAVE_SEGMENTS) in hair-locks.lua
+    if (ringPer > maxPer) ringPer = maxPer;
     int count = 0;
     for (int j = 1; j <= n - 1; j++) {
         double x0, y0, x1, y1, x2, y2, x3, y3;
@@ -74,19 +77,30 @@ int hair_strip(const float *points, int n, float segment, float radius, float pi
             count++;
         }
     }
-    // the corkscrew, around the axis (tangents from the axis), growing in over the first turn
+    // the corkscrew and the wave, around the axis (tangents from the axis), growing in over the
+    // first turn / wave
     double shade[HAIR_MAX_SAMPLES];
-    if (R > 0) {
+    if (R > 0 || W > 0) {
         double ox[HAIR_MAX_SAMPLES], oy[HAIR_MAX_SAMPLES];
         for (int c = 0; c < count; c++) {
             double tx, ty;
             unit_tangent(c, count, &tx, &ty);
-            double r = R * (ss[c] / P < 1 ? ss[c] / P : 1);
-            double th = ss[c] / P * 2 * M_PI + phase;
-            double sn = sin(th), cs = cos(th);
-            ox[c] = sx[c] - ty * r * sn + tx * r * tilt * cs;
-            oy[c] = sy[c] + tx * r * sn + ty * r * tilt * cs;
-            shade[c] = 0.72 + 0.28 * (0.5 + 0.5 * cs);
+            double side = 0, along = 0;
+            shade[c] = 1;
+            if (R > 0) {
+                double r = R * (ss[c] / P < 1 ? ss[c] / P : 1);
+                double th = ss[c] / P * 2 * M_PI + phase;
+                double cs = cos(th);
+                side = r * sin(th);
+                along = r * tilt * cs;
+                shade[c] = 0.72 + 0.28 * (0.5 + 0.5 * cs);
+            }
+            if (W > 0) {
+                double grow = ss[c] / WP < 1 ? ss[c] / WP : 1;
+                side += W * grow * sin(ss[c] / WP * 2 * M_PI + phase + 1);
+            }
+            ox[c] = sx[c] - ty * side + tx * along;
+            oy[c] = sy[c] + tx * side + ty * along;
         }
         for (int c = 0; c < count; c++) { sx[c] = ox[c]; sy[c] = oy[c]; }
     } else {
@@ -106,3 +120,7 @@ int hair_strip(const float *points, int n, float segment, float radius, float pi
     }
     return 2 * count;
 }
+
+// hair_strip's version: 2 = with the curly wave (wave, wavePitch). src/hair-native.lua only uses
+// hair_strip when this is there, so a library from before can't be called with the new arguments.
+int hair_strip_v2(void) { return 2; }

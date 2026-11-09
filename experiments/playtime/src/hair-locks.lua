@@ -35,7 +35,7 @@ lib.defaults = {
     wild = 0.5,      -- 0 every lock alike .. 1 each its own length, curl and width
     damping = 0.96,  -- of the velocity each step (1 = never settles)
     stand = 0,       -- 0 hangs .. 1 stands up: the rest shape holds all along the lock, less gravity and droop
-    curly = 0,       -- 0 straight .. 1 curls: a wave along each lock, held tip to root
+    curly = 0,       -- 0 straight .. 1 curls: a wave drawn along each lock (16 px at 1, a wave every 5 segments)
     cut = 0,         -- the haircut: px below the head's centre where the long locks end (a blunt line); 0 = by points
     lenMiddle = 1,   -- length of the middle locks, times ..
     lenSides = 1,    -- .. and of the outer ones; blended in between (short middle + long sides, or the other way)
@@ -83,6 +83,9 @@ local function outlinePoint(vertices, angle)
     best = best or 50
     return dx * best, dy * best
 end
+
+local WAVE_AMP = 16  -- px: the curly wave's height at curly 1 (bangs half)
+local WAVE_SEGMENTS = 5 -- segments a wave
 
 local function headOf(instance)
     local part = instance.parts and (instance.parts.head or instance.parts.torso1)
@@ -149,12 +152,14 @@ function lib.attach(instance, opts)
             points = {}, prev = {},
         }
     end
-    -- each lock's bend per segment at rest: the curl, plus the curly wave (its own phase per lock)
+    -- each lock's bend per segment at rest (the curl); its curly wave and ringlet turns are only
+    -- drawn (lockPath), each lock at its own phase: held by the physics, the wave fought the rest
+    -- shape and the tips never stopped moving (7 px a frame on a still head, 2026-11-09)
     for _, lock in ipairs(locks) do
-        local phase, amp = rng:random() * 2 * math.pi, o.curly * (lock.drape and 1.1 or 0.5)
-        lock.phase = phase
+        lock.phase = rng:random() * 2 * math.pi
+        lock.wave = o.curly * WAVE_AMP * (lock.drape and 1 or 0.5)
         lock.bends = {}
-        for i = 3, lock.n do lock.bends[i] = lock.curl + amp * math.sin((i - 2) * 0.9 + phase) end
+        for i = 3, lock.n do lock.bends[i] = lock.curl end
     end
     instance.hairLocks = { opts = o, locks = locks, body = body, ovalX = ovalX, ovalY = ovalY }
     lib.reset(instance)
@@ -192,26 +197,6 @@ local function stepLock(lock, o, body, gx, gy, dt, ovalX, ovalY)
         p[ix] = x + (x - q[ix]) * o.damping + ddx
         p[iy] = y + (y - q[iy]) * o.damping + ddy
         q[ix], q[iy] = x, y
-    end
-    -- curly: points two apart held at their rest distance (2 L cos(bend / 2)), pushed or pulled
-    -- both ways (a one-sided pull is what made the octopus), so the wave holds out to the tip
-    local kc = o.curly * 0.5
-    if kc > 0 then
-        local L2 = lock.segment * 2
-        for i = 3, n do
-            local ax, ay, cx, cy = 2 * i - 5, 2 * i - 4, 2 * i - 1, 2 * i
-            local ex, ey = p[cx] - p[ax], p[cy] - p[ay]
-            local len = math.sqrt(ex * ex + ey * ey)
-            if len > 1e-6 then
-                local corr = (len - L2 * math.cos(lock.bends[i] / 2)) / len * kc
-                if i == 3 then -- the root stays put
-                    p[cx], p[cy] = p[cx] - ex * corr, p[cy] - ey * corr
-                else
-                    p[ax], p[ay] = p[ax] + ex * corr * 0.5, p[ay] + ey * corr * 0.5
-                    p[cx], p[cy] = p[cx] - ex * corr * 0.5, p[cy] - ey * corr * 0.5
-                end
-            end
-        end
     end
     -- rest shape and length, root outward
     local dirX, dirY = math.cos(lock.restAngle + a), math.sin(lock.restAngle + a)
@@ -260,6 +245,32 @@ local function stepLock(lock, o, body, gx, gy, dt, ovalX, ovalY)
     end
 end
 
+-- Sleep: hair that has settled on a head that holds still isn't simulated (nor its strips built
+-- again) until the head moves: most Mipos stand around most of the time.
+local SLEEP_MOVE = 0.05  -- px a frame: no point of any lock moved more, the locks have settled
+local STILL_MOVE, STILL_TURN = 0.05, 0.0005 -- px and radians a frame: the head holds still
+local SLEEP_AFTER = 0.5  -- seconds settled and still: asleep
+local WAKE_MOVE, WAKE_TURN = 0.5, 0.005 -- the head this far from where the hair fell asleep: awake
+
+-- Whether no point moved more than SLEEP_MOVE since the last frame (from where they were then,
+-- kept in hair.snap: points - prev isn't the move, DFTL writes into prev). Takes the new snapshot.
+local function settled(hair)
+    local limit, snap, k, still = SLEEP_MOVE * SLEEP_MOVE, hair.snap or {}, 0, true
+    for _, lock in ipairs(hair.locks) do
+        local p = lock.points
+        for i = 1, 2 * lock.n, 2 do
+            local x, y = p[i], p[i + 1]
+            local sx, sy = snap[k + 1], snap[k + 2]
+            if not sx or (x - sx) * (x - sx) + (y - sy) * (y - sy) > limit then still = false end
+            snap[k + 1], snap[k + 2] = x, y
+            k = k + 2
+        end
+    end
+    for i = k + 1, #snap do snap[i] = nil end
+    hair.snap = snap
+    return still
+end
+
 function lib.update(dt)
     local gx, gy = state.physicsWorld:getGravity()
     -- fixed steps: verlet carries velocity as the last step's move, so a step that changes size
@@ -270,17 +281,39 @@ function lib.update(dt)
         if hair then
             if hair.body:isDestroyed() then
                 instance.hairLocks = nil
-            elseif not hair.ovalX or (hair.locks[1] and not hair.locks[1].bends) then
+            elseif not hair.ovalX or (hair.locks[1] and not hair.locks[1].wave) then
                 lib.attach(instance, hair.opts) -- made by an older version of this file (hot reload)
             else
-                local w = hair.opts.weight * (1 - hair.opts.stand)
-                hair.acc = math.min((hair.acc or 0) + dt, 0.1)
-                while hair.acc >= h do
-                    hair.acc = hair.acc - h
-                    for _, lock in ipairs(hair.locks) do
-                        stepLock(lock, hair.opts, hair.body, gx * w, gy * w, h, hair.ovalX, hair.ovalY)
+                local body = hair.body
+                local x, y = body:getPosition()
+                local a = body:getAngle()
+                local s = hair.asleep
+                if s and (math.abs(x - s.x) + math.abs(y - s.y) > WAKE_MOVE or math.abs(a - s.a) > WAKE_TURN) then
+                    hair.asleep, hair.stillTime, hair.acc = nil, 0, 0
+                end
+                if not hair.asleep then
+                    local w = hair.opts.weight * (1 - hair.opts.stand)
+                    hair.acc = math.min((hair.acc or 0) + dt, 0.1)
+                    local stepped = false
+                    while hair.acc >= h do
+                        hair.acc = hair.acc - h
+                        stepped = true
+                        for _, lock in ipairs(hair.locks) do
+                            stepLock(lock, hair.opts, body, gx * w, gy * w, h, hair.ovalX, hair.ovalY)
+                        end
+                    end
+                    if stepped then hair.version = (hair.version or 0) + 1 end
+                    -- asleep once the locks have settled and the head held still for a while
+                    local headStill = hair.lastX and math.abs(x - hair.lastX) + math.abs(y - hair.lastY) < STILL_MOVE
+                        and math.abs(a - hair.lastA) < STILL_TURN
+                    if stepped and headStill and settled(hair) then
+                        hair.stillTime = (hair.stillTime or 0) + dt
+                        if hair.stillTime >= SLEEP_AFTER then hair.asleep = { x = x, y = y, a = a } end
+                    elseif stepped then
+                        hair.stillTime = 0
                     end
                 end
+                hair.lastX, hair.lastY, hair.lastA = x, y, a
             end
         end
     end
@@ -296,9 +329,13 @@ local cork = {}
 local function lockPath(lock, o, out)
     local p, n, L = lock.points, lock.n, lock.segment
     local R, pitch = o.ringlets, math.max(4, o.ringletPitch)
-    -- samples per segment: ringlets ~10 a turn; plain locks only as many as the bend needs
+    local W, wavePitch = lock.wave or 0, L * WAVE_SEGMENTS
+    -- samples per segment: ~10 a ringlet turn or wave; plain locks only as many as the bend needs
     local maxPer = math.max(1, math.floor((MAXSAMPLES - 1) / math.max(1, n - 1)))
-    local ringPer = R > 0 and math.min(maxPer, math.max(3, math.ceil(L / pitch * 10))) or nil
+    local ringPer = nil
+    if R > 0 then ringPer = math.max(3, math.ceil(L / pitch * 10)) end
+    if W > 0 then ringPer = math.max(ringPer or 0, math.ceil(10 / WAVE_SEGMENTS)) end
+    ringPer = ringPer and math.min(maxPer, ringPer)
     local count = 0
     local function at(i) -- with the ends mirrored
         if i < 1 then return 2 * p[1] - p[3], 2 * p[2] - p[4] end
@@ -336,9 +373,9 @@ local function lockPath(lock, o, out)
             out[3 * count - 2], out[3 * count - 1], out[3 * count] = x, y, (j - 1 + t) * L
         end
     end
-    -- the corkscrew: around the axis (tangents from the axis, so worked out before any point
-    -- moves), growing in over the first turn
-    if R <= 0 then
+    -- the corkscrew and the wave: around the axis (tangents from the axis, so worked out before
+    -- any point moves), growing in over the first turn / wave
+    if R <= 0 and W <= 0 then
         for c = 1, count do out[3 * c] = 1 end
         return count
     end
@@ -349,12 +386,21 @@ local function lockPath(lock, o, out)
         local tx, ty = out[3 * b - 2] - out[3 * a - 2], out[3 * b - 1] - out[3 * a - 1]
         local tl = math.sqrt(tx * tx + ty * ty)
         if tl > 1e-6 then tx, ty = tx / tl, ty / tl else tx, ty = 0, 1 end
-        local r = R * math.min(1, s / pitch)
-        local th = s / pitch * 2 * math.pi + (lock.phase or 0)
-        local sn, cs = math.sin(th), math.cos(th)
-        moved[3 * c - 2] = x - ty * r * sn + tx * r * TILT * cs
-        moved[3 * c - 1] = y + tx * r * sn + ty * r * TILT * cs
-        moved[3 * c] = 0.72 + 0.28 * (0.5 + 0.5 * cs) -- the back of each turn darker
+        local phase = lock.phase or 0
+        local side, along, shade = 0, 0, 1
+        if R > 0 then
+            local r = R * math.min(1, s / pitch)
+            local th = s / pitch * 2 * math.pi + phase
+            local cs = math.cos(th)
+            side, along = r * math.sin(th), r * TILT * cs
+            shade = 0.72 + 0.28 * (0.5 + 0.5 * cs) -- the back of each turn darker
+        end
+        if W > 0 then
+            side = side + W * math.min(1, s / wavePitch) * math.sin(s / wavePitch * 2 * math.pi + phase + 1)
+        end
+        moved[3 * c - 2] = x - ty * side + tx * along
+        moved[3 * c - 1] = y + tx * side + ty * along
+        moved[3 * c] = shade
     end
     for i = 1, 3 * count do out[i] = moved[i] end
     return count
@@ -364,35 +410,12 @@ local pathBuf = {}
 local MESH_FORMAT = { -- as hair.c writes
     { 'VertexPosition', 'float', 2 }, { 'VertexTexCoord', 'float', 2 }, { 'VertexColor', 'float', 4 },
 }
--- A textured strip along the path, the picture's width across (times `width`), its length along.
--- One mesh a lock: the fill and the line pictures are the same size (an OMP pair), so the strip
--- is built once and drawn twice with the picture swapped.
-local nativeData -- one ByteData all locks take turns writing (setVertices copies it)
-local function lockMesh(lock)
-    local m = lock.mesh
-    if not m then
-        m = { mesh = love.graphics.newMesh(MESH_FORMAT, MAXSAMPLES * 2, 'strip', 'stream'), verts = {} }
-        lock.mesh = m
-    end
-    return m
-end
 
--- The lock's strip from C (hair.c), when the library has it: nil without it.
-local function nativeStripMesh(lock, o, hw)
-    if not (lib.useNative and hairNative.available()) then return nil end
-    nativeData = nativeData or love.data.newByteData(MAXSAMPLES * 2 * hairNative.BYTES_PER_VERTEX)
-    local count = hairNative.strip(lock.points, lock.n, lock.segment, o.ringlets, o.ringletPitch,
-        lock.phase or 0, TILT, hw, nativeData)
-    if count < 4 then return false end
-    local m = lockMesh(lock)
-    m.mesh:setVertices(nativeData, 1, count)
-    m.mesh:setDrawRange(1, count)
-    return m.mesh
-end
-
-local function stripMesh(lock, hw, count)
-    local m = lockMesh(lock)
-    local v, buf = m.verts, pathBuf
+-- One lock's strip in Lua (lockPath, then the picture's width across, its length along) into
+-- `verts` from index `start`, { x, y, u, v, r, g, b, a } each; returns how many it wrote.
+local function luaLockVertices(lock, o, hw, verts, start)
+    local count = lockPath(lock, o, pathBuf)
+    local buf = pathBuf
     for c = 1, count do
         local a, b = math.max(1, c - 1), math.min(count, c + 1)
         local tx, ty = buf[3 * b - 2] - buf[3 * a - 2], buf[3 * b - 1] - buf[3 * a - 1]
@@ -400,15 +423,89 @@ local function stripMesh(lock, hw, count)
         if tl > 1e-6 then tx, ty = tx / tl, ty / tl else tx, ty = 0, 1 end
         local x, y, sh = buf[3 * c - 2], buf[3 * c - 1], buf[3 * c]
         local tv = (c - 1) / math.max(1, count - 1)
-        local l, r = v[2 * c - 1] or {}, v[2 * c] or {}
+        local i = start + 2 * c - 2
+        local l, r = verts[i] or {}, verts[i + 1] or {}
         l[1], l[2], l[3], l[4], l[5], l[6], l[7], l[8] = x - ty * hw, y + tx * hw, 0, tv, sh, sh, sh, 1
         r[1], r[2], r[3], r[4], r[5], r[6], r[7], r[8] = x + ty * hw, y - tx * hw, 1, tv, sh, sh, sh, 1
-        v[2 * c - 1], v[2 * c] = l, r
+        verts[i], verts[i + 1] = l, r
     end
-    for i = 2 * count + 1, #v do v[i] = nil end
-    m.mesh:setVertices(v)
-    m.mesh:setDrawRange(1, 2 * count)
-    return m.mesh
+    return count >= 2 and 2 * count or 0
+end
+
+-- The most vertices a lock's strip can take, with the two that join it to the one before.
+local function capacityFor(lock, o)
+    local per = 5
+    if o.ringlets > 0 then per = math.max(per, math.ceil(lock.segment / math.max(4, o.ringletPitch) * 10)) end
+    return 2 * math.min(MAXSAMPLES, (lock.n - 1) * per + 1) + 2
+end
+
+local nativeData -- one ByteData every layer takes turns writing (setVertices copies it); grows
+
+-- All the locks of one layer of a Mipo's hair in one strip, joined by two repeated vertices
+-- (triangles with no area): one mesh, drawn once a picture, instead of one a lock (27 locks were
+-- 54 draws). Built again only when the hair moved since (asleep, it's kept as it is).
+local function layerMesh(hair, wantFront, pic)
+    hair.layers = hair.layers or {}
+    local key = wantFront and 'front' or 'back'
+    local L = hair.layers[key]
+    if L and L.version == hair.version and L.pic == pic then return L.mesh end
+    local o, cap = hair.opts, 0
+    for _, lock in ipairs(hair.locks) do
+        if (lock.front or false) == wantFront then cap = cap + capacityFor(lock, o) end
+    end
+    if cap == 0 then return nil end
+    if not L or L.cap < cap then
+        if L then L.mesh:release() end
+        local size = math.max(cap, L and L.cap * 2 or 0)
+        L = { mesh = love.graphics.newMesh(MESH_FORMAT, size, 'strip', 'stream'), cap = size, verts = {} }
+        hair.layers[key] = L
+    end
+    local picW, count = pic:getWidth(), 0
+    if lib.useNative and hairNative.available() then
+        local bytes = cap * hairNative.BYTES_PER_VERTEX
+        if not nativeData or nativeData:getSize() < bytes then
+            nativeData = love.data.newByteData(math.max(bytes, nativeData and nativeData:getSize() * 2 or 0))
+        end
+        for _, lock in ipairs(hair.locks) do
+            if (lock.front or false) == wantFront then
+                local at = count > 0 and count + 2 or 0
+                local c = hairNative.strip(lock.points, lock.n, lock.segment, o.ringlets, o.ringletPitch,
+                    lock.wave or 0, lock.segment * WAVE_SEGMENTS, lock.phase or 0, TILT, picW * lock.width,
+                    nativeData, at)
+                if c > 0 then
+                    if count > 0 then -- the join: the last vertex again, then the next strip's first
+                        hairNative.copyVertex(nativeData, count - 1, count)
+                        hairNative.copyVertex(nativeData, at, count + 1)
+                    end
+                    count = at + c
+                end
+            end
+        end
+        if count > 0 then L.mesh:setVertices(nativeData, 1, count) end
+    else
+        local v = L.verts
+        for _, lock in ipairs(hair.locks) do
+            if (lock.front or false) == wantFront then
+                local at = count > 0 and count + 2 or 0
+                local c = luaLockVertices(lock, o, picW * lock.width, v, at + 1)
+                if c > 0 then
+                    if count > 0 then
+                        local last, first = v[count], v[at + 1]
+                        local gap1, gap2 = v[count + 1] or {}, v[count + 2] or {}
+                        for k = 1, 8 do gap1[k], gap2[k] = last[k], first[k] end
+                        v[count + 1], v[count + 2] = gap1, gap2
+                    end
+                    count = at + c
+                end
+            end
+        end
+        for i = count + 1, #v do v[i] = nil end
+        if count > 0 then L.mesh:setVertices(v) end
+    end
+    if count < 4 then return nil end
+    L.mesh:setDrawRange(1, count)
+    L.version, L.pic = hair.version, pic
+    return L.mesh
 end
 
 -- The locks of every Mipo that has them, in the colours of its haircut: layer 'back' (behind the
@@ -426,26 +523,18 @@ function lib.draw(layer)
             local main = cut and cut.main or {}
             local fr, fg, fb = color.hexToColor(main.fgHex or 'bf1a2dff')
             local lr, lg, lb = color.hexToColor(main.bgHex or '000000ff')
-            for _, lock in ipairs(hair.locks) do
-                if (lock.front or false) == wantFront then
-                    local pic = line or mask
-                    local mesh = pic and nativeStripMesh(lock, o, pic:getWidth() * lock.width)
-                    if mesh == nil and pic then
-                        local count = lockPath(lock, o, pathBuf)
-                        mesh = count >= 2 and stripMesh(lock, pic:getWidth() * lock.width, count)
-                    end
-                    if mesh then
-                        if mask then
-                            love.graphics.setColor(fr, fg, fb, 1)
-                            mesh:setTexture(mask)
-                            love.graphics.draw(mesh)
-                        end
-                        if line then
-                            love.graphics.setColor(lr, lg, lb, 1)
-                            mesh:setTexture(line)
-                            love.graphics.draw(mesh)
-                        end
-                    end
+            local pic = line or mask
+            local mesh = pic and layerMesh(hair, wantFront, pic)
+            if mesh then
+                if mask then
+                    love.graphics.setColor(fr, fg, fb, 1)
+                    mesh:setTexture(mask)
+                    love.graphics.draw(mesh)
+                end
+                if line then
+                    love.graphics.setColor(lr, lg, lb, 1)
+                    mesh:setTexture(line)
+                    love.graphics.draw(mesh)
                 end
             end
         end
@@ -453,13 +542,17 @@ function lib.draw(layer)
     love.graphics.setColor(1, 1, 1, 1)
 end
 
--- The strip's vertices built in Lua, { x, y, u, v, r, g, b, a } each (spec/hair-native_spec.lua).
+-- One lock's strip built in Lua, { x, y, u, v, r, g, b, a } each (spec/hair-native_spec.lua).
 function lib.luaStripVertices(lock, o, hw)
-    local count = lockPath(lock, o, pathBuf)
-    local mesh = stripMesh(lock, hw, count)
     local out = {}
-    for i = 1, 2 * count do out[i] = { mesh:getVertex(i) } end
+    local n = luaLockVertices(lock, o, hw, out, 1)
+    for i = n + 1, #out do out[i] = nil end
     return out
+end
+
+-- Whether a Mipo's hair is asleep (settled, its head still: not simulated, its strips kept).
+function lib.isAsleep(instance)
+    return instance.hairLocks and instance.hairLocks.asleep ~= nil or false
 end
 
 return lib

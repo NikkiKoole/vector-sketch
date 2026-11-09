@@ -48,7 +48,17 @@ one Bezier, which smoothed curls away. Cost per Mipo on the Mac: simulate 0.1-0.
   both the same). Per Mipo on the Mac, simulate + draw: plain 1.6 -> 0.80 (H1+H2) -> 0.46 ms (C);
   tight ringlets 4.0 -> 2.2 -> 0.44 ms; loose ringlets 1.5 -> 0.88 -> 0.29 ms. About 0.2 ms of
   that is the simulation, still Lua
+- [x] H5. Asleep: settled hair on a head that holds still isn't simulated nor built again (0.006 ms
+  a Mipo, from 0.35). Rarely asleep in practice: an idle Mipo shuffles and sways (its head 3-34 px/s
+  in the hair scene), so it's for Mipos lying, sitting or held. "settled" is measured from where the
+  points were a frame before: points - prev isn't the move, DFTL writes into prev
+- [x] H6. One mesh a layer of a Mipo (back, front), the locks joined by repeated vertices: 4 draws
+  instead of 54. Awake per Mipo: plain 0.35 ms, loose ringlets 0.23, tight 0.37, curly 0.32
+- [x] H7. curly is drawn, not simulated: a wave across the lock (16 px at 1, one every 5 segments),
+  like the ringlets. Held by the physics (pulls between points two apart) it fought the rest shape
+  and the tips never stopped moving, 7 px a frame on a still head. Now every setting comes to rest
 - [ ] H4. Measure on the phone (`./playtime.sh bench device`)
+- [ ] H8. The simulation in C (~0.2 ms a Mipo awake, all Lua), if the phone says so
 
 ## Hair bounce (also parked)
 

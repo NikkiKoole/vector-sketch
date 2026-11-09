@@ -6,19 +6,20 @@ local hairLocks = require('src.hair-locks')
 local hairNative = require('src.hair-native')
 
 -- A lock of `n` points `segment` apart, waving sideways as it falls (a bent one turns sharply).
-local function lock(n, segment, bend, phase)
+local function lock(n, segment, bend, phase, wave)
     local points, x, y, a = {}, 0, 0, math.pi / 2
     for i = 1, n do
         points[2 * i - 1], points[2 * i] = x, y
         a = a + bend * math.sin(i * 0.9)
         x, y = x + math.cos(a) * segment, y + math.sin(a) * segment
     end
-    return { points = points, n = n, segment = segment, phase = phase, width = 0.06 }
+    return { points = points, n = n, segment = segment, phase = phase, width = 0.06, wave = wave or 0 }
 end
 
 local function nativeVertices(l, o, hw)
     local data = love.data.newByteData(hairNative.MAX_SAMPLES * 2 * hairNative.BYTES_PER_VERTEX)
-    local count = hairNative.strip(l.points, l.n, l.segment, o.ringlets, o.ringletPitch, l.phase, 0.5, hw, data)
+    local count = hairNative.strip(l.points, l.n, l.segment, o.ringlets, o.ringletPitch, l.wave or 0,
+        l.segment * 5, l.phase, 0.5, hw, data)
     local f = require('ffi').cast('float *', data:getFFIPointer())
     local out = {}
     for i = 1, count do
@@ -35,6 +36,8 @@ local CASES = {
     { name = 'loose ringlets', lock = lock(12, 24, 0.1, 1.3), o = { ringlets = 18, ringletPitch = 50 } },
     { name = 'tight ringlets', lock = lock(16, 24, 0.2, 4.0), o = { ringlets = 12, ringletPitch = 26 } },
     { name = 'two points', lock = lock(2, 20, 0, 0), o = { ringlets = 0, ringletPitch = 30 } },
+    { name = 'curly wave', lock = lock(16, 24, 0.1, 2.0, 16), o = { ringlets = 0, ringletPitch = 30 } },
+    { name = 'wave and ringlets', lock = lock(12, 24, 0.1, 0.4, 8), o = { ringlets = 14, ringletPitch = 40 } },
 }
 
 describe('hair lock strips, C and Lua', function()
