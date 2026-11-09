@@ -193,8 +193,10 @@ local CATEGORIES = {
                     characterManager.updatePositioners(inst, { earY = v })
                     characterManager.rebuildFromCreation(inst, {})
                 end),
-            -- the ears' tilt, mirrored: lear at -90deg + t, rear at 90deg - t (the editor's defaults: t = 36deg)
-            { less = 'icons/ear-ccw', more = 'icons/ear-cw', min = 0, max = 2, step = 0.1,
+            -- the ears' tilt, mirrored: lear at -90deg + t, rear at 90deg - t (the editor's defaults: t = 36deg).
+            -- t 0: straight out sideways; below: drooping; ~1.5: upright (past it they crossed over the head).
+            -- The icons show a right ear: ear-cw leaning out and down, ear-ccw standing up (Puppetmaker's order).
+            { less = 'icons/ear-cw', more = 'icons/ear-ccw', min = -0.7, max = 1.5, step = 0.1,
                 get = function(inst) return (partData(inst, 'lear').stanceAngle or (-math.pi / 2 + math.pi / 5)) + math.pi / 2 end,
                 set = function(inst, v)
                     partData(inst, 'lear').stanceAngle = -math.pi / 2 + v
