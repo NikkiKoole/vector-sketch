@@ -444,5 +444,22 @@ fade, a sun: the panel's `fades` switch, LS4).
   Watch: a light can pop in or out as a part crosses a cell line when more than 8 reach it (not seen in
   light-grass-check: 3 always-on + the ~5 nearest bulbs); the phone still to check (compile, cost).
 
+- [x] **LS28. The face and feet catch the light** (2026-11-10, Nikki: "a bit with a volume, that light
+  catches it"; each liked as it came). Every Mipo, old scenes too; each has a flat switch to compare:
+  - Nose (`state.noseFlat`): through the clay shader rounded like a dome (form baked from its mask), and a
+    soft shadow of it on the face away from the strongest light. `src/physics/box2d-draw-textured.lua`.
+  - Teeth (`state.teethFlat`): lit as glaze (enamel), the upper lip's shadow along their top, darker toward
+    the corners. Lips (`state.lipsFlat`): lit as satin, the lower lip's soft shadow on the chin.
+    `src/render/mouth.lua` (teethMaterial / teethLipShadow / teethCorners, lipMaterial / lipShadow).
+  - Eyes (`state.eyesFlat`): the white lit as glaze rounded like a ball with the flat white laid back over
+    at half (alone a warm lamp made them tan), the lid's soft shadow along its top following the blink.
+    Tried and dropped: a catchlight glint ("just remove it", a white dot beside the pupil).
+  - Feet (`state.feetFlat`): each foot drawn twice, behind its leg and its lower part in front cut across
+    the leg, the leg reaching into the foot and clipped to it below the ankle; each side its own depth
+    range, the right over the left (one range for both: the feet cut into each other, "z fighting").
+  - Hair locks are lit like the part they grow on and cast shadows (`docs/HAIR-LOCKS.md`).
+  Also: the mouth flap lasts at least 0.35 s (`src/mipo-voice.lua` flapMinDuration; 0.15 twitched).
+  Not measured on the phone: the nose / eye / lip shaders and the feet's stencils are a few more draws per Mipo.
+
 Not light, but where this started (`LITTLE-USED.md`): three rounds left there, skinned mesh, UV mesh,
 the recorder (the feature-rounds sweep, `claudetools/feature-rounds_spec.lua`, takes a recipe each).
