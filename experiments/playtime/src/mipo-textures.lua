@@ -346,9 +346,14 @@ local function imageSize(path)
     return imageSizes[path] or nil
 end
 
+-- An eye's and a brow's size as a share of the head's width / height, before wMul/hMul and the
+-- face magnitude (a roll keeps the brows above the eyes with these: mipo-randomize).
+lib.EYE_UNIT = 0.25
+lib.BROW_UNIT_W, lib.BROW_UNIT_H = 0.2, 0.1
+
 local function placeEyes(body, face, box)
     local eye, pupil, eyeR = face.eye, face.pupil, face.positioners.eye.r
-    local eyeW, eyeH = box.headW * 0.25 * box.fm * eye.wMul, box.headH * 0.25 * box.fm * eye.hMul
+    local eyeW, eyeH = box.headW * lib.EYE_UNIT * box.fm * eye.wMul, box.headH * lib.EYE_UNIT * box.fm * eye.hMul
     -- eye shape 0: no white, only the pupil (cartoon dot eyes); it still moves within the eye's size
     local eyeName = eye.shape > 0 and textureNames.part('eye', eye.shape) or nil
     for _, side in ipairs({ { x = box.leftEyeX, label = 'l', mirror = true, rot = -eyeR },
@@ -376,7 +381,7 @@ local function placeBrows(body, face, box)
                             { x = box.rightEyeX, label = 'rbrow', mirror = true } }) do
         addDecal(body, side.label, {
             ox = side.x, oy = lerp(box.topY, box.botY, face.positioners.brow.y),
-            w = box.headW * 0.2 * brow.wMul * box.fm, h = box.headH * 0.1 * brow.hMul * box.fm,
+            w = box.headW * lib.BROW_UNIT_W * brow.wMul * box.fm, h = box.headH * lib.BROW_UNIT_H * brow.hMul * box.fm,
             zOffset = FACE_Z.brow, browCurve = true, browBend = brow.bend, browMirror = side.mirror,
             bgURL = textureNames.part('brow', brow.shape) .. '.png', bgHex = brow.bgHex,
         })

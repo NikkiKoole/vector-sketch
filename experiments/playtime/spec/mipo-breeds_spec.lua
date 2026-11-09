@@ -148,3 +148,64 @@ describe("a Mipo of each breed", function()
         end
     end)
 end)
+
+-- brows above the eyes (2026-11-09): the rule, then every roll and a family mutation
+describe("brows above the eyes", function()
+    local textures = require('src.mipo-textures')
+
+    local function gapOf(v, fm)
+        fm = fm or 1
+        local eyeTop = v.eyeY - textures.EYE_UNIT * fm * v.eyeHMul / 2
+        local browBottom = v.browY + textures.BROW_UNIT_H * fm * v.browHMul / 2
+        return eyeTop - browBottom
+    end
+
+    it("leaves a face alone when the brows are already above", function()
+        local v = { eyeY = 0.5, eyeHMul = 1, browY = 0.25, browHMul = 1, mouthY = 0.8 }
+        randomize.keepBrowsAboveEyes(v, 1)
+        assert.are.equal(0.25, v.browY); assert.are.equal(0.5, v.eyeY); assert.are.equal(0.8, v.mouthY)
+    end)
+
+    it("moves the brows up when there's room", function()
+        local v = { eyeY = 0.5, eyeHMul = 1.2, browY = 0.35, browHMul = 1, mouthY = 0.8 }
+        randomize.keepBrowsAboveEyes(v, 1)
+        assert.is_true(v.browY < 0.35)
+        assert.are.equal(0.5, v.eyeY)
+        assert.is_true(math.abs(gapOf(v) - randomize.BROW_GAP) < 1e-9)
+    end)
+
+    it("moves the eyes and the mouth down when the brows would leave the head", function()
+        local v = { eyeY = 0.3, eyeHMul = 1.5, browY = 0.3, browHMul = 1.2, mouthY = 0.6 }
+        randomize.keepBrowsAboveEyes(v, 1)
+        assert.are.equal(randomize.BROW_TOP_Y, v.browY)
+        assert.is_true(v.eyeY > 0.3)
+        assert.is_true(math.abs((v.mouthY - v.eyeY) - 0.3) < 1e-9, 'the mouth keeps its distance to the eyes')
+        assert.is_true(gapOf(v) >= randomize.BROW_GAP - 1e-9)
+    end)
+
+    it("holds after every roll and a family mutation", function()
+        local world = love.physics.newWorld(0, 0, true)
+        registry.reset(); mipoRegistry.reset(); state.physicsWorld = world
+        local names = { 'any' }
+        for _, n in ipairs(breeds.order) do names[#names + 1] = n end
+        for seed = 1, 6 do
+            for _, name in ipairs(names) do
+                math.randomseed(seed); love.math.setRandomSeed(seed)
+                local mipo = CharacterManager.createCharacter('humanoid', 0, 0, 1)
+                if name == 'any' then CharacterManager.randomizeMipo(mipo) else breeds.randomize(mipo, name) end
+                for round = 0, 1 do
+                    if round == 1 then randomize.mutateSizes(mipo) end
+                    local owner = mipo.dna.creation.isPotatoHead and 'torso1' or 'head'
+                    local face = mipo.dna.parts[owner].appearance.face
+                    local v = { eyeY = face.positioners.eye.y, eyeHMul = face.eye.hMul,
+                                browY = face.positioners.brow.y, browHMul = face.brow.hMul }
+                    assert.is_true(gapOf(v, mipo.dna.faceMagnitude) >= randomize.BROW_GAP - 1e-9,
+                        string.format('%s seed %d%s: brow %.3f into the eye', name, seed,
+                            round == 1 and ' (mutated)' or '', -gapOf(v, mipo.dna.faceMagnitude)))
+                end
+            end
+        end
+        for _, b in ipairs(world:getBodies()) do if not b:isDestroyed() then b:destroy() end end
+        world:destroy()
+    end)
+end)

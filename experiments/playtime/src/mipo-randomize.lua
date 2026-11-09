@@ -239,6 +239,28 @@ local function mouthWMulCap(instance)
     return lib.mouthMaxHeadShare / (widest * textures.MOUTH_UNIT * fm)
 end
 
+-- Brows above the eyes: the brow's bottom edge at least BROW_GAP (a share of the head's height)
+-- above the eye's top, the brow moved up for it; when that takes it above BROW_TOP_Y (off the
+-- head) it stays there and the eyes, and the mouth with them, go down instead. v holds the
+-- face values (eyeY, eyeHMul, browY, browHMul, mouthY); changed in place. (2026-11-09)
+lib.BROW_GAP, lib.BROW_TOP_Y = 0.02, 0.08
+function lib.keepBrowsAboveEyes(v, fm)
+    fm = fm or 1
+    local eyeHalf = textures.EYE_UNIT * fm * v.eyeHMul / 2
+    local browHalf = textures.BROW_UNIT_H * fm * v.browHMul / 2
+    local highest = v.eyeY - eyeHalf - lib.BROW_GAP - browHalf
+    if v.browY <= highest then return v end
+    if highest >= lib.BROW_TOP_Y then
+        v.browY = highest
+    else
+        v.browY = math.min(v.browY, lib.BROW_TOP_Y)
+        local eyeY = v.browY + browHalf + lib.BROW_GAP + eyeHalf
+        if v.mouthY then v.mouthY = v.mouthY + (eyeY - v.eyeY) end
+        v.eyeY = eyeY
+    end
+    return v
+end
+
 local function randomizeFace(instance, hairColor, opts)
     local randomEyeY = D.randomInRangeWeighted('eyeY')
     local randomMouthY = randomEyeY + D.randomInRangeWeighted('mouthYOffset')
@@ -295,6 +317,7 @@ local function randomizeFace(instance, hairColor, opts)
         teethBgHex = '000000ff',
         teethFgHex = 'eeeeeeff',
     }
+    lib.keepBrowsAboveEyes(faceValues, instance.dna.faceMagnitude)
     appearance.updateFaceOfPart(instance, 'head', faceValues)
     appearance.updateFaceOfPart(instance, 'torso1', faceValues)
 end
@@ -543,7 +566,7 @@ local function mutateFace(instance, creation)
     if not (fp and fp.appearance and fp.appearance.face) then return end
     local face = fp.appearance.face
     -- the random numbers drawn in this order (a table constructor's fields are evaluated in order)
-    appearance.updateFaceOfPart(instance, faceOwner, {
+    local values = {
         eyeWMul          = jitterInRange(face.eye.wMul,                          'eyeWMul'),
         eyeHMul          = jitterInRange(face.eye.hMul,                          'eyeHMul'),
         pupilWMul        = jitterInRange(face.pupil.wMul,                        'pupilWMul'),
@@ -556,7 +579,12 @@ local function mutateFace(instance, creation)
         mouthHMul        = jitterInRange(face.mouth.hMul,                        'mouthHMul'),
         mouthUpperLipScale = jitterInRange(face.mouth.upperLipScale or 0.15,     'mouthUpperLipScale'),
         mouthLowerLipScale = jitterInRange(face.mouth.lowerLipScale or 0.2,      'mouthLowerLipScale'),
-    })
+    }
+    -- new eye and brow sizes: the brows still above the eyes
+    local pos = face.positioners
+    values.eyeY, values.browY, values.mouthY = pos.eye.y, pos.brow.y, pos.mouth.y
+    lib.keepBrowsAboveEyes(values, instance.dna.faceMagnitude)
+    appearance.updateFaceOfPart(instance, faceOwner, values)
 end
 
 -- one length for all of these parts (left/right symmetric), from the first that has one;
