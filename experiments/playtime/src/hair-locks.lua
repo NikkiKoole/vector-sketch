@@ -120,16 +120,18 @@ end
 -- The head's outline as it's drawn: the texfixture with the most points (a Mipo head's 8-point
 -- shape), else the body's own shape. A potato head is drawn about twice its physics shape (-185..76
 -- against -57..56 px): on the physics outline the hair grew from the middle of its face.
+-- Also returns that texfixture's extra: its light settings (clay, a material), which the hair is
+-- lit with, as the part it grows on is (nil for a body drawn without one: the hair stays unlit).
 local function drawnOutline(body)
-    local best
+    local best, bestExtra
     for _, f in ipairs(body:getFixtures()) do
         local ud = f:getUserData()
         local v = ud and ud.subtype == 'texfixture' and ud.extra and ud.extra.vertices
-        if v and #v >= 12 and (not best or #v > #best) then best = v end
+        if v and #v >= 12 and (not best or #v > #best) then best, bestExtra = v, ud.extra end
     end
-    if best then return best end
+    if best then return best, bestExtra end
     local thing = utils.thingOf(body)
-    return thing and thing.vertices
+    return thing and thing.vertices, nil
 end
 
 -- Whether (x, y) is inside the closed outline (flat list).
@@ -208,7 +210,7 @@ function lib.attach(instance, opts)
     for k, v in pairs(lib.defaults) do o[k] = (opts and opts[k] ~= nil) and opts[k] or v end
     local body = headOf(instance)
     if not body or body:isDestroyed() then return end
-    local vertices = drawnOutline(body)
+    local vertices, litExtra = drawnOutline(body)
     if not vertices or #vertices < 6 then return end
     local rng = love.math.newRandomGenerator(o.seed or 1)
     -- the head as an oval (body space) for the locks to drape over
@@ -286,7 +288,8 @@ function lib.attach(instance, opts)
     end
     local rootRest = {}
     for k, lock in ipairs(locks) do rootRest[2 * k - 1], rootRest[2 * k] = lock.rx, lock.ry end
-    instance.hairLocks = { opts = o, locks = locks, body = body, ovalX = ovalX, ovalY = ovalY, rootRest = rootRest }
+    instance.hairLocks = { opts = o, locks = locks, body = body, ovalX = ovalX, ovalY = ovalY, rootRest = rootRest,
+        lit = litExtra, litChecked = true }
     lib.reset(instance)
 end
 
@@ -484,7 +487,8 @@ function lib.update(dt)
         if hair then
             if hair.body:isDestroyed() then
                 instance.hairLocks = nil
-            elseif not hair.ovalX or not hair.rootRest or (hair.locks[1] and not hair.locks[1].ringPitch) then
+            elseif not hair.ovalX or not hair.rootRest or not hair.litChecked
+                    or (hair.locks[1] and not hair.locks[1].ringPitch) then
                 lib.attach(instance, hair.opts) -- made by an older version of this file (hot reload)
             else
                 local body = hair.body
@@ -725,6 +729,10 @@ local function layerMesh(hair, wantFront, pic)
     return L.mesh
 end
 
+local shaders -- src/render/shaders.lua, required when first drawing (not on top: no require loop)
+local litAt = { 0, 0 }
+lib.lit = true -- hair lit like the part it grows on (false: flat colours, as before)
+
 -- The locks of every Mipo that has them, in the colours of its haircut: layer 'back' (behind the
 -- Mipos) or 'front' (over their faces).
 function lib.draw(layer)
@@ -743,6 +751,14 @@ function lib.draw(layer)
             local pic = line or mask
             local mesh = pic and layerMesh(hair, wantFront, pic)
             if mesh then
+                -- lit like the part it grows on (its clay or material, the scene's lights), as the limb
+                -- ribbons are: world space, the lights picked at the body
+                local shaded = false
+                if hair.lit and lib.lit then
+                    shaders = shaders or require('src.render.shaders')
+                    litAt[1], litAt[2] = hair.body:getPosition()
+                    shaded = shaders.setSurfaceShader(hair.lit, nil, litAt)
+                end
                 if mask then
                     love.graphics.setColor(fr, fg, fb, 1)
                     mesh:setTexture(mask)
@@ -753,10 +769,38 @@ function lib.draw(layer)
                     mesh:setTexture(line)
                     love.graphics.draw(mesh)
                 end
+                if shaded then love.graphics.setShader() end
             end
         end
     end
     love.graphics.setColor(1, 1, 1, 1)
+end
+
+-- The hair into the shadows' silhouettes (src/shadow-silhouettes.lua): every haircut whose body `only`
+-- lets through (a depth layer's, nil: all), plain, only its pictures' alpha counts. Drawn by a scene
+-- script, the hair isn't part of the textured world those are drawn from, so it cast none.
+function lib.drawShadow(only)
+    for _, instance in ipairs(holders()) do
+        local hair = instance.hairLocks
+        if hair and not hair.body:isDestroyed() and (not only or only(hair.body)) then
+            local o = hair.opts
+            local line = image('textures/' .. textureNames.part('hair', o.texture) .. '.png')
+            local mask = image('textures/' .. textureNames.part('hair', o.texture) .. '-mask.png')
+            local pic = line or mask
+            love.graphics.setColor(1, 1, 1, 1)
+            for _, front in ipairs({ false, true }) do
+                local mesh = pic and layerMesh(hair, front, pic)
+                if mesh then
+                    for _, img in ipairs({ mask or false, line or false }) do
+                        if img then
+                            mesh:setTexture(img)
+                            love.graphics.draw(mesh)
+                        end
+                    end
+                end
+            end
+        end
+    end
 end
 
 -- One lock's strip built in Lua, { x, y, u, v, r, g, b, a } each (spec/hair-native_spec.lua).

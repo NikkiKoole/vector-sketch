@@ -29,6 +29,11 @@ local function drawOutlines(world, only)
     state.drawingOutlines = true
     local function shows(body, drawable) return castsShadow(drawable) and only(body, drawable) end
     local ok, err = pcall(textured.drawTexturedWorld, world, shows)
+    -- hair locks are drawn by scene scripts, not the textured world: added here (when they're loaded)
+    local hairLocks = package.loaded['src.hair-locks']
+    if ok and hairLocks and hairLocks.drawShadow then
+        ok, err = pcall(hairLocks.drawShadow, only ~= everything and only or nil)
+    end
     state.drawingOutlines = false
     if not ok then error(err, 0) end
 end
