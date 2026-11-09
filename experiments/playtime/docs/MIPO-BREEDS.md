@@ -177,6 +177,17 @@ rubberleg-pearbod**, above **undo**: every random button there remembers the Mip
 and undo rebuilds it from that DNA, up to 20 steps back. In a breed's list `''` is "none" (limb
 hair, for now).
 
+## Where it stands (2026-11-09)
+
+Done: all 8 breeds in `src/mipo-breeds.lua` with palettes (ENGINE-MERGE EM6), the spike only a
+stage; `spec/mipo-breeds_spec.lua` (each breed rolls, lists, build, colours in their bands, nothing
+left swapped in) and `spec/mipo-dna-roundtrip_spec.lua` (a Mipo's whole DNA through save and load,
+migrateDNA's rules) as the guard before the DNA changes. Nikki: "I'm ok with this now".
+Left, in order: B4 judge the breeds by eye (`./playtime.sh play breeds`, 1-9, r), B2's refactor
+(`randomizeAll(instance, breed)`, the opts tables gone, `claudetools/snapshot.sh take before mipos`
+first), the B3 accent, B1 tags (the shape groups in mipo-breeds are a stopgap), then B5 `dna.breed`
+and the picker (a migration test for it goes in the DNA spec).
+
 ## Steps
 
 - [ ] **B1. Tag the catalogs.** Look at each torso/head, ear, hand/foot and pattern picture and
