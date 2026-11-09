@@ -44,6 +44,9 @@ lib.defaults = {
     ringlets = 0,      -- pijpenkrullen: the corkscrew's radius, px (0 = none)
     ringletPitch = 30, -- px of lock per turn; below ~3x the radius the turns show as loops
     springy = 0,       -- 0 keeps its length .. 1 stretches and bounces back like a spring (ringlets do)
+    surface = 0,       -- a coat: this many short locks rooted over the face and body (chest hair), not on the edge
+    surfaceLength = 22, -- px, root to tip
+    surfaceWidth = 0.35, -- times `width`: thin, or the picture squashes into a square
     weight = 3,      -- gravity on the hair, times the world's: at 1 the stiffness held the locks out like a fountain
     width = 0.06,    -- ribbon half-width as a share of the picture's width
     inset = 0.85,    -- the long locks' roots this share of the way out to the outline (fur: almost on it)
@@ -127,6 +130,65 @@ local function drawnOutline(body)
     return thing and thing.vertices
 end
 
+-- Whether (x, y) is inside the closed outline (flat list).
+local function inside(vertices, x, y)
+    local n, isIn = #vertices / 2, false
+    local j = n
+    for i = 1, n do
+        local xi, yi, xj, yj = vertices[2 * i - 1], vertices[2 * i], vertices[2 * j - 1], vertices[2 * j]
+        if (yi > y) ~= (yj > y) and x < (xj - xi) * (y - yi) / (yj - yi) + xi then isIn = not isIn end
+        j = i
+    end
+    return isIn
+end
+
+-- The face parts a coat keeps clear (eyes, mouth), as { x, y, r } in the body's frame.
+local function faceSpots(body)
+    local spots = {}
+    for _, label in ipairs({ 'lpupil', 'rpupil', 'leye', 'reye', 'upperlip', 'lowerlip' }) do
+        local d = decalExtra(body, label)
+        if d and d.ox and d.oy then
+            local r = (d.eyeH or d.h or d.w or 20) * 0.75
+            spots[#spots + 1] = { x = d.ox, y = d.oy, r = math.max(r, (d.w or 0) * 0.6) }
+        end
+    end
+    return spots
+end
+
+-- A coat's locks (o.surface of them): roots on a jittered grid over the outline (pulled in a
+-- little from its edge), none on the eyes or mouth, hanging down, drawn in front.
+local function surfaceLocks(o, vertices, body, rng, locks)
+    local minX, minY, maxX, maxY = math.huge, math.huge, -math.huge, -math.huge
+    for i = 1, #vertices, 2 do
+        minX, maxX = math.min(minX, vertices[i]), math.max(maxX, vertices[i])
+        minY, maxY = math.min(minY, vertices[i + 1]), math.max(maxY, vertices[i + 1])
+    end
+    local step = math.sqrt((maxX - minX) * (maxY - minY) / o.surface)
+    if step < 1 then return end
+    local spots, w = faceSpots(body), o.wild
+    local n = 3
+    for gy = minY + step / 2, maxY, step do
+        for gx = minX + step / 2, maxX, step do
+            local x = gx + (rng:random() - 0.5) * step * 0.8
+            local y = gy + (rng:random() - 0.5) * step * 0.8
+            local clear = inside(vertices, x / 0.9, y / 0.9)
+            for _, sp in ipairs(spots) do
+                if clear and (x - sp.x) ^ 2 + (y - sp.y) ^ 2 < sp.r * sp.r then clear = false end
+            end
+            if clear then
+                locks[#locks + 1] = {
+                    rx = x, ry = y, restAngle = math.pi / 2 + (rng:random() - 0.5) * 0.8,
+                    n = n, drape = false, front = true, surface = true,
+                    segment = o.surfaceLength / (n - 1) * (1 + w * (rng:random() - 0.5) * 0.6),
+                    curl = o.curl * 0.3 * (1 - w + w * (rng:random() * 2 - 1) * 2),
+                    width = o.width * o.surfaceWidth * (1 + w * (rng:random() - 0.5) * 0.6),
+                    points = {}, prev = {},
+                }
+            end
+        end
+    end
+end
+
 local function headOf(instance)
     local part = instance.parts and (instance.parts.head or instance.parts.torso1)
     return part and part.body
@@ -197,6 +259,7 @@ function lib.attach(instance, opts)
             points = {}, prev = {},
         }
     end
+    if o.surface > 0 then surfaceLocks(o, vertices, body, rng, locks) end
     -- each lock's bend per segment at rest (the curl); its curly wave and ringlet turns are only
     -- drawn (lockPath), each lock at its own phase: held by the physics, the wave fought the rest
     -- shape and the tips never stopped moving (7 px a frame on a still head, 2026-11-09)

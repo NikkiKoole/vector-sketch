@@ -2,7 +2,8 @@
 -- Mipo with locks of hair on its head; the panel (play mode, tab) sets how many, how long, how
 -- stiff, how curly, how wild. Throw the Mipo around and watch them.
 -- Its torso has hair all around too, shorter (bodyHair: its length against the head's, 0 = none),
--- or fur (fur: how thick, 0 = the body hair; furLength: px): many short locks standing out a bit.
+-- or fur (fur: how thick, 0 = the body hair; furLength: px): many short locks standing out a bit;
+-- and a coat over the face and body like chest hair (coat: how thick, 0 = none; coatLength: px).
 -- A box beside it wears the same hair: pick it up and swing it, or let it rest (its hair sleeps).
 -- keys: r: lay the locks out again   h: hide/show the panel   m: a new random Mipo
 
@@ -37,8 +38,12 @@ local function bodyOpts()
         o.width = math.min(opts.width or 0.06, 0.04)
         o.spread = 2 * math.pi * (1 - 1 / o.count)
         o.bangs, o.frontLocks = 0, 0
+        o.surface = math.floor((opts.coat or 0) * 120 + 0.5)
+        o.surfaceLength = opts.coatLength or 22
         return o
     end
+    o.surface = math.floor((opts.coat or 0) * 120 + 0.5) -- the coat over the body
+    o.surfaceLength = opts.coatLength or 22
     local f = opts.bodyHair or 0.5
     o.points = math.max(2, math.floor((opts.points or hairLocks.defaults.points) * f + 0.5))
     o.cut = (opts.cut or 0) * f
@@ -48,12 +53,21 @@ local function bodyOpts()
     return o
 end
 
+-- The head's haircut, with its share of the coat (over the face).
+local function headOpts()
+    local o = {}
+    for k, v in pairs(opts) do o[k] = v end
+    o.surface = math.floor((opts.coat or 0) * 40 + 0.5)
+    o.surfaceLength = opts.coatLength or 22
+    return o
+end
+
 local function attachAll()
     for _, instance in pairs(state.mipoInstances) do
-        hairLocks.attach(instance, opts)
+        hairLocks.attach(instance, headOpts())
         local torso = instance.parts and instance.parts.torso1
         if torso and torso.body and not torso.body:isDestroyed()
-                and ((opts.bodyHair or 0.5) > 0 or (opts.fur or 0) > 0) then
+                and ((opts.bodyHair or 0.5) > 0 or (opts.fur or 0) > 0 or (opts.coat or 0) > 0) then
             local holder = hairLocks.attachBody(torso.body, bodyOpts(), instance)
             holder.dna = instance.dna -- the Mipo's hair colours
         else
@@ -69,6 +83,7 @@ function s.onStart()
     for k, v in pairs(hairLocks.defaults) do opts[k] = v end
     opts.bodyHair = 0.5
     opts.fur, opts.furLength = 0, 20
+    opts.coat, opts.coatLength = 0, 22
     attachAll()
 end
 
@@ -121,6 +136,8 @@ local SLIDERS = {
     { key = 'bodyHair', min = 0, max = 1 },
     { key = 'fur', min = 0, max = 1 },
     { key = 'furLength', min = 4, max = 60 },
+    { key = 'coat', min = 0, max = 1 },
+    { key = 'coatLength', min = 4, max = 40 },
     { key = 'wild', min = 0, max = 1 },
     { key = 'damping', min = 0.8, max = 1 },
     { key = 'weight', min = 0, max = 8 },
