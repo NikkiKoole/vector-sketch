@@ -152,6 +152,15 @@ function lib.iconButton(id, x, y, size, icon, opts)
         love.graphics.setColor(0, 0, 0, 0.1)
         drawFitted(lib.image('rect1'), x, y, size, size)
     end
+    local word = icon:match('^text:(.+)$') -- no drawing for it yet (MIPO-MAKER MM12): its word instead
+    if word then
+        local font = love.graphics.getFont()
+        local k = math.min(1.4, size * 0.8 / math.max(1, font:getWidth(word)))
+        love.graphics.setColor(INK[1], INK[2], INK[3], opts.dim and 0.35 or 1)
+        love.graphics.print(word, x + size / 2, y + size / 2, 0, k, k, font:getWidth(word) / 2, font:getHeight() / 2)
+        love.graphics.setColor(1, 1, 1)
+        return pressed(id, x, y, size, size)
+    end
     local mask = opts.mask and lib.image(icon .. '-mask')
     if mask then
         love.graphics.setColor(opts.mask)

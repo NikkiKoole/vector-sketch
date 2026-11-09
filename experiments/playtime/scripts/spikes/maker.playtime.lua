@@ -4,7 +4,7 @@
 -- still pokes). Widgets: src/ui/maker/drawn.lua (makerUI), drawings in textures/ui/maker/.
 -- Parts: body, head, eyes, nose, mouth, teeth, brows, face patches, ears, hair, arms, hands, legs, feet, body hair, arm hair, leg hair.
 -- Play mode only (./playtime.sh play maker; tab toggles the editor).
--- keys: r: a new Mipo   h: hide/show the card
+-- keys: r: a new Mipo   h: hide/show the card   d: the dev-only rows
 
 local s = {}
 
@@ -102,6 +102,71 @@ local function faceSize(onPotato)
         set = function(inst, v) characterManager.updatePositioners(inst, { faceMagnitude = v }) end }
 end
 
+-- The Mipo's build (dna.creation): a change rebuilds it (as the editor's creation rows), but softness,
+-- sway and jiggle, which are read live. Words where Puppetmaker has no drawing ('text:', MM12).
+local function creation(inst) return inst.dna.creation end
+local function rebuildWith(inst, patch) characterManager.rebuildFromCreation(inst, patch) end
+local function liveSlider(less, more, key, min, max, step, default, onSet, extra)
+    local sl = { less = less, more = more, min = min, max = max, step = step,
+        get = function(inst) return creation(inst)[key] or default end,
+        set = function(inst, v)
+            creation(inst)[key] = v
+            if onSet then onSet(inst) end
+        end }
+    for k, v in pairs(extra or {}) do sl[k] = v end
+    return sl
+end
+local function springs(inst) torsoLobes.setSprings(inst) end
+local BUILD_SLIDERS = {
+    { less = 'text:1', more = 'text:5', min = 1, max = 5, step = 1, -- torso segments (a spine needs 2)
+        get = function(inst) return creation(inst).torsoSegments or 1 end,
+        set = function(inst, v)
+            if creation(inst).torsoSpine then v = math.max(2, v) end
+            rebuildWith(inst, { torsoSegments = v })
+        end },
+    { less = 'text:flat', more = 'text:bend', min = 0, max = 45, step = 1,
+        hidden = function(inst) return not creation(inst).torsoSpine end,
+        get = function(inst) return creation(inst).spineBend or 15 end,
+        set = function(inst, v) rebuildWith(inst, { spineBend = v }) end },
+    liveSlider('text:still', 'text:sway', 'spineSway', 0, 1, 0.05, 0.3, nil,
+        { dev = true, hidden = function(inst) return not creation(inst).torsoSpine end }),
+    { less = 'text:thin', more = 'text:deep', min = 0.15, max = 0.6, step = 0.05,
+        hidden = function(inst) return not creation(inst).torsoLobes end,
+        get = function(inst) return creation(inst).lobeDepth or 0.35 end,
+        set = function(inst, v) rebuildWith(inst, { lobeDepth = v }) end },
+    { less = 'text:firm', more = 'text:jelly', min = 0, max = 1, step = 0.05,
+        hidden = function(inst) return not creation(inst).torsoLobes end,
+        get = function(inst) return creation(inst).softness or 0.5 end,
+        set = function(inst, v)
+            torsoLobes.applySoftness(creation(inst), v)
+            springs(inst)
+        end },
+    liveSlider('text:slow', 'text:fast', 'lobeSpring', 0.5, 10, 0.25, 5.5, springs,
+        { dev = true, hidden = function(inst) return not creation(inst).torsoLobes end }),
+    liveSlider('text:bouncy', 'text:damped', 'lobeDamping', 0, 1, 0.05, 0.38, springs,
+        { dev = true, hidden = function(inst) return not creation(inst).torsoLobes end }),
+    liveSlider('text:calm', 'text:wobbly', 'jiggleAmount', 0, 3, 0.1, 0.4, nil,
+        { hidden = function(inst) return not creation(inst).torsoJiggle end }),
+    liveSlider('text:slow', 'text:fast', 'jiggleSpring', 0.5, 8, 0.25, 3, nil,
+        { dev = true, hidden = function(inst) return not creation(inst).torsoJiggle end }),
+    liveSlider('text:bouncy', 'text:damped', 'jiggleDamping', 0, 1, 0.05, 0.15, nil,
+        { dev = true, hidden = function(inst) return not creation(inst).torsoJiggle end }),
+}
+local BUILD_SWITCHES = {
+    { label = 'potato', get = function(inst) return creation(inst).isPotatoHead end,
+        set = function(inst, on) rebuildWith(inst, { isPotatoHead = on }) end },
+    { label = 'spine', get = function(inst) return creation(inst).torsoSpine end,
+        set = function(inst, on)
+            local patch = { torsoSpine = on }
+            if on and (creation(inst).torsoSegments or 1) < 2 then patch.torsoSegments = 2 end
+            rebuildWith(inst, patch)
+        end },
+    { label = 'lobes', get = function(inst) return creation(inst).torsoLobes end,
+        set = function(inst, on) rebuildWith(inst, { torsoLobes = on }) end },
+    { label = 'jiggle', get = function(inst) return creation(inst).torsoJiggle end,
+        set = function(inst, on) creation(inst).torsoJiggle = on end }, -- read live
+}
+
 local CATEGORIES = {
     {
         name = 'body', icon = 'icons/body',
@@ -118,6 +183,8 @@ local CATEGORIES = {
                 set = function(inst, v) setShape(inst, 'torso1', nil, nil, v) end },
             faceSize(true),
         },
+        build = true, -- + BUILD_SLIDERS, BUILD_SWITCHES
+        switches = BUILD_SWITCHES,
     },
     {
         name = 'head', icon = 'icons/head',
@@ -600,6 +667,77 @@ local function withAlpha(hex, a)
     return hex .. string.format('%02x', math.floor(math.max(0, math.min(1, a)) * 255 + 0.5))
 end
 
+-- Neck: the strip from the top torso segment to the head (its connected-skin, set on every segment so
+-- a change of count keeps it), 0..5 segments. 'None': no neck segments (Puppetmaker's neck-no);
+-- picking a skin with none gives it one. Not on a potato.
+local function neckSkin(inst)
+    local top = partData(inst, 'torso' .. (creation(inst).torsoSegments or 1))
+    local cs = top and top.appearance and top.appearance['connected-skin']
+    return cs and cs.main
+end
+local function setNeck(inst, values)
+    for i = 1, creation(inst).torsoSegments or 1 do
+        characterManager.updateConnectedAppearance(inst, 'torso' .. i, 'connected-skin', values)
+    end
+end
+local NECK = {
+    name = 'neck', icon = 'icons/neck', allowNone = true,
+    hidden = function(inst) return creation(inst).isPotatoHead or not neckSkin(inst) end,
+    shapes = shapeCatalogs.limbSkinTextures,
+    picked = function(inst) return (creation(inst).neckSegments or 0) > 0 and neckSkin(inst).bgURL or '' end,
+    pick = function(inst, url)
+        if not url then return rebuildWith(inst, { neckSegments = 0 }) end
+        setNeck(inst, { bgURL = url .. '.png', fgURL = url .. '-mask.png' })
+        if (creation(inst).neckSegments or 0) == 0 then rebuildWith(inst, { neckSegments = 1 }) end
+    end,
+    look = function(inst) return neckSkin(inst) end,
+    layers = ALL_LAYERS,
+    colour = function(inst, layer, hex) setNeck(inst, { [LAYER_KEY[layer]] = hex }) end,
+    setBlock = function(inst, values) setNeck(inst, values) end,
+    sliders = {
+        { less = 'icons/neck-no', more = 'icons/neck-yes', min = 1, max = 5, step = 1, -- segments
+            hidden = function(inst) return (creation(inst).neckSegments or 0) == 0 end,
+            get = function(inst) return creation(inst).neckSegments end,
+            set = function(inst, v) rebuildWith(inst, { neckSegments = v }) end },
+        { less = 'icons/neck-short', more = 'icons/neck-long', min = 10, max = 500, step = 10,
+            hidden = function(inst) return (creation(inst).neckSegments or 0) == 0 end,
+            get = function(inst) return partData(inst, 'neck1') and partData(inst, 'neck1').dims.h or 150 end,
+            set = function(inst, v)
+                for i = 1, creation(inst).neckSegments or 0 do characterManager.updatePart('neck' .. i, { h = v }, inst) end
+            end },
+        { less = 'icons/neck-thin', more = 'icons/neck-thick', min = 0.25, max = 4, step = 0.25,
+            get = function(inst) return neckSkin(inst).wmul or inst.scale or 1 end,
+            set = function(inst, v) setNeck(inst, { wmul = v }) end },
+    },
+}
+
+-- Pupils: shape, colour (one: the editor's 'pupil color'), size (width and height together)
+local function pupil(inst) return face(inst).pupil end
+local PUPILS = {
+    name = 'pupils', icon = 'icons/pupil', outlineOnly = true,
+    shapes = shapeCatalogs.pupilShapes,
+    picked = function(inst) return pupil(inst).shape end,
+    pick = function(inst, url) faceSet(inst, { pupilShape = numberOf(url) }) end,
+    look = function(inst) return { bgHex = pupil(inst).bgHex, fgHex = '' } end,
+    layers = { 'line' },
+    colour = function(inst, _, hex) faceSet(inst, { pupilBgHex = hex }) end,
+    sliders = {
+        { less = 'icons/pupil-small', more = 'icons/pupil-big', min = 0.1, max = 1, step = 0.05,
+            get = function(inst) return pupil(inst).wMul end,
+            set = function(inst, v)
+                local p = pupil(inst)
+                local ratio = (p.hMul or v) / math.max(0.01, p.wMul or v)
+                faceSet(inst, { pupilWMul = v, pupilHMul = math.min(1, v * ratio) })
+            end },
+    },
+}
+for i, cat in ipairs(CATEGORIES) do
+    if cat.name == 'head' then table.insert(CATEGORIES, i + 1, NECK) break end
+end
+for i, cat in ipairs(CATEGORIES) do
+    if cat.name == 'eyes' then table.insert(CATEGORIES, i + 1, PUPILS) break end
+end
+
 local BY_NAME = {}
 for _, cat in ipairs(CATEGORIES) do BY_NAME[cat.name] = cat end
 
@@ -741,6 +879,7 @@ function s.onKeyPress(key)
     local c = check()
     if key == 'r' then newMipo() end
     if key == 'h' then c.show = not c.show end
+    if key == 'd' then c.dev = not c.dev end -- the dev-only rows (sway, springs, damping)
 end
 
 -- the shapes grid: flick it up and down; a tap picks (not at the end of a flick)
@@ -858,6 +997,11 @@ function s.drawUI()
     local cw = math.min(440, W * 0.37)
     local cx, cy, ch = W - cw - 16, 16, H - 32
     makerUI.card(cx, cy, cw, ch)
+    if c.dev then
+        love.graphics.setColor(0.6, 0.2, 0.1)
+        love.graphics.print('dev', cx + cw - 46, cy + 10)
+        love.graphics.setColor(1, 1, 1)
+    end
     local m = cw * 0.08
     local x, w = cx + m, cw - m * 2
     local y = cy + ch * 0.06
@@ -870,7 +1014,7 @@ function s.drawUI()
     if not BY_NAME[c.category] or (BY_NAME[c.category].hidden and BY_NAME[c.category].hidden(inst)) then
         c.category = 'body'
     end
-    local perRow = 9 -- seventeen parts: two rows (a flickable row is MM4's)
+    local perRow = 10 -- nineteen parts: two rows (a flickable row is MM4's)
     local isize = w / perRow
     for i, cat in ipairs(shown) do
         local fill = hexToRGB(fillOf(inst, cat))
@@ -928,15 +1072,20 @@ function s.drawUI()
     -- the sliders on a taped strip, at the bottom
     local sliders = {}
     local source = layer == 'pattern' and patternSliders(cat) or (cat.slidersFor and cat.slidersFor(inst)) or cat.sliders
-    for _, sl in ipairs(source) do
-        if not (sl.hidden and sl.hidden(inst)) then sliders[#sliders + 1] = sl end
+    local function take(list)
+        for _, sl in ipairs(list) do
+            if not (sl.hidden and sl.hidden(inst)) and not (sl.dev and not c.dev) then sliders[#sliders + 1] = sl end
+        end
     end
+    take(source)
+    if cat.build and layer ~= 'pattern' then take(BUILD_SLIDERS) end
     local columns = #sliders > 3 and 2 or 1 -- more than three: two columns, smaller
     local colW = (w - (columns - 1) * m * 0.5) / columns
     local ssize = math.min(48, colW / (columns == 2 and 4.2 or 7))
     local rowH = ssize * 1.25
     local switches = layer ~= 'pattern' and cat.switches or {}
-    local slidersH = (math.ceil(#sliders / columns) + (#switches > 0 and 1 or 0)) * rowH + m * 0.6
+    local switchRows = math.ceil(#switches / 2)
+    local slidersH = (math.ceil(#sliders / columns) + switchRows) * rowH + m * 0.6
     local blobSize = w / 8
     local blobsH = #layers > 0 and (blobSize * 2 + m * 0.4) or 0 -- no colours of its own (patches): no blobs
     local bottom = cy + ch - m * 0.9
@@ -973,18 +1122,19 @@ function s.drawUI()
     end
     -- on/off settings (teeth over the lip, the gum): drawn switches in one row under the sliders
     local swY = sy0 + m * 0.3 + math.ceil(#sliders / columns) * rowH
-    local swW = w / math.max(1, #switches)
+    local swW = w / math.min(2, math.max(1, #switches)) -- two to a row
     for i, sw in ipairs(switches) do
-        local sx = x + (i - 1) * swW
+        local sx = x + ((i - 1) % 2) * swW
+        local rowY = swY + math.floor((i - 1) / 2) * rowH
         local tw, th = ssize * 1.6, ssize * 0.7
-        local on = makerUI.toggle('maker-sw-' .. cat.name .. '-' .. i, sx, swY + (rowH - th) / 2 - ssize * 0.1, tw, th,
+        local on = makerUI.toggle('maker-sw-' .. cat.name .. '-' .. i, sx, rowY + (rowH - th) / 2 - ssize * 0.1, tw, th,
             sw.get(inst) and true or false)
         if on ~= nil then
             apply(function() sw.set(inst, on) end)
             mipoVoice.edited(inst)
         end
         love.graphics.setColor(0.2, 0.15, 0.12)
-        love.graphics.print(sw.label, sx + tw + 8, swY + rowH / 2 - 10)
+        love.graphics.print(sw.label, sx + tw + 8, rowY + rowH / 2 - 10)
         love.graphics.setColor(1, 1, 1)
     end
 
