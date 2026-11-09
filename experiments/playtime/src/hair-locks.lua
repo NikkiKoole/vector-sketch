@@ -24,6 +24,7 @@ local utils = require('src.utils')
 local color = require('src.color')
 local textureNames = require('src.texture-names')
 local hairNative = require('src.hair-native')
+local spineSkin = require('src.spine-skin')
 
 lib.defaults = {
     count = 17,      -- locks
@@ -204,7 +205,9 @@ function lib.attach(instance, opts)
         lock.bends = {}
         for i = 3, lock.n do lock.bends[i] = lock.curl end
     end
-    instance.hairLocks = { opts = o, locks = locks, body = body, ovalX = ovalX, ovalY = ovalY }
+    local rootRest = {}
+    for k, lock in ipairs(locks) do rootRest[2 * k - 1], rootRest[2 * k] = lock.rx, lock.ry end
+    instance.hairLocks = { opts = o, locks = locks, body = body, ovalX = ovalX, ovalY = ovalY, rootRest = rootRest }
     lib.reset(instance)
 end
 
@@ -286,7 +289,7 @@ local function stepLock(lock, o, body, gx, gy, dt, ovalX, ovalY, groundY)
     local p, q = lock.points, lock.prev
     local n = lock.n
     local a = body:getAngle()
-    local rootX, rootY = body:getWorldPoint(lock.rx, lock.ry)
+    local rootX, rootY = body:getWorldPoint(lock.bx or lock.rx, lock.by or lock.ry)
     p[1], p[2], q[1], q[2] = rootX, rootY, rootX, rootY
     local ddx, ddy = gx * dt * dt, gy * dt * dt
     for i = 2, n do
@@ -373,6 +376,25 @@ local function settled(hair)
     return still
 end
 
+-- Where each lock's root is on a torso drawn bent or pushed (a spine, lobes, the drawn jiggle:
+-- spineSkin.torsoBones, the bones the torso picture is drawn with): its rest point moved as the
+-- picture has it, into lock.bx / by (torso1's frame). Without such a torso the roots stay put.
+-- Returns whether a root moved more than WAKE_MOVE from where it was when the hair fell asleep.
+local function bendRoots(hair)
+    local bones = hair.body and spineSkin.torsoBones(hair.body)
+    if not bones then return false end
+    local bent = (bones.deform or spineSkin.deform)(hair.rootRest, bones, hair.rootBent)
+    hair.rootBent = bent
+    local moved = false
+    local slept = hair.asleep and hair.asleep.roots
+    for k, lock in ipairs(hair.locks) do
+        local bx, by = bent[2 * k - 1], bent[2 * k]
+        lock.bx, lock.by = bx, by
+        if slept and math.abs(bx - slept[2 * k - 1]) + math.abs(by - slept[2 * k]) > WAKE_MOVE then moved = true end
+    end
+    return moved
+end
+
 function lib.update(dt)
     local gx, gy = state.physicsWorld:getGravity()
     -- fixed steps: verlet carries velocity as the last step's move, so a step that changes size
@@ -383,14 +405,16 @@ function lib.update(dt)
         if hair then
             if hair.body:isDestroyed() then
                 instance.hairLocks = nil
-            elseif not hair.ovalX or (hair.locks[1] and not hair.locks[1].wave) then
+            elseif not hair.ovalX or not hair.rootRest or (hair.locks[1] and not hair.locks[1].wave) then
                 lib.attach(instance, hair.opts) -- made by an older version of this file (hot reload)
             else
                 local body = hair.body
                 local x, y = body:getPosition()
                 local a = body:getAngle()
+                local rootsMoved = bendRoots(hair)
                 local s = hair.asleep
-                if s and (math.abs(x - s.x) + math.abs(y - s.y) > WAKE_MOVE or math.abs(a - s.a) > WAKE_TURN) then
+                if s and (rootsMoved or math.abs(x - s.x) + math.abs(y - s.y) > WAKE_MOVE
+                        or math.abs(a - s.a) > WAKE_TURN) then
                     hair.asleep, hair.stillTime, hair.acc = nil, 0, 0
                 end
                 if not hair.asleep then
@@ -411,7 +435,9 @@ function lib.update(dt)
                         and math.abs(a - hair.lastA) < STILL_TURN
                     if stepped and headStill and settled(hair) then
                         hair.stillTime = (hair.stillTime or 0) + dt
-                        if hair.stillTime >= SLEEP_AFTER then hair.asleep = { x = x, y = y, a = a } end
+                        if hair.stillTime >= SLEEP_AFTER then
+                            hair.asleep = { x = x, y = y, a = a, roots = hair.rootBent and { unpack(hair.rootBent) } }
+                        end
                     elseif stepped then
                         hair.stillTime = 0
                     end
