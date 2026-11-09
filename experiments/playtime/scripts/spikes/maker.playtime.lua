@@ -62,6 +62,7 @@ end
 local function setShape(inst, name, url, sx, sy)
     local p = partData(inst, name)
     if not p then return end
+    if url and not url:match('%.png$') then url = url .. '.png' end -- the catalogs leave it off, shape8 keys have it
     characterManager.updatePart(name, { shape8URL = url or p.shape8URL, sx = sx or p.dims.sx or 1,
         sy = sy or p.dims.sy or 1 }, inst)
 end
@@ -243,6 +244,7 @@ local function frame()
 end
 
 function s.onStart()
+    check().categories = CATEGORIES -- so the bridge can try every pick and slider (the spike's test)
     worldState.paused = false
     makeGround()
     if not alive(check().mipo) then newMipo() end
