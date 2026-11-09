@@ -2,7 +2,7 @@
 -- beside a live Mipo, the parts in a row on top, the shapes in a flickable grid, paint blobs, icon
 -- sliders on a taped strip, a drawn toggle and the dice. Tap a part of the Mipo to pick it (a drag
 -- still pokes). Widgets: src/ui/maker/drawn.lua (makerUI), drawings in textures/ui/maker/.
--- Parts: body, head, eyes, nose, ears, hair, arms, hands, legs, feet.
+-- Parts: body, head, eyes, nose, ears, hair, arms, hands, legs, feet, body hair, arm hair, leg hair.
 -- Play mode only (./playtime.sh play maker; tab toggles the editor).
 -- keys: r: a new Mipo   h: hide/show the card
 
@@ -33,7 +33,7 @@ local function alive(inst)
 end
 
 local function hexToRGB(hex)
-    hex = hex or 'ccccccff'
+    if not hex or #hex < 6 then hex = 'ccccccff' end -- '' : a layer with no colour (hair without fill)
     return { tonumber(hex:sub(1, 2), 16) / 255, tonumber(hex:sub(3, 4), 16) / 255, tonumber(hex:sub(5, 6), 16) / 255 }
 end
 
@@ -163,7 +163,7 @@ local CATEGORIES = {
         },
     },
     {
-        name = 'hair', icon = 'icons/hair',
+        name = 'hair', icon = 'icons/hair', outlineOnly = true,
         hidden = function(inst) return not haircut(inst) end,
         shapes = shapeCatalogs.haircutTextures,
         picked = function(inst) return haircut(inst).main and haircut(inst).main.bgURL end,
@@ -260,6 +260,82 @@ CATEGORIES[#CATEGORIES + 1] = limbCategory('legs', 'icons/leg', 'icons/legs', {
         end },
 })
 CATEGORIES[#CATEGORIES + 1] = pairCategory('feet', 'icons/feet', 'lfoot', 'rfoot', shapeCatalogs.feetShapes, 'icons/foot')
+
+-- Body hair: a picture laid along each torso segment's outline (all segments alike), grown out
+-- from it by growfactor. 'none' clears it, as the editor's x cell does.
+local function bodyhair(inst, name)
+    local p = partData(inst, name or 'torso1')
+    return p and p.appearance and p.appearance.bodyhair
+end
+local function setBodyhair(inst, values)
+    for _, name in ipairs(torsos(inst)) do
+        if bodyhair(inst, name) then characterManager.updateBodyhairOfPart(inst, name, values) end
+    end
+end
+CATEGORIES[#CATEGORIES + 1] = {
+    name = 'bodyhair', icon = 'icons/chesthair', allowNone = true,
+    hidden = function(inst) return not (bodyhair(inst) and bodyhair(inst).main) end,
+    shapes = shapeCatalogs.bodyhairTextures,
+    picked = function(inst) return bodyhair(inst).main.bgURL end,
+    pick = function(inst, url)
+        if not url then
+            for _, name in ipairs(torsos(inst)) do
+                local main = bodyhair(inst, name) and bodyhair(inst, name).main
+                if main then main.bgURL, main.fgURL, main.cached = nil, nil, nil end
+            end
+            return
+        end
+        setBodyhair(inst, { bgURL = url .. '.png', fgURL = url .. '-mask.png' })
+    end,
+    look = function(inst) return bodyhair(inst).main end,
+    colour = function(inst, layer, hex) setBodyhair(inst, layer == 'line' and { bgHex = hex } or { fgHex = hex }) end,
+    sliders = {
+        { less = 'icons/chesthair-inner', more = 'icons/chesthair-outer', min = 0.5, max = 2.5, step = 0.25,
+            get = function(inst) return bodyhair(inst).growfactor or 1.2 end,
+            set = function(inst, v)
+                for _, name in ipairs(torsos(inst)) do
+                    if bodyhair(inst, name) then bodyhair(inst, name).growfactor = v end
+                end
+                characterManager.rebuildFromCreation(inst, {})
+            end },
+    },
+}
+
+-- Arm and leg hair: a ribbon along the limb (connected-hair on the upper segment, both sides).
+-- Outline only, but for the two hair pictures with a mask (fill then too).
+local function limbHair(inst, limb)
+    local p = partData(inst, LIMBS[limb].owners[1])
+    local ch = p and p.appearance and p.appearance['connected-hair']
+    return ch and ch.main
+end
+local function setLimbHair(inst, limb, values)
+    for _, owner in ipairs(LIMBS[limb].owners) do
+        if partData(inst, owner) then characterManager.updateConnectedAppearance(inst, owner, 'connected-hair', values) end
+    end
+end
+local function limbHairCategory(name, icon, limb)
+    return {
+        name = name, icon = icon, allowNone = true, outlineOnly = true,
+        hidden = function(inst) return not limbHair(inst, limb) end,
+        shapes = shapeCatalogs.limbHairTextures,
+        picked = function(inst) return limbHair(inst, limb).bgURL end,
+        pick = function(inst, url)
+            if not url then return setLimbHair(inst, limb, { bgURL = '', fgURL = '' }) end
+            url = url .. '.png'
+            local fg = shapeCatalogs.hairsWithMask[url] and url:gsub('%.png', '-mask.png') or ''
+            setLimbHair(inst, limb, { bgURL = url, fgURL = fg })
+        end,
+        look = function(inst) return limbHair(inst, limb) end,
+        colour = function(inst, layer, hex) setLimbHair(inst, limb, layer == 'line' and { bgHex = hex } or { fgHex = hex }) end,
+        sliders = {
+            { less = 'icons/hair-thin', more = 'icons/hair-thick', min = 0.25, max = 4, step = 0.25,
+                get = function(inst) return limbHair(inst, limb).wmul or inst.scale or 1 end,
+                set = function(inst, v) setLimbHair(inst, limb, { wmul = v }) end },
+        },
+    }
+end
+CATEGORIES[#CATEGORIES + 1] = limbHairCategory('armhair', 'icons/armhair', 'arms')
+CATEGORIES[#CATEGORIES + 1] = limbHairCategory('leghair', 'icons/leghair', 'legs')
 
 local BY_NAME = {}
 for _, cat in ipairs(CATEGORIES) do BY_NAME[cat.name] = cat end
@@ -403,7 +479,9 @@ end
 local function drawGrid(c, inst, cat, x, y, w, h)
     local cols = 4
     local cell = w / cols
-    local items = cat.shapes or {}
+    local items = {}
+    if cat.allowNone then items[1] = false end -- false: the 'none' cell (no hair)
+    for _, url in ipairs(cat.shapes or {}) do items[#items + 1] = url end
     local rows = math.ceil(#items / cols)
     local g = c.grid
     local maxOff = math.max(0, rows * cell - h)
@@ -433,9 +511,14 @@ local function drawGrid(c, inst, cat, x, y, w, h)
         local col, row = (i - 1) % cols, math.floor((i - 1) / cols)
         local cx, cy = x + col * cell, y + row * cell - g.off
         if cy + cell > y and cy < y + h then
-            local isPicked = picked == url .. '.png' or picked == url or picked == numberOf(url)
-            local tapped = makerUI.partCell('maker-cell-' .. i, cx, cy, cell, url, look, isPicked,
-                cat.name == 'hair' and not shapeCatalogs.hairsWithMask[url .. '.png'])
+            local tapped
+            if url == false then
+                tapped = makerUI.noneCell('maker-cell-none', cx, cy, cell, picked == nil or picked == '')
+            else
+                local isPicked = picked == url .. '.png' or picked == url or picked == numberOf(url)
+                tapped = makerUI.partCell('maker-cell-' .. i, cx, cy, cell, url, look, isPicked,
+                    cat.outlineOnly and not shapeCatalogs.hairsWithMask[url .. '.png'])
+            end
             if tapped and not g.flicked and over then
                 apply(function() cat.pick(inst, url) end)
                 mipoVoice.edited(inst)
@@ -473,7 +556,7 @@ function s.drawUI()
     if not BY_NAME[c.category] or (BY_NAME[c.category].hidden and BY_NAME[c.category].hidden(inst)) then
         c.category = 'body'
     end
-    local perRow = 5 -- ten parts: two rows (a flickable row is MM4's)
+    local perRow = 7 -- thirteen parts: two rows (a flickable row is MM4's)
     local isize = w / perRow
     for i, cat in ipairs(shown) do
         local fill = hexToRGB(fillOf(inst, cat))

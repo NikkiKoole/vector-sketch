@@ -250,4 +250,21 @@ function lib.partCell(id, x, y, size, url, look, picked, noMask)
     return pressed(id, x, y, size, size)
 end
 
+-- The 'none' cell (no hair): an empty chalk circle, crossed. Returns true when tapped.
+function lib.noneCell(id, x, y, size, picked)
+    if picked then
+        love.graphics.setColor(1, 0.97, 0.88, 0.9)
+        drawFitted(lib.image('panels/whiterect2'), x, y, size, size)
+    end
+    love.graphics.setColor(INK[1], INK[2], INK[3], 0.6)
+    local grow = picked and 0.7 * lib.wobble(0.05) or 0.6
+    drawFitted(lib.image('circle2'), x, y, size, size, grow)
+    love.graphics.setLineWidth(3)
+    local d = size * 0.22
+    love.graphics.line(x + size / 2 - d, y + size / 2 + d, x + size / 2 + d, y + size / 2 - d)
+    love.graphics.setLineWidth(1)
+    love.graphics.setColor(1, 1, 1)
+    return pressed(id, x, y, size, size)
+end
+
 return lib
