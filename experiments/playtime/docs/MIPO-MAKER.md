@@ -1,6 +1,6 @@
 # Mipo maker — Puppetmaker 2's dress-up screen, in Playtime
 
-status: active, focus
+status: parked — kept: "lets keep it, and come back to it later" (Nikki 2026-11-09, after the spike, scene `maker`). Next when picked up: MM2, MM4, MM1 (out of the spike scene, into any scene)
 
 **Started:** 2026-11-09. **Focus since 2026-11-09.** The editor's Mipo panel (`src/ui/mipo/`) stays: it is the developer's tool,
 reaches everything, accordions and numbers, mouse first. The maker is for kids playing: tap a Mipo,
@@ -125,8 +125,10 @@ facing, pupils' and patches' positions.
   a drag still pokes; the camera moves to body / head / face by category. Done 2026-11-09 in the spike, but the camera move (MM9).
 - [x] **MM6. Part thumbnails.** Cells from `textures/mipo/<part>/` plus the mask tinted in the Mipo's
   colour; cached by picture and colour (a cache that levels off, CLAUDE.md). Done 2026-11-09: baked by the OMP bake itself (bakePreview), not the mask tinted (the masks are black).
-- [ ] **MM7. First slice, Nikki judges:** the card + tap to pick + shapes and colours for body, eyes
-  and hair. Keep, change or park?
+- [x] **MM7. First slice, Nikki judges:** the card + tap to pick + shapes and colours for body, eyes
+  and hair. Keep, change or park? Kept 2026-11-09 (judged as it grew: the paper fill out, a
+  fixed skeleton instead of 'a bit of a mess', line before fill for body hair, wider ranges than
+  Puppetmaker's).
 - [x] **MM8. The rest:** patterns, icon sliders in the fold, the other categories from the catalog. Done 2026-11-09 in the spike: patterns, the more fold, every part (and more: neck, pupils, teeth, patches, build).
 - [ ] **MM9. Feel.** The growl through `src/mipo-voice.lua`, pitched by the value; clicks and ticks;
   the camera tween (DOLL-PLAY F3's tween layer: this is the real sequence it waited for); the
