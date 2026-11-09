@@ -1,6 +1,7 @@
 -- hair: a spike for long hair that swings (src/hair-locks.lua; parked, docs/HAIR-LOCKS.md). One
 -- Mipo with locks of hair on its head; the panel (play mode, tab) sets how many, how long, how
 -- stiff, how curly, how wild. Throw the Mipo around and watch them.
+-- Its torso has hair all around too, shorter (bodyHair: its length against the head's, 0 = none).
 -- A box beside it wears the same hair: pick it up and swing it, or let it rest (its hair sleeps).
 -- keys: r: lay the locks out again   h: hide/show the panel
 
@@ -22,8 +23,30 @@ local function hairBox()
     return thing and thing.body
 end
 
+-- The torso's hair: roots all around its outline, no bangs, all behind, `bodyHair` times as long.
+local function bodyOpts()
+    local o = {}
+    for k, v in pairs(opts) do o[k] = v end
+    local f = opts.bodyHair or 0.5
+    o.points = math.max(2, math.floor((opts.points or hairLocks.defaults.points) * f + 0.5))
+    o.cut = (opts.cut or 0) * f
+    o.spread = 2 * math.pi * (1 - 1 / 24) -- all the way round, the two ends not on one spot
+    o.count = 24
+    o.bangs, o.frontLocks = 0, 0
+    return o
+end
+
 local function attachAll()
-    for _, instance in pairs(state.mipoInstances) do hairLocks.attach(instance, opts) end
+    for _, instance in pairs(state.mipoInstances) do
+        hairLocks.attach(instance, opts)
+        local torso = instance.parts and instance.parts.torso1
+        if torso and torso.body and not torso.body:isDestroyed() and (opts.bodyHair or 0.5) > 0 then
+            local holder = hairLocks.attachBody(torso.body, bodyOpts(), instance)
+            holder.dna = instance.dna -- the Mipo's hair colours
+        else
+            hairLocks.detachBody(instance)
+        end
+    end
     local box = hairBox()
     if box then hairLocks.attachBody(box, opts, 'box') end
 end
@@ -31,6 +54,7 @@ end
 function s.onStart()
     worldState.paused = false
     for k, v in pairs(hairLocks.defaults) do opts[k] = v end
+    opts.bodyHair = 0.5
     attachAll()
 end
 
@@ -72,6 +96,7 @@ local SLIDERS = {
     { key = 'lenMiddle', min = 0.2, max = 2 },
     { key = 'lenSides', min = 0.2, max = 2 },
     { key = 'part', min = -1, max = 1 },
+    { key = 'bodyHair', min = 0, max = 1 },
     { key = 'wild', min = 0, max = 1 },
     { key = 'damping', min = 0.8, max = 1 },
     { key = 'weight', min = 0, max = 8 },
@@ -99,7 +124,7 @@ function s.drawUI()
             local col, row = (k - 1) % 2, math.floor((k - 1) / 2)
             local x, y = x0 + pad + col * colW, y0 + 24 + row * (BH + pad)
             local v = ui.sliderWithInput('hair' .. sl.key, x, y, 160, sl.min, sl.max,
-                opts[sl.key] or hairLocks.defaults[sl.key], nil, sl.step)
+                opts[sl.key] or hairLocks.defaults[sl.key] or 0, nil, sl.step)
             if v and v ~= opts[sl.key] then
                 if sl.step then v = math.floor(v + 0.5) end
                 opts[sl.key] = v

@@ -175,6 +175,11 @@ function lib.attachBody(body, opts, key)
     return holder
 end
 
+-- The hair off the body attachBody gave it under `key`.
+function lib.detachBody(key)
+    if state.hairHolders then state.hairHolders[key] = nil end
+end
+
 -- The hair off every body that got it with attachBody (a scene's unload).
 function lib.detachBodies()
     state.hairHolders = nil
