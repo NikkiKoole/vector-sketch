@@ -52,6 +52,9 @@ describe('every scene', function()
         ui.startFrame()
         script.call('drawUI')
         love.graphics.setCanvas()
+        -- end the frame, like the game: without it every scene's frames went to the GPU as one, and
+        -- the office iMac's AMD GL driver aborted the run in it (2026-11-09; the same as MEASURING M6)
+        love.graphics.present()
     end
 
     -- the keys a scene script answers to
