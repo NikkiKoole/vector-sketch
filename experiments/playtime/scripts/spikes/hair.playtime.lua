@@ -103,10 +103,10 @@ end
 function s.onStart()
     worldState.paused = false
     for k, v in pairs(hairLocks.defaults) do opts[k] = v end
-    opts.headOn, opts.bangsOn, opts.bodyOn, opts.furOn, opts.coatOn = true, true, true, false, false
+    opts.headOn, opts.bangsOn, opts.bodyOn, opts.furOn, opts.coatOn = true, true, false, false, false
     opts.bodyHair = 0.5
     opts.fur, opts.furLength = 0.5, 20
-    opts.coat, opts.coatLength, opts.coatCurly, opts.coatWidth = 0.5, 22, 0, 0.021
+    opts.coat, opts.coatLength, opts.coatCurly, opts.coatWidth = 0.5, 17, 0, 0.05
     attachAll()
 end
 
