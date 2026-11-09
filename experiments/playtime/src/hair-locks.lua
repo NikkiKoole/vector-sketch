@@ -47,6 +47,7 @@ lib.defaults = {
     surface = 0,       -- a coat: this many short locks rooted over the face and body (chest hair), not on the edge
     surfaceLength = 22, -- px, root to tip
     surfaceWidth = 0.35, -- times `width`: thin, or the picture squashes into a square
+    surfaceCurly = 0,  -- 0 straight .. 1 the coat in small coils (5 px across, a turn every 9 px)
     weight = 3,      -- gravity on the hair, times the world's: at 1 the stiffness held the locks out like a fountain
     width = 0.06,    -- ribbon half-width as a share of the picture's width
     inset = 0.85,    -- the long locks' roots this share of the way out to the outline (fur: almost on it)
@@ -90,6 +91,7 @@ local function outlinePoint(vertices, angle)
 end
 
 local WAVE_AMP = 16  -- px: the curly wave's height at curly 1 (bangs half)
+local COAT_RING, COAT_PITCH = 5, 9 -- px: a coat's coils at surfaceCurly 1 (radius, a turn)
 local WAVE_SEGMENTS = 5 -- segments a wave
 
 -- How far down the head (its frame, y down) the bangs may reach: the top of the brows, else of the
@@ -266,6 +268,13 @@ function lib.attach(instance, opts)
     for _, lock in ipairs(locks) do
         lock.phase = rng:random() * 2 * math.pi
         lock.wave = o.curly * WAVE_AMP * (lock.drape and 1 or 0.5)
+        -- its ringlet: the haircut's, or a coat's own small coils (chest hair curls)
+        if lock.surface then
+            lock.ring = o.surfaceCurly * COAT_RING * (1 + o.wild * (rng:random() - 0.5) * 0.6)
+            lock.ringPitch = COAT_PITCH
+        else
+            lock.ring, lock.ringPitch = o.ringlets, o.ringletPitch
+        end
         lock.bends = {}
         for i = 3, lock.n do lock.bends[i] = lock.curl end
     end
@@ -469,7 +478,7 @@ function lib.update(dt)
         if hair then
             if hair.body:isDestroyed() then
                 instance.hairLocks = nil
-            elseif not hair.ovalX or not hair.rootRest or (hair.locks[1] and not hair.locks[1].wave) then
+            elseif not hair.ovalX or not hair.rootRest or (hair.locks[1] and not hair.locks[1].ringPitch) then
                 lib.attach(instance, hair.opts) -- made by an older version of this file (hot reload)
             else
                 local body = hair.body
@@ -521,7 +530,7 @@ local MAXSAMPLES = hairNative.MAX_SAMPLES
 local cork = {}
 local function lockPath(lock, o, out)
     local p, n, L = lock.points, lock.n, lock.segment
-    local R, pitch = o.ringlets, math.max(4, o.ringletPitch)
+    local R, pitch = lock.ring or o.ringlets, math.max(4, lock.ringPitch or o.ringletPitch)
     local W, wavePitch = lock.wave or 0, L * WAVE_SEGMENTS
     -- samples per segment: ~10 a ringlet turn or wave; plain locks only as many as the bend needs
     local maxPer = math.max(1, math.floor((MAXSAMPLES - 1) / math.max(1, n - 1)))
@@ -628,7 +637,8 @@ end
 -- The most vertices a lock's strip can take, with the two that join it to the one before.
 local function capacityFor(lock, o)
     local per = 5
-    if o.ringlets > 0 then per = math.max(per, math.ceil(lock.segment / math.max(4, o.ringletPitch) * 10)) end
+    local ring, pitch = lock.ring or o.ringlets, lock.ringPitch or o.ringletPitch
+    if ring > 0 then per = math.max(per, math.ceil(lock.segment / math.max(4, pitch) * 10)) end
     return 2 * math.min(MAXSAMPLES, (lock.n - 1) * per + 1) + 2
 end
 
@@ -662,7 +672,8 @@ local function layerMesh(hair, wantFront, pic)
         for _, lock in ipairs(hair.locks) do
             if (lock.front or false) == wantFront then
                 local at = count > 0 and count + 2 or 0
-                local c = hairNative.strip(lock.points, lock.n, lock.segment, o.ringlets, o.ringletPitch,
+                local c = hairNative.strip(lock.points, lock.n, lock.segment, lock.ring or o.ringlets,
+                    lock.ringPitch or o.ringletPitch,
                     lock.wave or 0, lock.segment * WAVE_SEGMENTS, lock.phase or 0, TILT, picW * lock.width,
                     nativeData, at)
                 if c > 0 then

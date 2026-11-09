@@ -35,6 +35,7 @@ end
 local function coat(o, share)
     o.surface = opts.coatOn and math.floor((opts.coat or 0.5) * share + 0.5) or 0
     o.surfaceLength = opts.coatLength or 22
+    o.surfaceCurly = opts.coatCurly or 0
 end
 
 -- The torso's hair: fur (many short locks standing out, roots almost on the outline), or the body
@@ -103,7 +104,7 @@ function s.onStart()
     opts.headOn, opts.bangsOn, opts.bodyOn, opts.furOn, opts.coatOn = true, true, true, false, false
     opts.bodyHair = 0.5
     opts.fur, opts.furLength = 0.5, 20
-    opts.coat, opts.coatLength = 0.5, 22
+    opts.coat, opts.coatLength, opts.coatCurly = 0.5, 22, 0
     attachAll()
 end
 
@@ -178,6 +179,7 @@ local SECTIONS = {
     { name = 'coat', toggle = 'coatOn', sliders = {
         { key = 'coat', min = 0, max = 1 },
         { key = 'coatLength', min = 4, max = 40 },
+        { key = 'coatCurly', min = 0, max = 1 },
     } },
     { name = 'physics', sliders = {
         { key = 'stiffness', min = 0, max = 1 },
