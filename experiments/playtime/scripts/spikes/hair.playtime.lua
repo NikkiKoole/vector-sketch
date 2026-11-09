@@ -1,14 +1,31 @@
 -- hair: a spike for long hair that swings (src/hair-locks.lua; parked, docs/HAIR-LOCKS.md). One
 -- Mipo with locks of hair on its head; the panel (play mode, tab) sets how many, how long, how
 -- stiff, how curly, how wild. Throw the Mipo around and watch them.
+-- A box beside it wears the same hair: pick it up and swing it, or let it rest (its hair sleeps).
 -- keys: r: lay the locks out again   h: hide/show the panel
 
 local s = {}
 local opts = {}
 local showPanel = true
 
+-- The box with hair: the one in the scene (by its label), else a new one beside the Mipo.
+local function hairBox()
+    local found = getObjectsByLabel('hair-box')[1]
+    if found and found.body and not found.body:isDestroyed() then return found.body end
+    local x, y = 0, 0
+    for _, instance in pairs(state.mipoInstances) do
+        local head = instance.parts and instance.parts.head
+        if head and head.body and not head.body:isDestroyed() then x, y = head.body:getPosition() end
+    end
+    local thing = objectManager.addThing('rectangle', { x = x - 500, y = y, width = 220, height = 150,
+        label = 'hair-box' })
+    return thing and thing.body
+end
+
 local function attachAll()
     for _, instance in pairs(state.mipoInstances) do hairLocks.attach(instance, opts) end
+    local box = hairBox()
+    if box then hairLocks.attachBody(box, opts, 'box') end
 end
 
 function s.onStart()
@@ -19,6 +36,7 @@ end
 
 function s.onUnload()
     for _, instance in pairs(state.mipoInstances) do instance.hairLocks = nil end
+    hairLocks.detachBodies()
 end
 
 function s.onKeyPress(key)

@@ -165,6 +165,41 @@ function lib.attach(instance, opts)
     lib.reset(instance)
 end
 
+-- Hair on any body (a box to pick up): `key` names it (again with the same key: new hair). Kept on
+-- state, so a hot reload keeps it; drawn and moved with the Mipos' hair.
+function lib.attachBody(body, opts, key)
+    state.hairHolders = state.hairHolders or {}
+    local holder = { parts = { head = { body = body } } }
+    state.hairHolders[key or body] = holder
+    lib.attach(holder, opts)
+    return holder
+end
+
+-- The hair off every body that got it with attachBody (a scene's unload).
+function lib.detachBodies()
+    state.hairHolders = nil
+end
+
+-- Everything that wears hair: the Mipos, and the bodies given it with attachBody.
+local holderList = {}
+local function holders()
+    local list, n = holderList, 0
+    for _, instance in pairs(state.mipoInstances) do
+        n = n + 1
+        list[n] = instance
+    end
+    for key, holder in pairs(state.hairHolders or {}) do
+        if holder.hairLocks then
+            n = n + 1
+            list[n] = holder
+        else
+            state.hairHolders[key] = nil -- its body is gone
+        end
+    end
+    for i = n + 1, #list do list[i] = nil end
+    return list
+end
+
 -- Lay every lock out of the head in its rest shape (after a teleport, or new locks).
 function lib.reset(instance)
     local h = instance.hairLocks
@@ -276,7 +311,7 @@ function lib.update(dt)
     -- fixed steps: verlet carries velocity as the last step's move, so a step that changes size
     -- with the frame time flings points (80-120 px a step with uneven frames, 2026-11-09)
     local h = 1 / 120
-    for _, instance in pairs(state.mipoInstances) do
+    for _, instance in ipairs(holders()) do
         local hair = instance.hairLocks
         if hair then
             if hair.body:isDestroyed() then
@@ -512,7 +547,7 @@ end
 -- Mipos) or 'front' (over their faces).
 function lib.draw(layer)
     local wantFront = layer == 'front'
-    for _, instance in pairs(state.mipoInstances) do
+    for _, instance in ipairs(holders()) do
         local hair = instance.hairLocks
         if hair and not hair.body:isDestroyed() then
             local o = hair.opts
