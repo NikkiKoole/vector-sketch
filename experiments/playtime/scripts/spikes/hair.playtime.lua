@@ -3,7 +3,8 @@
 -- stiff, how curly, how wild. Throw the Mipo around and watch them.
 -- Its torso has hair all around too, shorter (bodyHair: its length against the head's, 0 = none),
 -- or fur (fur: how thick, 0 = the body hair; furLength: px): many short locks standing out a bit;
--- and a coat over the face and body like chest hair (coat: how thick, 0 = none; coatLength: px).
+-- and a coat over the face and body like chest hair (coat: how thick, 0 = none, 1 = ~120 strands on
+-- the face and ~400 on the body; coatLength: px).
 -- A box beside it wears the same hair: pick it up and swing it, or let it rest (its hair sleeps).
 -- keys: r: lay the locks out again   h: hide/show the panel   m: a new random Mipo
 
@@ -38,11 +39,11 @@ local function bodyOpts()
         o.width = math.min(opts.width or 0.06, 0.04)
         o.spread = 2 * math.pi * (1 - 1 / o.count)
         o.bangs, o.frontLocks = 0, 0
-        o.surface = math.floor((opts.coat or 0) * 120 + 0.5)
+        o.surface = math.floor((opts.coat or 0) * 400 + 0.5)
         o.surfaceLength = opts.coatLength or 22
         return o
     end
-    o.surface = math.floor((opts.coat or 0) * 120 + 0.5) -- the coat over the body
+    o.surface = math.floor((opts.coat or 0) * 400 + 0.5) -- the coat over the body
     o.surfaceLength = opts.coatLength or 22
     local f = opts.bodyHair or 0.5
     o.points = math.max(2, math.floor((opts.points or hairLocks.defaults.points) * f + 0.5))
@@ -57,7 +58,7 @@ end
 local function headOpts()
     local o = {}
     for k, v in pairs(opts) do o[k] = v end
-    o.surface = math.floor((opts.coat or 0) * 40 + 0.5)
+    o.surface = math.floor((opts.coat or 0) * 120 + 0.5)
     o.surfaceLength = opts.coatLength or 22
     return o
 end
