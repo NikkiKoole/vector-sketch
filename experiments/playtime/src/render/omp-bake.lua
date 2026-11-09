@@ -429,6 +429,7 @@ function lib.makeCombinedImages()
         end
     end
     if replaced then releaseReplacedImages(replaced, state.physicsWorld:getBodies()) end
+    require('src.face-patches').bakePending() -- face patches with an outline or a pattern (MIPO-MAKER)
 end
 
 

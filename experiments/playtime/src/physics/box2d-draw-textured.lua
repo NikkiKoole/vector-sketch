@@ -935,7 +935,15 @@ local function drawFacePatches(extra, body)
     local angle = body:getAngle()
     for _, patch in ipairs(extra.facePatches) do
         local img, iw, ih = getLoveImage('textures/' .. patch.url)
-        if img then
+        if patch.image then -- baked with its outline / pattern (face-patches bakePending): drawn as it is
+            local bw, bh = patch.image:getDimensions()
+            local wx, wy = body:getWorldPoint(patch.ox, patch.oy)
+            love.graphics.setShader(shader)
+            love.graphics.setColor(1, 1, 1, patch.tint[4] or 1)
+            love.graphics.draw(patch.image, wx, wy, angle, patch.w / bw * (patch.mirror and -1 or 1), patch.h / bh,
+                bw / 2, bh / 2)
+            love.graphics.setShader(patchShader)
+        elseif img then
             local wx, wy = body:getWorldPoint(patch.ox, patch.oy)
             love.graphics.setColor(patch.tint)
             local sx = patch.w / iw * (patch.mirror and -1 or 1)

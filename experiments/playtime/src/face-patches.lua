@@ -10,6 +10,12 @@
 --
 -- A Mipo has them while instance.facePatches holds its settings (lib.defaults()); rebuildTextures
 -- puts them back after it remakes the face. Not saved yet: a spike (breeds, facing).
+--
+-- Each kind (eye, cheek, snout) can have a look of its own, as Puppetmaker 2's patches did
+-- (set.looks[kind]: shape, fgHex fill, bgHex outline, pHex + pURL + pr / psx / psy pattern; the Mipo
+-- maker sets them). Without one a patch is its mask tinted from the skin, as before. With an outline
+-- or a pattern showing it's baked like a part's skin (omp-bake bakePreview), at the frame's start
+-- (lib.bakePending, from omp-bake makeCombinedImages: never while drawing), and drawn as that picture.
 local fixtures = require('src.fixtures')
 
 local lib = {}
@@ -128,6 +134,63 @@ end
 
 -- Put the patches on (again) from instance.facePatches; without settings, take them off. turn:
 -- turn them with the face now (rebuildTextures turns the whole face itself afterwards).
+local function hexOf(rgba)
+    local function b(v) return math.floor(clamp01(v) * 255 + 0.5) end
+    return string.format('%02x%02x%02x%02x', b(rgba[1]), b(rgba[2]), b(rgba[3]), b(rgba[4] or 1))
+end
+local function shows(hex) return hex and #hex >= 8 and tonumber(hex:sub(7, 8), 16) > 0 end
+
+-- a patch's own look (set.looks[kind]) onto it: its picture, its fill, and a bake when it has an
+-- outline or a pattern to show
+local function applyLook(patch, set, derived)
+    local look = set.looks and set.looks[patch.kind]
+    local base = lib.SHAPES[look and look.shape or set.shape] or lib.SHAPES[1]
+    patch.url = base .. '-mask.png'
+    patch.tint = derived
+    patch.bake, patch.image = nil, nil
+    if not look then return end
+    if look.fgHex then
+        local r, g, b = tonumber(look.fgHex:sub(1, 2), 16) / 255, tonumber(look.fgHex:sub(3, 4), 16) / 255,
+            tonumber(look.fgHex:sub(5, 6), 16) / 255
+        patch.tint = { r, g, b, derived[4] }
+    end
+    if shows(look.bgHex) or shows(look.pHex) then
+        local fill = hexOf({ patch.tint[1], patch.tint[2], patch.tint[3], 1 })
+        local b = { fgHex = fill, bgHex = look.bgHex or '00000000', pHex = look.pHex or '00000000',
+            pURL = look.pURL, pr = look.pr, psx = look.psx, psy = look.psy }
+        patch.bake = { outline = base .. '.png', mask = base .. '-mask.png', look = b,
+            key = table.concat({ base, b.fgHex, b.bgHex, b.pHex, b.pURL or '', b.pr or 0, b.psx or 1, b.psy or 1 },
+                '|') }
+    end
+end
+
+-- Baked patch pictures, by look (shared by Mipos with the same one). Dropped oldest first past
+-- BAKED_MAX, not released: a Mipo may still draw it (the GC frees it when none does).
+local BAKED_MAX = 32
+local baked, bakedOrder = {}, {}
+local pending = {} -- decal extras whose patches want a bake
+
+function lib.bakePending()
+    if not next(pending) then return end
+    local ompBake = require('src.render.omp-bake') -- here: omp-bake calls this module
+    for extra in pairs(pending) do
+        for _, patch in ipairs(extra.facePatches or {}) do
+            local job = patch.bake
+            if job then
+                local img = baked[job.key]
+                if not img then
+                    img = ompBake.bakePreview(job.outline, job.mask, job.look)
+                    baked[job.key] = img
+                    bakedOrder[#bakedOrder + 1] = job.key
+                    if #bakedOrder > BAKED_MAX then baked[table.remove(bakedOrder, 1)] = nil end
+                end
+                patch.image = img
+            end
+        end
+        pending[extra] = nil
+    end
+end
+
 function lib.place(instance, turn)
     local body = faceBody(instance)
     if not body then return end
@@ -138,15 +201,19 @@ function lib.place(instance, turn)
         return
     end
     local list = places(face, set)
-    local url = lib.SHAPES[set.shape] .. '-mask.png'
     local colours = tints(skinFixture:getUserData().extra.main.fgHex, set)
-    for _, patch in ipairs(list) do patch.url, patch.tint = url, colours[patch.kind] end
+    local wantsBake = false
+    for _, patch in ipairs(list) do
+        applyLook(patch, set, colours[patch.kind])
+        wantsBake = wantsBake or patch.bake ~= nil
+    end
     if not fixture then
         fixture = fixtures.createSFixture(body, 0, 0, 'decal', { radius = 10 })
         fixture:getUserData().label = 'facepatches'
     end
     local e = fixture:getUserData().extra
     e.facePatches, e.skinFixture = list, skinFixture
+    if wantsBake then pending[e] = true end
     e.zOffset, e.zGroupOffset = lib.Z, instance.zGroupOffset or face.lpupil.zGroupOffset
     if turn then require('src.mipo-facing').applyFace(instance) end
 end

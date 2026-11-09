@@ -482,9 +482,9 @@ local TEETH = {
 -- tap the picked one to turn it off. The sliders: the picked patch's size and strength.
 -- Cheeks borrow Puppetmaker's second eye-patch icon: it has none for cheeks.
 local PATCH_KINDS = {
-    { key = 'eyes', icon = 'icons/skinpatchEye1', size = { 'eyeSize', 1, 3 }, strength = { 'eyeDark', 0, 1 } },
-    { key = 'cheeks', icon = 'icons/skinpatchEye2', size = { 'cheekSize', 0.5, 2.5 }, strength = { 'cheekBlush', 0, 1 } },
-    { key = 'snout', icon = 'icons/skinpatchSnout', size = { 'snoutSize', 0.5, 2 }, strength = { 'snoutLight', 0, 1 } },
+    { key = 'eyes', kind = 'eye', icon = 'icons/skinpatchEye1', size = { 'eyeSize', 1, 3 }, strength = { 'eyeDark', 0, 1 } },
+    { key = 'cheeks', kind = 'cheek', icon = 'icons/skinpatchEye2', size = { 'cheekSize', 0.5, 2.5 }, strength = { 'cheekBlush', 0, 1 } },
+    { key = 'snout', kind = 'snout', icon = 'icons/skinpatchSnout', size = { 'snoutSize', 0.5, 2 }, strength = { 'snoutLight', 0, 1 } },
 }
 local function patchesNow(inst, make)
     if not inst.facePatches and make then
@@ -499,25 +499,64 @@ local function patchKind()
     for _, k in ipairs(PATCH_KINDS) do if k.key == key then return k end end
     return PATCH_KINDS[1]
 end
+-- the picked patch's own look (face-patches set.looks[kind]: Puppetmaker 2's per-patch picture,
+-- colours and pattern), made when first changed
+local function kindLook(inst, make)
+    local set = patchesNow(inst, make)
+    if not set then return nil end
+    set.looks = set.looks or {}
+    local kind = patchKind().kind
+    if make and not set.looks[kind] then set.looks[kind] = {} end
+    return set.looks[kind]
+end
+-- the fill it has now: its own, else the one face-patches made from the skin (on the face's decal)
+local function patchFill(inst)
+    local look = kindLook(inst)
+    if look and look.fgHex then return look.fgHex end
+    local body = inst.parts[faceOwner(inst)] and inst.parts[faceOwner(inst)].body
+    for _, f in ipairs(body and body:getFixtures() or {}) do
+        local ud = f:getUserData()
+        if ud and ud.label == 'facepatches' then
+            for _, p in ipairs(ud.extra.facePatches or {}) do
+                if p.kind == patchKind().kind then
+                    local t = p.tint
+                    return string.format('%02x%02x%02xff', t[1] * 255, t[2] * 255, t[3] * 255)
+                end
+            end
+        end
+    end
+    local skin = skinOf(inst, faceOwner(inst))
+    return skin and skin.fgHex or 'ccccccff'
+end
+local function setKindLook(inst, values)
+    local look = kindLook(inst, true)
+    for k, v in pairs(values) do look[k] = v end
+    inst.facePatches[patchKind().key] = true -- changing a patch shows it
+    placePatches(inst)
+end
 local PATCHES = {
     name = 'patches', icon = 'icons/patches',
     shapes = facePatches.SHAPES, allowNone = true,
-    picked = function(inst) return inst.facePatches and inst.facePatches.shape end,
+    picked = function(inst)
+        local look = kindLook(inst)
+        return inst.facePatches and (look and look.shape or inst.facePatches.shape)
+    end,
     pick = function(inst, url)
         if not url then
             inst.facePatches = nil
+            placePatches(inst)
         else
-            local set = patchesNow(inst, true)
-            set.shape = numberOf(url)
-            if not (set.eyes or set.cheeks or set.snout) then set[patchKind().key] = true end
+            setKindLook(inst, { shape = numberOf(url) })
         end
-        placePatches(inst)
     end,
     look = function(inst)
-        local skin = skinOf(inst, faceOwner(inst))
-        return { fgHex = skin and skin.fgHex or 'ccccccff', bgHex = '00000000' } -- the mask only: no outline
+        local look = kindLook(inst) or {}
+        return { fgHex = patchFill(inst), bgHex = look.bgHex or '00000000', pHex = look.pHex or '00000000',
+            pURL = look.pURL, pr = look.pr, psx = look.psx, psy = look.psy }
     end,
-    layers = {},
+    layers = ALL_LAYERS,
+    colour = function(inst, layer, hex) setKindLook(inst, { [LAYER_KEY[layer]] = hex }) end,
+    setBlock = function(inst, values) setKindLook(inst, values) end,
     kinds = PATCH_KINDS,
     slidersFor = function(inst)
         local k = patchKind()
@@ -855,12 +894,12 @@ function s.drawUI()
     -- each showing its colour now; none when it has only one
     local layers = layersOf(inst, cat)
     local layer = layerFor(inst, cat, c.layer) or 'none'
-    if cat.kinds then -- face patches: one button per patch, on / off and which one the sliders show
+    if cat.kinds then -- face patches: one button per patch, next to the dice: on / off, and which one
         local set = inst.facePatches
         local skin = hexToRGB(fillOf(inst, cat))
         for i, k in ipairs(cat.kinds) do
             local on = set and set[k.key]
-            local bx = x + w - (#cat.kinds - i + 1) * dsize
+            local bx = x + i * dsize
             if makerUI.iconButton('maker-patch-' .. k.key, bx, y, dsize, k.icon,
                     { mask = on and skin or nil, picked = on and c.patchKind == k.key, dim = not on, paper = i + 2, bare = true }) then
                 apply(function()
@@ -873,7 +912,8 @@ function s.drawUI()
                 mipoVoice.edited(inst)
             end
         end
-    elseif #layers > 1 then
+    end
+    if #layers > 1 then
         for i, l in ipairs(layers) do
             local bx = x + w - (#layers - i + 1) * dsize
             if makerUI.iconButton('maker-layer-' .. l, bx, y, dsize, 'colorpick/ui' .. l,
