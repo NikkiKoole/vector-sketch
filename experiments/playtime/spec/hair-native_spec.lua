@@ -59,10 +59,10 @@ describe('hair lock strips, C and Lua', function()
         end)
     end
 
-    it('a ringlet turn gets ~10 samples, a straight lock one a segment', function()
+    it('a ringlet turn gets ~10 samples, a plain lock 4 a segment', function()
         if not hairNative.available() then pending('no hair_strip in the library') return end
         local straight = nativeVertices(lock(10, 24, 0, 0), { ringlets = 0, ringletPitch = 30 }, 4)
-        assert.are.equal(10 * 2, #straight)
+        assert.are.equal((9 * 4 + 1) * 2, #straight)
         local ring = nativeVertices(lock(10, 24, 0, 0), { ringlets = 12, ringletPitch = 24 }, 4)
         assert.are.equal((9 * 10 + 1) * 2, #ring)
     end)

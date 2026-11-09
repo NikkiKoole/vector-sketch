@@ -528,6 +528,8 @@ end
 local TILT = 0.5   -- how much of the turn is seen from above (its loops)
 local MAXSAMPLES = hairNative.MAX_SAMPLES
 local cork = {}
+local restS = {} -- each sample's rest length along its lock: the picture's v, so it can't slide
+local PLAIN_PER = 4 -- samples a segment of a lock without ringlets or a wave
 local function lockPath(lock, o, out)
     local p, n, L = lock.points, lock.n, lock.segment
     local R, pitch = lock.ring or o.ringlets, math.max(4, lock.ringPitch or o.ringletPitch)
@@ -549,21 +551,9 @@ local function lockPath(lock, o, out)
         local x1, y1 = at(j)
         local x2, y2 = at(j + 1)
         local x3, y3 = at(j + 2)
-        local per = ringPer
-        if not per then -- the sharper turn at either end of this segment, in steps of ~0.15 rad
-            local ax, ay, bx, by, cx, cy = x1 - x0, y1 - y0, x2 - x1, y2 - y1, x3 - x2, y3 - y2
-            local la, lb, lc = ax * ax + ay * ay, bx * bx + by * by, cx * cx + cy * cy
-            local turn = 0
-            if la > 1e-9 and lb > 1e-9 then
-                turn = math.max(turn, 1 - (ax * bx + ay * by) / math.sqrt(la * lb))
-            end
-            if lb > 1e-9 and lc > 1e-9 then
-                turn = math.max(turn, 1 - (bx * cx + by * cy) / math.sqrt(lb * lc))
-            end
-            -- 1 - cos: ~angle^2 / 2; one sample a segment when straight, up to 5 in a bend
-            per = math.min(maxPer, 1 + math.floor(math.sqrt(2 * turn) / 0.15))
-            per = math.min(per, 5)
-        end
+        -- a fixed count a segment: counting by the bend, a lock's samples changed as it moved and its
+        -- picture slid along it (the hair jumped, 2026-11-09)
+        local per = ringPer or math.min(maxPer, PLAIN_PER)
         for s = 0, (j == n - 1) and per or per - 1 do
             local t = s / per
             local t2, t3 = t * t, t * t * t
@@ -573,6 +563,7 @@ local function lockPath(lock, o, out)
                 + (3 * y1 - y0 - 3 * y2 + y3) * t3)
             count = count + 1
             out[3 * count - 2], out[3 * count - 1], out[3 * count] = x, y, (j - 1 + t) * L
+            restS[count] = (j - 1 + t) * L
         end
     end
     -- the corkscrew and the wave: around the axis (tangents from the axis, so worked out before
@@ -615,20 +606,36 @@ local MESH_FORMAT = { -- as hair.c writes
 
 -- One lock's strip in Lua (lockPath, then the picture's width across, its length along) into
 -- `verts` from index `start`, { x, y, u, v, r, g, b, a } each; returns how many it wrote.
+-- The widest the strip can be at sample c without its inner edge folding over in a bend (as the
+-- limb ribbons clamp, src/render/ribbon.lua): about twice the bend's radius there.
+local function miterLimit(buf, c)
+    local ax, ay = buf[3 * c - 2] - buf[3 * c - 5], buf[3 * c - 1] - buf[3 * c - 4]
+    local bx, by = buf[3 * c + 1] - buf[3 * c - 2], buf[3 * c + 2] - buf[3 * c - 1]
+    local la, lb = math.sqrt(ax * ax + ay * ay), math.sqrt(bx * bx + by * by)
+    if la < 1e-9 or lb < 1e-9 then return math.huge end
+    local dot = (ax * bx + ay * by) / (la * lb)
+    if dot >= 0.9999 then return math.huge end
+    dot = math.max(-1, math.min(1, dot))
+    return math.min(la, lb) * math.tan((math.pi - math.acos(dot)) * 0.5)
+end
+
 local function luaLockVertices(lock, o, hw, verts, start)
     local count = lockPath(lock, o, pathBuf)
     local buf = pathBuf
+    local total = math.max(1e-6, (lock.n - 1) * lock.segment)
     for c = 1, count do
         local a, b = math.max(1, c - 1), math.min(count, c + 1)
         local tx, ty = buf[3 * b - 2] - buf[3 * a - 2], buf[3 * b - 1] - buf[3 * a - 1]
         local tl = math.sqrt(tx * tx + ty * ty)
         if tl > 1e-6 then tx, ty = tx / tl, ty / tl else tx, ty = 0, 1 end
         local x, y, sh = buf[3 * c - 2], buf[3 * c - 1], buf[3 * c]
-        local tv = (c - 1) / math.max(1, count - 1)
+        local tv = restS[c] / total
+        local w = hw
+        if c > 1 and c < count then w = math.min(w, miterLimit(buf, c)) end
         local i = start + 2 * c - 2
         local l, r = verts[i] or {}, verts[i + 1] or {}
-        l[1], l[2], l[3], l[4], l[5], l[6], l[7], l[8] = x - ty * hw, y + tx * hw, 0, tv, sh, sh, sh, 1
-        r[1], r[2], r[3], r[4], r[5], r[6], r[7], r[8] = x + ty * hw, y - tx * hw, 1, tv, sh, sh, sh, 1
+        l[1], l[2], l[3], l[4], l[5], l[6], l[7], l[8] = x - ty * w, y + tx * w, 0, tv, sh, sh, sh, 1
+        r[1], r[2], r[3], r[4], r[5], r[6], r[7], r[8] = x + ty * w, y - tx * w, 1, tv, sh, sh, sh, 1
         verts[i], verts[i + 1] = l, r
     end
     return count >= 2 and 2 * count or 0

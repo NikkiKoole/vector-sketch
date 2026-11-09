@@ -1,6 +1,6 @@
 // hair.c — a hair lock's strip in one call (src/hair-native.lua), the same maths as
 // src/hair-locks.lua's lockPath + stripMesh: a Catmull-Rom curve through the lock's points
-// (samples per segment by how sharply it turns, or ~10 a ringlet turn or wave), for ringlets a
+// (4 samples a segment, or ~10 a ringlet turn or wave), for ringlets a
 // corkscrew around it seen a little from above (its back half darker), for curly hair a wave
 // across it, then a strip the
 // picture's width across, written as { x, y, u, v, r, g, b, a } floats (2 vertices a sample)
@@ -8,6 +8,7 @@
 #include <math.h>
 
 #define HAIR_MAX_SAMPLES 400
+#define HAIR_PLAIN_PER 4
 
 static double sx[HAIR_MAX_SAMPLES], sy[HAIR_MAX_SAMPLES], ss[HAIR_MAX_SAMPLES];
 
@@ -49,23 +50,9 @@ int hair_strip(const float *points, int n, float segment, float radius, float pi
         at(points, n, j, &x1, &y1);
         at(points, n, j + 1, &x2, &y2);
         at(points, n, j + 2, &x3, &y3);
-        int per = ringPer;
-        if (!per) {
-            double ax = x1 - x0, ay = y1 - y0, bx = x2 - x1, by = y2 - y1, cx = x3 - x2, cy = y3 - y2;
-            double la = ax * ax + ay * ay, lb = bx * bx + by * by, lc = cx * cx + cy * cy;
-            double turn = 0;
-            if (la > 1e-9 && lb > 1e-9) {
-                double t = 1 - (ax * bx + ay * by) / sqrt(la * lb);
-                if (t > turn) turn = t;
-            }
-            if (lb > 1e-9 && lc > 1e-9) {
-                double t = 1 - (bx * cx + by * cy) / sqrt(lb * lc);
-                if (t > turn) turn = t;
-            }
-            per = 1 + (int)floor(sqrt(2 * turn) / 0.15);
-            if (per > maxPer) per = maxPer;
-            if (per > 5) per = 5;
-        }
+        // a fixed count a segment (hair-locks.lua PLAIN_PER): counted by the bend, the samples
+        // changed as the lock moved and its picture slid along it
+        int per = ringPer ? ringPer : (HAIR_PLAIN_PER < maxPer ? HAIR_PLAIN_PER : maxPer);
         int last = (j == n - 1) ? per : per - 1;
         for (int s = 0; s <= last && count < HAIR_MAX_SAMPLES; s++) {
             double t = (double)s / per, t2 = t * t, t3 = t2 * t;
@@ -106,12 +93,28 @@ int hair_strip(const float *points, int n, float segment, float radius, float pi
     } else {
         for (int c = 0; c < count; c++) shade[c] = 1;
     }
-    // the strip
-    double hw = halfWidth;
+    // the strip: v by the rest length along the lock (so the picture can't slide), the width
+    // clamped in tight bends (about twice the bend's radius, as the limb ribbons do)
+    double total = (n - 1) * L > 1e-6 ? (n - 1) * L : 1e-6;
     for (int c = 0; c < count; c++) {
         double tx, ty;
         unit_tangent(c, count, &tx, &ty);
-        double v = count > 1 ? (double)c / (count - 1) : 0;
+        double v = ss[c] / total;
+        double hw = halfWidth;
+        if (c > 0 && c < count - 1) {
+            double ax = sx[c] - sx[c - 1], ay = sy[c] - sy[c - 1];
+            double bx = sx[c + 1] - sx[c], by = sy[c + 1] - sy[c];
+            double la = sqrt(ax * ax + ay * ay), lb = sqrt(bx * bx + by * by);
+            if (la >= 1e-9 && lb >= 1e-9) {
+                double dot = (ax * bx + ay * by) / (la * lb);
+                if (dot < 0.9999) {
+                    if (dot < -1) dot = -1;
+                    if (dot > 1) dot = 1;
+                    double lim = (la < lb ? la : lb) * tan((M_PI - acos(dot)) * 0.5);
+                    if (lim < hw) hw = lim;
+                }
+            }
+        }
         float *l = out + 16 * c, *r = l + 8;
         l[0] = (float)(sx[c] - ty * hw); l[1] = (float)(sy[c] + tx * hw); l[2] = 0; l[3] = (float)v;
         r[0] = (float)(sx[c] + ty * hw); r[1] = (float)(sy[c] - tx * hw); r[2] = 1; r[3] = (float)v;

@@ -57,6 +57,11 @@ one Bezier, which smoothed curls away. Cost per Mipo on the Mac: simulate 0.1-0.
 - [x] H7. curly is drawn, not simulated: a wave across the lock (16 px at 1, one every 5 segments),
   like the ringlets. Held by the physics (pulls between points two apart) it fought the rest shape
   and the tips never stopped moving, 7 px a frame on a still head. Now every setting comes to rest
+- [x] H9. No more jumping (Nikki: "a bit like retriangulating or jumping", with thick locks): H2's
+  samples-by-the-bend changed a lock's sample count as it moved and its picture slid along it. Now 4
+  a segment fixed (ringlets / waves as before), the picture's v by the rest length along the lock,
+  and the width clamped in tight bends like the limb ribbons (a 78 px wide lock folded on its
+  inside). Her defaults: 0.26 ms a Mipo awake on the Mac
 - [ ] H4. Measure on the phone (`./playtime.sh bench device`)
 - [ ] H8. The simulation in C (~0.2 ms a Mipo awake, all Lua), if the phone says so
 
