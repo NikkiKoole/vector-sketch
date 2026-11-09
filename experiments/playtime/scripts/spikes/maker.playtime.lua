@@ -198,6 +198,14 @@ local function fillOf(inst, cat)
     return skin and skin.fgHex
 end
 
+-- the texture block a category's pictures are drawn with (colours, pattern), for the shape cells
+local function lookOf(inst, cat)
+    if cat.skin then return skinOf(inst, cat.skin(inst)[1]) end
+    if cat.name == 'eyes' then return face(inst).eye end
+    if cat.name == 'nose' then return face(inst).nose end
+    if cat.name == 'hair' then return haircut(inst).main end
+end
+
 local function colourOf(inst, cat, layer)
     if cat.skin then
         local skin = skinOf(inst, cat.skin(inst)[1])
@@ -326,7 +334,7 @@ local function drawGrid(c, inst, cat, x, y, w, h)
     if g.off < 0 then g.off, g.vel = 0, 0 end
     if g.off > maxOff then g.off, g.vel = maxOff, 0 end
 
-    local fill = hexToRGB(fillOf(inst, cat))
+    local look = lookOf(inst, cat)
     local picked = cat.picked(inst)
     ui.pushClip(x, y, w, h)
     for i, url in ipairs(items) do
@@ -334,7 +342,8 @@ local function drawGrid(c, inst, cat, x, y, w, h)
         local cx, cy = x + col * cell, y + row * cell - g.off
         if cy + cell > y and cy < y + h then
             local isPicked = picked == url .. '.png' or picked == url or picked == numberOf(url)
-            local tapped = makerUI.partCell('maker-cell-' .. i, cx, cy, cell, url, fill, isPicked)
+            local tapped = makerUI.partCell('maker-cell-' .. i, cx, cy, cell, url, look, isPicked,
+                cat.name == 'hair' and not shapeCatalogs.hairsWithMask[url .. '.png'])
             if tapped and not g.flicked and over then
                 apply(function() cat.pick(inst, url) end)
                 mipoVoice.edited(inst)
@@ -356,6 +365,7 @@ function s.drawUI()
     end
     if not (c.show and alive(inst)) then return end
     ui.startFrame() -- play mode draws no editor UI, so nothing else starts the frame
+    makerUI.beginFrame()
 
     local cw = math.min(440, W * 0.37)
     local cx, cy, ch = W - cw - 16, 16, H - 32

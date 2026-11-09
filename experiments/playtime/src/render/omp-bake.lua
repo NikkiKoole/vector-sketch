@@ -236,6 +236,26 @@ lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color
         return imageData
 end
 
+-- A part's picture as it looks on a Mipo, for a thumbnail (the Mipo maker's shape cells, MIPO-MAKER MM6):
+-- outlineURL / maskURL under textures/ ('mipo/eye/eye-03.png'), `look` a texture block's colours and
+-- pattern (bgHex line, fgHex fill, pHex + pURL pattern, pr / psx / psy / ptx / pty its placement).
+-- Returns an Image, nil when the outline isn't there. The caller keeps and releases it.
+function lib.bakePreview(outlineURL, maskURL, look)
+    local outline = getLoveImage('textures/' .. outlineURL)
+    if not outline then return nil end
+    local mask = maskURL and maskURL ~= '' and getLoveImage('textures/' .. maskURL) or nil
+    local pattern = look.pURL and look.pURL ~= '' and getLoveImage('textures/pat/' .. look.pURL, settings) or nil
+    local fr, fg, fb, fa = color.hexToColor(look.fgHex ~= '' and look.fgHex or 'ffffffff')
+    local pr, pg, pb, pa = color.hexToColor(look.pHex ~= '' and look.pHex or '00000000')
+    local lr, lg, lb, la = color.hexToColor(look.bgHex ~= '' and look.bgHex or '020202ff')
+    local imgData = lib.makeTexturedCanvas(outline, mask, { fr, fg, fb }, fa, pattern or tex1, { pr, pg, pb },
+        pattern and pa or 0, look.pr or 0, look.psx or 1, look.psy or 1, look.ptx or 0, look.pty or 0,
+        { lr, lg, lb }, la, 1, 1, nil)
+    local image = love.graphics.newImage(imgData)
+    imgData:release()
+    return image
+end
+
 -- the picture a layer names, nil when it names none yet (a pattern not picked when OMP was switched on)
 local function layerImage(dir, url)
     if not url or url == '' then return nil end

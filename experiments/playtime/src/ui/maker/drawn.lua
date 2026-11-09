@@ -190,21 +190,52 @@ function lib.toggle(id, x, y, w, h, on)
     return nil
 end
 
--- A cell of a part's picture: the mask in the part's fill colour, the outline over it.
--- `url` as in the shape catalogs ('mipo/eye/eye-03'). Returns true when tapped.
-function lib.partCell(id, x, y, size, url, fill, picked)
+-- A cell of a part's picture as it would look on the Mipo: outline, fill and pattern baked by the
+-- game's own OMP bake (src/render/omp-bake.lua bakePreview) from `look` (a texture block: bgHex, fgHex,
+-- pHex, pURL...). `url` as in the shape catalogs ('mipo/eye/eye-03'); `noMask`: outline only (most
+-- hair). One picture kept per url, baked again when its look changes, at most BAKES_PER_FRAME a frame
+-- (switching parts would hitch); until then the plain outline shows. Returns true when tapped.
+local ompBake = require('src.render.omp-bake')
+local BAKES_PER_FRAME = 3
+local previews = {} -- url -> { key, image }
+local bakesThisFrame = 0
+
+-- call once a frame before the widgets (it counts the bakes)
+function lib.beginFrame() bakesThisFrame = 0 end
+
+local function lookKey(look, noMask)
+    return table.concat({ look.bgHex or '', look.fgHex or '', look.pHex or '', look.pURL or '',
+        look.pr or 0, look.psx or 1, look.psy or 1, look.ptx or 0, look.pty or 0, noMask and 'n' or 'm' }, '|')
+end
+
+local function preview(url, look, noMask)
+    local key = lookKey(look, noMask)
+    local entry = previews[url]
+    if entry and entry.key == key then return entry.image end
+    if bakesThisFrame >= BAKES_PER_FRAME then return entry and entry.image end -- the old look a moment longer
+    bakesThisFrame = bakesThisFrame + 1
+    local maskURL = not noMask and love.filesystem.getInfo('textures/' .. url .. '-mask.png') and url .. '-mask.png'
+    local image = ompBake.bakePreview(url .. '.png', maskURL, look)
+    if entry and entry.image then entry.image:release() end
+    previews[url] = { key = key, image = image }
+    return image
+end
+
+function lib.partCell(id, x, y, size, url, look, picked, noMask)
     local grow = picked and lib.wobble(0.05) or 0.88
     if picked then
         love.graphics.setColor(1, 0.97, 0.88, 0.9)
         drawFitted(lib.image('panels/whiterect2'), x, y, size, size)
     end
-    local mask = lib.image('textures/' .. url .. '-mask')
-    if mask then
-        love.graphics.setColor(fill or { 0.9, 0.8, 0.7 })
-        drawFitted(mask, x, y, size, size, grow)
+    local image = look and preview(url, look, noMask)
+    if image then
+        love.graphics.setColor(1, 1, 1)
+        drawFitted(image, x, y, size, size, grow)
+    else
+        love.graphics.setColor(INK)
+        drawFitted(lib.image('textures/' .. url), x, y, size, size, grow)
     end
-    love.graphics.setColor(INK)
-    drawFitted(lib.image('textures/' .. url), x, y, size, size, grow)
+    love.graphics.setColor(1, 1, 1)
     return pressed(id, x, y, size, size)
 end
 
