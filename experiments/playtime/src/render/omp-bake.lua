@@ -266,9 +266,12 @@ function lib.bakePreview(outlineURL, maskURL, look)
 end
 
 -- the picture a layer names, nil when it names none yet (a pattern not picked when OMP was switched on)
+-- Patterns repeat: only the nine type*.png got their wrap when this file loads, so the others (bee
+-- stripes, ladybird spots, pattern2...) were clamped on a part: scaled finer, one copy and smeared
+-- edges (found with the Mipo maker, which offers every picture in textures/pat/, 2026-11-09).
 local function layerImage(dir, url)
     if not url or url == '' then return nil end
-    return getLoveImage(dir .. url)
+    return getLoveImage(dir .. url, dir == 'textures/pat/' and settings or nil)
 end
 
 local function makePatch(name, ud)
