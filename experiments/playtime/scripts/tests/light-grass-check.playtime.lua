@@ -1,7 +1,8 @@
 -- light-grass-check: working on light — a sun, a warm and a cool lamp to carry about, a turning lamp, over
 -- six plasticine shapes and three Mipos; and grass on a spinning turf (its blades rebuilt every frame: the counter).
--- From the LITTLE-USED rounds (docs/LITTLE-USED.md, 2026-11-06). Up to 16 lights reach a shape
--- (src/render/shaders.lua MAX_LIGHTS, 8 until LS26); a light's colour tints, its intensity and nearness light.
+-- From the LITTLE-USED rounds (docs/LITTLE-USED.md, 2026-11-06). Up to 8 lights reach a shape, the ones
+-- that reach it most of up to 32 on (src/render/shaders.lua MAX_LIGHTS, pickLights: LS27); a light's colour
+-- tints, its intensity and nearness light.
 -- A festoon (LS26, src/festoon.lua): a wire in three swags over the scene, nine bulbs in five colours, each
 -- bulb a real point light (the 'festoon bulb' bodies) that lights the things in its colour, brighter at night.
 -- The shapes start lit strongly and baked round (their settings, src/render/shaders.lua and
@@ -360,7 +361,7 @@ end
 local LIGHTS = { 'sun', 'moon', 'warm lamp', 'cool lamp', 'turning lamp', 'sky light', 'back light' }
 
 -- The festoon (LS26): its hooks on the wall (three swags), and each bulb's light by day and at night. Nine
--- bulbs + the seven lights above = 16, the shaders' MAX_LIGHTS: one more light and the last ones are dropped.
+-- bulbs + the seven lights above = 16: each part gets the 8 that reach it most (LS27).
 local FESTOON_HOOKS = { { -1450, -470 }, { -480, -500 }, { 500, -480 }, { 1450, -470 } }
 local FESTOON_KEY = 'v1' -- change it (or the hooks) and the wire is hung again
 -- (night 0.9 and range 800 hardly showed on the Mipos next to the warm and cool lamps, Nikki 2026-11-09)

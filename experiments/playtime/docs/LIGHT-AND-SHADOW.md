@@ -413,8 +413,7 @@ fade, a sun: the panel's `fades` switch, LS4).
   nine bulbs in five colours, each a real point light (the 'festoon bulb' bodies; the script puts them
   where their bulb hangs and sets colour and strength, 0.4 by day, 4.0 at night, range 1600). Nikki
   wanted them real lights, not glows: **MAX_LIGHTS went 8 -> 16** (src/render/shaders.lua, three places);
-  the scene now has exactly 16, a 17th light would be dropped (the first 16 that are on, by the
-  registry's order: no nearest-lights pick per part). Hung in front of the things, as the shaders light
+  the scene has exactly 16 (then LS27: back to 8 slots, each part picks its 8 of up to 32). Hung in front of the things, as the shaders light
   from in front (Nikki chose it; 'drawn behind' in the panel to compare). At night with the festoon on, the
   warm and cool lamps go out unless they throw 3D shadows or circle (they drowned the bulbs; panel switch
   to keep them). No shadows from the bulbs. The scene's three Mipos were regrown from their DNA standing
@@ -430,6 +429,20 @@ fade, a sun: the panel's `fades` switch, LS4).
   0.93, 16 lights 1.12, no shader 0.04: ~0.048 ms/MP a light. Guess for the iPhone SE 2 (~7x the Mac on
   this shader, MATERIALS 'What the Mipo shaders cost'): ~0.3 ms/MP a light, so the nine bulbs ~+3 ms/MP;
   a Mipo is ~5% of the screen: ~+0.15 ms a Mipo a frame, ~+3 ms for a room of 20. To check on the phone.
+  (Same day: back to 8 slots with LS27's pick per part; the numbers above are for the 16.)
+- [x] **LS27. The lights that reach a part most.** Instead of every part looping over every light (16 for
+  the festoon, and a 17th dropped by registry order): **MAX_LIGHTS back to 8** (the shaders' slots, the
+  phone's known-good uniforms), up to **32 on in a scene** (SCENE_LIGHTS), and each part gets its 8
+  (src/render/shaders.lua pickLights, 2026-11-09): with 8 or fewer on, all of them as before; with more,
+  the ones without falloff always (sky, back, a sun or moon with range 0), then by strength times the
+  falloff at the part, strongest first; one that doesn't reach it is left out (it added nothing); none
+  reaching: one dark light (not the shader's default). Picked once per 400 px cell of the world a frame,
+  from the cell's middle, so a cell's parts share a set and its colours go to the shader once (picking
+  per part cost ~+0.6 ms draw on the Mac with 3 Mipos, mostly re-sending; per cell ~+0.2-0.3). Limb
+  ribbons (no body) pick by their middle (box2d-draw-textured passes it). spec/light-pick_spec.lua.
+  Each pixel loops over at most 8 again (GPU on the Mac: 8 lights ~0.7 ms/MP between the measured 3 and 12, against 16's 1.12).
+  Watch: a light can pop in or out as a part crosses a cell line when more than 8 reach it (not seen in
+  light-grass-check: 3 always-on + the ~5 nearest bulbs); the phone still to check (compile, cost).
 
 Not light, but where this started (`LITTLE-USED.md`): three rounds left there, skinned mesh, UV mesh,
 the recorder (the feature-rounds sweep, `claudetools/feature-rounds_spec.lua`, takes a recipe each).

@@ -13,9 +13,14 @@ local state = require('src.state')
 -- Noise samples in UV space so it rotates/translates with the body (noise stuck to
 -- the character, not the screen). fBm approximates thumbprint texture without an
 -- asset file. Tune via lib.plasticineStrength / lib.plasticineScale / lib.plasticineEdge.
-local MAX_LIGHTS = 16 -- 8 until 2026-11-09 (a festoon of bulbs, LIGHT-AND-SHADOW LS26)
+-- the lights a part gets (the shaders' slots), and how many a scene may have on: each part gets the
+-- MAX_LIGHTS that reach it most (lib.gatherLightsForBody). 16 slots for a day (2026-11-09, the festoon,
+-- LIGHT-AND-SHADOW LS26), back to 8 with the pick per part (LS27): fewer uniforms on the phone, and the
+-- per-pixel loop no longer grows with the scene's lights
+local MAX_LIGHTS = 8
+local SCENE_LIGHTS = 32
 local plasticineShader = love.graphics.newShader([[
-    #define MAX_LIGHTS 16
+    #define MAX_LIGHTS 8
     uniform float strength;
     uniform float scale;
     uniform float edgeDark;
@@ -344,7 +349,7 @@ lib.plasticineCoolHex      = 'c8d8ffff'   -- steel blue: shadow/environment
 -- uv.y = across width; on surfaces where the axes are swapped, strands simply
 -- run the other way — tune density to taste.
 local hairsShader = love.graphics.newShader([[
-    #define MAX_LIGHTS 16
+    #define MAX_LIGHTS 8
     uniform float strength;      // strand brightness variation
     uniform float density;       // strand density
     uniform float fuzz;          // edge frayness
@@ -646,7 +651,7 @@ end
 -- Honors the legacy per-fixture `extra.plasticineLight` override.
 -- The way to each light and its place differ per part (its own frame); the lights' colours, strengths,
 -- types, ranges and ground colours are the same for every part in a frame: sent once a frame per shader.
-local function sendLightsToShader(shader, body, extra)
+local function sendLightsToShader(shader, body, extra, at)
     local sent = sentTo[shader] or {}
     sentTo[shader] = sent
     if extra.plasticineLight then
@@ -665,12 +670,13 @@ local function sendLightsToShader(shader, body, extra)
     else
         local fx = (extra.main and extra.main.fx) or 1
         local fy = (extra.main and extra.main.fy) or 1
-        local count, _, _, _, version = lib.gatherLightsForBody(body, fx, fy)
+        local count, _, _, _, version, mask = lib.gatherLightsForBody(body, fx, fy, at)
         send(shader, 'lightCount', count)
         shader:send('lightDir',      unpack(lightDirBuf))
         shader:send('lightLocalPos', unpack(lightPosBuf))
-        if sent.lightVersion == version then return end
-        sent.lightVersion = version
+        -- the colours etc. the same for every part with the same set of lights this frame (LS27)
+        if sent.lightVersion == version and sent.lightMask == mask then return end
+        sent.lightVersion, sent.lightMask = version, mask
     end
     if extra.plasticineLight then
         shader:send('lightDir',      unpack(lightDirBuf))
@@ -684,7 +690,7 @@ local function sendLightsToShader(shader, body, extra)
 end
 
 -- Send all lighting+material uniforms shared by plasticine and hairs shaders.
-local function sendSharedLighting(shader, body, extra)
+local function sendSharedLighting(shader, body, extra, at)
     local useLit = (extra.plasticineUseLighting ~= false) and
                    (lib.plasticineUseLighting ~= false)
     send(shader, 'useLighting',   useLit and 1 or 0)
@@ -692,7 +698,7 @@ local function sendSharedLighting(shader, body, extra)
     send(shader, 'lightAdd',      extra.plasticineLightAdd and 1 or 0)
     send(shader, 'warmColor', hexColour(extra.plasticineWarmHex or lib.plasticineWarmHex))
     send(shader, 'coolColor', hexColour(extra.plasticineCoolHex or lib.plasticineCoolHex))
-    sendLightsToShader(shader, body, extra)
+    sendLightsToShader(shader, body, extra, at)
 end
 
 local rimStyles = { off = 0, silhouette = 1, vignette = 2 }
@@ -701,7 +707,7 @@ local rimStyles = { off = 0, silhouette = 1, vignette = 2 }
 -- when both are on) and send it everything it reads. Returns true when it set one.
 -- One place for texfixtures, ribbons and trace vertices: three copies had drifted,
 -- two never sent the hairs mottle, so it kept the last ribbon's value (BUG11).
-local function setSurfaceShader(extra, body)
+local function setSurfaceShader(extra, body, at) -- at: { x, y } world, for a part without a body (LS27)
     -- the shadows' silhouettes need only the outlines (src/shadow-silhouettes.lua): no lighting there
     -- (it lit every part a second time, LIGHT-AND-SHADOW LS23)
     if state.drawingOutlines then return false end
@@ -716,7 +722,7 @@ local function setSurfaceShader(extra, body)
         send(sh, 'formStrength',   extra.plasticineFormStrength   or lib.plasticineFormStrength)
         send(sh, 'mottleStrength', extra.plasticineMottleStrength or lib.plasticineMottleStrength)
         send(sh, 'mottleScale',    extra.plasticineMottleScale    or lib.plasticineMottleScale)
-        sendSharedLighting(sh, body, extra)
+        sendSharedLighting(sh, body, extra, at)
         return true
     end
     if extra.plasticine or extra.material then
@@ -741,7 +747,7 @@ local function setSurfaceShader(extra, body)
         sendScalars(sh, PLASTICINE_SCALARS, extra)
         send(sh, 'useForm',        (extra.plasticineForm ~= false) and 1 or 0)
         send(sh, 'rimStyle',       rimStyles[extra.plasticineRimStyle or 'silhouette'])
-        sendSharedLighting(sh, body, extra)
+        sendSharedLighting(sh, body, extra, at)
         return true
     end
     return false
@@ -753,7 +759,7 @@ end
 -- strings parsed, the position (60% of setSurfaceShader with 20 lit Mipos on an iPhone SE 2,
 -- LIGHT-AND-SHADOW LS23). The numbers sent are the same as before.
 local frameLights = { stale = true, count = 0, skipped = false }
-for i = 1, MAX_LIGHTS do
+for i = 1, SCENE_LIGHTS do
     frameLights[i] = { wdx = 0, wdy = 0, r = 1, g = 1, b = 1, intensity = 0, type = 0, gr = 0, gg = 0, gb = 0,
         x = 0, y = 0, range = 1 }
 end
@@ -767,7 +773,7 @@ local function refreshFrameLights(list)
     local count, skipped = 0, false
     -- the light sfixtures only, a list the registry keeps until an sfixture comes or goes (LS23)
     for _, f in ipairs(list) do
-        if count >= MAX_LIGHTS then break end
+        if count >= SCENE_LIGHTS then break end
         if not f:isDestroyed() then
             local ud = f:getUserData()
             -- a light that's off adds nothing, but the shader would still loop over it per pixel
@@ -797,7 +803,7 @@ local function refreshFrameLights(list)
     -- { toLight = { x, y } (world), colorHex, groundHex, intensity, lightType }), else the shader's own
     if count == 0 and not skipped and state.sceneDefaultLights then
         for _, d in ipairs(state.sceneDefaultLights) do
-            if count >= MAX_LIGHTS then break end
+            if count >= SCENE_LIGHTS then break end
             count = count + 1
             local L = frameLights[count]
             L.wdx, L.wdy = d.toLight[1], d.toLight[2]
@@ -814,10 +820,96 @@ local function refreshFrameLights(list)
     frameLights.list, frameLights.listLength = list, #list
 end
 
+-- Which of the frame's lights a part gets (LS27), into `picked` (frame light indices, ascending: the
+-- same set always fills the slots in the same order, so its colours etc. can be sent once). With up
+-- to MAX_LIGHTS on, all of them, as before. With more: the ones without falloff first (sky, back, a
+-- sun or moon: range 0), then the rest by how much they reach the part (strength times the falloff at
+-- its middle, REACH nearer: a part has a size), the strongest; one that reaches it not at all is left
+-- out (it added nothing). Without a place (x nil: the material picker), the first MAX_LIGHTS.
+-- Picked once per CELL square of the world a frame, from its middle, and kept: the parts in one cell
+-- share their set, so its colours etc. go to the shader once, not again for every part (picking per
+-- part was ~+0.6 ms a frame on the Mac with 3 Mipos, most of it those sends).
+-- Returns how many, a mask of the set (for the send cache), and the list.
+local CELL = 400
+local REACH = 250 + CELL * 0.71 -- world units: about a big part's half size, and the cell's
+local firstN, scores, ranked = {}, {}, {}
+local cells = { version = nil }
+local function smooth01(t)
+    if t <= 0 then return 0 elseif t >= 1 then return 1 end
+    return t * t * (3 - 2 * t)
+end
+local function pickLights(x, y)
+    local count = frameLights.count
+    local n, mask = 0, 0
+    if count <= MAX_LIGHTS or x == nil then
+        for i = 1, math.min(count, MAX_LIGHTS) do
+            firstN[i] = i
+            mask = mask + 2 ^ (i - 1)
+        end
+        return math.min(count, MAX_LIGHTS), mask, firstN
+    end
+    if cells.version ~= frameLights.version then
+        cells = { version = frameLights.version }
+    end
+    local cx, cy = math.floor(x / CELL), math.floor(y / CELL)
+    local key = cx * 65536 + cy
+    local cell = cells[key]
+    if cell then return cell.n, cell.mask, cell end
+    cell = {}
+    cells[key] = cell
+    local picked = cell
+    x, y = (cx + 0.5) * CELL, (cy + 0.5) * CELL
+    local nRanked = 0
+    for i = 1, count do
+        local L = frameLights[i]
+        if L.type == 2 or L.type == 3 or L.range <= 0 then
+            if n < MAX_LIGHTS then
+                n = n + 1
+                picked[n] = i
+            end
+        else
+            local dx, dy = L.x - x, L.y - y
+            local d = math.max(0, math.sqrt(dx * dx + dy * dy) - REACH)
+            local score = L.intensity * (1 - smooth01(d / math.max(L.range, 1)))
+            if score > 0 then
+                nRanked = nRanked + 1
+                ranked[nRanked], scores[i] = i, score
+            end
+        end
+    end
+    -- the strongest first (a few dozen at most: insertion sort, no closure, no garbage)
+    for a = 2, nRanked do
+        local v, b = ranked[a], a - 1
+        while b >= 1 and scores[ranked[b]] < scores[v] do
+            ranked[b + 1] = ranked[b]
+            b = b - 1
+        end
+        ranked[b + 1] = v
+    end
+    for a = 1, nRanked do
+        if n >= MAX_LIGHTS then break end
+        n = n + 1
+        picked[n] = ranked[a]
+    end
+    -- ascending, and the mask
+    for a = 2, n do
+        local v, b = picked[a], a - 1
+        while b >= 1 and picked[b] > v do
+            picked[b + 1] = picked[b]
+            b = b - 1
+        end
+        picked[b + 1] = v
+    end
+    for a = 1, n do mask = mask + 2 ^ (picked[a] - 1) end
+    cell.n, cell.mask = n, mask
+    return n, mask, cell
+end
+
 -- Gather scene LIGHT sfixtures and rotate each world-space direction into the
--- target body's local UV frame. Returns count + (buffers reused every call).
--- Capped at MAX_LIGHTS; extras silently ignored.
-function lib.gatherLightsForBody(body, fx, fy)
+-- target body's local UV frame. Returns count + (buffers reused every call), the frame's version and
+-- the picked set's mask. At most MAX_LIGHTS: the ones that reach this part most (pickLights).
+-- at: { x, y } in the world, where a part without a body is (a limb ribbon's middle), to pick by.
+function lib.gatherLightsForBody(body, fx, fy, at)
     fx = fx or 1; fy = fy or 1
     -- outside the game's frames (a spec) nothing calls newFrame: worked out each time; within one,
     -- again when a light comes or goes
@@ -834,9 +926,11 @@ function lib.gatherLightsForBody(body, fx, fy)
         cosA, sinA = 1, 0  -- identity: no rotation (for CT ribbons)
         bx, by = 0, 0
     end
-    local count = frameLights.count
+    local px, py
+    if body then px, py = bx, by elseif at then px, py = at[1], at[2] end
+    local count, mask, picked = pickLights(px, py)
     for i = 1, count do
-        local L = frameLights[i]
+        local L = frameLights[picked[i]]
         lightDirBuf[i][1] = (L.wdx * cosA - L.wdy * sinA) * fx
         lightDirBuf[i][2] = (L.wdx * sinA + L.wdy * cosA) * fy
         lightColorBuf[i][1], lightColorBuf[i][2], lightColorBuf[i][3] = L.r, L.g, L.b
@@ -851,12 +945,14 @@ function lib.gatherLightsForBody(body, fx, fy)
         lightRangeBuf[i] = L.range
     end
     -- every light off: one dark light, not none (no light at all means the shader's own default light,
-    -- which would light up a scene whose lights were all turned off)
-    if count == 0 and frameLights.skipped then
+    -- which would light up a scene whose lights were all turned off); so too a part none of the
+    -- scene's lights reach (LS27)
+    if count == 0 and (frameLights.skipped or frameLights.count > 0) then
         count = 1
         lightInBuf[1], lightTypeBuf[1], lightRangeBuf[1] = 0, 0, 0
+        mask = -1
     end
-    return count, lightDirBuf, lightColorBuf, lightInBuf, frameLights.version
+    return count, lightDirBuf, lightColorBuf, lightInBuf, frameLights.version, mask
 end
 
 

@@ -581,6 +581,7 @@ local function ribbonPoints(extra)
     return c.points
 end
 
+local ribbonMiddle = { 0, 0 }
 local function drawConnectedTexture(d)
     local extra = d.extra
     local points = ribbonPoints(extra)
@@ -595,7 +596,10 @@ local function drawConnectedTexture(d)
         end
         return bezier, derivative
     end
-    local shaded = setSurfaceShader(extra, nil)
+    -- a ribbon has no body: its lights are picked by its middle, in the world (LIGHT-AND-SHADOW LS27)
+    local n = #points
+    ribbonMiddle[1], ribbonMiddle[2] = (points[1] + points[n - 1]) / 2, (points[2] + points[n]) / 2
+    local shaded = setSurfaceShader(extra, nil, ribbonMiddle)
     if not extra.OMP then -- this is the BG and FG routine
         if not main.cached then
             ompBake.makeCached(main)
