@@ -21,6 +21,11 @@ local system = love.system.getOS()
 if system == 'iOS' or system == 'Android' then FRAMES, BUFFERS = 1024, 4 end
 local source = love.audio.newQueueableSource(RATE, 16, 2, BUFFERS)
 local quit = love.thread.getChannel('synth-quit')
+-- one mark per running render thread, process-wide (a channel outlives a reset `state`): src/synth.lua
+-- start() stops an older thread before it starts one (two consumers corrupt the engine: a segfault in
+-- listener() with five of these running, 2026-11-09, after specs reset src.state)
+local alive = love.thread.getChannel('synth-alive')
+alive:push(true)
 
 -- One SoundData per queue slot; LÖVE copies on queue(), so they can be reused right away.
 local buffers = {}
@@ -75,3 +80,4 @@ while not quit:pop() do
     love.timer.sleep(0.002)
 end
 source:stop()
+alive:pop()

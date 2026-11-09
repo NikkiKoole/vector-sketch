@@ -844,6 +844,16 @@ function lib.start()
         print('[synth] ' .. S.failed)
         return false
     end
+    -- A render thread from before is still running when `state` was reset under us (specs that clear
+    -- package.loaded['src.state'], then play sound): its S.thread is gone, but the engine allows one
+    -- consumer only (synth-thread.lua). Stop it first; it marks itself on 'synth-alive'. Five at once
+    -- crashed the game in listener() (2026-11-09).
+    local alive = love.thread.getChannel('synth-alive')
+    local waitedFrom = love.timer.getTime()
+    while alive:getCount() > 0 and love.timer.getTime() - waitedFrom < 1 do
+        love.thread.getChannel('synth-quit'):push(true)
+        love.timer.sleep(0.005)
+    end
     S.C = C
     S.hasNoteAt = nil -- scheduleAt looks again (a rebuilt library may have the #47 functions now)
     C.de_lua_init()
