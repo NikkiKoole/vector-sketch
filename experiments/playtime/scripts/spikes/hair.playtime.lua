@@ -3,7 +3,7 @@
 -- stiff, how curly, how wild. Throw the Mipo around and watch them.
 -- Its torso has hair all around too, shorter (bodyHair: its length against the head's, 0 = none).
 -- A box beside it wears the same hair: pick it up and swing it, or let it rest (its hair sleeps).
--- keys: r: lay the locks out again   h: hide/show the panel
+-- keys: r: lay the locks out again   h: hide/show the panel   m: a new random Mipo
 
 local s = {}
 local opts = {}
@@ -63,8 +63,16 @@ function s.onUnload()
     hairLocks.detachBodies()
 end
 
+-- A new random Mipo (its bodies are made again, so its hair goes back on after), in its own hair
+-- colours.
+local function randomizeMipos()
+    for _, instance in pairs(state.mipoInstances) do characterManager.randomizeMipoConstrained(instance) end
+    attachAll()
+end
+
 function s.onKeyPress(key)
     if key == 'r' then attachAll() end
+    if key == 'm' then randomizeMipos() end
     if key == 'h' then showPanel = not showPanel end
 end
 
@@ -132,10 +140,12 @@ function s.drawUI()
             end
             ui.label(x + 260, y, sl.key)
         end
-        if ui.button(x0 + pad, y0 + 24 + (rows - 1) * (BH + pad), w - 2 * pad - 20, 'new random locks') then
+        local by, bw = y0 + 24 + (rows - 1) * (BH + pad), (w - 3 * pad - 20) / 2
+        if ui.button(x0 + pad, by, bw, 'new random locks') then
             opts.seed = (opts.seed or 1) + 1
             changed = true
         end
+        if ui.button(x0 + 2 * pad + bw, by, bw, 'random Mipo (m)') then randomizeMipos() end
         if changed then attachAll() end
     end)
 end
