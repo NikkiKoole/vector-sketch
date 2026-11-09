@@ -223,6 +223,87 @@ local function texturedMaker(kind, withLabel)
     end
 end
 
+-- A foot's picture is drawn twice (Nikki 2026-11-10: "the feet and leg connection a bit more depth
+-- correct"): whole, just behind its leg (its ribbons' lowest z), and its lower part again at its own z,
+-- in front, cut across its leg FOOT_CUT of the way from the ankle (where the lower leg joins it) to the
+-- foot's middle: the leg shows over the top of the foot and goes into it, as into a shoe. Before, the whole foot
+-- lay over the leg's end. state.feetFlat = true: as before.
+local FOOT_CUT = 0.9 -- of the way from the ankle to the foot's middle
+-- Each side in a depth range of its own (foot behind, leg, foot in front), the right one over the left:
+-- with both feet's pieces at the same two depths, the front of one lay over the back of the other where
+-- they overlapped and they cut into each other (Nikki: "z fighting"). The right leg's ribbons go up by
+-- RIGHT_SIDE_UP (nothing is drawn between the legs and the feet).
+local RIGHT_SIDE_UP = 2
+local function legSideUp(body)
+    local instance, partName = mipoRegistry.getFromBody(body)
+    if instance and (partName == 'ruleg' or partName == 'rlleg') then return RIGHT_SIDE_UP end
+    return 0
+end
+-- The z to draw a foot texfixture behind its leg at and the z of its front piece, or nil when it isn't a
+-- Mipo's foot (or has no leg).
+local function footBackZ(_, body)
+    local instance, partName = mipoRegistry.getFromBody(body)
+    if not (instance and (partName == 'lfoot' or partName == 'rfoot')) then return nil end
+    local side = partName:sub(1, 1)
+    local low, high
+    for _, leg in ipairs({ side .. 'uleg', side .. 'lleg' }) do
+        local part = instance.parts[leg]
+        if part and part.body and not part.body:isDestroyed() then
+            for _, f in ipairs(part.body:getFixtures()) do
+                local lud = f:getUserData()
+                if type(lud) == 'table' and lud.subtype == subtypes.CONNECTED_TEXTURE and lud.extra then
+                    local lz = (lud.extra.zGroupOffset or 0) * 1000 + (lud.extra.zOffset or 0) + legSideUp(part.body)
+                    low, high = low and math.min(low, lz) or lz, high and math.max(high, lz) or lz
+                end
+            end
+        end
+    end
+    if not low then return nil end
+    return low - 0.25, high + 0.5
+end
+
+-- Where a foot is cut, in the world: across its leg (the way from the knee to the ankle), FOOT_CUT of the
+-- way from the ankle toward the foot's middle (a foot's own frame runs along it, so not its y). Returns
+-- the cut's point, the leg's way (unit) and the distance from the ankle; nil without a leg.
+local function footCut(instance, side)
+    local foot, upper, lower = instance.parts[side .. 'foot'], instance.parts[side .. 'uleg'],
+        instance.parts[side .. 'lleg']
+    if not (foot and lower and upper and foot.body and lower.body and upper.body) then return nil end
+    if foot.body:isDestroyed() or lower.body:isDestroyed() or upper.body:isDestroyed() then return nil end
+    local function anchorBetween(a, b)
+        for _, joint in ipairs(a:getJoints()) do
+            local j1, j2 = joint:getBodies()
+            if (j1 == a and j2 == b) or (j1 == b and j2 == a) then return joint:getAnchors() end
+        end
+    end
+    local ax, ay = anchorBetween(foot.body, lower.body)
+    local kx, ky = anchorBetween(upper.body, lower.body)
+    if not (ax and kx) then return nil end
+    local dx, dy = ax - kx, ay - ky
+    local len = math.sqrt(dx * dx + dy * dy)
+    if len < 1e-6 then return nil end
+    dx, dy = dx / len, dy / len
+    local fx, fy = foot.body:getPosition()
+    local toMiddle = (fx - ax) * dx + (fy - ay) * dy
+    if toMiddle <= 1 then return nil end
+    local dist = toMiddle * FOOT_CUT
+    return ax + dx * dist, ay + dy * dist, dx, dy, dist
+end
+
+-- A leg ribbon (on an upper leg) reaches past the ankle into its foot, past the cut, so it goes into
+-- the foot instead of ending at its top edge; the foot's front pass hides the rest. A function of
+-- nothing giving the extra length (px), or nil when the body is no Mipo's upper leg.
+local function legFootReach(body)
+    local instance, partName = mipoRegistry.getFromBody(body)
+    if not (instance and (partName == 'luleg' or partName == 'ruleg')) then return nil end
+    local side = partName:sub(1, 1)
+    return function()
+        if state.feetFlat then return 0 end
+        local _, _, _, _, dist = footCut(instance, side)
+        return dist and dist * 1.3 or 0 -- past the cut, so its end is under the foot
+    end
+end
+
 -- [subtype] = function(out, ud, fixture, body, z): adds that sfixture's drawables to out, in
 -- draw order for equal z. A subtype not here draws nothing of its own.
 local makers = {
@@ -247,14 +328,27 @@ local makers = {
     [subtypes.SOFTBODY] = function(out, _, fixture, _, z)
         out[#out + 1] = { type = subtypes.SOFTBODY, z = z, fixture = fixture }
     end,
-    [subtypes.TEXFIXTURE] = texturedMaker('texfixture', false),
+    [subtypes.TEXFIXTURE] = function(out, ud, fixture, body, z)
+        local footBack, footFront = footBackZ(ud, body)
+        if footBack then -- a foot: behind its leg, and its lower part again over it (drawFootBack / Front)
+            local d = { type = 'foot-back', z = footBack, texfixture = fixture, extra = ud.extra, body = body,
+                thing = utils.thingOf(body) }
+            out[#out + 1] = d
+            out[#out + 1] = { type = 'foot-front', z = footFront, texfixture = fixture, extra = ud.extra,
+                body = body, thing = d.thing }
+            return
+        end
+        out[#out + 1] = { type = 'texfixture', z = z, texfixture = fixture, extra = ud.extra, body = body,
+            thing = utils.thingOf(body) }
+    end,
     [subtypes.MESHUSERT] = texturedMaker('meshusert', true),
     [subtypes.UVUSERT] = texturedMaker('uvusert', true),
     [subtypes.DECAL] = addDecal,
     [subtypes.CONNECTED_TEXTURE] = function(out, ud, _, body, z)
         -- its curve follows the joints: laid in drawConnectedTexture (ribbonPoints)
         if ud.extra.nodes then
-            out[#out + 1] = { z = z, type = 'connected-texture', extra = ud.extra, body = body }
+            out[#out + 1] = { z = z + legSideUp(body), type = 'connected-texture', extra = ud.extra, body = body,
+                footReach = legFootReach(body) }
         end
     end,
 }
@@ -516,7 +610,7 @@ local function nodePositions(extra, points)
     return points
 end
 
-local function shapeRibbon(points, extra)
+local function shapeRibbon(points, extra, endGrow)
     if #points == 4 then
         -- here we will just introduce a little midle thingie
         -- -- becaue i cannot draw a curve of 2 points
@@ -546,7 +640,8 @@ local function shapeRibbon(points, extra)
     -- three anchors, a bend in the middle of a ribbon with more)
     local n = #points
     points[1], points[2] = growLine({ points[1], points[2] }, { points[3], points[4] }, growLength)
-    points[n - 1], points[n] = growLine({ points[n - 1], points[n] }, { points[n - 3], points[n - 2] }, growLength)
+    points[n - 1], points[n] = growLine({ points[n - 1], points[n] }, { points[n - 3], points[n - 2] },
+        growLength + (endGrow or 0))
 
     -- bendiness controls control-point duplication for the bezier through
     -- joint anchors. 0 = soft/rubbery (curve smooths across the elbow),
@@ -561,11 +656,13 @@ end
 -- recomputed every frame it was 40% of the Lua time with 100 Mipos standing still.
 local ribbonCache = setmetatable({}, { __mode = 'k' }) -- [extra] = { raw, nodes, grow, bend, points }
 local rawScratch = {}
-local function ribbonPoints(extra)
+local function ribbonPoints(extra, endGrow)
     local raw = nodePositions(extra, rawScratch)
     local grow, bend = extra.growExtra or 20, (extra.main and extra.main.bendiness) or 2
+    endGrow = endGrow or 0
     local c = ribbonCache[extra]
-    if c and c.nodes == extra.nodes and c.grow == grow and c.bend == bend and #c.raw == #raw then
+    if c and c.nodes == extra.nodes and c.grow == grow and c.bend == bend and c.endGrow == endGrow
+        and #c.raw == #raw then
         local same = true
         for i = 1, #raw do
             if c.raw[i] ~= raw[i] then same = false; break end
@@ -577,14 +674,15 @@ local function ribbonPoints(extra)
     if not c then c = { raw = {} }; ribbonCache[extra] = c end
     for i = 1, #raw do c.raw[i] = raw[i] end
     for i = #raw + 1, #c.raw do c.raw[i] = nil end
-    c.nodes, c.grow, c.bend, c.points = extra.nodes, grow, bend, shapeRibbon(copy, extra)
+    c.nodes, c.grow, c.bend, c.endGrow = extra.nodes, grow, bend, endGrow
+    c.points = shapeRibbon(copy, extra, endGrow)
     return c.points
 end
 
 local ribbonMiddle = { 0, 0 }
 local function drawConnectedTexture(d)
     local extra = d.extra
-    local points = ribbonPoints(extra)
+    local points = ribbonPoints(extra, d.footReach and d.footReach() or nil)
     if not points then return end
     local main = extra.main
     local wmul, dir = main.wmul or 1, main.dir or 1
@@ -1270,6 +1368,27 @@ end
 -- Named, so a profiler (POST /profile/frames) reports them by name.
 local drawers = {
     [subtypes.TEXFIXTURE] = drawTexfixture,
+    ['foot-back'] = function(d)
+        if not state.feetFlat then drawTexfixture(d) end
+    end,
+    ['foot-front'] = function(d)
+        local instance, partName = mipoRegistry.getFromBody(d.body)
+        local cx, cy, dx, dy
+        if instance and not state.feetFlat then cx, cy, dx, dy = footCut(instance, partName:sub(1, 1)) end
+        if not cx then return drawTexfixture(d) end
+        local ok = pcall(love.graphics.stencil, function()
+            love.graphics.push()
+            love.graphics.translate(cx, cy)
+            love.graphics.rotate(math.atan2(dy, dx) - math.pi / 2) -- +y along the leg, into the foot
+            love.graphics.rectangle('fill', -1e4, 0, 2e4, 2e4)
+            love.graphics.pop()
+        end, 'replace', 1)
+        if not ok then return drawTexfixture(d) end -- a canvas without a stencil: the whole foot
+        local compare, value = love.graphics.getStencilTest()
+        love.graphics.setStencilTest('greater', 0)
+        drawTexfixture(d)
+        if compare then love.graphics.setStencilTest(compare, value) else love.graphics.setStencilTest() end
+    end,
     [subtypes.MESHUSERT] = drawMeshusert,
     [subtypes.UVUSERT] = drawUvusert,
     [subtypes.CONNECTED_TEXTURE] = drawConnectedTexture,
