@@ -2,6 +2,7 @@
 -- beside a live Mipo, the parts in a row on top, the shapes in a flickable grid, paint blobs, icon
 -- sliders on a taped strip, a drawn toggle and the dice. Tap a part of the Mipo to pick it (a drag
 -- still pokes). Widgets: src/ui/maker/drawn.lua (makerUI), drawings in textures/ui/maker/.
+-- Parts: body, head, eyes, nose, ears, hair, arms, hands, legs, feet.
 -- Play mode only (./playtime.sh play maker; tab toggles the editor).
 -- keys: r: a new Mipo   h: hide/show the card
 
@@ -180,6 +181,86 @@ local CATEGORIES = {
         },
     },
 }
+
+-- Limbs. Arms and legs are capsules (dims.h the length, dims.w the physics width) drawn by a
+-- connected-skin ribbon owned by the upper segment (luarm, luleg); hands and feet are shape8 parts.
+local LIMBS = {
+    arms = { owners = { 'luarm', 'ruarm' }, segments = { 'luarm', 'llarm', 'ruarm', 'rlarm' } },
+    legs = { owners = { 'luleg', 'ruleg' }, segments = { 'luleg', 'llleg', 'ruleg', 'rlleg' } },
+}
+local function ribbon(inst, limb)
+    local p = partData(inst, LIMBS[limb].owners[1])
+    local cs = p and p.appearance and p.appearance['connected-skin']
+    return cs and cs.main
+end
+local function setRibbon(inst, limb, values)
+    for _, owner in ipairs(LIMBS[limb].owners) do
+        if partData(inst, owner) then characterManager.updateConnectedAppearance(inst, owner, 'connected-skin', values) end
+    end
+end
+local function setLength(inst, limb, h)
+    for _, name in ipairs(LIMBS[limb].segments) do
+        if partData(inst, name) then characterManager.updatePart(name, { h = h }, inst) end
+    end
+end
+
+local function limbCategory(limb, icon, iconPrefix, extra)
+    local cat = {
+        name = limb, icon = icon,
+        hidden = function(inst) return not ribbon(inst, limb) end,
+        shapes = shapeCatalogs.limbSkinTextures,
+        picked = function(inst) return ribbon(inst, limb).bgURL end,
+        pick = function(inst, url) setRibbon(inst, limb, { bgURL = url .. '.png', fgURL = url .. '-mask.png' }) end,
+        look = function(inst) return ribbon(inst, limb) end,
+        colour = function(inst, layer, hex) setRibbon(inst, limb, layer == 'line' and { bgHex = hex } or { fgHex = hex }) end,
+        sliders = {
+            { less = iconPrefix .. '-short', more = iconPrefix .. '-long', min = 150, max = 1200, step = 50,
+                get = function(inst) return partData(inst, LIMBS[limb].segments[1]).dims.h end,
+                set = function(inst, v) setLength(inst, limb, v) end },
+            { less = iconPrefix .. '-thin', more = iconPrefix .. '-thick', min = 0.25, max = 3, step = 0.25,
+                get = function(inst) return ribbon(inst, limb).wmul or inst.scale or 1 end,
+                set = function(inst, v) setRibbon(inst, limb, { wmul = v }) end },
+        },
+    }
+    for _, sl in ipairs(extra or {}) do cat.sliders[#cat.sliders + 1] = sl end
+    return cat
+end
+
+-- hands and feet: shapes on both, the same scale on both
+local function pairCategory(name, icon, left, right, shapes, iconPrefix)
+    local function setBoth(inst, url, sx, sy)
+        for _, n in ipairs({ left, right }) do setShape(inst, n, url, sx, sy) end
+    end
+    return {
+        name = name, icon = icon,
+        hidden = function(inst) return not partData(inst, left) end,
+        shapes = shapes,
+        picked = function(inst) return partData(inst, left).shape8URL end,
+        pick = function(inst, url) setBoth(inst, url) end,
+        skin = function() return { left, right } end,
+        sliders = {
+            { less = iconPrefix .. '-narrow', more = iconPrefix .. '-wide', min = 0.5, max = 2.5, step = 0.25,
+                get = function(inst) return partData(inst, left).dims.sx or 1 end,
+                set = function(inst, v) setBoth(inst, nil, v, nil) end },
+            { less = iconPrefix .. '-short', more = iconPrefix .. '-tall', min = 0.5, max = 2.5, step = 0.25,
+                get = function(inst) return partData(inst, left).dims.sy or 1 end,
+                set = function(inst, v) setBoth(inst, nil, nil, v) end },
+        },
+    }
+end
+
+CATEGORIES[#CATEGORIES + 1] = limbCategory('arms', 'icons/arm', 'icons/arms')
+CATEGORIES[#CATEGORIES + 1] = pairCategory('hands', 'icons/hands', 'lhand', 'rhand', shapeCatalogs.handShapes, 'icons/hand')
+CATEGORIES[#CATEGORIES + 1] = limbCategory('legs', 'icons/leg', 'icons/legs', {
+    { less = 'icons/legs-stance1', more = 'icons/legs-stance2', min = 0, max = 1, step = 0.1,
+        get = function(inst) return inst.dna.positioners.leg.x end,
+        set = function(inst, v)
+            characterManager.updatePositioners(inst, { legX = v })
+            characterManager.rebuildFromCreation(inst, {})
+        end },
+})
+CATEGORIES[#CATEGORIES + 1] = pairCategory('feet', 'icons/feet', 'lfoot', 'rfoot', shapeCatalogs.feetShapes, 'icons/foot')
+
 local BY_NAME = {}
 for _, cat in ipairs(CATEGORIES) do BY_NAME[cat.name] = cat end
 
@@ -189,11 +270,16 @@ local function categoryOfPart(inst, partName)
     if partName == 'head' then return 'head' end
     if partName == 'lear' or partName == 'rear' then return 'ears' end
     if partName:match('^nose') then return 'nose' end
+    if partName:match('arm$') then return 'arms' end
+    if partName:match('leg$') then return 'legs' end
+    if partName:match('hand$') then return 'hands' end
+    if partName:match('foot$') then return 'feet' end
     return nil
 end
 
 local function fillOf(inst, cat)
     if cat.fill then return cat.fill(inst) end
+    if cat.look then return cat.look(inst).fgHex end
     local skin = cat.skin and skinOf(inst, cat.skin(inst)[1])
     return skin and skin.fgHex
 end
@@ -201,6 +287,7 @@ end
 -- the texture block a category's pictures are drawn with (colours, pattern), for the shape cells
 local function lookOf(inst, cat)
     if cat.skin then return skinOf(inst, cat.skin(inst)[1]) end
+    if cat.look then return cat.look(inst) end
     if cat.name == 'eyes' then return face(inst).eye end
     if cat.name == 'nose' then return face(inst).nose end
     if cat.name == 'hair' then return haircut(inst).main end
@@ -210,6 +297,10 @@ local function colourOf(inst, cat, layer)
     if cat.skin then
         local skin = skinOf(inst, cat.skin(inst)[1])
         return skin and (layer == 'line' and skin.bgHex or skin.fgHex)
+    end
+    if cat.look then
+        local block = cat.look(inst)
+        return block and (layer == 'line' and block.bgHex or block.fgHex)
     end
     if layer == 'line' and cat.name == 'eyes' then return face(inst).eye.bgHex end
     if layer == 'line' and cat.name == 'nose' then return face(inst).nose.bgHex end
@@ -382,16 +473,18 @@ function s.drawUI()
     if not BY_NAME[c.category] or (BY_NAME[c.category].hidden and BY_NAME[c.category].hidden(inst)) then
         c.category = 'body'
     end
-    local isize = w / #shown
+    local perRow = 5 -- ten parts: two rows (a flickable row is MM4's)
+    local isize = w / perRow
     for i, cat in ipairs(shown) do
         local fill = hexToRGB(fillOf(inst, cat))
-        if makerUI.iconButton('maker-cat-' .. cat.name, x + (i - 1) * isize, y, isize, cat.icon,
+        local col, row = (i - 1) % perRow, math.floor((i - 1) / perRow)
+        if makerUI.iconButton('maker-cat-' .. cat.name, x + col * isize, y + row * isize * 0.85, isize, cat.icon,
                 { mask = fill, picked = c.category == cat.name, paper = (i % 7) + 1, bare = true }) then
             c.category, c.grid.off, c.grid.vel = cat.name, 0, 0
             mipoVoice.edited(inst)
         end
     end
-    y = y + isize + m * 0.5
+    y = y + isize * (1 + 0.85 * (math.ceil(#shown / perRow) - 1)) + m * 0.3
     local cat = BY_NAME[c.category]
 
     -- dice and the colour layer
