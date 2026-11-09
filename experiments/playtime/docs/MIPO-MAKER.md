@@ -1,8 +1,8 @@
 # Mipo maker — Puppetmaker 2's dress-up screen, in Playtime
 
-status: active
+status: active, focus
 
-**Started:** 2026-11-09. The editor's Mipo panel (`src/ui/mipo/`) stays: it is the developer's tool,
+**Started:** 2026-11-09. **Focus since 2026-11-09.** The editor's Mipo panel (`src/ui/mipo/`) stays: it is the developer's tool,
 reaches everything, accordions and numbers, mouse first. The maker is for kids playing: tap a Mipo,
 change it on one card of pictures, colours and a few icon sliders, on a phone or an iPad.
 
@@ -65,6 +65,18 @@ then change it**.
   shrinks to a tab at the edge so you can play with the Mipo while it stays open.
 - Puppetmaker 2's drawings: the paper panel is the card, taped strips hold the sliders, paint blobs
   and pattern circles as they were; the three tab pictures go unused (or one heads the card).
+
+## The spike (2026-11-09)
+
+Scene `maker` (`./playtime.sh play maker`): the card beside a live Mipo, in Puppetmaker 2's drawings
+(copied to `textures/ui/maker/`). The widgets are `src/ui/maker/drawn.lua` (`makerUI` in scene
+scripts): card, tape strip, icon button, slider, icon slider, paint blob, toggle, part cell.
+Six parts (body, head, eyes, nose, ears, hair), each with shapes, fill / line colours and 1-3 icon
+sliders, written through the editor's own setters; the categories sit in the scene script for now
+(MM2 moves them to the catalog). Tap a Mipo part to pick it; the grid flicks; dragged sliders rebuild
+at most every 0.12 s and once more at the release; the dice; the growl on every change.
+Not in it yet: the camera move, flicking the category row (six fit), patterns, the scene setting,
+the phone layout.
 
 ## Steps
 

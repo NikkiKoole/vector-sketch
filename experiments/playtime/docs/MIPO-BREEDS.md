@@ -1,6 +1,6 @@
 # Mipo breeds — kinds of Mipo that share DNA but still vary
 
-status: active, focus
+status: active
 
 **Started:** 2026-10-30. **Focus since 2026-11-01.**
 

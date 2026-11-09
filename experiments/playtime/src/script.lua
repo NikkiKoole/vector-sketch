@@ -118,6 +118,7 @@ local baseEnv = {
         return require('src.physics.box2d-draw-textured').drawTexturedWorld(...)
     end,
     fluid                    = require('src.fluid'), -- particle water: tip a tank, a wave folds over (waterjar)
+    makerUI                  = require('src.ui.maker.drawn'), -- Puppetmaker 2's drawn widgets (maker spike)
     -- Add global utilities like NeedManager, etc.
     --broadcastEvent = function(eventName, data)
     -- Implementation for event broadcasting
