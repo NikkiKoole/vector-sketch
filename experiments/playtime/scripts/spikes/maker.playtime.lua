@@ -2,7 +2,7 @@
 -- beside a live Mipo, the parts in a row on top, the shapes in a flickable grid, paint blobs, icon
 -- sliders on a taped strip, a drawn toggle and the dice. Tap a part of the Mipo to pick it (a drag
 -- still pokes). Widgets: src/ui/maker/drawn.lua (makerUI), drawings in textures/ui/maker/.
--- Parts: body, head, eyes, nose, ears, hair, arms, hands, legs, feet, body hair, arm hair, leg hair.
+-- Parts: body, head, eyes, nose, mouth, brows, ears, hair, arms, hands, legs, feet, body hair, arm hair, leg hair.
 -- Play mode only (./playtime.sh play maker; tab toggles the editor).
 -- keys: r: a new Mipo   h: hide/show the card
 
@@ -77,6 +77,22 @@ local function faceSet(inst, values) characterManager.updateFaceOfPart(inst, fac
 -- The categories: what the card shows for each (later src/mipo-maker-catalog.lua, MM2).
 -- shapes: the catalog, picked(inst) the url picked now, pick(inst, url); fill(inst) the colour the
 -- cells and the icon get; colour(inst, layer, hex); sliders: { less, more, min, max, step, get, set }.
+-- A position slider with 'up' on the right: positions count from the top (0 top, 1 bottom: the face
+-- features lerp top to bottom, ear height measured too), so the slider shows them turned round.
+local function upDown(lessIcon, moreIcon, min, max, step, get, set)
+    return { less = lessIcon, more = moreIcon, min = min, max = max, step = step,
+        get = function(inst) return min + max - (get(inst) or (min + max) / 2) end,
+        set = function(inst, v) set(inst, min + max - v) end }
+end
+
+-- the face's size (dna.faceMagnitude): on the head, or the body of a potato (its face is there)
+local function faceSize(onPotato)
+    return { less = 'icons/face-small', more = 'icons/face-big', min = 0.5, max = 2, step = 0.1,
+        hidden = function(inst) return (inst.dna.creation.isPotatoHead or false) ~= onPotato end,
+        get = function(inst) return inst.dna.faceMagnitude or 1 end,
+        set = function(inst, v) characterManager.updatePositioners(inst, { faceMagnitude = v }) end }
+end
+
 local CATEGORIES = {
     {
         name = 'body', icon = 'icons/body',
@@ -91,6 +107,7 @@ local CATEGORIES = {
             { less = 'icons/body-small', more = 'icons/body-tall', min = 0.5, max = 2, step = 0.25,
                 get = function(inst) return partData(inst, 'torso1').dims.sy or 1 end,
                 set = function(inst, v) setShape(inst, 'torso1', nil, nil, v) end },
+            faceSize(true),
         },
     },
     {
@@ -107,6 +124,7 @@ local CATEGORIES = {
             { less = 'icons/head-small', more = 'icons/head-tall', min = 0.5, max = 2, step = 0.25,
                 get = function(inst) return partData(inst, 'head').dims.sy or 1 end,
                 set = function(inst, v) setShape(inst, 'head', nil, nil, v) end },
+            faceSize(false),
         },
     },
     {
@@ -126,6 +144,12 @@ local CATEGORIES = {
             { less = 'icons/eye-close', more = 'icons/eye-far', min = 0, max = 0.5, step = 0.05,
                 get = function(inst) return face(inst).positioners.eye.x end,
                 set = function(inst, v) faceSet(inst, { eyeX = v }) end },
+            upDown('icons/eye-down', 'icons/eye-up', 0, 1, 0.05,
+                function(inst) return face(inst).positioners.eye.y end,
+                function(inst, v) faceSet(inst, { eyeY = v }) end),
+            { less = 'icons/eye-ccw', more = 'icons/eye-cw', min = -1, max = 1, step = 0.1,
+                get = function(inst) return face(inst).positioners.eye.r or 0 end,
+                set = function(inst, v) faceSet(inst, { eyeR = v }) end },
         },
     },
     {
@@ -142,6 +166,9 @@ local CATEGORIES = {
             { less = 'icons/nose-small', more = 'icons/nose-tall', min = 0.5, max = 3, step = 0.25,
                 get = function(inst) return face(inst).nose.hMul end,
                 set = function(inst, v) faceSet(inst, { noseHMul = v }) end },
+            upDown('icons/nose-down', 'icons/nose-up', 0, 1, 0.05,
+                function(inst) return face(inst).positioners.nose.y end,
+                function(inst, v) faceSet(inst, { noseY = v }) end),
         },
     },
     {
@@ -159,6 +186,20 @@ local CATEGORIES = {
                 get = function(inst) return partData(inst, 'lear').dims.sy or 1 end,
                 set = function(inst, v)
                     for _, n in ipairs({ 'lear', 'rear' }) do setShape(inst, n, nil, nil, v) end
+                end },
+            upDown('icons/ear-down', 'icons/ear-up', 0, 1, 0.05,
+                function(inst) return inst.dna.positioners.ear.y end,
+                function(inst, v)
+                    characterManager.updatePositioners(inst, { earY = v })
+                    characterManager.rebuildFromCreation(inst, {})
+                end),
+            -- the ears' tilt, mirrored: lear at -90deg + t, rear at 90deg - t (the editor's defaults: t = 36deg)
+            { less = 'icons/ear-ccw', more = 'icons/ear-cw', min = 0, max = 2, step = 0.1,
+                get = function(inst) return (partData(inst, 'lear').stanceAngle or (-math.pi / 2 + math.pi / 5)) + math.pi / 2 end,
+                set = function(inst, v)
+                    partData(inst, 'lear').stanceAngle = -math.pi / 2 + v
+                    if partData(inst, 'rear') then partData(inst, 'rear').stanceAngle = math.pi / 2 - v end
+                    characterManager.rebuildFromCreation(inst, {})
                 end },
         },
     },
@@ -336,6 +377,58 @@ local function limbHairCategory(name, icon, limb)
 end
 CATEGORIES[#CATEGORIES + 1] = limbHairCategory('armhair', 'icons/armhair', 'arms')
 CATEGORIES[#CATEGORIES + 1] = limbHairCategory('leghair', 'icons/leghair', 'legs')
+
+-- Mouth and brows (face features, like eyes and nose), placed after the nose in the row.
+local function mouthLook(inst) return { fgHex = face(inst).mouth.lipHex, bgHex = '020202ff' } end
+local MOUTH = {
+    name = 'mouth', icon = 'icons/mouth',
+    shapes = shapeCatalogs.upperLipShapes,
+    picked = function(inst) return face(inst).mouth.upperLipShape end,
+    pick = function(inst, url) -- the lower lip of the same number, when there is one
+        local n = numberOf(url)
+        local lower = shapeCatalogs.lowerLipShapes[n] and n or nil
+        faceSet(inst, { mouthUpperLipShape = n, mouthLowerLipShape = lower })
+    end,
+    look = mouthLook,
+    colour = function(inst, _, hex) faceSet(inst, { mouthLipHex = hex }) end,
+    sliders = {
+        { less = 'icons/mouth-narrow', more = 'icons/mouth-wide', min = 0.25, max = 2.5, step = 0.25,
+            get = function(inst) return face(inst).mouth.wMul end,
+            set = function(inst, v) faceSet(inst, { mouthWMul = v }) end },
+        { less = 'icons/mouth-small', more = 'icons/mouth-tall', min = 0.25, max = 2.5, step = 0.25,
+            get = function(inst) return face(inst).mouth.hMul end,
+            set = function(inst, v) faceSet(inst, { mouthHMul = v }) end },
+        upDown('icons/mouth-down', 'icons/mouth-up', 0.5, 0.95, 0.05,
+            function(inst) return face(inst).positioners.mouth.y end,
+            function(inst, v) faceSet(inst, { mouthY = v }) end),
+    },
+}
+local BROWS = {
+    name = 'brows', icon = 'icons/brows', outlineOnly = true,
+    shapes = shapeCatalogs.browShapes,
+    picked = function(inst) return face(inst).brow.shape end,
+    pick = function(inst, url) faceSet(inst, { browShape = numberOf(url) }) end,
+    look = function(inst) return { bgHex = face(inst).brow.bgHex, fgHex = '' } end,
+    colour = function(inst, _, hex) faceSet(inst, { browBgHex = hex }) end,
+    sliders = {
+        { less = 'icons/brow-narrow', more = 'icons/brow-wide', min = 0.25, max = 2, step = 0.25,
+            get = function(inst) return face(inst).brow.wMul end,
+            set = function(inst, v) faceSet(inst, { browWMul = v }) end },
+        { less = 'icons/brow-thin', more = 'icons/brow-thick', min = 0.25, max = 2, step = 0.25,
+            get = function(inst) return face(inst).brow.hMul end,
+            set = function(inst, v) faceSet(inst, { browHMul = v }) end },
+        upDown('icons/brows-down', 'icons/brows-up', 0.1, 0.5, 0.05,
+            function(inst) return face(inst).positioners.brow.y end,
+            function(inst, v) faceSet(inst, { browY = v }) end),
+    },
+}
+for i, cat in ipairs(CATEGORIES) do
+    if cat.name == 'nose' then
+        table.insert(CATEGORIES, i + 1, MOUTH)
+        table.insert(CATEGORIES, i + 2, BROWS)
+        break
+    end
+end
 
 local BY_NAME = {}
 for _, cat in ipairs(CATEGORIES) do BY_NAME[cat.name] = cat end
@@ -556,7 +649,7 @@ function s.drawUI()
     if not BY_NAME[c.category] or (BY_NAME[c.category].hidden and BY_NAME[c.category].hidden(inst)) then
         c.category = 'body'
     end
-    local perRow = 7 -- thirteen parts: two rows (a flickable row is MM4's)
+    local perRow = 8 -- fifteen parts: two rows (a flickable row is MM4's)
     local isize = w / perRow
     for i, cat in ipairs(shown) do
         local fill = hexToRGB(fillOf(inst, cat))
@@ -586,9 +679,15 @@ function s.drawUI()
     y = y + dsize + m * 0.4
 
     -- the sliders on a taped strip, at the bottom
-    local ssize = math.min(48, w / 7)
+    local sliders = {}
+    for _, sl in ipairs(cat.sliders) do
+        if not (sl.hidden and sl.hidden(inst)) then sliders[#sliders + 1] = sl end
+    end
+    local columns = #sliders > 3 and 2 or 1 -- more than three: two columns, smaller
+    local colW = (w - (columns - 1) * m * 0.5) / columns
+    local ssize = math.min(48, colW / (columns == 2 and 4.2 or 7))
     local rowH = ssize * 1.25
-    local slidersH = #cat.sliders * rowH + m * 0.6
+    local slidersH = math.ceil(#sliders / columns) * rowH + m * 0.6
     local blobSize = w / 8
     local blobsH = blobSize * 2 + m * 0.4
     local bottom = cy + ch - m * 0.9
@@ -609,11 +708,12 @@ function s.drawUI()
     end
 
     makerUI.tape(x - m * 0.4, sy0, w + m * 0.8, slidersH)
-    for i, sl in ipairs(cat.sliders) do
-        local id = 'maker-' .. cat.name .. '-' .. i
+    for i, sl in ipairs(sliders) do
+        local id = 'maker-' .. cat.name .. '-' .. sl.less
         local shownValue = (c.live and c.live[id]) or sl.get(inst) or sl.min -- dragged, not applied yet
-        local v, amount = makerUI.iconSlider(id, x, sy0 + m * 0.3 + (i - 1) * rowH,
-            w, ssize, shownValue, sl.min, sl.max, sl.step, sl.less, sl.more)
+        local col, row = (i - 1) % columns, math.floor((i - 1) / columns)
+        local v, amount = makerUI.iconSlider(id, x + col * (colW + m * 0.5), sy0 + m * 0.3 + row * rowH,
+            colW, ssize, shownValue, sl.min, sl.max, sl.step, sl.less, sl.more)
         if v then
             c.live = c.live or {}
             c.live[id] = v
