@@ -231,6 +231,11 @@ local CATEGORIES = {
         colour = function(inst, layer, hex)
             characterManager.updateHaircutOfPart(inst, faceOwner(inst), { [LAYER_KEY[layer]] = hex })
         end,
+        setBlock = function(inst, values) -- straight into main: the haircut setter files turn / scale elsewhere
+            local main = haircut(inst).main
+            for k, v in pairs(values) do main[k] = v end
+            main.cached = nil
+        end,
         sliders = {
             { less = 'icons/hair-thin', more = 'icons/hair-thick', min = 50, max = 800, step = 50,
                 get = function(inst) return haircut(inst).width or 250 end,
@@ -271,6 +276,7 @@ local function limbCategory(limb, icon, iconPrefix, extra)
         look = function(inst) return ribbon(inst, limb) end,
         layers = ALL_LAYERS,
         colour = function(inst, layer, hex) setRibbon(inst, limb, { [LAYER_KEY[layer]] = hex }) end,
+        setBlock = function(inst, values) setRibbon(inst, limb, values) end,
         sliders = {
             { less = iconPrefix .. '-short', more = iconPrefix .. '-long', min = 150, max = 1200, step = 50,
                 get = function(inst) return partData(inst, LIMBS[limb].segments[1]).dims.h end,
@@ -387,6 +393,7 @@ local function limbHairCategory(name, icon, limb)
         look = function(inst) return limbHair(inst, limb) end,
         layers = function(inst) return hairLayers(limbHair(inst, limb)) end,
         colour = function(inst, layer, hex) setLimbHair(inst, limb, { [LAYER_KEY[layer]] = hex }) end,
+        setBlock = function(inst, values) setLimbHair(inst, limb, values) end,
         sliders = {
             { less = 'icons/hair-thin', more = 'icons/hair-thick', min = 0.25, max = 4, step = 0.25,
                 get = function(inst) return limbHair(inst, limb).wmul or inst.scale or 1 end,
@@ -476,6 +483,20 @@ for i, cat in ipairs(CATEGORIES) do
         table.insert(CATEGORIES, i + 3, BROWS)
         break
     end
+end
+
+-- Patterns: every picture in textures/pat/. A part's pattern is its block's pURL, pHex (its colour and,
+-- in the alpha, how solid it is) and pr / psx / psy (turn, scale). 'None' is the alpha at 0.
+local PATTERNS = {}
+for _, file in ipairs(love.filesystem.getDirectoryItems('textures/pat')) do
+    if file:match('%.png$') then PATTERNS[#PATTERNS + 1] = file end
+end
+table.sort(PATTERNS)
+
+local function alphaOf(hex) return (hex and #hex >= 8) and tonumber(hex:sub(7, 8), 16) / 255 or 1 end
+local function withAlpha(hex, a)
+    hex = (hex and #hex >= 6) and hex:sub(1, 6) or '000000'
+    return hex .. string.format('%02x', math.floor(math.max(0, math.min(1, a)) * 255 + 0.5))
 end
 
 local BY_NAME = {}
@@ -622,12 +643,41 @@ function s.onKeyPress(key)
 end
 
 -- the shapes grid: flick it up and down; a tap picks (not at the end of a flick)
-local function drawGrid(c, inst, cat, x, y, w, h)
+-- write keys into a part's texture block (skin: through the setter; others: the category's own)
+local function setBlock(inst, cat, values)
+    if cat.skin then
+        for k, v in pairs(values) do setSkin(inst, cat.skin(inst), k, v) end
+    elseif cat.setBlock then
+        cat.setBlock(inst, values)
+    end
+end
+
+-- the pattern's sliders, the same for every part with a pattern (made once per part)
+local function patternSliders(cat)
+    if cat._patternSliders then return cat._patternSliders end
+    local function block(inst) return lookOf(inst, cat) end
+    cat._patternSliders = {
+        -- a bigger scale repeats the pattern more often: finer
+        { less = 'icons/pattern-coarse', more = 'icons/pattern-fine', min = 0.25, max = 3, step = 0.25,
+            get = function(inst) return block(inst).psx or 1 end,
+            set = function(inst, v) setBlock(inst, cat, { psx = v, psy = v }) end },
+        { less = 'icons/pattern-ccw', more = 'icons/pattern-cw', min = 0, max = 6.2, step = 0.2,
+            get = function(inst) return block(inst).pr or 0 end,
+            set = function(inst, v) setBlock(inst, cat, { pr = v }) end },
+        { less = 'icons/pattern-transparent', more = 'icons/pattern-opaque', min = 0, max = 1, step = 0.1,
+            get = function(inst) return alphaOf(block(inst).pHex) end,
+            set = function(inst, v) setBlock(inst, cat, { pHex = withAlpha(block(inst).pHex, v) }) end },
+    }
+    return cat._patternSliders
+end
+
+local function drawGrid(c, inst, cat, layer, x, y, w, h)
     local cols = 4
     local cell = w / cols
+    local patterns = layer == 'pattern' -- the pattern button picked: the grid holds the patterns
     local items = {}
-    if cat.allowNone then items[1] = false end -- false: the 'none' cell (no hair)
-    for _, url in ipairs(cat.shapes or {}) do items[#items + 1] = url end
+    if cat.allowNone or patterns then items[1] = false end -- false: the 'none' cell
+    for _, url in ipairs(patterns and PATTERNS or cat.shapes or {}) do items[#items + 1] = url end
     local rows = math.ceil(#items / cols)
     local g = c.grid
     local maxOff = math.max(0, rows * cell - h)
@@ -652,6 +702,7 @@ local function drawGrid(c, inst, cat, x, y, w, h)
 
     local look = lookOf(inst, cat)
     local picked = cat.picked(inst)
+    if patterns then picked = alphaOf(look.pHex) > 0 and look.pURL or '' end
     ui.pushClip(x, y, w, h)
     for i, url in ipairs(items) do
         local col, row = (i - 1) % cols, math.floor((i - 1) / cols)
@@ -660,13 +711,29 @@ local function drawGrid(c, inst, cat, x, y, w, h)
             local tapped
             if url == false then
                 tapped = makerUI.noneCell('maker-cell-none', cx, cy, cell, picked == nil or picked == '' or picked == 0)
+            elseif patterns then
+                local pat = hexToRGB(look.pHex)
+                pat[4] = math.max(alphaOf(look.pHex), 0.6) -- 'none' picked: the circles still show their pattern
+                tapped = makerUI.patternCell('maker-pat-' .. i, cx, cy, cell, url, hexToRGB(look.fgHex), pat,
+                    hexToRGB(look.bgHex), look.pr, look.psx, picked == url)
             else
                 local isPicked = picked == url .. '.png' or picked == url or picked == numberOf(url)
                 tapped = makerUI.partCell('maker-cell-' .. i, cx, cy, cell, url, look, isPicked,
                     cat.outlineOnly and not shapeCatalogs.hairsWithMask[url .. '.png'])
             end
             if tapped and not g.flicked and over then
-                apply(function() cat.pick(inst, url) end)
+                if patterns then
+                    apply(function()
+                        if url then -- a pattern: solid again if it was 'none'
+                            local a = alphaOf(look.pHex)
+                            setBlock(inst, cat, { pURL = url, pHex = withAlpha(look.pHex, a > 0 and a or 1) })
+                        else
+                            setBlock(inst, cat, { pHex = withAlpha(look.pHex, 0) })
+                        end
+                    end)
+                else
+                    apply(function() cat.pick(inst, url) end)
+                end
                 mipoVoice.edited(inst)
             end
         end
@@ -740,14 +807,14 @@ function s.drawUI()
 
     -- the sliders on a taped strip, at the bottom
     local sliders = {}
-    for _, sl in ipairs(cat.sliders) do
+    for _, sl in ipairs(layer == 'pattern' and patternSliders(cat) or cat.sliders) do
         if not (sl.hidden and sl.hidden(inst)) then sliders[#sliders + 1] = sl end
     end
     local columns = #sliders > 3 and 2 or 1 -- more than three: two columns, smaller
     local colW = (w - (columns - 1) * m * 0.5) / columns
     local ssize = math.min(48, colW / (columns == 2 and 4.2 or 7))
     local rowH = ssize * 1.25
-    local switches = cat.switches or {}
+    local switches = layer ~= 'pattern' and cat.switches or {}
     local slidersH = (math.ceil(#sliders / columns) + (#switches > 0 and 1 or 0)) * rowH + m * 0.6
     local blobSize = w / 8
     local blobsH = blobSize * 2 + m * 0.4
@@ -755,7 +822,8 @@ function s.drawUI()
     local sy0 = bottom - slidersH
     local by0 = sy0 - blobsH
 
-    drawGrid(c, inst, cat, x, y, w, by0 - y - m * 0.3)
+    if c.gridFor ~= cat.name .. layer then c.gridFor, c.grid.off, c.grid.vel = cat.name .. layer, 0, 0 end
+    drawGrid(c, inst, cat, layer, x, y, w, by0 - y - m * 0.3)
 
     -- paint blobs
     local current = colourOf(inst, cat, layer)

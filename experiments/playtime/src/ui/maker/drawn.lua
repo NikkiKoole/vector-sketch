@@ -20,6 +20,7 @@ function lib.image(name)
         local ok, loaded = pcall(love.graphics.newImage, path)
         img = ok and loaded or false
         if img then img:setFilter('linear', 'linear') end
+        if img and path:match('^textures/pat/') then img:setWrap('repeat', 'repeat') end -- patterns tile
         images[name] = img
     end
     return img
@@ -319,6 +320,43 @@ function lib.noneCell(id, x, y, size, picked)
     local d = size * 0.22
     love.graphics.line(x + size / 2 - d, y + size / 2 + d, x + size / 2 + d, y + size / 2 - d)
     love.graphics.setLineWidth(1)
+    love.graphics.setColor(1, 1, 1)
+    return pressed(id, x, y, size, size)
+end
+
+-- A pattern circle (Puppetmaker's pattern tab): the part's fill colour with the pattern over it in the
+-- pattern colour, turned and scaled as on the part (pr, psx, psy), cut round and ringed in chalk in
+-- the line colour. `file` under textures/pat/ ('type3_.png'). Returns true when tapped.
+local patternShader = love.graphics.newShader([[
+    uniform vec3 fill;
+    uniform vec4 pat;
+    uniform mat2 m;
+    vec4 effect(vec4 color, Image tex, vec2 uv, vec2 sc) {
+        vec2 p = uv - 0.5;
+        float d = length(p);
+        float a = Texel(tex, m * p + 0.5).a * pat.a;
+        return vec4(mix(fill, pat.rgb, a), (1.0 - smoothstep(0.46, 0.5, d)) * color.a);
+    }
+]])
+function lib.patternCell(id, x, y, size, file, fill, pat, line, rot, scale, picked)
+    local img = lib.image('textures/pat/' .. file)
+    local grow = picked and lib.wobble(0.05) or 0.86
+    local d = size * grow
+    if img then
+        local c, sn = math.cos(rot or 0), math.sin(rot or 0)
+        local k = scale or 1
+        patternShader:send('fill', fill)
+        patternShader:send('pat', pat)
+        patternShader:send('m', { { c * k, -sn * k }, { sn * k, c * k } })
+        love.graphics.setShader(patternShader)
+        love.graphics.setColor(1, 1, 1)
+        local iw, ih = img:getDimensions()
+        love.graphics.draw(img, x + (size - d) / 2, y + (size - d) / 2, 0, d / iw, d / ih)
+        love.graphics.setShader()
+    end
+    local lc = line or INK
+    love.graphics.setColor(lc[1], lc[2], lc[3], 0.45) -- a light ring: at full strength it swallowed the circle
+    drawFitted(lib.image('circle1'), x, y, size, size, grow * 1.04)
     love.graphics.setColor(1, 1, 1)
     return pressed(id, x, y, size, size)
 end
