@@ -13,9 +13,9 @@ local state = require('src.state')
 -- Noise samples in UV space so it rotates/translates with the body (noise stuck to
 -- the character, not the screen). fBm approximates thumbprint texture without an
 -- asset file. Tune via lib.plasticineStrength / lib.plasticineScale / lib.plasticineEdge.
-local MAX_LIGHTS = 8
+local MAX_LIGHTS = 16 -- 8 until 2026-11-09 (a festoon of bulbs, LIGHT-AND-SHADOW LS26)
 local plasticineShader = love.graphics.newShader([[
-    #define MAX_LIGHTS 8
+    #define MAX_LIGHTS 16
     uniform float strength;
     uniform float scale;
     uniform float edgeDark;
@@ -344,7 +344,7 @@ lib.plasticineCoolHex      = 'c8d8ffff'   -- steel blue: shadow/environment
 -- uv.y = across width; on surfaces where the axes are swapped, strands simply
 -- run the other way — tune density to taste.
 local hairsShader = love.graphics.newShader([[
-    #define MAX_LIGHTS 8
+    #define MAX_LIGHTS 16
     uniform float strength;      // strand brightness variation
     uniform float density;       // strand density
     uniform float fuzz;          // edge frayness

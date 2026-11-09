@@ -1,7 +1,9 @@
 -- light-grass-check: working on light — a sun, a warm and a cool lamp to carry about, a turning lamp, over
 -- six plasticine shapes and three Mipos; and grass on a spinning turf (its blades rebuilt every frame: the counter).
--- From the LITTLE-USED rounds (docs/LITTLE-USED.md, 2026-11-06). Up to 8 lights reach a shape
--- (src/render/shaders.lua MAX_LIGHTS); a light's colour tints, its intensity and nearness light.
+-- From the LITTLE-USED rounds (docs/LITTLE-USED.md, 2026-11-06). Up to 16 lights reach a shape
+-- (src/render/shaders.lua MAX_LIGHTS, 8 until LS26); a light's colour tints, its intensity and nearness light.
+-- A festoon (LS26, src/festoon.lua): a wire in three swags over the scene, nine bulbs in five colours, each
+-- bulb a real point light (the 'festoon bulb' bodies) that lights the things in its colour, brighter at night.
 -- The shapes start lit strongly and baked round (their settings, src/render/shaders.lua and
 -- src/render/form-bake.lua; 0 shows them as other scenes draw them).
 -- play mode (tab): drag the warm and the cool lamp about.
@@ -357,6 +359,14 @@ local function boardShapes()
 end
 local LIGHTS = { 'sun', 'moon', 'warm lamp', 'cool lamp', 'turning lamp', 'sky light', 'back light' }
 
+-- The festoon (LS26): its hooks on the wall (three swags), and each bulb's light by day and at night. Nine
+-- bulbs + the seven lights above = 16, the shaders' MAX_LIGHTS: one more light and the last ones are dropped.
+local FESTOON_HOOKS = { { -1450, -470 }, { -480, -500 }, { 500, -480 }, { 1450, -470 } }
+local FESTOON_KEY = 'v1' -- change it (or the hooks) and the wire is hung again
+-- (night 0.9 and range 800 hardly showed on the Mipos next to the warm and cool lamps, Nikki 2026-11-09)
+-- (1.6 / 1200 still too faint: "more extreme, easier to see their effect on the Mipos", same day)
+local BULB_DAY, BULB_NIGHT, BULB_RANGE = 0.4, 4.0, 1600
+
 -- each key steps through these on every shape; the first is how other scenes draw them
 local TRIES = {
     g = { key = 'plasticineLightGain', name = 'swing', values = { 0, 0.3, 0.5 } },
@@ -386,7 +396,7 @@ local function freshen()
     local count = world:getBodyCount()
     if count ~= found.bodyCount or found.frames > 60 then
         found.lights, found.shapes, found.parts, found.bodyCount, found.frames = {}, nil, nil, count, 0
-        found.stoneSet = nil
+        found.stoneSet, found.bulbs = nil, nil
     end
 end
 
@@ -753,6 +763,50 @@ local function solidLights(wallShadows)
     return list
 end
 
+-- the festoon's wire (kept on the scene's state: a hot swap keeps it swaying where it was)
+local function theFestoon(c)
+    if not c.festoon or c.festoonKey ~= FESTOON_KEY then
+        c.festoon, c.festoonKey = festoon.new(FESTOON_HOOKS, { segments = 12, slack = 1.07, bulbsPerSwag = 3 }),
+            FESTOON_KEY
+    end
+    return c.festoon
+end
+
+-- the bulbs' light sfixtures, in the order of the bodies (found again with the other lights)
+local function bulbLights()
+    if found.bulbs then return found.bulbs end
+    local list = {}
+    for _, thing in ipairs(getObjectsByLabel('festoon bulb')) do
+        for _, fixture in ipairs(thing.body:getFixtures()) do
+            local ud = fixture:getUserData()
+            if ud and ud.subtype == 'light' then list[#list + 1] = { thing.body, ud.extra } end
+        end
+    end
+    found.bulbs = list
+    return list
+end
+
+-- each bulb's light where its bulb hangs, in its colour; off with the festoon, in 'only the turning lamp',
+-- or when only the glows are wanted ('bulbs light the things' off)
+local function placeBulbs(c)
+    local f = theFestoon(c)
+    local lit = not c.festoonOff and not c.lampOnly and not c.bulbGlowOnly
+    local night = c.bulbStrength or BULB_NIGHT
+    local strength = BULB_DAY + (night - BULB_DAY) * nightness()
+    for i, light in ipairs(bulbLights()) do
+        local bulb = f.bulbs[i]
+        local body, extra = light[1], light[2]
+        if bulb and not body:isDestroyed() then
+            body:setPosition(bulb.x, bulb.y)
+            extra.colorHex = bulb.colour .. 'ff'
+            extra.range = BULB_RANGE
+            extra.intensity = lit and strength or 0
+        else
+            extra.intensity = 0
+        end
+    end
+end
+
 local function wallAboveFloor()
     love.graphics.rectangle('fill', WALL.x, WALL.y, WALL.w, FLOOR_Y - WALL.y)
 end
@@ -786,6 +840,12 @@ local function applyTime()
     local coolOn = (c.solid and set.cool) or (c.lampsCircle and c.circlingZ and c.circlingZ['cool lamp'])
     setLight('warm lamp', nil, warmOn and math.max(1.4, L.warm) or L.warm)
     setLight('cool lamp', nil, coolOn and math.max(1.2, L.cool) or L.cool)
+    -- the festoon alone (its panel switch, on to start): the warm and cool lamps out unless they throw the
+    -- 3D shadows or circle, so the bulbs' colours are what lights the Mipos
+    if not c.festoonOff and not c.festoonWithLamps then
+        if not warmOn then setLight('warm lamp', nil, 0) end
+        if not coolOn then setLight('cool lamp', nil, 0) end
+    end
     -- the circling lamp: a point light while it circles, the turning lamp's own way again after
     local _, turning = lightOf('turning lamp')
     if turning then
@@ -895,6 +955,11 @@ function s.update(dt)
     if c.circling or c.lampsCircle then
         c.circleAngle = ((c.circleAngle or 0) + (dt or 0) * (c.circleSpeed or 0.35)) % (2 * math.pi)
     end
+    if not c.festoonOff then
+        local f = theFestoon(c)
+        f.wind = c.festoonWind or 120
+        festoon.step(f, dt)
+    end
     c.time = c.time + (dt or 0)
     if c.time >= 1 then
         c.perSecond, c.made, c.time = c.made, 0, c.time - 1
@@ -923,6 +988,7 @@ local function everyFrame()
     freshen()
     circle(c)
     applyTime()
+    placeBulbs(c)
     lightMipos()
     local L = c.now or LAMP_ONLY
     state.contactShadows = not c.shadowsOff and { strength = L.shadows } or nil
@@ -1102,6 +1168,13 @@ function s.drawBelow()
             end
         end
     end
+    -- the festoon's light on the wall, by how dark it is (the bulbs' own light on the things is the
+    -- shaders'); the wire and bulbs here too when it hangs behind the things
+    if not look().festoonOff and not look().lampOnly then
+        local f, dark = theFestoon(look()), nightness()
+        festoon.drawPools(f, dark)
+        if look().festoonBehind then festoon.draw(f, 0.25 + 0.75 * dark) end
+    end
     drawLampGlows(true) -- circling lamps behind the things
     love.graphics.setColor(1, 1, 1, 1)
 end
@@ -1138,6 +1211,11 @@ end
 
 -- the lamps in front of the things, and the stones' labels
 function s.draw()
+    -- the festoon in front of the things (to start): the shaders light the Mipos from in front of them, so
+    -- drawn behind them it didn't match (Nikki 2026-11-09 chose in front)
+    if not look().festoonOff and not look().lampOnly and not look().festoonBehind then
+        festoon.draw(theFestoon(look()), 0.25 + 0.75 * nightness())
+    end
     drawLampGlows(false)
     -- each stone's and the fence's roughness, small under it
     local font = love.graphics.getFont()
@@ -1163,7 +1241,7 @@ end
 -- sliders and buttons; the keys still work. Folds away with its – button.
 local PANEL = '•• light and shadow ••'
 local ROW, COL_W = 34, 380
-local PANEL_ROWS = 19
+local PANEL_ROWS = 21
 
 local function check(x, y, on, label)
     local clicked, now = ui.checkbox(x, y, on, label)
@@ -1295,6 +1373,22 @@ local function drawPanel(c)
         row()
         local front = slider('front', x, y, 0.2, 0.95, current(TRIES.z), 'stones: frontal')
         if front then setAll(TRIES.z, front) end
+        row()
+        on = toggle(x, y, not c.festoonOff, 'string lights (festoon)')
+        c.festoonOff = not on
+        row()
+        on = toggle(x, y, not c.bulbGlowOnly, 'bulbs light the things (9 lights)')
+        c.bulbGlowOnly = not on
+        row()
+        local bs = slider('bulbStrength', x, y, 0, 8, c.bulbStrength or BULB_NIGHT, 'bulbs: strength at night')
+        if bs then c.bulbStrength = bs end
+        row()
+        c.festoonWithLamps = toggle(x, y, c.festoonWithLamps, 'festoon: warm and cool lamps on too')
+        row()
+        c.festoonBehind = toggle(x, y, c.festoonBehind, 'festoon: drawn behind the things')
+        row()
+        local wind = slider('festoonWind', x, y, 0, 600, c.festoonWind or 120, 'festoon: wind', 1)
+        if wind then c.festoonWind = wind end
     end)
 end
 

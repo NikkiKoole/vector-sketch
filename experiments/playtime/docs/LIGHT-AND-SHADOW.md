@@ -407,6 +407,23 @@ fade, a sun: the panel's `fades` switch, LS4).
 - [ ] **LS15. Small ones:** should a new directional light be a sun (not fade) by default; the back
   light on a drawn stone lands on its black outline (reach past it, as the contact shadow does);
   grass on a moving body rebuilds its blades every frame (LITTLE-USED, the grass round).
+- [x] **LS26. Festoon lights.** A wire hung in swags with bulbs in a few colours, each bulb a small light.
+  Built 2026-11-09 in light-grass-check: `src/festoon.lua` (a verlet rope per swag between hooks, soft
+  wind, bulbs swinging under it; the wire, the bulbs' glow, their pools of light on the wall), three swags,
+  nine bulbs in five colours, each a real point light (the 'festoon bulb' bodies; the script puts them
+  where their bulb hangs and sets colour and strength, 0.4 by day, 4.0 at night, range 1600). Nikki
+  wanted them real lights, not glows: **MAX_LIGHTS went 8 -> 16** (src/render/shaders.lua, three places);
+  the scene now has exactly 16, a 17th light would be dropped (the first 16 that are on, by the
+  registry's order: no nearest-lights pick per part). Hung in front of the things, as the shaders light
+  from in front (Nikki chose it; 'drawn behind' in the panel to compare). At night with the festoon on, the
+  warm and cool lamps go out unless they throw 3D shadows or circle (they drowned the bulbs; panel switch
+  to keep them). No shadows from the bulbs. The scene's three Mipos were regrown from their DNA standing
+  clear of the fence (they loaded tangled in it and were flung, two out of the world).
+  Not done: **the phone.** Not measured (Nikki: later), and not even compiled there: this Mac's Xcode
+  (15.1) can't install on the iPhone's iOS 18.7 (Xcode 16.x needed). 16 lights doubles the light uniforms
+  (7 per light) and each lit pixel loops over every light that's on: check it compiles and what 9 bulbs
+  cost on the phone; if too much, the cap back to 12 or a nearest-lights pick per part
+  (`gatherLightsForBody`).
 
 Not light, but where this started (`LITTLE-USED.md`): three rounds left there, skinned mesh, UV mesh,
 the recorder (the feature-rounds sweep, `claudetools/feature-rounds_spec.lua`, takes a recipe each).
