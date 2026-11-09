@@ -96,7 +96,7 @@ end
 
 -- the face's size (dna.faceMagnitude): on the head, or the body of a potato (its face is there)
 local function faceSize(onPotato)
-    return { less = 'icons/face-small', more = 'icons/face-big', min = 0.5, max = 2, step = 0.1,
+    return { less = 'icons/face-small', more = 'icons/face-big', min = 0.25, max = 2.5, step = 0.25,
         hidden = function(inst) return (inst.dna.creation.isPotatoHead or false) ~= onPotato end,
         get = function(inst) return inst.dna.faceMagnitude or 1 end,
         set = function(inst, v) characterManager.updatePositioners(inst, { faceMagnitude = v }) end }
@@ -176,10 +176,10 @@ local CATEGORIES = {
         pick = function(inst, url) setShape(inst, 'torso1', url) end,
         skin = function(inst) return torsos(inst) end,
         sliders = {
-            { less = 'icons/body-narrow', more = 'icons/body-wide', min = 0.5, max = 2, step = 0.25,
+            { less = 'icons/body-narrow', more = 'icons/body-wide', min = 0.5, max = 4, step = 0.25,
                 get = function(inst) return partData(inst, 'torso1').dims.sx or 1 end,
                 set = function(inst, v) setShape(inst, 'torso1', nil, v, nil) end },
-            { less = 'icons/body-small', more = 'icons/body-tall', min = 0.5, max = 2, step = 0.25,
+            { less = 'icons/body-small', more = 'icons/body-tall', min = 0.5, max = 4, step = 0.25,
                 get = function(inst) return partData(inst, 'torso1').dims.sy or 1 end,
                 set = function(inst, v) setShape(inst, 'torso1', nil, nil, v) end },
             faceSize(true),
@@ -193,10 +193,10 @@ local CATEGORIES = {
         pick = function(inst, url) setShape(inst, 'head', url) end,
         skin = function() return { 'head' } end,
         sliders = {
-            { less = 'icons/head-narrow', more = 'icons/head-wide', min = 0.5, max = 2, step = 0.25,
+            { less = 'icons/head-narrow', more = 'icons/head-wide', min = 0.5, max = 4, step = 0.25,
                 get = function(inst) return partData(inst, 'head').dims.sx or 1 end,
                 set = function(inst, v) setShape(inst, 'head', nil, v, nil) end },
-            { less = 'icons/head-small', more = 'icons/head-tall', min = 0.5, max = 2, step = 0.25,
+            { less = 'icons/head-small', more = 'icons/head-tall', min = 0.5, max = 4, step = 0.25,
                 get = function(inst) return partData(inst, 'head').dims.sy or 1 end,
                 set = function(inst, v) setShape(inst, 'head', nil, nil, v) end },
             faceSize(false),
@@ -211,10 +211,10 @@ local CATEGORIES = {
         layers = FILL_LINE,
         colour = function(inst, layer, hex) faceSet(inst, layer == 'line' and { eyeBgHex = hex } or { eyeFgHex = hex }) end,
         sliders = {
-            { less = 'icons/eye-small', more = 'icons/eye-wide', min = 0.25, max = 2, step = 0.25,
+            { less = 'icons/eye-small', more = 'icons/eye-wide', min = 0.125, max = 4, step = 0.125,
                 get = function(inst) return face(inst).eye.wMul end,
                 set = function(inst, v) faceSet(inst, { eyeWMul = v }) end },
-            { less = 'icons/eye-small2', more = 'icons/eye-tall', min = 0.25, max = 2, step = 0.25,
+            { less = 'icons/eye-small2', more = 'icons/eye-tall', min = 0.125, max = 4, step = 0.125,
                 get = function(inst) return face(inst).eye.hMul end,
                 set = function(inst, v) faceSet(inst, { eyeHMul = v }) end },
             { less = 'icons/eye-close', more = 'icons/eye-far', min = 0, max = 0.5, step = 0.05,
@@ -237,10 +237,10 @@ local CATEGORIES = {
         layers = FILL_LINE,
         colour = function(inst, layer, hex) faceSet(inst, layer == 'line' and { noseBgHex = hex } or { noseFgHex = hex }) end,
         sliders = {
-            { less = 'icons/nose-narrow', more = 'icons/nose-wide', min = 0.5, max = 3, step = 0.25,
+            { less = 'icons/nose-narrow', more = 'icons/nose-wide', min = 0.5, max = 3.5, step = 0.25,
                 get = function(inst) return face(inst).nose.wMul end,
                 set = function(inst, v) faceSet(inst, { noseWMul = v }) end },
-            { less = 'icons/nose-small', more = 'icons/nose-tall', min = 0.5, max = 3, step = 0.25,
+            { less = 'icons/nose-small', more = 'icons/nose-tall', min = 0.5, max = 3.5, step = 0.25,
                 get = function(inst) return face(inst).nose.hMul end,
                 set = function(inst, v) faceSet(inst, { noseHMul = v }) end },
             upDown('icons/nose-down', 'icons/nose-up', 0, 1, 0.05,
@@ -259,7 +259,7 @@ local CATEGORIES = {
         end,
         skin = function() return { 'lear', 'rear' } end,
         sliders = {
-            { less = 'icons/ear-small', more = 'icons/ear-big', min = 0.5, max = 2.5, step = 0.25,
+            { less = 'icons/ear-small', more = 'icons/ear-big', min = 0.5, max = 3.5, step = 0.25,
                 get = function(inst) return partData(inst, 'lear').dims.sy or 1 end,
                 set = function(inst, v)
                     for _, n in ipairs({ 'lear', 'rear' }) do setShape(inst, n, nil, nil, v) end
@@ -332,7 +332,7 @@ local function setLength(inst, limb, h)
     end
 end
 
-local function limbCategory(limb, icon, iconPrefix, extra)
+local function limbCategory(limb, icon, iconPrefix, extra, maxLength)
     local cat = {
         name = limb, icon = icon,
         hidden = function(inst) return not ribbon(inst, limb) end,
@@ -344,10 +344,10 @@ local function limbCategory(limb, icon, iconPrefix, extra)
         colour = function(inst, layer, hex) setRibbon(inst, limb, { [LAYER_KEY[layer]] = hex }) end,
         setBlock = function(inst, values) setRibbon(inst, limb, values) end,
         sliders = {
-            { less = iconPrefix .. '-short', more = iconPrefix .. '-long', min = 150, max = 1200, step = 50,
+            { less = iconPrefix .. '-short', more = iconPrefix .. '-long', min = 100, max = maxLength or 1600, step = 50,
                 get = function(inst) return partData(inst, LIMBS[limb].segments[1]).dims.h end,
                 set = function(inst, v) setLength(inst, limb, v) end },
-            { less = iconPrefix .. '-thin', more = iconPrefix .. '-thick', min = 0.25, max = 3, step = 0.25,
+            { less = iconPrefix .. '-thin', more = iconPrefix .. '-thick', min = 0.25, max = 4, step = 0.25,
                 get = function(inst) return ribbon(inst, limb).wmul or inst.scale or 1 end,
                 set = function(inst, v) setRibbon(inst, limb, { wmul = v }) end },
         },
@@ -369,17 +369,17 @@ local function pairCategory(name, icon, left, right, shapes, iconPrefix)
         pick = function(inst, url) setBoth(inst, url) end,
         skin = function() return { left, right } end,
         sliders = {
-            { less = iconPrefix .. '-narrow', more = iconPrefix .. '-wide', min = 0.5, max = 2.5, step = 0.25,
+            { less = iconPrefix .. '-narrow', more = iconPrefix .. '-wide', min = 0.5, max = 3.5, step = 0.25,
                 get = function(inst) return partData(inst, left).dims.sx or 1 end,
                 set = function(inst, v) setBoth(inst, nil, v, nil) end },
-            { less = iconPrefix .. '-short', more = iconPrefix .. '-tall', min = 0.5, max = 2.5, step = 0.25,
+            { less = iconPrefix .. '-short', more = iconPrefix .. '-tall', min = 0.5, max = 3.5, step = 0.25,
                 get = function(inst) return partData(inst, left).dims.sy or 1 end,
                 set = function(inst, v) setBoth(inst, nil, nil, v) end },
         },
     }
 end
 
-CATEGORIES[#CATEGORIES + 1] = limbCategory('arms', 'icons/arm', 'icons/arms')
+CATEGORIES[#CATEGORIES + 1] = limbCategory('arms', 'icons/arm', 'icons/arms', nil, 1600)
 CATEGORIES[#CATEGORIES + 1] = pairCategory('hands', 'icons/hands', 'lhand', 'rhand', shapeCatalogs.handShapes, 'icons/hand')
 CATEGORIES[#CATEGORIES + 1] = limbCategory('legs', 'icons/leg', 'icons/legs', {
     { less = 'icons/legs-stance1', more = 'icons/legs-stance2', min = 0, max = 1, step = 0.1,
@@ -388,7 +388,7 @@ CATEGORIES[#CATEGORIES + 1] = limbCategory('legs', 'icons/leg', 'icons/legs', {
             characterManager.updatePositioners(inst, { legX = v })
             characterManager.rebuildFromCreation(inst, {})
         end },
-})
+}, 2200)
 CATEGORIES[#CATEGORIES + 1] = pairCategory('feet', 'icons/feet', 'lfoot', 'rfoot', shapeCatalogs.feetShapes, 'icons/foot')
 
 -- Body hair: a picture laid along each torso segment's outline (all segments alike), grown out
@@ -418,7 +418,9 @@ CATEGORIES[#CATEGORIES + 1] = {
         setBodyhair(inst, { bgURL = url .. '.png', fgURL = url .. '-mask.png' })
     end,
     look = function(inst) return bodyhair(inst).main end,
-    layers = FILL_LINE,
+    -- line first: the chest hair pictures are nearly all strokes, the fill only shows between them
+    -- (picked first, a blob 'didn't change the colour', Nikki 2026-11-09)
+    layers = { 'line', 'fill' },
     colour = function(inst, layer, hex) setBodyhair(inst, { [LAYER_KEY[layer]] = hex }) end,
     sliders = {
         { less = 'icons/chesthair-inner', more = 'icons/chesthair-outer', min = 0.5, max = 2.5, step = 0.25,
@@ -485,10 +487,10 @@ local MOUTH = {
     layers = { 'fill' },
     colour = function(inst, _, hex) faceSet(inst, { mouthLipHex = hex }) end,
     sliders = {
-        { less = 'icons/mouth-narrow', more = 'icons/mouth-wide', min = 0.25, max = 2.5, step = 0.25,
+        { less = 'icons/mouth-narrow', more = 'icons/mouth-wide', min = 0.25, max = 3, step = 0.25,
             get = function(inst) return face(inst).mouth.wMul end,
             set = function(inst, v) faceSet(inst, { mouthWMul = v }) end },
-        { less = 'icons/mouth-small', more = 'icons/mouth-tall', min = 0.25, max = 2.5, step = 0.25,
+        { less = 'icons/mouth-small', more = 'icons/mouth-tall', min = 0.25, max = 3, step = 0.25,
             get = function(inst) return face(inst).mouth.hMul end,
             set = function(inst, v) faceSet(inst, { mouthHMul = v }) end },
         upDown('icons/mouth-down', 'icons/mouth-up', 0.5, 0.95, 0.05,
@@ -698,7 +700,7 @@ local NECK = {
             hidden = function(inst) return (creation(inst).neckSegments or 0) == 0 end,
             get = function(inst) return creation(inst).neckSegments end,
             set = function(inst, v) rebuildWith(inst, { neckSegments = math.floor(v + 0.5) }) end }, -- a count too
-        { less = 'icons/neck-short', more = 'icons/neck-long', min = 10, max = 500, step = 10,
+        { less = 'icons/neck-short', more = 'icons/neck-long', min = 10, max = 600, step = 10,
             hidden = function(inst) return (creation(inst).neckSegments or 0) == 0 end,
             get = function(inst) return partData(inst, 'neck1') and partData(inst, 'neck1').dims.h or 150 end,
             set = function(inst, v)
@@ -721,12 +723,12 @@ local PUPILS = {
     layers = { 'line' },
     colour = function(inst, _, hex) faceSet(inst, { pupilBgHex = hex }) end,
     sliders = {
-        { less = 'icons/pupil-small', more = 'icons/pupil-big', min = 0.1, max = 1, step = 0.05,
+        { less = 'icons/pupil-small', more = 'icons/pupil-big', min = 0.1, max = 2, step = 0.05,
             get = function(inst) return pupil(inst).wMul end,
             set = function(inst, v)
                 local p = pupil(inst)
                 local ratio = (p.hMul or v) / math.max(0.01, p.wMul or v)
-                faceSet(inst, { pupilWMul = v, pupilHMul = math.min(1, v * ratio) })
+                faceSet(inst, { pupilWMul = v, pupilHMul = math.min(2, v * ratio) })
             end },
     },
 }
