@@ -1,6 +1,6 @@
 # Hair locks — long hair that swings
 
-status: active — picked up again 2026-11-09: fixed, haircuts and pijpenkrullen ("those look great!"); now its cost. (2026-10-31 it was parked for the tufts route, below)
+status: parked — Nikki 2026-11-09: "we are good with the hair" (tried 2026-11-09: locks that hang and swing, haircuts, ringlets, body hair, fur, a coat, the box); left: H4 the phone, H8 the simulation in C
 
 A spike: locks of hair as chains of points rooted on the head, moved by a small verlet step of
 their own (not Box2D) and drawn as ribbons with the hair pictures. `src/hair-locks.lua`, the scene
