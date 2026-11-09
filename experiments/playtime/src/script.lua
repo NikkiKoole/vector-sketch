@@ -100,6 +100,7 @@ local baseEnv = {
     dnaDefaults              = dnaDefaults,
     tostring                 = tostring,
     tonumber                 = tonumber,
+    type                     = type,
     pcall                    = pcall,
     ompBake                  = require('src.render.omp-bake'), -- the outline + mask + pattern bake (scan-test)
     formBake                 = require('src.render.form-bake'), -- a picture's roundness from its mask (material-check)

@@ -2,7 +2,7 @@
 -- beside a live Mipo, the parts in a row on top, the shapes in a flickable grid, paint blobs, icon
 -- sliders on a taped strip, a drawn toggle and the dice. Tap a part of the Mipo to pick it (a drag
 -- still pokes). Widgets: src/ui/maker/drawn.lua (makerUI), drawings in textures/ui/maker/.
--- Parts: body, head, eyes, nose, mouth, brows, ears, hair, arms, hands, legs, feet, body hair, arm hair, leg hair.
+-- Parts: body, head, eyes, nose, mouth, teeth, brows, ears, hair, arms, hands, legs, feet, body hair, arm hair, leg hair.
 -- Play mode only (./playtime.sh play maker; tab toggles the editor).
 -- keys: r: a new Mipo   h: hide/show the card
 
@@ -66,6 +66,15 @@ local function setShape(inst, name, url, sx, sy)
     if url and not url:match('%.png$') then url = url .. '.png' end -- the catalogs leave it off, shape8 keys have it
     characterManager.updatePart(name, { shape8URL = url or p.shape8URL, sx = sx or p.dims.sx or 1,
         sy = sy or p.dims.sy or 1 }, inst)
+end
+
+-- colour layers: which key of a texture block each one is (outline, fill, pattern)
+local LAYER_KEY = { fill = 'fgHex', line = 'bgHex', pattern = 'pHex' }
+local ALL_LAYERS = { 'fill', 'line', 'pattern' }
+local FILL_LINE = { 'fill', 'line' }
+-- hair is an outline only, but for the hair pictures with a mask (fill and pattern then too)
+local function hairLayers(block)
+    return block and block.fgURL and block.fgURL ~= '' and ALL_LAYERS or { 'line' }
 end
 
 local function setSkin(inst, names, key, hex)
@@ -133,6 +142,7 @@ local CATEGORIES = {
         picked = function(inst) return face(inst).eye.shape end,
         pick = function(inst, url) faceSet(inst, { eyeShape = numberOf(url) }) end,
         fill = function(inst) return face(inst).eye.fgHex end,
+        layers = FILL_LINE,
         colour = function(inst, layer, hex) faceSet(inst, layer == 'line' and { eyeBgHex = hex } or { eyeFgHex = hex }) end,
         sliders = {
             { less = 'icons/eye-small', more = 'icons/eye-wide', min = 0.25, max = 2, step = 0.25,
@@ -158,6 +168,7 @@ local CATEGORIES = {
         picked = function(inst) return face(inst).nose.shape end,
         pick = function(inst, url) faceSet(inst, { noseShape = numberOf(url) }) end,
         fill = function(inst) return face(inst).nose.fgHex end,
+        layers = FILL_LINE,
         colour = function(inst, layer, hex) faceSet(inst, layer == 'line' and { noseBgHex = hex } or { noseFgHex = hex }) end,
         sliders = {
             { less = 'icons/nose-narrow', more = 'icons/nose-wide', min = 0.5, max = 3, step = 0.25,
@@ -216,7 +227,10 @@ local CATEGORIES = {
             characterManager.updateHaircutOfPart(inst, faceOwner(inst), { bgURL = url, fgURL = fg })
         end,
         fill = function(inst) return haircut(inst).main and haircut(inst).main.bgHex end,
-        colour = function(inst, _, hex) characterManager.updateHaircutOfPart(inst, faceOwner(inst), { bgHex = hex }) end,
+        layers = function(inst) return hairLayers(haircut(inst).main) end,
+        colour = function(inst, layer, hex)
+            characterManager.updateHaircutOfPart(inst, faceOwner(inst), { [LAYER_KEY[layer]] = hex })
+        end,
         sliders = {
             { less = 'icons/hair-thin', more = 'icons/hair-thick', min = 50, max = 800, step = 50,
                 get = function(inst) return haircut(inst).width or 250 end,
@@ -255,7 +269,8 @@ local function limbCategory(limb, icon, iconPrefix, extra)
         picked = function(inst) return ribbon(inst, limb).bgURL end,
         pick = function(inst, url) setRibbon(inst, limb, { bgURL = url .. '.png', fgURL = url .. '-mask.png' }) end,
         look = function(inst) return ribbon(inst, limb) end,
-        colour = function(inst, layer, hex) setRibbon(inst, limb, layer == 'line' and { bgHex = hex } or { fgHex = hex }) end,
+        layers = ALL_LAYERS,
+        colour = function(inst, layer, hex) setRibbon(inst, limb, { [LAYER_KEY[layer]] = hex }) end,
         sliders = {
             { less = iconPrefix .. '-short', more = iconPrefix .. '-long', min = 150, max = 1200, step = 50,
                 get = function(inst) return partData(inst, LIMBS[limb].segments[1]).dims.h end,
@@ -331,7 +346,8 @@ CATEGORIES[#CATEGORIES + 1] = {
         setBodyhair(inst, { bgURL = url .. '.png', fgURL = url .. '-mask.png' })
     end,
     look = function(inst) return bodyhair(inst).main end,
-    colour = function(inst, layer, hex) setBodyhair(inst, layer == 'line' and { bgHex = hex } or { fgHex = hex }) end,
+    layers = FILL_LINE,
+    colour = function(inst, layer, hex) setBodyhair(inst, { [LAYER_KEY[layer]] = hex }) end,
     sliders = {
         { less = 'icons/chesthair-inner', more = 'icons/chesthair-outer', min = 0.5, max = 2.5, step = 0.25,
             get = function(inst) return bodyhair(inst).growfactor or 1.2 end,
@@ -369,7 +385,8 @@ local function limbHairCategory(name, icon, limb)
             setLimbHair(inst, limb, { bgURL = url, fgURL = fg })
         end,
         look = function(inst) return limbHair(inst, limb) end,
-        colour = function(inst, layer, hex) setLimbHair(inst, limb, layer == 'line' and { bgHex = hex } or { fgHex = hex }) end,
+        layers = function(inst) return hairLayers(limbHair(inst, limb)) end,
+        colour = function(inst, layer, hex) setLimbHair(inst, limb, { [LAYER_KEY[layer]] = hex }) end,
         sliders = {
             { less = 'icons/hair-thin', more = 'icons/hair-thick', min = 0.25, max = 4, step = 0.25,
                 get = function(inst) return limbHair(inst, limb).wmul or inst.scale or 1 end,
@@ -392,6 +409,7 @@ local MOUTH = {
         faceSet(inst, { mouthUpperLipShape = n, mouthLowerLipShape = lower })
     end,
     look = mouthLook,
+    layers = { 'fill' },
     colour = function(inst, _, hex) faceSet(inst, { mouthLipHex = hex }) end,
     sliders = {
         { less = 'icons/mouth-narrow', more = 'icons/mouth-wide', min = 0.25, max = 2.5, step = 0.25,
@@ -411,6 +429,7 @@ local BROWS = {
     picked = function(inst) return face(inst).brow.shape end,
     pick = function(inst, url) faceSet(inst, { browShape = numberOf(url) }) end,
     look = function(inst) return { bgHex = face(inst).brow.bgHex, fgHex = '' } end,
+    layers = { 'line' },
     colour = function(inst, _, hex) faceSet(inst, { browBgHex = hex }) end,
     sliders = {
         { less = 'icons/brow-narrow', more = 'icons/brow-wide', min = 0.25, max = 2, step = 0.25,
@@ -424,10 +443,37 @@ local BROWS = {
             function(inst, v) faceSet(inst, { browY = v }) end),
     },
 }
+-- Teeth: a shape (0: none), colours, size, and two switches: over the lip, and the gum.
+local function teeth(inst) return face(inst).teeth end
+local TEETH = {
+    name = 'teeth', icon = 'icons/teeth', allowNone = true,
+    shapes = shapeCatalogs.teethShapes,
+    picked = function(inst) return teeth(inst).shape end,
+    pick = function(inst, url) faceSet(inst, { teethShape = url and numberOf(url) or 0 }) end,
+    look = function(inst) return teeth(inst) end,
+    layers = FILL_LINE,
+    colour = function(inst, layer, hex) faceSet(inst, layer == 'line' and { teethBgHex = hex } or { teethFgHex = hex }) end,
+    sliders = {
+        { less = 'icons/mouth-narrow', more = 'icons/mouth-wide', min = 0.5, max = 2.5, step = 0.25,
+            get = function(inst) return teeth(inst).wMul end,
+            set = function(inst, v) faceSet(inst, { teethWMul = v }) end },
+        { less = 'icons/mouth-small', more = 'icons/mouth-tall', min = 0.5, max = 3, step = 0.25,
+            get = function(inst) return teeth(inst).hMul end,
+            set = function(inst, v) faceSet(inst, { teethHMul = v }) end },
+    },
+    switches = {
+        { label = 'over lip', get = function(inst) return teeth(inst).stickOut end,
+            set = function(inst, on) faceSet(inst, { teethStickOut = on }) end },
+        { label = 'gum', get = function(inst) return teeth(inst).gum end,
+            set = function(inst, on) faceSet(inst, { teethGum = on }) end },
+    },
+}
+
 for i, cat in ipairs(CATEGORIES) do
     if cat.name == 'nose' then
         table.insert(CATEGORIES, i + 1, MOUTH)
-        table.insert(CATEGORIES, i + 2, BROWS)
+        table.insert(CATEGORIES, i + 2, TEETH)
+        table.insert(CATEGORIES, i + 3, BROWS)
         break
     end
 end
@@ -464,22 +510,27 @@ local function lookOf(inst, cat)
     if cat.name == 'hair' then return haircut(inst).main end
 end
 
+-- the colour layers a part has: skin parts all three, others as their category says
+local function layersOf(inst, cat)
+    local layers = cat.layers or (cat.skin and ALL_LAYERS) or FILL_LINE
+    if type(layers) == 'function' then layers = layers(inst) end
+    return layers
+end
+
+-- the layer the blobs paint: the one picked, if this part has it, else its first
+local function layerFor(inst, cat, picked)
+    local layers = layersOf(inst, cat)
+    for _, l in ipairs(layers) do if l == picked then return l end end
+    return layers[1]
+end
+
 local function colourOf(inst, cat, layer)
-    if cat.skin then
-        local skin = skinOf(inst, cat.skin(inst)[1])
-        return skin and (layer == 'line' and skin.bgHex or skin.fgHex)
-    end
-    if cat.look then
-        local block = cat.look(inst)
-        return block and (layer == 'line' and block.bgHex or block.fgHex)
-    end
-    if layer == 'line' and cat.name == 'eyes' then return face(inst).eye.bgHex end
-    if layer == 'line' and cat.name == 'nose' then return face(inst).nose.bgHex end
-    return fillOf(inst, cat)
+    local block = lookOf(inst, cat)
+    return block and block[LAYER_KEY[layer]]
 end
 
 local function setColour(inst, cat, layer, hex)
-    if cat.skin then setSkin(inst, cat.skin(inst), layer == 'line' and 'bgHex' or 'fgHex', hex)
+    if cat.skin then setSkin(inst, cat.skin(inst), LAYER_KEY[layer], hex)
     else cat.colour(inst, layer, hex) end
 end
 
@@ -608,7 +659,7 @@ local function drawGrid(c, inst, cat, x, y, w, h)
         if cy + cell > y and cy < y + h then
             local tapped
             if url == false then
-                tapped = makerUI.noneCell('maker-cell-none', cx, cy, cell, picked == nil or picked == '')
+                tapped = makerUI.noneCell('maker-cell-none', cx, cy, cell, picked == nil or picked == '' or picked == 0)
             else
                 local isPicked = picked == url .. '.png' or picked == url or picked == numberOf(url)
                 tapped = makerUI.partCell('maker-cell-' .. i, cx, cy, cell, url, look, isPicked,
@@ -651,7 +702,7 @@ function s.drawUI()
     if not BY_NAME[c.category] or (BY_NAME[c.category].hidden and BY_NAME[c.category].hidden(inst)) then
         c.category = 'body'
     end
-    local perRow = 8 -- fifteen parts: two rows (a flickable row is MM4's)
+    local perRow = 8 -- sixteen parts: two rows (a flickable row is MM4's)
     local isize = w / perRow
     for i, cat in ipairs(shown) do
         local fill = hexToRGB(fillOf(inst, cat))
@@ -671,13 +722,20 @@ function s.drawUI()
         characterManager.randomizeMipo(inst)
         mipoVoice.dice(inst)
     end
-    local tw, th = w * 0.32, dsize * 0.5
-    local tx = x + w - tw
-    love.graphics.setColor(0.2, 0.15, 0.12)
-    love.graphics.print(c.layer == 'line' and 'line' or 'fill', tx - 40, y + dsize / 2 - 7)
-    love.graphics.setColor(1, 1, 1)
-    local on = makerUI.toggle('maker-layer', tx, y + (dsize - th) / 2, tw, th, c.layer == 'line')
-    if on ~= nil then c.layer = on and 'line' or 'fill' end
+    -- the colour layers this part has (fill / line / pattern, Puppetmaker's uifill / uiline / uipattern),
+    -- each showing its colour now; none when it has only one
+    local layers = layersOf(inst, cat)
+    local layer = layerFor(inst, cat, c.layer)
+    if #layers > 1 then
+        for i, l in ipairs(layers) do
+            local bx = x + w - (#layers - i + 1) * dsize
+            if makerUI.iconButton('maker-layer-' .. l, bx, y, dsize, 'colorpick/ui' .. l,
+                    { mask = hexToRGB(colourOf(inst, cat, l)), picked = l == layer, paper = i + 2, bare = true }) then
+                c.layer = l
+                mipoVoice.edited(inst)
+            end
+        end
+    end
     y = y + dsize + m * 0.4
 
     -- the sliders on a taped strip, at the bottom
@@ -689,7 +747,8 @@ function s.drawUI()
     local colW = (w - (columns - 1) * m * 0.5) / columns
     local ssize = math.min(48, colW / (columns == 2 and 4.2 or 7))
     local rowH = ssize * 1.25
-    local slidersH = math.ceil(#sliders / columns) * rowH + m * 0.6
+    local switches = cat.switches or {}
+    local slidersH = (math.ceil(#sliders / columns) + (#switches > 0 and 1 or 0)) * rowH + m * 0.6
     local blobSize = w / 8
     local blobsH = blobSize * 2 + m * 0.4
     local bottom = cy + ch - m * 0.9
@@ -699,12 +758,12 @@ function s.drawUI()
     drawGrid(c, inst, cat, x, y, w, by0 - y - m * 0.3)
 
     -- paint blobs
-    local current = colourOf(inst, cat, c.layer)
+    local current = colourOf(inst, cat, layer)
     for i, hex in ipairs(PALETTE) do
         local col, row = (i - 1) % 8, math.floor((i - 1) / 8)
         local isPicked = current and current:sub(1, 6):lower() == hex
         if makerUI.blob('maker-blob-' .. i, x + col * blobSize, by0 + row * blobSize, blobSize, hexToRGB(hex), i, isPicked) then
-            apply(function() setColour(inst, cat, c.layer, hex .. 'ff') end)
+            apply(function() setColour(inst, cat, layer, hex .. 'ff') end)
             mipoVoice.edited(inst)
         end
     end
@@ -723,6 +782,23 @@ function s.drawUI()
             mipoVoice.edited(inst, amount)
         end
     end
+    -- on/off settings (teeth over the lip, the gum): drawn switches in one row under the sliders
+    local swY = sy0 + m * 0.3 + math.ceil(#sliders / columns) * rowH
+    local swW = w / math.max(1, #switches)
+    for i, sw in ipairs(switches) do
+        local sx = x + (i - 1) * swW
+        local tw, th = ssize * 1.6, ssize * 0.7
+        local on = makerUI.toggle('maker-sw-' .. cat.name .. '-' .. i, sx, swY + (rowH - th) / 2 - ssize * 0.1, tw, th,
+            sw.get(inst) and true or false)
+        if on ~= nil then
+            apply(function() sw.set(inst, on) end)
+            mipoVoice.edited(inst)
+        end
+        love.graphics.setColor(0.2, 0.15, 0.12)
+        love.graphics.print(sw.label, sx + tw + 8, swY + rowH / 2 - 10)
+        love.graphics.setColor(1, 1, 1)
+    end
+
     -- a slider let go: its last value now
     if c.pending and not ui.mouseIsDown then apply(c.pending) end
 end
