@@ -7,6 +7,7 @@ local getLoveImage = ompBake.getLoveImage
 local ownStrip = ribbon.ownStrip
 local shapes = require('src.shapes')
 local utils = require('src.utils')
+local state = require('src.state')
 
 -- A mouth part in a material (src/render/materials.lua; docs/MATERIALS.md MT6b): the lips' and the
 -- teeth's own `extra.material`, the inner mouth's `extra.innerMaterial` (on the lower lip's extra).
@@ -412,6 +413,45 @@ end
 lib.gumPicture = 'mipo/brow/brow-05.png'
 lib.gumSolid = { 0.3, 0.89 }
 
+-- Teeth that look like they're in a mouth (Nikki 2026-11-10): without a material of their own they're
+-- lit as glaze (enamel: a soft shine where the light falls, each tooth rounded by its picture's alpha),
+-- and a soft dark over them, still clipped to the opening: the upper lip's shadow along the top and
+-- darker toward the corners, where they turn away into the mouth. state.teethFlat = true: flat.
+lib.teethMaterial = 'glaze'
+lib.teethLipShadow = 0.4  -- darkest at the top of the teeth, fading out over teethLipDepth of their height
+lib.teethLipDepth = 0.45
+lib.teethCorners = 0.5    -- darkest at the corners
+local depthMesh
+local DEPTH_COLS, DEPTH_ROWS = 9, 5
+local function teethDepth(x0, y0, w, h)
+    local verts = {}
+    for r = 0, DEPTH_ROWS - 1 do
+        local v = r / (DEPTH_ROWS - 1)
+        for c = 0, DEPTH_COLS - 1 do
+            local u = c / (DEPTH_COLS - 1)
+            local top = v < lib.teethLipDepth and lib.teethLipShadow * (1 - v / lib.teethLipDepth) ^ 2 or 0
+            local side = lib.teethCorners * math.abs(2 * u - 1) ^ 3
+            local a = 1 - (1 - top) * (1 - side)
+            verts[#verts + 1] = { x0 + u * w, y0 + v * h, 0, 0, 0, 0, 0, a }
+        end
+    end
+    local tris = {}
+    for r = 0, DEPTH_ROWS - 2 do
+        for c = 0, DEPTH_COLS - 2 do
+            local i = r * DEPTH_COLS + c + 1
+            local j, k, l = i + 1, i + DEPTH_COLS, i + DEPTH_COLS + 1
+            tris[#tris + 1] = verts[i]; tris[#tris + 1] = verts[j]; tris[#tris + 1] = verts[k]
+            tris[#tris + 1] = verts[j]; tris[#tris + 1] = verts[l]; tris[#tris + 1] = verts[k]
+        end
+    end
+    if not depthMesh or depthMesh:getVertexCount() ~= #tris then
+        depthMesh = love.graphics.newMesh(#tris, 'triangles', 'stream')
+    end
+    depthMesh:setVertices(tris)
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.draw(depthMesh)
+end
+
 local function drawTeeth(d)
     local extra = d.extra
     local body = d.body
@@ -512,9 +552,11 @@ local function drawTeeth(d)
                     end
 
                     love.graphics.setColor(1, 1, 1, 1)
-                    local shaded = shadeAs(extra, body, extra.material)
+                    local flat = state.teethFlat or state.drawingOutlines
+                    local shaded = shadeAs(extra, body, extra.material or (not flat and lib.teethMaterial))
                     love.graphics.draw(img, ox - w / 2, oy - h / 2, 0, scaleX, scaleY)
                     if shaded then love.graphics.setShader() end
+                    if not flat then teethDepth(ox - w / 2, oy - h / 2, w, h) end
 
                     love.graphics.setStencilTest()
                 end
