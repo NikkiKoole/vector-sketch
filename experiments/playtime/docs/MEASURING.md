@@ -164,8 +164,8 @@ parts (music-theory, skinning's `meshusertVertices`, the polygon modules) run wi
   of asked three times a part: 0.40 -> 0.33 ms. The crowd's update ~4.0 ms on the phone.
   Seen on the way: that pile untangled 109 times in 90 s, more than once a second (the twitching
   in a crowd?). Bigger, with Box2D, if ever needed: resting Mipos asleep.
-- [ ] **M6. The potato-torso click.** (2026-11-05: the click and the Box2D crash it led to are fixed;
-  left: the iMac run, see NEXT below.) The editor snapshot forces every slider to its midpoint; on a
+- [x] **M6. The potato-torso click.** (2026-11-05: the click and the Box2D crash it led to are fixed;
+  the iMac run done 2026-11-09, see the end.) The editor snapshot forces every slider to its midpoint; on a
   potato head's torso1 panel that makes a shape Box2D refuses (`fixtures.lua:132: Box2D assertion
   failed`), and the next click finds the Mipo half rebuilt. Same before and after the splits, so
   older. Find which slider, and keep its values to shapes Box2D takes.
@@ -209,6 +209,9 @@ parts (music-theory, skinning's `meshusertVertices`, the polygon modules) run wi
   per click (setCanvas() / present / setCanvas back; hashes unchanged). NEXT on the iMac:
   `claudetools/snapshot.sh take a editor`. Runs through: the endless frame was it. Still aborts: the
   old AMD GL driver; take reference snapshots on the M1.
+  2026-11-09, the iMac: `claudetools/snapshot.sh take a editor` runs through (exit 0, ~56 s), three
+  times, and two takes are identical. So the endless frame was it, not the driver: the editor snapshot
+  works on both machines now.
   Same day, a third Mipo in the editor snapshot (spine, 3 torso segments, 2 neck) crashed the game
   on the M1 too, but in Box2D, not the GPU: SIGBUS in newPolygonShape at spine lear click 58. Its
   torso had three points in a line down each side; LÖVE 11.5's Box2D went round the hull forever
