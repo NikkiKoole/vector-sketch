@@ -46,6 +46,7 @@ lib.defaults = {
     springy = 0,       -- 0 keeps its length .. 1 stretches and bounces back like a spring (ringlets do)
     weight = 3,      -- gravity on the hair, times the world's: at 1 the stiffness held the locks out like a fountain
     width = 0.06,    -- ribbon half-width as a share of the picture's width
+    inset = 0.85,    -- the long locks' roots this share of the way out to the outline (fur: almost on it)
     spread = 1.9,    -- radians of the head's outline the roots cover, around the top
     texture = 7,     -- mipo/hair/hair-NN.png (and its -mask when there is one)
     frontLocks = 2,  -- the outermost long locks drawn in front, framing the face
@@ -154,7 +155,7 @@ function lib.attach(instance, opts)
         local rx, ry = outlinePoint(vertices, angle)
         local w = o.wild
         local lock = {
-            rx = rx * 0.85, ry = ry * 0.85, -- a little inside, under the head
+            rx = rx * o.inset, ry = ry * o.inset, -- a little inside, under the head
             -- leaning toward its side (the middle one too, by turns): falls instead of balancing on top
             restAngle = angle + ((f < partF or (f == partF and k % 2 == 0)) and -1 or 1) * o.droop * (1 - o.stand),
             n = o.points, drape = true,
