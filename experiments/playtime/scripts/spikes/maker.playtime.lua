@@ -183,8 +183,6 @@ local CATEGORIES = {
                 set = function(inst, v) setShape(inst, 'torso1', nil, nil, v) end },
             faceSize(true),
         },
-        build = true, -- + BUILD_SLIDERS, BUILD_SWITCHES
-        switches = BUILD_SWITCHES,
     },
     {
         name = 'head', icon = 'icons/head',
@@ -738,6 +736,33 @@ for i, cat in ipairs(CATEGORIES) do
     if cat.name == 'eyes' then table.insert(CATEGORIES, i + 1, PUPILS) break end
 end
 
+-- The build (dna.creation: potato head, torso segments, spine, lobes, jiggle) is the whole Mipo's, not
+-- one part's: a part of its own in the body region, its switches and sliders on a sheet where the
+-- grid would be.
+CATEGORIES[#CATEGORIES + 1] = {
+    name = 'build', icon = 'icons/body-potato', sheet = true,
+    shapes = {}, layers = {}, sliders = BUILD_SLIDERS, switches = BUILD_SWITCHES,
+    look = function(inst) return skinOf(inst, 'torso1') end,
+    picked = function() return nil end, pick = function() end,
+}
+
+-- The card's order: regions (tabs), their parts (one row), a part's sub-parts (the toolbar's left,
+-- Puppetmaker's child picker). A sub-part is a category of its own; the row shows its parent.
+local REGIONS = {
+    { name = 'face', icon = 'icons/head', parts = { 'head', 'eyes', 'nose', 'mouth', 'brows', 'ears', 'hair', 'patches' } },
+    { name = 'body', icon = 'icons/body', parts = { 'body', 'neck', 'build' } },
+    { name = 'limbs', icon = 'icons/arm', parts = { 'arms', 'hands', 'legs', 'feet' } },
+}
+local CHILDREN = {
+    eyes = { 'eyes', 'pupils' }, mouth = { 'mouth', 'teeth' }, body = { 'body', 'bodyhair' },
+    arms = { 'arms', 'armhair' }, legs = { 'legs', 'leghair' },
+}
+local PARENT, REGION_OF = {}, {}
+for parent, kids in pairs(CHILDREN) do for _, k in ipairs(kids) do PARENT[k] = parent end end
+for _, r in ipairs(REGIONS) do for _, p in ipairs(r.parts) do REGION_OF[p] = r.name end end
+local function partOf(name) return PARENT[name] or name end
+local function regionOf(name) return REGION_OF[partOf(name)] end
+
 local BY_NAME = {}
 for _, cat in ipairs(CATEGORIES) do BY_NAME[cat.name] = cat end
 
@@ -982,6 +1007,47 @@ local function drawGrid(c, inst, cat, layer, x, y, w, h)
     if not ui.mouseIsDown then g.flicked = false end
 end
 
+-- Sliders and switches in rows (the slider strip, the 'more' sheet, the build sheet), `columns` wide
+local function drawItems(c, inst, cat, items, x, y, w, columns, m)
+    local colW = (w - (columns - 1) * m * 0.5) / columns
+    local ssize = math.min(48, colW / (columns == 2 and 4.2 or 7))
+    local rowH = ssize * 1.3
+    for i, item in ipairs(items) do
+        local col, row = (i - 1) % columns, math.floor((i - 1) / columns)
+        local ix, iy = x + col * (colW + m * 0.5), y + row * rowH
+        if item.label then -- a switch
+            local tw, th = ssize * 1.5, ssize * 0.65
+            local on = makerUI.toggle('maker-sw-' .. cat.name .. '-' .. item.label, ix, iy + (ssize - th) / 2, tw, th,
+                item.get(inst) and true or false)
+            if on ~= nil then
+                apply(function() item.set(inst, on) end)
+                mipoVoice.edited(inst)
+            end
+            love.graphics.setColor(0.2, 0.15, 0.12)
+            love.graphics.print(item.label, ix + tw + 8, iy + ssize / 2 - 9)
+            love.graphics.setColor(1, 1, 1)
+        else
+            local id = 'maker-' .. cat.name .. '-' .. (item.id or item.less)
+            local shownValue = (c.live and c.live[id]) or item.get(inst) or item.min -- dragged, not applied yet
+            local v, amount = makerUI.iconSlider(id, ix, iy, colW, ssize, shownValue, item.min, item.max, item.step,
+                item.less, item.more)
+            if v then
+                c.live = c.live or {}
+                c.live[id] = v
+                applySoon(function() item.set(inst, v) end)
+                mipoVoice.edited(inst, amount)
+            end
+        end
+    end
+    return math.ceil(#items / columns) * rowH
+end
+
+local function visible(inst, cat) return BY_NAME[cat] and not (BY_NAME[cat].hidden and BY_NAME[cat].hidden(inst)) end
+
+-- The card on a fixed skeleton, the same zones at the same heights for every part:
+--   region tabs + dice | the region's parts (one row) | toolbar: sub-parts or patches left, colour
+--   layers right | grid (shapes / patterns; the build's sheet) | paint blobs | two rows of sliders,
+--   the rest behind 'more' (a sheet over the grid). Crayon lines between the zones.
 function s.drawUI()
     local c = check()
     local inst = c.mipo
@@ -997,61 +1063,81 @@ function s.drawUI()
     local cw = math.min(440, W * 0.37)
     local cx, cy, ch = W - cw - 16, 16, H - 32
     makerUI.card(cx, cy, cw, ch)
+    local m = cw * 0.07
+    local x, w = cx + m, cw - m * 2
+    local y = cy + m * 0.9
+    local cell = w / 8 -- the column rhythm: parts, blobs (8), grid (4)
     if c.dev then
         love.graphics.setColor(0.6, 0.2, 0.1)
         love.graphics.print('dev', cx + cw - 46, cy + 10)
         love.graphics.setColor(1, 1, 1)
     end
-    local m = cw * 0.08
-    local x, w = cx + m, cw - m * 2
-    local y = cy + ch * 0.06
 
-    -- the parts in a row
-    local shown = {}
-    for _, cat in ipairs(CATEGORIES) do
-        if not (cat.hidden and cat.hidden(inst)) then shown[#shown + 1] = cat end
+    -- where we are: the category, its part (row), its region (tab)
+    if not visible(inst, c.category) then c.category = 'body' end
+    c.region = regionOf(c.category) or 'body'
+    local function pick(name)
+        if name ~= c.category then c.moreOpen = false end
+        c.category, c.grid.off, c.grid.vel = name, 0, 0
+        mipoVoice.edited(inst)
     end
-    if not BY_NAME[c.category] or (BY_NAME[c.category].hidden and BY_NAME[c.category].hidden(inst)) then
-        c.category = 'body'
-    end
-    -- the parts in rows of seven (three rows for now; a flickable row is MM4's), each icon padded in
-    -- its cell, the rows apart, a short last row centred
-    local perRow = 7
-    local cell = w / perRow
-    local isize = cell * 0.84
-    local rowStep = cell * 1.02
-    local rows = math.ceil(#shown / perRow)
-    for i, cat in ipairs(shown) do
-        local fill = hexToRGB(fillOf(inst, cat))
-        local col, row = (i - 1) % perRow, math.floor((i - 1) / perRow)
-        local inRow = math.min(perRow, #shown - row * perRow)
-        local rowX = x + (w - inRow * cell) / 2
-        if makerUI.iconButton('maker-cat-' .. cat.name, rowX + col * cell + (cell - isize) / 2, y + row * rowStep,
-                isize, cat.icon, { mask = fill, picked = c.category == cat.name, paper = (i % 7) + 1, bare = true }) then
-            c.category, c.grid.off, c.grid.vel = cat.name, 0, 0
-            mipoVoice.edited(inst)
+
+    -- 1. region tabs, the dice on the right
+    local tsize = cell * 1.25
+    for i, r in ipairs(REGIONS) do
+        local here = c.region == r.name
+        if makerUI.iconButton('maker-region-' .. r.name, x + (i - 1) * (tsize + cell * 0.4), y, tsize, r.icon,
+                { picked = here, dim = not here, paper = i + 1, bare = true }) and not here then
+            local target = c.lastIn and c.lastIn[r.name]
+            if not (target and visible(inst, target)) then
+                for _, p in ipairs(r.parts) do if visible(inst, p) then target = p break end end
+            end
+            if target then pick(target) end
         end
     end
-    y = y + rows * rowStep + m * 0.4
-    local cat = BY_NAME[c.category]
-
-    -- dice and the colour layer
-    local dsize = cell * 0.72 -- the dice and colour-layer row: a bit smaller than the part icons
-    if makerUI.iconButton('maker-dice', x, y, dsize, 'big-button-dice', { mask = { 0.95, 0.75, 0.4 }, bare = true }) then
+    if makerUI.iconButton('maker-dice', x + w - tsize, y, tsize, 'big-button-dice', { mask = { 0.95, 0.75, 0.4 }, bare = true }) then
         characterManager.randomizeMipo(inst)
         mipoVoice.dice(inst)
     end
-    -- the colour layers this part has (fill / line / pattern, Puppetmaker's uifill / uiline / uipattern),
-    -- each showing its colour now; none when it has only one
+    y = y + tsize + m * 0.35
+    makerUI.divider(x, y, w)
+    y = y + m * 0.35
+
+    -- 2. the region's parts, one row
+    local region
+    for _, r in ipairs(REGIONS) do if r.name == c.region then region = r end end
+    local parts = {}
+    for _, p in ipairs(region.parts) do if visible(inst, p) then parts[#parts + 1] = p end end
+    local rowX = x + (w - #parts * cell) / 2
+    for i, name in ipairs(parts) do
+        local part = BY_NAME[name]
+        local isize = cell * 0.9
+        if makerUI.iconButton('maker-cat-' .. name, rowX + (i - 1) * cell + (cell - isize) / 2, y, isize, part.icon,
+                { mask = hexToRGB(fillOf(inst, part)), picked = partOf(c.category) == name, paper = (i % 7) + 1,
+                    bare = true }) and partOf(c.category) ~= name then
+            pick(name)
+        end
+    end
+    c.lastIn = c.lastIn or {}
+    c.lastIn[c.region] = c.category
+    y = y + cell + m * 0.3
+    makerUI.divider(x, y, w)
+    y = y + m * 0.35
+
+    local cat = BY_NAME[c.category]
     local layers = layersOf(inst, cat)
     local layer = layerFor(inst, cat, c.layer) or 'none'
-    if cat.kinds then -- face patches: one button per patch, next to the dice: on / off, and which one
+
+    -- 3. toolbar: sub-parts (or the face patches) left, colour layers right
+    local dsize = cell * 0.85
+    local kids = {}
+    for _, k in ipairs(CHILDREN[partOf(c.category)] or {}) do if visible(inst, k) then kids[#kids + 1] = k end end
+    if cat.kinds then -- face patches: one button per patch: on / off, and which one
         local set = inst.facePatches
         local skin = hexToRGB(fillOf(inst, cat))
         for i, k in ipairs(cat.kinds) do
             local on = set and set[k.key]
-            local bx = x + i * dsize
-            if makerUI.iconButton('maker-patch-' .. k.key, bx, y, dsize, k.icon,
+            if makerUI.iconButton('maker-patch-' .. k.key, x + (i - 1) * dsize * 1.1, y, dsize, k.icon,
                     { mask = on and skin or nil, picked = on and c.patchKind == k.key, dim = not on, paper = i + 2, bare = true }) then
                 apply(function()
                     local s2 = patchesNow(inst, true)
@@ -1063,10 +1149,19 @@ function s.drawUI()
                 mipoVoice.edited(inst)
             end
         end
+    elseif #kids > 1 then
+        for i, k in ipairs(kids) do
+            local kid = BY_NAME[k]
+            if makerUI.iconButton('maker-kid-' .. k, x + (i - 1) * dsize * 1.1, y, dsize, kid.icon,
+                    { mask = hexToRGB(fillOf(inst, kid)), picked = c.category == k, dim = c.category ~= k, paper = i + 3,
+                        bare = true }) and c.category ~= k then
+                pick(k)
+            end
+        end
     end
     if #layers > 1 then
         for i, l in ipairs(layers) do
-            local bx = x + w - (#layers - i + 1) * dsize
+            local bx = x + w - (#layers - i + 1) * dsize * 1.1 + dsize * 0.1
             if makerUI.iconButton('maker-layer-' .. l, bx, y, dsize, 'colorpick/ui' .. l,
                     { mask = hexToRGB(colourOf(inst, cat, l)), picked = l == layer, paper = i + 2, bare = true }) then
                 c.layer = l
@@ -1074,75 +1169,89 @@ function s.drawUI()
             end
         end
     end
-    y = y + dsize + m * 0.4
+    y = y + dsize + m * 0.3
+    makerUI.divider(x, y, w)
+    y = y + m * 0.35
 
-    -- the sliders on a taped strip, at the bottom
-    local sliders = {}
-    local source = layer == 'pattern' and patternSliders(cat) or (cat.slidersFor and cat.slidersFor(inst)) or cat.sliders
-    local function take(list)
-        for _, sl in ipairs(list) do
-            if not (sl.hidden and sl.hidden(inst)) and not (sl.dev and not c.dev) then sliders[#sliders + 1] = sl end
-        end
-    end
-    take(source)
-    if cat.build and layer ~= 'pattern' then take(BUILD_SLIDERS) end
-    local columns = #sliders > 3 and 2 or 1 -- more than three: two columns, smaller
-    local colW = (w - (columns - 1) * m * 0.5) / columns
-    local ssize = math.min(48, colW / (columns == 2 and 4.2 or 7))
-    local rowH = ssize * 1.25
-    local switches = layer ~= 'pattern' and cat.switches or {}
-    local switchRows = math.ceil(#switches / 2)
-    local slidersH = (math.ceil(#sliders / columns) + switchRows) * rowH + m * 0.6
-    local blobSize = w / 8
-    local blobsH = #layers > 0 and (blobSize * 2 + m * 0.4) or 0 -- no colours of its own (patches): no blobs
+    -- the bottom zones, fixed heights from the card's foot up: sliders (two rows), blobs (two rows)
+    local sliderRowH = math.min(48, (w - m * 0.5) / 2 / 4.2) * 1.3
+    local slidersH = sliderRowH * 2
     local bottom = cy + ch - m * 0.9
     local sy0 = bottom - slidersH
-    local by0 = sy0 - blobsH
+    local by0 = sy0 - m * 0.6 - cell * 2
+    local gridH = by0 - m * 0.6 - y
 
+    -- what goes in the strip: two rows; the rest behind 'more'
+    local items = {}
+    local function take(list)
+        for _, it in ipairs(list or {}) do
+            if not (it.hidden and it.hidden(inst)) and not (it.dev and not c.dev) then items[#items + 1] = it end
+        end
+    end
+    if layer == 'pattern' then
+        take(patternSliders(cat))
+    elseif not cat.sheet then -- the build: everything on its sheet, the strip stays empty
+        take(cat.slidersFor and cat.slidersFor(inst) or cat.sliders)
+        take(cat.switches)
+    end
+    local columns = #items > 2 and 2 or 1
+    local capacity = 2 * columns
+    local strip, more = items, nil
+    if #items > capacity then
+        strip = {}
+        if not c.moreOpen then -- open, they're all on the sheet: the strip keeps only 'less'
+            for i = 1, capacity - 1 do strip[i] = items[i] end
+        end
+        more = true
+    end
+
+    -- 4. grid: shapes or patterns, the build's sheet, or the 'more' sheet over it
     if c.gridFor ~= cat.name .. layer then c.gridFor, c.grid.off, c.grid.vel = cat.name .. layer, 0, 0 end
-    drawGrid(c, inst, cat, layer, x, y, w, by0 - y - m * 0.3)
+    if cat.sheet then
+        -- switches two to a row, then the sliders one to a row (full width)
+        local function shownOf(list)
+            local out = {}
+            for _, it in ipairs(list) do
+                if not (it.hidden and it.hidden(inst)) and not (it.dev and not c.dev) then out[#out + 1] = it end
+            end
+            return out
+        end
+        local sy = y + m * 0.3
+        sy = sy + drawItems(c, inst, cat, shownOf(cat.switches), x, sy, w, 2, m) + m * 0.3
+        drawItems(c, inst, cat, shownOf(cat.sliders), x, sy, w, 1, m)
+    elseif c.moreOpen and more then
+        makerUI.paper(x - m * 0.3, y, w + m * 0.6, gridH)
+        drawItems(c, inst, cat, items, x, y + m * 0.2, w, 1, m)
+    else
+        drawGrid(c, inst, cat, layer, x, y, w, gridH)
+    end
+    makerUI.divider(x, by0 - m * 0.35, w)
 
-    -- paint blobs
+    -- 5. paint blobs (the zone stays when a part has no colours of its own)
     local current = colourOf(inst, cat, layer)
     for i, hex in ipairs(#layers > 0 and PALETTE or {}) do
         local col, row = (i - 1) % 8, math.floor((i - 1) / 8)
         local isPicked = current and current:sub(1, 6):lower() == hex
-        if makerUI.blob('maker-blob-' .. i, x + col * blobSize, by0 + row * blobSize, blobSize, hexToRGB(hex), i, isPicked) then
+        if makerUI.blob('maker-blob-' .. i, x + col * cell, by0 + row * cell, cell, hexToRGB(hex), i, isPicked) then
             apply(function() setColour(inst, cat, layer, hex .. 'ff') end)
             mipoVoice.edited(inst)
         end
     end
+    makerUI.divider(x, sy0 - m * 0.4, w)
 
-    makerUI.tape(x - m * 0.4, sy0, w + m * 0.8, slidersH)
-    for i, sl in ipairs(sliders) do
-        local id = 'maker-' .. cat.name .. '-' .. (sl.id or sl.less)
-        local shownValue = (c.live and c.live[id]) or sl.get(inst) or sl.min -- dragged, not applied yet
-        local col, row = (i - 1) % columns, math.floor((i - 1) / columns)
-        local v, amount = makerUI.iconSlider(id, x + col * (colW + m * 0.5), sy0 + m * 0.3 + row * rowH,
-            colW, ssize, shownValue, sl.min, sl.max, sl.step, sl.less, sl.more)
-        if v then
-            c.live = c.live or {}
-            c.live[id] = v
-            applySoon(function() sl.set(inst, v) end)
-            mipoVoice.edited(inst, amount)
-        end
-    end
-    -- on/off settings (teeth over the lip, the gum): drawn switches in one row under the sliders
-    local swY = sy0 + m * 0.3 + math.ceil(#sliders / columns) * rowH
-    local swW = w / math.min(2, math.max(1, #switches)) -- two to a row
-    for i, sw in ipairs(switches) do
-        local sx = x + ((i - 1) % 2) * swW
-        local rowY = swY + math.floor((i - 1) / 2) * rowH
-        local tw, th = ssize * 1.6, ssize * 0.7
-        local on = makerUI.toggle('maker-sw-' .. cat.name .. '-' .. i, sx, rowY + (rowH - th) / 2 - ssize * 0.1, tw, th,
-            sw.get(inst) and true or false)
-        if on ~= nil then
-            apply(function() sw.set(inst, on) end)
+    -- 6. the slider strip, and 'more' in its last place
+    if #strip > 0 or more then makerUI.tape(x - m * 0.4, sy0 - m * 0.15, w + m * 0.8, slidersH + m * 0.3) end
+    drawItems(c, inst, cat, strip, x, sy0, w, columns, m)
+    if more then
+        local colW = (w - m * 0.5) / 2
+        local bx = x + colW + m * 0.5
+        local by = sy0 + sliderRowH
+        local bw = math.min(48, colW / 4.2)
+        if makerUI.iconButton('maker-more', bx + (colW - bw * 2) / 2, by, bw * 2, c.moreOpen and 'text:less' or 'text:more',
+                { bare = true }) then
+            c.moreOpen = not c.moreOpen
             mipoVoice.edited(inst)
         end
-        love.graphics.setColor(0.2, 0.15, 0.12)
-        love.graphics.print(sw.label, sx + tw + 8, rowY + rowH / 2 - 10)
-        love.graphics.setColor(1, 1, 1)
     end
 
     -- a slider let go: its last value now

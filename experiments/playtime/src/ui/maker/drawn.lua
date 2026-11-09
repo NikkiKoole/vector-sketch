@@ -121,6 +121,36 @@ function lib.card(x, y, w, h, fill)
     love.graphics.setColor(1, 1, 1)
 end
 
+-- A short crayon line between the card's zones (the card outline's strokes, thinner)
+local dividers = {} -- key -> meshes
+function lib.divider(x, y, w)
+    STROKE = STROKE or love.filesystem.load('scripts/spikes/drawn-stroke.lua')()
+    local key = math.floor(x) .. ',' .. math.floor(y) .. ',' .. math.floor(w)
+    if not dividers[key] then
+        if #dividers > 64 then dividers = {} end -- a window resize leaves old ones behind: start over
+        dividers[key] = STROKE.meshes({ { pts = { { x, y }, { x + w * 0.5, y + 1.5 }, { x + w, y } }, loop = false,
+            width = CARD_STROKE * 0.45 } }, CARD_WOBBLE, 0, true)
+        dividers[#dividers + 1] = key
+    end
+    love.graphics.setColor(INK[1], INK[2], INK[3], 0.55)
+    for _, mesh in ipairs(dividers[key]) do love.graphics.draw(mesh) end
+    love.graphics.setColor(1, 1, 1)
+end
+
+-- Plain card paper over x, y, w, h (the 'more' sheet laid over the grid), the card's own fill
+function lib.paper(x, y, w, h, fill)
+    if inside(x, y, w, h) then ui.overPanel = true end
+    local dpi = love.graphics.getDPIScale()
+    local tx, ty = love.graphics.transformPoint(x, y)
+    local bx, by = love.graphics.transformPoint(x + w, y + h)
+    cardShader:send('rect', { tx * dpi, ty * dpi, (bx - tx) * dpi, (by - ty) * dpi })
+    cardShader:send('base', fill or CARD_FILL)
+    love.graphics.setShader(cardShader)
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.rectangle('fill', x, y, w, h)
+    love.graphics.setShader()
+end
+
 function lib.cardPicture(x, y, w, h, fill)
     if inside(x, y, w, h) then ui.overPanel = true end
     love.graphics.setColor(fill or { 0.98, 0.93, 0.82 })
