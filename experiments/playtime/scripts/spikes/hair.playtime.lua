@@ -36,6 +36,8 @@ local function coat(o, share)
     o.surface = opts.coatOn and math.floor((opts.coat or 0.5) * share + 0.5) or 0
     o.surfaceLength = opts.coatLength or 22
     o.surfaceCurly = opts.coatCurly or 0
+    -- its own width, in the head hair's units (hair-locks takes it as a share of `width`)
+    o.surfaceWidth = (opts.coatWidth or 0.021) / math.max(o.width or 0.06, 0.001)
 end
 
 -- The torso's hair: fur (many short locks standing out, roots almost on the outline), or the body
@@ -43,7 +45,6 @@ end
 local function bodyOpts()
     local o = copyOpts()
     o.bangs, o.frontLocks = 0, 0
-    coat(o, 400)
     if opts.furOn then
         local fur = opts.fur or 0.5
         o.count = math.floor(40 + 140 * fur + 0.5)
@@ -61,6 +62,7 @@ local function bodyOpts()
     else
         o.count = 0
     end
+    coat(o, 400) -- last: its width is a share of the width set above
     return o
 end
 
@@ -104,7 +106,7 @@ function s.onStart()
     opts.headOn, opts.bangsOn, opts.bodyOn, opts.furOn, opts.coatOn = true, true, true, false, false
     opts.bodyHair = 0.5
     opts.fur, opts.furLength = 0.5, 20
-    opts.coat, opts.coatLength, opts.coatCurly = 0.5, 22, 0
+    opts.coat, opts.coatLength, opts.coatCurly, opts.coatWidth = 0.5, 22, 0, 0.021
     attachAll()
 end
 
@@ -180,6 +182,7 @@ local SECTIONS = {
         { key = 'coat', min = 0, max = 1 },
         { key = 'coatLength', min = 4, max = 40 },
         { key = 'coatCurly', min = 0, max = 1 },
+        { key = 'coatWidth', min = 0.005, max = 0.1 },
     } },
     { name = 'physics', sliders = {
         { key = 'stiffness', min = 0, max = 1 },
