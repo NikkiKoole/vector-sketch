@@ -27,6 +27,85 @@ What's neither (the soapbox ride, the burrow) stays a scene, a shorter one, buil
 | The Mipo | breeds, facing, raspberry, choir, tufts, soft torso | DNA and actions (mostly on the way in) |
 | Places | burrow, soapbox, bike, planets, platforms | stay scenes |
 
+## Who owns what (2026-11-09)
+
+The owner is the version the next spike builds on, and the one to merge from. The others are older or
+side copies: read them for one idea, don't start from them. From a read of every spike's script.
+
+| Idea | Owner | Older / side copies |
+|---|---|---|
+| Wave columns, swell, foam | seaside (sea's, identical) | sea (the original); drawn-sea (scrolls with the boat); mirrors pond (simpler) |
+| Floating | seaside/sea `float` (by mass, drag against the water's own motion) | drawn-sea `float` for hulls (by wet area, ballast); mirrors (hard numbers); water (oldest, superseded) |
+| Splashes, drops, pouring | seaside (`splash`, `particles` + the stream) | sea |
+| Particle water | `src/fluid.lua`; waterjar is its stage | seaside uses it for pouring |
+| Water look (shader) | seaside (thin cup water, stream shader) | sea, drawn-sea (near-identical); drawn-sea's own extras: drawn bands, glassy waterline |
+| Cups, bath | `src/liquid.lua` + seaside's drawing | — (floating in them: WATER W4 / SEASIDE SS4, open) |
+| Reflection, ripple rings | mirrors | — |
+| Boat of planks | boat2 (drawn-sea has the newer `makeBoat` with ballast) | — ; boat = the kinematic drawn boat |
+| Crayon stroke / outline | `scripts/spikes/drawn-stroke.lua` (loaded by 9 spikes) | planks (byte-identical copy, delete); burrow (the ancestor: has `canonical()` and per-cell tile pick, merge those in) |
+| Drawn plank | planks (bodies, nails, pop) + boat2's quad grain | wild (seeded wear and chaos, an option on it) |
+| Course from a height | soapbox | bike (parked) |
+| Course from waypoints, pipes, rails, depth as collision | tracks | — |
+| Lift / cable car | soapbox | bike (identical) |
+| Rider Mipo | upright: soapbox; upside down / loops: tracks | bike (older) |
+| Diggable earth | burrow | — |
+| Chunky parts | `src/fabuland.lua` (merged; only the shelf loop is missing) | — |
+| Sky, clouds, far hills, parallax | clouds | weather (puff clouds, gradient sky), depth (plain sky, sine hills) |
+| Haze by depth | none yet: tracks `hazed()` is the most complete | clouds, depth, weather (`airColours`) |
+| 2.5D ground with grass rows | clouds | weather (line blades) |
+| Weather | weather (not played with yet) | clouds `rainFrom` |
+| Depth layers, lanes | depth | boat2, planks by hand |
+| Materials | material-check (src has the kept ones) | materials spike (superseded, don't build on it) |
+| Light, day and night | light-grass-check (source of scene-light and the shadows) | scene-light's wall shadow is a sun-only copy |
+| Trees and bark | bark (already modules: tree-grow / tree-kinds / tree-mesh / bark-look) | — |
+| Glass | glass (its bake became `src/render/form-bake.lua`) | — |
+| Ageing, order vs chaos | wild | — |
+| Critters | garden (the dog/cat/giraffe kind tables are closest to a prop recipe) | — |
+| Plants | plants | garden's simple flowers |
+| Wearables | spikes/wearables (engine half in `src/wearables.lua`) | — |
+| Singing | choir | — |
+| Breeds | `src/mipo-breeds.lua` | spikes/breeds: 7 trial breeds + palettes on an older `randomizeAs` |
+| Facing, turning, walking | spikes/facing (MF6 plans `src/mipo-walk.lua`) | — |
+| Hair | tufts (`src/hair-tufts.lua`) | hair (`src/hair-locks.lua`, the dropped route) |
+
+Stages only, nothing to merge: cloth, raspberry, hair, tufts, scan-test, waterjar. Not owners of an
+idea: mudready (Bathhouse game logic), nofeet (its finding is DNA defaults), platforms, planets,
+elasto, stapelaar (old toys), cellophane (dead end).
+
+## Reusable code in the spikes
+
+Copied between scenes (identical bodies, checked by md5 with whitespace and comments set aside):
+- `spawnMipo(b, x, y)`: 13 scenes + 3 with another name for `b` (burrow, depth differ). `aliveMipos`: 11 + 4.
+  `alive(inst)`: 6. A shared `mipoKit.spawn(list, x, y, opts)` / `mipoKit.alive(list)` / `isAlive(inst)`.
+- `clamp`: 11 copies of `mathutils.clamp`; `lerp`, `wrapAngle`, `dist`, `deepCopy` copied too.
+- `clipUnder`, `areaCentroid`, `fixturePolygon`: identical in sea, drawn-sea, seaside, mirrors.
+  Overlaps `src/liquid.lua`'s `area` / `clipBelow` (flat level).
+- `pointInPoly`: planks, boat2, drawn-sea; `src/cdt.lua` already has one.
+- `viewRect` (4 identical), `ensureCanvas` (3), `overPanel` (pairs, differ only in the label).
+- The boat kit (`plank`, `quad`, `makeLook`, `placeNails`, `drawPlank`, `drawBoat`, …): identical
+  in boat2 and drawn-sea; `meshesOf`, `waveY`, `drawShape` in boat, boat2, drawn-sea.
+- Bike and soapbox share ~400 identical lines (lift, course, wheels, tire pictures, pose helpers).
+- The grass blade atlas: clouds and wild copy `src/grass.lua`'s `QUADS` + `ATLAS`.
+- Contact shadows drawn by hand in materials, glass, clouds, depth; `src/contact-shadows.lua` does it.
+- Sky, far and sand shaders identical in sea and seaside; the water shader near-identical in three.
+
+Worth a home in `src/` (take arguments, no scene state):
+- Mipo pose helpers `jointPoint`, `turnParts`, `moveAll`, `mipoHeight` (soapbox, facing, tracks):
+  next to `poseTpose` in `src/mipo-build.lua`.
+- `muscle(joint, target, rate, torque)`, `shapeBody`, `skinOf`, pupil eyes, `castFrom`, `steerAngle` (garden).
+- `drawSkinStrip` (garden) and `drawRibbon` (plants): a picture along a chain of points, two differing copies.
+- Wearables' `partBody`, `headOf`, `hipTorso`, `faceOval`, `spot`: into `src/wearables.lua`
+  (`jointBetween` there is `mipoRegistry.jointBetween`).
+- `hslHex`, `paletteColor` (breeds): B3 needs them.
+- `resample`, `nearest`, `ease`, the 3D box projection (tracks); `projector`, `drawSides` (depth).
+- `layerCam`, `zoomOf`, `drawHill` (clouds); `updateAmounts` + the weather machine, `airColours` (weather).
+- Time of day `sunTheta`, `moonTheta`, `onArc` (light-grass-check); `wallShadow` with the moon.
+- L-system `expand`, `turtle`, `vary`, `newPlant` (plants); the vowel formant filter (choir).
+- `marchChunk`, `rebuildChunk`, `stamp` (burrow): a terrain module if digging comes back.
+- `glassShader`, `hull`, `simplify` (glass); wild's `plank` / `shapeAt` / `lookAt` wear.
+
+Not in `src/physics-units` yet: the water spikes' wave speeds and forces are raw pixel numbers.
+
 ## Order
 
 - [ ] **EM1. Light and materials.** Decisions first, then the move:
@@ -39,5 +118,11 @@ What's neither (the soapbox ride, the burrow) stays a scene, a shorter one, buil
   glass beads; tries spike thing -> prop recipe -> shelf. Read each spike's script first.
 - [ ] **EM3. Water**, as one piece of work, from seaside.
 - [ ] **EM4. Garden critters**, once the shelf and 🎲 exist (EDITOR-ARRANGE EA2-EA4).
+- [ ] **EM5. The cheap shared bits**, any time, each checked by a scene snapshot before/after:
+  a `mipoKit` (spawn / alive / isAlive) for the scene scripts, `mathutils.clamp` instead of the copies,
+  drawn-stroke into `src/` with burrow's two extras (planks and burrow drop their copies), the grass
+  blades from `src/grass.lua`, the Mipo pose helpers into `src/mipo-build.lua`.
+- [ ] **EM6. The 7 trial breeds** in spikes/breeds into `src/mipo-breeds.lua` with palettes
+  (MIPO-BREEDS B2-B4; that plan owns it, listed here so the spike's copy goes).
 
 Mipo breeds stays the focus; this runs beside it.
