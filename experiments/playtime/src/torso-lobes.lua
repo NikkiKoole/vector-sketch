@@ -386,7 +386,13 @@ end
 -- Each lobe's offset from where its band carries its rest place, in torso1's frame.
 function lib.measure(bones)
     if caching then
-        if bones.measured == frame then return end
+        -- kept for the frame, unless a lobe was never measured: bonesOf fills in new lobes after a
+        -- rebuild, and hair (src/hair-locks.lua) asks in love.update, before the frame's newFrame
+        local all = true
+        for i = 1, #bones.lobes do
+            if not bones.lobes[i].ox then all = false end
+        end
+        if bones.measured == frame and all then return end
         bones.measured = frame
     end
     local torso = bones.torso
