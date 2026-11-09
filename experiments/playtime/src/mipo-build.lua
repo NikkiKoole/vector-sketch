@@ -472,8 +472,13 @@ end
 -- a creation of a humanoid during runtime.
 -- its alos used by initially creating a character.
 function lib.rebuildFromCreation(instance, newCreation)
-    -- Step 1: Update the creation settings
+    -- Step 1: Update the creation settings. The counts name parts (torso1..torsoN, neck1..neckN): a
+    -- fraction ('torso3.25', from a dragged slider) left the arms, neck and head hanging from a part
+    -- that doesn't exist, so they fell off (Mipo maker, 2026-11-09). Whole numbers only.
     for k, v in pairs(newCreation) do
+        if (k == 'torsoSegments' or k == 'neckSegments' or k == 'noseSegments') and type(v) == 'number' then
+            v = math.floor(v + 0.5)
+        end
         instance.dna.creation[k] = v
     end
 

@@ -246,7 +246,10 @@ function lib.iconSlider(id, x, y, w, size, value, min, max, step, iconLess, icon
     local new
     if lib.iconButton(id .. '-less', x, y, size, iconLess) then new = math.max(min, value - step) end
     if lib.iconButton(id .. '-more', x + w - size, y, size, iconMore) then new = math.min(max, value + step) end
-    local v = lib.slider(id, x + size, y + size * 0.15, w - size * 2, size * 0.7, value, min, max, step / 4)
+    -- dragging moves in quarter steps (smooth for coarse ones), but whole-number sliders (segments: a
+    -- part named 'torso3.25' doesn't exist, the arms and head came off) stay on whole steps
+    local dragStep = step >= 1 and step or step / 4
+    local v = lib.slider(id, x + size, y + size * 0.15, w - size * 2, size * 0.7, value, min, max, dragStep)
     new = new or v
     if new and new ~= value then return new, (new - min) / (max - min) end
     return nil

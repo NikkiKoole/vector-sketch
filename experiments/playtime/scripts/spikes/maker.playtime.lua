@@ -121,13 +121,14 @@ local BUILD_SLIDERS = {
     { less = 'text:1', more = 'text:5', min = 1, max = 5, step = 1, -- torso segments (a spine needs 2)
         get = function(inst) return creation(inst).torsoSegments or 1 end,
         set = function(inst, v)
+            v = math.floor(v + 0.5) -- a count: torso segments are named torso1..torsoN
             if creation(inst).torsoSpine then v = math.max(2, v) end
             rebuildWith(inst, { torsoSegments = v })
         end },
     { less = 'text:flat', more = 'text:bend', min = 0, max = 45, step = 1,
         hidden = function(inst) return not creation(inst).torsoSpine end,
         get = function(inst) return creation(inst).spineBend or 15 end,
-        set = function(inst, v) rebuildWith(inst, { spineBend = v }) end },
+        set = function(inst, v) rebuildWith(inst, { spineBend = math.floor(v + 0.5) }) end },
     liveSlider('text:still', 'text:sway', 'spineSway', 0, 1, 0.05, 0.3, nil,
         { dev = true, hidden = function(inst) return not creation(inst).torsoSpine end }),
     { less = 'text:thin', more = 'text:deep', min = 0.15, max = 0.6, step = 0.05,
@@ -696,7 +697,7 @@ local NECK = {
         { less = 'icons/neck-no', more = 'icons/neck-yes', min = 1, max = 5, step = 1, -- segments
             hidden = function(inst) return (creation(inst).neckSegments or 0) == 0 end,
             get = function(inst) return creation(inst).neckSegments end,
-            set = function(inst, v) rebuildWith(inst, { neckSegments = v }) end },
+            set = function(inst, v) rebuildWith(inst, { neckSegments = math.floor(v + 0.5) }) end }, -- a count too
         { less = 'icons/neck-short', more = 'icons/neck-long', min = 10, max = 500, step = 10,
             hidden = function(inst) return (creation(inst).neckSegments or 0) == 0 end,
             get = function(inst) return partData(inst, 'neck1') and partData(inst, 'neck1').dims.h or 150 end,
