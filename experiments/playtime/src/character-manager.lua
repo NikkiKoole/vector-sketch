@@ -10,6 +10,7 @@
 local lib = {}
 
 local mipoDna = require('src.mipo-dna')
+local state = require('src.state')
 local appearance = require('src.mipo-appearance')
 local textures = require('src.mipo-textures')
 local balance = require('src.mipo-balance')
@@ -56,7 +57,7 @@ function lib.randomizePart(...) return randomize.randomizePart(...) end
 function lib.mutateSizes(...) return randomize.mutateSizes(...) end
 -- Where random Mipos get their colours (a hex string each call); nil puts back any colour at
 -- all. A breed's palette goes here (docs/MIPO-BREEDS.md B3; scripts/spikes/breeds).
-function lib.setRandomColor(fn) randomize.randomColor = fn or randomize.anyColor end
+function lib.setRandomColor(fn) state.randomColor = fn end -- nil: any colour (mipo-randomize)
 
 -- Tuning values, to read (set them on their own module: these are copies or the same table)
 lib.earSpring = mipoDna.earSpring

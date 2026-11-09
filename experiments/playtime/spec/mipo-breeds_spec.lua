@@ -102,7 +102,7 @@ describe("a Mipo of each breed", function()
 
             for k, v in pairs(rangesBefore) do assert.are.equal(v, D.randomRanges[k], name .. ' left range ' .. k) end
             for k, v in pairs(listsBefore) do assert.are.equal(v, C[k], name .. ' left list ' .. k) end
-            assert.are.equal(randomize.anyColor, randomize.randomColor, name .. ' left its palette on')
+            assert.is_nil(state.randomColor, name .. ' left its palette on')
 
             local breed = breeds.breeds[name]
             local torsoList = breed.lists and breed.lists.torsoHeadShapes

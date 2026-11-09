@@ -5,6 +5,7 @@ local appearance = require('src.mipo-appearance')
 local build = require('src.mipo-build')
 local textures = require('src.mipo-textures')
 local utils = require('src.utils')
+local state = require('src.state')
 local mathutils = require('src.math-utils')
 local mipoRegistry = require('src.mipo-registry')
 local mouthShapes = require('src.mouth-shapes')
@@ -12,10 +13,12 @@ local D = require('src.dna-defaults')
 local C = require('src.shape-catalogs')
 local torsoLobes = require('src.torso-lobes')
 
--- Every random colour comes from here (character-manager setRandomColor: a breed's palette).
+-- Every random colour comes from here: state.randomColor while a breed rolls (its palette,
+-- character-manager setRandomColor), else any colour. On state, not on lib: after a lurker hot
+-- swap this code reads a fresh lib, and a field set on the old one (by character-manager) was
+-- never seen: teddies came out in any colour in a running game (2026-11-09).
 lib.anyColor = utils.randomHexColor
-lib.randomColor = lib.anyColor
-local function randomHexColor() return lib.randomColor() end
+local function randomHexColor() return (state.randomColor or lib.anyColor)() end
 
 -- One of the list, at random.
 local function pick(list)
