@@ -224,7 +224,22 @@ function lib.reset(instance)
     end
 end
 
-local function stepLock(lock, o, body, gx, gy, dt, ovalX, ovalY)
+-- The floor under a haircut: one ray straight down from its body a frame, the nearest static
+-- body it hits (a flat floor: hair lies on it instead of hanging through; nothing else stops hair).
+local GROUND_RAY, GROUND_GAP = 4000, 2
+local hitY
+local function rayHit(fixture, _, y, _, _, fraction)
+    if fixture:isSensor() or fixture:getBody():getType() ~= 'static' then return -1 end
+    hitY = y
+    return fraction -- only nearer ones from here on
+end
+local function groundBelow(x, y)
+    hitY = nil
+    state.physicsWorld:rayCast(x, y, x, y + GROUND_RAY, rayHit)
+    return hitY
+end
+
+local function stepLock(lock, o, body, gx, gy, dt, ovalX, ovalY, groundY)
     local p, q = lock.points, lock.prev
     local n = lock.n
     local a = body:getAngle()
@@ -281,6 +296,10 @@ local function stepLock(lock, o, body, gx, gy, dt, ovalX, ovalY)
             q[ix - 2] = q[ix - 2] + (x - p[ix]) * DFTL
             q[iy - 2] = q[iy - 2] + (y - p[iy]) * DFTL
         end
+        if groundY and y > groundY - GROUND_GAP then -- on the floor: no further, and it drags
+            y = groundY - GROUND_GAP
+            q[ix], q[iy] = x - (x - q[ix]) * 0.5, y
+        end
         p[ix], p[iy] = x, y
     end
 end
@@ -332,6 +351,7 @@ function lib.update(dt)
                     hair.asleep, hair.stillTime, hair.acc = nil, 0, 0
                 end
                 if not hair.asleep then
+                    local groundY = groundBelow(x, y)
                     local w = hair.opts.weight * (1 - hair.opts.stand)
                     hair.acc = math.min((hair.acc or 0) + dt, 0.1)
                     local stepped = false
@@ -339,7 +359,7 @@ function lib.update(dt)
                         hair.acc = hair.acc - h
                         stepped = true
                         for _, lock in ipairs(hair.locks) do
-                            stepLock(lock, hair.opts, body, gx * w, gy * w, h, hair.ovalX, hair.ovalY)
+                            stepLock(lock, hair.opts, body, gx * w, gy * w, h, hair.ovalX, hair.ovalY, groundY)
                         end
                     end
                     if stepped then hair.version = (hair.version or 0) + 1 end
