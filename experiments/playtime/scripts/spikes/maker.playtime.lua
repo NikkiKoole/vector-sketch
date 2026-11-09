@@ -1089,7 +1089,7 @@ function s.drawUI()
         if makerUI.iconButton('maker-region-' .. r.name, x + (i - 1) * (tsize + cell * 0.4), y, tsize, r.icon,
                 { picked = here, dim = not here, paper = i + 1, bare = true }) and not here then
             local target = c.lastIn and c.lastIn[r.name]
-            if not (target and visible(inst, target)) then
+            if not (target and visible(inst, target) and regionOf(target) == r.name) then
                 for _, p in ipairs(r.parts) do if visible(inst, p) then target = p break end end
             end
             if target then pick(target) end
@@ -1118,8 +1118,9 @@ function s.drawUI()
             pick(name)
         end
     end
+    -- remembered under the category's own region: a tab tapped this frame has already moved it
     c.lastIn = c.lastIn or {}
-    c.lastIn[c.region] = c.category
+    c.lastIn[regionOf(c.category) or c.region] = c.category
     y = y + cell + m * 0.3
     makerUI.divider(x, y, w)
     y = y + m * 0.35
