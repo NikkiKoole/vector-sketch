@@ -2,7 +2,7 @@
 -- beside a live Mipo, the parts in a row on top, the shapes in a flickable grid, paint blobs, icon
 -- sliders on a taped strip, a drawn toggle and the dice. Tap a part of the Mipo to pick it (a drag
 -- still pokes). Widgets: src/ui/maker/drawn.lua (makerUI), drawings in textures/ui/maker/.
--- Parts: body, head, eyes, nose, mouth, teeth, brows, ears, hair, arms, hands, legs, feet, body hair, arm hair, leg hair.
+-- Parts: body, head, eyes, nose, mouth, teeth, brows, face patches, ears, hair, arms, hands, legs, feet, body hair, arm hair, leg hair.
 -- Play mode only (./playtime.sh play maker; tab toggles the editor).
 -- keys: r: a new Mipo   h: hide/show the card
 
@@ -476,11 +476,73 @@ local TEETH = {
     },
 }
 
+-- Face patches (src/face-patches.lua, MIPO-BREEDS B10): eye hollows, cheeks, a snout, coloured from
+-- the skin (so no paint blobs). Settings on instance.facePatches, not in the DNA yet (not saved).
+-- The grid: the patch picture ('none': all off). Three patch buttons: tap to turn one on and pick it,
+-- tap the picked one to turn it off. The sliders: the picked patch's size and strength.
+-- Cheeks borrow Puppetmaker's second eye-patch icon: it has none for cheeks.
+local PATCH_KINDS = {
+    { key = 'eyes', icon = 'icons/skinpatchEye1', size = { 'eyeSize', 1, 3 }, strength = { 'eyeDark', 0, 1 } },
+    { key = 'cheeks', icon = 'icons/skinpatchEye2', size = { 'cheekSize', 0.5, 2.5 }, strength = { 'cheekBlush', 0, 1 } },
+    { key = 'snout', icon = 'icons/skinpatchSnout', size = { 'snoutSize', 0.5, 2 }, strength = { 'snoutLight', 0, 1 } },
+}
+local function patchesNow(inst, make)
+    if not inst.facePatches and make then
+        inst.facePatches = facePatches.defaults()
+        inst.facePatches.eyes, inst.facePatches.cheeks, inst.facePatches.snout = false, false, false
+    end
+    return inst.facePatches
+end
+local function placePatches(inst) facePatches.place(inst, true) end
+local function patchKind()
+    local key = check().patchKind or 'eyes'
+    for _, k in ipairs(PATCH_KINDS) do if k.key == key then return k end end
+    return PATCH_KINDS[1]
+end
+local PATCHES = {
+    name = 'patches', icon = 'icons/patches',
+    shapes = facePatches.SHAPES, allowNone = true,
+    picked = function(inst) return inst.facePatches and inst.facePatches.shape end,
+    pick = function(inst, url)
+        if not url then
+            inst.facePatches = nil
+        else
+            local set = patchesNow(inst, true)
+            set.shape = numberOf(url)
+            if not (set.eyes or set.cheeks or set.snout) then set[patchKind().key] = true end
+        end
+        placePatches(inst)
+    end,
+    look = function(inst)
+        local skin = skinOf(inst, faceOwner(inst))
+        return { fgHex = skin and skin.fgHex or 'ccccccff', bgHex = '00000000' } -- the mask only: no outline
+    end,
+    layers = {},
+    kinds = PATCH_KINDS,
+    slidersFor = function(inst)
+        local k = patchKind()
+        local set = inst.facePatches
+        if not (set and set[k.key]) then return {} end
+        local function slider(def, less, more)
+            return { id = k.key .. def[1], less = less, more = more, min = def[2], max = def[3], step = (def[3] - def[2]) / 20,
+                get = function(i) return i.facePatches and i.facePatches[def[1]] or def[2] end,
+                set = function(i, v)
+                    if i.facePatches then i.facePatches[def[1]] = v end
+                    placePatches(i)
+                end }
+        end
+        return { slider(k.size, 'icons/patch-ScaleXless', 'icons/patch-ScaleXmore'),
+            slider(k.strength, 'icons/pattern-transparent', 'icons/pattern-opaque') }
+    end,
+    sliders = {},
+}
+
 for i, cat in ipairs(CATEGORIES) do
     if cat.name == 'nose' then
         table.insert(CATEGORIES, i + 1, MOUTH)
         table.insert(CATEGORIES, i + 2, TEETH)
         table.insert(CATEGORIES, i + 3, BROWS)
+        table.insert(CATEGORIES, i + 4, PATCHES)
         break
     end
 end
@@ -769,7 +831,7 @@ function s.drawUI()
     if not BY_NAME[c.category] or (BY_NAME[c.category].hidden and BY_NAME[c.category].hidden(inst)) then
         c.category = 'body'
     end
-    local perRow = 8 -- sixteen parts: two rows (a flickable row is MM4's)
+    local perRow = 9 -- seventeen parts: two rows (a flickable row is MM4's)
     local isize = w / perRow
     for i, cat in ipairs(shown) do
         local fill = hexToRGB(fillOf(inst, cat))
@@ -792,8 +854,26 @@ function s.drawUI()
     -- the colour layers this part has (fill / line / pattern, Puppetmaker's uifill / uiline / uipattern),
     -- each showing its colour now; none when it has only one
     local layers = layersOf(inst, cat)
-    local layer = layerFor(inst, cat, c.layer)
-    if #layers > 1 then
+    local layer = layerFor(inst, cat, c.layer) or 'none'
+    if cat.kinds then -- face patches: one button per patch, on / off and which one the sliders show
+        local set = inst.facePatches
+        local skin = hexToRGB(fillOf(inst, cat))
+        for i, k in ipairs(cat.kinds) do
+            local on = set and set[k.key]
+            local bx = x + w - (#cat.kinds - i + 1) * dsize
+            if makerUI.iconButton('maker-patch-' .. k.key, bx, y, dsize, k.icon,
+                    { mask = on and skin or nil, picked = on and c.patchKind == k.key, dim = not on, paper = i + 2, bare = true }) then
+                apply(function()
+                    local s2 = patchesNow(inst, true)
+                    if s2[k.key] and c.patchKind == k.key then s2[k.key] = false
+                    else s2[k.key] = true end
+                    c.patchKind = k.key
+                    placePatches(inst)
+                end)
+                mipoVoice.edited(inst)
+            end
+        end
+    elseif #layers > 1 then
         for i, l in ipairs(layers) do
             local bx = x + w - (#layers - i + 1) * dsize
             if makerUI.iconButton('maker-layer-' .. l, bx, y, dsize, 'colorpick/ui' .. l,
@@ -807,7 +887,8 @@ function s.drawUI()
 
     -- the sliders on a taped strip, at the bottom
     local sliders = {}
-    for _, sl in ipairs(layer == 'pattern' and patternSliders(cat) or cat.sliders) do
+    local source = layer == 'pattern' and patternSliders(cat) or (cat.slidersFor and cat.slidersFor(inst)) or cat.sliders
+    for _, sl in ipairs(source) do
         if not (sl.hidden and sl.hidden(inst)) then sliders[#sliders + 1] = sl end
     end
     local columns = #sliders > 3 and 2 or 1 -- more than three: two columns, smaller
@@ -817,7 +898,7 @@ function s.drawUI()
     local switches = layer ~= 'pattern' and cat.switches or {}
     local slidersH = (math.ceil(#sliders / columns) + (#switches > 0 and 1 or 0)) * rowH + m * 0.6
     local blobSize = w / 8
-    local blobsH = blobSize * 2 + m * 0.4
+    local blobsH = #layers > 0 and (blobSize * 2 + m * 0.4) or 0 -- no colours of its own (patches): no blobs
     local bottom = cy + ch - m * 0.9
     local sy0 = bottom - slidersH
     local by0 = sy0 - blobsH
@@ -827,7 +908,7 @@ function s.drawUI()
 
     -- paint blobs
     local current = colourOf(inst, cat, layer)
-    for i, hex in ipairs(PALETTE) do
+    for i, hex in ipairs(#layers > 0 and PALETTE or {}) do
         local col, row = (i - 1) % 8, math.floor((i - 1) / 8)
         local isPicked = current and current:sub(1, 6):lower() == hex
         if makerUI.blob('maker-blob-' .. i, x + col * blobSize, by0 + row * blobSize, blobSize, hexToRGB(hex), i, isPicked) then
@@ -838,7 +919,7 @@ function s.drawUI()
 
     makerUI.tape(x - m * 0.4, sy0, w + m * 0.8, slidersH)
     for i, sl in ipairs(sliders) do
-        local id = 'maker-' .. cat.name .. '-' .. sl.less
+        local id = 'maker-' .. cat.name .. '-' .. (sl.id or sl.less)
         local shownValue = (c.live and c.live[id]) or sl.get(inst) or sl.min -- dragged, not applied yet
         local col, row = (i - 1) % columns, math.floor((i - 1) / columns)
         local v, amount = makerUI.iconSlider(id, x + col * (colW + m * 0.5), sy0 + m * 0.3 + row * rowH,
