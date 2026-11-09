@@ -2,12 +2,15 @@
 -- two to a row as pictures (scripts/thumbs/, made by `./playtime.sh thumbs`, src/scene-thumbs.lua).
 -- Pick one to see what it is, then 'load' or 'load + play'; a script without a scene of its own
 -- (tufts) runs on the scene that's open. Loading replaces what's on the stage.
+-- The search box on top finds scenes by name and description as you type (src/fuzzy-find.lua),
+-- best first, groups set aside; enter loads the best one.
 local lib = {}
 
 local ui = require('src.ui.all')
 local state = require('src.state')
 local catalog = require('src.scene-catalog')
 local thumbs = require('src.scene-thumbs')
+local fuzzy = require('src.fuzzy-find')
 
 local DIM = { 0.75, 0.72, 0.66, 1 }
 local COLUMNS = 2
@@ -71,8 +74,36 @@ local function tile(scene, x, y, w, imgH, picked)
     return clicked, h
 end
 
+-- a scene's texts for the search: its name counts double its description, then its group
+local function searchFields(scene)
+    return { scene.name, scene.note or '', scene.group or '' }, { 2, 1, 0.5 }
+end
+
+-- tiles for `list`, COLUMNS to a row, a picked one's row under it; the y after them
+local function grid(list, rowX, rowY, rowW, rowH, gap, tileW, imgH)
+    local picked = state.rightColumn.pickedScene
+    for first = 1, #list, COLUMNS do
+        local tallest, pickedHere = 0, nil
+        for c = 0, COLUMNS - 1 do
+            local scene = list[first + c]
+            if scene then
+                local clicked, th = tile(scene, rowX + c * (tileW + gap), rowY, tileW, imgH, picked == scene.id)
+                if clicked then
+                    state.rightColumn.pickedScene = (picked ~= scene.id) and scene.id or nil
+                    picked = state.rightColumn.pickedScene
+                end
+                if picked == scene.id then pickedHere = scene end
+                tallest = math.max(tallest, th)
+            end
+        end
+        rowY = rowY + tallest + gap
+        if pickedHere then rowY = lib.pickedRow(pickedHere, rowX, rowY, rowW, rowH, gap) end
+    end
+    return rowY
+end
+
 -- under a picked tile's row: what it is, and load / load + play
-local function pickedRow(scene, x, y, w, rowH, gap)
+function lib.pickedRow(scene, x, y, w, rowH, gap)
     if scene.note ~= '' then
         ui.label(x + 4, y, fit(scene.note, w - 8), DIM)
         y = y + ui.fontHeight + 2
@@ -103,15 +134,46 @@ function lib.draw(x, y, w, h)
     local rowH = ui.theme.button.height
     local gap = ui.theme.spacing
     local open = groupsOpen()
-    local picked = state.rightColumn.pickedScene
     ui.panel(x, y, w, h, 'scenes', function()
-        ui.scrollPanel('scenes-panel', x, y + ui.theme.panelHeader, w, h - ui.theme.panelHeader - 5, function()
-            local rowX, rowY, rowW = x + 10, y + ui.theme.panelHeader + gap, w - 26 -- room for the scroll bar
+        -- the search box, above the list (it stays put while the list scrolls)
+        local searchY = y + ui.theme.panelHeader + gap
+        local text = ui.textinput('scene-search', x + 10, searchY, w - 20, rowH, 'search...',
+            state.rightColumn.sceneSearch or '')
+        if text then
+            local entered = text:find('\n', 1, true) ~= nil -- enter types a newline: load the best one
+            text = text:gsub('\n', '')
+            if text ~= (state.rightColumn.sceneSearch or '') and ui._scrollers['scenes-panel'] then
+                ui._scrollers['scenes-panel'].value = 0 -- a new search: its best at the top
+            end
+            state.rightColumn.sceneSearch = text
+            if entered then
+                ui.focusedTextInputID = nil
+                local best = fuzzy.rank(text, scenes, searchFields)[1]
+                if best then
+                    catalog.request(best, false)
+                    state.rightColumn.pickedScene = nil
+                end
+            end
+        end
+        local query = state.rightColumn.sceneSearch or ''
+        local top = searchY + rowH + gap
+        ui.scrollPanel('scenes-panel', x, top, w, h - (top - y) - 5, function()
+            local rowX, rowY, rowW = x + 10, top + gap, w - 26 -- room for the scroll bar
             ui.label(rowX, rowY, fit('now: ' .. tostring(state.scene.id or '?'), rowW), DIM)
             rowY = rowY + ui.fontHeight + gap * 2
             local tileW = math.floor((rowW - gap * (COLUMNS - 1)) / COLUMNS)
             local imgH = math.floor((tileW - 8) * THUMB_ASPECT)
-            -- the scenes of each group, COLUMNS to a row
+            if query:match('%S') then
+                -- searching: the matches, best first, groups set aside
+                local found = fuzzy.rank(query, scenes, searchFields)
+                local note = #found == 0 and 'nothing found'
+                    or (#found .. (#found == 1 and ' scene' or ' scenes') .. ', enter loads the first')
+                ui.label(rowX, rowY, fit(note, rowW), DIM)
+                rowY = rowY + ui.fontHeight + gap
+                grid(found, rowX, rowY, rowW, rowH, gap, tileW, imgH)
+                return
+            end
+            -- the scenes of each group
             local groups, order = {}, {}
             for _, scene in ipairs(scenes) do
                 if not groups[scene.group] then
@@ -126,27 +188,7 @@ function lib.draw(x, y, w, h)
                     open[group] = not open[group]
                 end
                 rowY = rowY + rowH + gap
-                if open[group] then
-                    local list = groups[group]
-                    for first = 1, #list, COLUMNS do
-                        local tallest, pickedHere = 0, nil
-                        for c = 0, COLUMNS - 1 do
-                            local scene = list[first + c]
-                            if scene then
-                                local clicked, th = tile(scene, rowX + c * (tileW + gap), rowY, tileW, imgH,
-                                    picked == scene.id)
-                                if clicked then
-                                    state.rightColumn.pickedScene = (picked ~= scene.id) and scene.id or nil
-                                    picked = state.rightColumn.pickedScene
-                                end
-                                if picked == scene.id then pickedHere = scene end
-                                tallest = math.max(tallest, th)
-                            end
-                        end
-                        rowY = rowY + tallest + gap
-                        if pickedHere then rowY = pickedRow(pickedHere, rowX, rowY, rowW, rowH, gap) end
-                    end
-                end
+                if open[group] then rowY = grid(groups[group], rowX, rowY, rowW, rowH, gap, tileW, imgH) end
             end
         end)
     end)
