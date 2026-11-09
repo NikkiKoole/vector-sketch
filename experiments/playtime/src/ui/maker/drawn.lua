@@ -64,7 +64,63 @@ end
 
 -- The card: Puppetmaker's tall tab panel (tab1: its paper tab at the top left), filled and outlined.
 -- Everything under it is the card's: the world isn't poked through it.
+-- The card: a slightly uneven box, filled by a quiet shader (a flat warm colour, a touch lighter at
+-- the top, no grain) and outlined in Nikki's crayon strokes (scripts/spikes/drawn-stroke.lua: the
+-- strokes laid along a line, broken and overshooting at the corners). Everything under it is the
+-- card's: the world isn't poked through it. (lib.cardPicture: Puppetmaker's tab picture, as before.)
+local CARD_FILL = { 0.98, 0.94, 0.85 }
+local CARD_STROKE = 10  -- px: the outline's width
+local CARD_WOBBLE = 1.8 -- how much the stroke wanders
+local STROKE         -- drawn-stroke, loaded once (a spike's file for now: moves to src/ with the maker)
+local cardCache = {} -- { key, pts, meshes }
+
+local cardShader = love.graphics.newShader([[
+    uniform vec4 rect;   // x, y, w, h on screen
+    uniform vec3 base;
+    vec4 effect(vec4 color, Image tex, vec2 uv, vec2 sc) {
+        vec2 p = (sc - rect.xy) / rect.zw;
+        float light = 1.0 + 0.035 * (1.0 - p.y) - 0.02 * pow(abs(p.x - 0.5) * 2.0, 3.0);
+        return vec4(base * light, color.a);
+    }
+]])
+
+-- the box's corners, each pushed a little off true by a fixed hash (the same box every frame)
+local function cardPoints(x, y, w, h)
+    local function j(k, amount) return (math.sin(k * 12.9898) * 43758.5453 % 1 - 0.5) * amount end
+    local d = math.min(w, h) * 0.025
+    return {
+        { x + j(1, d), y + j(2, d) }, { x + w + j(3, d), y + j(4, d) },
+        { x + w + j(5, d), y + h + j(6, d) }, { x + j(7, d), y + h + j(8, d) },
+    }
+end
+
 function lib.card(x, y, w, h, fill)
+    if inside(x, y, w, h) then ui.overPanel = true end
+    STROKE = STROKE or love.filesystem.load('scripts/spikes/drawn-stroke.lua')()
+    local key = table.concat({ math.floor(x), math.floor(y), math.floor(w), math.floor(h) }, ',')
+    if cardCache.key ~= key then
+        local pts = cardPoints(x, y, w, h)
+        cardCache = { key = key, pts = pts,
+            meshes = STROKE.meshes({ { pts = pts, loop = true, width = CARD_STROKE } }, CARD_WOBBLE, 0, true) }
+    end
+    local flat = {}
+    for _, p in ipairs(cardCache.pts) do flat[#flat + 1] = p[1]; flat[#flat + 1] = p[2] end
+    local dpi = love.graphics.getDPIScale() -- the shader's screen coords are pixels
+    local tx, ty = love.graphics.transformPoint(x, y)
+    local bx, by = love.graphics.transformPoint(x + w, y + h)
+    tx, ty, bx, by = tx * dpi, ty * dpi, bx * dpi, by * dpi
+    cardShader:send('rect', { tx, ty, bx - tx, by - ty })
+    cardShader:send('base', fill or CARD_FILL)
+    love.graphics.setShader(cardShader)
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.polygon('fill', flat)
+    love.graphics.setShader()
+    love.graphics.setColor(INK)
+    for _, mesh in ipairs(cardCache.meshes) do love.graphics.draw(mesh) end
+    love.graphics.setColor(1, 1, 1)
+end
+
+function lib.cardPicture(x, y, w, h, fill)
     if inside(x, y, w, h) then ui.overPanel = true end
     love.graphics.setColor(fill or { 0.98, 0.93, 0.82 })
     drawStretched(lib.image('panels/tab1-mask'), x, y, w, h)
