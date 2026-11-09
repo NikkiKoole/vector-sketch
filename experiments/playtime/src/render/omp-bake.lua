@@ -239,7 +239,8 @@ end
 -- A part's picture as it looks on a Mipo, for a thumbnail (the Mipo maker's shape cells, MIPO-MAKER MM6):
 -- outlineURL / maskURL under textures/ ('mipo/eye/eye-03.png'), `look` a texture block's colours and
 -- pattern (bgHex line, fgHex fill, pHex + pURL pattern, pr / psx / psy / ptx / pty its placement).
--- Returns an Image, nil when the outline isn't there. The caller keeps and releases it.
+-- Returns an Image, nil when the outline isn't there. The caller keeps and releases it. Call it
+-- outside drawing (in update): it switches canvases.
 function lib.bakePreview(outlineURL, maskURL, look)
     local outline = getLoveImage('textures/' .. outlineURL)
     if not outline then return nil end
@@ -248,9 +249,17 @@ function lib.bakePreview(outlineURL, maskURL, look)
     local fr, fg, fb, fa = color.hexToColor(look.fgHex ~= '' and look.fgHex or 'ffffffff')
     local pr, pg, pb, pa = color.hexToColor(look.pHex ~= '' and look.pHex or '00000000')
     local lr, lg, lb, la = color.hexToColor(look.bgHex ~= '' and look.bgHex or '020202ff')
+    -- the bake draws into its own canvases and ends on setCanvas(): keep whatever was being drawn
+    -- (canvas, scissor, transform, shader, blend) out of it and put back after
+    love.graphics.push('all')
+    love.graphics.origin()
+    love.graphics.setScissor()
+    love.graphics.setShader()
+    love.graphics.setBlendMode('alpha')
     local imgData = lib.makeTexturedCanvas(outline, mask, { fr, fg, fb }, fa, pattern or tex1, { pr, pg, pb },
         pattern and pa or 0, look.pr or 0, look.psx or 1, look.psy or 1, look.ptx or 0, look.pty or 0,
         { lr, lg, lb }, la, 1, 1, nil)
+    love.graphics.pop()
     local image = love.graphics.newImage(imgData)
     imgData:release()
     return image

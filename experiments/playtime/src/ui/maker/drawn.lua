@@ -193,32 +193,43 @@ end
 -- A cell of a part's picture as it would look on the Mipo: outline, fill and pattern baked by the
 -- game's own OMP bake (src/render/omp-bake.lua bakePreview) from `look` (a texture block: bgHex, fgHex,
 -- pHex, pURL...). `url` as in the shape catalogs ('mipo/eye/eye-03'); `noMask`: outline only (most
--- hair). One picture kept per url, baked again when its look changes, at most BAKES_PER_FRAME a frame
--- (switching parts would hitch); until then the plain outline shows. Returns true when tapped.
+-- hair). One picture kept per url, baked again when its look changes: in lib.update, at most
+-- BAKES_PER_FRAME a frame (switching parts would hitch); until then the old one or the plain outline
+-- shows. Returns true when tapped.
 local ompBake = require('src.render.omp-bake')
 local BAKES_PER_FRAME = 3
 local previews = {} -- url -> { key, image }
-local bakesThisFrame = 0
-
--- call once a frame before the widgets (it counts the bakes)
-function lib.beginFrame() bakesThisFrame = 0 end
+local wanted = {}   -- url -> { key, look, noMask }: asked for while drawing, baked in lib.update
 
 local function lookKey(look, noMask)
     return table.concat({ look.bgHex or '', look.fgHex or '', look.pHex or '', look.pURL or '',
         look.pr or 0, look.psx or 1, look.psy or 1, look.ptx or 0, look.pty or 0, noMask and 'n' or 'm' }, '|')
 end
 
+-- while drawing: the picture if it's baked for this look, else ask for it (the old one meanwhile)
 local function preview(url, look, noMask)
     local key = lookKey(look, noMask)
     local entry = previews[url]
     if entry and entry.key == key then return entry.image end
-    if bakesThisFrame >= BAKES_PER_FRAME then return entry and entry.image end -- the old look a moment longer
-    bakesThisFrame = bakesThisFrame + 1
-    local maskURL = not noMask and love.filesystem.getInfo('textures/' .. url .. '-mask.png') and url .. '-mask.png'
-    local image = ompBake.bakePreview(url .. '.png', maskURL, look)
-    if entry and entry.image then entry.image:release() end
-    previews[url] = { key = key, image = image }
-    return image
+    wanted[url] = { key = key, look = look, noMask = noMask }
+    return entry and entry.image
+end
+
+-- Bake what drawing asked for, a few a frame. Call from update, never while drawing: a bake
+-- switches canvases (half-drawn cells and a lost frame, 2026-11-09).
+function lib.update()
+    local n = 0
+    for url, want in pairs(wanted) do
+        if n >= BAKES_PER_FRAME then break end
+        n = n + 1
+        wanted[url] = nil
+        local maskURL = not want.noMask and love.filesystem.getInfo('textures/' .. url .. '-mask.png')
+            and url .. '-mask.png'
+        local image = ompBake.bakePreview(url .. '.png', maskURL, want.look)
+        local entry = previews[url]
+        if entry and entry.image then entry.image:release() end
+        previews[url] = { key = want.key, image = image }
+    end
 end
 
 function lib.partCell(id, x, y, size, url, look, picked, noMask)

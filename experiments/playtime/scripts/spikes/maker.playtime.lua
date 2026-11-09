@@ -262,6 +262,7 @@ end
 function s.update()
     local c = check()
     if c.pending and love.timer.getTime() - c.lastApply > APPLY_EVERY then apply(c.pending) end
+    makerUI.update() -- the shape cells' pictures, baked here and not while drawing
     -- the grid's flick
     local g = c.grid
     if not g.drag and math.abs(g.vel) > 0.5 then
@@ -365,7 +366,6 @@ function s.drawUI()
     end
     if not (c.show and alive(inst)) then return end
     ui.startFrame() -- play mode draws no editor UI, so nothing else starts the frame
-    makerUI.beginFrame()
 
     local cw = math.min(440, W * 0.37)
     local cx, cy, ch = W - cw - 16, 16, H - 32
