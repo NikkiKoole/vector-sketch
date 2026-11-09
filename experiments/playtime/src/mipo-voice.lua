@@ -56,6 +56,10 @@ lib.impactPairCooldown = 0.5 -- the same two bodies make the same impact sound a
 lib.minApproachSpeed = 350
 lib.plonkMipoCooldown = 0.25 -- one Mipo plonks at most this often (catches jitter spikes)
 lib.mouthFlap = true
+-- the shortest a mouth flap lasts, s (rise a third, hold, fall a third): chatter's short syllables
+-- (0.2 s) opened and shut the mouth in 70 ms each way, a twitch (Nikki 2026-11-10: "sometimes goes too
+-- fast"); was 0.15
+lib.flapMinDuration = 0.35
 
 -- Impacts from dreamengine's synth (src/synth.lua: modeled instruments placed in the
 -- world) instead of the samples. Falls back to the samples when the library isn't built.
@@ -335,7 +339,7 @@ function lib.flapMouth(instance, duration)
     flaps[instance.id] = {
         thing = thing,
         start = now(),
-        duration = math.max(duration, 0.15),
+        duration = math.max(duration, lib.flapMinDuration),
         from = from,
         target = target,
         amount = 0.7 + love.math.random() * 0.3,
