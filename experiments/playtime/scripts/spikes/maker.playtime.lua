@@ -168,6 +168,35 @@ local BUILD_SWITCHES = {
         set = function(inst, on) creation(inst).torsoJiggle = on end }, -- read live
 }
 
+-- A shape part's width / height as a slider: the size without its sign (a negative one is a flip,
+-- Puppetmaker's fliph / flipv), the sign kept when it's set.
+local function sizeSlider(partName, axis, less, more)
+    local key = axis == 'x' and 'sx' or 'sy'
+    return { less = less, more = more, min = 0.5, max = 4, step = 0.25,
+        get = function(inst) return math.abs(partData(inst, partName).dims[key] or 1) end,
+        set = function(inst, v)
+            local now = partData(inst, partName).dims[key] or 1
+            v = now < 0 and -v or v
+            if axis == 'x' then setShape(inst, partName, nil, v, nil) else setShape(inst, partName, nil, nil, v) end
+        end }
+end
+-- the two flips of a shape part: sideways (sx negative) and upside down (sy negative); the icon
+-- shows the state it's in (Puppetmaker's pairs: <prefix>-fliph1 / -fliph2, -flipv1 / -flipv2)
+local function flipsOf(partName, prefix)
+    local function flipped(inst, key) return (partData(inst, partName).dims[key] or 1) < 0 end
+    local function flip(inst, key)
+        local dims = partData(inst, partName).dims
+        if key == 'sx' then setShape(inst, partName, nil, -(dims.sx or 1), nil)
+        else setShape(inst, partName, nil, nil, -(dims.sy or 1)) end
+    end
+    return {
+        { key = 'sx', icon = function(inst) return prefix .. '-fliph' .. (flipped(inst, 'sx') and 2 or 1) end,
+            flipped = function(inst) return flipped(inst, 'sx') end, flip = function(inst) flip(inst, 'sx') end },
+        { key = 'sy', icon = function(inst) return prefix .. '-flipv' .. (flipped(inst, 'sy') and 2 or 1) end,
+            flipped = function(inst) return flipped(inst, 'sy') end, flip = function(inst) flip(inst, 'sy') end },
+    }
+end
+
 local CATEGORIES = {
     {
         name = 'body', icon = 'icons/body',
@@ -176,14 +205,11 @@ local CATEGORIES = {
         pick = function(inst, url) setShape(inst, 'torso1', url) end,
         skin = function(inst) return torsos(inst) end,
         sliders = {
-            { less = 'icons/body-narrow', more = 'icons/body-wide', min = 0.5, max = 4, step = 0.25,
-                get = function(inst) return partData(inst, 'torso1').dims.sx or 1 end,
-                set = function(inst, v) setShape(inst, 'torso1', nil, v, nil) end },
-            { less = 'icons/body-small', more = 'icons/body-tall', min = 0.5, max = 4, step = 0.25,
-                get = function(inst) return partData(inst, 'torso1').dims.sy or 1 end,
-                set = function(inst, v) setShape(inst, 'torso1', nil, nil, v) end },
+            sizeSlider('torso1', 'x', 'icons/body-narrow', 'icons/body-wide'),
+            sizeSlider('torso1', 'y', 'icons/body-small', 'icons/body-tall'),
             faceSize(true),
         },
+        flips = flipsOf('torso1', 'icons/body'),
     },
     {
         name = 'head', icon = 'icons/head',
@@ -193,14 +219,11 @@ local CATEGORIES = {
         pick = function(inst, url) setShape(inst, 'head', url) end,
         skin = function() return { 'head' } end,
         sliders = {
-            { less = 'icons/head-narrow', more = 'icons/head-wide', min = 0.5, max = 4, step = 0.25,
-                get = function(inst) return partData(inst, 'head').dims.sx or 1 end,
-                set = function(inst, v) setShape(inst, 'head', nil, v, nil) end },
-            { less = 'icons/head-small', more = 'icons/head-tall', min = 0.5, max = 4, step = 0.25,
-                get = function(inst) return partData(inst, 'head').dims.sy or 1 end,
-                set = function(inst, v) setShape(inst, 'head', nil, nil, v) end },
+            sizeSlider('head', 'x', 'icons/head-narrow', 'icons/head-wide'),
+            sizeSlider('head', 'y', 'icons/head-small', 'icons/head-tall'),
             faceSize(false),
         },
+        flips = flipsOf('head', 'icons/head'),
     },
     {
         name = 'eyes', icon = 'icons/eyes', textures = true,
@@ -1160,6 +1183,17 @@ function s.drawUI()
                     { mask = hexToRGB(fillOf(inst, kid)), picked = c.category == k, dim = c.category ~= k, paper = i + 3,
                         bare = true }) and c.category ~= k then
                 pick(k)
+            end
+        end
+    end
+    -- the flips (body, head), after the sub-parts: each button shows the state it's in
+    if cat.flips then
+        local fx = x + (#kids > 1 and #kids * dsize * 1.1 + dsize * 0.4 or 0)
+        for i, f in ipairs(cat.flips) do
+            if makerUI.iconButton('maker-flip-' .. cat.name .. f.key, fx + (i - 1) * dsize * 1.1, y, dsize, f.icon(inst),
+                    { bare = true, picked = f.flipped(inst) }) then
+                apply(function() f.flip(inst) end)
+                mipoVoice.edited(inst)
             end
         end
     end
