@@ -5,6 +5,7 @@ local appearance = require('src.mipo-appearance')
 local build = require('src.mipo-build')
 local textures = require('src.mipo-textures')
 local utils = require('src.utils')
+local color = require('src.color')
 local state = require('src.state')
 local mathutils = require('src.math-utils')
 local mipoRegistry = require('src.mipo-registry')
@@ -275,7 +276,7 @@ local function randomizeFace(instance, hairColor, opts)
         mouthHMul = D.randomInRangeWeighted('mouthHMul'),
         mouthY = randomMouthY,
         browShape = math.ceil(math.random() * #C.browShapes),
-        browBgHex = hairColor,
+        browBgHex = color.darkerHex(hairColor), -- the hair colour a tint darker (2026-11-09)
         browWMul = D.randomInRangeWeighted('browWMul'),
         browHMul = D.randomInRangeWeighted('browHMul'),
         browBend = D.randomIntInRangeWeighted('browBend'),

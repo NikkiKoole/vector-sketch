@@ -91,6 +91,15 @@ function lib.hexToColor(hex)
     return c[1], c[2], c[3], c[4]
 end
 
+-- The same colour a tint darker ('RRGGBBAA'): r, g and b times `factor` (default 0.75),
+-- alpha kept. Eyebrows are the hair colour this much darker (mipo-randomize).
+function lib.darkerHex(hex, factor)
+    factor = factor or 0.75
+    local r, g, b, a = parse(hex)
+    local function byte(v) return math.floor(v * 255 + 0.5) end
+    return string.format('%02X%02X%02X%02X', byte(r * factor), byte(g * factor), byte(b * factor), byte(a))
+end
+
 -- for spec/color_spec.lua: how many colours are remembered
 lib._test = { parsedCount = function()
     local n = 0

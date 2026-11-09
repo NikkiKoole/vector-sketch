@@ -40,3 +40,15 @@ describe('color.hexToColor', function()
         for _, hex in ipairs(color.palette) do assert.are.equal(6, #hex) end
     end)
 end)
+
+describe('color.darkerHex', function()
+    it('makes r, g and b darker by the factor, keeps alpha', function()
+        assert.are.equal('BF6000FF', color.darkerHex('FF8000FF'))
+        assert.are.equal('80402080', color.darkerHex('FF804080', 0.5))
+        assert.are.equal('000000FF', color.darkerHex('000000ff'))
+    end)
+
+    it('reads the short forms too', function()
+        assert.are.equal('BF0000FF', color.darkerHex('#f00'))
+    end)
+end)
