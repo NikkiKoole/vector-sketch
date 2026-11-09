@@ -11,6 +11,8 @@
 -- short locks along the top that hang inward over the forehead, and the outermost long locks.
 local lib = {}
 
+lib.useNative = true -- the strips from native/desound/hair.c when the library has it
+
 -- Each point is pulled to its length behind the one before it ("follow the leader"); that pull
 -- counts as speed, piles up along the lock and the tips whip like an angry octopus. DFTL (Mueller,
 -- "Fast Simulation of Inextensible Hair and Fur", 2012) gives part of each pull back to the point
@@ -21,6 +23,7 @@ local state = require('src.state')
 local utils = require('src.utils')
 local color = require('src.color')
 local textureNames = require('src.texture-names')
+local hairNative = require('src.hair-native')
 
 lib.defaults = {
     count = 17,      -- locks
@@ -288,12 +291,14 @@ end
 -- it, seen from the side and a little from above so the turns loop. The turns follow the lock's
 -- rest length, so a stretched ringlet opens up like a spring. Fills `out` with x, y, shade.
 local TILT = 0.5   -- how much of the turn is seen from above (its loops)
-local MAXSAMPLES = 400
+local MAXSAMPLES = hairNative.MAX_SAMPLES
+local cork = {}
 local function lockPath(lock, o, out)
     local p, n, L = lock.points, lock.n, lock.segment
     local R, pitch = o.ringlets, math.max(4, o.ringletPitch)
-    local per = R > 0 and math.max(4, math.ceil(L / pitch * 12)) or 4
-    per = math.max(1, math.min(per, math.floor((MAXSAMPLES - 1) / math.max(1, n - 1))))
+    -- samples per segment: ringlets ~10 a turn; plain locks only as many as the bend needs
+    local maxPer = math.max(1, math.floor((MAXSAMPLES - 1) / math.max(1, n - 1)))
+    local ringPer = R > 0 and math.min(maxPer, math.max(3, math.ceil(L / pitch * 10))) or nil
     local count = 0
     local function at(i) -- with the ends mirrored
         if i < 1 then return 2 * p[1] - p[3], 2 * p[2] - p[4] end
@@ -305,6 +310,21 @@ local function lockPath(lock, o, out)
         local x1, y1 = at(j)
         local x2, y2 = at(j + 1)
         local x3, y3 = at(j + 2)
+        local per = ringPer
+        if not per then -- the sharper turn at either end of this segment, in steps of ~0.15 rad
+            local ax, ay, bx, by, cx, cy = x1 - x0, y1 - y0, x2 - x1, y2 - y1, x3 - x2, y3 - y2
+            local la, lb, lc = ax * ax + ay * ay, bx * bx + by * by, cx * cx + cy * cy
+            local turn = 0
+            if la > 1e-9 and lb > 1e-9 then
+                turn = math.max(turn, 1 - (ax * bx + ay * by) / math.sqrt(la * lb))
+            end
+            if lb > 1e-9 and lc > 1e-9 then
+                turn = math.max(turn, 1 - (bx * cx + by * cy) / math.sqrt(lb * lc))
+            end
+            -- 1 - cos: ~angle^2 / 2; one sample a segment when straight, up to 5 in a bend
+            per = math.min(maxPer, 1 + math.floor(math.sqrt(2 * turn) / 0.15))
+            per = math.min(per, 5)
+        end
         for s = 0, (j == n - 1) and per or per - 1 do
             local t = s / per
             local t2, t3 = t * t, t * t * t
@@ -316,40 +336,62 @@ local function lockPath(lock, o, out)
             out[3 * count - 2], out[3 * count - 1], out[3 * count] = x, y, (j - 1 + t) * L
         end
     end
-    -- the corkscrew: around the axis, growing in over the first turn
+    -- the corkscrew: around the axis (tangents from the axis, so worked out before any point
+    -- moves), growing in over the first turn
+    if R <= 0 then
+        for c = 1, count do out[3 * c] = 1 end
+        return count
+    end
+    local moved = cork
     for c = 1, count do
         local x, y, s = out[3 * c - 2], out[3 * c - 1], out[3 * c]
-        local shade = 1
-        if R > 0 then
-            local a, b = math.max(1, c - 1), math.min(count, c + 1)
-            local tx, ty = out[3 * b - 2] - out[3 * a - 2], out[3 * b - 1] - out[3 * a - 1]
-            local tl = math.sqrt(tx * tx + ty * ty)
-            if tl > 1e-6 then tx, ty = tx / tl, ty / tl else tx, ty = 0, 1 end
-            local r = R * math.min(1, s / pitch)
-            local th = s / pitch * 2 * math.pi + (lock.phase or 0)
-            local sn, cs = math.sin(th), math.cos(th)
-            x, y = x - ty * r * sn + tx * r * TILT * cs, y + tx * r * sn + ty * r * TILT * cs
-            shade = 0.72 + 0.28 * (0.5 + 0.5 * cs) -- the back of each turn darker
-        end
-        out[3 * c - 2], out[3 * c - 1], out[3 * c] = x, y, shade
+        local a, b = math.max(1, c - 1), math.min(count, c + 1)
+        local tx, ty = out[3 * b - 2] - out[3 * a - 2], out[3 * b - 1] - out[3 * a - 1]
+        local tl = math.sqrt(tx * tx + ty * ty)
+        if tl > 1e-6 then tx, ty = tx / tl, ty / tl else tx, ty = 0, 1 end
+        local r = R * math.min(1, s / pitch)
+        local th = s / pitch * 2 * math.pi + (lock.phase or 0)
+        local sn, cs = math.sin(th), math.cos(th)
+        moved[3 * c - 2] = x - ty * r * sn + tx * r * TILT * cs
+        moved[3 * c - 1] = y + tx * r * sn + ty * r * TILT * cs
+        moved[3 * c] = 0.72 + 0.28 * (0.5 + 0.5 * cs) -- the back of each turn darker
     end
+    for i = 1, 3 * count do out[i] = moved[i] end
     return count
 end
 
 local pathBuf = {}
-local MESH_FORMAT = {
-    { 'VertexPosition', 'float', 2 }, { 'VertexTexCoord', 'float', 2 }, { 'VertexColor', 'byte', 4 },
+local MESH_FORMAT = { -- as hair.c writes
+    { 'VertexPosition', 'float', 2 }, { 'VertexTexCoord', 'float', 2 }, { 'VertexColor', 'float', 4 },
 }
 -- A textured strip along the path, the picture's width across (times `width`), its length along.
-local function stripMesh(lock, slot, img, count)
-    lock.meshes = lock.meshes or {}
-    local m = lock.meshes[slot]
-    if not m or m.img ~= img then
-        m = { mesh = love.graphics.newMesh(MESH_FORMAT, MAXSAMPLES * 2, 'strip', 'stream'), img = img, verts = {} }
-        m.mesh:setTexture(img)
-        lock.meshes[slot] = m
+-- One mesh a lock: the fill and the line pictures are the same size (an OMP pair), so the strip
+-- is built once and drawn twice with the picture swapped.
+local nativeData -- one ByteData all locks take turns writing (setVertices copies it)
+local function lockMesh(lock)
+    local m = lock.mesh
+    if not m then
+        m = { mesh = love.graphics.newMesh(MESH_FORMAT, MAXSAMPLES * 2, 'strip', 'stream'), verts = {} }
+        lock.mesh = m
     end
-    local hw = img:getWidth() * lock.width
+    return m
+end
+
+-- The lock's strip from C (hair.c), when the library has it: nil without it.
+local function nativeStripMesh(lock, o, hw)
+    if not (lib.useNative and hairNative.available()) then return nil end
+    nativeData = nativeData or love.data.newByteData(MAXSAMPLES * 2 * hairNative.BYTES_PER_VERTEX)
+    local count = hairNative.strip(lock.points, lock.n, lock.segment, o.ringlets, o.ringletPitch,
+        lock.phase or 0, TILT, hw, nativeData)
+    if count < 4 then return false end
+    local m = lockMesh(lock)
+    m.mesh:setVertices(nativeData, 1, count)
+    m.mesh:setDrawRange(1, count)
+    return m.mesh
+end
+
+local function stripMesh(lock, hw, count)
+    local m = lockMesh(lock)
     local v, buf = m.verts, pathBuf
     for c = 1, count do
         local a, b = math.max(1, c - 1), math.min(count, c + 1)
@@ -386,15 +428,22 @@ function lib.draw(layer)
             local lr, lg, lb = color.hexToColor(main.bgHex or '000000ff')
             for _, lock in ipairs(hair.locks) do
                 if (lock.front or false) == wantFront then
-                    local count = lockPath(lock, o, pathBuf)
-                    if count >= 2 then
+                    local pic = line or mask
+                    local mesh = pic and nativeStripMesh(lock, o, pic:getWidth() * lock.width)
+                    if mesh == nil and pic then
+                        local count = lockPath(lock, o, pathBuf)
+                        mesh = count >= 2 and stripMesh(lock, pic:getWidth() * lock.width, count)
+                    end
+                    if mesh then
                         if mask then
                             love.graphics.setColor(fr, fg, fb, 1)
-                            love.graphics.draw(stripMesh(lock, 'fill', mask, count))
+                            mesh:setTexture(mask)
+                            love.graphics.draw(mesh)
                         end
                         if line then
                             love.graphics.setColor(lr, lg, lb, 1)
-                            love.graphics.draw(stripMesh(lock, 'line', line, count))
+                            mesh:setTexture(line)
+                            love.graphics.draw(mesh)
                         end
                     end
                 end
@@ -402,6 +451,15 @@ function lib.draw(layer)
         end
     end
     love.graphics.setColor(1, 1, 1, 1)
+end
+
+-- The strip's vertices built in Lua, { x, y, u, v, r, g, b, a } each (spec/hair-native_spec.lua).
+function lib.luaStripVertices(lock, o, hw)
+    local count = lockPath(lock, o, pathBuf)
+    local mesh = stripMesh(lock, hw, count)
+    local out = {}
+    for i = 1, 2 * count do out[i] = { mesh:getVertex(i) } end
+    return out
 end
 
 return lib

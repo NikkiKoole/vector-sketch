@@ -41,9 +41,13 @@ Locks are drawn as strips of their own (Catmull-Rom through the points) instead 
 one Bezier, which smoothed curls away. Cost per Mipo on the Mac: simulate 0.1-0.35 ms; draw 1.4 ms
 (17 locks + 10 bangs), 3.4 ms (tight ringlets), against 0.09 ms for the old ribbon in C.
 
-- [ ] H1. Build each strip once, draw it twice (fill, line) with the picture swapped
-- [ ] H2. Fewer samples: more only where a lock bends or turns
-- [ ] H3. The strip in C, like the ribbon's native strip
+- [x] H1. Build each strip once, draw it twice (fill, line) with the picture swapped
+- [x] H2. Fewer samples: more only where a lock bends or turns (1 a segment straight, up to 5 in a bend; ~10 a ringlet turn)
+- [x] H3. The strip in C, like the ribbon's native strip: `native/desound/hair.c` via
+  `src/hair-native.lua`, the Lua path kept for the web and stale libraries (`spec/hair-native_spec.lua`:
+  both the same). Per Mipo on the Mac, simulate + draw: plain 1.6 -> 0.80 (H1+H2) -> 0.46 ms (C);
+  tight ringlets 4.0 -> 2.2 -> 0.44 ms; loose ringlets 1.5 -> 0.88 -> 0.29 ms. About 0.2 ms of
+  that is the simulation, still Lua
 - [ ] H4. Measure on the phone (`./playtime.sh bench device`)
 
 ## Hair bounce (also parked)

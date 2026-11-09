@@ -15,6 +15,7 @@ PLACE_OBJ="$(mktemp -t place).o"
 GRID_OBJ="$(mktemp -t grid).o"
 CLOTH_OBJ="$(mktemp -t cloth).o"
 FLUID_OBJ="$(mktemp -t fluid).o"
+HAIR_OBJ="$(mktemp -t hair).o"
 CC="xcrun -sdk iphoneos clang -arch arm64 -miphoneos-version-min=12.0 -std=gnu11 -O2"
 $CC -DDE_NO_RAYLIB -I"$R" -c desound.c -o "$OBJ"
 $CC -c ribbon.c -o "$RIBBON_OBJ" # limb ribbons (src/ribbon-native.lua)
@@ -22,7 +23,8 @@ $CC -c place.c -o "$PLACE_OBJ" # a spike: parts moved to their bodies (claudetoo
 $CC -c grid.c -o "$GRID_OBJ" # bent pictures: spine torsos, ears (src/spine-skin.lua)
 $CC -c cloth.c -o "$CLOTH_OBJ" # cloth: curtains, flags (src/cloth.lua)
 $CC -c fluid.c -o "$FLUID_OBJ" # particle water (src/fluid.lua, scene waterjar)
+$CC -c hair.c -o "$HAIR_OBJ" # hair locks (src/hair-native.lua, scene hair)
 rm -f "$OUT"
-xcrun libtool -static -o "$OUT" "$OBJ" "$RIBBON_OBJ" "$PLACE_OBJ" "$GRID_OBJ" "$CLOTH_OBJ" "$FLUID_OBJ" 2>/dev/null
-rm -f "$OBJ" "$RIBBON_OBJ" "$PLACE_OBJ" "$GRID_OBJ" "$CLOTH_OBJ" "$FLUID_OBJ"
+xcrun libtool -static -o "$OUT" "$OBJ" "$RIBBON_OBJ" "$PLACE_OBJ" "$GRID_OBJ" "$CLOTH_OBJ" "$FLUID_OBJ" "$HAIR_OBJ" 2>/dev/null
+rm -f "$OBJ" "$RIBBON_OBJ" "$PLACE_OBJ" "$GRID_OBJ" "$CLOTH_OBJ" "$FLUID_OBJ" "$HAIR_OBJ"
 echo "built $OUT from dreamengine $(git -C "$DREAMENGINE" rev-parse --short HEAD)"
