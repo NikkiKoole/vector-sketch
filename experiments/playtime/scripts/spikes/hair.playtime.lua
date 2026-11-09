@@ -140,6 +140,23 @@ function s.draw()
     hairLocks.draw('front') -- bangs, front locks and coats, over the faces
 end
 
+-- Haircuts: buttons that set the head hair's sliders at once (then tune from there). 'long' is the
+-- defaults (hanging, Nikki's look of 2026-11-09); 'short up' a short cut standing up.
+local CUTS = {
+    { name = 'long', set = {} }, -- the defaults: applyCut puts every key a cut sets back to them first
+    { name = 'short up', set = { count = 26, points = 4, segment = 12, stand = 0.85, stiffness = 0.6,
+        droop = 0.1, spread = 2.4, frontLocks = 0, width = 0.14, curly = 0, ringlets = 0, cut = 0,
+        lenMiddle = 1, lenSides = 1 }, bangs = false },
+}
+local function applyCut(cut)
+    local d = hairLocks.defaults
+    for k in pairs(CUTS[2].set) do opts[k] = d[k] end -- every key a cut sets back to the long look,
+    opts.bangsOn = true
+    for k, v in pairs(cut.set) do opts[k] = v end -- then this cut's
+    if cut.bangs == false then opts.bangsOn = false end
+    opts.headOn = true
+end
+
 -- The panel's sections: `toggle` names the opts switch shown on the section's left (none: always on).
 local SECTIONS = {
     { name = 'head hair', toggle = 'headOn', sliders = {
@@ -235,12 +252,18 @@ function s.drawUI()
                 ui.label(x + 260, y, sl.key)
             end
         end
-        local by, bw = y0 + 24 + (rows - 1) * (BH + pad), (w - 3 * pad - 20) / 2
-        if ui.button(x0 + pad, by, bw, 'new random locks') then
+        local by, bw = y0 + 24 + (rows - 1) * (BH + pad), (w - 5 * pad - 20) / 4
+        for k, cut in ipairs(CUTS) do
+            if ui.button(x0 + k * pad + (k - 1) * bw, by, bw, cut.name) then
+                applyCut(cut)
+                changed = true
+            end
+        end
+        if ui.button(x0 + 3 * pad + 2 * bw, by, bw, 'new locks') then
             opts.seed = (opts.seed or 1) + 1
             changed = true
         end
-        if ui.button(x0 + 2 * pad + bw, by, bw, 'random Mipo (m)') then randomizeMipos() end
+        if ui.button(x0 + 4 * pad + 3 * bw, by, bw, 'random Mipo') then randomizeMipos() end
         if changed then attachAll() end
     end)
 end
