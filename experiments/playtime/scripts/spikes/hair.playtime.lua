@@ -45,8 +45,18 @@ local SLIDERS = {
     { key = 'stiffness', min = 0, max = 1 },
     { key = 'droop', min = 0, max = 1.5 },
     { key = 'curl', min = -1, max = 1 },
+    { key = 'curly', min = 0, max = 1 },
+    { key = 'stand', min = 0, max = 1 },
+    { key = 'ringlets', min = 0, max = 30 },
+    { key = 'ringletPitch', min = 8, max = 60 },
+    { key = 'springy', min = 0, max = 1 },
+    { key = 'cut', min = 0, max = 500 },
+    { key = 'lenMiddle', min = 0.2, max = 2 },
+    { key = 'lenSides', min = 0.2, max = 2 },
+    { key = 'part', min = -1, max = 1 },
     { key = 'wild', min = 0, max = 1 },
     { key = 'damping', min = 0.8, max = 1 },
+    { key = 'weight', min = 0, max = 8 },
     { key = 'width', min = 0.05, max = 0.6 },
     { key = 'spread', min = 0.3, max = 6.2 },
     { key = 'texture', min = 1, max = 11, step = 1 },
@@ -60,16 +70,18 @@ local SLIDERS = {
 function s.drawUI()
     if not (state.playMode and showPanel) then return end
     ui.startFrame() -- play mode draws no editor UI, so nothing else starts the frame
-    local BH, pad, w = 34, 8, 380
-    local h = BH * (#SLIDERS + 1) + pad * (#SLIDERS + 2) + 20
+    local BH, pad, colW = 32, 2, 390 -- two columns of sliders
+    local rows = math.ceil(#SLIDERS / 2) + 1
+    local w, h = colW * 2 + pad, (BH + pad) * rows + pad + 24
     local _, sh = love.graphics.getDimensions()
     local x0, y0 = 20, sh - h - 20
     ui.panel(x0, y0, w, h, '•• hair ••', function()
-        local layout = ui.createLayout({ type = 'columns', spacing = pad, startX = x0 + pad, startY = y0 + pad + 20 })
         local changed = false
-        for _, sl in ipairs(SLIDERS) do
-            local x, y = ui.nextLayoutPosition(layout, w - 20, BH)
-            local v = ui.sliderWithInput('hair' .. sl.key, x, y, 160, sl.min, sl.max, opts[sl.key], nil, sl.step)
+        for k, sl in ipairs(SLIDERS) do
+            local col, row = (k - 1) % 2, math.floor((k - 1) / 2)
+            local x, y = x0 + pad + col * colW, y0 + 24 + row * (BH + pad)
+            local v = ui.sliderWithInput('hair' .. sl.key, x, y, 160, sl.min, sl.max,
+                opts[sl.key] or hairLocks.defaults[sl.key], nil, sl.step)
             if v and v ~= opts[sl.key] then
                 if sl.step then v = math.floor(v + 0.5) end
                 opts[sl.key] = v
@@ -77,8 +89,7 @@ function s.drawUI()
             end
             ui.label(x + 260, y, sl.key)
         end
-        local x, y = ui.nextLayoutPosition(layout, w - 20, BH)
-        if ui.button(x, y, w - 20, 'new random locks') then
+        if ui.button(x0 + pad, y0 + 24 + (rows - 1) * (BH + pad), w - 2 * pad - 20, 'new random locks') then
             opts.seed = (opts.seed or 1) + 1
             changed = true
         end

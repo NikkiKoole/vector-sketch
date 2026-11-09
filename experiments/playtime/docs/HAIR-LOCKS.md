@@ -1,6 +1,6 @@
 # Hair locks — long hair that swings
 
-status: parked — the route is the tufts (real bodies, ear pictures, haircuts): "when we revisit hair this is the route" (2026-10-31)
+status: active — picked up again 2026-11-09: fixed, haircuts and pijpenkrullen ("those look great!"); now its cost. (2026-10-31 it was parked for the tufts route, below)
 
 A spike: locks of hair as chains of points rooted on the head, moved by a small verlet step of
 their own (not Box2D) and drawn as ribbons with the hair pictures. `src/hair-locks.lua`, the scene
@@ -20,6 +20,31 @@ mass, not hair, and long hair mostly hides behind the body. Left open if it come
 - Locks lying on the torso and arms, not only the head
 - Its cost on the phone (not measured; guess 1–1.5 ms for 20 Mipos with 10 locks each)
 - Dreadlocks: fewer, thicker, stiffer locks are probably where this fits best
+
+## 2026-11-09: fixed, haircuts, ringlets
+
+Why the locks spun instead of hanging, three causes: the step followed the frame time (uneven
+frames flung points: now fixed 1/120 s steps); curl pulled each segment relative to the chain's
+current one, a one-sided pull that wound the locks round (now a rest shape fixed on the head);
+and follow-the-leader counts each length fix as speed, so the tips whipped ("an aggressive
+octopus": DFTL, Müller 2012, gives half of it back to the point before). Gravity on the hair is
+`weight` (3): at 1 the stiffness held the locks out like a fountain.
+
+New sliders: `stand`, `curly` (a wave held tip to root by both-way pulls between points two
+apart), the haircut (`cut`: a blunt line below the head; `lenMiddle` / `lenSides`; `part`), and
+pijpenkrullen: `ringlets` (radius), `ringletPitch`, `springy`. A ringlet is its axis simulated as
+a springy chain and a corkscrew drawn around it, the back of each turn darker; the turns follow
+the rest length, so a stretched ringlet opens up. Big radius, long pitch, thin strand and fewer
+locks read best (r 16-20, pitch 45-60, width 0.03-0.04, 8-10 locks).
+
+Locks are drawn as strips of their own (Catmull-Rom through the points) instead of the ribbon's
+one Bezier, which smoothed curls away. Cost per Mipo on the Mac: simulate 0.1-0.35 ms; draw 1.4 ms
+(17 locks + 10 bangs), 3.4 ms (tight ringlets), against 0.09 ms for the old ribbon in C.
+
+- [ ] H1. Build each strip once, draw it twice (fill, line) with the picture swapped
+- [ ] H2. Fewer samples: more only where a lock bends or turns
+- [ ] H3. The strip in C, like the ribbon's native strip
+- [ ] H4. Measure on the phone (`./playtime.sh bench device`)
 
 ## Hair bounce (also parked)
 
