@@ -244,9 +244,10 @@ end
 local function footBackZ(_, body)
     local instance, partName = mipoRegistry.getFromBody(body)
     if not (instance and (partName == 'lfoot' or partName == 'rfoot')) then return nil end
-    local side = partName:sub(1, 1)
+    -- both sides' legs: a foot lies behind every leg, so the legs always show (Nikki 2026-11-10: "legs
+    -- go under and over the feet, we should just see them always")
     local low, high
-    for _, leg in ipairs({ side .. 'uleg', side .. 'lleg' }) do
+    for _, leg in ipairs({ 'luleg', 'llleg', 'ruleg', 'rlleg' }) do
         local part = instance.parts[leg]
         if part and part.body and not part.body:isDestroyed() then
             for _, f in ipairs(part.body:getFixtures()) do
@@ -259,7 +260,7 @@ local function footBackZ(_, body)
         end
     end
     if not low then return nil end
-    return low - 0.25, high + 0.5
+    return low - (partName == 'rfoot' and 0.25 or 0.5), high + 0.5 -- the right foot over the left
 end
 
 -- Where a foot is cut, in the world: across its leg (the way from the knee to the ankle), FOOT_CUT of the
@@ -1426,6 +1427,9 @@ local drawers = {
     end,
     ['foot-front'] = function(d)
         local instance, partName = mipoRegistry.getFromBody(d.body)
+        -- Not drawn over the leg any more (the legs always show; tried 2026-11-10: the foot's lower part
+        -- cut across the leg and drawn in front, the leg went under and over the feet). Flat: the whole foot.
+        if not state.feetFlat then return end
         local cx, cy, dx, dy
         if instance and not state.feetFlat then cx, cy, dx, dy = footCut(instance, partName:sub(1, 1)) end
         if not cx then return drawTexfixture(d) end

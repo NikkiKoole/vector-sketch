@@ -454,9 +454,10 @@ fade, a sun: the panel's `fades` switch, LS4).
   - Eyes (`state.eyesFlat`): the white lit as glaze rounded like a ball with the flat white laid back over
     at half (alone a warm lamp made them tan), the lid's soft shadow along its top following the blink.
     Tried and dropped: a catchlight glint ("just remove it", a white dot beside the pupil).
-  - Feet (`state.feetFlat`): each foot drawn twice, behind its leg and its lower part in front cut across
-    the leg, the leg reaching into the foot and clipped to it below the ankle; each side its own depth
-    range, the right over the left (one range for both: the feet cut into each other, "z fighting").
+  - Feet (`state.feetFlat`): both feet behind all the legs (the right over the left), each leg reaching
+    into its foot and clipped to it below the ankle, so the legs always show. Tried and dropped: the
+    foot's lower part drawn again in front, cut across the leg ("legs go under and over the feet, we
+    should just see them always").
   - Hair locks are lit like the part they grow on and cast shadows (`docs/HAIR-LOCKS.md`).
   Also: the mouth flap lasts at least 0.35 s (`src/mipo-voice.lua` flapMinDuration; 0.15 twitched).
   Not measured on the phone: the nose / eye / lip shaders and the feet's stencils are a few more draws per Mipo.
