@@ -215,8 +215,9 @@ end
 
 -- Randomize face features: eyes, pupils, brows, nose, mouth, and teeth.
 -- hairColor: shared hex color used for brow color.
--- The mouth never wider than this share of the head (the head's box; it narrows at the mouth).
-lib.mouthMaxHeadShare = 0.85
+-- The mouth never wider than this share of the head (the head's box). 0.85 at first; 1 since
+-- mouths went 30% wider (2026-11-09).
+lib.mouthMaxHeadShare = 1
 
 -- The widest mouthWMul for which the widest resting mouth stays inside mouthMaxHeadShare:
 -- resting mouths switch while a Mipo talks and rests, so the cap holds for all of them.
@@ -547,7 +548,7 @@ local function mutateFace(instance, creation)
         browHMul         = jitterInRange(face.brow.hMul,                         'browHMul'),
         noseWMul         = jitterInRange(face.nose.wMul,                         'noseWMul'),
         noseHMul         = jitterInRange(face.nose.hMul,                         'noseHMul'),
-        mouthWMul        = jitterInRange(face.mouth.wMul,                        'mouthWMul'),
+        mouthWMul        = math.min(jitterInRange(face.mouth.wMul, 'mouthWMul'), mouthWMulCap(instance)),
         mouthHMul        = jitterInRange(face.mouth.hMul,                        'mouthHMul'),
         mouthUpperLipScale = jitterInRange(face.mouth.upperLipScale or 0.15,     'mouthUpperLipScale'),
         mouthLowerLipScale = jitterInRange(face.mouth.lowerLipScale or 0.2,      'mouthLowerLipScale'),
