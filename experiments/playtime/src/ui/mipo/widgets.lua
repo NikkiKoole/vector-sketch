@@ -29,7 +29,7 @@ local CharacterManager = require('src.character-manager')
 local colors = require('src.color')
 
 local C = require('src.shape-catalogs')
-local materials = require('src.render.materials')
+local materialPicker = require('src.ui.material-picker')
 
 local PANEL_WIDTH = ui.theme.panelWidth
 local BUTTON_HEIGHT = ui.theme.lineHeight
@@ -243,21 +243,17 @@ local function drawPatternControls(block, idPrefix, panelX, startY, onUpdate)
     return yy
 end
 
--- A part's material instead of clay (src/render/materials.lua, MATERIALS MT6): '<' name '>' at x, y,
--- clicking the name steps on too. blocks(): the DNA appearance blocks to set (the part, its mirror);
--- the textures are rebuilt after, the fixtures copying `material` from the block (mipo-textures).
+-- A part's material instead of clay (src/render/materials.lua, MATERIALS MT6): a swatch button at x, y
+-- that opens the swatches (src/ui/material-picker.lua). blocks(): the DNA appearance blocks to set (the
+-- part, its mirror); the textures are rebuilt after, the fixtures copying `material` from the block
+-- (mipo-textures).
 local function drawMaterialRow(instance, x, y, current, blocks)
-    local names = materials.NAMES
-    local i = 0 -- 0: none (clay)
-    for k, name in ipairs(names) do if name == current then i = k end end
-    local step
-    if ui.button(x + 30, y, 22, '<', BUTTON_HEIGHT) then step = -1 end
-    if ui.button(x + 54, y, 100, names[i] or 'none', BUTTON_HEIGHT) then step = 1 end
-    if ui.button(x + 156, y, 22, '>', BUTTON_HEIGHT) then step = 1 end
+    local set = blocks()
+    local picked, name = materialPicker.button('mipo-material:' .. tostring(set[1]), x + 30, y, 148, BUTTON_HEIGHT,
+        current)
     ui.alignedLabel(x + 182, y, 'material')
-    if step then
-        local picked = names[(i + step) % (#names + 1)] -- names[0] is nil: none
-        for _, block in ipairs(blocks()) do block.material = picked end
+    if picked then
+        for _, block in ipairs(set) do block.material = name end
         CharacterManager.rebuildTextures(instance)
         if editing then mipoVoice.edited(editing) end
     end

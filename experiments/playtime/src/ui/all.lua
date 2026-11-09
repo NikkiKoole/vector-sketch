@@ -208,6 +208,16 @@ function ui.startFrame()
     ui.mouseX, ui.mouseY = ui.toUI(love.mouse.getPosition())
     ui.overPanel = false
     updateDragScroll(down)
+
+    -- a popup drawn on top last frame (ui.blockRect, set by it each frame it's drawn: the material
+    -- picker): the widgets under it see no pointer; the popup reads ui.realMouseX/Y
+    ui.realMouseX, ui.realMouseY = ui.mouseX, ui.mouseY
+    local block = ui.blockRect
+    ui.blockRect = nil
+    if block and ui.mouseX >= block[1] and ui.mouseX <= block[1] + block[3]
+        and ui.mouseY >= block[2] and ui.mouseY <= block[2] + block[4] then
+        ui.mouseX, ui.mouseY = -1e6, -1e6
+    end
 end
 
 function ui.generateID()

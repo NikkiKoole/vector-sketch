@@ -27,6 +27,7 @@ local uiRecordingPanel = require('src.ui.recording-panel')
 local uiSFixtureEditor = require('src.ui.sfixture-editor')
 local uiBodyEditor = require('src.ui.body-editor')
 local fileBrowser  = require('src.file-browser')
+local materialPicker = require('src.ui.material-picker')
 local uiMipoEditor = require('src.ui.mipo-editor')
 local playMode = require('src.play-mode')
 local inspector = require('src.ui.inspector')
@@ -446,6 +447,7 @@ function lib.drawUI()
     end
 
     fileBrowser:draw()
+    materialPicker.drawPopup() -- on top of everything
 end
 
 return lib

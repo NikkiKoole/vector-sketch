@@ -186,6 +186,11 @@ Kinds of material, by what the shader does differently:
   The lit look by default (Nikki 2026-11-08: "the way the Mipos are set up in light and shadow"): at the
   scene light level off, a Mipo part in a material gets the lit level's Mipo settings anyway (baked
   roundness, lights adding up, clay off; src/scene-light.lua), taken off before a save like the others.
+  2026-11-09: picked from swatches (Nikki: a popup of swatches, not '< name >'): `src/ui/material-picker.lua`,
+  one lit ball per material drawn by the engine's shader, on the texfixture row and the Mipo editor's.
+  Its 'edit' toggle is MT2's tuning place: the picked material's numbers as sliders, live on every part
+  in it, 'save' writes the PRESETS block of materials.lua. Found: the shader never reads `surf[1]` (light
+  wrap), wax's only number, so wax is felt with a small shine.
 - [ ] **MT20. A drawn thing in one go** (idea, 2026-11-08; Nikki: "don't know", written down for later).
   Today a plain body gets a picture and a material by hand: attach tool -> looks -> texture dropped on
   it (body-sized), the texture section set to OMP with outline, mask and colours, then the material row.

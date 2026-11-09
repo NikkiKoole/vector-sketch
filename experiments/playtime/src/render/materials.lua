@@ -12,7 +12,7 @@ local lib = {}
 lib.PRESETS = {
     metal = { kind = 1, spec = { 1.5, 70 } },
     brass = { kind = 1, spec = { 1.5, 70 }, tint = { 0.95, 0.72, 0.3, 1 } },
-    gold = { kind = 1, spec = { 1.8, 90 }, tint = { 1.0, 0.8, 0.28, 1 } },
+    gold = { kind = 1, spec = { 1.8, 90 }, tint = { 1, 0.8, 0.28, 1 } },
     copper = { kind = 1, spec = { 1.5, 70 }, surf = { 0, 0, 0, 0.2 }, tint = { 0.93, 0.5, 0.32, 1 } },
     tin = { kind = 1, spec = { 1.2, 50 }, tint = { 0.78, 0.8, 0.85, 1 } },
     velvet = { kind = 2 },
@@ -21,9 +21,9 @@ lib.PRESETS = {
     leather = { kind = 5, spec = { 0.35, 16, 0.2 }, surf = { 0.15, 0, 0.45 } },
     rubber = { kind = 5, spec = { 0.18, 4 }, surf = { 0.2, 0.25 } },
     wax = { kind = 5, spec = { 0.2, 12 }, surf = { 0.7 } },
-    plastic = { kind = 5, spec = { 1.0, 70 }, surf = { 0.15 } },
-    glaze = { kind = 5, spec = { 0.3, 20, 0.5, 1.0 }, surf = { 0.1, 0, 0.45 } },
-    candy = { kind = 5, spec = { 0.2, 30, 0, 1.0 }, surf = { 0.4 } },
+    plastic = { kind = 5, spec = { 1, 70 }, surf = { 0.15 } },
+    glaze = { kind = 5, spec = { 0.3, 20, 0.5, 1 }, surf = { 0.1, 0, 0.45 } },
+    candy = { kind = 5, spec = { 0.2, 30, 0, 1 }, surf = { 0.4 } },
 }
 
 -- in the order a panel steps through them; nil (clay) first
@@ -47,5 +47,8 @@ function lib.uniforms(name)
     end
     return sent[name]
 end
+
+-- a preset's numbers changed (the material picker's edit panel): send them again
+function lib.changed(name) sent[name] = nil end
 
 return lib

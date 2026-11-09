@@ -659,7 +659,7 @@ local function sendLightsToShader(shader, body, extra)
         lightTypeBuf[1]     = 0
         lightPosBuf[1][1]   = 0
         lightPosBuf[1][2]   = 0
-        lightRangeBuf[1]    = 1
+        lightRangeBuf[1]    = 0 -- no falloff (1 faded it out a pixel from the origin)
         send(shader, 'lightCount', 1)
         sent.lightVersion = nil -- the buffers aren't the frame's lights: send them all, and next time too
     else
@@ -733,7 +733,9 @@ local function setSurfaceShader(extra, body)
         local wetCount, wetSpots = wet.shaderSpots(body)
         send(sh, 'wetCount', wetCount)
         if wetCount > 0 then sh:send('wetSpot', unpack(wetSpots)) end
-        local formMap = extra.plasticineFormBaked and formBake.map(extra, extra.plasticineFormRise)
+        -- formMapImage: a roundness map handed in (the material picker's swatch ball)
+        local formMap = extra.formMapImage
+            or (extra.plasticineFormBaked and formBake.map(extra, extra.plasticineFormRise))
         if formMap then send(sh, 'formMap', formMap) end
         send(sh, 'useFormMap', formMap and 1 or 0)
         sendScalars(sh, PLASTICINE_SCALARS, extra)

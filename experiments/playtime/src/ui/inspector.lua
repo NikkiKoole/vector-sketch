@@ -6,6 +6,7 @@ local ui = require('src.ui.all')
 local color = require('src.color')
 local fileBrowser = require('src.file-browser')
 local state = require('src.state')
+local materialPicker = require('src.ui.material-picker')
 
 local lib = {}
 
@@ -104,6 +105,12 @@ end
 drawers.choice = function(c) -- click: the next option; row.stepper: '<' and '>' either side too
     local picked = drawChoice(c.row, c.target, c.wx, c.y, c.w - lib.labelWidth)
     if picked ~= nil then return setValue(c.row, c.target, picked) end
+end
+
+drawers.material = function(c) -- a swatch button that opens the material swatches; 'none' or a name
+    local picked, name = materialPicker.button(c.id .. c.row.key, c.wx, c.y + DY, c.w - lib.labelWidth,
+        ui.theme.button.height, valueOf(c.row, c.target))
+    if picked then return setValue(c.row, c.target, name or 'none') end
 end
 
 drawers.part = function(c) -- [x] name, then '<' choice '>' (or a note): a wider label column
