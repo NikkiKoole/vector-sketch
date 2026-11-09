@@ -424,6 +424,12 @@ fade, a sun: the panel's `fades` switch, LS4).
   (7 per light) and each lit pixel loops over every light that's on: check it compiles and what 9 bulbs
   cost on the phone; if too much, the cap back to 12 or a nearest-lights pick per part
   (`gatherLightsForBody`).
+  **On the Mac (2026-11-09, night, 3 Mipos):** the CPU sees nothing: draw p50 4.5-4.9 ms with the bulbs
+  as real lights, as glows only, or the festoon off (noise). The GPU (shader-cost on the plasticine
+  shader, lightCount forced, 512 canvas, three runs to the hundredth): 3 lights 0.50 ms/MP, 12 lights
+  0.93, 16 lights 1.12, no shader 0.04: ~0.048 ms/MP a light. Guess for the iPhone SE 2 (~7x the Mac on
+  this shader, MATERIALS 'What the Mipo shaders cost'): ~0.3 ms/MP a light, so the nine bulbs ~+3 ms/MP;
+  a Mipo is ~5% of the screen: ~+0.15 ms a Mipo a frame, ~+3 ms for a room of 20. To check on the phone.
 
 Not light, but where this started (`LITTLE-USED.md`): three rounds left there, skinned mesh, UV mesh,
 the recorder (the feature-rounds sweep, `claudetools/feature-rounds_spec.lua`, takes a recipe each).
