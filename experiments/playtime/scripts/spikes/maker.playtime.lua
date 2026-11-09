@@ -1014,22 +1014,29 @@ function s.drawUI()
     if not BY_NAME[c.category] or (BY_NAME[c.category].hidden and BY_NAME[c.category].hidden(inst)) then
         c.category = 'body'
     end
-    local perRow = 10 -- nineteen parts: two rows (a flickable row is MM4's)
-    local isize = w / perRow
+    -- the parts in rows of seven (three rows for now; a flickable row is MM4's), each icon padded in
+    -- its cell, the rows apart, a short last row centred
+    local perRow = 7
+    local cell = w / perRow
+    local isize = cell * 0.84
+    local rowStep = cell * 1.02
+    local rows = math.ceil(#shown / perRow)
     for i, cat in ipairs(shown) do
         local fill = hexToRGB(fillOf(inst, cat))
         local col, row = (i - 1) % perRow, math.floor((i - 1) / perRow)
-        if makerUI.iconButton('maker-cat-' .. cat.name, x + col * isize, y + row * isize * 0.85, isize, cat.icon,
-                { mask = fill, picked = c.category == cat.name, paper = (i % 7) + 1, bare = true }) then
+        local inRow = math.min(perRow, #shown - row * perRow)
+        local rowX = x + (w - inRow * cell) / 2
+        if makerUI.iconButton('maker-cat-' .. cat.name, rowX + col * cell + (cell - isize) / 2, y + row * rowStep,
+                isize, cat.icon, { mask = fill, picked = c.category == cat.name, paper = (i % 7) + 1, bare = true }) then
             c.category, c.grid.off, c.grid.vel = cat.name, 0, 0
             mipoVoice.edited(inst)
         end
     end
-    y = y + isize * (1 + 0.85 * (math.ceil(#shown / perRow) - 1)) + m * 0.3
+    y = y + rows * rowStep + m * 0.4
     local cat = BY_NAME[c.category]
 
     -- dice and the colour layer
-    local dsize = isize * 0.9
+    local dsize = cell * 0.72 -- the dice and colour-layer row: a bit smaller than the part icons
     if makerUI.iconButton('maker-dice', x, y, dsize, 'big-button-dice', { mask = { 0.95, 0.75, 0.4 }, bare = true }) then
         characterManager.randomizeMipo(inst)
         mipoVoice.dice(inst)
