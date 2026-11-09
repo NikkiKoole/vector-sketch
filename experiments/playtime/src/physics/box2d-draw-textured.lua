@@ -992,9 +992,9 @@ local function drawNoseShadow(body, img, ox, oy, dw, dh, mirrorX, rot)
 end
 
 -- Eyes (Nikki 2026-11-10): the white lit as glaze rounded like a ball (its form baked from its mask),
--- and inside the eye, after the pupil: the lid's soft shadow along its top (following the blink) and a
--- catchlight, a small glint from the eye's middle toward the strongest light (where it stays when
--- the pupil looks round). state.eyesFlat = true: flat as before.
+-- and inside the eye, after the pupil: the lid's soft shadow along its top (following the blink).
+-- (tried 2026-11-10: a catchlight, a small glint toward the strongest light: "just remove it", it read
+-- as a white dot beside the pupil.) state.eyesFlat = true: flat as before.
 local eyeLits = setmetatable({}, { __mode = 'k' })
 local function eyeLit(extra)
     local lit = eyeLits[extra]
@@ -1007,11 +1007,9 @@ end
 lib.eyeLidShadow, lib.eyeLidDepth = 0.35, 0.5 -- darkest at the top, fading over this much of its height
 lib.eyeWhite = 0.5 -- the flat white laid back over the lit one: whites stay bright (lit alone, a warm
 -- lamp near them made them tan)
-lib.eyeGlint, lib.eyeGlintAway = 0.07, 0.24 -- the glint's radius and its way from the middle, of the eye's size
-lib.eyeGlintAlpha = 0.45 -- quiet: at 0.9 and 0.1 a white dot stood out beside the pupil (Nikki)
 local lidMesh
 local LID_ROWS = 6
-local function eyeDepth(body)
+local function eyeDepth()
     local x, y, angle, w, h = eyeLine.x, eyeLine.y, eyeLine.angle, eyeLine.w, eyeLine.h
     if not x or h <= 0 then return end
     -- the lid's shadow: a strip over the eye, dark at its top
@@ -1026,19 +1024,6 @@ local function eyeDepth(body)
     lidMesh:setVertices(verts)
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.draw(lidMesh, x, y, angle, math.abs(w), h)
-    -- the catchlight, toward the strongest light (the lights come in the body's frame)
-    local count, dirs = shaders.gatherLightsForBody(body)
-    local lx, ly = -0.7, -0.7 -- the shaders' own light without the scene's: from the upper left
-    if count > 0 and dirs[1] then lx, ly = dirs[1][1], dirs[1][2] end
-    local len = math.sqrt(lx * lx + ly * ly)
-    if len < 1e-6 then return end
-    local ba = body:getAngle()
-    local c, s = math.cos(ba), math.sin(ba)
-    local wx, wy = (lx * c - ly * s) / len, (lx * s + ly * c) / len
-    local size = math.min(math.abs(w), h)
-    love.graphics.setColor(1, 1, 1, lib.eyeGlintAlpha)
-    love.graphics.circle('fill', x + wx * size * lib.eyeGlintAway, y + wy * size * lib.eyeGlintAway,
-        size * lib.eyeGlint)
     love.graphics.setColor(1, 1, 1, 1)
 end
 
@@ -1141,7 +1126,7 @@ local function drawDecal(d)
                 end
             end
         end
-        if clip and not state.eyesFlat and not state.drawingOutlines then eyeDepth(body) end
+        if clip and not state.eyesFlat and not state.drawingOutlines then eyeDepth() end
         endClip(clip)
         if clip then redrawEyeLine(extra) end
     end
