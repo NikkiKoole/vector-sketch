@@ -346,6 +346,30 @@ local function drawMouthBackdrop(d)
     end
 end
 
+-- Lips with a soft sheen (Nikki 2026-11-10, after the teeth): without a material of their own they're
+-- lit as satin, each rounded across like a little tube by its picture's alpha, so the light catches
+-- their edges; and the lower lip lays a soft shadow on the chin, a little away from the strongest light
+-- (the upper lip's falls on the teeth, drawTeeth). state.lipsFlat = true: flat as before.
+lib.lipMaterial = 'satin'
+lib.lipShadow = 0.22      -- its darkness
+lib.lipShadowOffset = 0.5 -- of the lip's thickness, away from the light
+local function lipLook(extra)
+    if state.lipsFlat or state.drawingOutlines then return extra.material end
+    return extra.material or lib.lipMaterial
+end
+local function drawLipShadow(mesh, body, thick)
+    shaders = shaders or require('src.render.shaders')
+    local count, dirs = shaders.gatherLightsForBody(body)
+    local lx, ly = -0.7, -0.7 -- the shaders' own light without the scene's: from the upper left
+    if count > 0 and dirs[1] then lx, ly = dirs[1][1], dirs[1][2] end
+    local len = math.sqrt(lx * lx + ly * ly)
+    if len < 1e-6 then return end
+    local k = thick * lib.lipShadowOffset / len
+    love.graphics.setColor(0, 0, 0, lib.lipShadow)
+    love.graphics.draw(mesh, -lx * k, -ly * k)
+    love.graphics.setColor(1, 1, 1, 1)
+end
+
     -- Mouth lower lip: lip curve only (interior fill moved to mouth-backdrop)
 local function drawLowerLip(d)
     local extra = d.extra
@@ -366,10 +390,13 @@ local function drawLowerLip(d)
         end
         if lipImg then
             local scale = extra.lipScale or 0.25
+            local mesh = ownStrip(extra, 'lip', lipImg, scale, curve, -1, lipShift(extra, 'lower', lipImg), nil, true)
+            if not (state.lipsFlat or state.drawingOutlines or extra.material) then
+                drawLipShadow(mesh, body, lipImg:getWidth() * scale)
+            end
             love.graphics.setColor(1, 1, 1, 1)
-            local shaded = shadeAs(extra, body, extra.material)
-            love.graphics.draw(ownStrip(extra, 'lip', lipImg, scale, curve, -1, lipShift(extra, 'lower', lipImg),
-                nil, true))
+            local shaded = shadeAs(extra, body, lipLook(extra))
+            love.graphics.draw(mesh)
             if shaded then love.graphics.setShader() end
         end
 
@@ -397,7 +424,7 @@ local function drawUpperLip(d)
         if lipImg then
             local scale = extra.lipScale or 0.25
             love.graphics.setColor(1, 1, 1, 1)
-            local shaded = shadeAs(extra, body, extra.material)
+            local shaded = shadeAs(extra, body, lipLook(extra))
             love.graphics.draw(ownStrip(extra, 'lip', lipImg, scale, curve, -1, lipShift(extra, 'upper', lipImg),
                 nil, true))
             if shaded then love.graphics.setShader() end
