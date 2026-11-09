@@ -57,7 +57,7 @@ lib.mouth = {
     -- lips 2 and 2, also what a roll gives (a breed's face options can allow others) (2026-11-09)
     shape = 2, upperLipShape = 2, lowerLipShape = 2,
     lipHex = 'cc5555ff', backdropHex = '00000099',
-    upperLipScale = 0.19, lowerLipScale = 0.31, wMul = 1, hMul = 0.8,
+    upperLipScale = 0.25, lowerLipScale = 0.4, wMul = 1, hMul = 0.8,
 }
 
 lib.facePositioners = {
@@ -132,10 +132,10 @@ lib.randomRanges = {
     pupilWMul     = { min = 0.2, max = 0.8 },
     pupilHMul     = { min = 0.2, max = 0.8 },
     mouthYOffset  = { min = 0.2, max = 0.4 },
-    -- lips a bit thicker, the mouth not too tall, and never wider than the head: a roll caps
+    -- lips thicker (twice, ~1.6x the old), the mouth not too tall, and never wider than the head: a roll caps
     -- mouthWMul so the widest resting mouth fits (mipo-randomize, lib.mouthMaxHeadShare) (2026-11-09)
-    mouthUpperLipScale = { min = 0.09, max = 0.22 },
-    mouthLowerLipScale = { min = 0.13, max = 0.31 },
+    mouthUpperLipScale = { min = 0.12, max = 0.29 },
+    mouthLowerLipScale = { min = 0.17, max = 0.4 },
     mouthWMul     = { min = 0.65, max = 1.1 },
     mouthHMul     = { min = 0.5, max = 0.8 },
     browWMul      = { min = 0.8, max = 1.3 },
