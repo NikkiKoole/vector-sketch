@@ -1682,7 +1682,11 @@ function s.draw()
         state.world.debugDrawBodies = b.savedDrawBodies
         b.savedDrawBodies = nil
     end
-    love.graphics.setCanvas(b.before)
+    -- back to what was drawn into before, with a stencil: the loose pants clip with one below.
+    -- getCanvas() gives the canvas alone, so a canvas set back plainly lost its stencil (the scene
+    -- smoke spec draws into one: "Drawing to the stencil buffer with a Canvas active requires
+    -- stencil=true", 2026-11-09); the screen has one anyway
+    if b.before then love.graphics.setCanvas({ b.before, stencil = true }) else love.graphics.setCanvas() end
     b.before = nil
     love.graphics.push()
     love.graphics.origin()
