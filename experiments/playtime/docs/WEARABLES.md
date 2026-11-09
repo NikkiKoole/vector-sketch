@@ -142,6 +142,8 @@ Steps:
 - [ ] WR9. Headscarves: Nikki plays with them ("looks promising"); keep the drape or drop it
 - [ ] WR10. Shirts: Nikki plays with them (the hem, the sleeves, the neck hole)
 - [x] WR11. Masks (Nikki 2026-11-08: "works good")
+- [x] Held items touch nothing (2026-11-09, Nikki: bumping into the Mipos made some hard or impossible to
+      put on); let go, they pass through Mipos until clear of them
 - [ ] WR6. Underpants: Nikki plays with them (the cut, the waist heights, the drop on the hips).
       Soft torsos done 2026-11-08
 - [x] WR7. The wear/jolt code in `src/wearables.lua` (2026-11-08, with the underpants)

@@ -9,6 +9,8 @@
 -- those fields). spot(item, instance) -> host body, wx, wy, angle, reach (px), or nil: where the
 -- item goes on that Mipo and how near counts. Worn items touch nothing (a neighbour's head bumping
 -- them tore them off) but stay grabbable (the pointer skips sensors, so they aren't sensors).
+-- A held item touches nothing either (bumping into the Mipos it was carried past made some impossible
+-- to put on, Nikki 2026-11-09); let go, it passes through Mipos until it's clear of them.
 local box2dPointerJoints = require('src.physics.box2d-pointerjoints')
 
 local lib = {}
@@ -27,6 +29,13 @@ local function setWorn(item, worn)
     end
 end
 
+-- held, or just let go inside a Mipo: touching nothing (the same mask as worn)
+local function setPassing(item, passing)
+    if (item.passing or false) == passing then return end
+    item.passing = passing or nil
+    setWorn(item, passing)
+end
+
 function lib.isWorn(item) return item.joint ~= nil end
 
 function lib.wear(item, host, wx, wy, angle)
@@ -36,6 +45,7 @@ function lib.wear(item, host, wx, wy, angle)
     body:setLinearVelocity(host:getLinearVelocityFromWorldPoint(wx, wy))
     body:setAngularVelocity(host:getAngularVelocity())
     setWorn(item, true)
+    item.passing = nil
     item.joint = love.physics.newWeldJoint(host, body, wx, wy, false)
     item.host, item.peak, item.vel, item.near = host, 0, nil, nil
     item.settle = lib.SETTLE
@@ -45,10 +55,10 @@ local function setGroup(item, group)
     for _, fixture in ipairs(item.body:getFixtures()) do fixture:setGroupIndex(group) end
 end
 
--- Does the item still touch a part of the Mipo whose collision group it's in? (boxes found by
--- their bounding boxes, then the shapes' real distance: a box alone kept a hat lying by the feet
--- passing through that Mipo for good)
-local function stillInside(item)
+-- Does the item still touch a fixture that match(fixture) picks (not a sensor, not its own)? Boxes found
+-- by their bounding boxes, then the shapes' real distance: a box alone kept a hat lying by the feet
+-- passing through that Mipo for good.
+local function touching(item, match)
     local own = item.body:getFixtures()
     local x0, y0, x1, y1 = math.huge, math.huge, -math.huge, -math.huge
     for _, fixture in ipairs(own) do
@@ -57,7 +67,7 @@ local function stillInside(item)
     end
     local hit = false
     item.body:getWorld():queryBoundingBox(x0, y0, x1, y1, function(fixture)
-        if fixture:getBody() ~= item.body and fixture:getGroupIndex() == item.passGroup and not fixture:isSensor() then
+        if fixture:getBody() ~= item.body and not fixture:isSensor() and match(fixture) then
             for _, mine in ipairs(own) do
                 if love.physics.getDistance(mine, fixture) < 1 then
                     hit = true
@@ -79,6 +89,7 @@ function lib.takeOff(item, pop)
     item.joint, item.host, item.wearer = nil, nil, nil
     if not item.body:isDestroyed() then
         setWorn(item, false)
+        item.passing = nil
         if group and group < 0 then
             setGroup(item, group)
             item.passGroup = group
@@ -139,7 +150,12 @@ function lib.update(item, dt, opts)
         end
         return
     end
-    if item.passGroup and not stillInside(item) then
+    if lib.held(item) then
+        setPassing(item, true)
+    elseif item.passing and not touching(item, function(f) return f:getGroupIndex() < 0 end) then
+        setPassing(item, false) -- clear of every Mipo (a Mipo's parts share a negative group)
+    end
+    if item.passGroup and not touching(item, function(f) return f:getGroupIndex() == item.passGroup end) then
         setGroup(item, 0)
         item.passGroup = nil
     end
