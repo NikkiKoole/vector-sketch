@@ -287,7 +287,7 @@ local function footCut(instance, side)
     local toMiddle = (fx - ax) * dx + (fy - ay) * dy
     if toMiddle <= 1 then return nil end
     local dist = toMiddle * FOOT_CUT
-    return ax + dx * dist, ay + dy * dist, dx, dy, dist
+    return ax + dx * dist, ay + dy * dist, dx, dy, dist, ax, ay
 end
 
 -- A leg ribbon (on an upper leg) reaches past the ankle into its foot, past the cut, so it goes into
@@ -301,7 +301,54 @@ local function legFootReach(body)
         if state.feetFlat then return 0 end
         local _, _, _, _, dist = footCut(instance, side)
         return dist and dist * 1.3 or 0 -- past the cut, so its end is under the foot
+    end, instance, side
+end
+
+-- Below its ankle a leg shows only inside its own foot: what reaches past the ankle lay over the other
+-- foot where the feet overlap, and its tip out of the foot (Nikki's screenshot, 2026-11-10). A stencil:
+-- everything on the knee's side of the ankle, and the foot's own shape (its pictures' alpha). Returns
+-- the stencil test to put back, or nil (no clip: feet flat, no foot, a canvas without a stencil).
+local legCutShader
+local legClipState = {}
+local drawTexfixture -- (below)
+local function clipLegToFoot(instance, side)
+    if state.feetFlat then return nil end
+    local _, _, dx, dy, _, ax, ay = footCut(instance, side)
+    local foot = instance.parts[side .. 'foot']
+    if not (ax and foot and foot.body) then return nil end
+    local fixture
+    for _, f in ipairs(foot.body:getFixtures()) do
+        local ud = f:getUserData()
+        if type(ud) == 'table' and ud.subtype == subtypes.TEXFIXTURE then fixture = f end
     end
+    if not fixture then return nil end
+    legCutShader = legCutShader or love.graphics.newShader([[
+        vec4 effect(vec4 color, Image tex, vec2 uv, vec2 fc) {
+            if (Texel(tex, uv).a < 0.5) discard;
+            return vec4(1.0);
+        }
+    ]])
+    local footD = { body = foot.body, extra = fixture:getUserData().extra, texfixture = fixture,
+        thing = utils.thingOf(foot.body) }
+    local shader = love.graphics.getShader()
+    local wasOutlines = state.drawingOutlines
+    local ok = pcall(love.graphics.stencil, function()
+        love.graphics.setShader()
+        love.graphics.push()
+        love.graphics.translate(ax, ay)
+        love.graphics.rotate(math.atan2(dy, dx) - math.pi / 2) -- +y along the leg, into the foot
+        love.graphics.rectangle('fill', -1e4, -2e4, 2e4, 2e4)  -- the knee's side of the ankle
+        love.graphics.pop()
+        state.drawingOutlines = true -- (no light shaders: only the foot's alpha)
+        love.graphics.setShader(legCutShader)
+        drawTexfixture(footD)
+    end, 'replace', 1)
+    state.drawingOutlines = wasOutlines
+    love.graphics.setShader(shader)
+    if not ok then return nil end
+    legClipState.compare, legClipState.value = love.graphics.getStencilTest()
+    love.graphics.setStencilTest('greater', 0)
+    return legClipState
 end
 
 -- [subtype] = function(out, ud, fixture, body, z): adds that sfixture's drawables to out, in
@@ -347,8 +394,9 @@ local makers = {
     [subtypes.CONNECTED_TEXTURE] = function(out, ud, _, body, z)
         -- its curve follows the joints: laid in drawConnectedTexture (ribbonPoints)
         if ud.extra.nodes then
+            local reach, instance, side = legFootReach(body)
             out[#out + 1] = { z = z + legSideUp(body), type = 'connected-texture', extra = ud.extra, body = body,
-                footReach = legFootReach(body) }
+                footReach = reach, legInstance = instance, legSide = side }
         end
     end,
 }
@@ -393,7 +441,7 @@ end
 -- onscreen 'd' button quite a distnace out of the actual physics body center.
 --
 -- local function drawImageLayerSquish(url, hex, extra, texfixture)
-local function drawTexfixture(d)
+function drawTexfixture(d)
     local thing = d.thing
     local texfixture = d.texfixture
     local extra = d.extra
@@ -684,6 +732,7 @@ local function drawConnectedTexture(d)
     local extra = d.extra
     local points = ribbonPoints(extra, d.footReach and d.footReach() or nil)
     if not points then return end
+    local legClip = d.legInstance and clipLegToFoot(d.legInstance, d.legSide)
     local main = extra.main
     local wmul, dir = main.wmul or 1, main.dir or 1
     local bezier, derivative -- one curve for the layers, made when the first needs laying
@@ -731,6 +780,10 @@ local function drawConnectedTexture(d)
     end
     if shaded then
         love.graphics.setShader()
+    end
+    if legClip then
+        if legClip.compare then love.graphics.setStencilTest(legClip.compare, legClip.value)
+        else love.graphics.setStencilTest() end
     end
 end
 
