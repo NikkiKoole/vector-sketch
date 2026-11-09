@@ -4,7 +4,9 @@
 -- (many short locks standing out round it, instead of the body hair), coat (strands over the body,
 -- like chest hair, kept off the face), physics. Throw the Mipo around and watch them.
 -- A box beside it wears the same head hair: pick it up and swing it, or let it rest (its hair sleeps).
--- keys: r: lay the locks out again   h: hide/show the panel   m: a new random Mipo
+-- A lamp (its section): a warm point light and a soft sky, to see the hair lit and its shadow; hold l
+-- and it follows the mouse.
+-- keys: r: lay the locks out again   h: hide/show the panel   m: a new random Mipo   l: move the lamp
 
 local s = {}
 local opts = {}
@@ -23,6 +25,57 @@ local function hairBox()
     local thing = objectManager.addThing('rectangle', { x = x - 500, y = y, width = 220, height = 150,
         label = 'hair-box' })
     return thing and thing.body
+end
+
+-- The lamp: a small body that touches nothing (label hair-lamp, found again on reload) with a point
+-- light and a sky light on it. Off, it's taken away altogether: lights set to 0 would leave the scene
+-- dark (with every light off the shaders get one dark light), without any it has its default light.
+local function lampBody()
+    local found = getObjectsByLabel('hair-lamp')[1]
+    return found and found.body and not found.body:isDestroyed() and found.body or nil
+end
+
+local function lampLights(body)
+    local point, sky
+    for _, f in ipairs(body:getFixtures()) do
+        local ud = f:getUserData()
+        if ud and ud.subtype == 'light' then
+            if ud.extra.lightType == 'sky' then sky = ud.extra else point = ud.extra end
+        end
+    end
+    return point, sky
+end
+
+local function updateLamp()
+    local body = lampBody()
+    if not opts.lampOn then
+        if body then objectManager.destroyBody(body) end
+        return
+    end
+    if not body then
+        local x, y = 0, 0
+        for _, instance in pairs(state.mipoInstances) do
+            local head = instance.parts and (instance.parts.head or instance.parts.torso1)
+            if head and head.body and not head.body:isDestroyed() then x, y = head.body:getPosition() end
+        end
+        local thing = objectManager.addThing('circle', { x = x - 350, y = y - 300, radius = 12,
+            bodyType = 'kinematic', label = 'hair-lamp' })
+        if not thing then return end
+        body = thing.body
+        for _, f in ipairs(body:getFixtures()) do f:setSensor(true) end -- it touches nothing
+        fixtures.createSFixture(body, 0, 0, 'light', { radius = 8 })
+        local skyFixture = fixtures.createSFixture(body, 0, 0, 'light', { radius = 8 })
+        skyFixture:getUserData().extra.lightType = 'sky'
+    end
+    local point, sky = lampLights(body)
+    if point then
+        point.lightType, point.colorHex = 'point', 'ffd9a6ff'
+        point.intensity, point.range = opts.lampStrength or 2.5, opts.lampRange or 900
+    end
+    if sky then
+        sky.colorHex, sky.groundHex = 'c9d8ffff', '6b5a40ff'
+        sky.intensity = opts.lampSky or 0.35
+    end
 end
 
 local function copyOpts()
@@ -92,6 +145,7 @@ local function attachAll()
             hairLocks.detachBody(instance)
         end
     end
+    updateLamp()
     local box = hairBox()
     if box then
         local o = copyOpts()
@@ -107,6 +161,7 @@ function s.onStart()
     opts.bodyHair = 0.5
     opts.fur, opts.furLength = 0.5, 20
     opts.coat, opts.coatLength, opts.coatCurly, opts.coatWidth = 0.5, 17, 0, 0.05
+    opts.lampOn, opts.lampStrength, opts.lampRange, opts.lampSky = false, 2.5, 900, 0.35
     attachAll()
 end
 
@@ -130,6 +185,8 @@ end
 
 function s.update(dt)
     hairLocks.update(dt)
+    local lamp = opts.lampOn and lampBody()
+    if lamp and love.keyboard.isDown('l') then lamp:setPosition(mouseWorldPos()) end
 end
 
 function s.drawBelow()
@@ -138,6 +195,15 @@ end
 
 function s.draw()
     hairLocks.draw('front') -- bangs, front locks and coats, over the faces
+    local lamp = opts.lampOn and lampBody()
+    if lamp then -- the bulb
+        local x, y = lamp:getPosition()
+        love.graphics.setColor(1, 0.85, 0.6, 1)
+        love.graphics.circle('fill', x, y, 14)
+        love.graphics.setColor(0.2, 0.15, 0.1, 1)
+        love.graphics.circle('line', x, y, 14)
+        love.graphics.setColor(1, 1, 1, 1)
+    end
 end
 
 -- Haircuts: buttons that set the head hair's sliders at once (then tune from there). 'long' is the
@@ -200,6 +266,11 @@ local SECTIONS = {
         { key = 'coatLength', min = 4, max = 40 },
         { key = 'coatCurly', min = 0, max = 1 },
         { key = 'coatWidth', min = 0.005, max = 0.1 },
+    } },
+    { name = 'lamp (hold l)', toggle = 'lampOn', sliders = {
+        { key = 'lampStrength', min = 0, max = 6 },
+        { key = 'lampRange', min = 200, max = 2500 },
+        { key = 'lampSky', min = 0, max = 1.5 },
     } },
     { name = 'physics', sliders = {
         { key = 'stiffness', min = 0, max = 1 },
