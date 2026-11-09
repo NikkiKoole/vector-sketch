@@ -326,6 +326,38 @@ local function fixDrift(positionTorso, instance)
     end
 end
 
+-- The lowest point of the Mipo's solid fixtures (world y grows downward), nil without any.
+local function lowestPoint(instance)
+    local low
+    for _, part in pairs(instance.parts) do
+        if part.body and not part.body:isDestroyed() then
+            for _, fixture in ipairs(part.body:getFixtures()) do
+                if not fixture:isSensor() then
+                    local _, _, _, bottom = fixture:getBoundingBox()
+                    low = math.max(low or bottom, bottom)
+                end
+            end
+        end
+    end
+    return low
+end
+
+-- A rebuild keeps torso1 where it was, so a Mipo that came out taller (longer legs, a bigger body,
+-- bigger feet) started with its feet inside the floor, and Box2D pushed them out in one step: the dice
+-- in the Mipo maker shot Mipos thousands of px up (measured 2026-11-09: feet 307 px into the floor).
+-- Its lowest point is put back where the old one was: not into the floor, and a smaller Mipo set down
+-- rather than dropped (the old feet were there, so the space is free).
+local function keepLowestWhereItWas(instance, oldLowest)
+    local newLowest = lowestPoint(instance)
+    if not (oldLowest and newLowest) or math.abs(newLowest - oldLowest) <= 0.5 then return end
+    local dy = oldLowest - newLowest
+    for _, part in pairs(instance.parts) do
+        local bx, by = part.body:getPosition()
+        part.body:setPosition(bx, by + dy)
+    end
+end
+lib.lowestPoint = lowestPoint
+
 local function updateSinglePart(partName, data, instance)
     local partData = instance.dna.parts[partName]
     if not partData then return end
@@ -392,6 +424,7 @@ function lib.updatePart(partName, data, instance)
 
     -- filling the cache
     local poseCache = getPoseCache(instance)
+    local oldLowest = lowestPoint(instance)
     updateSinglePart(partName, data, instance)
     -- a new torso shape can have another number of lobes: build the Mipo again
     local lobes, built = torsoLobes.names(instance), 0
@@ -402,6 +435,7 @@ function lib.updatePart(partName, data, instance)
     balance.balanceMasses(instance)
     applyPoseCache(instance, poseCache)
     if positionTorso then fixDrift(positionTorso, instance) end
+    keepLowestWhereItWas(instance, oldLowest)
 end
 
 -- The joint limits of a built part set again: after its facing changed (switchFacing).
@@ -488,6 +522,7 @@ function lib.rebuildFromCreation(instance, newCreation)
     local poseCache = getPoseCache(instance)
 
     local positionTorso = { instance.parts['torso1'].body:getPosition() }
+    local oldLowest = lowestPoint(instance)
 
     -- Track which part was selected so we can re-select after rebuild
     local selectedPartName = nil
@@ -512,6 +547,7 @@ function lib.rebuildFromCreation(instance, newCreation)
 
     applyPoseCache(instance, poseCache)
     if positionTorso then fixDrift(positionTorso, instance) end
+    keepLowestWhereItWas(instance, oldLowest)
 
     -- Re-select the same part (or torso1 if the old part no longer exists)
     if selectedPartName then
