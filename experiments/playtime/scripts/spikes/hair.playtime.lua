@@ -1,8 +1,8 @@
 -- hair: a spike for long hair that swings (src/hair-locks.lua; docs/HAIR-LOCKS.md). One Mipo with
 -- hair; the panel (play mode, tab) in sections, each switched on or off on its left and opened to
 -- show its sliders: head hair, bangs, haircut, curls, body hair (round the torso's edge), fur
--- (many short locks standing out round it, instead of the body hair), coat (strands over the face
--- and body, like chest hair), physics. Throw the Mipo around and watch them.
+-- (many short locks standing out round it, instead of the body hair), coat (strands over the body,
+-- like chest hair, kept off the face), physics. Throw the Mipo around and watch them.
 -- A box beside it wears the same head hair: pick it up and swing it, or let it rest (its hair sleeps).
 -- keys: r: lay the locks out again   h: hide/show the panel   m: a new random Mipo
 
@@ -31,7 +31,7 @@ local function copyOpts()
     return o
 end
 
--- The coat's strands for a body (its share: the face gets fewer than the body).
+-- The coat's strands for a body (`share` of them at coat 1).
 local function coat(o, share)
     o.surface = opts.coatOn and math.floor((opts.coat or 0.5) * share + 0.5) or 0
     o.surfaceLength = opts.coatLength or 22
@@ -71,7 +71,7 @@ local function headOpts()
     local o = copyOpts()
     if not opts.headOn then o.count = 0 end
     if not opts.bangsOn then o.bangs = 0 end
-    coat(o, 120)
+    coat(o, 0) -- no coat on the head (on a potato head the body's coat keeps off the face)
     return o
 end
 

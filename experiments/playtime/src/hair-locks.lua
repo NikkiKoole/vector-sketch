@@ -44,7 +44,7 @@ lib.defaults = {
     ringlets = 0,      -- pijpenkrullen: the corkscrew's radius, px (0 = none)
     ringletPitch = 30, -- px of lock per turn; below ~3x the radius the turns show as loops
     springy = 0,       -- 0 keeps its length .. 1 stretches and bounces back like a spring (ringlets do)
-    surface = 0,       -- a coat: this many short locks rooted over the face and body (chest hair), not on the edge
+    surface = 0,       -- a coat: this many short locks rooted over the body (chest hair), off the face
     surfaceLength = 22, -- px, root to tip
     surfaceWidth = 0.35, -- times `width`: thin, or the picture squashes into a square
     surfaceCurly = 0,  -- 0 straight .. 1 the coat in small coils (5 px across, a turn every 9 px)
@@ -144,21 +144,27 @@ local function inside(vertices, x, y)
     return isIn
 end
 
--- The face parts a coat keeps clear (eyes, mouth), as { x, y, r } in the body's frame.
-local function faceSpots(body)
-    local spots = {}
-    for _, label in ipairs({ 'lpupil', 'rpupil', 'leye', 'reye', 'upperlip', 'lowerlip' }) do
+-- The face a coat keeps clear, as an oval { x, y, rx, ry } in the body's frame: round the eyes,
+-- brows, nose and mouth (the face decals) with room to spare; nil without a face. On a potato head
+-- the body is the face, and a coat kept only off the eyes and mouth grew a beard over the rest.
+local FACE_LABELS = { 'lpupil', 'rpupil', 'leye', 'reye', 'lbrow', 'rbrow', 'nose', 'upperlip', 'lowerlip' }
+local function faceOval(body)
+    local x0, y0, x1, y1 = math.huge, math.huge, -math.huge, -math.huge
+    for _, label in ipairs(FACE_LABELS) do
         local d = decalExtra(body, label)
         if d and d.ox and d.oy then
-            local r = (d.eyeH or d.h or d.w or 20) * 0.75
-            spots[#spots + 1] = { x = d.ox, y = d.oy, r = math.max(r, (d.w or 0) * 0.6) }
+            local hw, hh = (d.w or d.eyeW or 20) * 0.5, (d.h or d.eyeH or 20) * 0.5
+            x0, x1 = math.min(x0, d.ox - hw), math.max(x1, d.ox + hw)
+            y0, y1 = math.min(y0, d.oy - hh), math.max(y1, d.oy + hh)
         end
     end
-    return spots
+    if x0 > x1 then return nil end
+    -- an oval through the box's corners is sqrt(2) its half sides; a little more for room
+    return { x = (x0 + x1) / 2, y = (y0 + y1) / 2, rx = (x1 - x0) / 2 * 1.6, ry = (y1 - y0) / 2 * 1.6 }
 end
 
 -- A coat's locks (o.surface of them): roots on a jittered grid over the outline (pulled in a
--- little from its edge), none on the eyes or mouth, hanging down, drawn in front.
+-- little from its edge), none on the face, hanging down, drawn in front.
 local function surfaceLocks(o, vertices, body, rng, locks)
     local minX, minY, maxX, maxY = math.huge, math.huge, -math.huge, -math.huge
     for i = 1, #vertices, 2 do
@@ -167,15 +173,15 @@ local function surfaceLocks(o, vertices, body, rng, locks)
     end
     local step = math.sqrt((maxX - minX) * (maxY - minY) / o.surface)
     if step < 1 then return end
-    local spots, w = faceSpots(body), o.wild
+    local face, w = faceOval(body), o.wild
     local n = 3
     for gy = minY + step / 2, maxY, step do
         for gx = minX + step / 2, maxX, step do
             local x = gx + (rng:random() - 0.5) * step * 0.8
             local y = gy + (rng:random() - 0.5) * step * 0.8
             local clear = inside(vertices, x / 0.9, y / 0.9)
-            for _, sp in ipairs(spots) do
-                if clear and (x - sp.x) ^ 2 + (y - sp.y) ^ 2 < sp.r * sp.r then clear = false end
+            if clear and face and ((x - face.x) / face.rx) ^ 2 + ((y - face.y) / face.ry) ^ 2 < 1 then
+                clear = false
             end
             if clear then
                 locks[#locks + 1] = {
