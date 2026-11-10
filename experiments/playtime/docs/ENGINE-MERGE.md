@@ -129,4 +129,4 @@ The landing order, what bites what, and Nikki's keep / spike choices of 2026-11-
   (MIPO-BREEDS B2-B4; that plan owns it, listed here so the spike's copy goes). Done 2026-11-09:
   the spike's table and `randomizeAs` are gone, it reads `mipoBreeds` (in the script env).
 
-Mipo breeds stays the focus; this runs beside it.
+The focus since 2026-11-11 (Nikki, after facing: "lets look at engine merge next").
