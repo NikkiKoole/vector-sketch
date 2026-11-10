@@ -353,8 +353,18 @@ end
 lib.lipMaterial = 'satin'
 lib.lipShadow = 0.22      -- its darkness
 lib.lipShadowOffset = 0.5 -- of the lip's thickness, away from the light
+-- the mouth's width (its curve's 8 points): small on screen, the lips and teeth are drawn flat
+-- (src/render/small-flat.lua)
+local smallFlat = require('src.render.small-flat')
+local function mouthTiny(extra)
+    local points = extra.curvePoints
+    if not points or #points < 2 then return false end
+    local minX, maxX = points[1], points[1]
+    for i = 3, #points, 2 do minX, maxX = math.min(minX, points[i]), math.max(maxX, points[i]) end
+    return smallFlat.tooSmall(maxX - minX)
+end
 local function lipLook(extra)
-    if state.lipsFlat or state.drawingOutlines then return extra.material end
+    if state.lipsFlat or state.drawingOutlines or mouthTiny(extra) then return extra.material end
     return extra.material or lib.lipMaterial
 end
 local function drawLipShadow(mesh, body, thick)
@@ -391,7 +401,7 @@ local function drawLowerLip(d)
         if lipImg then
             local scale = extra.lipScale or 0.25
             local mesh = ownStrip(extra, 'lip', lipImg, scale, curve, -1, lipShift(extra, 'lower', lipImg), nil, true)
-            if not (state.lipsFlat or state.drawingOutlines or extra.material) then
+            if not (state.lipsFlat or state.drawingOutlines or extra.material or mouthTiny(extra)) then
                 drawLipShadow(mesh, body, lipImg:getWidth() * scale)
             end
             love.graphics.setColor(1, 1, 1, 1)
@@ -579,7 +589,7 @@ local function drawTeeth(d)
                     end
 
                     love.graphics.setColor(1, 1, 1, 1)
-                    local flat = state.teethFlat or state.drawingOutlines
+                    local flat = state.teethFlat or state.drawingOutlines or smallFlat.tooSmall(w)
                     local shaded = shadeAs(extra, body, extra.material or (not flat and lib.teethMaterial))
                     love.graphics.draw(img, ox - w / 2, oy - h / 2, 0, scaleX, scaleY)
                     if shaded then love.graphics.setShader() end

@@ -473,15 +473,18 @@ fade, a sun: the panel's `fades` switch, LS4).
   14.7; everything lit but the eyes 11.3 / 12.9 (two runs); + feet flat 11.8, + mouth flat 12.2; nose,
   feet or mouth flat alone: no change within the noise (~±1 ms). (Read then as "the eyes ~5 of the
   ~6 ms": the noise. Interleaved runs in LS30 split it properly.)
-- [ ] **LS30. Cheaper lit face and feet.** Measured properly 2026-11-10 (same 20 Mipos, each setting
+- [x] **LS30. Cheaper lit face and feet.** Measured properly 2026-11-10 (same 20 Mipos, each setting
   alternated 2-3 times, 6 s each, draw p50 steady to ~0.1 ms): all lit 15.6, all flat 10.9 (4.6 ms);
   one flat at a time saves: eyes 1.4, feet 1.0, mouth (teeth + lips) 0.8, nose 0.3. The parts' sum is
   less than 4.6: each lit piece also breaks LÖVE's batching of the plain draws around it. ProFi on the
   phone: drawDecalLit (eye whites, noses) 100 calls a frame. Tried: a lit decal's quad uploaded only
   when it changes (kept, ~0.15 ms: upload 16.5 / cached 16.4, three pairs); so the cost is the shader
   switch and draw per piece, the same as any lit part (~0.035 ms an eye).
-  Next lever: a face or foot drawn small on screen is drawn flat (zoomed out to a room of 20, an eye is
-  a few pixels and its light doesn't show); the threshold judged by eye, then measured the same way.
+  Done: small on screen, drawn flat (`src/render/small-flat.lua`, `state.litMinPx`, default 20 screen
+  points; 0 lights everything): the eyes, nose, lips and teeth by their own size, the legs' clip into
+  the feet by the foot's (small, the leg ends at the ankle over its foot). Phone, same 20 Mipos zoomed
+  out to the room (eye whites 3-17 points), two alternated runs each: all lit 15.8, cut at 20 px 11.9,
+  all flat 11.0. Nikki: no pop seen while zooming.
 
 Not light, but where this started (`LITTLE-USED.md`): three rounds left there, skinned mesh, UV mesh,
 the recorder (the feature-rounds sweep, `claudetools/feature-rounds_spec.lua`, takes a recipe each).

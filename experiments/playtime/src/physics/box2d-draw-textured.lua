@@ -18,6 +18,7 @@ local color = require('src.color')
 local NT = require('src.node-types')
 local spineMesh = require('src.spine-mesh')
 local cam = require('src.camera').getInstance()
+local smallFlat = require('src.render.small-flat')
 local spineSkin = require('src.spine-skin')
 local earBend = require('src.ear-bend')
 -- face parts drawn on their body around extra.ox/oy: on a spine torso they ride the bend
@@ -301,7 +302,9 @@ local function legFootReach(body)
     return function()
         if state.feetFlat then return 0 end
         local _, _, _, _, dist = footCut(instance, side)
-        return dist and dist * 1.3 or 0 -- past the cut, so its end is under the foot
+        -- small on screen: the leg ends at the ankle over its foot, unclipped (src/render/small-flat.lua)
+        if not dist or smallFlat.tooSmall(dist / FOOT_CUT * 2) then return 0 end
+        return dist * 1.3 -- past the cut, so its end is under the foot
     end, instance, side
 end
 
@@ -314,9 +317,9 @@ local legClipState = {}
 local drawTexfixture -- (below)
 local function clipLegToFoot(instance, side)
     if state.feetFlat then return nil end
-    local _, _, dx, dy, _, ax, ay = footCut(instance, side)
+    local _, _, dx, dy, dist, ax, ay = footCut(instance, side)
     local foot = instance.parts[side .. 'foot']
-    if not (ax and foot and foot.body) then return nil end
+    if not (ax and foot and foot.body) or smallFlat.tooSmall(dist / FOOT_CUT * 2) then return nil end
     local fixture
     for _, f in ipairs(foot.body:getFixtures()) do
         local ud = f:getUserData()
@@ -1242,6 +1245,10 @@ local function drawDecal(d)
             dh = dh * eyesOpen
         end
         local clip = extra.eyeMaskURL and extra.eyeW and clipToEye(extra, body)
+        -- small on screen: drawn flat (src/render/small-flat.lua); a pupil goes by its eye's size
+        local tiny = smallFlat.tooSmall(extra.eyeW or math.max(extra.w or 50, extra.h or 50))
+        local eyeLitNow = extra.isEye and not extra.material and not state.eyesFlat and not state.drawingOutlines
+            and not tiny
 
         if extra.OMP and extra.ompImage then
             -- Pre-composited OMP image (has proper alpha)
@@ -1250,10 +1257,10 @@ local function drawDecal(d)
             local sx = dw / imgw * mirrorX
             local sy = dh / imgh
             love.graphics.setColor(1, 1, 1, 1)
-            if d.nose and not extra.material and not state.noseFlat and not state.drawingOutlines then
+            if d.nose and not extra.material and not state.noseFlat and not state.drawingOutlines and not tiny then
                 drawNoseShadow(body, img, ox, oy, dw, dh, mirrorX, extra.rot)
                 drawDecalLit(noseLit(extra), body, img, ox, oy, dw, dh, mirrorX)
-            elseif extra.isEye and not extra.material and not state.eyesFlat and not state.drawingOutlines then
+            elseif eyeLitNow then
                 drawDecalLit(eyeLit(extra), body, img, ox, oy, dw, dh, mirrorX)
                 love.graphics.setColor(1, 1, 1, lib.eyeWhite)
                 love.graphics.draw(img, wx, wy, angle, sx, sy, imgw / 2, imgh / 2)
@@ -1271,10 +1278,10 @@ local function drawDecal(d)
                 local sy = dh / imgh
                 local r, g, b, a = color.hexToColor(extra.bgHex or 'ffffffff')
                 love.graphics.setColor(r, g, b, a)
-                if d.nose and not extra.material and not state.noseFlat and not state.drawingOutlines then
+                if d.nose and not extra.material and not state.noseFlat and not state.drawingOutlines and not tiny then
                     drawNoseShadow(body, img, ox, oy, dw, dh, mirrorX, extra.rot)
                     drawDecalLit(noseLit(extra), body, img, ox, oy, dw, dh, mirrorX)
-                elseif extra.isEye and not extra.material and not state.eyesFlat and not state.drawingOutlines then
+                elseif eyeLitNow then
                     drawDecalLit(eyeLit(extra), body, img, ox, oy, dw, dh, mirrorX)
                     love.graphics.setColor(r, g, b, a * lib.eyeWhite)
                     love.graphics.draw(img, wx, wy, angle, sx, sy, imgw / 2, imgh / 2)
@@ -1286,7 +1293,7 @@ local function drawDecal(d)
                 end
             end
         end
-        if clip and not state.eyesFlat and not state.drawingOutlines then eyeDepth() end
+        if clip and not state.eyesFlat and not state.drawingOutlines and not tiny then eyeDepth() end
         endClip(clip)
         if clip then redrawEyeLine(extra) end
     end
