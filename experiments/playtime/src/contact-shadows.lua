@@ -48,9 +48,11 @@ end
 -- bounding boxes carry Box2D's skin: a box resting on a shelf reaches a little into it.)
 local function extent(body)
     local x0, x1, y0, y1 = math.huge, -math.huge, math.huge, -math.huge
-    for _, fixture in ipairs(solidFixtures(body)) do
-        local ax, ay, bx, by = fixture:getBoundingBox(1)
-        x0, x1, y0, y1 = math.min(x0, ax), math.max(x1, bx), math.min(y0, ay), math.max(y1, by)
+    for _, fixture in ipairs(body:getFixtures()) do
+        if not fixture:isSensor() then
+            local ax, ay, bx, by = fixture:getBoundingBox(1)
+            x0, x1, y0, y1 = math.min(x0, ax), math.max(x1, bx), math.min(y0, ay), math.max(y1, by)
+        end
     end
     if x0 == math.huge then return nil end
     return x0, x1, y0, y1
@@ -64,18 +66,25 @@ local function casts(body)
 end
 
 -- the nearest up-facing surface straight under (x, y) within reach: its fixture, the y, and the
--- surface's normal there (a sloped floor: the shadow lies along it)
-local function surfaceUnder(world, body, x, y, reach)
-    local mipoId = (utils.thingOf(body) or {}).mipoId
-    local best, bestFixture, bestY, bestNx, bestNy = math.huge, nil, nil, 0, -1
-    world:rayCast(x, y, x, y + reach, function(fixture, _, hy, nx, ny, fraction)
-        local other = fixture:getBody()
-        if fixture:isSensor() or other == body or ny > -0.3 then return -1 end
+-- surface's normal there (a sloped floor: the shadow lies along it). One callback for every ray, its
+-- state in upvalues: a closure per ray was most of compute's ~190 KB of garbage a frame (M12).
+local rayBody, rayMipoId, best, bestFixture, bestY, bestNx, bestNy
+local function onRayHit(fixture, _, hy, nx, ny, fraction)
+    if fixture:isSensor() or ny > -0.3 then return -1 end
+    local other = fixture:getBody()
+    if other == rayBody then return -1 end
+    if rayMipoId then
         local otherThing = utils.thingOf(other)
-        if mipoId and otherThing and otherThing.mipoId == mipoId then return -1 end
-        if fraction < best then best, bestFixture, bestY, bestNx, bestNy = fraction, fixture, hy, nx, ny end
-        return fraction
-    end)
+        if otherThing and otherThing.mipoId == rayMipoId then return -1 end
+    end
+    if fraction < best then best, bestFixture, bestY, bestNx, bestNy = fraction, fixture, hy, nx, ny end
+    return fraction
+end
+local function surfaceUnder(world, body, mipoId, x, y, reach)
+    rayBody, rayMipoId = body, mipoId
+    best, bestFixture, bestY, bestNx, bestNy = math.huge, nil, nil, 0, -1
+    world:rayCast(x, y, x, y + reach, onRayHit)
+    rayBody = nil
     return bestFixture, bestY, bestNx, bestNy
 end
 
@@ -93,11 +102,13 @@ local function pictureDepth(body)
 end
 
 -- every shadow this frame: { receiver, x, y, hw, hh, alpha, z }
+local RAY_OFFSETS = { 0, -0.35, 0.35 }
 function lib.compute(world)
     local settings = state.contactShadows
     local list = {}
     if not settings or not world then return list end
     local strength, reachWidths = settings.strength or 0.45, settings.reach or 1.5
+    local depths = {} -- a receiver's picture depth, once a frame (false: none)
     for _, body in ipairs(world:getBodies()) do
         if casts(body) then
             local x0, x1, top, bottom = extent(body)
@@ -109,9 +120,10 @@ function lib.compute(world)
                 -- from a little up inside the caster (skipped by the rays): a ray starting inside the
                 -- surface wouldn't see it
                 local from = bottom - math.min((bottom - top) * 0.5, 20)
-                for _, k in ipairs({ 0, -0.35, 0.35 }) do
+                local mipoId = (utils.thingOf(body) or {}).mipoId
+                for _, k in ipairs(RAY_OFFSETS) do
                     hitX = cx + k * width
-                    fixture, surfaceY, nx, ny = surfaceUnder(world, body, hitX, from, reach + bottom - from)
+                    fixture, surfaceY, nx, ny = surfaceUnder(world, body, mipoId, hitX, from, reach + bottom - from)
                     if fixture then break end
                 end
                 if fixture then
@@ -126,8 +138,11 @@ function lib.compute(world)
                         -- is where the surface is under the caster's middle, not under the ray that hit
                         local angle = math.atan2(nx, -ny)
                         local y = surfaceY + (cx - hitX) * math.tan(angle)
-                        list[#list + 1] = { receiver = fixture:getBody(), x = cx, y = y, hw = hw,
-                            hh = hh, alpha = alpha, angle = angle, z = pictureDepth(fixture:getBody()) }
+                        local receiver = fixture:getBody()
+                        local z = depths[receiver]
+                        if z == nil then z = pictureDepth(receiver) or false; depths[receiver] = z end
+                        list[#list + 1] = { receiver = receiver, x = cx, y = y, hw = hw,
+                            hh = hh, alpha = alpha, angle = angle, z = z or nil }
                     end
                 end
             end

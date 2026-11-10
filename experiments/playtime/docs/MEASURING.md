@@ -188,8 +188,19 @@ parts (music-theory, skinning's `meshusertVertices`, the polygon modules) run wi
   Lit, per kind (drawTimes, zoom 0.13): limb ribbons 2.4 -> 4.0, picture parts 1.2 -> 2.5, foot-back
   0.3 -> 0.7; that's ~3.3 of the ~5.8: the rest is outside the textured world (contact shadows?, not
   split yet). LS23's "lighting 20 Mipos ~1.8 ms" was light-grass-check in the editor, not this level.
-  Next, if a zoomed-out room needs it: what the other ~2.5 ms of 'lit' is; parts small on screen drawn
-  unlit (LS30's rule for the whole Mipo, a look question for Nikki).
+  The other ~2.5 ms of 'lit': the contact shadows (src/contact-shadows.lua; frame-profile sent over the
+  bridge with the draw steps main.lua calls directly added: `contact before` 2.6 ms, 200 KB garbage a
+  frame). (Setting state.contactShadows = nil to compare doesn't work: sceneLight.apply puts it back
+  every frame.) compute ~1.8 ms: 160 casters (20 Mipos x 5 parts + 60 props), 166 rays, 501 ray
+  callbacks into Lua (141 on sensors); spread over extents (~0.25), rays (~0.5), the casts check and
+  the per-caster maths, no single hotspot (ProFi). Drawing: 105 ovals on 30 receivers (floor, boxes,
+  Mipo heads and feet in the pile), a stencil each, ~0.8 ms.
+  Done: one ray callback instead of a closure per ray, the extent without a fixture list, a receiver's
+  depth once a frame: garbage 195 -> 58 KB a frame, compute 1.84 -> ~1.73 ms (old/new swapped live on
+  the phone, twice). Same shadows (spec/contact-shadows_spec.lua).
+  Levers left, each a choice: compute every other frame (the ovals a frame behind, ~0.9 ms), skip
+  casters well off screen (rooms, not the crowd), no hand casters (40 of 160), the compute in C.
+  Also: parts small on screen drawn unlit (LS30's rule for the whole Mipo, a look question for Nikki).
 - [x] **M6. The potato-torso click.** (2026-11-05: the click and the Box2D crash it led to are fixed;
   the iMac run done 2026-11-09, see the end.) The editor snapshot forces every slider to its midpoint; on a
   potato head's torso1 panel that makes a shape Box2D refuses (`fixtures.lua:132: Box2D assertion
