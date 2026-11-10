@@ -95,6 +95,11 @@ one Bezier, which smoothed curls away. Cost per Mipo on the Mac: simulate 0.1-0.
   4.1 -> 0.6 ms, drawing 1.8-2.2 -> 0.6 ms: the hair ~6 -> ~1.2 ms a frame for 20 Mipos (~0.06 a Mipo).
   (H4's "drawing as much again" was an estimate; timed, the strips were ~2 ms.)
 
+- [ ] **H10. Hair into the engine** (Nikki 2026-11-10, LANDING-2026-11.md): a haircut in the DNA (its options next to the
+  drawn haircut, a breed's range in src/mipo-breeds.lua, saved and loaded: a field with a default, or a
+  DNA step, src/save-migrations.lua), so every Mipo grows its own hair without the hair scene. Running and
+  drawing are in already (src/systems.lua, src/mipo-layers.lua: L1, L2). After MIPO-FACING MF6.
+
 ## Hair bounce (also parked)
 
 The other try the same day: the haircut strip as it is, its outer edge on a spring

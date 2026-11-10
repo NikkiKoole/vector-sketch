@@ -64,7 +64,7 @@ already folded; swinging straight legs forward in the air pushed it off the back
   feet / arms / ears, or swing the feet round instead of remaking them. Feet, limits, draw order and ears change in those two steps. Open: does
   the pop show, and a turn that's not a rebuild (feet swung, z swapped in place).
 - [ ] **MF6. Promote turning + autowalk out of the spike** (Nikki 2026-11-06: "we might want to
-  promote this soon"). The turning (body / head / arms / leaning foot) and the autowalk live in
+  promote this soon"; into the engine (Nikki 2026-11-10, LANDING-2026-11.md), before hair and hats land, so they turn with it). The turning (body / head / arms / leaning foot) and the autowalk live in
   `scripts/spikes/facing.playtime.lua`; for every Mipo they move into a module (`src/mipo-walk.lua`
   next to `src/mipo-facing.lua`), run from `mipo-actions.update` for every registered Mipo. To
   settle on the way: the defaults that stay (head speed, arm moment, turn pull, grips), which

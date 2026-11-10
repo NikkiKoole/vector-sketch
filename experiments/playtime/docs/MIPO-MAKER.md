@@ -106,6 +106,8 @@ facing, pupils' and patches' positions.
 
 ## Steps
 
+Into the engine (Nikki 2026-11-10, LANDING-2026-11.md): MM1-MM4 after MIPO-BREEDS B5/B6 (the card shows them, MM10).
+
 - [ ] **MM1. Open and close.** A per-scene setting (`maker = true`, saved with the scene, a checkbox in
   world settings; off by default). In play mode a tap (not a drag) on a Mipo opens the card: the
   camera moves in, the card slides in, 'done' (or shrinking it to its tab) goes back. The Mipo stays

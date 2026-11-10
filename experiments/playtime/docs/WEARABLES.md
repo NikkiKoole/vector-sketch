@@ -147,3 +147,6 @@ Steps:
 - [ ] WR6. Underpants: Nikki plays with them (the cut, the waist heights, the drop on the hips).
       Soft torsos done 2026-11-08
 - [x] WR7. The wear/jolt code in `src/wearables.lua` (2026-11-08, with the underpants)
+- [ ] WR12. Hats and masks into the engine (Nikki 2026-11-10, LANDING-2026-11.md): out of the spike, a system (src/systems.lua)
+      drawing them in their Mipo's places (src/mipo-layers.lua: hat, mask, read by the spike already),
+      facing-aware (MIPO-FACING MF6 first; WR8's bill), on the shelf to drop onto a head. The rest stays here

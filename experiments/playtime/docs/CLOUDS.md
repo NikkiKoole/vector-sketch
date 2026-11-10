@@ -50,5 +50,5 @@ Not done / open:
 - [ ] On the phone: not measured. Each cloud runs fbm a few times per pixel (heaped ones three
       times, for the lighting); big near clouds cover a lot of screen.
 - [ ] Clouds as a look in the engine (SHADER-LOOKS SH2, the sky), with `../sky-atmosphere/`'s day
-      and night colours.
+      and night colours. Sky and clouds as a scene setting: into the engine (Nikki 2026-11-10, LANDING-2026-11.md).
 - [ ] Flying a Mipo up through them hasn't been tried by hand yet.

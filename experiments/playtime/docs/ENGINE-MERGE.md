@@ -118,7 +118,8 @@ The landing order, what bites what, and Nikki's keep / spike choices of 2026-11-
   `src/scene-light.lua`), the order above turned round by Nikki's wish to have the button.
 - [ ] **EM2. Two or three easy shelf things**: cloth (`src/cloth.lua`), planks with drawn outlines,
   glass beads; tries spike thing -> prop recipe -> shelf. Read each spike's script first.
-- [ ] **EM3. Water**, as one piece of work, from seaside.
+- [ ] **EM3. Water**, as one piece of work, from seaside (into the engine (Nikki 2026-11-10, LANDING-2026-11.md); its speeds
+  and forces through src/physics-units.lua).
 - [ ] **EM4. Garden critters**, once the shelf and 🎲 exist (EDITOR-ARRANGE EA2-EA4).
 - [ ] **EM5. The cheap shared bits**, any time, each checked by a scene snapshot before/after:
   a `mipoKit` (spawn / alive / isAlive) for the scene scripts, `mathutils.clamp` instead of the copies,

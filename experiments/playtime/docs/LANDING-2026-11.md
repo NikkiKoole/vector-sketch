@@ -1,6 +1,6 @@
 # Landing the spikes: order, collisions, choices (November 2026)
 
-status: active
+status: done
 
 A report from 2026-11-10, built on ENGINE-MERGE.md (its owner table and reusable-code list still
 hold). It adds what came after 11-09 (hair in C, maker, rides, flora, the lit face, festoon), the
@@ -125,6 +125,17 @@ Each step is small enough to finish, and makes the next one cheaper.
 
 **5. Places stay scenes**, rebuilt shorter on the landed parts: burrow, soapbox, tracks, rides,
 weather. Clouds / sky become a scene setting only if kept (G4, G5).
+
+## Where the next steps live
+
+The foundations (L1-L4) are done. The landing order goes on in each piece's own doc:
+
+1. The Mipo: MIPO-BREEDS (the focus), then MIPO-FACING MF6 (turning + autowalk), HAIR-LOCKS H10
+   (hair in the DNA), WEARABLES WR12 (hats and masks), MIPO-MAKER MM1-MM4.
+2. The room's look: ENGINE-MERGE EM1 (MATERIALS MT2, LIGHT-AND-SHADOW LS13, MATERIALS MT6).
+3. The shelf: EDITOR-ARRANGE EA2-EA4, then ENGINE-MERGE EM2 (which things: still to ask).
+4. Water: ENGINE-MERGE EM3. Sky and clouds as a setting: CLOUDS.
+5. Places stay scenes.
 
 ## For Nikki to choose
 
