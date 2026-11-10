@@ -460,7 +460,11 @@ fade, a sun: the panel's `fades` switch, LS4).
     should just see them always").
   - Hair locks are lit like the part they grow on and cast shadows (`docs/HAIR-LOCKS.md`).
   Also: the mouth flap lasts at least 0.35 s (`src/mipo-voice.lua` flapMinDuration; 0.15 twitched).
-  Not measured on the phone: the nose / eye / lip shaders and the feet's stencils are a few more draws per Mipo.
+  Not measured on the phone yet: LS29.
+- [ ] **LS29. LS28 on the phone.** The nose / eye / lip shaders and the feet's stencils (two a leg: the
+  foot's shape to clip it) are a few more draws per Mipo. `./playtime.sh device`, 20 Mipos paused,
+  `./playtime.sh bench device` all lit vs every flat switch on (noseFlat, eyesFlat, teethFlat, lipsFlat,
+  feetFlat), then each alone; against LS23's 9.3 ms draw for 20 lit Mipos.
 
 Not light, but where this started (`LITTLE-USED.md`): three rounds left there, skinned mesh, UV mesh,
 the recorder (the feature-rounds sweep, `claudetools/feature-rounds_spec.lua`, takes a recipe each).
