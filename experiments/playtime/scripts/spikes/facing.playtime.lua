@@ -278,7 +278,7 @@ function s.drawUI()
     if not (state.playMode and c.showPanel) then return end
     ui.startFrame() -- play mode draws no editor UI, so nothing else starts the frame
     local BH, pad, w = 34, 6, 300
-    local rows = 11
+    local rows = 15
     local h = BH * rows + pad * (rows + 1) + 24
     local _, sh = love.graphics.getDimensions()
     local x0, y0 = 20, sh - h - 20
@@ -320,6 +320,22 @@ function s.drawUI()
         local v = ui.sliderWithInput('facing-armAt', x, y, 150, 0, 1, walk.armAt, nil, 0.05)
         if v then walk.armAt = v + 0 end
         ui.label(x + 225, y, 'arms at')
+        x, y = ui.nextLayoutPosition(layout, w - 12, BH)
+        if ui.button(x, y, w - 12, 'head: ' .. (walk.headKeys and 'keyed' or 'slow drift')) then
+            walk.headKeys = not walk.headKeys
+        end
+        x, y = ui.nextLayoutPosition(layout, w - 12, BH)
+        v = ui.sliderWithInput('facing-headTime', x, y, 150, 0.1, 1, walk.headTime, nil, 0.05)
+        if v then walk.headTime = v + 0 end
+        ui.label(x + 225, y, 'head time')
+        x, y = ui.nextLayoutPosition(layout, w - 12, BH)
+        v = ui.sliderWithInput('facing-headBack', x, y, 150, 0, 4, walk.headBack, nil, 0.1)
+        if v then walk.headBack = v + 0 end
+        ui.label(x + 225, y, 'overshoot')
+        x, y = ui.nextLayoutPosition(layout, w - 12, BH)
+        v = ui.sliderWithInput('facing-relaxAfter', x, y, 150, 0, 10, walk.relaxAfter, nil, 0.5)
+        if v then walk.relaxAfter = v + 0 end
+        ui.label(x + 225, y, 'back home after (s)')
     end)
     love.graphics.setColor(0.95, 0.92, 0.8)
     love.graphics.print('left            front            right', x0 + w + 20, sh - 40, 0, 1.4, 1.4)

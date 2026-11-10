@@ -8,8 +8,13 @@
 -- switch is in place (characterManager.switchFacing: only the turning foot and the ears are remade),
 -- and the turning foot leans round: its picture tips toes up, is swapped for the new side's foot
 -- leaning the other way, which comes down. The head (the face: mipoFacing.angle / applyFace, and the
--- idle gaze) follows slowly, so the eyes pass through every place in between. The arms switch at
--- their own moment, once the head is lib.armAt of the way.
+-- idle gaze) turns as a keyed move (lib.headKeys, Nikki 2026-11-11: "weight, keyframe feel" instead
+-- of the slow even drift): a small pull the other way, quick through the middle, past the side and
+-- back (an ease-in-out with overshoot, lib.headBack) in lib.headTime a step. Off: the old drift,
+-- HEAD_SPEED. The arms switch at their own moment, once the head is lib.armAt of the way.
+-- Back home: a Mipo this module turned (arrows, a scene's turn, a walk) turns back to the facing it had
+-- before (inst._home: as built, front for nearly all) once it has stood lib.relaxAfter seconds, not held
+-- nor walking (Nikki 2026-11-11). Facing a scene sets itself (tracks, rides, soapbox) is left alone.
 --
 -- Walking: dragged sideways near the floor, a Mipo turns to face the way it's dragged (after a real
 -- pull, not a nudge) and its leg muscles (KEEP_ANGLE targets) step: thighs swing in turn, the knee
@@ -40,12 +45,17 @@ local SWITCHES = {
     hop = false,     -- a little hop as the body switches, the swap in the air
     rebuild = false, -- switch by rebuilding the whole Mipo instead of in place
     auto = false,    -- turn back and forth by itself (a demo)
+    headKeys = true, -- the head turns as a keyed move (false: the slow even drift, HEAD_SPEED)
+    headTime = 0.3,  -- seconds the keyed head takes for one step (left -> right: two steps, ~1.4x)
+    headBack = 1.7,  -- the keyed head's anticipation and overshoot (0: plain ease; 1.7 ~10% of a step)
+    relaxAfter = 3,  -- seconds standing before a turned Mipo turns back home (0: it stays turned)
 }
 for k, v in pairs(SWITCHES) do lib[k] = v end
 
 local BODY_SPEED = math.rad(120) -- a second
 local WALK_TURN_SPEED = 0.6 -- a turn the walk makes (or relaxing back to front): of BODY_SPEED
-local HEAD_SPEED = math.rad(30)  -- a second: left -> right (60 degrees) in 2 s
+local HEAD_SPEED = math.rad(30)  -- a second: left -> right (60 degrees) in 2 s (lib.headKeys off)
+local HEAD_SLOW = 1.6            -- a keyed head relaxing back to front (a turn the walk made) takes longer
 local SWITCH_AT = math.rad(15)
 local AUTO_HOLD = 1.2            -- seconds a turning-by-itself Mipo stays put at a side
 local STEPS = { left = -1, front = 0, right = 1 }
@@ -183,6 +193,36 @@ local function approach(value, target, step)
     return value + (target > value and step or -step)
 end
 
+-- ease in and out with a pull back first and an overshoot at the end (u 0..1); back 0 is a plain ease
+local function easeBack(u, back)
+    local c = back * 1.525
+    if u < 0.5 then
+        local t = 2 * u
+        return t * t * ((c + 1) * t - c) / 2
+    end
+    local t = 2 * u - 2
+    return (t * t * ((c + 1) * t + c) + 2) / 2
+end
+
+-- the head's angle this frame as a keyed move toward target: restarts from where it is when the target
+-- changes; true once it has arrived
+local function keyHead(inst, target, dt)
+    local key = inst._headKey
+    if not key or key.to ~= target then
+        local from = inst._turnAngle or facing.angle(inst)
+        local steps = math.max(0.5, math.abs(target - from) / facing.faceTurn)
+        key = { from = from, to = target, t = 0,
+            dur = lib.headTime * math.sqrt(steps) * (inst._slowTurn and HEAD_SLOW or 1) }
+        inst._headKey = key
+    end
+    key.t = key.t + dt
+    local u = math.min(1, key.t / math.max(key.dur, 0.01))
+    inst._turnAngle = key.from + (key.to - key.from) * easeBack(u, lib.headBack)
+    if u < 1 then return false end
+    inst._turnAngle, inst._headKey = target, nil
+    return true
+end
+
 local function facingAt(angle)
     if angle <= -SWITCH_AT then return 'left' end
     if angle >= SWITCH_AT then return 'right' end
@@ -202,14 +242,22 @@ local function headSide(inst)
     return a <= -0.5 and 'left' or a >= 0.5 and 'right' or 'front'
 end
 
+-- the facing to come back to, kept from before the first turn this module makes
+local function keepHome(inst)
+    inst._home = inst._home or facing.get(inst)
+    inst._settledAt = nil
+end
+
 -- the head a step round (dir -1 left, 1 right), the body staying
 function lib.turnHead(inst, dir)
+    keepHome(inst)
     inst._turnAngle = inst._turnAngle or facing.angle(inst)
     inst._headGoal = stepFrom(headSide(inst), dir)
 end
 
 -- the body a step round (the head stays unless turned too: lib.turn)
 function lib.turnBody(inst, dir)
+    keepHome(inst)
     inst._bodyAngle = inst._bodyAngle or facing.dir(inst) * facing.faceTurn
     inst._turnGoal = stepFrom(inst._turnGoal or facing.get(inst), dir)
 end
@@ -223,6 +271,7 @@ end
 -- body and head on their way to a side; slow: the body at WALK_TURN_SPEED
 function lib.turnTo(inst, side, slow)
     if inst._turnGoal == side and inst._headGoal == side then return end
+    keepHome(inst)
     inst._slowTurn = slow
     inst._bodyAngle = inst._bodyAngle or facing.dir(inst) * facing.faceTurn
     inst._turnAngle = inst._turnAngle or facing.angle(inst)
@@ -374,15 +423,39 @@ local function updateTurn(inst, dt, now)
     end
     if inst._headGoal then
         local target = STEPS[inst._headGoal] * facing.faceTurn
-        inst._turnAngle = approach(inst._turnAngle or facing.angle(inst), target, HEAD_SPEED * dt)
+        local arrived
+        if lib.headKeys then
+            arrived = keyHead(inst, target, dt)
+        else
+            inst._headKey = nil
+            inst._turnAngle = approach(inst._turnAngle or facing.angle(inst), target, HEAD_SPEED * dt)
+            arrived = inst._turnAngle == target
+        end
         if not rebuilt then facing.applyFace(inst) end
-        if inst._turnAngle == target then
+        if arrived then
             inst._headGoal = nil
             -- turning by itself: a while at a side, through the front without stopping
             inst._turnHoldUntil = now + ((lib.auto and target ~= 0) and AUTO_HOLD or 0)
         end
     end
     updateArms(inst)
+end
+
+-- back home after standing a while (lib.relaxAfter): not while turning, held, walking or held off
+local function updateRelax(inst, now)
+    if not inst._home or lib.auto or lib.relaxAfter <= 0 then return end
+    if inst._turnGoal or inst._headGoal or inst._walking or inst._noWalk or held(inst) then
+        inst._settledAt = nil
+        return
+    end
+    inst._settledAt = inst._settledAt or now
+    if now - inst._settledAt < lib.relaxAfter then return end
+    local home = inst._home
+    if facing.get(inst) == home and headSide(inst) == home then
+        inst._home, inst._settledAt = nil, nil -- home: nothing left to come back to
+    else
+        lib.turnTo(inst, home, true)
+    end
 end
 
 ---------------------------------------------------------------- walking
@@ -490,7 +563,8 @@ local function updateWalk(inst, dt, now)
         -- standing again after a walk: back to front, relaxed (head slow, as any turn)
         if inst._walkTurned and not isHeld and now - (inst._walkedAt or now) > RELAX_AFTER then
             inst._walkTurned = nil
-            if facing.get(inst) ~= 'front' or inst._turnGoal then lib.turnTo(inst, 'front', true) end
+            local home = inst._home or 'front'
+            if facing.get(inst) ~= home or inst._turnGoal then lib.turnTo(inst, home, true) end
         end
         stopWalking(inst)
         return
@@ -537,6 +611,7 @@ function lib.update(dt)
         if alive(inst) then
             updateWalk(inst, dt, now)
             updateTurn(inst, dt, now)
+            updateRelax(inst, now)
         end
     end
 end

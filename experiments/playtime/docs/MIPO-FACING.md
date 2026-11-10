@@ -76,6 +76,16 @@ already folded; swinging straight legs forward in the air pushed it off the back
   dna.facing; a turn or walk under way starts over. The spike is its panel now (760 -> 330 lines).
   Spec `mipo-walk_spec.lua` (dragged by a finger: turns right and steps, let go back to front; off:
   neither; held: neither; the setting saved only when off); snapshot mipos identical; full suite green.
+- [x] **MF10. The head turns with weight, and turns go back home** (Nikki 2026-11-11: "I don't like
+  the slow way the face just rotates, can we have weight, keyframe feel"; "better like this").
+  The head no longer drifts at 30°/s: a keyed move (`lib.headKeys`), an ease-in-out with a pull back
+  first and an overshoot after (`lib.headBack` 1.7, ~9% of a step each), 0.3 s a step (`lib.headTime`;
+  left -> right ~0.42 s, a relaxed turn 1.6x). The head now leads and the body follows (before: the
+  body quick, the head slow after it). Any turn this module makes (arrows, a scene's `turn`, a walk)
+  goes back to the facing it had before (`inst._home`, front for nearly all) once the Mipo has stood
+  `lib.relaxAfter` (3 s) not held, walking or held off; facing a scene sets itself is left alone.
+  The facing panel: head keyed / slow drift, head time, overshoot, back home after. Next to try: a
+  blink during a quick turn.
 - [ ] **MF4. A facing pick** in the Mipo editor (MIPO-EDITOR-LEFTOVERS E2).
 - [x] **MF5. Autowalk.** Tried 2026-11-06 in the spike (`w`), "pretty good": a Mipo faces front;
   dragged sideways near the floor (a foot touched in the last 0.3 s, faster than 0.25 leg
