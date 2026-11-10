@@ -9,6 +9,7 @@ local SE = require('src.script-events')
 local FEXT = require('src.file-extensions')
 local signals = require('src.signals')
 local modes = require('src.modes')
+local systems = require('src.systems')
 local cam = camera.getInstance()
 
 -- The scene script's hot reload (maybeHotReload): on state, so a hot swap of this file doesn't
@@ -65,6 +66,7 @@ function lib.loadSceneData(data, name)
         state.scene.sceneScript = nil
         state.scene.scriptPath = nil
     end
+    systems.unload() -- the engine's systems let go of the old room's bodies (src/systems.lua)
     sceneIO.load(data, state.physicsWorld, cam)
     signals.applySavedStates() -- gates back to their saved open/closed
     logger:info("Scene loaded: " .. name)

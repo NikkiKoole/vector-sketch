@@ -183,18 +183,12 @@ function s.onKeyPress(key)
     if key == 'h' then showPanel = not showPanel end
 end
 
-function s.update(dt)
-    hairLocks.update(dt)
+function s.update()
     local lamp = opts.lampOn and lampBody()
     if lamp and love.keyboard.isDown('l') then lamp:setPosition(mouseWorldPos()) end
 end
 
-function s.drawBelow()
-    hairLocks.draw('back') -- behind the Mipos (and everything else, for now)
-end
-
 function s.draw()
-    hairLocks.draw('front') -- bangs, front locks and coats, over the faces
     local lamp = opts.lampOn and lampBody()
     if lamp then -- the bulb
         local x, y = lamp:getPosition()

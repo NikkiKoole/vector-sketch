@@ -1,6 +1,6 @@
 -- Every scene in scripts/ (src/scene-catalog.lua, the editor's scenes tab) loads and runs: its
 -- scene and script, then a second of frames the way main.lua runs them (physics, the script's
--- update, the bodies and the textured world drawn, the script's draw hooks and its UI panel in
+-- update, the engine's systems (src/systems.lua), the bodies and the textured world drawn, the script's draw hooks and its UI panel in
 -- play mode), then every key the script listens for (`key == 'p'`) pressed with a few frames after
 -- each. A script-only spike runs on an empty world. A scene that errors fails here.
 
@@ -15,6 +15,7 @@ local box2dDraw = require('src.physics.box2d-draw')
 local box2dDrawTextured = require('src.physics.box2d-draw-textured')
 local fabuland = require('src.fabuland')
 local camera = require('src.camera')
+local systems = require('src.systems')
 
 describe('every scene', function()
     local canvas, previousPlay
@@ -38,15 +39,18 @@ describe('every scene', function()
         if not state.world.paused then
             state.physicsWorld:update(dt)
             script.call('update', dt)
+            systems.update(dt)
         end
         love.graphics.setCanvas({ canvas, stencil = true })
         love.graphics.clear()
         local cam = camera.getInstance()
         cam:push()
         script.call('drawBelow')
+        systems.drawBelow()
         box2dDraw.drawWorld(state.physicsWorld)
         fabuland.draw()
         box2dDrawTextured.drawTexturedWorld(state.physicsWorld)
+        systems.draw()
         script.call('draw')
         cam:pop()
         ui.startFrame()

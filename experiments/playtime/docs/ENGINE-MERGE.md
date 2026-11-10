@@ -108,6 +108,8 @@ Not in `src/physics-units` yet: the water spikes' wave speeds and forces are raw
 
 ## Order
 
+The landing order, what bites what, and Nikki's keep / spike choices of 2026-11-10: LANDING-2026-11.md.
+
 - [ ] **EM1. Light and materials.** Decisions first, then the move:
   MATERIALS MT2 (Nikki judges the 36 in material-check: keep / change / drop; postponed 2026-11-06,
   another time), then LIGHT-AND-SHADOW LS23 + LS15 (a full room's defaults), then LS13 (light as a

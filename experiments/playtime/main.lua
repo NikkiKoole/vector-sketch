@@ -134,6 +134,7 @@ local projectedShadows = require('src.projected-shadows') -- off unless a scene 
 local shaders = require('src.render.shaders')
 local shadowSilhouettes = require('src.shadow-silhouettes') -- the world drawn once for both
 local liquid = require('src.liquid')
+local systems = require('src.systems') -- what runs in every scene without a script: hair (src/systems.lua)
 local signals = require('src.signals')
 local doors = require('src.doors')
 local cameraFollow = require('src.camera-follow')
@@ -252,6 +253,7 @@ function love.update(dt)
         prof.pop('physicsWorld:update')
 
         script.call('update', scaled_dt)
+        systems.update(scaled_dt)
         mipoJointGuard.update()
         mipoActions.update()
         torsoJiggle.update(scaled_dt) -- the torso picture's soft flesh (src/torso-jiggle.lua)
@@ -359,6 +361,7 @@ function love.draw()
         editorRenderer.drawGrid(state.world.darkMode and { 1, 1, 1, .1 } or { 0, 0, 1, .1 })
     end
     script.call('drawBelow') -- a scene script's ground, under the bodies (scripts/spikes/burrow.playtime.lua)
+    systems.drawBelow() -- over that ground, behind the bodies: the hair's back layer
     if state.world.showTextures then
         shadowSilhouettes.newFrame()
         backdropShadows.draw(state.physicsWorld) -- on the scene's back wall (src/backdrop-shadows.lua)
@@ -383,6 +386,7 @@ function love.draw()
         projectedShadows.drawOnThings(state.physicsWorld) -- on things further back (src/projected-shadows.lua)
     end
     prof.pop('drawtexturedworld')
+    systems.draw() -- over the bodies: bangs and coats over the faces
     script.call('draw')
     doors.draw()
 
