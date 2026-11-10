@@ -463,10 +463,19 @@ fade, a sun: the panel's `fades` switch, LS4).
   - Hair locks are lit like the part they grow on and cast shadows (`docs/HAIR-LOCKS.md`).
   Also: the mouth flap lasts at least 0.35 s (`src/mipo-voice.lua` flapMinDuration; 0.15 twitched).
   Not measured on the phone yet: LS29.
-- [ ] **LS29. LS28 on the phone.** The nose / eye / lip shaders and the feet's stencils (two a leg: the
+- [x] **LS29. LS28 on the phone.** The nose / eye / lip shaders and the feet's stencils (two a leg: the
   foot's shape to clip it) are a few more draws per Mipo. `./playtime.sh device`, 20 Mipos paused,
   `./playtime.sh bench device` all lit vs every flat switch on (noseFlat, eyesFlat, teethFlat, lipsFlat,
   feetFlat), then each alone; against LS23's 9.3 ms draw for 20 lit Mipos.
+  Measured 2026-11-10 (iPhone SE 2, `hair` scene + 19 Mipos: createCharacter 0.3 +
+  randomizeMipoConstrained, seeds 1-19, x = 100 + 145 i; paused, editor, no shadows; draw p50):
+  all flat 9.3 ms, 60 fps (= LS23); all lit 15.1, 58 fps (frames over 20 ms: 5%); only the eyes lit
+  14.7; everything lit but the eyes 11.3 / 12.9 (two runs); + feet flat 11.8, + mouth flat 12.2; nose,
+  feet or mouth flat alone: no change within the noise (~±1 ms). So the eyes are ~5 of the ~6 ms;
+  nose, mouth and feet together ~1-2. Next: LS30.
+- [ ] **LS30. Cheaper lit eyes.** The eyes cost ~5 ms a frame for 20 Mipos on the phone (LS29), ~0.13 ms
+  an eye: lit through the shader, the flat white laid back over, the lid's shadow. Find which of the
+  three it is (ProFi on the phone, or each switched off) and make that cheaper, or bake the lid's shadow.
 
 Not light, but where this started (`LITTLE-USED.md`): three rounds left there, skinned mesh, UV mesh,
 the recorder (the feature-rounds sweep, `claudetools/feature-rounds_spec.lua`, takes a recipe each).
