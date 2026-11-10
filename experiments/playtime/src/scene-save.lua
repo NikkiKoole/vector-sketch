@@ -19,6 +19,7 @@ local characterManager = require('src.character-manager')
 local roomMusic = require('src.room-music')
 local sceneLight = require('src.scene-light')
 local influences = require('src.influences')
+local migrations = require('src.save-migrations')
 
 local lib = {}
 
@@ -220,7 +221,7 @@ function lib.gatherSaveData(world, camera)
     -- frame puts them back: src/scene-light.lua)
     sceneLight.unapply()
     local saveData = {
-        version = "1.0",
+        version = migrations.SCENE_VERSION, -- src/save-migrations.lua
         bodies = {},
         joints = {},
         backdrops = {},

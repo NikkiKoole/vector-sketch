@@ -12,8 +12,6 @@ local joints = require('src.joints')
 local uuid = require('src.uuid')
 local utils = require('src.utils')
 local mathutils = require('src.math-utils')
-local subtypes = require('src.subtypes')
-local JT = require('src.joint-types')
 local BT = require('src.body-types')
 local NT = require('src.node-types')
 local mipoRegistry = require('src.mipo-registry')
@@ -24,8 +22,8 @@ local units = require('src.physics-units')
 local registry = require('src.registry')
 local facing = require('src.mipo-facing')
 local torsoLobes = require('src.torso-lobes')
-local dna, earJoint = mipoDna.dna, mipoDna.earJoint
-local TORSO_SKIN_Z, TORSO_HAIR_ABOVE_SKIN = mipoDna.TORSO_SKIN_Z, mipoDna.TORSO_HAIR_ABOVE_SKIN
+local dna = mipoDna.dna
+local migrations = require('src.save-migrations')
 local initBlock = appearance.initBlock
 local applyGroupAndZ = textures.applyGroupAndZ
 local makeTransformedVertices = mathutils.scalePolygonPoints
@@ -558,31 +556,13 @@ function lib.rebuildFromCreation(instance, newCreation)
     end
 end
 
--- Old saved DNA moved over to what builds now.
-local function migrateDNA(instance)
-    for partName, partDNA in pairs(instance.dna.parts or {}) do
-        -- noses saved when they drew at z 490, above the arms
-        if partName:find('^nose') and partDNA.appearance then
-            for _, block in pairs(partDNA.appearance) do
-                if type(block) == 'table' and block.zOffset == 490 then block.zOffset = 350 end
-            end
-        end
-        -- ears on a hinge (saved before the soft weld): the next rebuild makes them springy
-        if (partName == 'lear' or partName == 'rear') and partDNA.j and partDNA.j.type == JT.REVOLUTE then
-            partDNA.j = earJoint()
-        end
-        local skin = partName:find('^torso%d') and partDNA.appearance and partDNA.appearance.skin
-        if skin and skin.zOffset == 200 then skin.zOffset = TORSO_SKIN_Z end
-        -- the duck beak upper lip is out (shape-catalogs.lua)
-        local face = partDNA.appearance and partDNA.appearance.face
-        if face and face.mouth and face.mouth.upperLipShape == 4 then face.mouth.upperLipShape = 1 end
-    end
-end
-
 -- Defaults for what older DNA lacks, old saves moved over, and the body plan (topology).
 local function prepareDNA(instance)
     D.ensureDefaults(instance.dna.creation, D.creation)
-    migrateDNA(instance)
+    -- old saves moved over (src/save-migrations.lua); once, the instance's DNA is today's after
+    local partSteps
+    partSteps, instance.dnaVersion = migrations.upgradeDNA(instance.dna, instance.dnaVersion)
+    instance.oldPartSteps = #partSteps > 0 and partSteps or nil
     instance.dna.faceMagnitude = instance.dna.faceMagnitude or D.faceMagnitude
     instance.dna.positioners = instance.dna.positioners or {}
     D.ensureDefaults(instance.dna.positioners, D.positioners)
@@ -716,8 +696,12 @@ function lib.removeCharacter(instance)
     mipoRegistry.unregister(instance.id)
 end
 
-function lib.createCharacterFromJustDNA(mydna, x, y, scale)
-    return lib.createCharacterFromExistingDNA(newInstance(mydna, scale), x, y, false)
+-- dnaVersion: the DNA's save version when it comes from a file (src/save-migrations.lua; nil, from
+-- before versions or unknown: the old saves' steps run, which leave today's DNA as it is)
+function lib.createCharacterFromJustDNA(mydna, x, y, scale, dnaVersion)
+    local instance = newInstance(mydna, scale)
+    instance.dnaVersion = dnaVersion
+    return lib.createCharacterFromExistingDNA(instance, x, y, false)
 end
 
 -- One-shot post-spawn pose: rigidly rotate each arm chain about its shoulder so
@@ -764,7 +748,7 @@ function lib.serializeCharacters()
     local result = {}
     for _, instance in pairs(mipoRegistry.getAll()) do
         result[#result + 1] = {
-            version = 1,
+            version = migrations.DNA_VERSION, -- src/save-migrations.lua
             id = instance.id,
             scale = instance.scale or 1,
             zGroupOffset = instance.zGroupOffset,
@@ -774,34 +758,6 @@ function lib.serializeCharacters()
     return result
 end
 
--- Fixtures saved by older versions, brought up to date: torsos drawn at the head's 200/210
--- (TORSO_SKIN_Z), the duck-beak upper lip (out), every nose drawn at z 490 above the arms.
-local function migrateSavedFixtures(body, partName)
-    for _, fixture in ipairs(body:getFixtures()) do
-        local fud = fixture:getUserData()
-        if fud and fud.extra and partName:find('^torso%d') and fud.subtype == subtypes.TEXFIXTURE then
-            if fud.extra.zOffset == 200 then
-                fud.extra.zOffset = TORSO_SKIN_Z
-            elseif fud.extra.zOffset == 210 then
-                fud.extra.zOffset = TORSO_SKIN_Z + TORSO_HAIR_ABOVE_SKIN
-            end
-        end
-        if fud and fud.label == 'upperlip' and fud.extra and fud.extra.main
-            and fud.extra.main.bgURL == 'mipo/upperlip/upperlip-04.png' then -- the duck beak is out
-            fud.extra.main.bgURL = 'mipo/upperlip/upperlip-01.png'
-            fud.extra.main.fgURL = 'mipo/upperlip/upperlip-01-mask.png'
-            fud.extra.dirty = true
-        end
-        if fud and fud.extra and fud.extra.zOffset == 490 then
-            if fud.label == 'nose' then
-                fud.extra.zOffset = 254
-            elseif partName:find('^nose') then
-                fud.extra.zOffset = 350
-            end
-        end
-    end
-end
-
 -- A loaded body taken in as the instance's part: its thing, foot grip (scenes saved before feet
 -- had it), old fixtures updated, the limits of the joint to its parent relative to the rest pose.
 local function adoptPart(instance, partName, body)
@@ -809,7 +765,7 @@ local function adoptPart(instance, partName, body)
     if not thing then return end
     instance.parts[partName] = thing
     applyFootMaterial(thing, partName)
-    migrateSavedFixtures(body, partName)
+    for _, step in ipairs(instance.oldPartSteps or {}) do step(body, partName) end -- old saves' fixtures
     for _, joint in ipairs(body:getJoints()) do
         local _, bodyB = joint:getBodies()
         if bodyB == body then
@@ -875,6 +831,7 @@ function lib.reconstructInstance(charData, partBodies)
     if not partBodies then return nil end
     local instance = newInstance(charData.dna, charData.scale, charData.id)
     instance.zGroupOffset = charData.zGroupOffset
+    instance.dnaVersion = charData.version -- old saves are moved over in prepareDNA
     prepareDNA(instance)
     balance.applyNeck(instance) -- neck limits (bend budget) before the rest-pose limits below
     balance.applyTrunk(instance)
@@ -886,6 +843,7 @@ function lib.reconstructInstance(charData, partBodies)
             instance.groupIndex = first:getGroupIndex()
         end
     end
+    instance.oldPartSteps = nil
     rebuildJointIds(instance)
     local brokenTextures = hasBrokenTextures(instance)
     repairGroupAndZ(instance)

@@ -219,11 +219,11 @@ local function buildJoints(saved)
     end
 end
 
--- What needs the bodies and joints to exist: MESHUSERT influences get their bodies (and the
--- backfills for older files), and a RESOURCE with a picture but no cached mesh computes it now
+-- What needs the bodies and joints to exist: MESHUSERT influences get their bodies (and an older
+-- file's steps, src/save-migrations.lua: `oldSteps`), and a RESOURCE with a picture but no cached mesh computes it now
 -- (else its meshes draw untextured until you select the RESOURCE; computeResourceMesh picks the
 -- mode from the body).
-local function fixUpSFixtures(sfixtures)
+local function fixUpSFixtures(sfixtures, oldSteps)
     for _, fixture in pairs(sfixtures) do
         -- a destroyed one left in the registry (a hot reload of registry.lua split it) is skipped,
         -- not a crash in the middle of a room load
@@ -231,7 +231,7 @@ local function fixUpSFixtures(sfixtures)
         if ud and subtypes.is(ud, subtypes.MESHUSERT) and ud.extra then
             if ud.extra.influences then
                 influences.restoreBodies(ud.extra.influences)
-                migrations.backfillBindVerts(ud.extra)
+                for _, step in ipairs(oldSteps) do step(ud.extra) end
                 migrations.backfillRigidLookup(ud.extra)
             end
             if ud.extra.triangleBones then ud.extra.triangleBones = numberKeys(ud.extra.triangleBones) end
@@ -297,22 +297,25 @@ function lib.buildWorld(data, world, cam, opts)
             if resourceLink.isUser(ud) then resourceLink.find(ud, builtSFixtures) end
         end
     end
-    fixUpSFixtures(additive and builtSFixtures or registry.sfixtures)
+    fixUpSFixtures(additive and builtSFixtures or registry.sfixtures, migrations.sceneSteps(data))
     buildCharacters(data.characters, world)
     return builtThings
 end
 
--- Decoded file data into the shape buildWorld expects: bone metadata back on each influence (files
--- without bones pass through), old Steiner points moved to their body, and old texture names to their
--- new ones (src/texture-names.lua). Also for library imports.
+-- Decoded file data into the shape buildWorld expects: an older file brought up to today's version
+-- (src/save-migrations.lua), old texture names to their new ones (src/texture-names.lua), bone
+-- metadata back on each influence (files without bones pass through). Also for library imports and
+-- a door's travelers. Returns true, or false and why (a file from a newer Playtime).
 function lib.prepareLoaded(jsonData)
+    local ok, err = migrations.upgradeScene(jsonData)
+    if not ok then return false, err end
     textureNames.migrate(jsonData)
     for _, body in ipairs(jsonData.bodies or {}) do
         for _, fix in ipairs(body.fixtures or {}) do
             influences.fromFile(fix.userData and fix.userData.extra)
         end
     end
-    migrations.extraSteinerToBody(jsonData)
+    return true
 end
 
 -- A scene file's text into the world, replacing what's there.
@@ -326,12 +329,11 @@ function lib.load(data, world, cam)
         logger:error('failed loading json')
         return
     end
-    if jsonData.version ~= "1.0" then
-        logger:error("Unsupported save version:", jsonData.version)
+    local ok, why = lib.prepareLoaded(jsonData)
+    if not ok then
+        logger:error("Can't load this scene:", why)
         return
     end
-
-    lib.prepareLoaded(jsonData)
     lib.buildWorld(jsonData, world, cam)
     snap.onSceneLoaded()
 end

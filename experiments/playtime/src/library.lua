@@ -93,7 +93,7 @@ function lib.trim(data, ids, mipoIds)
     for _, character in ipairs(data.characters or {}) do
         local position = (not mipoIds or mipoIds[character.id]) and mipoPosition(data, character.id)
         if position then
-            table.insert(prefab.mipos, { dna = character.dna, scale = character.scale,
+            table.insert(prefab.mipos, { dna = character.dna, scale = character.scale, version = character.version,
                 position = { position[1], position[2] } })
             cx, cy, n = cx + position[1], cy + position[2], n + 1
         end
@@ -178,7 +178,8 @@ function lib.import(filename, contents)
     local name = lib.cleanName(filename:match('([^/\\]+)$'):gsub('%.playtime%.json$', ''))
     local data = type(contents) == 'string' and json.decode(contents)
     if type(data) ~= 'table' or type(data.bodies) ~= 'table' then return false, 'not a scene file' end
-    sceneIO.prepareLoaded(data)
+    local loaded, why = sceneIO.prepareLoaded(data)
+    if not loaded then return false, why end
     local prefab = lib.trim(data)
     if not prefab then return false, 'nothing in it' end
     if name == '' then name = 'imported' end
@@ -301,7 +302,7 @@ function lib.place(name, x, y)
     -- Mipos grow fresh from their DNA, with their own id, collision group and z-range
     for _, mipo in ipairs(prefab.mipos or {}) do
         local instance = CharacterManager.createCharacterFromJustDNA(mipo.dna, mipo.position[1], mipo.position[2],
-            mipo.scale)
+            mipo.scale, mipo.version) -- an old prefab's Mipo moved over (src/save-migrations.lua)
         if instance then
             CharacterManager.poseTpose(instance)
             for _, part in pairs(instance.parts) do table.insert(things, part) end

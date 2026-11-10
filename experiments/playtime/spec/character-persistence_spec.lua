@@ -84,7 +84,7 @@ describe("CharacterManager.serializeCharacters", function()
     it("each entry has version, id, dna, scale, zGroupOffset", function()
         local result = CharacterManager.serializeCharacters()
         local entry = result[1]
-        assert.are.equal(1, entry.version)
+        assert.are.equal(require('src.save-migrations').DNA_VERSION, entry.version)
         assert.is_string(entry.id)
         assert.is_table(entry.dna)
         assert.is_number(entry.scale)

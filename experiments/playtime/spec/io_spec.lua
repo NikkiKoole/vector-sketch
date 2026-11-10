@@ -380,7 +380,7 @@ describe("save/load round-trip", function()
 
             local originalData = json.decode(rawJson)
             assert.is_not_nil(originalData, "Could not parse " .. sceneFile)
-            if originalData.version ~= "1.0" then
+            if not require('src.save-migrations').sceneVersion(originalData) then
                 pending("skipping " .. sceneFile .. " (version " .. tostring(originalData.version) .. ")")
                 return
             end
@@ -678,7 +678,7 @@ describe("double round-trip (all scene files)", function()
 
             local originalData = json.decode(rawJson)
             assert.is_not_nil(originalData, "Could not parse " .. sceneFile)
-            if originalData.version ~= "1.0" then
+            if not require('src.save-migrations').sceneVersion(originalData) then
                 pending("skipping " .. sceneFile .. " (version " .. tostring(originalData.version) .. ")")
                 return
             end

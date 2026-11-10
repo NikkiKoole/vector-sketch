@@ -80,7 +80,19 @@ Each step is small enough to finish, and makes the next one cheaper.
   Spec `mipo-layers_spec.lua`. Left: the shadow passes (`only`) still draw no splits (the hair
   casts through `shadow-silhouettes` as before), and world layers back / play / front stay for
   DEPTH-LAYERS.
-- [ ] **L3. A scene and DNA version with one ordered list of migrations** (bite 4). Half a day.
+- [x] **L3. A scene and DNA version with one ordered list of migrations** (bite 4). Done 2026-11-10:
+  `src/save-migrations.lua` has SCENE_VERSION and DNA_VERSION (both 2; "1.0", every file before,
+  is 1) and the steps in order (SCENE_STEPS / DNA_STEPS[n] take a version-n file to n+1: the decoded
+  scene, each MESHUSERT once its bodies exist, a saved Mipo's DNA, its bodies). Today's fixups for
+  old files are step 1, run for old files only: Steiner points to the body, bindVerts, and the Mipo
+  ones (were `migrateDNA` / `migrateSavedFixtures` in mipo-build). A scene saved by a newer Playtime
+  is refused with why; a newer Mipo is built as it is. Still on every load, written there why:
+  texture renames, subtype names, a RESOURCE's image, rigidLookup. Scenes save `version = 2`, each
+  Mipo its DNA version; a library prefab keeps its Mipos' versions. A change to what's saved: one up
+  and a step (the file's top comment). Spec `save-migrations_spec.lua`.
+  Found on the way: `mipo-neck_spec` seed 6 passes or fails by what ran before it in the same run
+  (a Mipo's parts are built in `pairs` order, which follows earlier string interning; same DNA, mass
+  and random numbers, other build order, Box2D settles otherwise). Not from this work; open.
 - [ ] **L4. EM5's cheap shared bits**: `drawn-stroke` into `src/` (with burrow's extras), `mipoKit`,
   the clamp copies. Trees and flora then load from `src/` like everything else.
 

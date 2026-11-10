@@ -85,9 +85,14 @@ describe("a Mipo's DNA through a scene save and load", function()
     end)
 
     -- save the scene to JSON text, change the decoded data (an old save), load it in a fresh world
-    local function saveAndLoad(change)
+    -- change(dna): the saved DNA made to look like an old save, which it then says it is (version 1,
+    -- from before versions: src/save-migrations.lua) unless `version` says otherwise
+    local function saveAndLoad(change, version)
         local decoded = json.decode(json.encode(sceneIO.gatherSaveData(world, camera), { indent = true }))
-        if change then change(decoded.characters[1].dna) end
+        if change then
+            change(decoded.characters[1].dna)
+            decoded.characters[1].version = version or 1
+        end
         registry.reset()
         mipoRegistry.reset()
         local newWorld = makeWorld()
@@ -109,7 +114,7 @@ describe("a Mipo's DNA through a scene save and load", function()
         end)
     end
 
-    describe("old saved DNA moved over (migrateDNA)", function()
+    describe("old saved DNA moved over (src/save-migrations.lua DNA_STEPS)", function()
         local mipo
 
         before_each(function()
@@ -129,6 +134,13 @@ describe("a Mipo's DNA through a scene save and load", function()
                 if part.appearance and part.appearance.face and part.appearance.face.mouth then return name end
             end
         end
+
+        it("a Mipo saved today is left as it is (its steps are for older saves only)", function()
+            local loaded = saveAndLoad(function(dna)
+                dna.parts['nose-single-template'].appearance.skin.zOffset = 490
+            end, require('src.save-migrations').DNA_VERSION)
+            assert.are.equal(490, loaded.dna.parts['nose-single-template'].appearance.skin.zOffset)
+        end)
 
         it("a nose saved at z 490 (above the arms) goes to 350", function()
             local loaded = saveAndLoad(function(dna)
