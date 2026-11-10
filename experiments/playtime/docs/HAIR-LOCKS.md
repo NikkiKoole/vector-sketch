@@ -1,6 +1,6 @@
 # Hair locks — long hair that swings
 
-status: parked — Nikki 2026-11-09: "we are good with the hair" (tried 2026-11-09: locks that hang and swing, haircuts, ringlets, body hair, fur, a coat, the box); left: H4 the phone, H8 the simulation in C
+status: parked — Nikki 2026-11-09: "we are good with the hair" (tried 2026-11-09: locks that hang and swing, haircuts, ringlets, body hair, fur, a coat, the box); left: H8 the simulation in C (H4, the phone: ~0.65 ms a Mipo, 20 don't fit)
 
 A spike: locks of hair as chains of points rooted on the head, moved by a small verlet step of
 their own (not Box2D) and drawn as ribbons with the hair pictures. `src/hair-locks.lua`, the scene
@@ -62,8 +62,15 @@ one Bezier, which smoothed curls away. Cost per Mipo on the Mac: simulate 0.1-0.
   a segment fixed (ringlets / waves as before), the picture's v by the rest length along the lock,
   and the width clamped in tight bends like the limb ribbons (a 78 px wide lock folded on its
   inside). Her defaults: 0.26 ms a Mipo awake on the Mac
-- [ ] H4. Measure on the phone (`./playtime.sh bench device`)
-- [ ] H8. The simulation in C (~0.2 ms a Mipo awake, all Lua), if the phone says so
+- [x] H4. Measure on the phone (`./playtime.sh bench device`). 2026-11-10, iPhone SE 2, the `hair` scene
+  + 19 Mipos (LIGHT-AND-SHADOW LS29's setup), each given the scene Mipo's locks (21 a Mipo), zoomed
+  out to the room. Paused: drawing them +0.3 ms (11.9 -> 12.2), lit or flat the same. Running: the
+  Mipos never sleep (breathing; 355 of 355 bodies awake), so no haircut sleeps either: update 7.2 ->
+  15.0 ms (script.call 0.7 -> 11.3, the hair's step: ~0.5 ms a Mipo, twice the Mac's 0.26), draw 11.9
+  -> 15.0 (the strips rebuilt every frame), 46 -> 31 fps. So 20 Mipos with long hair don't fit;
+  a few do (~0.65 ms each).
+- [ ] H8. The simulation in C (~0.5 ms a Mipo awake on the phone, H4, all Lua). Or: hair small on
+  screen not simulated (LS30's rule), fewer locks in a crowd
 
 ## Hair bounce (also parked)
 
