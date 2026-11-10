@@ -169,8 +169,9 @@ describe('Mipo untangle', function()
     -- Nikki's pit (spec/fixtures/pit-knot.playtime.json, saved from the hair scene, 2026-11-10): 19
     -- Mipos in a bowl, three of them knotted into each other (25 hooks). Untangled pair by pair, each
     -- hop landed in the third Mipo; after 4 tries each it gave up and they lay knotted for good. As a
-    -- group they pass through each other and drift apart. (Some Mipos in the file were already falling
-    -- off the bowl's open left side when it was saved: only the ones in the bowl are checked.)
+    -- group they pass through each other and drift apart. The file is cut down to the bowl, its floor
+    -- and walls, the three and their two nearest neighbours (2.1 MB -> 0.28 MB); the old pair-by-pair
+    -- untangle still leaves it knotted. Only Mipos in the bowl are checked for flying off.
     it('a knot of three in a crowded pit comes apart as a group, and stays apart', function()
         withClock(function(clock)
             local world = newWorld()
