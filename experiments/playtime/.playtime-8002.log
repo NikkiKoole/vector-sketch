@@ -1,0 +1,529 @@
+[lurker] Initing lurker
+[INFO] src/scene-loader.lua:70:	Scene loaded: /Users/nikkikoole/Projects/love/vector-sketch/experiments/playtime/scripts/spikes/rides.playtime.json
+[INFO] src/script.lua:190:	Script loaded: /Users/nikkikoole/Projects/love/vector-sketch/experiments/playtime/scripts/spikes/rides.playtime.lua
+Cached not found
+0.52549019607843	0.023529411764706	0.30196078431373	1
+Cached not found
+0.52549019607843	0.023529411764706	0.30196078431373	1
+Cached not found
+0.94117647058824	0.062745098039216	0.94117647058824	1
+Cached not found
+0.94117647058824	0.062745098039216	0.94117647058824	1
+Cached not found
+0.69803921568627	0.81176470588235	0.43921568627451	1
+Cached not found
+0.69803921568627	0.81176470588235	0.43921568627451	1
+[claude-bridge] listening on 0.0.0.0:8002
+Cached not found
+0.69803921568627	0.81176470588235	0.43921568627451	1
+Cached not found
+0.69803921568627	0.81176470588235	0.43921568627451	1
+[lurker] Hotswapping 'scripts/spikes/rides.playtime.lua'...
+[INFO] src/scene-loader.lua:156:	scene script changed: loading it again
+[INFO] src/script.lua:190:	Script loaded: /Users/nikkikoole/Projects/love/vector-sketch/experiments/playtime/scripts/spikes/rides.playtime.lua
+[lurker] Hotswap of 'scripts/spikes/rides.playtime.lua' aborted by preswap
+Cached not found
+0.63529411764706	0.011764705882353	0.28627450980392	1
+Cached not found
+0.63529411764706	0.011764705882353	0.28627450980392	1
+Cached not found
+0.37647058823529	0.56862745098039	0.65098039215686	1
+Cached not found
+0.37647058823529	0.56862745098039	0.65098039215686	1
+Cached not found
+0.7843137254902	0.094117647058824	0.34901960784314	1
+Cached not found
+0.7843137254902	0.094117647058824	0.34901960784314	1
+Cached not found
+0.047058823529412	0.67450980392157	0.23137254901961	1
+Cached not found
+0.047058823529412	0.67450980392157	0.23137254901961	1
+Cached not found
+0.7843137254902	0.094117647058824	0.34901960784314	1
+Cached not found
+0.7843137254902	0.094117647058824	0.34901960784314	1
+[lurker] Hotswapping 'src/script.lua'...
+[lurker] Swapped 'src/script.lua' in 0.001100000000001 secs
+Cached not found
+0.37647058823529	0.56862745098039	0.65098039215686	1
+Cached not found
+0.37647058823529	0.56862745098039	0.65098039215686	1
+[lurker] Hotswapping 'scripts/spikes/rides.playtime.lua'...
+[INFO] src/scene-loader.lua:156:	scene script changed: loading it again
+[INFO] src/script.lua:189:	Script loaded: /Users/nikkikoole/Projects/love/vector-sketch/experiments/playtime/scripts/spikes/rides.playtime.lua
+[lurker] Hotswap of 'scripts/spikes/rides.playtime.lua' aborted by preswap
+Cached not found
+0.42745098039216	0.5921568627451	0.70588235294118	1
+Cached not found
+0.42745098039216	0.5921568627451	0.70588235294118	1
+Cached not found
+0.34117647058824	0.62352941176471	0.35686274509804	1
+Cached not found
+0.34117647058824	0.62352941176471	0.35686274509804	1
+Cached not found
+0.3843137254902	0.53725490196078	0.8078431372549	1
+Cached not found
+0.3843137254902	0.53725490196078	0.8078431372549	1
+Cached not found
+0.13725490196078	0.72941176470588	0.91372549019608	1
+Cached not found
+0.13725490196078	0.72941176470588	0.91372549019608	1
+[INFO] src/scene-loader.lua:70:	Scene loaded: /Users/nikkikoole/Projects/love/vector-sketch/experiments/playtime/scripts/spikes/rides.playtime.json
+[INFO] src/script.lua:189:	Script loaded: /Users/nikkikoole/Projects/love/vector-sketch/experiments/playtime/scripts/spikes/rides.playtime.lua
+Cached not found
+0.3921568627451	0.41176470588235	0.57647058823529	1
+Cached not found
+0.3921568627451	0.41176470588235	0.57647058823529	1
+Cached not found
+0.47843137254902	0.24313725490196	0.47843137254902	1
+Cached not found
+0.47843137254902	0.24313725490196	0.47843137254902	1
+Cached not found
+0.55686274509804	0.46274509803922	0.023529411764706	1
+Cached not found
+0.55686274509804	0.46274509803922	0.023529411764706	1
+Cached not found
+0.61176470588235	0.56470588235294	0.46274509803922	1
+Cached not found
+0.61176470588235	0.56470588235294	0.46274509803922	1
+[lurker] Hotswapping 'scripts/spikes/rides.playtime.lua'...
+[INFO] src/scene-loader.lua:156:	scene script changed: loading it again
+[INFO] src/script.lua:189:	Script loaded: /Users/nikkikoole/Projects/love/vector-sketch/experiments/playtime/scripts/spikes/rides.playtime.lua
+[lurker] Hotswap of 'scripts/spikes/rides.playtime.lua' aborted by preswap
+Cached not found
+0.019607843137255	0.23137254901961	0.74117647058824	1
+Cached not found
+0.019607843137255	0.23137254901961	0.74117647058824	1
+Cached not found
+0.4	0.22745098039216	0.95686274509804	1
+Cached not found
+0.4	0.22745098039216	0.95686274509804	1
+Cached not found
+0.47058823529412	0.50588235294118	0.40392156862745	1
+Cached not found
+0.47058823529412	0.50588235294118	0.40392156862745	1
+Cached not found
+0.25490196078431	0.45098039215686	0.63529411764706	1
+Cached not found
+0.25490196078431	0.45098039215686	0.63529411764706	1
+[lurker] Hotswapping 'scripts/spikes/rides.playtime.lua'...
+[INFO] src/scene-loader.lua:156:	scene script changed: loading it again
+[INFO] src/script.lua:189:	Script loaded: /Users/nikkikoole/Projects/love/vector-sketch/experiments/playtime/scripts/spikes/rides.playtime.lua
+[lurker] Hotswap of 'scripts/spikes/rides.playtime.lua' aborted by preswap
+Cached not found
+0.25882352941176	0.32941176470588	0.92941176470588	1
+Cached not found
+0.25882352941176	0.32941176470588	0.92941176470588	1
+Cached not found
+0.76078431372549	0.035294117647059	0.71372549019608	1
+Cached not found
+0.76078431372549	0.035294117647059	0.71372549019608	1
+Cached not found
+0.97254901960784	0.82352941176471	0.80392156862745	1
+Cached not found
+0.97254901960784	0.82352941176471	0.80392156862745	1
+Cached not found
+0.43529411764706	0.95294117647059	0.29411764705882	1
+Cached not found
+0.43529411764706	0.95294117647059	0.29411764705882	1
+[untangle] 2pPc6d and 3EXHxM
+Cached not found
+0.25882352941176	0.32941176470588	0.92941176470588	1
+Cached not found
+0.25882352941176	0.32941176470588	0.92941176470588	1
+[lurker] Hotswapping 'scripts/spikes/rides.playtime.lua'...
+[INFO] src/scene-loader.lua:156:	scene script changed: loading it again
+[INFO] src/script.lua:189:	Script loaded: /Users/nikkikoole/Projects/love/vector-sketch/experiments/playtime/scripts/spikes/rides.playtime.lua
+[lurker] Hotswap of 'scripts/spikes/rides.playtime.lua' aborted by preswap
+Cached not found
+0.16862745098039	0.062745098039216	0.42352941176471	1
+Cached not found
+0.16862745098039	0.062745098039216	0.42352941176471	1
+Cached not found
+0.77254901960784	0.39607843137255	0.86274509803922	1
+Cached not found
+0.77254901960784	0.39607843137255	0.86274509803922	1
+Cached not found
+0.30588235294118	0.68235294117647	0.5843137254902	1
+Cached not found
+0.30588235294118	0.68235294117647	0.5843137254902	1
+Cached not found
+0.88235294117647	0.31764705882353	0.27843137254902	1
+Cached not found
+0.88235294117647	0.31764705882353	0.27843137254902	1
+Cached not found
+0.77254901960784	0.39607843137255	0.86274509803922	1
+Cached not found
+0.77254901960784	0.39607843137255	0.86274509803922	1
+[untangle] 2qSB45 and 4pgya1
+Cached not found
+0.77254901960784	0.39607843137255	0.86274509803922	1
+Cached not found
+0.77254901960784	0.39607843137255	0.86274509803922	1
+[untangle] 2qSB45 and 4pgya1
+[lurker] Hotswapping 'src/hair-locks.lua'...
+[lurker] Swapped 'src/hair-locks.lua' in 0.001119000000017 secs
+[lurker] Hotswapping 'src/hair-native.lua'...
+[lurker] Swapped 'src/hair-native.lua' in 0.00025199999998904 secs
+[synth] dropout: render thread away 33 ms, sound stopped; window in the background, frame 11 ms (worst 11); busy: WindowServer 36%, love115 32%, love115 26%, love115 24%
+[untangle] 3QQVM2 and 41lC5F
+[untangle] 3QQVM2 and 41lC5F
+[lurker] Hotswapping 'scripts/spikes/rides.playtime.lua'...
+[INFO] src/scene-loader.lua:156:	scene script changed: loading it again
+[INFO] src/script.lua:189:	Script loaded: /Users/nikkikoole/Projects/love/vector-sketch/experiments/playtime/scripts/spikes/rides.playtime.lua
+[lurker] Hotswap of 'scripts/spikes/rides.playtime.lua' aborted by preswap
+Cached not found
+0.9921568627451	0.71372549019608	0.1843137254902	1
+Cached not found
+0.9921568627451	0.71372549019608	0.1843137254902	1
+Cached not found
+0.77647058823529	0.29019607843137	0.43921568627451	1
+Cached not found
+0.77647058823529	0.29019607843137	0.43921568627451	1
+Cached not found
+0.38823529411765	0.39607843137255	0.30196078431373	1
+Cached not found
+0.38823529411765	0.39607843137255	0.30196078431373	1
+Cached not found
+0.44705882352941	0.2	0.3843137254902	1
+Cached not found
+0.44705882352941	0.2	0.3843137254902	1
+Cached not found
+0.38823529411765	0.39607843137255	0.30196078431373	1
+Cached not found
+0.38823529411765	0.39607843137255	0.30196078431373	1
+Cached not found
+0.56078431372549	0.79607843137255	0.92549019607843	1
+Cached not found
+0.56078431372549	0.79607843137255	0.92549019607843	1
+Cached not found
+0.88627450980392	0.14901960784314	0.3843137254902	1
+Cached not found
+0.88627450980392	0.14901960784314	0.3843137254902	1
+Cached not found
+0.47843137254902	0.61176470588235	0.24313725490196	1
+Cached not found
+0.47843137254902	0.61176470588235	0.24313725490196	1
+[untangle] 2e1Hqh and j56lt
+[untangle] XpRxX and j56lt
+[untangle] 2e1Hqh and XpRxX
+[untangle] 3ByAP3 and XpRxX
+[untangle] 2e1Hqh and 3ByAP3
+[untangle] 3ByAP3 and j56lt
+Cached not found
+0.38823529411765	0.39607843137255	0.30196078431373	1
+Cached not found
+0.38823529411765	0.39607843137255	0.30196078431373	1
+[untangle] 2e1Hqh and j56lt
+[untangle] XpRxX and j56lt
+[lurker] Hotswapping 'src/hair-locks.lua'...
+[lurker] Swapped 'src/hair-locks.lua' in 0.055064000000016 secs
+[lurker] Hotswapping 'src/hair-native.lua'...
+[lurker] Swapped 'src/hair-native.lua' in 0.00070599999997967 secs
+Cached not found
+0.9921568627451	0.71372549019608	0.1843137254902	1
+Cached not found
+0.9921568627451	0.71372549019608	0.1843137254902	1
+[synth] dropout: render thread away 86 ms, sound stopped; window in the background, frame 11 ms (worst 11); busy: WindowServer 33%, Arc 31%, Arc 22%, cart 22%
+[synth] dropout: render thread away 24 ms, sound stopped; window in the background, frame 11 ms (worst 11)
+[lurker] Hotswapping 'scripts/spikes/rides.playtime.lua'...
+[INFO] src/scene-loader.lua:156:	scene script changed: loading it again
+[INFO] src/script.lua:189:	Script loaded: /Users/nikkikoole/Projects/love/vector-sketch/experiments/playtime/scripts/spikes/rides.playtime.lua
+[lurker] Hotswap of 'scripts/spikes/rides.playtime.lua' aborted by preswap
+Cached not found
+0.82352941176471	0.40392156862745	0.67058823529412	1
+Cached not found
+0.82352941176471	0.40392156862745	0.67058823529412	1
+Cached not found
+0.76862745098039	0.90196078431373	0.49411764705882	1
+Cached not found
+0.76862745098039	0.90196078431373	0.49411764705882	1
+Cached not found
+0.27058823529412	0.90588235294118	0.58039215686275	1
+Cached not found
+0.27058823529412	0.90588235294118	0.58039215686275	1
+Cached not found
+0.050980392156863	0.94509803921569	0.91372549019608	1
+Cached not found
+0.050980392156863	0.94509803921569	0.91372549019608	1
+[lurker] Hotswapping 'scripts/spikes/rides.playtime.lua'...
+[INFO] src/scene-loader.lua:156:	scene script changed: loading it again
+[INFO] src/script.lua:189:	Script loaded: /Users/nikkikoole/Projects/love/vector-sketch/experiments/playtime/scripts/spikes/rides.playtime.lua
+[lurker] Hotswap of 'scripts/spikes/rides.playtime.lua' aborted by preswap
+Cached not found
+0.68627450980392	0.023529411764706	0.57254901960784	1
+Cached not found
+0.68627450980392	0.023529411764706	0.57254901960784	1
+Cached not found
+0.14509803921569	0.96078431372549	0.30588235294118	1
+Cached not found
+0.14509803921569	0.96078431372549	0.30588235294118	1
+Cached not found
+0.37647058823529	0.65098039215686	0.24313725490196	1
+Cached not found
+0.37647058823529	0.65098039215686	0.24313725490196	1
+Cached not found
+0.65098039215686	0.1843137254902	0.54117647058824	1
+Cached not found
+0.65098039215686	0.1843137254902	0.54117647058824	1
+Cached not found
+0.14509803921569	0.96078431372549	0.30588235294118	1
+Cached not found
+0.14509803921569	0.96078431372549	0.30588235294118	1
+Cached not found
+0.37647058823529	0.65098039215686	0.24313725490196	1
+Cached not found
+0.37647058823529	0.65098039215686	0.24313725490196	1
+[lurker] Hotswapping 'src/hair-locks.lua'...
+[lurker] Swapped 'src/hair-locks.lua' in 0.014427999999981 secs
+Cached not found
+0.14509803921569	0.96078431372549	0.30588235294118	1
+Cached not found
+0.14509803921569	0.96078431372549	0.30588235294118	1
+Cached not found
+0.14509803921569	0.96078431372549	0.30588235294118	1
+Cached not found
+0.14509803921569	0.96078431372549	0.30588235294118	1
+[INFO] src/scene-loader.lua:156:	scene script changed: loading it again
+[INFO] src/script.lua:189:	Script loaded: /Users/nikkikoole/Projects/love/vector-sketch/experiments/playtime/scripts/spikes/rides.playtime.lua
+Cached not found
+0.56862745098039	0.094117647058824	0.30588235294118	1
+Cached not found
+0.56862745098039	0.094117647058824	0.30588235294118	1
+Cached not found
+0.58823529411765	0.91372549019608	0.63137254901961	1
+Cached not found
+0.58823529411765	0.91372549019608	0.63137254901961	1
+Cached not found
+0.2156862745098	0.76862745098039	0.64705882352941	1
+Cached not found
+0.2156862745098	0.76862745098039	0.64705882352941	1
+Cached not found
+0.89019607843137	0.54509803921569	0.027450980392157	1
+Cached not found
+0.89019607843137	0.54509803921569	0.027450980392157	1
+[lurker] Hotswapping 'scripts/spikes/rides.playtime.lua'...
+[lurker] Hotswap of 'scripts/spikes/rides.playtime.lua' aborted by preswap
+Cached not found
+0.58823529411765	0.91372549019608	0.63137254901961	1
+Cached not found
+0.58823529411765	0.91372549019608	0.63137254901961	1
+[lurker] Hotswapping 'scripts/spikes/rides.playtime.lua'...
+[INFO] src/scene-loader.lua:156:	scene script changed: loading it again
+[INFO] src/script.lua:189:	Script loaded: /Users/nikkikoole/Projects/love/vector-sketch/experiments/playtime/scripts/spikes/rides.playtime.lua
+[lurker] Hotswap of 'scripts/spikes/rides.playtime.lua' aborted by preswap
+Cached not found
+0.64313725490196	0.23137254901961	0.27843137254902	1
+Cached not found
+0.64313725490196	0.23137254901961	0.27843137254902	1
+Cached not found
+0.96078431372549	0.77254901960784	0.54509803921569	1
+Cached not found
+0.96078431372549	0.77254901960784	0.54509803921569	1
+Cached not found
+0.91764705882353	0.050980392156863	0.67058823529412	1
+Cached not found
+0.91764705882353	0.050980392156863	0.67058823529412	1
+Cached not found
+0.57254901960784	0.28627450980392	0.87843137254902	1
+Cached not found
+0.57254901960784	0.28627450980392	0.87843137254902	1
+Cached not found
+0.96078431372549	0.77254901960784	0.54509803921569	1
+Cached not found
+0.96078431372549	0.77254901960784	0.54509803921569	1
+[lurker] Hotswapping 'src/hair-locks.lua'...
+[lurker] Swapped 'src/hair-locks.lua' in 0.0011419999999589 secs
+[lurker] Hotswapping 'src/hair-locks.lua'...
+[lurker] Swapped 'src/hair-locks.lua' in 0.0012199999999893 secs
+[INFO] src/script.lua:189:	Script loaded: /Users/nikkikoole/Projects/love/vector-sketch/experiments/playtime/scripts/spikes/tufts.playtime.lua
+[synth] dropout: render thread away 25 ms, sound stopped; window in the background, frame 11 ms (worst 11); busy: WindowServer 35%, Arc 30%, iTerm 27%, love115 24%
+[synth] dropout: render thread away 87 ms, sound stopped; window in the background, frame 11 ms (worst 11)
+[lurker] Hotswapping 'src/fuzzy-find.lua'...
+[lurker] Swapped 'src/fuzzy-find.lua' in 0.0030590000000075 secs
+[synth] dropout: render thread away 33 ms, sound stopped; window in the background, frame 11 ms (worst 11); busy: WindowServer 30%, Arc 28%, cart 26%, iTerm 26%
+[synth] dropout: render thread away 105 ms, sound stopped; window in the background, frame 11 ms (worst 11)
+[lurker] Hotswapping 'src/ui/scenes-tab.lua'...
+[lurker] Swapped 'src/ui/scenes-tab.lua' in 0.001355999999987 secs
+[lurker] Hotswapping 'src/fuzzy-find.lua'...
+[lurker] Swapped 'src/fuzzy-find.lua' in 0.00080399999995961 secs
+[lurker] Hotswapping 'src/ui/scenes-tab.lua'...
+[lurker] Swapped 'src/ui/scenes-tab.lua' in 0.00062500000001364 secs
+[synth] dropout: render thread away 2 ms, sound stopped; window in the background, frame 11 ms (worst 11); busy: dreamatlas-dbg 95%, WindowServer 37%, love115 27%, love115 25%
+[synth] dropout: render thread away 13 ms, sound stopped; window in the background, frame 11 ms (worst 11); busy: WindowServer 38%, claude 35%, love115 34%, Xcode26_6 21%
+[synth] dropout: render thread away 34 ms, sound stopped; window in the background, frame 11 ms (worst 11); busy: Google Chrome 147%, dreamatlas-dbg 96%, dasd 49%, WindowServer 37%
+[INFO] src/scene-loader.lua:70:	Scene loaded: /Users/nikkikoole/Projects/love/vector-sketch/experiments/playtime/scripts/spikes/hair.playtime.json
+[INFO] src/script.lua:189:	Script loaded: /Users/nikkikoole/Projects/love/vector-sketch/experiments/playtime/scripts/spikes/hair.playtime.lua
+[native-lib] native/desound/libdesound.dylib lacks hair_strip_v2: it is older than the C in native/desound, rerun native/desound/build.sh (game stopped)
+[lurker] Hotswapping 'scripts/spikes/hair.playtime.lua'...
+[lurker] Hotswap of 'scripts/spikes/hair.playtime.lua' aborted by preswap
+Cached not found
+0.95294117647059	0.45882352941176	0.03921568627451	1
+[synth] dropout: render thread away 21 ms, sound stopped; window in the background, frame 11 ms (worst 11); busy: iTerm 59%, WindowServer 34%, dreamatlas-dbg 28%, love115 28%
+[synth] dropout: render thread away 7 ms, sound stopped; window in the background, frame 11 ms (worst 11); busy: iTerm 58%, claude 51%, love115 36%, claude 33%
+[synth] dropout: render thread away 36 ms, sound stopped; window in the background, frame 11 ms (worst 11); busy: WindowServer 37%, ControlCenter 34%, love115 31%, love115 24%
+[synth] dropout: render thread away 31 ms, sound stopped; window in the background, frame 11 ms (worst 11); busy: cart 39%, love115 35%, WindowServer 34%, coreaudiod 29%
+[synth] dropout: render thread away 26 ms, sound stopped; window in the background, frame 11 ms (worst 11); busy: WindowServer 33%, iTerm 32%, love115 29%, love115 22%
+[lurker] Hotswapping 'src/hair-locks.lua'...
+[lurker] Swapped 'src/hair-locks.lua' in 0.025904999999966 secs
+[synth] dropout: render thread away 45 ms, sound stopped; window in the background, frame 11 ms (worst 11); busy: WindowServer 37%, Arc 30%, iTerm 29%, love115 27%
+[synth] dropout: render thread away 24 ms, sound stopped; window in the background, frame 11 ms (worst 11); busy: WindowServer 32%, iTerm 30%, Arc 29%, love115 28%
+[synth] dropout: render thread away 2 ms, sound stopped; window in the background, frame 11 ms (worst 11)
+Cached not found
+0.93333333333333	0.90196078431373	0.50196078431373	1
+Cached not found
+0.93333333333333	0.90196078431373	0.50196078431373	1
+Cached not found
+0.81176470588235	0.97647058823529	0.031372549019608	1
+Cached not found
+0.48235294117647	0.73333333333333	0.46666666666667	1
+Cached not found
+0.48235294117647	0.73333333333333	0.46666666666667	1
+Cached not found
+1	0.65882352941176	0.019607843137255	1
+Cached not found
+0.33725490196078	0.03921568627451	0.72941176470588	1
+Cached not found
+0.33725490196078	0.03921568627451	0.72941176470588	1
+Cached not found
+0.56078431372549	0.090196078431373	0.32549019607843	1
+Cached not found
+0.16078431372549	0.84313725490196	0.53333333333333	1
+Cached not found
+0.16078431372549	0.84313725490196	0.53333333333333	1
+Cached not found
+0.81960784313725	0.57647058823529	0.3921568627451	1
+Cached not found
+0.062745098039216	0.77647058823529	0.40392156862745	1
+Cached not found
+0.062745098039216	0.77647058823529	0.40392156862745	1
+Cached not found
+0.54901960784314	0.5843137254902	0.64313725490196	1
+Cached not found
+0.003921568627451	0.50196078431373	0.33333333333333	1
+Cached not found
+0.003921568627451	0.50196078431373	0.33333333333333	1
+Cached not found
+0.098039215686275	0.63529411764706	0.26274509803922	1
+[ERROR] src/shapes.lua:347:	Failed to create shape for triangle: Box2D assertion failed: false
+Cached not found
+0.22352941176471	0.67450980392157	0.84705882352941	1
+Cached not found
+0.22352941176471	0.67450980392157	0.84705882352941	1
+Cached not found
+0.36078431372549	0.32549019607843	0.34117647058824	1
+Cached not found
+0	0.42352941176471	0.72941176470588	1
+Cached not found
+0	0.42352941176471	0.72941176470588	1
+[synth] dropout: render thread away 36 ms, sound stopped; window in front, frame 11 ms (worst 11); busy: WindowServer 39%, coreaudiod 26%, love115 22%, iTerm 20%
+[synth] dropout: render thread away 165 ms, sound stopped; window in front, frame 11 ms (worst 11)
+[synth] dropout: render thread away 43 ms, sound stopped; window in front, frame 11 ms (worst 11)
+[synth] dropout: render thread away 85 ms, sound stopped; window in the background, frame 11 ms (worst 11); busy: WindowServer 34%, cart 30%, Arc 26%, OpenEmu 23%
+[synth] dropout: render thread away 25 ms, sound stopped; window in the background, frame 11 ms (worst 11); busy: Xcode26_6 75%, WindowServer 37%, love115 30%, love115 26%
+[synth] dropout: render thread away 32 ms, sound stopped; window in the background, frame 11 ms (worst 11); busy: dreamatlas-dbg 104%, WindowServer 37%, love115 30%, love115 26%
+Cached not found
+0.32941176470588	0.74117647058824	0.78823529411765	1
+Cached not found
+0.47058823529412	0.47058823529412	0.69019607843137	1
+Cached not found
+0.47058823529412	0.47058823529412	0.69019607843137	1
+Cached not found
+0.93333333333333	0.50980392156863	0.73333333333333	1
+Cached not found
+0.066666666666667	0.78039215686275	0.4	1
+Cached not found
+0.066666666666667	0.78039215686275	0.4	1
+[ERROR] src/shapes.lua:347:	Failed to create shape for triangle: Box2D assertion failed: false
+[ERROR] src/shapes.lua:347:	Failed to create shape for triangle: Box2D assertion failed: false
+[ERROR] src/shapes.lua:347:	Failed to create shape for triangle: Box2D assertion failed: false
+Cached not found
+0.054901960784314	0.023529411764706	0.25490196078431	1
+Cached not found
+0.92549019607843	0.72156862745098	0.31372549019608	1
+Cached not found
+0.92549019607843	0.72156862745098	0.31372549019608	1
+Cached not found
+0.64705882352941	0.54901960784314	0.69411764705882	1
+[synth] dropout: render thread away 33 ms, sound stopped; window in the background, frame 11 ms (worst 11); busy: iTerm 43%, dreamatlas-dbg 41%, WindowServer 32%, love115 28%
+[synth] dropout: render thread away 39 ms, sound stopped; window in the background, frame 11 ms (worst 11); busy: mobileassetd 106%, WindowServer 37%, love115 29%, dreamatlas-dbg 28%
+[synth] dropout: render thread away 19 ms, sound stopped; window in the background, frame 11 ms (worst 11); busy: axassetsd 99%, mobileassetd 50%, iTerm 38%, WindowServer 32%
+[synth] dropout: render thread away 26 ms, sound stopped; window in the background, frame 11 ms (worst 11); busy: claude 74%, dreamatlas-dbg 52%, (pidinfo) 46%, WindowServer 30%
+[synth] dropout: render thread away 12 ms, sound stopped; window in the background, frame 11 ms (worst 11)
+[lurker] Hotswapping 'src/hair-locks.lua'...
+[lurker] Swapped 'src/hair-locks.lua' in 0.0013619999999719 secs
+[ERROR] src/shapes.lua:347:	Failed to create shape for triangle: Box2D assertion failed: area > b2_epsilon
+[ERROR] src/shapes.lua:347:	Failed to create shape for triangle: Box2D assertion failed: area > b2_epsilon
+Cached not found
+0.21960784313725	0.90196078431373	0.60392156862745	1
+Cached not found
+0.21960784313725	0.90196078431373	0.60392156862745	1
+Cached not found
+0.32156862745098	0.90980392156863	0.81960784313725	1
+[synth] dropout: render thread away 2 ms, sound stopped; window in front, frame 11 ms (worst 11); busy: WindowServer 34%, love115 26%, love115 18%, Safari 18%
+[synth] dropout: render thread away 23 ms, sound stopped; window in front, frame 11 ms (worst 11)
+[synth] dropout: render thread away 3 ms, sound stopped; window in front, frame 11 ms (worst 11)
+[synth] dropout: render thread away 63 ms, sound stopped; window in front, frame 11 ms (worst 11)
+[synth] dropout: render thread away 88 ms, sound stopped; window in the background, frame 11 ms (worst 11)
+[synth] dropout: render thread away 47 ms, sound stopped; window in the background, frame 11 ms (worst 11); busy: dreamatlas-dbg 53%, WindowServer 35%, love115 29%, Arc 26%
+[synth] dropout: render thread away 34 ms, sound stopped; window in the background, frame 11 ms (worst 11); busy: iTerm 46%, Xcode26_6 43%, WindowServer 38%, love115 22%
+[synth] dropout: render thread away 73 ms, sound stopped; window in the background, frame 11 ms (worst 11); busy: dreamatlas-dbg 54%, WindowServer 37%, love115 30%, Arc 24%
+[lurker] An error occurred; switching to error state
+[lurker] Hotswapping 'src/torso-lobes.lua'...
+[lurker] Swapped 'src/torso-lobes.lua' in 0.0015250000000151 secs
+Cached not found
+0.17647058823529	0.87843137254902	0.34901960784314	1
+Cached not found
+0.17647058823529	0.87843137254902	0.34901960784314	1
+[synth] dropout: render thread away 37 ms, sound stopped; window in front, frame 11 ms (worst 11); busy: love115 45%, love115 32%, WindowServer 31%, claude 29%
+Cached not found
+0.78823529411765	1	0.7921568627451	1
+[ERROR] src/shapes.lua:347:	Failed to create shape for triangle: Box2D assertion failed: area > b2_epsilon
+[ERROR] src/shapes.lua:347:	Failed to create shape for triangle: Box2D assertion failed: area > b2_epsilon
+Cached not found
+0.42745098039216	0.2078431372549	0.90588235294118	1
+Cached not found
+0.42745098039216	0.2078431372549	0.90588235294118	1
+Cached not found
+0.37647058823529	0.67450980392157	0.37254901960784	1
+Cached not found
+0.047058823529412	0.48235294117647	0.17254901960784	1
+Cached not found
+0.047058823529412	0.48235294117647	0.17254901960784	1
+Cached not found
+0.75686274509804	0.83137254901961	0.79607843137255	1
+[synth] dropout: render thread away 3 ms, sound stopped; window in front, frame 11 ms (worst 11); busy: WindowServer 36%, Arc 34%, Arc 22%, iTerm 19%
+[synth] dropout: render thread away 68 ms, sound stopped; window in front, frame 11 ms (worst 11)
+[synth] dropout: render thread away 118 ms, sound stopped; window in front, frame 11 ms (worst 11)
+Cached not found
+0.2	0.32549019607843	0.18039215686275	1
+Cached not found
+0.2	0.32549019607843	0.18039215686275	1
+Cached not found
+0.77254901960784	0.36862745098039	0.29803921568627	1
+[lurker] Hotswapping 'src/hair-locks.lua'...
+[lurker] Swapped 'src/hair-locks.lua' in 0.03727200000003 secs
+[lurker] Hotswapping 'scripts/spikes/hair.playtime.lua'...
+[INFO] src/scene-loader.lua:156:	scene script changed: loading it again
+[INFO] src/script.lua:189:	Script loaded: /Users/nikkikoole/Projects/love/vector-sketch/experiments/playtime/scripts/spikes/hair.playtime.lua
+[lurker] Hotswap of 'scripts/spikes/hair.playtime.lua' aborted by preswap
+[synth] dropout: render thread away 84 ms, sound stopped; window in the background, frame 11 ms (worst 11); busy: love115 41%, Arc 34%, cart 28%, WindowServer 28%
+[synth] dropout: render thread away 64 ms, sound stopped; window in the background, frame 11 ms (worst 11)
+[lurker] Hotswapping 'src/hair-locks.lua'...
+[lurker] Swapped 'src/hair-locks.lua' in 0.053174000000013 secs
+[lurker] Hotswapping 'scripts/spikes/hair.playtime.lua'...
+[INFO] src/scene-loader.lua:156:	scene script changed: loading it again
+[INFO] src/script.lua:189:	Script loaded: /Users/nikkikoole/Projects/love/vector-sketch/experiments/playtime/scripts/spikes/hair.playtime.lua
+[lurker] Hotswap of 'scripts/spikes/hair.playtime.lua' aborted by preswap
+[lurker] Hotswapping 'src/hair-locks.lua'...
+[lurker] Swapped 'src/hair-locks.lua' in 0.0018350000000282 secs
+[lurker] Hotswapping 'scripts/spikes/hair.playtime.lua'...
+[INFO] src/scene-loader.lua:156:	scene script changed: loading it again
+[INFO] src/script.lua:189:	Script loaded: /Users/nikkikoole/Projects/love/vector-sketch/experiments/playtime/scripts/spikes/hair.playtime.lua
+[lurker] Hotswap of 'scripts/spikes/hair.playtime.lua' aborted by preswap
+[synth] dropout: render thread away 83 ms, sound stopped; window in the background, frame 11 ms (worst 11); busy: cart 31%, WindowServer 28%, Arc 25%, ControlCenter 22%
+Cached not found
+0.32549019607843	0.070588235294118	0.80392156862745	1
+Cached not found
+0.32549019607843	0.070588235294118	0.80392156862745	1
+writing took	9.5833365776343e-07	seconds
