@@ -467,6 +467,8 @@ end
 -- picture has it, into lock.bx / by (torso1's frame). Without such a torso the roots stay put.
 -- Returns whether a root moved more than WAKE_MOVE from where it was when the hair fell asleep.
 local function bendRoots(hair)
+    -- (no locks: nothing to bend; torso-lobes' weightsFor reads the first point, 2026-11-10)
+    if #hair.rootRest == 0 then return false end
     local bones = hair.body and spineSkin.torsoBones(hair.body)
     if not bones then return false end
     local bent = (bones.deform or spineSkin.deform)(hair.rootRest, bones, hair.rootBent)
