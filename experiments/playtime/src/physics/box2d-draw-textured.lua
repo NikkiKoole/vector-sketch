@@ -1119,8 +1119,10 @@ local noseLits = setmetatable({}, { __mode = 'k' })
 local function noseLit(extra)
     local lit = noseLits[extra]
     if not lit then
+        -- matte: the clay's tight shine (0.2, 25) read as metal (Nikki 2026-11-10: "less metallic")
         lit = setmetatable({ plasticine = true, plasticineForm = true, plasticineFormBaked = true,
-            plasticineMottleStrength = 0 }, { __index = extra })
+            plasticineMottleStrength = 0, plasticineSpecStrength = 0.04, plasticineSpecPow = 6,
+            plasticineBump = 1 }, { __index = extra })
         noseLits[extra] = lit
     end
     return lit

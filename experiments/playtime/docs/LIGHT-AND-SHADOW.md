@@ -447,8 +447,10 @@ fade, a sun: the panel's `fades` switch, LS4).
 - [x] **LS28. The face and feet catch the light** (2026-11-10, Nikki: "a bit with a volume, that light
   catches it"; each liked as it came). Every Mipo, old scenes too; each has a flat switch to compare:
   - Nose (`state.noseFlat`): through the clay shader rounded like a dome (form baked from its mask), and a
-    soft shadow of it on the face away from the strongest light. `src/physics/box2d-draw-textured.lua`.
-  - Teeth (`state.teethFlat`): lit as glaze (enamel), the upper lip's shadow along their top, darker toward
+    soft shadow of it on the face away from the strongest light. Matte (shine 0.04, wide; bump 1): the
+    clay's own tight shine read as metal ("less metallic"). `src/physics/box2d-draw-textured.lua`.
+  - Teeth (`state.teethFlat`): lit as enamel (glaze without its clear coat, fainter shine: glaze looked
+    wet, "less wet"), the upper lip's shadow along their top, darker toward
     the corners. Lips (`state.lipsFlat`): lit as satin, the lower lip's soft shadow on the chin.
     `src/render/mouth.lua` (teethMaterial / teethLipShadow / teethCorners, lipMaterial / lipShadow).
   - Eyes (`state.eyesFlat`): the white lit as glaze rounded like a ball with the flat white laid back over

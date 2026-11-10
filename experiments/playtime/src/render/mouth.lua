@@ -444,7 +444,7 @@ lib.gumSolid = { 0.3, 0.89 }
 -- lit as glaze (enamel: a soft shine where the light falls, each tooth rounded by its picture's alpha),
 -- and a soft dark over them, still clipped to the opening: the upper lip's shadow along the top and
 -- darker toward the corners, where they turn away into the mouth. state.teethFlat = true: flat.
-lib.teethMaterial = 'glaze'
+lib.teethMaterial = 'enamel' -- glaze looked wet (Nikki 2026-11-10: "less wet"): enamel has no clear coat
 lib.teethLipShadow = 0.4  -- darkest at the top of the teeth, fading out over teethLipDepth of their height
 lib.teethLipDepth = 0.45
 lib.teethCorners = 0.5    -- darkest at the corners

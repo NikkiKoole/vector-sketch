@@ -23,6 +23,7 @@ lib.PRESETS = {
     wax = { kind = 5, spec = { 0.2, 12 }, surf = { 0.7 } },
     plastic = { kind = 5, spec = { 1, 70 }, surf = { 0.15 } },
     glaze = { kind = 5, spec = { 0.3, 20, 0.5, 1 }, surf = { 0.1, 0, 0.45 } },
+    enamel = { kind = 5, spec = { 0.12, 10, 0.3 }, surf = { 0.15, 0, 0.45 } }, -- teeth: glaze without the wet coat
     candy = { kind = 5, spec = { 0.2, 30, 0, 1 }, surf = { 0.4 } },
 }
 
