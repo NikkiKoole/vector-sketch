@@ -278,7 +278,7 @@ function s.drawUI()
     if not (state.playMode and c.showPanel) then return end
     ui.startFrame() -- play mode draws no editor UI, so nothing else starts the frame
     local BH, pad, w = 34, 6, 300
-    local rows = 16
+    local rows = 19
     local h = BH * rows + pad * (rows + 1) + 24
     local _, sh = love.graphics.getDimensions()
     local x0, y0 = 20, sh - h - 20
@@ -340,6 +340,18 @@ function s.drawUI()
         v = ui.sliderWithInput('facing-turnBlink', x, y, 150, 0, 1, walk.turnBlink, nil, 0.05)
         if v then walk.turnBlink = v + 0 end
         ui.label(x + 225, y, 'blink on turn')
+        x, y = ui.nextLayoutPosition(layout, w - 12, BH)
+        if ui.button(x, y, w - 12, 'switch: ' .. (walk.stagger and 'staggered' or 'all at once')) then
+            walk.stagger = not walk.stagger
+        end
+        x, y = ui.nextLayoutPosition(layout, w - 12, BH)
+        v = ui.sliderWithInput('facing-earAt', x, y, 150, 0.1, 1, walk.earAt, nil, 0.05)
+        if v then walk.earAt = v + 0 end
+        ui.label(x + 225, y, 'ears at')
+        x, y = ui.nextLayoutPosition(layout, w - 12, BH)
+        v = ui.sliderWithInput('facing-armLag', x, y, 150, 0, 0.5, walk.armLag, nil, 0.02)
+        if v then walk.armLag = v + 0 end
+        ui.label(x + 225, y, 'arms after (s)')
     end)
     love.graphics.setColor(0.95, 0.92, 0.8)
     love.graphics.print('left            front            right', x0 + w + 20, sh - 40, 0, 1.4, 1.4)

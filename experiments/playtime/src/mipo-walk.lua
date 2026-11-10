@@ -13,7 +13,9 @@
 -- back (an ease-in-out with overshoot, lib.headBack) in lib.headTime a step. Off: the old drift,
 -- HEAD_SPEED. Sometimes (lib.turnBlink) it blinks as it sets off, shut through the quick middle
 -- (Nikki 2026-11-11: "do the blink on turn, sometimes"). The arms switch at their own moment, once
--- the head is lib.armAt of the way.
+-- the head is lib.armAt of the way. Staggered (lib.stagger, Nikki 2026-11-11, MIPO-FACING MF7): the
+-- switch spread over three moments instead of one frame: the ears go with the head (as it passes
+-- lib.earAt of a step), the body and feet when the body switches, the arms lib.armLag after that.
 -- Back home: a Mipo this module turned (arrows, a scene's turn, a walk) turns back to the facing it had
 -- before (inst._home: as built, front for nearly all) once it has stood lib.relaxAfter seconds, not held
 -- nor walking (Nikki 2026-11-11). Facing a scene sets itself (tracks, rides, soapbox) is left alone.
@@ -51,6 +53,9 @@ local SWITCHES = {
     headKeys = true, -- the head turns as a keyed move (false: the slow even drift, HEAD_SPEED)
     headTime = 0.3,  -- seconds the keyed head takes for one step (left -> right: two steps, ~1.4x)
     headBack = 1.7,  -- the keyed head's anticipation and overshoot (0: plain ease; 1.7 ~10% of a step)
+    stagger = true,  -- ears with the head, body and feet, then the arms (false: ears with the body, arms by armAt)
+    earAt = 0.5,     -- staggered: the ears switch once the head is this far through a step
+    armLag = 0.1,    -- staggered: seconds after the body switches that the arms follow
     turnBlink = 0.5, -- the chance a keyed head turn blinks as it sets off (0: never, 1: always)
     relaxAfter = 3,  -- seconds standing before a turned Mipo turns back home (0: it stays turned)
 }
@@ -350,6 +355,9 @@ end
 
 local function doSwitch(inst, want)
     inst.dna.armFacing = facing.armFacing(inst) -- the arms keep theirs until updateArms moves them
+    -- staggered, the ears keep theirs too (updateEars moves them with the head); else they go now
+    inst.dna.earFacing = lib.stagger and facing.earFacing(inst) or nil
+    inst._bodySwitchedAt = love.timer.getTime()
     if lib.rebuild then -- the whole Mipo made again (to compare)
         inst.dna.facing = want
         characterManager.rebuildFromCreation(inst, {}) -- its textures turn the face by _turnAngle
@@ -408,10 +416,15 @@ local function switchBody(inst, want, now)
 end
 
 -- The arms (limits, draw order) follow the body's facing at their own moment: once the head is
--- lib.armAt of the way there. Turning only the head leaves them with the body.
-local function updateArms(inst)
+-- lib.armAt of the way there (staggered: lib.armLag after the body switched). Turning only the head
+-- leaves them with the body.
+local function updateArms(inst, now)
     local body, arms = facing.get(inst), facing.armFacing(inst)
     if body == arms then return end
+    if lib.stagger then
+        if now - (inst._bodySwitchedAt or 0) >= lib.armLag then characterManager.switchArms(inst, body) end
+        return
+    end
     local ratio = facing.angle(inst) / facing.faceTurn -- the head: -1 left .. 1 right
     local at = lib.armAt
     local ready
@@ -419,6 +432,25 @@ local function updateArms(inst)
     elseif body == 'left' then ready = ratio <= -at
     else ready = math.abs(ratio) <= 1 - at end
     if ready or not inst._headGoal then characterManager.switchArms(inst, body) end
+end
+
+-- Staggered, the ears go with the head: the side it is past lib.earAt of a step toward. Only for a
+-- Mipo this module turns (a scene that sets facing itself keeps its ears with the body). Not while an
+-- ear is held (it is remade).
+local EARS = { 'lear', 'rear' }
+local function updateEars(inst)
+    if not (inst._headGoal or inst._turnGoal or inst.dna.earFacing) then return end
+    if not lib.stagger then
+        if inst.dna.earFacing and not held(inst, EARS) then characterManager.switchEars(inst, nil) end
+        return
+    end
+    local ratio = facing.angle(inst) / facing.faceTurn
+    local side = ratio >= lib.earAt and 'right' or ratio <= -lib.earAt and 'left' or 'front'
+    if side ~= facing.earFacing(inst) and not held(inst, EARS) then characterManager.switchEars(inst, side) end
+    -- turned and settled with the body: back to following it
+    if not (inst._headGoal or inst._turnGoal) and facing.earFacing(inst) == facing.get(inst) then
+        inst.dna.earFacing = nil
+    end
 end
 
 local function updateTurn(inst, dt, now)
@@ -451,7 +483,8 @@ local function updateTurn(inst, dt, now)
             inst._turnHoldUntil = now + ((lib.auto and target ~= 0) and AUTO_HOLD or 0)
         end
     end
-    updateArms(inst)
+    updateArms(inst, now)
+    updateEars(inst)
 end
 
 -- back home after standing a while (lib.relaxAfter): not while turning, held, walking or held off

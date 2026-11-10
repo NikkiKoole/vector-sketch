@@ -57,6 +57,19 @@ function lib.armFacing(instance)
     return lib.get(instance)
 end
 
+-- The ears can switch at another moment than the body too (a staggered turn, src/mipo-walk.lua: they
+-- go with the head): dna.earFacing, else they face as the body does.
+function lib.earFacing(instance)
+    local f = instance and instance.dna and instance.dna.earFacing
+    if f == 'left' or f == 'right' or f == 'front' then return f end
+    return lib.get(instance)
+end
+
+local function earDir(instance)
+    local f = lib.earFacing(instance)
+    return f == 'right' and 1 or f == 'left' and -1 or 0
+end
+
 local ARM_KIND = { luarm = true, ruarm = true, llarm = true, rlarm = true, lhand = true, rhand = true }
 
 -- the facing a part goes by: the arms' for arm parts, else the body's
@@ -148,14 +161,14 @@ end
 
 -- The ear at the back of the turned head: lear facing right, rear facing left.
 function lib.isBackEar(instance, partName)
-    local d = lib.dir(instance)
+    local d = earDir(instance)
     return (d > 0 and partName == 'lear') or (d < 0 and partName == 'rear')
 end
 
 -- An ear's attach point turned with the head (character-topology outline).
 function lib.turnEarX(instance, partName, x, cx, r)
     local turn = lib.isBackEar(instance, partName) and lib.backEarTurn or lib.faceTurn
-    return (lib.turnX(instance, x, cx, r, lib.dir(instance) * turn))
+    return (lib.turnX(instance, x, cx, r, earDir(instance) * turn))
 end
 
 -- The idle gaze's centre: ahead of the face as far as the head is turned (mipo-actions gazeGoal).
@@ -188,8 +201,10 @@ local BACK_EAR_Z = 205
 -- After the textures are made (mipo-textures rebuildTextures): far limbs' sfixtures behind the
 -- torso, the back ear over the head.
 function lib.applyZ(instance)
-    if lib.get(instance) == 'front' and lib.armFacing(instance) == 'front' then return end
-    local backEar = instance.parts and instance.parts[lib.dir(instance) > 0 and 'lear' or 'rear']
+    if lib.get(instance) == 'front' and lib.armFacing(instance) == 'front'
+        and lib.earFacing(instance) == 'front' then return end
+    local ed = earDir(instance)
+    local backEar = ed ~= 0 and instance.parts and instance.parts[ed > 0 and 'lear' or 'rear']
     if backEar and backEar.body and not backEar.body:isDestroyed() then
         for _, fixture in ipairs(backEar.body:getFixtures()) do
             local ud = fixture:getUserData()

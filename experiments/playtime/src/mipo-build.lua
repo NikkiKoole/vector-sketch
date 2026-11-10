@@ -464,7 +464,7 @@ local FEET = { 'lfoot', 'rfoot' }
 -- limbs get the new side's joint limits, the foot that turns and the ears are remade (their
 -- angle, picture and attach point change) and the textures redrawn (the draw order with them).
 function lib.switchFacing(instance, want)
-    local before = {}
+    local before, earsBefore = {}, facing.earFacing(instance)
     for _, name in ipairs(FEET) do before[name] = facing.source(instance, name) end
     instance.dna.facing = want
     for _, name in ipairs(LIMBS) do reapplyLimits(instance, name) end
@@ -474,8 +474,11 @@ function lib.switchFacing(instance, want)
         turned[name] = facing.source(instance, name) ~= before[name]
         if turned[name] and instance.parts[name] then lib.updatePart(name, {}, instance) end
     end
-    for _, name in ipairs({ 'lear', 'rear' }) do
-        if instance.parts[name] then lib.updatePart(name, {}, instance) end
+    -- the ears only when theirs changed (dna.earFacing keeps them: a staggered turn moves them later)
+    if facing.earFacing(instance) ~= earsBefore then
+        for _, name in ipairs({ 'lear', 'rear' }) do
+            if instance.parts[name] then lib.updatePart(name, {}, instance) end
+        end
     end
     -- updatePart keeps a part's angle; a turned foot goes to its new rest instead
     for _, name in ipairs(FEET) do
@@ -496,6 +499,19 @@ end
 function lib.switchArms(instance, want)
     instance.dna.armFacing = want
     for _, name in ipairs({ 'luarm', 'ruarm', 'llarm', 'rlarm' }) do reapplyLimits(instance, name) end
+    textures.rebuildTextures(instance)
+    applyGroupAndZ(instance, true)
+end
+
+-- The ears alone turned to another facing (dna.earFacing; nil again follows the body): remade, their
+-- attach point and the back ear's place, at their own moment in a turn (src/mipo-walk.lua).
+function lib.switchEars(instance, want)
+    local was = facing.earFacing(instance)
+    instance.dna.earFacing = want
+    if facing.earFacing(instance) == was then return end
+    for _, name in ipairs({ 'lear', 'rear' }) do
+        if instance.parts[name] then lib.updatePart(name, {}, instance) end
+    end
     textures.rebuildTextures(instance)
     applyGroupAndZ(instance, true)
 end

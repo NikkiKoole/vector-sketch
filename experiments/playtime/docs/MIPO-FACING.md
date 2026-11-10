@@ -107,8 +107,14 @@ already folded; swinging straight legs forward in the air pushed it off the back
   Muscles only, no forces: the hand moves it. A turn waits only
   while a part it remakes (foot, ear) is held. Into every scene with MF6 (2026-11-10); what's left
   is MF8.
-- [ ] **MF7. A smoother turn**, if the pop shows: stagger feet / arms / ears, or swing the feet
-  round and swap z in place instead of remaking them.
+- [x] **MF7. A smoother turn: staggered** (Nikki 2026-11-11: "y try the stagger"; "reads better").
+  The switch spread over three moments instead of one frame (`lib.stagger`): the ears go with the
+  head as it passes `lib.earAt` (0.5) of a step (`dna.earFacing`, `characterManager.switchEars`),
+  the body and feet when the body switches, the arms `lib.armLag` (0.1 s) after (with the keyed head
+  the arms' `armAt` had them switch on the body's frame). Front -> right: ears ~0.15 s, body ~0.25 s,
+  arms ~0.35 s. Scenes that set facing themselves keep their ears with the body. Panel: staggered /
+  all at once, ears at, arms after. Not tried: swinging the feet round and swapping z in place
+  instead of remaking them.
 - [ ] **MF8. Walking, the leftovers.** It still tips into the drag (pulled high, feet on the floor:
   a broom by its handle), next try pulling at the hips while walking; walking held by a foot (that
   foot can't step).
