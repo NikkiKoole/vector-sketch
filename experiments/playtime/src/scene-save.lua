@@ -249,6 +249,7 @@ function lib.gatherSaveData(world, camera)
     }
     saveData.music = roomMusic.save()
     saveData.light = sceneLight.save()
+    saveData.mipos = require('src.mipo-walk').save() -- nil while walking is on (src/mipo-walk.lua)
     return saveData
 end
 

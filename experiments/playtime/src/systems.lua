@@ -15,6 +15,11 @@ local lib = {}
 
 lib.list = {
     {
+        name = 'walk', -- Mipos turn, and walk when dragged along the floor (src/mipo-walk.lua, MIPO-FACING MF6)
+        module = 'src.mipo-walk',
+        update = function(m, dt) m.update(dt) end,
+    },
+    {
         name = 'hair', -- hair locks on Mipos and on bodies (src/hair-locks.lua, docs/HAIR-LOCKS.md)
         module = 'src.hair-locks',
         update = function(m, dt) m.update(dt) end,

@@ -108,6 +108,7 @@ local function resetScene(data, world, cam)
     cameraFollow.loadSettings(data.camera and data.camera.settings)
     roomMusic.load(data.music) -- the room's music (src/room-music.lua)
     sceneLight.load(data.light) -- the room's light level (src/scene-light.lua)
+    require('src.mipo-walk').load(data.mipos) -- do Mipos walk when dragged (src/mipo-walk.lua)
     if data.camera then
         cam:setTranslation(data.camera.x, data.camera.y)
         cam:setScale(data.camera.scale)

@@ -15,6 +15,7 @@ local lightParams = require('src.light-params')
 local roomMusicParams = require('src.room-music-params')
 local voiceLabParams = require('src.voice-lab-params')
 local hairBounce = require('src.hair-bounce')
+local mipoWalk = require('src.mipo-walk')
 
 local PANEL_WIDTH = ui.theme.panelWidth
 local START_X, START_Y = 102, 60 -- right of the tool rail
@@ -92,6 +93,13 @@ function lib.drawWorldSettingsUI()
             if clicked then f.light = not f.light end
             if f.light then
                 y = y + inspector.drawParams('light', lightParams.rows, lightParams.target(), nil, x, y, w)
+            end
+
+            -- the scene's Mipos: walking when dragged along the floor (src/mipo-walk.lua), saved with it
+            clicked, y = sectionHeader(x, y, w, 'mipos', f.mipos)
+            if clicked then f.mipos = not f.mipos end
+            if f.mipos then
+                y = y + inspector.drawParams('mipos', mipoWalk.rows, mipoWalk.settings(), nil, x, y, w)
             end
 
             local pv = state.panelVisibility

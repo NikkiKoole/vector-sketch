@@ -1,6 +1,6 @@
 # Mipo facing — left, front, right
 
-status: idea
+status: active, focus
 
 A Mipo can face left or right instead of front: `dna.facing` = `'left'` / `'right'` (nil or
 `'front'` = as always), `src/mipo-facing.lua`. After puppet-maker2's `facingVars.legs`
@@ -63,15 +63,22 @@ already folded; swinging straight legs forward in the air pushed it off the back
   the flip. Next if wanted: stagger
   feet / arms / ears, or swing the feet round instead of remaking them. Feet, limits, draw order and ears change in those two steps. Open: does
   the pop show, and a turn that's not a rebuild (feet swung, z swapped in place).
-- [ ] **MF6. Promote turning + autowalk out of the spike** (Nikki 2026-11-06: "we might want to
-  promote this soon"; into the engine (Nikki 2026-11-10, LANDING-2026-11.md), before hair and hats land, so they turn with it). The turning (body / head / arms / leaning foot) and the autowalk live in
-  `scripts/spikes/facing.playtime.lua`; for every Mipo they move into a module (`src/mipo-walk.lua`
-  next to `src/mipo-facing.lua`), run from `mipo-actions.update` for every registered Mipo. To
-  settle on the way: the defaults that stay (head speed, arm moment, turn pull, grips), which
-  spike switches go (rebuild compare, hop, flip), what a saved scene keeps (dna.facing yes;
-  mid-turn state no), and how it sits with what mipo-actions already does to legs (idle slump,
-  jump, ragdoll, sit). Checked by the full suite, `snapshot.sh mipos` before and after, and a
-  spec that drags a Mipo (a fake pointer, as the spike was measured) and sees it step and turn.
+- [x] **MF6. Promote turning + autowalk out of the spike** (Nikki 2026-11-06: "we might want to
+  promote this soon"; into the engine, Nikki 2026-11-10, LANDING-2026-11.md, before hair and hats).
+  Done 2026-11-10: `src/mipo-walk.lua`, run for every Mipo by `src/systems.lua` (in a fixed order: a
+  switch remakes bodies). The spike's code as it was, its defaults kept (head 30°/s, body 120°/s,
+  arms at 0.6, the turn pull 0.7 leg lengths over 0.3 s, grips 0.05 / 0.5). Walking can be switched
+  off per scene (Nikki: "we also need to be able to toggle this"): settings panel, section 'mipos',
+  'walk when dragged', on by default, saved with the scene only when off (`mipos = { walk = false }`).
+  Not while a Mipo is a ragdoll, flipped or dazed, nor one a scene holds off (`mipoWalk.hold(inst,
+  true)`: the facing spike's sitting). The spike's comparison switches (lean / flip, hop, rebuild
+  whole, turning by itself, arms at) are the module's options, back to their defaults on every scene
+  load (left on, they rebuilt the tracks riders out of their carts in the next scene). A scene keeps
+  dna.facing; a turn or walk under way starts over. The spike is its panel now (760 -> 330 lines).
+  Spec `mipo-walk_spec.lua` (dragged by a finger: turns right and steps, let go back to front; off:
+  neither; held: neither; the setting saved only when off); snapshot mipos identical; full suite green.
+  Open: scenes that seat Mipos themselves (tracks, soapbox, rides) don't `hold` their riders yet: a
+  rider dragged with its feet on the cart could start stepping against the scene's pose.
 - [ ] **MF4. A facing pick** in the Mipo editor (MIPO-EDITOR-LEFTOVERS E2).
 - [ ] **MF5. Autowalk.** Tried 2026-11-06 in the spike (`w`), "pretty good": a Mipo faces front;
   dragged sideways near the floor (a foot touched in the last 0.3 s, faster than 0.25 leg
