@@ -1,6 +1,6 @@
 # Mipo facing — left, front, right
 
-status: active, focus
+status: active
 
 A Mipo can face left or right instead of front: `dna.facing` = `'left'` / `'right'` (nil or
 `'front'` = as always), `src/mipo-facing.lua`. After puppet-maker2's `facingVars.legs`

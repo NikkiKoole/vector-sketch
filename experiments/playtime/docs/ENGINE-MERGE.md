@@ -1,6 +1,6 @@
 # Merging the spikes into the engine
 
-status: active
+status: active, focus
 
 Where it stood on 2026-11-06: about 35 spike scenes, most of them one big scene script (600-2,900 lines)
 with their own drawing, shaders and physics. A few have code in `src/` already (cloth, liquid, fluid,
