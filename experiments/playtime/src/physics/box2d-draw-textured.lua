@@ -932,25 +932,31 @@ end
 -- docs/MATERIALS.md MT6c): drawn as a quad in the head's own frame, as the head's picture is, so the
 -- lights reach it the same way (an image draw hands the shader the picture's own pixels). Only when
 -- a material is set; a quad kept per decal.
-local decalQuads = setmetatable({}, { __mode = 'k' })
+-- The quad is only uploaded when it changed (an eye's white changes only while blinking): ~0.15 ms
+-- with 20 Mipos on the phone (LIGHT-AND-SHADOW LS30; the eyes' cost is the shader, not the upload).
+local decalQuads = setmetatable({}, { __mode = 'k' }) -- [extra] = { mesh, img, ox, oy, dw, dh, mirrorX, rot }
 local quadVerts = { { 0, 0, 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 1, 1 }, { 0, 0, 0, 1 } }
+local quadCorners = { { -1, -1 }, { 1, -1 }, { 1, 1 }, { -1, 1 } }
 local function drawDecalLit(extra, body, img, ox, oy, dw, dh, mirrorX)
     local rot = extra.rot or 0
-    local c, s = math.cos(rot), math.sin(rot)
-    local hw, hh = dw / 2, dh / 2
-    local corners = { { -hw, -hh }, { hw, -hh }, { hw, hh }, { -hw, hh } }
-    for i = 1, 4 do
-        local px, py = corners[i][1] * mirrorX, corners[i][2]
-        quadVerts[i][1] = ox + c * px - s * py
-        quadVerts[i][2] = oy + s * px + c * py
+    local q = decalQuads[extra]
+    if not q then
+        q = { mesh = love.graphics.newMesh(4, 'fan', 'dynamic') }
+        decalQuads[extra] = q
     end
-    local mesh = decalQuads[extra]
-    if not mesh then
-        mesh = love.graphics.newMesh(4, 'fan', 'stream')
-        decalQuads[extra] = mesh
+    local mesh = q.mesh
+    if q.ox ~= ox or q.oy ~= oy or q.dw ~= dw or q.dh ~= dh or q.mirrorX ~= mirrorX or q.rot ~= rot then
+        local c, s = math.cos(rot), math.sin(rot)
+        local hw, hh = dw / 2, dh / 2
+        for i = 1, 4 do
+            local px, py = quadCorners[i][1] * hw * mirrorX, quadCorners[i][2] * hh
+            quadVerts[i][1] = ox + c * px - s * py
+            quadVerts[i][2] = oy + s * px + c * py
+        end
+        mesh:setVertices(quadVerts)
+        q.ox, q.oy, q.dw, q.dh, q.mirrorX, q.rot = ox, oy, dw, dh, mirrorX, rot
     end
-    mesh:setVertices(quadVerts)
-    mesh:setTexture(img)
+    if q.img ~= img then mesh:setTexture(img); q.img = img end
     local shaded = setSurfaceShader(extra, body)
     local bx, by = body:getPosition()
     love.graphics.draw(mesh, bx, by, body:getAngle())

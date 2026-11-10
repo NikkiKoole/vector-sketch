@@ -471,11 +471,17 @@ fade, a sun: the panel's `fades` switch, LS4).
   randomizeMipoConstrained, seeds 1-19, x = 100 + 145 i; paused, editor, no shadows; draw p50):
   all flat 9.3 ms, 60 fps (= LS23); all lit 15.1, 58 fps (frames over 20 ms: 5%); only the eyes lit
   14.7; everything lit but the eyes 11.3 / 12.9 (two runs); + feet flat 11.8, + mouth flat 12.2; nose,
-  feet or mouth flat alone: no change within the noise (~±1 ms). So the eyes are ~5 of the ~6 ms;
-  nose, mouth and feet together ~1-2. Next: LS30.
-- [ ] **LS30. Cheaper lit eyes.** The eyes cost ~5 ms a frame for 20 Mipos on the phone (LS29), ~0.13 ms
-  an eye: lit through the shader, the flat white laid back over, the lid's shadow. Find which of the
-  three it is (ProFi on the phone, or each switched off) and make that cheaper, or bake the lid's shadow.
+  feet or mouth flat alone: no change within the noise (~±1 ms). (Read then as "the eyes ~5 of the
+  ~6 ms": the noise. Interleaved runs in LS30 split it properly.)
+- [ ] **LS30. Cheaper lit face and feet.** Measured properly 2026-11-10 (same 20 Mipos, each setting
+  alternated 2-3 times, 6 s each, draw p50 steady to ~0.1 ms): all lit 15.6, all flat 10.9 (4.6 ms);
+  one flat at a time saves: eyes 1.4, feet 1.0, mouth (teeth + lips) 0.8, nose 0.3. The parts' sum is
+  less than 4.6: each lit piece also breaks LÖVE's batching of the plain draws around it. ProFi on the
+  phone: drawDecalLit (eye whites, noses) 100 calls a frame. Tried: a lit decal's quad uploaded only
+  when it changes (kept, ~0.15 ms: upload 16.5 / cached 16.4, three pairs); so the cost is the shader
+  switch and draw per piece, the same as any lit part (~0.035 ms an eye).
+  Next lever: a face or foot drawn small on screen is drawn flat (zoomed out to a room of 20, an eye is
+  a few pixels and its light doesn't show); the threshold judged by eye, then measured the same way.
 
 Not light, but where this started (`LITTLE-USED.md`): three rounds left there, skinned mesh, UV mesh,
 the recorder (the feature-rounds sweep, `claudetools/feature-rounds_spec.lua`, takes a recipe each).
