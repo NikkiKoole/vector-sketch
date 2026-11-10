@@ -44,6 +44,7 @@ local getLoveImage = ompBake.getLoveImage
 local setSurfaceShader = shaders.setSurfaceShader
 local ownStrip, growLine = ribbon.ownStrip, ribbon.growLine
 local hairBounce = require('src.hair-bounce')
+local systems = require('src.systems')
 local drawSquishableHairOver, traceVerticesMesh = ribbon.drawSquishableHairOver, ribbon.traceVerticesMesh
 local lookupUV, buildPolyVertexIndex = skinning.lookupUV, skinning.buildPolyVertexIndex
 
@@ -1410,6 +1411,40 @@ local function mipoReach(instance)
     reachOf[instance] = reach
     return reach
 end
+-- This frame's splits: the scene's own (state.drawSplits, with the contact shadows') and the engine
+-- systems' (src/systems.lua: the hair in its Mipo's layers), sorted by z, equal z in the order added.
+-- Pooled: one entry table per split, kept between frames.
+local splitList, splitPool, splitCount = {}, {}, 0
+local function addSplit(z, fn, arg, mipoId)
+    splitCount = splitCount + 1
+    local e = splitPool[splitCount]
+    if not e then
+        e = {}
+        splitPool[splitCount] = e
+    end
+    e.z, e.fn, e.arg, e.mipoId, e.order = z, fn, arg, mipoId, splitCount
+    splitList[splitCount] = e
+end
+local function splitSorter(a, b)
+    if a.z ~= b.z then return a.z < b.z end
+    return a.order < b.order
+end
+local function frameSplits()
+    splitCount = 0
+    local scene = state.drawSplits
+    if scene then
+        for i = 1, #scene do addSplit(scene[i].z, scene[i].fn, scene[i].arg, scene[i].mipoId) end
+    end
+    systems.splits(addSplit)
+    for i = splitCount + 1, #splitList do splitList[i] = nil end
+    if splitCount == 0 then return nil end
+    table.sort(splitList, splitSorter)
+    return splitList
+end
+local function drawSplit(split)
+    if not (split.mipoId and hiddenMipos[split.mipoId]) then split.fn(split.arg) end
+end
+
 local function hideOffscreenMipos()
     for id in pairs(hiddenMipos) do hiddenMipos[id] = nil end
     if not lib.cull then return end
@@ -1499,10 +1534,11 @@ function lib.drawTexturedWorld(_world, only)
     local tCreate = times and tBuilt - tStart
     local tSort = times and love.timer.getTime() - tBuilt
 
-    -- state.drawSplits = { { z = n, fn = f }, ... } (sorted by z): a scene draws its own layer
-    -- between the drawables, f called before the first one at z or higher (the depth spike draws
-    -- its house between the back lane's Mipos and the front lane's). Set per frame by the scene.
-    local splits, nextSplit = (not only) and state.drawSplits or nil, 1
+    -- state.drawSplits = { { z = n, fn = f }, ... }: a scene draws its own layer between the
+    -- drawables, f called before the first one at z or higher (the depth spike draws its house
+    -- between the back lane's Mipos and the front lane's). Set per frame by the scene. Merged with
+    -- the engine systems' splits (frameSplits), so the hair goes in its Mipo's layers too.
+    local splits, nextSplit = (not only) and frameSplits() or nil, 1
     -- state.sceneDrawnMipos = { [instance.id] = true }: Mipos a scene draws itself (with `only`, in
     -- its own transform: the tracks spike's riders, at their cart's depth); the world pass skips them
     local sceneDrawn = (not only) and state.sceneDrawnMipos or nil
@@ -1512,7 +1548,7 @@ function lib.drawTexturedWorld(_world, only)
         if splits then
             local z = drawables[i].z
             while splits[nextSplit] and splits[nextSplit].z <= z do
-                splits[nextSplit].fn()
+                drawSplit(splits[nextSplit])
                 nextSplit = nextSplit + 1
             end
         end
@@ -1539,7 +1575,7 @@ function lib.drawTexturedWorld(_world, only)
         end
     until true end
     if splits then
-        for k = nextSplit, #splits do splits[k].fn() end
+        for k = nextSplit, #splits do drawSplit(splits[k]) end
     end
     cullStats.culled = culled
     if times then

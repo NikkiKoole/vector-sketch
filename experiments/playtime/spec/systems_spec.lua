@@ -40,12 +40,20 @@ describe('systems', function()
         assert.same({ 'a2:draw' }, calls)
     end)
 
-    it('lists hair, with every hook', function()
+    it('passes splits their add', function()
+        local got
+        systems.list = { { name = 'c', module = 'spec.fake-a', splits = function(m, add) got = { m.tag, add } end } }
+        local add = function() end
+        systems.splits(add)
+        assert.same({ 'a', add }, got)
+    end)
+
+    it('lists hair: stepped, in its Mipo\'s layers, let go on unload', function()
         local hair
         for _, s in ipairs(saved) do if s.name == 'hair' then hair = s end end
         assert.is_not_nil(hair)
         assert.equal('src.hair-locks', hair.module)
-        for _, hook in ipairs({ 'update', 'drawBelow', 'draw', 'unload' }) do
+        for _, hook in ipairs({ 'update', 'splits', 'unload' }) do
             assert.is_function(hair[hook])
         end
     end)

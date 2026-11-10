@@ -70,8 +70,16 @@ Each step is small enough to finish, and makes the next one cheaper.
   the hair spike no longer calls it. Cloth, fluid, festoon and wearables join when they land
   (their scenes still place and draw them by hand); a new system is one entry there, and its
   scene scripts stop calling it. The scenes smoke spec runs the systems as main.lua does.
-- [ ] **L2. Draw slots per Mipo** (bites 1, 3): behind / between / over-face, plus back / play /
-  front for the world. Hair is the first user (fixes the overlap), wearables next.
+- [x] **L2. Draw slots per Mipo** (bites 1, 3). Done 2026-11-10: `src/mipo-layers.lua` names the
+  places between a Mipo's own pictures (hairBack 50, headscarf 230, hairFront 255, mask 256, pants
+  302, shirt 305, hat 380, scarf 390, sleeve 404; the wearables spike reads them from there). The
+  textured world merges the scene's splits with the systems' (`splits` hook in `src/systems.lua`),
+  skipping an off-screen Mipo's. Hair is drawn in its Mipo's layers: its back behind that Mipo
+  only (it used to vanish behind the Mipos in front), bangs over the face but now under the arms
+  and hands (they used to go over everything); a torso's coat just over the torso, under the head.
+  Spec `mipo-layers_spec.lua`. Left: the shadow passes (`only`) still draw no splits (the hair
+  casts through `shadow-silhouettes` as before), and world layers back / play / front stay for
+  DEPTH-LAYERS.
 - [ ] **L3. A scene and DNA version with one ordered list of migrations** (bite 4). Half a day.
 - [ ] **L4. EM5's cheap shared bits**: `drawn-stroke` into `src/` (with burrow's extras), `mipoKit`,
   the clamp copies. Trees and flora then load from `src/` like everything else.

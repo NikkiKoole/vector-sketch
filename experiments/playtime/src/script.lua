@@ -86,6 +86,7 @@ local baseEnv = {
     mipoRaspberry            = require('src.mipo-raspberry'), -- blow(instance) (raspberry spike)
     mipoTextures             = require('src.mipo-textures'), -- addFaceDecals: a Mipo face on a script's body (garden)
     mipoRegistry             = require('src.mipo-registry'),
+    mipoLayers               = require('src.mipo-layers'), -- where a hat, pants, hair go between a Mipo's parts
     mipoFacing               = require('src.mipo-facing'), -- facing left / front / right (facing spike)
     festoon                  = require('src.festoon'), -- a wire of bulbs in swags (light-grass-check, LS26)
     torsoLobes               = require('src.torso-lobes'), -- applySoftness / setSprings: live softness (maker)

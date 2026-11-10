@@ -25,6 +25,7 @@ local color = require('src.color')
 local textureNames = require('src.texture-names')
 local hairNative = require('src.hair-native')
 local spineSkin = require('src.spine-skin')
+local registry, mipoLayers, mipoRegistry -- required when first drawing (no require loops)
 
 lib.defaults = {
     count = 11,      -- locks
@@ -772,47 +773,89 @@ local shaders -- src/render/shaders.lua, required when first drawing (not on top
 local litAt = { 0, 0 }
 lib.lit = true -- hair lit like the part it grows on (false: flat colours, as before)
 
--- The locks of every Mipo that has them, in the colours of its haircut: layer 'back' (behind the
--- Mipos) or 'front' (over their faces).
-function lib.draw(layer)
-    local wantFront = layer == 'front'
-    for _, instance in ipairs(holders()) do
-        local hair = instance.hairLocks
-        if hair and not hair.body:isDestroyed() then
-            local o = hair.opts
-            local line = image('textures/' .. textureNames.part('hair', o.texture) .. '.png')
-            local mask = image('textures/' .. textureNames.part('hair', o.texture) .. '-mask.png')
-            local cut = instance.dna and instance.dna.parts and instance.dna.parts.head
-                and instance.dna.parts.head.appearance and instance.dna.parts.head.appearance.haircut
-            local main = cut and cut.main or {}
-            local fr, fg, fb = color.hexToColor(main.fgHex or 'bf1a2dff')
-            local lr, lg, lb = color.hexToColor(main.bgHex or '000000ff')
-            local pic = line or mask
-            local mesh = pic and layerMesh(hair, wantFront, pic)
-            if mesh then
-                -- lit like the part it grows on (its clay or material, the scene's lights), as the limb
-                -- ribbons are: world space, the lights picked at the body
-                local shaded = false
-                if hair.lit and lib.lit then
-                    shaders = shaders or require('src.render.shaders')
-                    litAt[1], litAt[2] = hair.body:getPosition()
-                    shaded = shaders.setSurfaceShader(hair.lit, nil, litAt)
-                end
-                if mask then
-                    love.graphics.setColor(fr, fg, fb, 1)
-                    mesh:setTexture(mask)
-                    love.graphics.draw(mesh)
-                end
-                if line then
-                    love.graphics.setColor(lr, lg, lb, 1)
-                    mesh:setTexture(line)
-                    love.graphics.draw(mesh)
-                end
-                if shaded then love.graphics.setShader() end
+-- One holder's locks (a Mipo, or a body given hair), in the colours of its haircut: layer 'back' or
+-- 'front'. Drawn in its Mipo's own layers by lib.splits; lib.draw draws everyone's at once.
+local function drawOne(instance, wantFront)
+    local hair = instance.hairLocks
+    if hair and not hair.body:isDestroyed() then
+        local o = hair.opts
+        local line = image('textures/' .. textureNames.part('hair', o.texture) .. '.png')
+        local mask = image('textures/' .. textureNames.part('hair', o.texture) .. '-mask.png')
+        local cut = instance.dna and instance.dna.parts and instance.dna.parts.head
+            and instance.dna.parts.head.appearance and instance.dna.parts.head.appearance.haircut
+        local main = cut and cut.main or {}
+        local fr, fg, fb = color.hexToColor(main.fgHex or 'bf1a2dff')
+        local lr, lg, lb = color.hexToColor(main.bgHex or '000000ff')
+        local pic = line or mask
+        local mesh = pic and layerMesh(hair, wantFront, pic)
+        if mesh then
+            -- lit like the part it grows on (its clay or material, the scene's lights), as the limb
+            -- ribbons are: world space, the lights picked at the body
+            local shaded = false
+            if hair.lit and lib.lit then
+                shaders = shaders or require('src.render.shaders')
+                litAt[1], litAt[2] = hair.body:getPosition()
+                shaded = shaders.setSurfaceShader(hair.lit, nil, litAt)
             end
+            if mask then
+                love.graphics.setColor(fr, fg, fb, 1)
+                mesh:setTexture(mask)
+                love.graphics.draw(mesh)
+            end
+            if line then
+                love.graphics.setColor(lr, lg, lb, 1)
+                mesh:setTexture(line)
+                love.graphics.draw(mesh)
+            end
+            if shaded then love.graphics.setShader() end
         end
     end
     love.graphics.setColor(1, 1, 1, 1)
+end
+
+local function drawBackOf(instance) drawOne(instance, false) end
+local function drawFrontOf(instance) drawOne(instance, true) end
+
+-- Everyone's locks in one layer, 'back' or 'front' (over or under all the Mipos at once).
+function lib.draw(layer)
+    local wantFront = layer == 'front'
+    for _, instance in ipairs(holders()) do drawOne(instance, wantFront) end
+end
+
+-- Where a holder's two layers go in the textured list (src/mipo-layers.lua): a Mipo's head hair behind
+-- the whole Mipo and its front over the face; hair on a body (a torso's coat, a box) just under and
+-- over that body's own pictures, its back still behind the whole Mipo when the body is one of a
+-- Mipo's. A body without pictures: under and over everything, as before. Kept on the hair until an
+-- sfixture comes or goes.
+local NO_Z_BACK, NO_Z_FRONT = -1e9, 1e9
+local function layerZ(instance, hair)
+    registry = registry or require('src.registry')
+    if hair.zVersion == registry.sfixtureVersion then return hair.zBack, hair.zFront, hair.zMipoId end
+    mipoLayers = mipoLayers or require('src.mipo-layers')
+    mipoRegistry = mipoRegistry or require('src.mipo-registry')
+    local mipo = mipoRegistry.getFromBody(hair.body) -- head hair: the holder is the Mipo itself
+    local lo, hi = mipoLayers.bodyRange(hair.body)
+    local back, front
+    if mipo then
+        back = mipoLayers.z(mipo, 'hairBack')
+        front = (mipo == instance or not hi) and mipoLayers.z(mipo, 'hairFront') or hi + 0.5
+    else
+        back, front = lo and lo - 0.5 or NO_Z_BACK, hi and hi + 0.5 or NO_Z_FRONT
+    end
+    hair.zVersion, hair.zBack, hair.zFront, hair.zMipoId = registry.sfixtureVersion, back, front, mipo and mipo.id
+    return back, front, hair.zMipoId
+end
+
+-- Every holder's two layers as splits in the textured list: add(z, fn, arg, mipoId) (src/systems.lua).
+function lib.splits(add)
+    for _, instance in ipairs(holders()) do
+        local hair = instance.hairLocks
+        if hair and not hair.body:isDestroyed() then
+            local back, front, mipoId = layerZ(instance, hair)
+            add(back, drawBackOf, instance, mipoId)
+            add(front, drawFrontOf, instance, mipoId)
+        end
+    end
 end
 
 -- The hair into the shadows' silhouettes (src/shadow-silhouettes.lua): every haircut whose body `only`

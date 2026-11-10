@@ -104,7 +104,7 @@ local HATS = {
         { circle = { 0, -0.1, 0.07 }, color = { 0.2, 0.45, 0.9 } },
         { circle = { 0.22, -0.1, 0.06 }, color = { 0.85, 0.15, 0.2 } } } },
 }
-local HAT_Z = 380 -- in a Mipo's own layers: over the face (250s) and the hair (220), under the arms (402)
+local HAT_Z = mipoLayers.Z.hat -- in a Mipo's own layers: over the face (250s) and the hair (220), under the arms (402)
 local HAT_LOOSE = 170 -- a loose hat's width
 local HAT_STACK = 6   -- hats on one head at most
 -- scarves: a fabric of src/cloth.lua for the tails, the wrap drawn in the same (its colours: base,
@@ -124,9 +124,9 @@ local HEADSCARVES = {
     { name = 'gingham', fabric = 'gingham', tint = { 1, 1, 1 } },
     { name = 'cream', fabric = 'plain', tint = { 0.95, 0.9, 0.78 } },
 }
-local HEADSCARF_Z = 230 -- over the hair (220) and the ears (190), under the face (250..254)
+local HEADSCARF_Z = mipoLayers.Z.headscarf -- over the hair (220) and the ears (190), under the face (250..254)
 local HEADSCARF_LOOSE = 180
-local SCARF_Z = 390 -- over the chin and the pants, under the feet (399) and the arms (402)
+local SCARF_Z = mipoLayers.Z.scarf -- over the chin and the pants, under the feet (399) and the arms (402)
 local SCARF_LOOSE = 220
 -- shirts: hem (0 the torso's top .. 1 its bottom), sleeve (how far down the upper arm, 0 none: a
 -- tank top), sleeveW (its width, a part of the torso's), neck (the neck hole's half width, ditto)
@@ -148,10 +148,10 @@ local MASKS = {
     { name = 'bear', type = 'face', color = { 0.6, 0.4, 0.25 }, ears = 'bear' },
     { name = 'frog', type = 'face', color = { 0.42, 0.74, 0.36 }, ears = 'frog' },
 }
-local MASK_Z = 256 -- over the face's parts (eyes 250 .. nose 254), under hats (380) and the arms (402)
-local SHIRT_Z = 305  -- over the torso and the pants (302: worn untucked), under the arms (402)
-local SLEEVE_Z = 404 -- over the arms (402, 403), under the hands (500)
-local PANTS_Z = 302 -- in a Mipo's own layers: over the legs (300, 301), under the nose (350), feet (399), arms (402)
+local MASK_Z = mipoLayers.Z.mask -- over the face's parts (eyes 250 .. nose 254), under hats (380) and the arms (402)
+local SHIRT_Z = mipoLayers.Z.shirt -- over the torso and the pants (302: worn untucked), under the arms (402)
+local SLEEVE_Z = mipoLayers.Z.sleeve -- over the arms (402, 403), under the hands (500)
+local PANTS_Z = mipoLayers.Z.pants -- in a Mipo's own layers: over the legs (300, 301), under the nose (350), feet (399), arms (402)
 local OUTLINE = { 0.12, 0.1, 0.12 }
 local GROUND = { x = 0, w = 4200, h = 140 } -- its top at y = 0
 local LIGHT = { -0.55, -0.83 }              -- towards the light, on the screen: the top left
