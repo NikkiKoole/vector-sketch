@@ -420,7 +420,12 @@ function love.draw()
         love.graphics.pop()
     end
     if not sceneThumbs.capturing() then
+        -- a scene's own panel at the UI's scale too: ui.mouseX/Y are in UI units, and unscaled a
+        -- spike's panel ran off a phone's screen (the hair panel's corner button, 2026-11-10)
+        love.graphics.push()
+        love.graphics.scale(ui.scale)
         script.call('drawUI')
+        love.graphics.pop()
         playMode.drawHint()
         playMode.drawExitButton() -- phones: the way back to the editor
     end

@@ -289,7 +289,7 @@ function s.drawUI()
     local w = leftW + rightW + 3 * pad
     local rows = math.max(#SECTIONS, 8) + 1 -- + the buttons
     local h = rows * (BH + pad) + pad + 24
-    local _, sh = love.graphics.getDimensions()
+    local _, sh = ui.getDimensions() -- the screen in UI units (a phone's ui.scale)
     local x0, y0 = 20, sh - h - 20
     ui.panel(x0, y0, w, h, '•• hair ••', function()
         local changed = false
