@@ -127,3 +127,81 @@ int hair_strip(const float *points, int n, float segment, float radius, float pi
 // hair_strip's version: 2 = with the curly wave (wave, wavePitch). src/hair-native.lua only uses
 // hair_strip when this is there, so a library from before can't be called with the new arguments.
 int hair_strip_v2(void) { return 2; }
+
+// One lock's simulation for `steps` fixed steps of dt (src/hair-locks.lua's stepLock, the same
+// maths): verlet with damping and gravity, then root outward each point pulled toward the rest
+// shape (fixed in the head's frame, fading to nothing at the tip), back to its length (springy:
+// part of the way), out of the head's oval, DFTL (the parent gives back the pull), on the floor.
+// p, q: the points and their previous positions, flat x, y (n each), updated in place; bends:
+// n + 1 values, bends[i] for point i (1-based, used from 3); the root (rootLX, rootLY) in the head's
+// frame, the head at (bx, by) turned by `angle`. hasOval / hasGround: 0 = none.
+int hair_step(double *p, double *q, int n, double segment, double restAngle, const double *bends,
+              double rootLX, double rootLY, int drape, double bx, double by, double angle,
+              double gx, double gy, double dt, double damping, double stand, double stiffness,
+              double springy, int hasOval, double ovalX, double ovalY, int hasGround, double groundY,
+              int steps) {
+    const double DFTL = 0.5, GROUND_GAP = 2.0;
+    if (n < 2) return 0;
+    double c = cos(angle), s = sin(angle);
+    double rootX = bx + c * rootLX - s * rootLY, rootY = by + s * rootLX + c * rootLY;
+    double ddx = gx * dt * dt, ddy = gy * dt * dt, L = segment;
+    double kBase = (stiffness > stand ? stiffness : stand) * 0.1;
+    int nm1 = n - 1 > 1 ? n - 1 : 1;
+    for (int step = 0; step < steps; step++) {
+        p[0] = rootX; p[1] = rootY; q[0] = rootX; q[1] = rootY;
+        for (int i = 1; i < n; i++) { // point i + 1 (1-based)
+            double x = p[2 * i], y = p[2 * i + 1];
+            p[2 * i] = x + (x - q[2 * i]) * damping + ddx;
+            p[2 * i + 1] = y + (y - q[2 * i + 1]) * damping + ddy;
+            q[2 * i] = x; q[2 * i + 1] = y;
+        }
+        double dirX = cos(restAngle + angle), dirY = sin(restAngle + angle);
+        for (int i = 2; i <= n; i++) { // 1-based, as in the Lua
+            int ix = 2 * i - 2, iy = 2 * i - 1;
+            double px = p[ix - 2], py = p[iy - 2];
+            if (i > 2) {
+                double bc = cos(bends[i]), bs = sin(bends[i]);
+                double nx = dirX * bc - dirY * bs, ny = dirX * bs + dirY * bc;
+                dirX = nx; dirY = ny;
+            }
+            double fade = 1.0 - (1.0 - stand) * (double)(i - 2) / (double)nm1;
+            double k = kBase * fade * fade;
+            double tx = px + dirX * L, ty = py + dirY * L;
+            double x = p[ix] + (tx - p[ix]) * k, y = p[iy] + (ty - p[iy]) * k;
+            double ex = x - px, ey = y - py;
+            double len = sqrt(ex * ex + ey * ey);
+            if (len > 1e-6) {
+                double want = L;
+                if (springy > 0 && drape) {
+                    want = len + (L - len) * (1.0 - springy * 0.85);
+                    if (want > L * 1.8) want = L * 1.8;
+                    if (want < L * 0.9) want = L * 0.9;
+                }
+                x = px + ex / len * want;
+                y = py + ey / len * want;
+            }
+            if (i > 2 && hasOval && drape) { // out of the head
+                double dx = x - bx, dy = y - by;
+                double lx = c * dx + s * dy, ly = -s * dx + c * dy;
+                double d = (lx / ovalX) * (lx / ovalX) + (ly / ovalY) * (ly / ovalY);
+                if (d < 1.0) {
+                    double f = 1.0 / sqrt(d > 1e-6 ? d : 1e-6);
+                    lx *= f; ly *= f;
+                    x = bx + c * lx - s * ly;
+                    y = by + s * lx + c * ly;
+                }
+            }
+            if (i > 2) {
+                q[ix - 2] += (x - p[ix]) * DFTL;
+                q[iy - 2] += (y - p[iy]) * DFTL;
+            }
+            if (hasGround && y > groundY - GROUND_GAP) {
+                y = groundY - GROUND_GAP;
+                q[ix] = x - (x - q[ix]) * 0.5;
+                q[iy] = y;
+            }
+            p[ix] = x; p[iy] = y;
+        }
+    }
+    return 1;
+}

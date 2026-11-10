@@ -71,6 +71,20 @@ one Bezier, which smoothed curls away. Cost per Mipo on the Mac: simulate 0.1-0.
   a few do (~0.65 ms each).
 - [ ] H8. The simulation in C (~0.5 ms a Mipo awake on the phone, H4, all Lua). Or: hair small on
   screen not simulated (LS30's rule), fewer locks in a crowd
+  2026-11-10, step 1: `hair_step` in native/desound/hair.c, the same maths as stepLock (all of a lock's
+  steps in one call; the head's transform as cos/sin instead of getWorldPoint), via hairNative.step;
+  state.hairStepLua = true: Lua. spec/hair-native_spec.lua: C and Lua within 0.05 px over 20 frames
+  (hanging, springy + stiff, a bang, on the floor). (Its declaration has to be in hair-native's
+  `local CDEF = [[` block: device.sh keeps only those functions on iOS, the linker strips the rest.)
+  Phone, 20 Mipos x 21 locks, running, alternated twice: hairLocks.update 4.55 -> 3.1 ms. The C maths
+  is cheap; the 441 calls a frame each copy the lock's points into FFI buffers and back, and with the
+  JIT off every FFI element access is slow: that copying is most of the 2.6 ms left in the step.
+  The hair's drawing is as much again (~4.5 ms: script.call ~9 ms in all): layerMesh copies each
+  lock's points into C for its strip, and joins the strips vertex by vertex (copyVertex).
+  Next: the points live in C, not in Lua tables: one FFI buffer per haircut (every lock's points and
+  previous points), one C call a frame steps all its locks, one builds each layer's joined strip
+  straight from it, and the settle check reads it there. Lua keeps the per-lock settings, the roots
+  (bendRoots) and the Lua path for the web.
 
 ## Hair bounce (also parked)
 

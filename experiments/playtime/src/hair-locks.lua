@@ -432,6 +432,9 @@ local function stepLock(lock, o, body, gx, gy, dt, ovalX, ovalY, groundY)
     end
 end
 
+lib.stepLockLua = stepLock -- (spec/hair-native_spec.lua: the C step against this)
+local NO_LOCKS = {}
+
 -- Sleep: hair that has settled on a head that holds still isn't simulated (nor its strips built
 -- again) until the head moves: most Mipos stand around most of the time.
 local SLEEP_MOVE = 0.05  -- px a frame: no point of any lock moved more, the locks have settled
@@ -504,10 +507,24 @@ function lib.update(dt)
                     local groundY = groundBelow(x, y)
                     local w = hair.opts.weight * (1 - hair.opts.stand)
                     hair.acc = math.min((hair.acc or 0) + dt, 0.1)
-                    local stepped = false
+                    local steps = 0
                     while hair.acc >= h do
                         hair.acc = hair.acc - h
-                        stepped = true
+                        steps = steps + 1
+                    end
+                    local stepped = steps > 0
+                    -- in C where the library has it (all of a lock's steps in one call: ~0.5 ms a Mipo
+                    -- in Lua on the phone, HAIR-LOCKS H8); state.hairStepLua = true: Lua anyway
+                    local native = stepped and not state.hairStepLua and hairNative.stepAvailable()
+                    for _, lock in ipairs(native and hair.locks or NO_LOCKS) do
+                        if not hairNative.step(lock, hair.opts, x, y, a, gx * w, gy * w, h, hair.ovalX, hair.ovalY,
+                                groundY, steps) then
+                            for _ = 1, steps do
+                                stepLock(lock, hair.opts, body, gx * w, gy * w, h, hair.ovalX, hair.ovalY, groundY)
+                            end
+                        end
+                    end
+                    for _ = 1, native and 0 or steps do
                         for _, lock in ipairs(hair.locks) do
                             stepLock(lock, hair.opts, body, gx * w, gy * w, h, hair.ovalX, hair.ovalY, groundY)
                         end

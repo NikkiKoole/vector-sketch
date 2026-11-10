@@ -12,6 +12,11 @@ local CDEF = [[
 int hair_strip(const float *points, int n, float segment, float radius, float pitch, float wave,
                float wavePitch, float phase, float tilt, float halfWidth, float *out);
 int hair_strip_v2(void);
+int hair_step(double *p, double *q, int n, double segment, double restAngle, const double *bends,
+              double rootLX, double rootLY, int drape, double bx, double by, double angle,
+              double gx, double gy, double dt, double damping, double stand, double stiffness,
+              double springy, int hasOval, double ovalX, double ovalY, int hasGround, double groundY,
+              int steps);
 ]]
 
 lib.MAX_SAMPLES = 400 -- HAIR_MAX_SAMPLES in hair.c
@@ -37,6 +42,37 @@ function lib.strip(points, n, segment, radius, pitch, wave, wavePitch, phase, ti
     for i = 1, 2 * n do pointBuf[i - 1] = points[i] end
     return c.hair_strip(pointBuf, n, segment, radius, pitch, wave, wavePitch, phase, tilt, halfWidth,
         ffi.cast('float *', data:getFFIPointer()) + (at or 0) * 8)
+end
+
+-- A lock's simulation steps in one C call (hair.c hair_step, the same maths as hair-locks.lua's
+-- stepLock): its points copied in, `steps` fixed steps, copied back. False without the library
+-- (the web, a stale dylib): hair-locks steps it in Lua then. (Declared in CDEF above: device.sh keeps
+-- only the functions a `local CDEF = [[` block names, the linker strips the rest.)
+local S
+local function loadStep()
+    if S == nil then S = nativeLib.load(CDEF, 'hair_step') end
+    return S
+end
+function lib.stepAvailable() return loadStep() ~= false end
+
+local MAX_STEP_POINTS = 64
+local pBuf = ffi and ffi.new('double[?]', 2 * MAX_STEP_POINTS)
+local qBuf = ffi and ffi.new('double[?]', 2 * MAX_STEP_POINTS)
+local bendBuf = ffi and ffi.new('double[?]', MAX_STEP_POINTS + 1)
+
+-- Returns false when it couldn't (no library, a lock too long): the caller steps it in Lua.
+function lib.step(lock, o, bx, by, angle, gx, gy, dt, ovalX, ovalY, groundY, steps)
+    local c = loadStep()
+    local n = lock.n
+    if not c or n > MAX_STEP_POINTS then return false end
+    local p, q, bends = lock.points, lock.prev, lock.bends
+    for i = 1, 2 * n do pBuf[i - 1], qBuf[i - 1] = p[i], q[i] end
+    if bends then for i = 3, n do bendBuf[i] = bends[i] end end
+    c.hair_step(pBuf, qBuf, n, lock.segment, lock.restAngle, bendBuf, lock.bx or lock.rx, lock.by or lock.ry,
+        lock.drape and 1 or 0, bx, by, angle, gx, gy, dt, o.damping, o.stand, o.stiffness, o.springy,
+        ovalX and 1 or 0, ovalX or 0, ovalY or 1, groundY and 1 or 0, groundY or 0, steps)
+    for i = 1, 2 * n do p[i], q[i] = pBuf[i - 1], qBuf[i - 1] end
+    return true
 end
 
 -- Vertex `from` copied over vertex `to` (0-based), in `data`: the joins between strips.

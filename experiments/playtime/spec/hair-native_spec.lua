@@ -67,3 +67,59 @@ describe('hair lock strips, C and Lua', function()
         assert.are.equal((9 * 10 + 1) * 2, #ring)
     end)
 end)
+
+-- A lock's simulation steps in C (hair.c hair_step) and in Lua (hair-locks.lua's stepLock) move it the
+-- same: a head at an angle, gravity, the head's oval, the floor, springy and stiff settings.
+describe('hair lock steps, C and Lua', function()
+    local function newLock(n, drape)
+        local points, prev, bends = {}, {}, {}
+        for i = 1, n do
+            points[2 * i - 1], points[2 * i] = 30 + i * 3, -20 + i * 18
+            prev[2 * i - 1], prev[2 * i] = points[2 * i - 1] - 1.5, points[2 * i] - 0.5
+            bends[i] = 0.1 * math.sin(i)
+        end
+        return { points = points, prev = prev, bends = bends, n = n, segment = 20, restAngle = 1.2,
+            rx = 25, ry = -30, drape = drape }
+    end
+    local function copyLock(l)
+        local c = {}
+        for k, v in pairs(l) do c[k] = v end
+        c.points, c.prev = { unpack(l.points) }, { unpack(l.prev) }
+        return c
+    end
+    local STEP_CASES = {
+        { name = 'hanging', o = { damping = 0.96, stand = 0, stiffness = 0.1, springy = 0 }, drape = true },
+        { name = 'springy, stiff', o = { damping = 0.9, stand = 0.3, stiffness = 0.6, springy = 0.7 }, drape = true },
+        { name = 'a bang (no drape)', o = { damping = 0.96, stand = 0, stiffness = 0.2, springy = 0.5 }, drape = false },
+        { name = 'on the floor', o = { damping = 0.96, stand = 0, stiffness = 0.1, springy = 0 }, drape = true,
+            ground = 160 },
+    }
+    for _, case in ipairs(STEP_CASES) do
+        it('match: ' .. case.name, function()
+            if not hairNative.stepAvailable() then
+                pending('no native/desound/libdesound.dylib with hair_step (native/desound/build.sh)')
+                return
+            end
+            local world = love.physics.newWorld(0, 0)
+            local body = love.physics.newBody(world, 100, 50, 'dynamic')
+            body:setAngle(0.4)
+            local a, b = newLock(14, case.drape), nil
+            b = copyLock(a)
+            local bx, by = body:getPosition()
+            for _ = 1, 20 do -- 20 frames of 2 steps
+                for _ = 1, 2 do
+                    hairLocks.stepLockLua(a, case.o, body, 0, 2940, 1 / 120, 45, 60, case.ground)
+                end
+                assert.is_true(hairNative.step(b, case.o, bx, by, body:getAngle(), 0, 2940, 1 / 120, 45, 60,
+                    case.ground, 2))
+            end
+            local worst = 0
+            for i = 1, 2 * a.n do
+                worst = math.max(worst, math.abs(a.points[i] - b.points[i]), math.abs(a.prev[i] - b.prev[i]))
+            end
+            world:destroy()
+            -- Box2D's getWorldPoint works in floats, the C in doubles
+            assert.is_true(worst < 0.05, 'points differ by ' .. worst)
+        end)
+    end
+end)
