@@ -84,8 +84,10 @@ already folded; swinging straight legs forward in the air pushed it off the back
   body quick, the head slow after it). Any turn this module makes (arrows, a scene's `turn`, a walk)
   goes back to the facing it had before (`inst._home`, front for nearly all) once the Mipo has stood
   `lib.relaxAfter` (3 s) not held, walking or held off; facing a scene sets itself is left alone.
-  The facing panel: head keyed / slow drift, head time, overshoot, back home after. Next to try: a
-  blink during a quick turn.
+  The facing panel: head keyed / slow drift, head time, overshoot, back home after, blink on turn.
+  Blink on turn (Nikki 2026-11-11: "do the blink on turn, sometimes"; "feels right"): half the keyed
+  head turns blink as they set off (`lib.turnBlink` 0.5), shut through the quick middle
+  (`mipoFace.blink(thing, hold)`, hold half the turn less the closing).
 - [ ] **MF4. A facing pick** in the Mipo editor (MIPO-EDITOR-LEFTOVERS E2).
 - [x] **MF5. Autowalk.** Tried 2026-11-06 in the spike (`w`), "pretty good": a Mipo faces front;
   dragged sideways near the floor (a foot touched in the last 0.3 s, faster than 0.25 leg

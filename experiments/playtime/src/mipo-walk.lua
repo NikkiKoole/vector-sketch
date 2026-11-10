@@ -11,7 +11,9 @@
 -- idle gaze) turns as a keyed move (lib.headKeys, Nikki 2026-11-11: "weight, keyframe feel" instead
 -- of the slow even drift): a small pull the other way, quick through the middle, past the side and
 -- back (an ease-in-out with overshoot, lib.headBack) in lib.headTime a step. Off: the old drift,
--- HEAD_SPEED. The arms switch at their own moment, once the head is lib.armAt of the way.
+-- HEAD_SPEED. Sometimes (lib.turnBlink) it blinks as it sets off, shut through the quick middle
+-- (Nikki 2026-11-11: "do the blink on turn, sometimes"). The arms switch at their own moment, once
+-- the head is lib.armAt of the way.
 -- Back home: a Mipo this module turned (arrows, a scene's turn, a walk) turns back to the facing it had
 -- before (inst._home: as built, front for nearly all) once it has stood lib.relaxAfter seconds, not held
 -- nor walking (Nikki 2026-11-11). Facing a scene sets itself (tracks, rides, soapbox) is left alone.
@@ -30,6 +32,7 @@ local utils = require('src.utils')
 local facing = require('src.mipo-facing')
 local mipoActions = require('src.mipo-actions')
 local mipoRegistry = require('src.mipo-registry')
+local mipoFace = require('src.mipo-face')
 local characterManager = require('src.character-manager')
 local box2dPointerJoints = require('src.physics.box2d-pointerjoints')
 
@@ -48,6 +51,7 @@ local SWITCHES = {
     headKeys = true, -- the head turns as a keyed move (false: the slow even drift, HEAD_SPEED)
     headTime = 0.3,  -- seconds the keyed head takes for one step (left -> right: two steps, ~1.4x)
     headBack = 1.7,  -- the keyed head's anticipation and overshoot (0: plain ease; 1.7 ~10% of a step)
+    turnBlink = 0.5, -- the chance a keyed head turn blinks as it sets off (0: never, 1: always)
     relaxAfter = 3,  -- seconds standing before a turned Mipo turns back home (0: it stays turned)
 }
 for k, v in pairs(SWITCHES) do lib[k] = v end
@@ -204,6 +208,14 @@ local function easeBack(u, back)
     return (t * t * ((c + 1) * t + c) + 2) / 2
 end
 
+-- a blink as a keyed head turn sets off, shut through its quick middle (the eyes are on the head, or
+-- on the torso of a Mipo without one)
+local function blinkOnTurn(inst, dur)
+    local face = partBody(inst, 'head') or partBody(inst, 'torso1')
+    local thing = face and utils.thingOf(face)
+    if thing then mipoFace.blink(thing, math.max(0, dur * 0.5 - 0.08)) end
+end
+
 -- the head's angle this frame as a keyed move toward target: restarts from where it is when the target
 -- changes; true once it has arrived
 local function keyHead(inst, target, dt)
@@ -214,6 +226,7 @@ local function keyHead(inst, target, dt)
         key = { from = from, to = target, t = 0,
             dur = lib.headTime * math.sqrt(steps) * (inst._slowTurn and HEAD_SLOW or 1) }
         inst._headKey = key
+        if math.random() < lib.turnBlink then blinkOnTurn(inst, key.dur) end
     end
     key.t = key.t + dt
     local u = math.min(1, key.t / math.max(key.dur, 0.01))

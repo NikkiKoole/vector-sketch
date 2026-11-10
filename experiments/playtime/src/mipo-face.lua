@@ -220,13 +220,16 @@ function lib.update(world, dt)
             if s.blinkStart then
                 local elapsed = now - s.blinkStart
                 local closeTime, openTime = 0.08, 0.12
+                local hold = s.blinkHold or 0 -- shut a moment (lib.blink: a blink on a head turn)
                 if elapsed < closeTime then
                     thing.eyesOpen = 1 - (elapsed / closeTime)
-                elseif elapsed < closeTime + openTime then
-                    thing.eyesOpen = (elapsed - closeTime) / openTime
+                elseif elapsed < closeTime + hold then
+                    thing.eyesOpen = 0
+                elseif elapsed < closeTime + hold + openTime then
+                    thing.eyesOpen = (elapsed - closeTime - hold) / openTime
                 else
                     thing.eyesOpen = 1
-                    s.blinkStart = nil
+                    s.blinkStart, s.blinkHold = nil, nil
                 end
             else
                 thing.eyesOpen = 1
@@ -265,6 +268,21 @@ function lib.update(world, dt)
         end
     end
     prevMouseDown = mouseDown
+end
+
+-- a blink now on the face that thing owns (hold: seconds shut, default 0), unless one is under way;
+-- the next idle blink waits its usual while after it. Used by src/mipo-walk.lua on a head turn.
+function lib.blink(thing, hold)
+    local now = love.timer.getTime()
+    local s = blinkStates[thing]
+    if s and s.blinkStart then return false end
+    if not s then
+        s = {}
+        blinkStates[thing] = s
+    end
+    s.blinkStart, s.blinkHold = now, hold
+    s.expiresAt = now + 2 + math.random() * 4
+    return true
 end
 
 lib._test = { blinkStates = blinkStates } -- for specs, not part of the API
