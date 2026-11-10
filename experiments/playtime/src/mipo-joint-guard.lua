@@ -665,6 +665,45 @@ local function releaseFreedPairs(now)
     end
 end
 
+-- Every Mipo hooked to `id`, through any chain of hooks (the hooked pairs, by pairKey).
+local function knotGroup(id, hooked)
+    local seen, list, i = { [id] = true }, { id }, 1
+    while list[i] do
+        local current = list[i]
+        for _, h in pairs(hooked) do
+            local other = (h.a == current and h.b) or (h.b == current and h.a)
+            if other and not seen[other] then
+                seen[other] = true
+                list[#list + 1] = other
+            end
+        end
+        i = i + 1
+    end
+    table.sort(list)
+    return list
+end
+
+-- A knot of three or more (Nikki's pit, 2026-11-10: one Mipo hooked into two others, more around):
+-- untangled pair by pair, each pair hopped its upper Mipo away from the other into the third, and
+-- undid what the other pairs did; it gave up after 4 tries and lay knotted. Now every pair in the
+-- knot passes through each other at once and drifts apart (pushApart, as Mipos put down overlapping),
+-- no hop, until nothing overlaps.
+local function untangleGroup(group, now)
+    local all = mipoRegistry.getAll()
+    for i = 1, #group do
+        countTry(group[i], now)
+        for j = i + 1, #group do
+            local key, a, b = pairKey(group[i], group[j])
+            if lib.untangleLetsGo and all[a] and all[b] then require('src.physics.snap').letGo(all[a], all[b]) end
+            tangles[key] = { a = a, b = b, soft = true, overlap = true, startT = now,
+                untilT = now + lib.untangleMaxTime + lib.passThroughMaxTime }
+            hookSeen[key] = nil
+        end
+    end
+    lib.stats.untangles = (lib.stats.untangles or 0) + 1
+    print('[untangle] group ' .. table.concat(group, ', '))
+end
+
 local function untangleMipos(now)
     releaseFreedPairs(now)
     lookForHooks()
@@ -688,6 +727,12 @@ local function untangleMipos(now)
         elseif t.untilT then
             if not hooked[key] and not overlapping(t.a, t.b) then
                 t.untilT, t.since, t.restUntil = nil, nil, now + lib.untangleRest
+            elseif now >= t.untilT and overlapping(t.a, t.b) then
+                -- out of time, still inside each other: they drift apart, passing through, until
+                -- nothing overlaps (pushApart). Colliding again deep inside each other knotted them
+                -- again at once, the pair hopped and re-knotted for good (Nikki's pit, 2026-11-10)
+                tangles[key] = { a = t.a, b = t.b, soft = true, overlap = true, startT = now,
+                    untilT = now + lib.passThroughMaxTime }
             elseif now >= t.untilT then
                 -- out of time, still hooked: hop again soon (the rest is for a pair that came
                 -- apart; light Mipos' arms often still hung on when the 4 s ran out)
@@ -706,12 +751,17 @@ local function untangleMipos(now)
             if wasHeld(h.a, now) or wasHeld(h.b, now) or not t.since then t.since = now end
             if now - t.since >= lib.untangleAfter and not (t.restUntil and now < t.restUntil)
                 and not gaveUp(h.a, now) and not gaveUp(h.b, now) then
-                t.untilT = now + lib.untangleMaxTime
-                countTry(h.a, now)
-                countTry(h.b, now)
-                hopOut(h.a, h.b)
-                lib.stats.untangles = (lib.stats.untangles or 0) + 1
-                print(string.format('[untangle] %s and %s', h.a, h.b))
+                local group = knotGroup(h.a, hooked)
+                if #group >= 3 then
+                    untangleGroup(group, now)
+                else
+                    t.untilT = now + lib.untangleMaxTime
+                    countTry(h.a, now)
+                    countTry(h.b, now)
+                    hopOut(h.a, h.b)
+                    lib.stats.untangles = (lib.stats.untangles or 0) + 1
+                    print(string.format('[untangle] %s and %s', h.a, h.b))
+                end
             end
         end
     end

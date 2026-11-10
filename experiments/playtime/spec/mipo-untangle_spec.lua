@@ -166,4 +166,47 @@ describe('Mipo untangle', function()
             assert.are.equal(before, jointGuard.stats.untangles or 0)
         end)
     end)
+    -- Nikki's pit (spec/fixtures/pit-knot.playtime.json, saved from the hair scene, 2026-11-10): 19
+    -- Mipos in a bowl, three of them knotted into each other (25 hooks). Untangled pair by pair, each
+    -- hop landed in the third Mipo; after 4 tries each it gave up and they lay knotted for good. As a
+    -- group they pass through each other and drift apart. (Some Mipos in the file were already falling
+    -- off the bowl's open left side when it was saved: only the ones in the bowl are checked.)
+    it('a knot of three in a crowded pit comes apart as a group, and stays apart', function()
+        withClock(function(clock)
+            local world = newWorld()
+            local f = assert(io.open(love.filesystem.getWorkingDirectory() .. '/spec/fixtures/pit-knot.playtime.json'))
+            local json = f:read('*a')
+            f:close()
+            sceneLoader.loadSceneData(json, 'pit-knot')
+            local knot = { ['2Gk6Md'] = true, ['4awB8O'] = true, KAmBT = true }
+            local function knotHooks()
+                local n = 0
+                for _, h in ipairs(jointGuard.hooks()) do
+                    if knot[h.a.id] and knot[h.b.id] then n = n + 1 end
+                end
+                return n
+            end
+            simulate(world, 0.2, clock)
+            assert.is_true(knotHooks() > 0, 'the fixture is not knotted')
+            local inBowl = {}
+            for id, instance in pairs(mipoRegistry.getAll()) do
+                local x, y = instance.parts.torso1.body:getPosition()
+                if x > -350 and x < 3050 and y < -1300 then inBowl[id] = instance end
+            end
+            local before = jointGuard.stats.untangles or 0
+            local fastest = 0
+            for _ = 1, 15 do
+                simulate(world, 1, clock)
+                for _, instance in pairs(inBowl) do
+                    local vx, vy = instance.parts.torso1.body:getLinearVelocity()
+                    fastest = math.max(fastest, math.sqrt(vx * vx + vy * vy))
+                end
+            end
+            -- before: 5 untangles, 12-18 hooks left all the way; now one group untangle, 0 hooks
+            assert.are.equal(0, knotHooks(), 'still knotted')
+            assert.is_true((jointGuard.stats.untangles or 0) - before <= 2, 'untangled again and again')
+            assert.is_true(fastest < 3000, 'a Mipo in the bowl flew at ' .. math.floor(fastest))
+            world:destroy()
+        end)
+    end)
 end)
