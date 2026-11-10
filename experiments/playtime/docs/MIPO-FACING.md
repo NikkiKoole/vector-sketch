@@ -38,7 +38,7 @@ already folded; swinging straight legs forward in the air pushed it off the back
 - [x] **MF1. The face.** Turned toward the facing side: gaze ahead, features on a turned
   cylinder, the back ear over the head. A drawn profile head is the step after, if wanted.
 - [ ] **MF2. Hips closer** facing a side (both legs hang from one point in a side view).
-- [ ] **MF3. Turning live.** Tried 2026-11-05 in the spike (arrows a step, `t` back and forth):
+- [x] **MF3. Turning live.** Tried 2026-11-05 in the spike (arrows a step, `t` back and forth):
   the face turns a little every frame (`instance._turnAngle`, `applyFace` from each decal's
   front-on place), the body switches by a rebuild when its own angle passes 15° (left -> right is
   two rebuilds, over front). Body and head turn separately (Nikki): the body quickly (120°/s),
@@ -60,9 +60,8 @@ already folded; swinging straight legs forward in the air pushed it off the back
   foot leaning as far the other way, which comes down to rest (0.12 s + 0.16 s). Only the picture
   leans (`extra.leanAngle` about the ankle, box2d-draw-textured): tipping the foot body itself
   fought the floor it stands on (tried: a motor toes-down got 9 of 63 degrees). `f` compares with
-  the flip. Next if wanted: stagger
-  feet / arms / ears, or swing the feet round instead of remaking them. Feet, limits, draw order and ears change in those two steps. Open: does
-  the pop show, and a turn that's not a rebuild (feet swung, z swapped in place).
+  the flip. Feet, limits, draw order and ears
+  change in those two steps. Into every scene with MF6 (2026-11-10); what's left is MF7.
 - [x] **MF6. Promote turning + autowalk out of the spike** (Nikki 2026-11-06: "we might want to
   promote this soon"; into the engine, Nikki 2026-11-10, LANDING-2026-11.md, before hair and hats).
   Done 2026-11-10: `src/mipo-walk.lua`, run for every Mipo by `src/systems.lua` (in a fixed order: a
@@ -77,10 +76,8 @@ already folded; swinging straight legs forward in the air pushed it off the back
   dna.facing; a turn or walk under way starts over. The spike is its panel now (760 -> 330 lines).
   Spec `mipo-walk_spec.lua` (dragged by a finger: turns right and steps, let go back to front; off:
   neither; held: neither; the setting saved only when off); snapshot mipos identical; full suite green.
-  Open: scenes that seat Mipos themselves (tracks, soapbox, rides) don't `hold` their riders yet: a
-  rider dragged with its feet on the cart could start stepping against the scene's pose.
 - [ ] **MF4. A facing pick** in the Mipo editor (MIPO-EDITOR-LEFTOVERS E2).
-- [ ] **MF5. Autowalk.** Tried 2026-11-06 in the spike (`w`), "pretty good": a Mipo faces front;
+- [x] **MF5. Autowalk.** Tried 2026-11-06 in the spike (`w`), "pretty good": a Mipo faces front;
   dragged sideways near the floor (a foot touched in the last 0.3 s, faster than 0.25 leg
   lengths a second) it turns that way and its leg muscles step (KEEP_ANGLE targets: thighs swing
   in turn, the knee bends on the swing forward), the steps going by how far it's dragged, at
@@ -96,9 +93,32 @@ already folded; swinging straight legs forward in the air pushed it off the back
   held still it fades), the body then turning at 0.6 of its speed, the head slow as always;
   relaxing back to front the same. "A great experiment" (2026-11-06).
   Muscles only, no forces: the hand moves it. A turn waits only
-  while a part it remakes (foot, ear) is held. Open: it still tips into the drag (pulled high,
-  feet on the floor: a broom by its handle), next try pulling at the hips while walking; out of
-  the spike into the Mipos everywhere,
-  and walking held by a foot (that foot can't step).
+  while a part it remakes (foot, ear) is held. Into every scene with MF6 (2026-11-10); what's left
+  is MF8.
+- [ ] **MF7. A smoother turn**, if the pop shows: stagger feet / arms / ears, or swing the feet
+  round and swap z in place instead of remaking them.
+- [ ] **MF8. Walking, the leftovers.** It still tips into the drag (pulled high, feet on the floor:
+  a broom by its handle), next try pulling at the hips while walking; walking held by a foot (that
+  foot can't step).
+- [ ] **MF9. Riders held.** Scenes that seat Mipos themselves (tracks, soapbox, rides) don't
+  `mipoWalk.hold` their riders yet (checked 2026-11-11: only the facing spike does): a rider
+  dragged with its feet on the cart could start stepping against the scene's pose.
 - Used by the tracks spike's riders (TRACKS.md TR4b): facing and the face's turn taken from their
   cart's 3D direction, front where the cart is end-on (2026-11-06).
+
+## Standing, and piles of Mipos (2026-11-10)
+
+Found once Mipos walked everywhere; built straight into the engine, no spike.
+- **On their soles** (`src/mipo-stance.lua`, a system): an ankle motor holds each foot square to
+  its shin, and facing a side a knee motor holds the bend the leg muscles ask for. Before, Mipos
+  landed on a heel or a toe tip, and stubby or side-facing ones did the splits. Rests while
+  walking, ragdoll, flipped, limp, and for legs a scene poses. Stubby Mipos get wider leg shapes
+  (mipo-build `fitLegWidth`). Spec `feet-hop_spec.lua`: 96 of 720 landings not flat -> 8.
+  tried 2026-11-10: pulling the foot level with the world (levered the shins; dropped); drawn-width
+  legs for every Mipo (piles knotted twice as often; dropped).
+- **Knots of three or more untangle as a group** (`mipo-joint-guard` knotGroup: they pass through
+  each other and drift apart, no hop). Nikki's pit (19 Mipos in a bowl) knotted for good when
+  untangled pair by pair. Spec `mipo-untangle_spec.lua` with `spec/fixtures/pit-knot.playtime.json`.
+- **Legs pass other Mipos** (settings, 'mipos'; `state.legsPassMipos`, off, not saved). tried
+  2026-11-10 against knots in piles: fewer untangles, but left off since the wider-legs fix stopped
+  the pit knotting.
