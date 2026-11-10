@@ -416,6 +416,7 @@ local function randomizeAll(instance, textureOpts, faceOpts)
     local patch = { isPotatoHead = not instance.dna.creation.isPotatoHead, noseSegments = 0 }
     randomizeSoftness(patch)
     build.rebuildFromCreation(instance, patch)
+    build.fitLegWidth(instance, true) -- a stubby Mipo stands on wide leg shapes (measured on the parts)
     lib.limitArmReach(instance)
     textures.rebuildTextures(instance)
 end
@@ -502,6 +503,7 @@ function lib.randomizePart(instance, partName)
         end
     end
 
+    build.fitLegWidth(instance, true) -- a new head or torso can make it stubby (or not)
     textures.rebuildTextures(instance)
 end
 
@@ -609,6 +611,7 @@ function lib.mutateSizes(instance)
     -- arms and legs vary independently
     mutateLength(instance, { 'luleg', 'ruleg', 'llleg', 'rlleg' })
     mutateLength(instance, { 'luarm', 'ruarm', 'llarm', 'rlarm' })
+    build.fitLegWidth(instance, true)
     textures.rebuildTextures(instance)
 end
 

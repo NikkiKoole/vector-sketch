@@ -33,6 +33,7 @@ local pupilRange = 0.6
 local mipoFace = require('src.mipo-face')
 local utils = require('src.utils')
 local mipoRegistry = require('src.mipo-registry')
+local facing = require('src.mipo-facing')
 local view = require('src.render.view')
 local ompBake = require('src.render.omp-bake')
 local shaders = require('src.render.shaders')
@@ -247,9 +248,15 @@ local function footBackZ(_, body)
     local instance, partName = mipoRegistry.getFromBody(body)
     if not (instance and (partName == 'lfoot' or partName == 'rfoot')) then return nil end
     -- both sides' legs: a foot lies behind every leg, so the legs always show (Nikki 2026-11-10: "legs
-    -- go under and over the feet, we should just see them always")
+    -- go under and over the feet, we should just see them always"). Facing a side, its own leg only:
+    -- the far leg is drawn behind the torso (mipo-facing FAR_Z), and with all four legs the far foot's
+    -- front piece came over the near leg and the near foot's back piece went behind the torso (Nikki
+    -- 2026-11-10: "the right foot when facing left should be closest to us").
+    local side = partName:sub(1, 1)
+    local legs = facing.facingOf(instance, partName) == 'front' and { 'luleg', 'llleg', 'ruleg', 'rlleg' }
+        or { side .. 'uleg', side .. 'lleg' }
     local low, high
-    for _, leg in ipairs({ 'luleg', 'llleg', 'ruleg', 'rlleg' }) do
+    for _, leg in ipairs(legs) do
         local part = instance.parts[leg]
         if part and part.body and not part.body:isDestroyed() then
             for _, f in ipairs(part.body:getFixtures()) do

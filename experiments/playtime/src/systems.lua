@@ -20,6 +20,11 @@ lib.list = {
         update = function(m, dt) m.update(dt) end,
     },
     {
+        name = 'stance', -- soft ankles and firm knees: Mipos stand on their soles (src/mipo-stance.lua)
+        module = 'src.mipo-stance',
+        update = function(m) m.update() end,
+    },
+    {
         name = 'hair', -- hair locks on Mipos and on bodies (src/hair-locks.lua, docs/HAIR-LOCKS.md)
         module = 'src.hair-locks',
         update = function(m, dt) m.update(dt) end,

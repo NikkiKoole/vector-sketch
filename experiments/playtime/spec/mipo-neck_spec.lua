@@ -15,6 +15,7 @@ local contactTracker = require('src.physics.contact-tracker')
 local keepAngle = require('src.keep-angle')
 local jointGuard = require('src.mipo-joint-guard')
 local mipoActions = require('src.mipo-actions')
+local stance = require('src.mipo-stance') -- an engine system: runs every frame in the game
 
 local DT = 1 / require('src.physics-units').stepsPerSecond()
 
@@ -53,6 +54,7 @@ describe('a long neck', function()
                     jointGuard.update()
                     mipoActions.update()
                     keepAngle.update(DT, {})
+                    stance.update()
                     if step * DT > 4 then
                         standUps = standUps or jointGuard.stats.standUps -- landing hops are fine
                     end

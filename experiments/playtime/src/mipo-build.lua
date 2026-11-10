@@ -857,6 +857,64 @@ function lib.reconstructInstance(charData, partBodies)
     return instance
 end
 
+-- Stubby Mipos get wide leg shapes (Nikki 2026-11-10: a Mipo with short legs under a big head and
+-- torso did the splits, hopped up (mipo-joint-guard standUp), and did them again, for good; wider leg
+-- shapes, the drawing left as it is, stood it). Measured on random Mipos, front and facing a side,
+-- dropped twice, with the stance muscles (src/mipo-stance.lua): on the usual legs (dims.w 80, 24 px
+-- at scale 0.3) about 1 in 10 doesn't stand; those have short legs under a tall body, and need
+-- 100-200. Not every stubby one does, and no measure told them apart, so: legs under lib.stubbyLeg
+-- px and a body over lib.stubbyRatio times as tall get lib.stubbyLegW. 180 px / 1.75: 13 of 80 wide,
+-- 4 still fell (all facing a side); 270 / 1.5: 31 of 80 wide, all 80 stand (Nikki: standing first).
+-- Wide legs knot more in piles (5 piles of 8, knots left after 30 s: 23 against 15); knots are
+-- their own problem. Drawn width for every Mipo was tried first: drawn legs are 24-60 px, piles
+-- knotted twice as often, and for the stubbiest it wasn't wide enough either.
+-- Measured on the built parts: run after the build; `rebuild` remakes the legs (then redraw the
+-- textures). Returns the width it set.
+lib.legW = 80
+lib.stubbyLegW = 200
+lib.stubbyLeg = 270    -- px, thigh + shin, at the Mipo's scale
+lib.stubbyRatio = 1.5  -- body (torso segments, neck, head) height over leg length
+local LEGS = { 'luleg', 'ruleg', 'llleg', 'rlleg' }
 
+local function tallness(body)
+    local y1, y2 = math.huge, -math.huge
+    for _, fixture in ipairs(body:getFixtures()) do
+        if not fixture:getUserData() then
+            local _, top, _, bottom = fixture:getBoundingBox(1)
+            y1, y2 = math.min(y1, top), math.max(y2, bottom)
+        end
+    end
+    return y2 > y1 and y2 - y1 or 0
+end
+
+-- leg length and body height (px), from the built parts
+function lib.legProportions(instance)
+    local parts, partsDNA = instance.parts, instance.dna.parts
+    if not (partsDNA.luleg and partsDNA.llleg) then return nil end
+    local legLength = (partsDNA.luleg.dims.h + partsDNA.llleg.dims.h) * (instance.scale or 1)
+    local body = 0
+    for name, part in pairs(parts) do
+        if (name == 'head' or name:match('^torso%d+$') or name:match('^neck%d+$'))
+            and part.body and not part.body:isDestroyed() then
+            body = body + tallness(part.body)
+        end
+    end
+    return legLength, body
+end
+
+function lib.fitLegWidth(instance, rebuild)
+    local legLength, body = lib.legProportions(instance)
+    if not legLength then return end
+    local stubby = legLength < lib.stubbyLeg and body > lib.stubbyRatio * legLength
+    local w = stubby and lib.stubbyLegW or lib.legW
+    for _, name in ipairs(LEGS) do
+        local dims = instance.dna.parts[name] and instance.dna.parts[name].dims
+        if dims and dims.w ~= w then
+            dims.w = w
+            if rebuild and instance.parts[name] then lib.updatePart(name, { w = w }, instance) end
+        end
+    end
+    return w
+end
 
 return lib
