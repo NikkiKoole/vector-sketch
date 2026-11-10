@@ -123,3 +123,73 @@ describe('hair lock steps, C and Lua', function()
         end)
     end
 end)
+
+-- A whole haircut kept in C (hairNative.newCut, hair.c hair_cut_*): stepping it moves every lock as
+-- stepping each lock does, and a layer's joined strip is each lock's strip with the joins between.
+describe('a haircut in C', function()
+    local function makeLocks()
+        local locks = {}
+        for k = 1, 4 do
+            local n = 6 + k * 2
+            local l = { n = n, segment = 18 + k, restAngle = 1 + k * 0.3, rx = -20 + k * 10, ry = -30,
+                drape = k ~= 4, front = k % 2 == 0, width = 0.2, phase = k, wave = k == 3 and 8 or 0,
+                ring = k == 2 and 10 or 0, ringPitch = 30, points = {}, prev = {}, bends = {} }
+            for i = 1, n do
+                l.points[2 * i - 1], l.points[2 * i] = l.rx + i * 2, l.ry + i * l.segment
+                l.prev[2 * i - 1], l.prev[2 * i] = l.points[2 * i - 1] - 1, l.points[2 * i]
+                l.bends[i] = 0.08 * k
+            end
+            locks[k] = l
+        end
+        return locks
+    end
+    local o = { damping = 0.96, stand = 0, stiffness = 0.1, springy = 0.3, ringlets = 0, ringletPitch = 30 }
+
+    it('steps like its locks one by one', function()
+        if not hairNative.cutAvailable() then pending('no hair_cut_v1 in native/desound (build.sh)') return end
+        local a, b = makeLocks(), makeLocks()
+        local cut = hairNative.newCut(a, o, 5)
+        for _ = 1, 15 do
+            hairNative.cutStep(cut, o, 100, 50, 0.3, 0, 2940, 1 / 120, 45, 60, 150, 2)
+            for _, l in ipairs(b) do hairNative.step(l, o, 100, 50, 0.3, 0, 2940, 1 / 120, 45, 60, 150, 2) end
+        end
+        hairNative.readBack(cut, a)
+        for k = 1, #a do
+            for i = 1, 2 * a[k].n do
+                assert.are.equal(b[k].points[i], a[k].points[i])
+                assert.are.equal(b[k].prev[i], a[k].prev[i])
+            end
+        end
+    end)
+
+    it('lays a layer as its locks joined', function()
+        if not hairNative.cutAvailable() then pending('no hair_cut_v1 in native/desound (build.sh)') return end
+        local locks = makeLocks()
+        local cut = hairNative.newCut(locks, o, 5)
+        local ffi = require('ffi')
+        for _, front in ipairs({ false, true }) do
+            local data = love.data.newByteData(4000 * hairNative.BYTES_PER_VERTEX)
+            local count = hairNative.cutStrip(cut, front, 0.5, 139, data, 4000)
+            local want = love.data.newByteData(4000 * hairNative.BYTES_PER_VERTEX)
+            local wcount = 0
+            for _, l in ipairs(locks) do
+                if (l.front or false) == front then
+                    local at = wcount > 0 and wcount + 2 or 0
+                    local c = hairNative.strip(l.points, l.n, l.segment, l.ring, l.ringPitch, l.wave, l.segment * 5,
+                        l.phase, 0.5, 139 * l.width, want, at)
+                    if wcount > 0 then
+                        hairNative.copyVertex(want, wcount - 1, wcount)
+                        hairNative.copyVertex(want, at, wcount + 1)
+                    end
+                    wcount = at + c
+                end
+            end
+            assert.are.equal(wcount, count)
+            local f, g = ffi.cast('float *', data:getFFIPointer()), ffi.cast('float *', want:getFFIPointer())
+            local worst = 0
+            for i = 0, count * 8 - 1 do worst = math.max(worst, math.abs(f[i] - g[i])) end
+            -- (hair_strip takes the points as floats, the cut as doubles)
+            assert.is_true(worst < 0.01, 'vertices differ by ' .. worst)
+        end
+    end)
+end)

@@ -1,6 +1,6 @@
 # Hair locks — long hair that swings
 
-status: parked — Nikki 2026-11-09: "we are good with the hair" (tried 2026-11-09: locks that hang and swing, haircuts, ringlets, body hair, fur, a coat, the box); left: H8 the simulation in C (H4, the phone: ~0.65 ms a Mipo, 20 don't fit)
+status: parked — Nikki 2026-11-09: "we are good with the hair" (tried 2026-11-09: locks that hang and swing, haircuts, ringlets, body hair, fur, a coat, the box); the phone (H4, H8): ~0.06 ms a Mipo with the hair in C (was ~0.3 in Lua)
 
 A spike: locks of hair as chains of points rooted on the head, moved by a small verlet step of
 their own (not Box2D) and drawn as ribbons with the hair pictures. `src/hair-locks.lua`, the scene
@@ -69,7 +69,7 @@ one Bezier, which smoothed curls away. Cost per Mipo on the Mac: simulate 0.1-0.
   15.0 ms (script.call 0.7 -> 11.3, the hair's step: ~0.5 ms a Mipo, twice the Mac's 0.26), draw 11.9
   -> 15.0 (the strips rebuilt every frame), 46 -> 31 fps. So 20 Mipos with long hair don't fit;
   a few do (~0.65 ms each).
-- [ ] H8. The simulation in C (~0.5 ms a Mipo awake on the phone, H4, all Lua). Or: hair small on
+- [x] H8. The simulation in C (~0.5 ms a Mipo awake on the phone, H4, all Lua). Or: hair small on
   screen not simulated (LS30's rule), fewer locks in a crowd
   2026-11-10, step 1: `hair_step` in native/desound/hair.c, the same maths as stepLock (all of a lock's
   steps in one call; the head's transform as cos/sin instead of getWorldPoint), via hairNative.step;
@@ -85,6 +85,15 @@ one Bezier, which smoothed curls away. Cost per Mipo on the Mac: simulate 0.1-0.
   previous points), one C call a frame steps all its locks, one builds each layer's joined strip
   straight from it, and the settle check reads it there. Lua keeps the per-lock settings, the roots
   (bendRoots) and the Lua path for the web.
+  Step 2, done the same day: a haircut's points live in C (hairNative.newCut: FFI buffers for every
+  lock's points, previous points, settings and bends; hair.c hair_cut_step / hair_cut_settled /
+  hair_cut_strip, sharing the per-lock step_core and strip_core). Made on a haircut's first update;
+  state.hairStepLua = true copies the points back into the lock tables (Lua again), and reset makes
+  the cut again. bendRoots writes the moved roots into it. Specs 14/14: the cut steps exactly as its
+  locks one by one, its layer strip within 0.01 px of the per-lock strips joined.
+  Phone, 20 Mipos x 21 locks, running, alternated twice (hairLocks.update / .draw timed): update
+  4.1 -> 0.6 ms, drawing 1.8-2.2 -> 0.6 ms: the hair ~6 -> ~1.2 ms a frame for 20 Mipos (~0.06 a Mipo).
+  (H4's "drawing as much again" was an estimate; timed, the strips were ~2 ms.)
 
 ## Hair bounce (also parked)
 

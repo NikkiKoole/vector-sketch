@@ -350,6 +350,7 @@ function lib.reset(instance)
         end
         for i = 2 * lock.n + 1, #lock.points do lock.points[i], lock.prev[i] = nil, nil end
     end
+    if h.cut then h.cut = hairNative.newCut(h.locks, h.opts, WAVE_SEGMENTS) end
 end
 
 -- The floor under a haircut: one ray straight down from its body a frame, the nearest static
@@ -433,7 +434,6 @@ local function stepLock(lock, o, body, gx, gy, dt, ovalX, ovalY, groundY)
 end
 
 lib.stepLockLua = stepLock -- (spec/hair-native_spec.lua: the C step against this)
-local NO_LOCKS = {}
 
 -- Sleep: hair that has settled on a head that holds still isn't simulated (nor its strips built
 -- again) until the head moves: most Mipos stand around most of the time.
@@ -445,6 +445,7 @@ local WAKE_MOVE, WAKE_TURN = 0.5, 0.005 -- the head this far from where the hair
 -- Whether no point moved more than SLEEP_MOVE since the last frame (from where they were then,
 -- kept in hair.snap: points - prev isn't the move, DFTL writes into prev). Takes the new snapshot.
 local function settled(hair)
+    if hair.cut then return hairNative.cutSettled(hair.cut, SLEEP_MOVE) end
     local limit, snap, k, still = SLEEP_MOVE * SLEEP_MOVE, hair.snap or {}, 0, true
     for _, lock in ipairs(hair.locks) do
         local p = lock.points
@@ -475,6 +476,7 @@ local function bendRoots(hair)
     for k, lock in ipairs(hair.locks) do
         local bx, by = bent[2 * k - 1], bent[2 * k]
         lock.bx, lock.by = bx, by
+        if hair.cut then hairNative.cutRoot(hair.cut, k, bx, by) end
         if slept and math.abs(bx - slept[2 * k - 1]) + math.abs(by - slept[2 * k]) > WAKE_MOVE then moved = true end
     end
     return moved
@@ -495,6 +497,17 @@ function lib.update(dt)
                 lib.attach(instance, hair.opts) -- made by an older version of this file (hot reload)
             else
                 local body = hair.body
+                -- its points kept in C (hairNative's cut, H8) where the library has it; state.hairStepLua
+                -- = true: in the lock tables, stepped and drawn in Lua (the points copied across once)
+                local wantCut = not state.hairStepLua and hairNative.cutAvailable()
+                if wantCut and not hair.cut then
+                    hair.cut = hairNative.newCut(hair.locks, hair.opts, WAVE_SEGMENTS)
+                    hair.version = (hair.version or 0) + 1
+                elseif not wantCut and hair.cut then
+                    hairNative.readBack(hair.cut, hair.locks)
+                    hair.cut = nil
+                    hair.version = (hair.version or 0) + 1
+                end
                 local x, y = body:getPosition()
                 local a = body:getAngle()
                 local rootsMoved = bendRoots(hair)
@@ -513,18 +526,12 @@ function lib.update(dt)
                         steps = steps + 1
                     end
                     local stepped = steps > 0
-                    -- in C where the library has it (all of a lock's steps in one call: ~0.5 ms a Mipo
-                    -- in Lua on the phone, HAIR-LOCKS H8); state.hairStepLua = true: Lua anyway
-                    local native = stepped and not state.hairStepLua and hairNative.stepAvailable()
-                    for _, lock in ipairs(native and hair.locks or NO_LOCKS) do
-                        if not hairNative.step(lock, hair.opts, x, y, a, gx * w, gy * w, h, hair.ovalX, hair.ovalY,
-                                groundY, steps) then
-                            for _ = 1, steps do
-                                stepLock(lock, hair.opts, body, gx * w, gy * w, h, hair.ovalX, hair.ovalY, groundY)
-                            end
-                        end
+                    -- every lock, every step, in one C call (~0.5 ms a Mipo in Lua on the phone, H8)
+                    if stepped and hair.cut then
+                        hairNative.cutStep(hair.cut, hair.opts, x, y, a, gx * w, gy * w, h, hair.ovalX, hair.ovalY,
+                            groundY, steps)
                     end
-                    for _ = 1, native and 0 or steps do
+                    for _ = 1, hair.cut and 0 or steps do
                         for _, lock in ipairs(hair.locks) do
                             stepLock(lock, hair.opts, body, gx * w, gy * w, h, hair.ovalX, hair.ovalY, groundY)
                         end
@@ -686,9 +693,15 @@ local function layerMesh(hair, wantFront, pic)
     local key = wantFront and 'front' or 'back'
     local L = hair.layers[key]
     if L and L.version == hair.version and L.pic == pic then return L.mesh end
-    local o, cap = hair.opts, 0
-    for _, lock in ipairs(hair.locks) do
-        if (lock.front or false) == wantFront then cap = cap + capacityFor(lock, o) end
+    local o = hair.opts
+    hair.caps = hair.caps or {} -- a layer's most vertices: fixed for a haircut
+    local cap = hair.caps[key]
+    if not cap then
+        cap = 0
+        for _, lock in ipairs(hair.locks) do
+            if (lock.front or false) == wantFront then cap = cap + capacityFor(lock, o) end
+        end
+        hair.caps[key] = cap
     end
     if cap == 0 then return nil end
     if not L or L.cap < cap then
@@ -698,7 +711,14 @@ local function layerMesh(hair, wantFront, pic)
         hair.layers[key] = L
     end
     local picW, count = pic:getWidth(), 0
-    if lib.useNative and hairNative.available() then
+    if hair.cut then -- the whole layer in one C call, from the points kept there (H8)
+        local bytes = cap * hairNative.BYTES_PER_VERTEX
+        if not nativeData or nativeData:getSize() < bytes then
+            nativeData = love.data.newByteData(math.max(bytes, nativeData and nativeData:getSize() * 2 or 0))
+        end
+        count = hairNative.cutStrip(hair.cut, wantFront, TILT, picW, nativeData, cap)
+        if count > 0 then L.mesh:setVertices(nativeData, 1, count) end
+    elseif lib.useNative and hairNative.available() then
         local bytes = cap * hairNative.BYTES_PER_VERTEX
         if not nativeData or nativeData:getSize() < bytes then
             nativeData = love.data.newByteData(math.max(bytes, nativeData and nativeData:getSize() * 2 or 0))

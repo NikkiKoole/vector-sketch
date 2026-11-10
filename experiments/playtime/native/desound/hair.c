@@ -6,6 +6,7 @@
 // picture's width across, written as { x, y, u, v, r, g, b, a } floats (2 vertices a sample)
 // for Mesh:setVertices(ByteData). Built into libdesound with the synth (build.sh, build-ios.sh).
 #include <math.h>
+#include <string.h>
 
 #define HAIR_MAX_SAMPLES 400
 #define HAIR_PLAIN_PER 4
@@ -13,7 +14,7 @@
 static double sx[HAIR_MAX_SAMPLES], sy[HAIR_MAX_SAMPLES], ss[HAIR_MAX_SAMPLES];
 
 // The lock's point i (1-based), its ends mirrored.
-static void at(const float *p, int n, int i, double *x, double *y) {
+static void at(const double *p, int n, int i, double *x, double *y) {
     if (i < 1) { *x = 2.0 * p[0] - p[2]; *y = 2.0 * p[1] - p[3]; return; }
     if (i > n) { *x = 2.0 * p[2 * n - 2] - p[2 * n - 4]; *y = 2.0 * p[2 * n - 1] - p[2 * n - 3]; return; }
     *x = p[2 * i - 2];
@@ -30,8 +31,8 @@ static void unit_tangent(int c, int count, double *tx, double *ty) {
 // points: flat x, y (n of them); segment: rest length between them; radius 0 = no ringlets;
 // wave 0 = no curly wave (its height, px, and wavePitch its length). Returns the number of
 // vertices written (2 a sample), 0 when there's no lock.
-int hair_strip(const float *points, int n, float segment, float radius, float pitch, float wave,
-               float wavePitch, float phase, float tilt, float halfWidth, float *out) {
+static int strip_core(const double *points, int n, double segment, double radius, double pitch, double wave,
+                      double wavePitch, double phase, double tilt, double halfWidth, float *out) {
     if (n < 2) return 0;
     double L = segment, R = radius, P = pitch < 4 ? 4 : pitch, W = wave, WP = wavePitch;
     int maxPer = (HAIR_MAX_SAMPLES - 1) / (n - 1);
@@ -124,6 +125,14 @@ int hair_strip(const float *points, int n, float segment, float radius, float pi
     return 2 * count;
 }
 
+static double fpoints[2 * HAIR_MAX_SAMPLES];
+int hair_strip(const float *points, int n, float segment, float radius, float pitch, float wave,
+               float wavePitch, float phase, float tilt, float halfWidth, float *out) {
+    if (n < 2 || n > HAIR_MAX_SAMPLES) return 0;
+    for (int i = 0; i < 2 * n; i++) fpoints[i] = points[i];
+    return strip_core(fpoints, n, segment, radius, pitch, wave, wavePitch, phase, tilt, halfWidth, out);
+}
+
 // hair_strip's version: 2 = with the curly wave (wave, wavePitch). src/hair-native.lua only uses
 // hair_strip when this is there, so a library from before can't be called with the new arguments.
 int hair_strip_v2(void) { return 2; }
@@ -135,7 +144,7 @@ int hair_strip_v2(void) { return 2; }
 // p, q: the points and their previous positions, flat x, y (n each), updated in place; bends:
 // n + 1 values, bends[i] for point i (1-based, used from 3); the root (rootLX, rootLY) in the head's
 // frame, the head at (bx, by) turned by `angle`. hasOval / hasGround: 0 = none.
-int hair_step(double *p, double *q, int n, double segment, double restAngle, const double *bends,
+static int step_core(double *p, double *q, int n, double segment, double restAngle, const double *bends,
               double rootLX, double rootLY, int drape, double bx, double by, double angle,
               double gx, double gy, double dt, double damping, double stand, double stiffness,
               double springy, int hasOval, double ovalX, double ovalY, int hasGround, double groundY,
@@ -205,3 +214,73 @@ int hair_step(double *p, double *q, int n, double segment, double restAngle, con
     }
     return 1;
 }
+
+int hair_step(double *p, double *q, int n, double segment, double restAngle, const double *bends,
+              double rootLX, double rootLY, int drape, double bx, double by, double angle,
+              double gx, double gy, double dt, double damping, double stand, double stiffness,
+              double springy, int hasOval, double ovalX, double ovalY, int hasGround, double groundY,
+              int steps) {
+    return step_core(p, q, n, segment, restAngle, bends, rootLX, rootLY, drape, bx, by, angle, gx, gy, dt,
+                     damping, stand, stiffness, springy, hasOval, ovalX, ovalY, hasGround, groundY, steps);
+}
+
+// A whole haircut, its points kept here (src/hair-native.lua's cut, HAIR-LOCKS H8): with the JIT off
+// every FFI element access from Lua is slow, so one call a frame steps all its locks, one checks
+// whether it settled, one lays each layer's joined strip; Lua no longer touches the points.
+// P, Q: every lock's points and previous points, flat x, y; defs: HAIR_DEF values a lock;
+// bends: each lock's n + 1 bends from its own offset.
+#define HAIR_DEF 16
+enum { D_N, D_OFF, D_SEG, D_REST, D_RX, D_RY, D_DRAPE, D_FRONT, D_RING, D_PITCH, D_WAVE, D_WAVEP, D_PHASE,
+       D_WIDTH, D_BENDS };
+
+int hair_cut_step(double *P, double *Q, const double *defs, const double *bends, int locks,
+                  double bx, double by, double angle, double gx, double gy, double dt, double damping,
+                  double stand, double stiffness, double springy, int hasOval, double ovalX, double ovalY,
+                  int hasGround, double groundY, int steps) {
+    for (int k = 0; k < locks; k++) {
+        const double *d = defs + k * HAIR_DEF;
+        int off = (int)d[D_OFF];
+        step_core(P + off, Q + off, (int)d[D_N], d[D_SEG], d[D_REST], bends + (int)d[D_BENDS], d[D_RX], d[D_RY],
+                  d[D_DRAPE] != 0, bx, by, angle, gx, gy, dt, damping, stand, stiffness, springy,
+                  hasOval, ovalX, ovalY, hasGround, groundY, steps);
+    }
+    return locks;
+}
+
+// 1 when no point moved more than sqrt(limit2) since the snapshot (and `valid`: there was one);
+// takes the new snapshot.
+int hair_cut_settled(const double *P, double *snap, int total, double limit2, int valid) {
+    int still = valid;
+    for (int i = 0; i < total; i += 2) {
+        double dx = P[i] - snap[i], dy = P[i + 1] - snap[i + 1];
+        if (dx * dx + dy * dy > limit2) still = 0;
+        snap[i] = P[i]; snap[i + 1] = P[i + 1];
+    }
+    return still;
+}
+
+// One layer (front 1 / back 0) of the haircut as one strip into `out` (8 floats a vertex), the locks
+// joined by two repeated vertices (no area); stops before `maxVerts`. Returns the vertex count.
+static float lockVerts[2 * HAIR_MAX_SAMPLES * 8];
+int hair_cut_strip(const double *P, const double *defs, int locks, int wantFront, double tilt, double picW,
+                   float *out, int maxVerts) {
+    int count = 0;
+    for (int k = 0; k < locks; k++) {
+        const double *d = defs + k * HAIR_DEF;
+        if ((d[D_FRONT] != 0) != (wantFront != 0)) continue;
+        int c = strip_core(P + (int)d[D_OFF], (int)d[D_N], d[D_SEG], d[D_RING], d[D_PITCH], d[D_WAVE], d[D_WAVEP],
+                           d[D_PHASE], tilt, picW * d[D_WIDTH], lockVerts);
+        if (c <= 0) continue;
+        int at = count > 0 ? count + 2 : 0;
+        if (at + c > maxVerts) break;
+        if (count > 0) { // the join: the last vertex again, then this strip's first
+            memcpy(out + 8 * count, out + 8 * (count - 1), 8 * sizeof(float));
+            memcpy(out + 8 * (count + 1), lockVerts, 8 * sizeof(float));
+        }
+        memcpy(out + 8 * at, lockVerts, (size_t)c * 8 * sizeof(float));
+        count = at + c;
+    }
+    return count;
+}
+
+int hair_cut_v1(void) { return 1; }
