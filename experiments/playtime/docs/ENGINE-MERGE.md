@@ -116,6 +116,8 @@ The landing order, what bites what, and Nikki's keep / spike choices of 2026-11-
   scene setting) and MT6 (setting a material in the editor, for the kept ones). LS20, LS21 and LS24
   after, in a real room. Started 2026-11-06 with LS13's first slice (the light button: off / lit,
   `src/scene-light.lua`), the order above turned round by Nikki's wish to have the button.
+- [ ] **EM7. Sky as a scene setting**: the day-night gradient and the climb to space, one clock for the
+  sky and the light (SKY.md, Nikki 2026-11-11).
 - [ ] **EM2. Two or three easy shelf things**: cloth (`src/cloth.lua`), planks with drawn outlines,
   glass beads; tries spike thing -> prop recipe -> shelf. Read each spike's script first.
 - [ ] **EM3. Water**, as one piece of work, from seaside (into the engine (Nikki 2026-11-10, LANDING-2026-11.md); its speeds
