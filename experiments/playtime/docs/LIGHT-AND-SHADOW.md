@@ -2,6 +2,25 @@
 
 status: active
 
+**Picking up (2026-11-10, end of the day):** LS28 judged and closed: legs always over their feet
+(going into them), matte noses (clay, faint shine) and teeth (new 'enamel' material, glaze looked wet).
+On the phone (iPhone SE 2): LS29/LS30, a lit face or foot under 20 px on screen drawn flat
+(`src/render/small-flat.lua`, `state.litMinPx`); a clean baseline, MEASURING.md M12 (the crowd scene in
+play mode, each light level at a room's zoom and the crowd's; repeat it the same way, settings
+alternated: single runs drift ~1 ms); the 'lit' level's hidden 2.5 ms was the contact shadows, now in
+C++ on the phone (`native/ios/patch-love-physics.py` patches LÖVE's World, desktop and web keep Lua).
+Hair (HAIR-LOCKS H4, H8): a haircut's points live in C now, 20 long-haired Mipos ~6 -> ~1.2 ms.
+Also: a scene's own panel draws at the phone's UI scale (main.lua; the hair panel ran off screen).
+Left open, each a choice for Nikki: at a room's zoom every level holds 60 fps; all 20 Mipos on screen,
+lit is ~48 fps (the lit limbs and pictures ~3 ms: draw them unlit when small? a look question), the
+contact-shadow levers in M12 (off-screen casters, hand casters), drawing +1 ms since M10 not split.
+Nikki's last question, not settled: "the feet change, that isn't in?" It is (74630ced, checked in the
+restarted game: legs over the feet, into them); zoomed out (foot < 20 px) the leg ends at the ankle
+over the foot instead (LS30). Ask what she saw. Other spikes' panels on the phone (now at UI scale)
+not looked at, only hair's.
+State left: desktop game restarted in `hair` (editor, panel at defaults, lamp off, hair in C); the
+phone has the `hair` scene from the last device build.
+
 **Picking up (2026-11-06, end of the day):** Nikki: "I like where we are with the light"; the shadows
 are done until they move into the engine (LS13). Everything up to LS22 is built and judged in one test
 scene, `light-grass-check`. Since lunch: 20 lit Mipos run at 60 fps on the iPhone SE 2 (LS23: the light
