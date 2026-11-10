@@ -1,0 +1,15 @@
+{
+  "camera": {
+    "scale": 0.16,
+    "rotation": 0,
+    "x": 0,
+    "y": 900,
+    "settings": {
+      "follow": false,
+      "minZoom": 0.05
+    }
+  },
+  "bodies": [],
+  "joints": [],
+  "version": "1.0"
+}

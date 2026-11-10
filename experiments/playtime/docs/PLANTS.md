@@ -2,6 +2,9 @@
 
 status: parked — kept as a spike, undecided: "not too great, but might become one"; Nikki wants plants interactable, not sure like this (tried 2026-11-04, scene `plants`)
 
+Followed by FLORA.md (2026-11-10): plants grown by modules like the trees (plant-kinds / plant-grow /
+plant-look), weight, phyllotaxis in 3D, age; scene `flora`.
+
 Nikki, 2026-11-03, right after the scan tool worked: "start adding some vegetation: leaves and stems,
 and grow real plants that are random, physicsy and great."
 
