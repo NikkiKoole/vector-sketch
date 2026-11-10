@@ -305,12 +305,19 @@ end
 -- the first part of another Mipo on the path parent centre -> joint -> child
 -- centre (the wallAcrossLimb path), and that Mipo.
 -- A Mipo in another lane (instance.lane, the depth spike's back lane) passes by, it can't hook.
+-- With state.legsPassMipos (lib.onPreSolve) legs go through other Mipos, so they can't hook either:
+-- another Mipo's leg across a limb isn't a hook, and nor is anything across a Mipo's own legs (the
+-- hip, knee and ankle paths); counted as hooks, they set off untangle after untangle.
+local LEG = { luleg = true, ruleg = true, llleg = true, rlleg = true }
+local LEG_PATH = { luleg = true, ruleg = true, llleg = true, rlleg = true, lfoot = true, rfoot = true }
 local function otherMipoAcross(x1, y1, x2, y2, ownId, ownLane)
     if (x2 - x1) ^ 2 + (y2 - y1) ^ 2 < 1 then return nil end
     local found, foundInstance
+    local legsPass = state.legsPassMipos
     state.physicsWorld:rayCast(x1, y1, x2, y2, function(fixture)
         if fixture:isSensor() then return -1 end
-        local instance = mipoRegistry.getFromBody(fixture:getBody())
+        local instance, partName = mipoRegistry.getFromBody(fixture:getBody())
+        if legsPass and LEG[partName] then return -1 end
         if instance and instance.id ~= ownId and instance.lane == ownLane then
             found, foundInstance = fixture, instance
             return 0
@@ -325,7 +332,7 @@ local function hooksOf(owner, result)
     eachRevolute(owner, function(joint)
         local bodyA, bodyB = joint:getBodies()
         local instance, partName = mipoRegistry.getFromBody(bodyB)
-        if instance then
+        if instance and not (state.legsPassMipos and LEG_PATH[partName]) then
             local x1, y1, x2, y2 = joint:getAnchors()
             local ax, ay = bodyA:getPosition()
             local bx, by = bodyB:getPosition()
@@ -763,14 +770,33 @@ local function pushApart()
     end
 end
 
+-- legsPass (a switch, on state so a hot swap keeps it): a Mipo's legs (thighs and shins, not the
+-- feet: Mipos still stand on each other) go through other Mipos. Knots are mostly a limb hooked
+-- through another Mipo; in a pile the legs hooked most (Nikki 2026-11-10, a pit of Mipos: knotted
+-- pairs untangled again and again, then shot out of the room). The settings panel's 'mipos' section.
+-- tried 2026-11-10, left off: 6 piles of 8 random Mipos, 30 s: untangles 18 -> 10, gave up 8 -> 4.
+-- Nikki liked the pit as well without it once only stubby Mipos had wide leg shapes (mipo-build
+-- fitLegWidth); turn it on if piles knot again.
+lib.rows = {
+    { key = 'legs pass other Mipos', kind = 'bool',
+      get = function() return state.legsPassMipos == true end,
+      set = function(_, v) state.legsPassMipos = v and true or nil end },
+}
+
 -- From preSolve (src/physics/physics-callbacks.lua): two Mipos that are
--- untangling, or were put down overlapping, pass through each other.
+-- untangling, or were put down overlapping, pass through each other; with legsPass, a leg and
+-- another Mipo do.
 function lib.onPreSolve(fix1, fix2, contact)
-    if next(tangles) == nil then return end
-    local instance1 = mipoRegistry.getFromBody(fix1:getBody())
+    local legsPass = state.legsPassMipos
+    if not legsPass and next(tangles) == nil then return end
+    local instance1, part1 = mipoRegistry.getFromBody(fix1:getBody())
     if not instance1 then return end
-    local instance2 = mipoRegistry.getFromBody(fix2:getBody())
+    local instance2, part2 = mipoRegistry.getFromBody(fix2:getBody())
     if not instance2 or instance1 == instance2 then return end
+    if legsPass and (LEG[part1] or LEG[part2]) then
+        contact:setEnabled(false)
+        return
+    end
     local t = tangles[pairKey(instance1.id, instance2.id)]
     if t and (t.untilT or t.soft) then contact:setEnabled(false) end
 end
