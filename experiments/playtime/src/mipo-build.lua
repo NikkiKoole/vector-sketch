@@ -534,8 +534,8 @@ function lib.rebuildFromCreation(instance, newCreation)
         end
     end
 
-    -- Step 2: Remove all existing parts
-    for _, part in pairs(instance.parts) do
+    -- Step 2: Remove all existing parts (in a fixed order: Box2D reuses what's freed in that order)
+    for _, part in utils.sortedPairs(instance.parts) do
         objectManager.destroyBody(part.body)
     end
 
@@ -687,7 +687,7 @@ function lib.removeCharacter(instance)
     require('src.physics.box2d-pointerjoints').resetPointerJoints()
     state.interaction.draggingObj = nil
     local snap = require('src.physics.snap')
-    for _, part in pairs(instance.parts or {}) do
+    for _, part in utils.sortedPairs(instance.parts or {}) do
         if part.body and not part.body:isDestroyed() then
             snap.destroySnapJointAboutBody(part.body)
             objectManager.destroyBody(part.body)

@@ -181,4 +181,26 @@ function lib.randomHexColor()
     return string.format("%02X%02X%02X%02X", r, g, b, a)
 end
 
+-- pairs(t) in a fixed order: keys sorted (numbers before strings, each in their own order). For
+-- loops that make or destroy Box2D things: pairs' own order follows how the table was built and what
+-- strings were made before, and Box2D hands out its ids (and so solves contacts) in the order things
+-- come and go, so the same Mipo built twice could settle differently (spec/mipo-neck_spec.lua, 2026-11-10).
+local function keyBefore(a, b)
+    local ta, tb = type(a), type(b)
+    if ta ~= tb then return ta == 'number' end
+    if ta == 'number' or ta == 'string' then return a < b end
+    return tostring(a) < tostring(b)
+end
+function lib.sortedPairs(t)
+    local keys = {}
+    for k in pairs(t) do keys[#keys + 1] = k end
+    table.sort(keys, keyBefore)
+    local i = 0
+    return function()
+        i = i + 1
+        local k = keys[i]
+        if k ~= nil then return k, t[k] end
+    end
+end
+
 return lib

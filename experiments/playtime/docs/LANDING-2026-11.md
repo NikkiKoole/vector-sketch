@@ -92,7 +92,10 @@ Each step is small enough to finish, and makes the next one cheaper.
   and a step (the file's top comment). Spec `save-migrations_spec.lua`.
   Found on the way: `mipo-neck_spec` seed 6 passes or fails by what ran before it in the same run
   (a Mipo's parts are built in `pairs` order, which follows earlier string interning; same DNA, mass
-  and random numbers, other build order, Box2D settles otherwise). Not from this work; open.
+  and random numbers, other build order, Box2D settles otherwise). Fixed the same day: the loops that
+  destroy a Mipo's bodies, regroup its fixtures and lay its pictures go by `utils.sortedPairs`; the
+  seed-6 head lands on the same spot to 9 decimals whatever ran before, the seeded Mipos' snapshot
+  is identical (light-grass-check and mipo-materials differ run to run, before and after alike).
 - [ ] **L4. EM5's cheap shared bits**: `drawn-stroke` into `src/` (with burrow's extras), `mipoKit`,
   the clamp copies. Trees and flora then load from `src/` like everything else.
 

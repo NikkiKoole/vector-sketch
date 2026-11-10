@@ -284,7 +284,7 @@ end
 -- Every fixture of the Mipo in its collision group (setGroup; a negative group never
 -- collides with itself) and its sfixtures in its z-range (zGroupOffset * 1000 + zOffset).
 local function applyGroupAndZ(instance, setGroup)
-    for _, part in pairs(instance.parts) do
+    for _, part in utils.sortedPairs(instance.parts) do -- fixed order: refiltering touches contacts
         if part.body and not part.body:isDestroyed() then
             for _, fixture in ipairs(part.body:getFixtures()) do
                 if setGroup and instance.groupIndex then fixture:setGroupIndex(instance.groupIndex) end
@@ -481,7 +481,9 @@ end
 
 function lib.rebuildTextures(instance)
     local scale = instance.scale
-    for k, v in pairs(instance.dna.parts) do
+    -- in a fixed order, part by part and picture by picture: Box2D hands out fixture ids in the order
+    -- they come and go (utils.sortedPairs)
+    for k, v in utils.sortedPairs(instance.dna.parts) do
         if v.appearance then
             local relevant = instance.parts[k]
             if (relevant) then
@@ -508,7 +510,7 @@ function lib.rebuildTextures(instance)
 
                 -- a spine's upper bands draw no picture of their own: torso1 draws the whole torso
                 local upperBand = v.spineBand and v.spineBand[1] > 1
-                for k2, v2 in pairs(v.appearance) do
+                for k2, v2 in utils.sortedPairs(v.appearance) do
                     if (k2 == 'skin' or k2 == 'bodyhair') and upperBand then -- luacheck: ignore 542
                     elseif k2 == 'skin' then
                         addSkinTexture(relevant.body, v, v2, scale)
