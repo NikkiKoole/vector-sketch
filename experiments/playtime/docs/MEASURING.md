@@ -164,6 +164,32 @@ parts (music-theory, skinning's `meshusertVertices`, the polygon modules) run wi
   of asked three times a part: 0.40 -> 0.33 ms. The crowd's update ~4.0 ms on the phone.
   Seen on the way: that pile untangled 109 times in 90 s, more than once a second (the twitching
   in a crowd?). Bigger, with Box2D, if ever needed: resting Mipos asleep.
+- [ ] **M12. The phone baseline again (2026-11-10).** After the light work (LS13 levels, LS28 faces).
+  Setup to repeat: `./playtime.sh device crowd --play` (20 Mipos, 380 bodies, no lights of its own),
+  wait ~20 s for them to land, `./playtime.sh bench device 6`, each setting alternated twice (draw p50
+  steady to ~0.2 ms). Zoom 0.13 is the crowd's own camera (all 20 on screen, faces tiny); 0.35 is a
+  room's (dollhouse; ~9 Mipos, 167 of 380 bodies on screen). Levels stepped with scene-light.step().
+  Update / draw p50 (ms), fps:
+
+  | light level | zoom 0.13 (all 20) | zoom 0.35 (a room's view) |
+  |---|---|---|
+  | off | 3.5 / 7.0, 60 | 3.0 / 3.0, 60 |
+  | lit | 5.7 / 12.8, 48 | 3.2 / 6.3, 60 |
+  | shadows | 6.5 / 15.7, 41 | 3.7 / 7.8, 60 |
+  | full (no floor set: = shadows) | 6.6 / 15.7, 41 | 3.6 / 7.6, 60 |
+
+  M10 (2026-10-31, the same scene, off): update 4.4 / draw 5.2. So the update is the same and drawing
+  grew ~1 ms over the 10 days (spine skin, faces, ... not split); LS28's lit face and feet are +0.6 ms at
+  0.13 (eyes, nose, mouth, feet flat: 6.2) thanks to LS30's small-flat (without it, every size lit: 11.0).
+  Editor instead of play mode: +2 ms draw (box2d-draw's debug shapes) and the world paused: phone runs
+  in the editor (LIGHT-AND-SHADOW LS23, LS29, HAIR-LOCKS H4) read high.
+  Over a frame's 16.7 ms the loop runs more physics steps to keep up (~85 a second at 200 px/m: 1.41 a
+  frame at 60 fps, 1.7-2.1 below), so a slow draw also costs update.
+  Lit, per kind (drawTimes, zoom 0.13): limb ribbons 2.4 -> 4.0, picture parts 1.2 -> 2.5, foot-back
+  0.3 -> 0.7; that's ~3.3 of the ~5.8: the rest is outside the textured world (contact shadows?, not
+  split yet). LS23's "lighting 20 Mipos ~1.8 ms" was light-grass-check in the editor, not this level.
+  Next, if a zoomed-out room needs it: what the other ~2.5 ms of 'lit' is; parts small on screen drawn
+  unlit (LS30's rule for the whole Mipo, a look question for Nikki).
 - [x] **M6. The potato-torso click.** (2026-11-05: the click and the Box2D crash it led to are fixed;
   the iMac run done 2026-11-09, see the end.) The editor snapshot forces every slider to its midpoint; on a
   potato head's torso1 panel that makes a shape Box2D refuses (`fixtures.lua:132: Box2D assertion
