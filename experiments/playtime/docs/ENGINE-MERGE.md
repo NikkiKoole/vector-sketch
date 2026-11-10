@@ -42,7 +42,7 @@ side copies: read them for one idea, don't start from them. From a read of every
 | Cups, bath | `src/liquid.lua` + seaside's drawing | — (floating in them: WATER W4 / SEASIDE SS4, open) |
 | Reflection, ripple rings | mirrors | — |
 | Boat of planks | boat2 (drawn-sea has the newer `makeBoat` with ballast) | — ; boat = the kinematic drawn boat |
-| Crayon stroke / outline | `scripts/spikes/drawn-stroke.lua` (loaded by 9 spikes) | planks (byte-identical copy, delete); burrow (the ancestor: has `canonical()` and per-cell tile pick, merge those in) |
+| Crayon stroke / outline | `src/drawn-stroke.lua` (loaded by 9 spikes) | planks (byte-identical copy, delete); burrow (the ancestor: has `canonical()` and per-cell tile pick, merge those in) |
 | Drawn plank | planks (bodies, nails, pop) + boat2's quad grain | wild (seeded wear and chaos, an option on it) |
 | Course from a height | soapbox | bike (parked) |
 | Course from waypoints, pipes, rails, depth as collision | tracks | — |

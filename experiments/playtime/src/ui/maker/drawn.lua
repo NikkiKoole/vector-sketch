@@ -66,13 +66,13 @@ end
 -- The card: Puppetmaker's tall tab panel (tab1: its paper tab at the top left), filled and outlined.
 -- Everything under it is the card's: the world isn't poked through it.
 -- The card: a slightly uneven box, filled by a quiet shader (a flat warm colour, a touch lighter at
--- the top, no grain) and outlined in Nikki's crayon strokes (scripts/spikes/drawn-stroke.lua: the
+-- the top, no grain) and outlined in Nikki's crayon strokes (src/drawn-stroke.lua: the
 -- strokes laid along a line, broken and overshooting at the corners). Everything under it is the
 -- card's: the world isn't poked through it. (lib.cardPicture: Puppetmaker's tab picture, as before.)
 local CARD_FILL = { 0.98, 0.94, 0.85 }
 local CARD_STROKE = 10  -- px: the outline's width
 local CARD_WOBBLE = 1.8 -- how much the stroke wanders
-local STROKE         -- drawn-stroke, loaded once (a spike's file for now: moves to src/ with the maker)
+local STROKE         -- src/drawn-stroke.lua, loaded at the first card (it makes pictures)
 local cardCache = {} -- { key, pts, meshes }
 
 local cardShader = love.graphics.newShader([[
@@ -97,7 +97,7 @@ end
 
 function lib.card(x, y, w, h, fill)
     if inside(x, y, w, h) then ui.overPanel = true end
-    STROKE = STROKE or love.filesystem.load('scripts/spikes/drawn-stroke.lua')()
+    STROKE = STROKE or require('src.drawn-stroke')
     local key = table.concat({ math.floor(x), math.floor(y), math.floor(w), math.floor(h) }, ',')
     if cardCache.key ~= key then
         local pts = cardPoints(x, y, w, h)
@@ -124,7 +124,7 @@ end
 -- A short crayon line between the card's zones (the card outline's strokes, thinner)
 local dividers = {} -- key -> meshes
 function lib.divider(x, y, w)
-    STROKE = STROKE or love.filesystem.load('scripts/spikes/drawn-stroke.lua')()
+    STROKE = STROKE or require('src.drawn-stroke')
     local key = math.floor(x) .. ',' .. math.floor(y) .. ',' .. math.floor(w)
     if not dividers[key] then
         if #dividers > 64 then dividers = {} end -- a window resize leaves old ones behind: start over

@@ -348,20 +348,9 @@ local function bladeRow(batch, k, yOff, seedP, size, time)
     love.graphics.draw(batch)
 end
 
-local function aliveMipos(b)
-    local alive = {}
-    for _, inst in ipairs(b.mipos) do
-        local torso = inst.parts and inst.parts.torso1
-        if torso and torso.body and not torso.body:isDestroyed() then alive[#alive + 1] = inst end
-    end
-    return alive
-end
+local function aliveMipos(b) return mipoKit.alive(b.mipos) end -- src/mipo-kit.lua
 
-local function spawnMipo(b, x, y)
-    local inst = characterManager.createCharacter('humanoid', x, y, 0.3)
-    if inst then characterManager.randomizeMipoConstrained(inst) end
-    if inst then b.mipos[#b.mipos + 1] = inst end
-end
+local function spawnMipo(b, x, y) mipoKit.spawn(b.mipos, x, y) end -- src/mipo-kit.lua
 
 ---------------------------------------------------------------- shaders
 

@@ -21,7 +21,7 @@ shed (a door, a window, trim, a roof), a fence in front, a lawn, two Mipos.
 - Everything random about a plank is drawn once with its own seed, so the same plank always moves
   the same way. Chaos goes in 12 steps, each step's outlines made once and kept (stop-motion);
   grime and growth slide smoothly.
-- Drawn, no shader: Nikki's crayon strokes (`scripts/spikes/drawn-stroke.lua`), the grass atlas.
+- Drawn, no shader: Nikki's crayon strokes (`src/drawn-stroke.lua`), the grass atlas.
   Nails, rust, stains, knots, moss and leaves are drawn in code until they're drawn by hand
   (`THINGS-TO-DRAW.md` A11).
 - `r` builds another shed (another seed). The roof is solid, the walls behind the Mipos.

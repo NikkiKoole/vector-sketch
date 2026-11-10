@@ -29,10 +29,7 @@ local function check() -- on state: a script hot reload keeps the Mipos
     return state.facingSpike
 end
 
-local function alive(inst)
-    local torso = inst and inst.parts and inst.parts.torso1
-    return torso and torso.body and not torso.body:isDestroyed()
-end
+local alive = mipoKit.isAlive -- src/mipo-kit.lua
 
 local function removeStools()
     local c = check()

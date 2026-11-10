@@ -528,9 +528,9 @@ end
 -- ─── The wheel, baked once into a picture that's drawn turning ───
 -- The tire: a Mipo leg picture baked as an OMP (outline, mask) in rubber colours, laid round as
 -- a ribbon (leg-05's ladder rungs read as tread, as the garden worm's rings); w cycles the six.
--- The spokes and hub: Nikki's crayon strokes (drawn-stroke.lua).
+-- The spokes and hub: Nikki's crayon strokes (src/drawn-stroke.lua).
 
-local STROKE = love.filesystem.load('scripts/spikes/drawn-stroke.lua')()
+local STROKE = drawnStroke()
 local RUBBER = { 0.26, 0.24, 0.23 }
 local INK = { 0.09, 0.08, 0.08 }
 local SPOKE_COUNT = 12

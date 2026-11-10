@@ -11,10 +11,7 @@ local function lab() -- on state: a script hot reload keeps the Mipo
     return state.vanilla
 end
 
-local function alive(inst)
-    local torso = inst and inst.parts and inst.parts.torso1
-    return torso and torso.body and not torso.body:isDestroyed()
-end
+local alive = mipoKit.isAlive -- src/mipo-kit.lua
 
 local function freshMipo()
     local v = lab()

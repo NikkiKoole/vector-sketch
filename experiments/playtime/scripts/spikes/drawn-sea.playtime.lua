@@ -562,7 +562,7 @@ end
 
 ---------------------------------------------------------------- the boat: planks
 
-local STROKE = love.filesystem.load('scripts/spikes/drawn-stroke.lua')()
+local STROKE = drawnStroke()
 local OUTLINE = { 0.2, 0.13, 0.1 }
 local NAVY = { 0.17, 0.24, 0.44 }
 local CREAM = { 0.9, 0.86, 0.76 }
@@ -900,20 +900,9 @@ local function drawNails(b, layer)
     end
 end
 
-local function aliveMipos(b)
-    local out = {}
-    for _, inst in ipairs(b.mipos) do
-        local torso = inst.parts and inst.parts.torso1
-        if torso and torso.body and not torso.body:isDestroyed() then out[#out + 1] = inst end
-    end
-    return out
-end
+local function aliveMipos(b) return mipoKit.alive(b.mipos) end -- src/mipo-kit.lua
 
-local function spawnMipo(b, x, y)
-    local inst = characterManager.createCharacter('humanoid', x, y, 0.3)
-    if inst then characterManager.randomizeMipoConstrained(inst) end
-    if inst then b.mipos[#b.mipos + 1] = inst end
-end
+local function spawnMipo(b, x, y) mipoKit.spawn(b.mipos, x, y) end -- src/mipo-kit.lua
 
 local function partBodies(inst)
     local out = {}

@@ -1,8 +1,11 @@
--- drawn-stroke: the drawn outline, shared by the spikes (not a scene). Loaded with
--- love.filesystem.load('scripts/spikes/drawn-stroke.lua')() -> { strokes, meshes(lines, wobble, step, seamless) }.
+-- drawn-stroke: the drawn outline, shared by the spikes (docs/LANDING-2026-11.md L4; was
+-- scripts/spikes/drawn-stroke.lua). require('src.drawn-stroke') -> { strokes, meshes(lines, wobble,
+-- step, seamless) }; a scene script calls drawnStroke() for it (src/script.lua). The pictures load on
+-- the first require, once for every scene.
 -- Nikki's crayon strokes (textures/strokes) as triangle strips along a line, broken at sharp
 -- corners (overshooting, tapered), each side one picture repeated mirror-wise (seamless). Copied
--- out of planks.playtime.lua (2026-11-04); burrow and planks still have their own copies.
+-- out of planks.playtime.lua (2026-11-04). Burrow keeps an older copy of its own (canonical(), a
+-- picture per marching-squares cell): merging it would change how burrow draws.
 -- lines: { { pts = { {x, y}, ... }, loop = bool, width = n, wobble = k }, ... }
 local STROKE_FAMILIES = {
     line = { alongX = false, from = 0.1, to = 0.9 },
@@ -45,7 +48,11 @@ do
             cut:paste(data, 0, 0, x0, y0, cw, ch)
             local seamless = love.graphics.newImage(cut, { mipmaps = true })
             seamless:setMipmapFilter('linear')
-            if f.alongX then seamless:setWrap('mirroredrepeat', 'clamp') else seamless:setWrap('clamp', 'mirroredrepeat') end
+            if f.alongX then
+                seamless:setWrap('mirroredrepeat', 'clamp')
+            else
+                seamless:setWrap('clamp', 'mirroredrepeat')
+            end
             STROKES[#STROKES + 1] = { image = image, family = family, alongX = f.alongX, from = f.from, to = f.to,
                 seamless = { image = seamless, family = family, alongX = f.alongX, from = 0, to = 1, w = cw, h = ch } }
         end
@@ -220,7 +227,7 @@ local function strokePiece(piece, width, wobble, step, byPicture, seamless)
         local mirror, offset = h2 < 0.5, h3 * 2
         local verts = byPicture[pic]
         if not verts then verts = {}; byPicture[pic] = verts end
-        local function vertex(x, y, across, d)
+        local function seamlessVertex(x, y, across, d)
             if mirror then across = 1 - across end
             local along = offset + d / length
             if pic.alongX then return { x, y, along, across } end
@@ -229,8 +236,8 @@ local function strokePiece(piece, width, wobble, step, byPicture, seamless)
         for i = 2, #centre do
             local ax, ay, bx, by = sides(i - 1)
             local cx, cy, dx, dy = sides(i)
-            local q1, q2 = vertex(ax, ay, 0, dist[i - 1]), vertex(bx, by, 1, dist[i - 1])
-            local q3, q4 = vertex(cx, cy, 0, dist[i]), vertex(dx, dy, 1, dist[i])
+            local q1, q2 = seamlessVertex(ax, ay, 0, dist[i - 1]), seamlessVertex(bx, by, 1, dist[i - 1])
+            local q3, q4 = seamlessVertex(cx, cy, 0, dist[i]), seamlessVertex(dx, dy, 1, dist[i])
             verts[#verts + 1] = q1; verts[#verts + 1] = q2; verts[#verts + 1] = q3
             verts[#verts + 1] = q2; verts[#verts + 1] = q4; verts[#verts + 1] = q3
         end

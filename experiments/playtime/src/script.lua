@@ -86,6 +86,7 @@ local baseEnv = {
     mipoRaspberry            = require('src.mipo-raspberry'), -- blow(instance) (raspberry spike)
     mipoTextures             = require('src.mipo-textures'), -- addFaceDecals: a Mipo face on a script's body (garden)
     mipoRegistry             = require('src.mipo-registry'),
+    mipoKit                  = require('src.mipo-kit'), -- spawn(list, x, y), alive(list), isAlive(inst)
     mipoLayers               = require('src.mipo-layers'), -- where a hat, pants, hair go between a Mipo's parts
     mipoFacing               = require('src.mipo-facing'), -- facing left / front / right (facing spike)
     festoon                  = require('src.festoon'), -- a wire of bulbs in swags (light-grass-check, LS26)
@@ -121,6 +122,9 @@ local baseEnv = {
     drawTexturedWorld        = function(...)
         return require('src.physics.box2d-draw-textured').drawTexturedWorld(...)
     end,
+    -- Nikki's crayon strokes along a line (src/drawn-stroke.lua): local STROKE = drawnStroke(); loaded
+    -- at the first call (it makes pictures)
+    drawnStroke              = function() return require('src.drawn-stroke') end,
     fluid                    = require('src.fluid'), -- particle water: tip a tank, a wave folds over (waterjar)
     makerUI                  = require('src.ui.maker.drawn'), -- Puppetmaker 2's drawn widgets (maker spike)
     -- Add global utilities like NeedManager, etc.

@@ -20,7 +20,7 @@
 
 local s = {}
 
-local STROKE = love.filesystem.load('scripts/spikes/drawn-stroke.lua')()
+local STROKE = drawnStroke()
 
 local OUTLINE = { 0.2, 0.14, 0.12 }
 local SKY_TOP, SKY_LOW = { 0.62, 0.78, 0.9 }, { 0.9, 0.92, 0.86 }
@@ -309,14 +309,7 @@ end
 
 ---------------------------------------------------------------- Mipos and lanes
 
-local function aliveMipos(b)
-    local out = {}
-    for _, inst in ipairs(b.mipos) do
-        local torso = inst.parts and inst.parts.torso1
-        if torso and torso.body and not torso.body:isDestroyed() then out[#out + 1] = inst end
-    end
-    return out
-end
+local function aliveMipos(b) return mipoKit.alive(b.mipos) end -- src/mipo-kit.lua
 
 local function setZ(b, inst)
     inst.lane = b.lanes[inst] or 'play' -- the joint guard: Mipos in other lanes can't hook (src/mipo-joint-guard.lua)

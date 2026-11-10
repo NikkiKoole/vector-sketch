@@ -1,12 +1,12 @@
 -- tree-mesh: a grown tree's branches (tree-grow.lua) as meshes for the bark shader (bark-look.lua) and
--- Nikki's crayon outlines (drawn-stroke.lua), not a scene. Loaded with
+-- Nikki's crayon outlines (src/drawn-stroke.lua), not a scene. Loaded with
 -- love.filesystem.load('scripts/spikes/tree-mesh.lua')() -> { parts, MESH_FORMAT }.
 -- parts(branches, seed) -> one part per depth, deepest first (twigs behind their branches, branches behind
 -- the trunk): { mesh, strokes (outline meshes), isStem (the trunk: the eyes go on it) }. seed turns each
 -- branch's bark round a little differently. From the bark spike (docs/BARK.md).
 local lib = {}
 
-local STROKE = love.filesystem.load('scripts/spikes/drawn-stroke.lua')()
+local STROKE = require('src.drawn-stroke')
 
 local MESH_FORMAT = {
     { 'VertexPosition', 'float', 2 },

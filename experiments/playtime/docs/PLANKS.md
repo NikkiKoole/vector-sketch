@@ -34,6 +34,6 @@ front, a ladder. Every plank is its own body, a little crooked, its ends cut a b
 - The left brace may still not be nailed at its top.
 - The stroke copies are short (cut, about 4–5× as long as wide): long planks can look a bit
   regular. A few long crayon lines from Nikki (1500–2000 px) would fix it.
-- The stroke code is in three places (burrow, planks, `scripts/spikes/drawn-stroke.lua`, which
+- The stroke code is in three places (burrow, planks, `src/drawn-stroke.lua`, which
   `boat2` loads); one module if it's kept.
 - Rebuilding (`r`) over the bridge hits the eval limit; restart instead.

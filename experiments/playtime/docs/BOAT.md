@@ -24,7 +24,7 @@ Mipos stand in for Walter and Olivia; the rods and the dragging of fish and buoy
 ## boat2 (`scripts/spikes/boat2.playtime.lua`)
 
 The same sea, sky, smoke, fish and buoy; the boat built from planks with the drawn outline (as in
-`PLANKS.md`, from `scripts/spikes/drawn-stroke.lua`):
+`PLANKS.md`, from `src/drawn-stroke.lua`):
 - A clinker hull (six rows overlapping, cream top, navy, red bottom; rivets along every seam),
   stem and stern posts, a deck, a cabin of upright planks with a window and frame, a solid front
   post, a red two-plank roof, a railing in front of the Mipos.

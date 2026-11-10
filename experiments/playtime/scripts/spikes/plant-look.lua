@@ -8,7 +8,7 @@
 -- Sway: the plant bends in the wind as one (more toward its top), its leaves flutter on their own.
 local lib = {}
 
-local STROKE = love.filesystem.load('scripts/spikes/drawn-stroke.lua')()
+local STROKE = require('src.drawn-stroke')
 local OUTLINE = { 0.17, 0.13, 0.1 }
 local UP, DOWN = -math.pi / 2, math.pi / 2
 

@@ -27,10 +27,7 @@ local function check() -- on state: a script hot reload keeps the Mipo and what'
     return state.makerSpike
 end
 
-local function alive(inst)
-    local torso = inst and inst.parts and inst.parts.torso1
-    return torso and torso.body and not torso.body:isDestroyed()
-end
+local alive = mipoKit.isAlive -- src/mipo-kit.lua
 
 local function hexToRGB(hex)
     if not hex or #hex < 6 then hex = 'ccccccff' end -- '' : a layer with no colour (hair without fill)

@@ -5,7 +5,7 @@
 -- - grime: fresh paint fades to grey weathered wood, darker; stains, rust running down from nails;
 -- - growth: moss creeping along the bottoms and the roof's edge, vines climbing the walls and
 --   leafing out, the lawn growing into tall weeds with flowers.
--- Everything drawn, no shader: the planks with Nikki's crayon strokes (drawn-stroke.lua), the
+-- Everything drawn, no shader: the planks with Nikki's crayon strokes (src/drawn-stroke.lua), the
 -- weeds from the grass blade atlas (textures/world/sprieten.png). Chaos goes in twelve steps (the
 -- outlines are made again at each, and kept), so it moves like stop-motion.
 --
@@ -14,7 +14,7 @@
 
 local s = {}
 
-local STROKE = love.filesystem.load('scripts/spikes/drawn-stroke.lua')()
+local STROKE = drawnStroke()
 local OUTLINE = { 0.2, 0.13, 0.1 }
 local GROUND_Y = 0
 local LEVELS = 12 -- chaos steps
@@ -284,20 +284,9 @@ local function makeBodies(b)
     end
 end
 
-local function aliveMipos(b)
-    local out = {}
-    for _, inst in ipairs(b.mipos) do
-        local torso = inst.parts and inst.parts.torso1
-        if torso and torso.body and not torso.body:isDestroyed() then out[#out + 1] = inst end
-    end
-    return out
-end
+local function aliveMipos(b) return mipoKit.alive(b.mipos) end -- src/mipo-kit.lua
 
-local function spawnMipo(b, x, y)
-    local inst = characterManager.createCharacter('humanoid', x, y, 0.3)
-    if inst then characterManager.randomizeMipoConstrained(inst) end
-    if inst then b.mipos[#b.mipos + 1] = inst end
-end
+local function spawnMipo(b, x, y) mipoKit.spawn(b.mipos, x, y) end -- src/mipo-kit.lua
 
 ---------------------------------------------------------------- hooks
 

@@ -114,11 +114,7 @@ local function build(sc)
     sc.ground = ground
 end
 
-local function spawnMipo(sc, x, y)
-    local inst = characterManager.createCharacter('humanoid', x, y, 0.3)
-    if inst then characterManager.randomizeMipoConstrained(inst) end
-    if inst then sc.mipos[#sc.mipos + 1] = inst end
-end
+local function spawnMipo(sc, x, y) mipoKit.spawn(sc.mipos, x, y) end -- src/mipo-kit.lua
 
 local function spawnCrate(sc, x, y)
     local body = love.physics.newBody(world, x, y, 'dynamic')

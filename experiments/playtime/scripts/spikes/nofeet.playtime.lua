@@ -26,10 +26,7 @@ local function check() -- on state: a script hot reload keeps the Mipos
     return c
 end
 
-local function alive(inst)
-    local torso = inst and inst.parts and inst.parts.torso1
-    return torso and torso.body and not torso.body:isDestroyed()
-end
+local alive = mipoKit.isAlive -- src/mipo-kit.lua
 
 -- ground, and right of the Mipos things to get stuck on: a low step, a slot, a row of
 -- little bumps, a kerb

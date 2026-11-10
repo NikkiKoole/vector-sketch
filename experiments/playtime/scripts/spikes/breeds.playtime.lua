@@ -23,10 +23,7 @@ local function check() -- on state: a script hot reload keeps the litter
     return state.breeds
 end
 
-local function alive(inst)
-    local torso = inst and inst.parts and inst.parts.torso1
-    return torso and torso.body and not torso.body:isDestroyed()
-end
+local alive = mipoKit.isAlive -- src/mipo-kit.lua
 
 -- One Mipo of the breed ('any': as random as ever).
 local function randomizeAs(inst, breed)

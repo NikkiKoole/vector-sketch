@@ -96,8 +96,15 @@ Each step is small enough to finish, and makes the next one cheaper.
   destroy a Mipo's bodies, regroup its fixtures and lay its pictures go by `utils.sortedPairs`; the
   seed-6 head lands on the same spot to 9 decimals whatever ran before, the seeded Mipos' snapshot
   is identical (light-grass-check and mipo-materials differ run to run, before and after alike).
-- [ ] **L4. EM5's cheap shared bits**: `drawn-stroke` into `src/` (with burrow's extras), `mipoKit`,
-  the clamp copies. Trees and flora then load from `src/` like everything else.
+- [x] **L4. EM5's cheap shared bits.** Done 2026-11-10, the copies that were identical only:
+  `drawn-stroke` is `src/drawn-stroke.lua` (scene scripts: `drawnStroke()`; trees, flora and the
+  maker's card `require` it; planks' byte-identical copy gone), `src/mipo-kit.lua` (`spawn`,
+  `alive`, `isAlive`: 16 + 15 + 7 copies now one line each). Left, because the copies differ, so
+  each is a choice (the obvious-reuse rule): burrow's older stroke (`canonical()`, a picture per
+  cell: merging changes how burrow draws); burrow's, depth's, choir's, cloth's and garden's own
+  Mipo helpers; the 11 `clamp`s (if/else: unlike `mathutils.clamp` when lo > hi or for NaN, and
+  cheaper with the JIT off). Not looked at in this step: the grass blades (clouds, wild) and the
+  Mipo pose helpers (facing, soapbox, tracks); with the scenes that use them.
 
 **1. The Mipo** (the focus, and the product)
 - Breeds B1-B10 as planned (focus).

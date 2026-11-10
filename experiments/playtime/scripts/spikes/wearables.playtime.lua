@@ -308,14 +308,7 @@ local function aliveItems(b)
     return out
 end
 
-local function aliveMipos(b)
-    local out = {}
-    for _, inst in ipairs(b.mipos) do
-        local torso = inst.parts and inst.parts.torso1
-        if torso and torso.body and not torso.body:isDestroyed() then out[#out + 1] = inst end
-    end
-    return out
-end
+local function aliveMipos(b) return mipoKit.alive(b.mipos) end -- src/mipo-kit.lua
 
 -- every Mipo in the scene, not only ours
 local function allMipos()
@@ -851,11 +844,7 @@ local function buildRoom(b)
     staticBox(b, GROUND.x + GROUND.w / 2 + 20, -1200, 40, 2400)
 end
 
-local function spawnMipo(b, x, y)
-    local inst = characterManager.createCharacter('humanoid', x, y, 0.3)
-    if inst then characterManager.randomizeMipoConstrained(inst) end
-    if inst then b.mipos[#b.mipos + 1] = inst end
-end
+local function spawnMipo(b, x, y) mipoKit.spawn(b.mipos, x, y) end -- src/mipo-kit.lua
 
 local function stock(b)
     for _, item in ipairs(aliveItems(b)) do
