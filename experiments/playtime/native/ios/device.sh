@@ -76,6 +76,8 @@ done
 /usr/libexec/PlistBuddy -c 'Add :UIRequiresFullScreen bool true' "$PLIST"
 # Dev builds play through the silent switch (the seam: native/ios/patch-love.py)
 /usr/bin/python3 patch-love.py love/src/common/ios.mm
+# World:playtimeContactShadows, the contact shadows' rays in C++ (src/contact-shadows.lua)
+/usr/bin/python3 patch-love-physics.py love/src/modules/physics/box2d/wrap_World.cpp
 /usr/libexec/PlistBuddy -c 'Delete :LoveIgnoreSilentSwitch' "$PLIST" 2>/dev/null || true
 /usr/libexec/PlistBuddy -c 'Add :LoveIgnoreSilentSwitch bool true' "$PLIST"
 # The wording of the Local Network prompt (see the packet in main.lua below)

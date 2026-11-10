@@ -198,8 +198,17 @@ parts (music-theory, skinning's `meshusertVertices`, the polygon modules) run wi
   Done: one ray callback instead of a closure per ray, the extent without a fixture list, a receiver's
   depth once a frame: garbage 195 -> 58 KB a frame, compute 1.84 -> ~1.73 ms (old/new swapped live on
   the phone, twice). Same shadows (spec/contact-shadows_spec.lua).
-  Levers left, each a choice: compute every other frame (the ovals a frame behind, ~0.9 ms), skip
-  casters well off screen (rooms, not the crowd), no hand casters (40 of 160), the compute in C.
+  Then in C++ (Nikki: "move the shadow work to c"): LÖVE's World gets playtimeContactShadows in the iOS
+  build (native/ios/patch-love-physics.py, run by device.sh like patch-love.py): each caster's extent,
+  its three rays (same skips: sensors, not facing up, its own body, its own Mipo by collision group:
+  each Mipo's parts share a negative group of their own) and the oval, into a reused flat table. The
+  casters are kept between frames (found again when the body count changes, one is destroyed, or every
+  30 frames). Desktop (love115.app) and web keep the Lua path; state.contactShadowsLua = true forces it.
+  Checked on the phone: the same 104 shadows on the same receivers, every value within 0.0003, three
+  times. compute (benchmark, the pile awake, alternated twice): Lua 1.23 / 1.25 ms, C++ 0.48 / 0.60;
+  draw p50 13.5 -> 12.8 ms. What's left in it: the per-shadow tables and receivers' depths in Lua.
+  Levers left, each a choice: skip casters well off screen (rooms, not the crowd), no hand casters
+  (40 of 160).
   Also: parts small on screen drawn unlit (LS30's rule for the whole Mipo, a look question for Nikki).
 - [x] **M6. The potato-torso click.** (2026-11-05: the click and the Box2D crash it led to are fixed;
   the iMac run done 2026-11-09, see the end.) The editor snapshot forces every slider to its midpoint; on a

@@ -101,14 +101,67 @@ local function pictureDepth(body)
     return z
 end
 
+-- The casters, kept between frames for the C++ path (found again when the world's body count changes,
+-- one is destroyed, or every 30 frames): the bodies, and each one's own Mipo's collision group (a Mipo's
+-- parts share a negative group of their own; 0: not a Mipo), so the rays skip its own Mipo.
+local casterCache = { bodies = {}, groups = {}, count = -1, frames = 0 }
+local function casterList(world)
+    local c = casterCache
+    c.frames = c.frames + 1
+    local stale = c.world ~= world or world:getBodyCount() ~= c.count or c.frames >= 30
+    if not stale then
+        for _, body in ipairs(c.bodies) do
+            if body:isDestroyed() then stale = true; break end
+        end
+    end
+    if stale then
+        local bodies, groups = {}, {}
+        for _, body in ipairs(world:getBodies()) do
+            if casts(body) then
+                local group = 0
+                if (utils.thingOf(body) or {}).mipoId then
+                    for _, fixture in ipairs(body:getFixtures()) do
+                        if not fixture:isSensor() then
+                            local g = fixture:getGroupIndex()
+                            if g < 0 then group = g end
+                            break
+                        end
+                    end
+                end
+                bodies[#bodies + 1], groups[#groups + 1] = body, group
+            end
+        end
+        c.bodies, c.groups, c.world, c.count, c.frames = bodies, groups, world, world:getBodyCount(), 0
+    end
+    return c.bodies, c.groups
+end
+
 -- every shadow this frame: { receiver, x, y, hw, hh, alpha, z }
+-- In C++ where LÖVE has World:playtimeContactShadows (the iOS build: native/ios/patch-love-physics.py,
+-- the same rays and ovals; docs/MEASURING.md M12); state.contactShadowsLua = true: the Lua path anyway.
 local RAY_OFFSETS = { 0, -0.35, 0.35 }
+local nativeOut = {}
 function lib.compute(world)
     local settings = state.contactShadows
     local list = {}
     if not settings or not world then return list end
     local strength, reachWidths = settings.strength or 0.45, settings.reach or 1.5
     local depths = {} -- a receiver's picture depth, once a frame (false: none)
+    if world.playtimeContactShadows and not state.contactShadowsLua then
+        local bodies, groups = casterList(world)
+        local n = world:playtimeContactShadows(bodies, groups, nativeOut, strength, reachWidths,
+            MAX_CASTER_WIDTH, MIN_DEPTH, 60)
+        for i = 0, n - 1 do
+            local o = i * 7
+            local receiver = nativeOut[o + 1]
+            local z = depths[receiver]
+            if z == nil then z = pictureDepth(receiver) or false; depths[receiver] = z end
+            list[#list + 1] = { receiver = receiver, x = nativeOut[o + 2], y = nativeOut[o + 3],
+                hw = nativeOut[o + 4], hh = nativeOut[o + 5], alpha = nativeOut[o + 6], angle = nativeOut[o + 7],
+                z = z or nil }
+        end
+        return list
+    end
     for _, body in ipairs(world:getBodies()) do
         if casts(body) then
             local x0, x1, top, bottom = extent(body)
