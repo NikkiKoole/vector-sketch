@@ -27,12 +27,24 @@ keeps on `state`), so it can go on the toys shelf later (ENGINE-MERGE EM2).
   any point light (`src/walls.lua`: the shaders don't light walls). In a sky scene the hour's sun, moon and
   sky light stay on beside a scene's own lamps (`src/render/shaders.lua`, `withSceneLights`), so the
   campfire has the moon round it.
+- **Day and night** (Nikki 2026-11-11: "during the day the fire is not causing that many shadows and light
+  and during the night it is"): the fire's light, shadows and glow each go from a day value to a night value
+  following the sun (`fire.nightness`: src/sky-light.lua's sun arc, from the sky's hour whatever the light
+  level): half as the sun touches the horizon, the change spread over the panel's `dusk` hours of the sun's
+  height round sunset and sunrise (4: 16:00 to 20:00), eased at both ends. The first try followed the hour's
+  light, which drops within about an hour (and isn't there with the light level off: the fire stood still).
+  A panel bottom right with the sliders (h hides); the values live on `state.campfire.settings`, not saved
+  with the scene yet. Judge it with a long day (settings -> sky): at a 10 s day an hour is 0.4 s.
 
 ## Next
 
 - [ ] **CF1. Nikki plays with it**: the flames' colours and size, the logs, `bands` / `fps` on keys to try.
 - [ ] **CF2. Smoke**: soft grey drawn blobs (or hair strokes) eroding as they rise and drift.
-- [ ] **CF3. The fire throws shadows**: its point light into the wall and 3D shadows (projected-shadows
-  already takes a lamp at a point), the Mipos' shadows long behind them on the wall and the ground.
+- [x] **CF3. The fire throws shadows** (2026-11-11): the scene sets `state.projectedShadows` each frame with
+  one point lamp where the flames are (`fire.light`), `FIRE_IN_FRONT` (120) in front of the Mipos, the wall
+  `WALL_BEHIND` (160) behind them: big, stretched shadows up the wall, wobbling with the flames, their edge
+  softening with the flicker. Darkening only (no `glow`: the wall's warm pool already comes from
+  src/walls.lua), strongest at night, faint by day beside the sun's. Nikki to judge: size (`FIRE_IN_FRONT`),
+  strength, whether the shadows should be holes in the pool (`glow`) instead.
 - [ ] **CF4. Heat haze** above the flames (needs the scene drawn into a canvas first).
 - [ ] **CF5. On the shelf**: a fire prop any scene can place (EDITOR-ARRANGE / ENGINE-MERGE EM2).

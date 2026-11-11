@@ -94,6 +94,7 @@ end
 
 function s.onKeyPress(key)
     local fc = c()
+    if key == 'h' then fc.showPanel = not fc.showPanel end
     if key == 'f' and fc.fire then
         local styles = fire.STYLES
         for i, name in ipairs(styles) do
@@ -102,30 +103,120 @@ function s.onKeyPress(key)
     end
 end
 
+-- how dark the hour is for the fire: 0 by day .. 1 at night, following the sun, the change spread over the
+-- panel's hours (fire.nightness: from the sky's hour, whatever the light level)
+local function darkness()
+    local st = state.campfire and state.campfire.settings
+    return fire.nightness((st and st.duskHours) or 4)
+end
+
+-- The fire throws shadows (CF3): the 3D shadows (src/projected-shadows.lua) from a lamp where the flames
+-- are. The wall stands WALL_BEHIND behind the Mipos (its foot hidden by the grass), the fire a little in
+-- front of them: close to the light, their shadows come out big on the wall and wobble with the flames.
+local WALL_BEHIND = 160      -- the wall sfixture's own `behind`
+local FIRE_IN_FRONT = 120    -- the fire this far in front of the Mipos: less, bigger shadows
+local SHADOW_SOFTNESS = 30   -- the flames' size as a lamp (world units): the shadows' soft edge
+
+-- Day and night: the fire's light, shadows and glow each go from a day value to a night value with
+-- how dark the hour is (darkness(), smooth over dusk and dawn: no switch). The panel's sliders (h hides).
+local DAY_NIGHT = {
+    { key = 'light', text = 'light', lo = 0, hi = 4, day = 0.5, night = LIGHT_STRENGTH },
+    { key = 'shadow', text = 'shadows', lo = 0, hi = 1, day = 0.08, night = 0.6 },
+    { key = 'glow', text = 'glow', lo = 0, hi = 2, day = 0.4, night = 1 },
+}
+local function settings()
+    local fc = c()
+    fc.settings = fc.settings or {}
+    local st = fc.settings
+    for _, row in ipairs(DAY_NIGHT) do -- each filled at use: a hot swap keeps older settings
+        if st[row.key .. 'Day'] == nil then st[row.key .. 'Day'] = row.day end
+        if st[row.key .. 'Night'] == nil then st[row.key .. 'Night'] = row.night end
+    end
+    if st.duskHours == nil then st.duskHours = 4 end
+    if fc.showPanel == nil then fc.showPanel = true end
+    return st
+end
+-- a setting at this hour: day .. night by darkness
+local function atHour(key)
+    local st, n = settings(), darkness()
+    return st[key .. 'Day'] + (st[key .. 'Night'] - st[key .. 'Day']) * n
+end
+local shadowLight = { kind = 'point', x = 0, h = 0, z = 0 }
+local shadowOne = { light = shadowLight, strength = 0, softness = SHADOW_SOFTNESS }
+local function wallArea()
+    love.graphics.rectangle('fill', -2600, GROUND_Y - 1700, 5200, 1700)
+end
+local shadowSettings = { area = wallArea, floorY = GROUND_Y - WALL_BEHIND, depth = WALL_BEHIND,
+    lights = { shadowOne } }
+
+local function fireShadows(x, y, flicker)
+    local z = WALL_BEHIND + FIRE_IN_FRONT
+    shadowLight.x, shadowLight.z = x, z
+    shadowLight.h = shadowSettings.floorY + z - y -- on screen a lamp sits at y = floorY + z - h
+    shadowOne.strength = atHour('shadow') * math.min(1, flicker)
+    shadowOne.softness = SHADOW_SOFTNESS * (0.8 + 0.4 * flicker)
+    state.projectedShadows = shadowSettings
+end
+
 function s.update(dt)
     local fc = c()
     if not fc.fire then return end
     fire.update(fc.fire, dt)
     local body, light = fireLight()
+    local x, y, flicker = fire.light(fc.fire)
     if body then
-        local x, y, flicker = fire.light(fc.fire)
         body:setPosition(x, y)
-        light.intensity = LIGHT_STRENGTH * flicker
+        light.intensity = atHour('light') * flicker
     end
+    if x then fireShadows(x, y, flicker) end
 end
 
--- how dark the hour is: 0 by day .. 1 at night (the sky's hour light, src/scene-light.lua)
-local function darkness()
-    local h = state.hourLight
-    if not h then return 0.6 end
-    return math.max(0, math.min(1, 1.15 - (h[1] + h[2] + h[3]) / 3 * 1.3))
+function s.onUnload()
+    if state.projectedShadows == shadowSettings then state.projectedShadows = nil end
 end
 
 function s.draw()
     local fc = c()
     if not fc.fire then return end
-    fire.drawGlow(fc.fire, darkness())
+    fire.drawGlow(fc.fire, darkness(), atHour('glow'))
     fire.draw(fc.fire)
+end
+
+-- the day / night panel, bottom right: per row a day slider and a night slider, then dusk
+local PANEL = { w = 470, row = 34, pad = 6 }
+function s.drawUI()
+    local fc = c()
+    local st = settings()
+    if not fc.showPanel then return end
+    ui.startFrame()
+    local sw, sh = love.graphics.getDimensions()
+    local w, h = PANEL.w, PANEL.row * (#DAY_NIGHT + 3) + 34
+    local x0, y0 = sw - w - 12, math.max(12, sh - h - 12)
+    ui.panel(x0, y0, w, h, '•• fire: day / night ••', function()
+        local layout = ui.createLayout({ type = 'columns', spacing = 0, startX = x0 + PANEL.pad, startY = y0 + 28 })
+        local function row() return ui.nextLayoutPosition(layout, w - PANEL.pad * 2, PANEL.row) end
+        local x, y = row()
+        ui.label(x + 80, y + 4, 'day')
+        ui.label(x + 270, y + 4, 'night')
+        for _, r in ipairs(DAY_NIGHT) do
+            x, y = row()
+            ui.label(x, y + 4, r.text)
+            local step = (r.hi - r.lo) / 100
+            local d = ui.sliderWithInput('fire-' .. r.key .. 'Day', x + 75, y - 2, 90, r.lo, r.hi,
+                st[r.key .. 'Day'], nil, step)
+            if d then st[r.key .. 'Day'] = d + 0 end
+            local n = ui.sliderWithInput('fire-' .. r.key .. 'Night', x + 265, y - 2, 90, r.lo, r.hi,
+                st[r.key .. 'Night'], nil, step)
+            if n then st[r.key .. 'Night'] = n + 0 end
+        end
+        x, y = row()
+        ui.label(x, y + 4, 'dusk')
+        local k = ui.sliderWithInput('fire-duskHours', x + 75, y - 2, 90, 0.5, 10, st.duskHours, nil, 0.1)
+        if k then st.duskHours = k + 0 end
+        ui.label(x + 265, y + 4, 'hours round sunset')
+        x, y = row()
+        ui.label(x, y + 4, string.format('now %d%% night   h hides', math.floor(darkness() * 100 + 0.5)))
+    end)
 end
 
 return s

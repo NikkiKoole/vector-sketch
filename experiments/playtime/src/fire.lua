@@ -510,13 +510,30 @@ local function drawLogs(f, layer)
 end
 
 -- behind the flames: the glow round the fire, and its pool on the ground (dark: 0 by day .. 1 at night)
-function lib.drawGlow(f, dark)
-    dark = dark or 1
+-- How much night it is for a fire: 0 by day .. 1 at night, following the sun (src/sky-light.lua's arc):
+-- half as the sun touches the horizon, the change spread over `hours` of the sun's height around it (4: from
+-- two hours before sunset to two after, the same round sunrise), eased at both ends. Nikki 2026-11-11: tied
+-- to the sun, smooth; the hour's light (the first try) dropped in about an hour. From the sky's hour itself,
+-- whatever the light level (state.hourLight is only there with it on). No sky: `noSky` (0.7 when left out).
+-- Required at use: hot-swap order (a module's new field).
+function lib.nightness(hours, noSky)
+    local sceneSky = package.loaded['src.scene-sky']
+    if not (sceneSky and sceneSky.isOn()) then return noSky or 0.7 end
+    local theta = require('src.sky-light').sunTheta(sceneSky.settings().hour)
+    -- the sun's height in hours from the horizon: 6 at noon, 0 at sunrise and sunset, -6 at midnight
+    local height = math.asin(math.max(-1, math.min(1, math.sin(theta)))) * 12 / math.pi
+    local t = math.max(0, math.min(1, 0.5 - height / math.max(0.1, hours or 4)))
+    return t * t * (3 - 2 * t)
+end
+
+-- dark: 0 by day .. 1 at night; amount: the whole glow times this (1 when left out)
+function lib.drawGlow(f, dark, amount)
+    dark, amount = dark or 1, amount or 1
     love.graphics.setBlendMode('add')
-    local a = (0.18 + 0.22 * dark) * f.flicker
+    local a = (0.18 + 0.22 * dark) * f.flicker * amount
     love.graphics.setColor(1 * a, 0.55 * a, 0.2 * a, 1)
     love.graphics.draw(glowDisc(), f.x, f.y - f.size * 0.5, 0, f.size * 2.6, f.size * 2.2)
-    local p = (0.10 + 0.25 * dark) * f.flicker
+    local p = (0.10 + 0.25 * dark) * f.flicker * amount
     love.graphics.setColor(1 * p, 0.6 * p, 0.25 * p, 1)
     love.graphics.draw(glowDisc(), f.x, f.y + f.size * 0.05, 0, f.size * 3.2, f.size * 0.55)
     love.graphics.setBlendMode('alpha')
