@@ -261,13 +261,8 @@ local topPattern = love.graphics.newImage('textures/world/grasspattern2.png')
 local sidePattern = love.graphics.newImage('textures/world/grasspattern4.png')
 topPattern:setWrap('repeat', 'repeat')
 sidePattern:setWrap('repeat', 'repeat')
-local blades = love.graphics.newImage('textures/world/sprieten.png')
--- the blade atlas's quads and base pivots (src/grass.lua, measured in physics-testbed)
-local BLADES = {
-    { 0, 0, 49, 192, 22, 185 }, { 51, 164, 40, 197, 12, 187 }, { 51, 0, 41, 162, 19, 144 },
-    { 94, 0, 46, 186, 25, 176 }, { 0, 194, 47, 231, 27, 224 }, { 94, 188, 45, 236, 16, 210 },
-    { 142, 197, 47, 208, 22, 190 }, { 142, 0, 52, 195, 30, 173 },
-}
+local blades = love.graphics.newImage(grass.ATLAS)
+local BLADES = grass.QUADS -- the atlas's quads and base pivots (src/grass.lua)
 local bladeQuads = {}
 for i, q in ipairs(BLADES) do bladeQuads[i] = love.graphics.newQuad(q[1], q[2], q[3], q[4], blades:getDimensions()) end
 local backBlades = love.graphics.newSpriteBatch(blades, 1000, 'stream')

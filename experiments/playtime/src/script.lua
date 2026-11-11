@@ -92,6 +92,7 @@ local baseEnv = {
     mipoLayers               = require('src.mipo-layers'), -- where a hat, pants, hair go between a Mipo's parts
     mipoFacing               = require('src.mipo-facing'), -- facing left / front / right (facing spike)
     festoon                  = require('src.festoon'), -- a wire of bulbs in swags (light-grass-check, LS26)
+    grass                    = require('src.grass'), -- the grass edge sfixture; its blade atlas (ATLAS, QUADS)
     fire                     = require('src.fire'), -- a campfire: flames, glow, sparks, its light's flicker
     waterLook                = require('src.render.water-shader'), -- the see-through water shader (seaside)
     torsoLobes               = require('src.torso-lobes'), -- applySoftness / setSprings: live softness (maker)

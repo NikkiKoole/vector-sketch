@@ -160,6 +160,15 @@ The landing order, what bites what, and Nikki's keep / spike choices of 2026-11-
   a `mipoKit` (spawn / alive / isAlive) for the scene scripts, `mathutils.clamp` instead of the copies,
   drawn-stroke into `src/` with burrow's two extras (planks and burrow drop their copies), the grass
   blades from `src/grass.lua`, the Mipo pose helpers into `src/mipo-build.lua`.
+  Where it stands (2026-11-11): the spawn copies are one-line wrappers round `mipoKit.spawn` (L4; burrow's
+  DNA and depth's lanes keep their own); planks uses `drawnStroke()`; the grass blades: clouds and wild read
+  `grass.ATLAS` / `grass.QUADS` (`grass` in the script env). `clamp` stays copied (13 one-liners;
+  `mathutils.clamp` differs only with the bounds reversed: plants' `clamp(i, 1, #sp.bodies)` with no bodies,
+  plant-look's droop if negative; tried 2026-11-11: Nikki chose to leave them, the gain is small). Left:
+  burrow's stroke extras, the pose helpers. Note: the
+  scenes snapshot renders a scene's saved bodies without its script, so it doesn't check script-drawn
+  things (clouds and wild hash the same, empty); and facing, light-grass-check, mipo-materials vary
+  between takes.
 - [x] **EM6. The 7 trial breeds** in spikes/breeds into `src/mipo-breeds.lua` with palettes
   (MIPO-BREEDS B2-B4; that plan owns it, listed here so the spike's copy goes). Done 2026-11-09:
   the spike's table and `randomizeAs` are gone, it reads `mipoBreeds` (in the script env).
