@@ -99,6 +99,22 @@ and what's there already. Pick a few, draw them, drop them in `textures/`, tick 
   - Have: `textures/plants/` (ovals, petals, daisy, heart, sprouts, tufts, two fronds), the eye
     rings copied as `berry-0n`; all fine to keep as fallbacks until the new ones are in.
 
+- [ ] **A19. Beaks: a duck and a stork first** (`BEAKS.md` BE2; Nikki 2026-11-11: "beaks are pretty
+  good"). The `beaks` spike builds a 3D beak that opens from three pictures a beak and lays the side
+  pictures on it, so the drawing's strokes and grain show.
+  - Have: placeholders, flat colour blocks (`textures/beak/<name>-upper/-lower/-top.png`, from
+    `claudetools/beak-pictures.py`): duck, stork, finch, parrot, toucan. Draw over them.
+  - Draw, three pictures a beak, each 512×512 on transparent, the beak pointing **right**, the
+    mouth's corner (the hinge) at the **left edge**, the mouth line at **row 256**, 512 px = the
+    upper half's length:
+    - `<name>-upper.png`: the upper half from the side, above the mouth line (a hook may come below it).
+    - `<name>-lower.png`: the lower half from the side, below it; it may stop short of the tip.
+    - `<name>-top.png`: the whole beak from above, centred on row 256: only its width is read.
+  - **Unlike the other parts:** in colour, **fill only, no outline** and no mask (the game draws the
+    outline; a drawn one would smear across the 3D surface). Markings that run along or around the
+    beak (a ridge, a nail, a band, a dark tip) read best from every side.
+  - Then maybe a finch, a parrot, a toucan, or new birds.
+
 ## For the materials (MATERIALS.md, 2026-11-06)
 
 The materials in `material-check` are lit from each picture's mask; these give them what a mask
