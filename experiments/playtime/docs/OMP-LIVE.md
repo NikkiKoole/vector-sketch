@@ -85,4 +85,10 @@ transform and patches mixed in a shader as it draws.
     So if live: mesh+rg, the two-channel outline+mask made once per shape (offline, as a build step).
 - [ ] **OL2. Decide**, with Nikki: if live wins or ties, the plan to switch (the Mipo editor's thumbnails,
   saves, the materials and lights that read the baked picture today, the spine skin and ribbons).
-- [ ] **OL3. r8 masks** for the sources (a quarter of their memory), either way.
+  The trade-off in short (from OL1, iPhone SE 2): baked is the fastest per frame (60 fps up to ~280
+  Mipos, live mesh+rg ~160) and costs ~1.3 MB a Mipo on top of 50 MB of shared sources (~76 MB with
+  20), plus a 25-46 ms hitch each time a Mipo appears or changes (a litter of 5: 150-270 ms). Live
+  mesh+rg: no hitch (~1 ms), 14.6 MB of rg8 outline+mask pictures plus the patterns (not measured
+  apart, a small part), sharper close up. Both hold 60 fps at the room's 20-25 Mipos.
+- [ ] **OL3. r8 masks** for the sources (a quarter of their memory), either way. If live: mesh+rg's
+  rg8 outline+mask per shape already is this (14.6 MB for the crowd's shapes, mipmapped).
