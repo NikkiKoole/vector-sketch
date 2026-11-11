@@ -41,6 +41,14 @@ the 3d layers, go in front or back yourself".
   upside down just work, with no upstop wheels or pipe walls (the `tracks` spike's cart wedged in
   them). Lift, boost and brake are forces along the track; derailing is a choice for later.
 
+## The scene
+
+`coaster` (scripts/spikes): a station, a drop, a loop (r 260), two hills and a ski jump, drawn as one
+track, and a cart (a RAIL_CART box). It plays by itself: the cart waits at the station, gets a nudge,
+makes the loop on gravity alone, flies off the jump and is put back at the station (also when it's stuck
+on the rail). `r` back to the station, `f` follow the cart. Made by a throwaway headless run that rode
+the course before writing the file (the bridge's eval stopped at its instruction limit on it).
+
 ## Steps
 
 - [x] **CO1. The track.** A `track` tool in the draw rail (next to freepath): drag to draw; smoothed

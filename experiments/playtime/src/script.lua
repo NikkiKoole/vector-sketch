@@ -87,6 +87,8 @@ local baseEnv = {
     mipoTextures             = require('src.mipo-textures'), -- addFaceDecals: a Mipo face on a script's body (garden)
     mipoRegistry             = require('src.mipo-registry'),
     mipoKit                  = require('src.mipo-kit'), -- spawn(list, x, y), alive(list), isAlive(inst)
+    track                    = require('src.track'), -- coaster tracks: list, layout, pointAt (COASTER.md)
+    railCart                 = require('src.rail-cart'), -- carts on them: lockOf, tryLock, setSpeed, release
     mipoEmotion              = require('src.mipo-emotion'), -- faces that show feelings (EMOTIONS.md)
     voiceBox                 = require('src.voice-box'), -- a Mipo voice from scratch: vowels, consonants (VOICEBOX.md)
     -- turning and walking, every Mipo (src/mipo-walk.lua): turn(inst, dir), turnHead, turnTo, hold
