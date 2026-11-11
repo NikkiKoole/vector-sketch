@@ -214,7 +214,8 @@ local function addDecal(out, ud, _, body, z)
     elseif extra.mouthCurve then
         addMouth(out, extra, body, z)
     else
-        out[#out + 1] = { type = 'decal', z = z, extra = extra, body = body, nose = ud.label == 'nose' }
+        out[#out + 1] = { type = 'decal', z = z, extra = extra, body = body, nose = ud.label == 'nose',
+            firstEye = ud.label == 'leye' }
     end
 end
 
@@ -1090,6 +1091,21 @@ local function clipToSkin(skin, body)
         line and function() mesh:setTexture(line) love.graphics.draw(mesh, bx, by, angle) end)
 end
 
+-- draw(), clipped to the inside of this body's skin picture (its OMP texfixture's mask): an emotion's flush
+-- over the face (src/mipo-emotion.lua). Nothing when the body has no masked skin (never spilled past it).
+function lib.drawInsideSkin(body, draw)
+    for _, fixture in ipairs(body:getFixtures()) do
+        local ud = fixture:getUserData()
+        if ud and ud.subtype == 'texfixture' and ud.extra and ud.extra.OMP and ud.extra.main then
+            local clip = clipToSkin(ud.extra, body)
+            if not clip then return end
+            draw()
+            endClip(clip)
+            return
+        end
+    end
+end
+
 -- Face patches (eye hollows, cheeks, a snout): skin colouring under the hair, the eyes on top. One
 -- decal per face holds them all (extra.facePatches: { ox, oy, w, h, mirror, url, tint }, turned
 -- with the face by mipo-facing applyFace), drawn inside the skin and off its outline with one
@@ -1222,7 +1238,7 @@ end
 local function drawDecal(d)
     local extra = d.extra
     local body = d.body
-    if d.nose then -- an emotion's blush on the cheeks, under the nose (src/mipo-emotion.lua, when loaded)
+    if d.firstEye then -- an emotion's flush and blush, on the skin under the eyes (src/mipo-emotion.lua)
         local emotion = package.loaded['src.mipo-emotion']
         if emotion and body and not body:isDestroyed() then emotion.drawBlush(body) end
     end
@@ -1340,6 +1356,12 @@ local function drawDecal(d)
 end
 
     -- Brow: bezier curve with bend pattern
+-- Brows bolder than the DNA's size (EMOTIONS EMO4: thin brows got lost in the head's pattern, so a
+-- feeling didn't read): thicker and a little wider for every Mipo; a feeling makes them thicker still
+-- (thing.browScale, src/mipo-emotion.lua). 1, 1 = as the DNA says. Their colour is random per Mipo and often
+-- the head's own (magenta brows in magenta head strokes, lavender on lavender): lib.browDark takes it that
+-- far towards black (0 = as the DNA says).
+lib.browThick, lib.browWide, lib.browDark = 1.8, 1.15, 0.6
 local browLit = setmetatable({}, { __mode = 'k' }) -- a brow's settings with its mirror, for the lights
 local function drawBrow(d)
     local extra = d.extra
@@ -1356,9 +1378,9 @@ local function drawBrow(d)
 
         local browImg = getLoveImage('textures/' .. extra.bgURL)
         if browImg then
-            local w = extra.w or 20
-            local h = extra.h or 10
             local bodyThing = utils.thingOf(body)
+            local w = (extra.w or 20) * lib.browWide
+            local h = (extra.h or 10) * lib.browThick * (bodyThing and bodyThing.browScale or 1)
             local vecKey = extra.browMirror and 'rbrowVec' or 'lbrowVec'
             local bend = (bodyThing and bodyThing[vecKey]) or browBends[extra.browBend or 1] or browBends[1]
             local bendMul = w / 5
@@ -1387,7 +1409,8 @@ local function drawBrow(d)
             local lipScale = h / (browImg:getHeight() * 2)
             local mesh = ownStrip(extra, 'brow', browImg, lipScale, curveData, -1)
             local r, g, b, a = color.hexToColor(extra.bgHex or '000000ff')
-            love.graphics.setColor(r, g, b, a)
+            local keep = 1 - lib.browDark
+            love.graphics.setColor(r * keep, g * keep, b * keep, a)
             -- Mirror right brow via sx=-1, matching puppet-maker2 approach
             local mirrorSx = extra.browMirror and -1 or 1
             -- in a material (MT6c): lit like the head; the mirrored brow tells the lights it's flipped

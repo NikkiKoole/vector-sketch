@@ -1,6 +1,6 @@
 # Emotions — Mipos showing how they feel with their faces
 
-status: active
+status: active — EMO3, EMO4 built 2026-11-11 (Nikki to try, EMO1); EMO2 built but for other Mipos near and the voice
 
 Nikki (2026-11-11): "we have faces and face parts, mouth, and even cheeks ... also i can imagine some
 recoloring to become possible too, could we experiment a system where mipos show emotion with their faces".
@@ -34,8 +34,26 @@ mouth was let go past the frown. The brows move as meant but are thin and often 
 - [ ] **EMO2. Feelings from play**: picked up (surprised, then happy while held), thrown hard (scared),
   a hard landing (sad, dizzy), left alone a long while (sleepy), another Mipo near (shy or happy). The voice
   already has `mipo:squeak(emotion)` (PUPPETMAKER-SOUND V3): the same feeling for both.
-- [ ] **EMO3. Recolouring**: the face flushing red (angry, shy) or going pale (scared), a tint on the head's
+  **Built 2026-11-11, Nikki to try** (`mipoEmotion.update(dt, true)`; the scene's 'feel what happens'): watched
+  each frame, nothing hooked in elsewhere: held (box2d-pointerjoints) -> surprised 0.5 s, then happy 0.8;
+  let go faster than 900 (at 100 px/m) -> scared 1.4 s, else happy 0.6 for 1.5 s; dazed (mipo-actions'
+  hard-hit daze) -> sad, and a moment after; still (torso speed averaged over ~1 s under 60: a standing Mipo
+  breathes at 2-60) for 12 s with nothing to feel -> sleepy, woken by a move with a little surprise. All in
+  `lib.REACT`. Checked from the bridge in a test window: each fires. Not yet: another Mipo near, the voice.
+- [x] **EMO3. Recolouring**: the face flushing red (angry, shy) or going pale (scared), a tint on the head's
   skin rather than the cheeks alone.
-- [ ] **EMO4. Brows that read**: thicker or darker while feeling something, or above the hair.
+  **Built 2026-11-11, Nikki to try**: each feeling's `flush` = { r, g, b, how strongly }: angry red 0.45,
+  shy pink 0.3, scared pale 0.4, sad a little blue 0.18, happy warm 0.12; mixed by weight like the rest. A
+  wide soft wash centred a little under the eyes, clipped to the head's skin (`box2d-draw-textured`
+  `drawInsideSkin`, the face patches' `clipToSkin`), drawn just before the left eye with the blush, so it
+  lies under the eyes, brows, nose, mouth and the head's hair strokes (first under the nose: it tinted the
+  eyes). A head without a masked skin gets none.
+- [x] **EMO4. Brows that read**: thicker or darker while feeling something, or above the hair.
+  Built 2026-11-11, Nikki to try (Nikki: "lets make the eye brows more prominent"). Why they were lost:
+  their colour is random per Mipo and often the head's own (magenta brows in magenta head strokes,
+  lavender on lavender skin), and they were thin. Now, at draw time for every Mipo (`box2d-draw-textured`
+  `lib.browThick` 1.8, `lib.browWide` 1.15, `lib.browDark` 0.6 = that far towards black), and a feeling
+  makes them thicker still: `brow` in each feeling's row (angry 1.45, sad/scared/surprised 1.2, sleepy
+  0.85), in twentieths so the strip is rebuilt only a few times a glide.
 - [ ] **EMO5. Into the engine**: `mipoEmotion.update` as a system (`src/systems.lua`) so every scene's Mipos
   feel, and the pulled face on a click (mipo-face) as a short surprised instead of random.

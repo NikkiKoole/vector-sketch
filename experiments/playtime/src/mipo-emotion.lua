@@ -15,20 +15,27 @@ local lib = {}
 -- raise: brows up (-) or down (+), in quarters of the eye's height; bend: outer end, middle, inner end,
 -- down (+) or up (-), in fifths of the brow's width; mouth: shape name = share (the rest is its own
 -- mouth; a share over 1 goes past the shape, exaggerating it: the frown alone is mild); eye: how open
--- (1 as drawn); pupil: size; blush: 0..1
+-- (1 as drawn); pupil: size; brow: how thick (1 as the renderer draws it, EMO4); blush: 0..1 (the cheeks);
+-- flush: { r, g, b, how strongly } over the whole
+-- face, inside the head's outline (EMO3: red angry, pink shy, pale scared, a little blue sad, warm happy)
 lib.EMOTIONS = {
-    neutral   = { raise = 0, bend = { 0, 0, 0 }, mouth = {}, eye = 1, pupil = 1, blush = 0 },
+    neutral   = { raise = 0, bend = { 0, 0, 0 }, mouth = {}, eye = 1, pupil = 1, brow = 1, blush = 0 },
     happy     = { raise = -0.4, bend = { 0.3, -0.6, 0.3 }, mouth = { smile = 1 }, eye = 0.7, pupil = 1.05,
-                  blush = 0.45 },
-    sad       = { raise = -0.3, bend = { 1.3, 0, -1.6 }, mouth = { frown = 1.8 }, eye = 0.8, pupil = 1.15, blush = 0 },
-    angry     = { raise = 0.9, bend = { -1, 0, 1.9 }, mouth = { frown = 1.4 }, eye = 0.7, pupil = 0.8, blush = 0.6 },
+                  brow = 1.05, blush = 0.45, flush = { 1, 0.62, 0.45, 0.12 } },
+    sad       = { raise = -0.3, bend = { 1.3, 0, -1.6 }, mouth = { frown = 1.8 }, eye = 0.8, pupil = 1.15,
+                  brow = 1.2, blush = 0,
+                  flush = { 0.5, 0.62, 0.95, 0.18 } },
+    angry     = { raise = 0.9, bend = { -1, 0, 1.9 }, mouth = { frown = 1.4 }, eye = 0.7, pupil = 0.8,
+                  brow = 1.45, blush = 0.6,
+                  flush = { 1, 0.12, 0.08, 0.45 } },
     scared    = { raise = -1, bend = { 0.6, -0.3, -1.7 }, mouth = { O_U_agh = 0.7 }, eye = 1.3, pupil = 0.65,
-                  blush = 0 },
+                  brow = 1.2, blush = 0, flush = { 0.9, 0.95, 1, 0.4 } },
     surprised = { raise = -1.3, bend = { 0.6, -0.9, 0.6 }, mouth = { O_U_W_Q = 1 }, eye = 1.35, pupil = 0.8,
-                  blush = 0 },
-    sleepy    = { raise = 0.3, bend = { 0.3, 0, 0 }, mouth = { mmm = 0.6 }, eye = 0.35, pupil = 1, blush = 0.15 },
+                  brow = 1.2, blush = 0 },
+    sleepy    = { raise = 0.3, bend = { 0.3, 0, 0 }, mouth = { mmm = 0.6 }, eye = 0.35, pupil = 1, brow = 0.85,
+                  blush = 0.15 },
     shy       = { raise = -0.3, bend = { 0.4, -0.3, -0.4 }, mouth = { mmm = 0.5, smile = 0.4 }, eye = 0.85,
-                  pupil = 1.15, blush = 1 },
+                  pupil = 1.15, brow = 1, blush = 1, flush = { 1, 0.4, 0.5, 0.3 } },
 }
 lib.NAMES = { 'happy', 'sad', 'angry', 'scared', 'surprised', 'sleepy', 'shy' }
 lib.IN, lib.OUT = 0.25, 0.7 -- seconds to glide most of the way in, and back out
@@ -90,7 +97,8 @@ local function blend(now)
     for _, w in pairs(now) do total = total + w end
     local scale = total > 1 and 1 / total or 1
     local n = lib.EMOTIONS.neutral
-    local out = { raise = 0, bend = { 0, 0, 0 }, mouth = {}, eye = n.eye, pupil = n.pupil, blush = 0, total = 0 }
+    local out = { raise = 0, bend = { 0, 0, 0 }, mouth = {}, eye = n.eye, pupil = n.pupil, brow = n.brow, blush = 0,
+        total = 0, flush = { 0, 0, 0, 0 } }
     for name, w in pairs(now) do
         local e = lib.EMOTIONS[name]
         if e and w > 0 then
@@ -100,9 +108,18 @@ local function blend(now)
             for i = 1, 3 do out.bend[i] = out.bend[i] + w * e.bend[i] end
             out.eye = out.eye + w * (e.eye - n.eye)
             out.pupil = out.pupil + w * (e.pupil - n.pupil)
+            out.brow = out.brow + w * ((e.brow or 1) - n.brow)
             out.blush = out.blush + w * e.blush
             for shape, share in pairs(e.mouth) do out.mouth[shape] = (out.mouth[shape] or 0) + w * share end
+            if e.flush then -- colours weighted by how strongly each flushes
+                local a = w * e.flush[4]
+                for i = 1, 3 do out.flush[i] = out.flush[i] + a * e.flush[i] end
+                out.flush[4] = out.flush[4] + a
+            end
         end
+    end
+    if out.flush[4] > 0 then
+        for i = 1, 3 do out.flush[i] = out.flush[i] / out.flush[4] end
     end
     return out
 end
@@ -136,6 +153,7 @@ local function apply(instance, levers)
             thing.lbrowYOffset, thing.rbrowYOffset = 0, 0
             thing.lbrowVec, thing.rbrowVec = { 0, 0, 0 }, { 0, 0, 0 }
             thing.mouthShapeVec, thing.eyeScale, thing.pupilScale, thing.blush = nil, nil, nil, nil
+            thing.flush, thing.browScale = nil, nil
             st.clean = true
         end
         return
@@ -150,11 +168,96 @@ local function apply(instance, levers)
     thing.rbrowVec = { levers.bend[1], levers.bend[2], levers.bend[3] }
     thing.mouthShapeVec = mouthVec(instance, owner, levers.mouth)
     thing.eyeScale, thing.pupilScale, thing.blush = levers.eye, levers.pupil, levers.blush
+    thing.flush = levers.flush[4] > 0.005 and levers.flush or nil
+    -- in twentieths: the brow's strip is rebuilt when its thickness changes, so only a few times a glide
+    thing.browScale = math.floor(levers.brow * 20 + 0.5) / 20
 end
 
--- every frame: the weights glide toward the goals, a held feeling ends, the face follows
-function lib.update(dt)
+-- Feelings from play (EMOTIONS EMO2): watched each frame, nothing hooked in elsewhere. Picked up: surprised
+-- for a moment, then happy while held. Let go: scared when thrown fast, a little happy when put down
+-- gently. Dazed by a hard hit (mipo-actions' daze): sad while it lasts, and a moment after. Still a long
+-- while with nothing to feel: sleepy; moved again, woken with a little surprise. Only on changes, so a
+-- feeling set by hand stays until something happens. Speeds at 100 px per metre (src/physics-units.lua).
+lib.REACT = {
+    surprise = 0.5,     -- seconds surprised when picked up, then happy
+    heldHappy = 0.8,    -- how happy while held
+    throwSpeed = 900,   -- let go faster than this: thrown, scared
+    scaredFor = 1.4,
+    putDownFor = 1.5,   -- happy this long after a gentle put-down
+    sadAfterDaze = 1.2, -- sad a moment longer after the daze
+    stillSpeed = 60,    -- slower than this on average (over about a second) counts as still: a standing
+                        -- Mipo breathes and balances at 2-60, a moment over 25 now and then
+    sleepAfter = 12,    -- seconds still before sleepy
+    wakeSpeed = 120,    -- a sleepy one moved faster than this wakes
+}
+local units = require('src.physics-units')
+
+local function torsoSpeed(instance)
+    local torso = instance.parts and instance.parts.torso1
+    if not (torso and torso.body and not torso.body:isDestroyed()) then return 0 end
+    local vx, vy = torso.body:getLinearVelocity()
+    return units.toReferenceSpeed(math.sqrt(vx * vx + vy * vy))
+end
+
+local function heldMipos()
+    local held = {}
+    local pointer = package.loaded['src.physics.box2d-pointerjoints']
+    if not pointer then return held end
+    for _, body in ipairs(pointer.getInteractedWithPointer()) do
+        local instance = mipoRegistry.getFromBody(body)
+        if instance then held[instance] = true end
+    end
+    return held
+end
+
+local function react(instance, held, dt, now)
+    local R = lib.REACT
+    local r = instance._feelPlay or { still = 0, avg = 0 }
+    instance._feelPlay = r
+    local speed = torsoSpeed(instance)
+    r.avg = (r.avg or 0) + (speed - (r.avg or 0)) * (1 - math.exp(-dt)) -- over about a second
+    local dazed = instance._dazedUntil and now < instance._dazedUntil
+    if held and not r.held then -- picked up
+        lib.set(instance, 'surprised', 1, R.surprise)
+        r.heldSince, r.sleeping = now, false
+    elseif held and r.heldSince and now - r.heldSince > R.surprise then
+        lib.set(instance, 'happy', R.heldHappy)
+        r.heldSince = nil
+    elseif not held and r.held then -- let go
+        if speed > R.throwSpeed then
+            lib.set(instance, 'scared', 1, R.scaredFor)
+        else
+            lib.set(instance, 'happy', 0.6, R.putDownFor)
+        end
+    end
+    r.held = held
+    if dazed and not r.dazed then
+        lib.set(instance, 'sad', 1)
+    elseif not dazed and r.dazed then
+        lib.set(instance, 'sad', 0.7, R.sadAfterDaze)
+    end
+    r.dazed = dazed
+    -- sleepy when left alone long enough; woken when moved
+    if held or dazed or r.avg > R.stillSpeed then r.still = 0 else r.still = r.still + dt end
+    if r.sleeping and (held or speed > R.wakeSpeed) then
+        r.sleeping = false
+        if not held then lib.set(instance, 'surprised', 0.7, 0.6) end
+    elseif not r.sleeping and r.still > R.sleepAfter and next(stateOf(instance).goal) == nil then
+        lib.set(instance, 'sleepy', 0.9)
+        r.sleeping = true
+    end
+end
+
+-- every frame: the weights glide toward the goals, a held feeling ends, the face follows. fromPlay: the
+-- Mipos also feel what happens to them (picked up, thrown, dazed, left alone)
+function lib.update(dt, fromPlay)
     local now = love.timer.getTime()
+    if fromPlay then
+        local held = heldMipos()
+        for _, instance in pairs(mipoRegistry.getAll()) do
+            if instance.parts and instance.parts.torso1 then react(instance, held[instance] == true, dt, now) end
+        end
+    end
     local kIn, kOut = 1 - math.exp(-dt * 3 / lib.IN), 1 - math.exp(-dt * 3 / lib.OUT)
     for _, instance in pairs(mipoRegistry.getAll()) do
         local st = instance.emotion
@@ -175,7 +278,8 @@ function lib.update(dt)
     end
 end
 
--- the blush: a soft disc on each cheek, below and outside the eyes (drawn before the nose by the renderer)
+-- the blush: a soft disc on each cheek, below and outside the eyes; and the flush (drawn by the renderer
+-- just before the left eye, so both lie on the skin under the eyes, brows, nose and mouth)
 local disc
 local function blushDisc()
     if disc then return disc end
@@ -191,11 +295,25 @@ local function blushDisc()
     return disc
 end
 
+-- the flush: a wide soft wash centred a little under the eyes, inside the head's skin (EMO3)
+local function drawFlush(body, flush, cx, cy, span)
+    local textured = package.loaded['src.physics.box2d-draw-textured']
+    if not (textured and textured.drawInsideSkin) then return end
+    local img = blushDisc()
+    local iw, ih = img:getDimensions()
+    local wx, wy = body:getWorldPoint(cx, cy)
+    textured.drawInsideSkin(body, function()
+        love.graphics.setColor(flush[1], flush[2], flush[3], math.min(1, flush[4]))
+        love.graphics.draw(img, wx, wy, body:getAngle(), span * 3.2 / iw, span * 2.6 / ih, iw / 2, ih / 2)
+    end)
+end
+
 function lib.drawBlush(body)
     local ud = body:getUserData()
     local thing = ud and ud.thing
-    local amount = thing and thing.blush
-    if not amount or amount <= 0.01 then return end
+    local amount = thing and thing.blush or 0
+    local flush = thing and thing.flush
+    if amount <= 0.01 and not flush then return end
     local eyes = {}
     for _, fixture in ipairs(body:getFixtures()) do
         local fud = fixture:getUserData()
@@ -203,12 +321,16 @@ function lib.drawBlush(body)
         if e and e.isEye and not e.eyeW and e.ox then eyes[#eyes + 1] = e end
     end
     if #eyes == 0 then return end
-    local cx = 0
-    for _, e in ipairs(eyes) do cx = cx + e.ox end
-    cx = cx / #eyes
+    local cx, cy, span = 0, 0, 0
+    for _, e in ipairs(eyes) do cx, cy = cx + e.ox, cy + (e.oy or 0) end
+    cx, cy = cx / #eyes, cy / #eyes
+    for _, e in ipairs(eyes) do span = math.max(span, math.abs(e.ox - cx) + (e.w or 20) / 2) end
+    local r, g, b, a = love.graphics.getColor()
+    if flush then drawFlush(body, flush, cx, cy + span * 0.35, span) end
+    love.graphics.setColor(r, g, b, a)
+    if amount <= 0.01 then return end
     local img = blushDisc()
     local iw, ih = img:getDimensions()
-    local r, g, b, a = love.graphics.getColor()
     love.graphics.setColor(lib.BLUSH[1], lib.BLUSH[2], lib.BLUSH[3], lib.BLUSH_ALPHA * math.min(1, amount))
     for _, e in ipairs(eyes) do
         local w, h = e.w or 20, e.h or 20
