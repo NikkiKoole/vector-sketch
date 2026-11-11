@@ -187,7 +187,7 @@ function s.drawUI()
     if not (state.playMode and c.showPanel) then return end
     ui.startFrame() -- play mode draws no editor UI, so nothing else starts the frame
     local BH, pad, w = 34, 6, 330
-    local rows = 13
+    local rows = 17
     local h = BH * rows + pad * (rows + 1) + 24
     local _, sh = love.graphics.getDimensions()
     local x0, y0 = 20, sh - h - 20
@@ -202,6 +202,32 @@ function s.drawUI()
         x, y = ui.nextLayoutPosition(layout, bw, BH)
         if ui.button(x, y, half, 'stop') then each(function(i) walk.drive(i, nil) end) end
         if ui.button(x + half + pad, y, half, 'jump (up)') then jumpAll() end
+        -- one go each: a thing, then they stand
+        local third, quarter = (bw - 2 * pad) / 3, (bw - 3 * pad) / 4
+        x, y = ui.nextLayoutPosition(layout, bw, BH)
+        if ui.button(x, y, third, '< step') then each(function(i) walk.steps(i, -c.speed, 1) end) end
+        if ui.button(x + third + pad, y, third, '2 steps') then
+            each(function(i) walk.steps(i, (mipoFacing.dir(i) < 0 and -1 or 1) * c.speed, 2) end)
+        end
+        if ui.button(x + 2 * (third + pad), y, third, 'step >') then
+            each(function(i) walk.steps(i, c.speed, 1) end)
+        end
+        x, y = ui.nextLayoutPosition(layout, bw, BH)
+        if ui.button(x, y, half, '< hop') then each(function(i) walk.hopOnce(i, -c.speed) end) end
+        if ui.button(x + half + pad, y, half, 'hop >') then each(function(i) walk.hopOnce(i, c.speed) end) end
+        x, y = ui.nextLayoutPosition(layout, bw, BH)
+        if ui.button(x, y, third, '< turn') then each(function(i) walk.turnTo(i, 'left') end) end
+        if ui.button(x + third + pad, y, third, 'front') then each(function(i) walk.turnTo(i, 'front') end) end
+        if ui.button(x + 2 * (third + pad), y, third, 'turn >') then each(function(i) walk.turnTo(i, 'right') end) end
+        x, y = ui.nextLayoutPosition(layout, bw, BH)
+        if ui.button(x, y, quarter, 'up') then each(function(i) actions.jump(i, 0) end) end
+        if ui.button(x + quarter + pad, y, quarter, 'breathe') then each(actions.breathe) end
+        if ui.button(x + 2 * (quarter + pad), y, quarter, 'flip') then
+            each(function(i) actions.setFlipped(i, not actions.isFlipped(i)) end)
+        end
+        if ui.button(x + 3 * (quarter + pad), y, quarter, 'limp') then
+            each(function(i) actions.setRagdoll(i, not actions.isRagdoll(i)) end)
+        end
         x, y = ui.nextLayoutPosition(layout, bw, BH)
         if ui.button(x, y, bw, 'gait: ' .. c.gait .. ' (g)') then c.gait = c.gait == 'walk' and 'hop' or 'walk' end
         x, y = ui.nextLayoutPosition(layout, bw, BH)

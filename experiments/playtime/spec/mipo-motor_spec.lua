@@ -138,6 +138,37 @@ describe('a Mipo moving by itself', function()
         end)
     end
 
+    it('takes one step, or two, and stops', function()
+        setup(4)
+        mipoWalk.steps(inst, 1.5, 2)
+        local took
+        for k = 1, math.floor(4 / DT) do
+            step()
+            if not mipoWalk.driving(inst) then took = k * DT break end
+        end
+        print(string.format('  2 steps: done in %s s', tostring(took)))
+        assert.is_truthy(took)
+        assert.are.equal('right', facing.get(inst))
+    end)
+
+    it('hops once and stops', function()
+        setup(4)
+        local len = legLen()
+        local x0 = inst.parts.torso1.body:getX()
+        local hops, wasUp = 0, false
+        mipoWalk.hopOnce(inst, 1.5)
+        seconds(3, function()
+            local up = not mipoActions.isGrounded(inst)
+            if up and not wasUp then hops = hops + 1 end
+            wasUp = up
+        end)
+        local x1 = inst.parts.torso1.body:getX()
+        print(string.format('  one hop: %d off the ground, %.1f legs', hops, (x1 - x0) / len))
+        assert.is_falsy(mipoWalk.driving(inst))
+        assert.are.equal(1, hops)
+        assert.is_true(x1 - x0 > 0)
+    end)
+
     it('jumps the way it is told', function()
         setup(4)
         local x0, y0 = inst.parts.torso1.body:getPosition()

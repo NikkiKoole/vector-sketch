@@ -151,6 +151,7 @@ function lib.hold(instance, on) instance._noWalk = on or nil end
 -- face the way it goes; its feet push it, only while one touches something (nothing holds it up or
 -- carries it in the air). A hand on it wins.
 function lib.drive(inst, speed, mode)
+    inst._stepsLeft, inst._hopsLeft, inst._gaitFrom = nil, nil, nil
     if speed and speed ~= 0 then
         inst._drive, inst._driveMode = speed, mode or 'walk'
     else
@@ -159,6 +160,16 @@ function lib.drive(inst, speed, mode)
     end
 end
 function lib.driving(inst) return inst._drive, inst._driveMode end
+
+-- one go, then it stops: n steps (counted once it faces its way), or one hop
+function lib.steps(inst, speed, n)
+    lib.drive(inst, speed, 'walk')
+    inst._stepsLeft = n or 1
+end
+function lib.hopOnce(inst, speed)
+    lib.drive(inst, speed, 'hop')
+    inst._hopsLeft = 1
+end
 
 ---------------------------------------------------------------- helpers
 
@@ -690,6 +701,7 @@ local function updateHop(inst, now, torso, legLen, face, grounded, target)
         local mass = mipoRegistry.totalMass(inst)
         torso:applyLinearImpulse(mass * (target - vx), -mass * up)
         inst._hopAt, inst._hopLanded = now, nil
+        if inst._hopsLeft then inst._hopsLeft = inst._hopsLeft - 1 end
         legsTo(inst, face, 0, 0)
         return
     end
@@ -699,6 +711,10 @@ local function updateHop(inst, now, torso, legLen, face, grounded, target)
         return
     end
     inst._hopLanded = inst._hopLanded or now
+    if inst._hopsLeft == 0 and now - (inst._hopAt or 0) > 0.2 then -- the one hop landed
+        lib.drive(inst, nil)
+        return
+    end
     legsTo(inst, face, 8, 16) -- soft knees
     if now - inst._hopLanded >= lib.hopRest and now - (inst._hopAt or 0) > 0.2 then
         inst._hopFireAt = now + lib.hopCrouch
@@ -730,7 +746,12 @@ local function updateDrive(inst, dt, now, torso, legLen)
         return
     end
     local vx = torso:getLinearVelocity()
+    if inst._stepsLeft and faceDir ~= dir then inst._gaitFrom = nil end -- steps count once it faces its way
+    if inst._stepsLeft then inst._gaitFrom = inst._gaitFrom or (inst._gait or 0) end
     stepLegs(inst, dt, math.max(math.abs(target) * 0.6, vx * dir), face, faceDir ~= 0, legLen)
+    if inst._stepsLeft and inst._gaitFrom and inst._gait - inst._gaitFrom >= inst._stepsLeft * math.pi then
+        lib.drive(inst, nil)
+    end
 end
 
 local function updateWalk(inst, dt, now)
