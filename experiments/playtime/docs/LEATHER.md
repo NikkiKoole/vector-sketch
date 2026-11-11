@@ -1,6 +1,6 @@
 # Leather — parts that look like stitched leather
 
-status: idea
+status: parked — kept as a spike (Nikki 2026-11-11: "keep leather in the spike too, park it"); the next step when it comes back is below
 
 Nikki (2026-11-11): "and then some more shader fun, with a more leathered look?". Leather is in the
 material palette already (MATERIALS MT4, 2026-11-06: a surface grain with a sheen, one of the stronger
@@ -47,5 +47,6 @@ picture ~60 times (the edge rings), not baked, phone not measured.
 
 - [x] **LE1. The spike** (scene `leather`, on the hook): stitching, burnished edges, creases, scuffs, sheen
   on two Mipos, sliders for each; baked like the fur if it costs.
-- [ ] **LE2. Nikki plays with it**: keep, change or park.
+- [x] **LE2. Nikki plays with it**: keep, change or park.
+  Kept 2026-11-11 (Nikki 2026-11-11: "keep leather in the spike too, park it"): kept as a spike, parked.
 - [ ] **LE3. If kept**: leather as a material on a part (the palette, MT6's editor row), and on shoes.
