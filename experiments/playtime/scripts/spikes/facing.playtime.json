@@ -1,11 +1,188 @@
 {
-  "camera":{
-    "scale":0.45,
-    "rotation":0,
-    "x":0,
-    "y":520
+  "camera": {
+    "scale": 0.45,
+    "rotation": 0,
+    "x": 0,
+    "y": 520
   },
-  "bodies":[],
-  "joints":[],
-  "version":"1.0"
+  "bodies": [
+    {
+      "mirrorX": 1,
+      "mirrorY": 1,
+      "label": "wall far",
+      "fixtures": [
+        {
+          "points": [
+            10,
+            -10,
+            10,
+            10,
+            -10,
+            10,
+            -10,
+            -10
+          ],
+          "userData": {
+            "label": "",
+            "id": "1XoUcq",
+            "extra": {
+              "tile": 600,
+              "behind": 400,
+              "main": {
+                "bgURL": "world/walls/concrete-02.jpg"
+              }
+            },
+            "type": "sfixture",
+            "subtype": "wall"
+          },
+          "sensor": true
+        },
+        {
+          "points": [
+            1100,
+            -800,
+            1100,
+            800,
+            -1100,
+            800,
+            -1100,
+            -800
+          ]
+        }
+      ],
+      "dims": [],
+      "shapeType": "custom",
+      "sharedFixtureData": {
+        "shapeType": "polygon",
+        "groupIndex": 0,
+        "friction": 0.2,
+        "restitution": 0.3,
+        "density": 1,
+        "sensor": true
+      },
+      "position": [
+        1100,
+        100
+      ],
+      "linearVelocity": [
+        0,
+        0
+      ],
+      "angularVelocity": 0,
+      "linearDamping": 0,
+      "id": "3tQ5Xf",
+      "angle": 0,
+      "vertices": [
+        0,
+        -700,
+        2200,
+        -700,
+        2200,
+        900,
+        0,
+        900
+      ],
+      "angularDamping": 0,
+      "bodyType": "static",
+      "fixedRotation": false
+    },
+    {
+      "mirrorX": 1,
+      "mirrorY": 1,
+      "label": "wall near",
+      "fixtures": [
+        {
+          "points": [
+            10,
+            -10,
+            10,
+            10,
+            -10,
+            10,
+            -10,
+            -10
+          ],
+          "userData": {
+            "label": "",
+            "id": "4rB8OM",
+            "extra": {
+              "tile": 4000,
+              "behind": 120,
+              "main": {
+                "bgURL": "world/walls/plaster-03.jpg"
+              }
+            },
+            "type": "sfixture",
+            "subtype": "wall"
+          },
+          "sensor": true
+        },
+        {
+          "points": [
+            1100,
+            -800,
+            1100,
+            800,
+            -1100,
+            800,
+            -1100,
+            -800
+          ]
+        }
+      ],
+      "dims": [],
+      "shapeType": "custom",
+      "sharedFixtureData": {
+        "shapeType": "polygon",
+        "groupIndex": 0,
+        "friction": 0.2,
+        "restitution": 0.3,
+        "density": 1,
+        "sensor": true
+      },
+      "position": [
+        -1468.4828,
+        -95.191
+      ],
+      "linearVelocity": [
+        0,
+        0
+      ],
+      "angularVelocity": 0,
+      "linearDamping": 0,
+      "id": "3O6oRc",
+      "angle": 0,
+      "vertices": [
+        -2200,
+        -700,
+        0,
+        -700,
+        0,
+        900,
+        -2200,
+        900
+      ],
+      "angularDamping": 0,
+      "bodyType": "static",
+      "fixedRotation": false
+    }
+  ],
+  "joints": [],
+  "version": 2,
+  "sky": {
+    "horizon": 917,
+    "hour": 14.4211,
+    "dayLength": 10
+  },
+  "light": {
+    "wallShadow": 1.2,
+    "level": "full",
+    "wallBehind": 280,
+    "mipo": {
+      "clay": true,
+      "round": 0.3,
+      "front": 0.75,
+      "swing": 0.35
+    }
+  }
 }

@@ -4,6 +4,7 @@ local shapes = require('src.shapes')
 local blobs = require('src.blob')
 local grass = require('src.grass')
 local liquid = require('src.liquid')
+local walls = require('src.walls')
 
 local rect = shapes.rect
 
@@ -68,6 +69,13 @@ fixtureTypes[subtypes.LIQUID] = {
     density = 0,
     getSize = function(cfg) return cfg.radius or 20, cfg.radius or 20 end,
     getExtra = function() return liquid.newExtra() end,
+}
+-- a wall: the body's shape filled with a repeating picture, behind everything (src/walls.lua)
+fixtureTypes[subtypes.WALL] = {
+    subtype = subtypes.WALL,
+    density = 0,
+    getSize = function(cfg) return cfg.radius or 20, cfg.radius or 20 end,
+    getExtra = function() return walls.newExtra() end,
 }
 fixtureTypes[subtypes.RESOURCE] = simpleEntry(subtypes.RESOURCE, {
     getSize = function(cfg) return cfg.radius or 20, cfg.radius or 20 end,

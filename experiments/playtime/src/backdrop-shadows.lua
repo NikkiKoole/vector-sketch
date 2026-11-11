@@ -8,7 +8,9 @@
 -- (its drawBelow), before the bodies.
 -- Off unless state.backdropShadows is set: { wall = function() (draws the wall's shape, world space),
 -- notOn = function() (optional: what stands in front of the wall and hides it, cut out),
--- offset = { x, y } (world units the shadow is shifted), blur = world units (8), strength = 0..1 (0.4) }.
+-- offset = { x, y } (world units the shadow is shifted), blur = world units (8), strength = 0..1 (0.4) },
+-- or { layers = { such tables } }: a pass each, for walls at other distances (a backdrop's own `behind`,
+-- src/scene-light.lua: a wall further back, a longer and softer shadow; Nikki 2026-11-11).
 -- A scene works out the offset from its light (the way its sun shines). One direction for the whole scene: a lamp
 -- in the middle throwing shadows both ways would need a pass per thing (not yet).
 -- Costs a second pass of the textured drawing per frame (shared with the 3D shadows: one pass for both).
@@ -47,11 +49,9 @@ local function pixelsPerUnit()
     return math.sqrt((x1 - x0) ^ 2 + (y1 - y0) ^ 2)
 end
 
-function lib.draw(world)
-    local settings = state.backdropShadows
-    if not settings or not settings.wall or not settings.offset or not world then return end
+local function drawOne(settings, shadowCanvas, w, h)
+    if not settings.wall or not settings.offset then return end
     -- the silhouettes, as they are; shifted the way the light shines when laid down (screen pixels)
-    local shadowCanvas, w, h = silhouettesOf.get(world)
     local ox, oy = love.graphics.transformPoint(0, 0)
     local sx, sy = love.graphics.transformPoint(settings.offset[1], settings.offset[2])
 
@@ -73,6 +73,18 @@ function lib.draw(world)
     love.graphics.setShader()
     love.graphics.pop()
     if compare then love.graphics.setStencilTest(compare, value) else love.graphics.setStencilTest() end
+end
+
+function lib.draw(world)
+    local settings = state.backdropShadows
+    if not settings or not world then return end
+    if not settings.layers and not (settings.wall and settings.offset) then return end
+    local shadowCanvas, w, h = silhouettesOf.get(world) -- once, for every layer
+    if settings.layers then
+        for _, layer in ipairs(settings.layers) do drawOne(layer, shadowCanvas, w, h) end
+    else
+        drawOne(settings, shadowCanvas, w, h)
+    end
 end
 
 return lib

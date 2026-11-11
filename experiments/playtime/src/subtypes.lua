@@ -15,6 +15,7 @@ lib.LIGHT             = 'light'
 lib.GRASS             = 'grass'
 lib.SOFTBODY          = 'softbody'
 lib.LIQUID            = 'liquid'
+lib.WALL              = 'wall' -- a body as a wall: drawn behind everything, shadows fall on it (src/walls.lua)
 
 -- All known subtypes (current era) — used by migration
 lib.ALL = {
@@ -32,6 +33,7 @@ lib.ALL = {
     [lib.GRASS]             = true,
     [lib.SOFTBODY]          = true,
     [lib.LIQUID]            = true,
+    [lib.WALL]              = true,
 }
 
 --- Check whether a fixture userData has a given subtype.

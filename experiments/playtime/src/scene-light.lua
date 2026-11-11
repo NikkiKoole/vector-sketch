@@ -23,11 +23,12 @@ local camera = require('src.camera')
 -- face stays as drawn)
 local LIT_PARTS = { texfixture = true, ['connected-texture'] = true, ['trace-vertices'] = true }
 
--- What the wall shadows land on (the light section's 'shadows land on', Nikki 2026-11-11):
--- 'everything' behind the things (2026-11-06: right for rooms), 'backdrops' (the pictures behind), 'nothing'
--- (no wall shadows; the 3D ones only along the floor), 'auto' (the default): backdrops when the scene has a
--- sky (src/scene-sky.lua: no shadow on open sky), else everything.
-lib.WALL_CHOICES = { 'auto', 'backdrops', 'everything', 'nothing' }
+-- What the wall shadows land on (the light section's 'falls on', Nikki 2026-11-11): 'walls' (bodies with a
+-- wall sfixture, src/walls.lua: each its own distance behind, a shadow pass per distance), 'everything'
+-- behind the things (2026-11-06: right for rooms), 'backdrops' (the pictures behind), 'nothing' (no wall
+-- shadows; the 3D ones only along the floor), 'auto' (the default): walls when the scene has any, else
+-- backdrops with a sky (src/scene-sky.lua: no shadow on open sky), else everything.
+lib.WALL_CHOICES = { 'auto', 'walls', 'backdrops', 'everything', 'nothing' }
 
 -- the screen's world rectangle, with room around
 local function view()
@@ -71,10 +72,12 @@ function lib.wallOf(settings)
     local wall = settings.wall or 'auto'
     if wall == 'auto' then
         local sky = package.loaded['src.scene-sky']
-        wall = (sky and sky.isOn()) and 'backdrops' or 'everything'
+        if require('src.walls').any() then wall = 'walls'
+        else wall = (sky and sky.isOn()) and 'backdrops' or 'everything' end
     end
     return wall
 end
+
 
 -- the soft wall shadow from a sun (the way to it, world): away from it, longer the lower it is (as
 -- light-grass-check's wallShadow), `behind` how far the wall is behind the things
@@ -91,6 +94,18 @@ end
 
 -- the day's sun (light-grass-check's, high on the left)
 local SUN = { -0.5, -0.85 }
+
+-- the walls' shadow layers (src/walls.lua): one per distance behind, each its own length and softness;
+-- `strength` for all, `notOn` (optional) cuts a part off (below the floor)
+local function wallLayers(layers, strength, notOn)
+    local out = {}
+    for _, layer in ipairs(layers) do
+        local shadow = wallShadowFrom(SUN, layer.behind, strength, layer.draw)
+        shadow.notOn = notOn
+        out[#out + 1] = shadow
+    end
+    return { layers = out }
+end
 
 local function extend(base, more)
     local t = {}
@@ -142,8 +157,17 @@ end
 
 -- + soft shadows on the wall behind (~4 ms on the phone; every other frame, half that: LS25)
 local function shadowsShared(settings)
+    local wall = lib.wallOf(settings)
+    if wall == 'walls' then
+        local layers, key = require('src.walls').layers()
+        return cached('shadows', wallKey(settings) .. '|' .. key, function()
+            return extend(LIT.shared, {
+                backdropShadows = wallLayers(layers, 0.35 * (settings.wallShadow or 1)),
+                shadowEveryOther = true,
+            })
+        end)
+    end
     return cached('shadows', wallKey(settings), function()
-        local wall = lib.wallOf(settings)
         if wall == 'nothing' then return LIT.shared end
         return extend(LIT.shared, {
             backdropShadows = wallShadowFrom(SUN, settings.wallBehind or DEFAULT_BEHIND,
@@ -167,16 +191,21 @@ CLAY.plasticineStrength, CLAY.plasticineBump, CLAY.plasticineSpecStrength, CLAY.
 local function fullShared(settings)
     local floor = settings.floor
     if not floor then return shadowsShared(settings) end
-    return cached('full', floor.standY .. '|' .. floor.depth .. '|' .. wallKey(settings), function()
+    local wall = lib.wallOf(settings)
+    local layers, wallsKey = {}, ''
+    if wall == 'walls' then layers, wallsKey = require('src.walls').layers() end
+    return cached('full', floor.standY .. '|' .. floor.depth .. '|' .. wallKey(settings) .. '|' .. wallsKey,
+        function()
         local floorY = floor.standY - floor.depth
-        local wall = lib.wallOf(settings)
         local wallAbove = wall == 'backdrops' and backdrops(floorY) or everything(floorY)
         local wallDown = wall == 'backdrops' and backdrops(floor.standY) or everything(floor.standY)
         local function floorBand() -- the floor, under the wall
             local x1, _, x2 = view()
             love.graphics.rectangle('fill', x1, floorY, x2 - x1, floor.standY - floorY)
         end
+        local function allWalls() for _, layer in ipairs(layers) do layer.draw() end end
         local area = wall == 'everything' and wallDown or wall == 'nothing' and floorBand
+            or wall == 'walls' and function() allWalls() floorBand() end
             or function() wallDown() floorBand() end
         local high = -SUN[2] / math.sqrt(SUN[1] * SUN[1] + SUN[2] * SUN[2])
         local more = {
@@ -185,7 +214,13 @@ local function fullShared(settings)
                 { light = { kind = 'sun', x = SUN[1], h = high, z = 0.5 }, strength = 0.5, softness = 0.03 },
             } },
         }
-        if wall ~= 'nothing' then
+        if wall == 'walls' then
+            local function belowFloor() -- the soft ones only above the floor
+                local x1, _, x2, y2 = view()
+                love.graphics.rectangle('fill', x1, floorY, x2 - x1, y2 - floorY)
+            end
+            more.backdropShadows = wallLayers(layers, 0.35 * 0.7 * (settings.wallShadow or 1), belowFloor)
+        elseif wall ~= 'nothing' then
             more.backdropShadows = wallShadowFrom(SUN, settings.wallBehind or DEFAULT_BEHIND,
                 0.35 * 0.7 * (settings.wallShadow or 1), wallAbove)
         end

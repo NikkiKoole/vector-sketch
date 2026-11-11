@@ -505,5 +505,19 @@ fade, a sun: the panel's `fades` switch, LS4).
   out to the room (eye whites 3-17 points), two alternated runs each: all lit 15.8, cut at 20 px 11.9,
   all flat 11.0. Nikki: no pop seen while zooming.
 
+- [x] **LS31. Walls as things, and the light panel in groups** (2026-11-11). Nikki: shadows shouldn't fall
+  on open sky; backdrops "a sort of hack single image to draw over", so walls became things: a `wall`
+  sfixture (tool rail, attach -> looks -> wall) makes its body a wall: its shape filled with a repeating
+  picture (`textures/world/walls/`: plaster 01-05, concrete 01-02, planks 01-02, CC0 from ambientCG), drawn
+  behind everything (`src/walls.lua`, an engine system's drawBelow), touching nothing (its fixtures
+  sensors, static), left out of the editor's body draw. Each wall has its own `behind`: the wall shadows
+  are a pass per distance (`src/backdrop-shadows.lua` layers), a further wall a longer, softer shadow
+  (Nikki: "one further away with larger shadow"). The light section's 'falls on': auto (walls when there
+  are any, else backdrops with a sky, else everything) / walls / backdrops / everything / nothing; 'dark',
+  'behind'; and a Mipos group (clay as the level / on / off, front, swing, round). The facing scene has a
+  near plaster and a far concrete wall. `spec/walls_spec.lua`.
+  tried 2026-11-11: walls as backdrop pictures with a per-backdrop distance (dropped half way for walls as
+  things).
+
 Not light, but where this started (`LITTLE-USED.md`): three rounds left there, skinned mesh, UV mesh,
 the recorder (the feature-rounds sweep, `claudetools/feature-rounds_spec.lua`, takes a recipe each).

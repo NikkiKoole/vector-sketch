@@ -10,6 +10,7 @@ local mathutils = require('src.math-utils')
 local subtypes = require('src.subtypes')
 local NT = require('src.node-types')
 local registry = require('src.registry')
+local walls = require('src.walls')
 local view = require('src.render.view')
 local pal = {
     ['orange']  = { 242 / 255, 133 / 255, 0 },         --#F28500  tangerine orange
@@ -117,7 +118,7 @@ end
 -- a connected-texture is a ribbon between joints, so it doesn't count
 local texturedKinds = {}
 for _, kind in ipairs({ subtypes.TEXFIXTURE, subtypes.MESHUSERT, subtypes.UVUSERT, subtypes.TILE_REPEAT,
-    subtypes.DECAL, subtypes.TRACE_VERTICES }) do
+    subtypes.DECAL, subtypes.TRACE_VERTICES, subtypes.WALL }) do -- a wall: src/walls.lua draws it
     texturedKinds[kind] = true
 end
 
@@ -413,6 +414,7 @@ function lib.drawWorld(world, drawOutline)
             -- a body under its picture first: in play mode that's nearly all of them, and this is a table
             -- lookup (hasTexture remembers) where the cull asks the body twice
             if skipTextured and not lib.showsBody(body, covered) then break end
+            if walls.isWallBody(body) then break end -- drawn by src/walls.lua, behind everything
             if cull then
                 local x, y = body:getPosition()
                 local reach = view.bodyReach(body) + OUTLINE_PAD

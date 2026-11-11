@@ -15,6 +15,12 @@ local lib = {}
 
 lib.list = {
     {
+        name = 'walls', -- bodies as walls: drawn behind everything, touching nothing (src/walls.lua)
+        module = 'src.walls',
+        update = function(m) m.update() end,
+        drawBelow = function(m) m.drawBelow() end,
+    },
+    {
         name = 'sky', -- the scene's clock: the hour goes round while the day runs (src/scene-sky.lua, SKY.md)
         module = 'src.scene-sky',
         update = function(m, dt) m.update(dt) end,

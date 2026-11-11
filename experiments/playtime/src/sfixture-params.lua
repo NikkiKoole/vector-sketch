@@ -267,6 +267,19 @@ lib.bySubtype = {
                   or 'aim: rotate the body (body +X = light dir)'
           end },
     }, position),
+    -- a wall (src/walls.lua): its picture repeating over the body's shape, how far behind the things it is
+    [subtypes.WALL] = concat({
+        { key = 'texture', kind = 'file',
+          get = function(fixture) return mainOf(fixture).bgURL or '' end,
+          set = function(fixture, v) mainOf(fixture).bgURL = v end },
+        { key = 'tint', kind = 'color',
+          get = function(fixture) return mainOf(fixture).tint or 'ffffffff' end,
+          set = function(fixture, v) mainOf(fixture).tint = v end },
+        extraNumber('tile', 'picture size', 50, 4000, 600, nil, { step = 10 }),
+        extraNumber('behind', 'behind', 0, 1000, 90, nil, { step = 5 }),
+        { key = 'wallnote', kind = 'note',
+          label = 'behind everything, touches nothing; further behind: longer, softer shadows' },
+    }, position),
     -- water in a container (src/liquid.lua): how full (of the body's hollow), the look
     [subtypes.LIQUID] = concat({
         extraNumber('fill', 'fill', 0, 1, 0.6),
