@@ -1034,7 +1034,7 @@ local function clipToEye(extra, body)
     local eyesOpen = (thing and thing.eyesOpen) or 1
     local wx, wy = body:getWorldPoint(extra.ox or 0, extra.oy or 0) -- the eye's centre (before the gaze)
     local angle = body:getAngle() + (extra.eyeRot or 0)
-    local w, h = extra.eyeW * (extra.eyeMirror and -1 or 1), extra.eyeH * eyesOpen
+    local w, h = extra.eyeW * (extra.eyeMirror and -1 or 1), extra.eyeH * eyesOpen * ((thing and thing.eyeScale) or 1)
     eyeLine.x, eyeLine.y, eyeLine.angle, eyeLine.w, eyeLine.h = wx, wy, angle, w, h
     return stencilInside(
         function() love.graphics.draw(mask, wx, wy, angle, w / mw, h / mh, mw / 2, mh / 2) end)
@@ -1222,6 +1222,10 @@ end
 local function drawDecal(d)
     local extra = d.extra
     local body = d.body
+    if d.nose then -- an emotion's blush on the cheeks, under the nose (src/mipo-emotion.lua, when loaded)
+        local emotion = package.loaded['src.mipo-emotion']
+        if emotion and body and not body:isDestroyed() then emotion.drawBlush(body) end
+    end
     if extra.facePatches then
         if body and not body:isDestroyed() then drawFacePatches(extra, body) end
         return
@@ -1271,7 +1275,14 @@ local function drawDecal(d)
         if extra.isEye then
             local bodyThing = utils.thingOf(body)
             local eyesOpen = (bodyThing and bodyThing.eyesOpen) or 1
-            dh = dh * eyesOpen
+            if extra.eyeW then
+                -- a pupil: its own size (an emotion's, src/mipo-emotion.lua: small when scared), squashed by
+                -- the blink; a narrower eye clips it (clipToEye)
+                local p = (bodyThing and bodyThing.pupilScale) or 1
+                dw, dh = dw * p, dh * p * eyesOpen
+            else
+                dh = dh * eyesOpen * ((bodyThing and bodyThing.eyeScale) or 1) -- an emotion's: wide, squinting
+            end
         end
         local clip = extra.eyeMaskURL and extra.eyeW and clipToEye(extra, body)
         -- small on screen: drawn flat (src/render/small-flat.lua); a pupil goes by its eye's size

@@ -87,6 +87,7 @@ local baseEnv = {
     mipoTextures             = require('src.mipo-textures'), -- addFaceDecals: a Mipo face on a script's body (garden)
     mipoRegistry             = require('src.mipo-registry'),
     mipoKit                  = require('src.mipo-kit'), -- spawn(list, x, y), alive(list), isAlive(inst)
+    mipoEmotion              = require('src.mipo-emotion'), -- faces that show feelings (EMOTIONS.md)
     -- turning and walking, every Mipo (src/mipo-walk.lua): turn(inst, dir), turnHead, turnTo, hold
     mipoWalk                 = require('src.mipo-walk'),
     mipoLayers               = require('src.mipo-layers'), -- where a hat, pants, hair go between a Mipo's parts
