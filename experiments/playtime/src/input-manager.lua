@@ -642,12 +642,33 @@ local function pressedTrackCrossing(x, y)
     return true
 end
 
+-- painting the selected track with the inspector's brush (lift / boost / brake / roll / clear, COASTER CO4):
+-- a press on the track starts it, dragging paints the points under the brush
+local function paintTrackAt(x, y)
+    local obj = state.selection.selectedObj
+    if not (obj and obj.shapeType == ST.TRACK and state.trackBrush) or obj.body:isDestroyed() then return false end
+    local track = require('src.track')
+    local wx, wy = cam:getWorldCoordinates(x, y)
+    local radius = 22 / cam:getScale()
+    if not state.trackPainting then
+        local hit = false
+        for _, fixture in ipairs(obj.body:getFixtures()) do
+            if track.hits(fixture, wx, wy, radius) then hit = true end
+        end
+        if not hit then return false end
+        state.trackPainting = true
+    end
+    track.paint(obj, wx, wy, radius, state.trackBrush)
+    return true
+end
+
 function lib.handleMousePressed(x, y, button, istouch)
     if playMode.isOn() then -- left grabs; right/middle pan (handleMouseMoved)
         if not istouch and button == 1 then handlePointer(x, y, 'mouse', 'pressed', button) end
         return
     end
     if not istouch and button == 1 and pressedTrackCrossing(x, y) then return end
+    if not istouch and button == 1 and not state.currentMode and paintTrackAt(x, y) then return end
     if not istouch and button == 1 then
         if modes.isFreehand() then
             -- Start capturing mouse movement
@@ -676,6 +697,10 @@ function lib.handleTouchPressed(id, x, y, _dx, _dy, _pressure)
 end
 
 function lib.handleMouseReleased(x, y, _button, istouch)
+    if state.trackPainting then
+        state.trackPainting = false
+        return
+    end
     if not istouch then
         handlePointer(x, y, 'mouse', 'released')
     end
@@ -768,6 +793,10 @@ end
 function lib.handleMouseMoved(x, y, dx, dy)
     if playMode.isOn() then -- play mode: moving only pans (right/middle drag)
         if love.mouse.isDown(3) or love.mouse.isDown(2) then panCamera(dx, dy) end
+        return
+    end
+    if state.trackPainting then
+        if love.mouse.isDown(1) then paintTrackAt(x, y) else state.trackPainting = false end
         return
     end
     modes.dropWhatsGone()

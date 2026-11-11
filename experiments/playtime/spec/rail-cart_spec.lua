@@ -156,6 +156,65 @@ describe('rail cart', function()
         assert.is_near(startY, highest, 400 * 0.04)
     end)
 
+    -- a straight track from a to b with the points within `radius` of (px, py) painted with `brush`
+    local function painted(a, b, brush, px, py, radius)
+        local t = makeTrack(line({ a, b }, 20))
+        assert.is_true(track.paint(t, px, py, radius, brush))
+        return t
+    end
+
+    it('a lift pulls a still cart up a slope at its steady speed, and holds it there', function()
+        local t = painted({ -600, 300 }, { 600, -300 }, 'lift', 0, 0, 2000) -- all of it, going up to the right
+        local body = cart(-500, 230)
+        step(1)
+        assert.is_truthy(railCart.lockOf(body))
+        assert.are.equal('lift', railCart.lockOf(body).zone)
+        step(90)
+        local lock = railCart.lockOf(body)
+        assert.is_near(require('src.physics-units').speed(railCart.LIFT_SPEED), lock.speed, 5)
+        assert.is_true(body:getX() > -300, 'went up')
+        assert.are.equal(t, lock.track)
+    end)
+
+    it('a brake slows a fast cart to a crawl, never backwards; a boost speeds one up', function()
+        local units = require('src.physics-units')
+        painted({ -2000, 0 }, { 2000, 0 }, 'brake', 0, 0, 2400)
+        local body = cart(-1900, -18)
+        step(1)
+        railCart.setSpeed(body, 1500)
+        step(120)
+        local crawl = railCart.lockOf(body).speed -- braked to the floor, then only drag: a little under it
+        assert.is_true(crawl <= units.speed(railCart.BRAKE_TO) + 1 and crawl > units.speed(railCart.BRAKE_TO) * 0.85)
+        -- boost
+        state.physicsWorld:destroy()
+        state.physicsWorld = love.physics.newWorld(0, 9.8 * love.physics.getMeter(), true)
+        state.physicsWorld:setCallbacks(unpack(callbacks))
+        state.railCarts = nil
+        painted({ -2000, 0 }, { 2000, 0 }, 'boost', 0, 0, 2400)
+        local fast = cart(-1900, -18)
+        step(1)
+        railCart.setSpeed(fast, 200)
+        step(30)
+        assert.is_true(railCart.lockOf(fast).speed > 200 + units.accel(railCart.BOOST) * 0.4, 'sped up')
+    end)
+
+    it('a roll stretch turns the cart round the rail: on top before it, hanging under it after', function()
+        local t = painted({ -1500, 0 }, { 1500, 0 }, 'roll', 0, 0, 200) -- a 400 long roll in the middle
+        local body = cart(-1400, -18)
+        step(1)
+        railCart.setSpeed(body, 600)
+        assert.is_true(body:getY() < -10, 'on top')
+        for _ = 1, 240 do
+            step(1)
+            if body:getX() > 600 then break end
+        end
+        assert.is_true(body:getX() > 600, 'rode through the roll')
+        assert.is_true(body:getY() > 10, 'under the rail now')
+        local a = body:getAngle() % (2 * math.pi)
+        assert.is_near(math.pi, a, 0.1) -- upside down
+        assert.are.equal(t, railCart.lockOf(body).track)
+    end)
+
     it('rides through a crossing in either lane without touching the other rail', function()
         -- an open figure: down to the right, up and back across its own way
         local t = makeTrack(line({ { -700, -200 }, { 700, 300 }, { 800, 0 }, { 0, 400 }, { -200, 600 } }, 20))

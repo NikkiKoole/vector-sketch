@@ -93,7 +93,23 @@ the course before writing the file (the bridge's eval stopped at its instruction
   Found: the bridge's eval stops at its instruction limit when a stroke of ~400 points is made into a
   track in the same call (the crossing search is every edge against every edge, once per change).
   Not yet tried by hand: making a cart in the inspector, picking it off the rail.
-- [ ] **CO4. Lift, boost, brake**: stretches of the track painted (achtbaan's zones), forces along it.
+- [x] **CO4. Lift, boost, brake**: stretches of the track painted (achtbaan's zones), forces along it.
+  Built 2026-11-11 (Nikki: "we need to be able to draw / mark hoist, boost, brake, flip? from achtbaan").
+  achtbaan marks points by holding h / a / d / f while drawing or tapping them over a point: hoist sets
+  the speed to 100, accelerate / decelerate kick once per segment, flip swaps the cart to the other side
+  of the rail (a 10 px offset). Here: a brush in the inspector of a selected track (lift, boost, brake,
+  roll, clear), dragged along the track; the points get a character each in `thing.track.marks`
+  (saved), the sleepers there are wider and in the zone's colour (lift yellow, boost green, brake red,
+  roll pink). In `src/rail-cart.lua` as changes to the cart's speed along the track: a lift catches a
+  slower cart and pulls it on at 260 (along the drawn way, so no rolling back), a boost pushes 900/s^2
+  the way it's going, a brake slows 1400/s^2 down to a crawl of 90, never backwards (numbers at 100 px
+  per metre). A roll (achtbaan's flip): over a painted run the cart turns round the rail, from on top to
+  hanging under it (seen from the side: a corkscrew); every roll run passed is half a turn.
+  Also from Nikki playing: a cart couldn't be put on her own track (the scene sent it back to the
+  station whenever it was off a rail a moment). Now a cart's home is where it last locked on, it goes
+  back there, `n` makes a new cart at the mouse, and the lock-on reach is half height + 70.
+  Specs: a lift pulls a still cart up a slope at its speed; a brake slows to the crawl; a boost speeds
+  up; a roll leaves the cart under the rail, upside down. Not yet painted by hand.
 - [ ] **CO5. Riders**: Mipos seated in the cart (TRACKS TR4's pivot servo is a start).
 - [ ] **CO6. Nikki plays with it**; then supports to the ground, the hand-drawn look, sounds
   (achtbaan's clacks and the crowd, dreamengine's `coaster` cart).

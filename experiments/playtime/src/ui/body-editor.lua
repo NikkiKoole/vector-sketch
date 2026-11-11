@@ -102,6 +102,33 @@ function lib.drawUpdateSelectedObjectUI(panelX, panelY, panelWidth, panelH)
                             end
                         end
 
+                        -- a coaster track: a brush to paint lift / boost / brake / roll stretches (src/track.lua),
+                        -- drag along the track with it; no Steiner points on a line
+                        if state.selection.selectedObj.shapeType == ST.TRACK then
+                            local track = require('src.track')
+                            local brushes = { 'lift', 'boost', 'brake', 'roll', 'clear' }
+                            nextRow()
+                            local brush = state.trackBrush
+                            local hint = brush and ('paint ' .. brush .. ': drag along the track') or 'paint the track:'
+                            ui.label(x, y, hint)
+                            for row = 0, 1 do
+                                nextRow()
+                                for k = 1, 3 do
+                                    local name = brushes[row * 3 + k]
+                                    if name then
+                                        local zone = track.ZONES[name]
+                                        local on = state.trackBrush == name
+                                        local c = zone and zone.colour or { 0.6, 0.6, 0.6 }
+                                        local colour = on and c or { c[1] * 0.55, c[2] * 0.55, c[3] * 0.55 }
+                                        if ui.button(x + (k - 1) * 88, y, 84, name, BUTTON_HEIGHT, colour) then
+                                            state.trackBrush = (not on) and name or nil
+                                        end
+                                    end
+                                end
+                            end
+                            return true
+                        end
+
                         -- POC: Steiner-point authoring on the body's polygon. Stores
                         -- (x,y) pairs in body-local coords on thing.extraSteiner. Does
                         -- NOT rebuild collision fixtures or change the fill draw — the

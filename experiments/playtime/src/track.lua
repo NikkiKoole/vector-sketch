@@ -31,6 +31,18 @@ lib.SLEEPER_EVERY = 2   -- a sleeper every n points
 
 local RAIL_FRONT = { 0.30, 0.31, 0.36 }
 local SLEEPER_FRONT = { 0.46, 0.34, 0.24 }
+
+-- the stretches a track can be painted with (COASTER CO4, after achtbaan's hoist / accelerate / decelerate
+-- / flip); what they do to a cart is src/rail-cart.lua's. thing.track.marks: a character per point.
+lib.ZONES = {
+    lift  = { char = 'l', colour = { 0.95, 0.80, 0.20 } }, -- a chain: pulls a slower cart up to a steady speed
+    boost = { char = 'b', colour = { 0.35, 0.80, 0.35 } }, -- tyres: push it on the way it's going
+    brake = { char = 'k', colour = { 0.85, 0.30, 0.25 } }, -- fins: slow it to a crawl
+    roll  = { char = 'r', colour = { 0.90, 0.45, 0.80 } }, -- a corkscrew: it rolls round the rail to its other side
+}
+lib.ZONE_ORDER = { 'lift', 'boost', 'brake', 'roll' }
+local ZONE_OF_CHAR = {}
+for name, zone in pairs(lib.ZONES) do ZONE_OF_CHAR[zone.char] = name end
 local HAZE = { 0.66, 0.70, 0.76 }
 local HAZE_BACK = 0.55 -- how far a back stretch goes toward the haze
 
@@ -335,8 +347,35 @@ local function edgeMasks(L, crossings, lane)
     return mask
 end
 
+-- each point's zone (nil: plain track), from thing.track.marks
+local function zonesOf(L, marks)
+    local zone = {}
+    marks = marks or ''
+    for i = 1, L.n do zone[i] = ZONE_OF_CHAR[marks:sub(i, i)] end
+    return zone
+end
+
+-- the roll stretches: each run of roll points as an arc range { s0, s1 }, in arc order
+local function rollRuns(L)
+    local runs = {}
+    local i = 1
+    while i <= L.n do
+        if L.zone[i] == 'roll' then
+            local j = i
+            while j < L.n and L.zone[j + 1] == 'roll' do j = j + 1 end
+            local s1 = (j < L.n or L.closed) and L.arc[j] + edgeLen(L, j) or L.arc[j] -- up to the next point
+            if s1 - L.arc[i] >= 1 then runs[#runs + 1] = { s0 = L.arc[i], s1 = s1 } end
+            i = j + 1
+        else
+            i = i + 1
+        end
+    end
+    return runs
+end
+
 -- The layout of a track, in body-local coordinates: xs, ys, arc (per point), total, edges, crossings,
--- lane (per point), depth (per point, 0 front .. 1 back, eased), mask (per edge), changes (arc positions).
+-- lane (per point), depth (per point, 0 front .. 1 back, eased), mask (per edge), changes (arc positions),
+-- zone (per point), rolls (arc ranges).
 local function computeLayout(thing)
     local track = thing.track or {}
     local L = linePoints(thing, track.closed or false)
@@ -346,6 +385,8 @@ local function computeLayout(thing)
     L.lane = assignLanes(L, wants)
     L.depth = easeDepth(L, L.lane, L.changes)
     L.mask = edgeMasks(L, L.crossings, L.lane)
+    L.zone = zonesOf(L, track.marks)
+    L.rolls = rollRuns(L)
     return L
 end
 
@@ -358,17 +399,68 @@ local function flipsKey(track)
     return table.concat(keys, ',')
 end
 
--- the layout of a track thing, made again when its line, closedness or flips change
+-- the layout of a track thing, made again when its line, closedness, flips or painted zones change
 function lib.layout(thing)
     local cached = layoutCache[thing]
     local fk = flipsKey(thing.track)
     local closed = thing.track and thing.track.closed or false
-    if cached and cached.vertices == thing.vertices and cached.flips == fk and cached.closed == closed then
+    local marks = thing.track and thing.track.marks or ''
+    if cached and cached.vertices == thing.vertices and cached.flips == fk and cached.closed == closed
+        and cached.marks == marks then
         return cached.layout
     end
     local layout = computeLayout(thing)
-    layoutCache[thing] = { vertices = thing.vertices, flips = fk, closed = closed, layout = layout }
+    layoutCache[thing] = { vertices = thing.vertices, flips = fk, closed = closed, marks = marks, layout = layout }
     return layout
+end
+
+-- how far round its rail a cart at s has rolled (radians): pi for every roll stretch passed (each lap
+-- round a loop counts them all again), part of pi inside one
+function lib.rollAt(layout, s)
+    local runs = layout.rolls
+    if not runs or #runs == 0 then return 0 end
+    local within, done = s, 0
+    if layout.closed then
+        local laps = math.floor(s / layout.total)
+        within, done = s - laps * layout.total, laps * #runs
+    end
+    local partial = 0
+    for _, run in ipairs(runs) do
+        if within >= run.s1 then
+            done = done + 1
+        elseif within > run.s0 then
+            partial = (within - run.s0) / (run.s1 - run.s0)
+        end
+    end
+    return (done + partial) * math.pi
+end
+
+-- paint the points within radius of world x, y with a zone ('lift', 'boost', 'brake', 'roll') or 'clear';
+-- true when something changed
+function lib.paint(thing, wx, wy, radius, brush)
+    if not lib.isTrack(thing) then return false end
+    local layout = lib.layout(thing)
+    thing.track = thing.track or { closed = false }
+    local ch = (brush == 'clear') and '.' or (lib.ZONES[brush] and lib.ZONES[brush].char)
+    if not ch then return false end
+    local marks = thing.track.marks or ''
+    local chars = {}
+    for i = 1, layout.n do
+        local c = marks:sub(i, i)
+        chars[i] = (c == '') and '.' or c
+    end
+    local lx, ly = thing.body:getLocalPoint(wx, wy)
+    local r2, changed = radius * radius, false
+    for i = 1, layout.n do
+        if (layout.xs[i] - lx) ^ 2 + (layout.ys[i] - ly) ^ 2 <= r2 and chars[i] ~= ch then
+            chars[i], changed = ch, true
+        end
+    end
+    if changed then
+        local joined = table.concat(chars):gsub('%.+$', '') -- trailing plain points: nothing kept
+        thing.track.marks = (joined ~= '') and joined or nil
+    end
+    return changed
 end
 
 function lib.isTrack(thing) return thing ~= nil and thing.shapeType == lib.SHAPE_TYPE and thing.vertices ~= nil end
@@ -684,17 +776,19 @@ local function buildMesh(layout, lane)
         verts[#verts + 1] = { cx, cy, 0, 0, r2, g2, b2, 1 }
     end
     local hw = lib.RAIL_W / 2
-    -- sleepers first (under the rails)
+    -- sleepers first (under the rails); in a painted zone every point gets one, wider, in its colour
     for e = 1, layout.edges do
-        if layout.lane[e] == lane and (e - 1) % lib.SLEEPER_EVERY == 0 then
+        local zone = layout.zone[e] and lib.ZONES[layout.zone[e]]
+        if layout.lane[e] == lane and (zone or (e - 1) % lib.SLEEPER_EVERY == 0) then
             local j = e % n + 1
             local tx, ty = xs[j] - xs[e], ys[j] - ys[e]
             local tl = math.sqrt(tx * tx + ty * ty)
             if tl > 0 then
-                tx, ty = tx / tl * lib.SLEEPER_W / 2, ty / tl * lib.SLEEPER_W / 2
-                local reach = lib.RAIL_GAP + lib.RAIL_W
+                local w = zone and lib.SLEEPER_W * 2 or lib.SLEEPER_W
+                tx, ty = tx / tl * w / 2, ty / tl * w / 2
+                local reach = lib.RAIL_GAP + lib.RAIL_W + (zone and 2 or 0)
                 local x, y = xs[e], ys[e]
-                local r, g, b = colourAt(e, SLEEPER_FRONT)
+                local r, g, b = colourAt(e, zone and zone.colour or SLEEPER_FRONT)
                 quad(x - tx + nx[e] * reach, y - ty + ny[e] * reach, x + tx + nx[e] * reach, y + ty + ny[e] * reach,
                     x - tx - nx[e] * reach, y - ty - ny[e] * reach, x + tx - nx[e] * reach, y + ty - ny[e] * reach,
                     r, g, b, r, g, b)
