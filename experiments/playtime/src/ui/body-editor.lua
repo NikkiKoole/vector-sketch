@@ -106,6 +106,13 @@ function lib.drawUpdateSelectedObjectUI(panelX, panelY, panelWidth, panelH)
                         -- drag along the track with it; no Steiner points on a line
                         if state.selection.selectedObj.shapeType == ST.TRACK then
                             local track = require('src.track')
+                            local selected = state.selection.selectedObj
+                            local closed = selected.track and selected.track.closed
+                            nextRow()
+                            if ui.button(x, y, 260, closed and 'open the loop' or 'close the loop') then
+                                require('src.poly-edit').setTrackClosed(not closed)
+                                return true -- made again: the new thing next frame
+                            end
                             local brushes = { 'lift', 'boost', 'brake', 'roll', 'clear' }
                             nextRow()
                             local brush = state.trackBrush

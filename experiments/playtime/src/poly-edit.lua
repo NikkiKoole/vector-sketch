@@ -236,8 +236,29 @@ function lib.removeCustomPolygonVertex(x, y)
     end
 end
 
+-- close the selected track into a loop or open it (src/track.lua setClosed), made again at once, kept in
+-- place; the vertex editing, if on, goes on from the new points
+function lib.setTrackClosed(closed)
+    local thing = state.selection.selectedObj
+    if not (thing and thing.shapeType == ST.TRACK) then return end
+    local wasEditing = state.polyEdit.tempVerts ~= nil
+    state.polyEdit.tempVerts = require('src.track').setClosed(thing, closed)
+    lib.applyVertices()
+    if not wasEditing then
+        state.polyEdit.tempVerts = nil
+        state.polyEdit.centroid = nil
+    end
+end
+
 function lib.maybeUpdateCustomPolygonVertices()
     if not utils.tablesEqualNumbers(state.polyEdit.tempVerts, state.selection.selectedObj.vertices) then
+        lib.applyVertices()
+    end
+end
+
+-- the selected thing made again from state.polyEdit.tempVerts, kept where it was
+function lib.applyVertices()
+    do
         local nx, ny = mathutils.computeCentroid(state.polyEdit.tempVerts)
         local ox, oy = mathutils.computeCentroid(state.selection.selectedObj.vertices)
         local dx = nx - ox

@@ -827,6 +827,11 @@ function lib.handleMouseMoved(x, y, dx, dy)
         local dx2, dy2 = localDelta(state.selection.selectedObj.body, dx, dy)
         state.polyEdit.tempVerts[index] = state.polyEdit.tempVerts[index] + dx2
         state.polyEdit.tempVerts[index + 1] = state.polyEdit.tempVerts[index + 1] + dy2
+        local obj = state.selection.selectedObj
+        if obj.shapeType == ST.TRACK then -- a track bends: its neighbours follow, less further along
+            require('src.track').dragNeighbours(state.polyEdit.tempVerts, (index + 1) / 2, dx2, dy2,
+                obj.track and obj.track.closed)
+        end
     elseif state.texFixtureEdit.dragIdx and state.texFixtureEdit.dragIdx > 0 then
         local index = state.texFixtureEdit.dragIdx
         local dx2, dy2 = localDelta(state.selection.selectedSFixture:getBody(), dx, dy)
@@ -900,6 +905,23 @@ function lib.handleKeyPressed(key)
         state.panelVisibility.saveDialogOpened = true
     end
     -- i / d: insert or delete a corner (a ribbon: a pair) at the mouse in the edited polygon
+    local editedTrack = state.selection.selectedObj and state.selection.selectedObj.shapeType == ST.TRACK
+    if (key == 'i' or key == 'd') and state.polyEdit.tempVerts and editedTrack then
+        -- a track: a point on the nearest edge / the nearest point gone, its painted zones kept in step
+        local track = require('src.track')
+        local obj = state.selection.selectedObj
+        local wx, wy = cam:getWorldCoordinates(love.mouse.getPosition())
+        local lx, ly = obj.body:getLocalPoint(wx, wy)
+        local vx, vy = lx + state.polyEdit.centroid.x, ly + state.polyEdit.centroid.y
+        local changed
+        if key == 'i' then
+            changed = track.insertPoint(obj, state.polyEdit.tempVerts, vx, vy)
+        else
+            changed = track.removePoint(obj, state.polyEdit.tempVerts, vx, vy, 40 / cam:getScale())
+        end
+        if changed then polyEdit.maybeUpdateCustomPolygonVertices() end
+        return
+    end
     if (key == 'i' or key == 'd') and state.polyEdit.tempVerts then
         local wx, wy = cam:getWorldCoordinates(love.mouse.getPosition())
         local ribbon = state.selection.selectedObj and state.selection.selectedObj.shapeType == ST.RIBBON

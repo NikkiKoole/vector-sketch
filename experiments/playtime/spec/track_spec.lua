@@ -151,6 +151,53 @@ describe('track', function()
         assert.are.equal(track.BACK, track.layout(thing).lane[c.e1])
     end)
 
+    it('bends around a dragged point: neighbours follow, less further along, none past the reach', function()
+        local verts = {}
+        for i = 0, 40 do verts[#verts + 1] = i * 20; verts[#verts + 1] = 0 end -- 41 points, 20 apart
+        local i = 21 -- the middle, at x 400
+        verts[i * 2] = verts[i * 2] - 100 -- dragged up 100
+        track.dragNeighbours(verts, i, 0, -100, false, 160)
+        assert.is_near(-100 * 0.5 * (1 + math.cos(math.pi * 20 / 160)), verts[22 * 2], 1e-6)
+        assert.is_true(verts[22 * 2] < verts[24 * 2] and verts[24 * 2] < 0, 'less further along')
+        assert.is_near(verts[22 * 2], verts[20 * 2], 1e-6) -- the same both ways
+        assert.are.equal(0, verts[30 * 2]) -- 180 along: past the reach
+        assert.are.equal(0, verts[1 * 2])
+    end)
+
+    it('inserts and removes points with the painted zones kept in step', function()
+        local thing = makeTrack({ { 0, 0 }, { 400, 0 } })
+        thing.track.marks = '..ll' -- points 3 and 4 lift
+        local verts = {}
+        for k = 1, #thing.vertices do verts[k] = thing.vertices[k] end
+        local n = #verts / 2
+        -- a point between 1 and 2: the marks move up by one, the new point takes point 1's zone
+        assert.is_true(track.insertPoint(thing, verts, (verts[1] + verts[3]) / 2, verts[2] + 3))
+        assert.are.equal(n + 1, #verts / 2)
+        assert.are.equal('...ll', thing.track.marks)
+        -- point 4 (was 3) gone
+        assert.is_true(track.removePoint(thing, verts, verts[7], verts[8], 5))
+        assert.are.equal('...l', thing.track.marks)
+        assert.is_false(track.removePoint(thing, verts, verts[7] + 500, verts[8], 5)) -- nothing near
+        -- an open track has no edge from its end to its start: a point near that gap goes on a real edge
+        assert.is_true(track.insertPoint(thing, verts, verts[1] - 30, verts[2]))
+        assert.are.equal(verts[1], verts[1]) -- (still a list of numbers)
+    end)
+
+    it('closes into a loop with a bridge back to the start, and opens again', function()
+        local thing = makeTrack({ { 0, 0 }, { 600, 0 }, { 600, -400 } }) -- an L: its ends ~720 apart
+        local n = track.layout(thing).n
+        local verts = track.setClosed(thing, true)
+        assert.is_true(#verts / 2 > n + 30, 'bridged with points')
+        local again = objectManager.recreateThingFromBody(thing.body, { optionalVertices = verts })
+        local layout = track.layout(again)
+        assert.is_true(layout.closed)
+        assert.are.equal(layout.n, again.body:getFixtures()[1]:getShape():getChildCount()) -- a loop
+        -- open: the same points, the chain open again
+        local opened = objectManager.recreateThingFromBody(again.body, { optionalVertices = track.setClosed(again, false) })
+        assert.is_false(track.layout(opened).closed)
+        assert.are.equal(track.layout(opened).n - 1, opened.body:getFixtures()[1]:getShape():getChildCount())
+    end)
+
     it('paints the stretch drawn with a key held: the zone lands at the same share of the way along', function()
         local flat = stroke({ { 0, 0 }, { 900, 0 } })
         local brushes = {}

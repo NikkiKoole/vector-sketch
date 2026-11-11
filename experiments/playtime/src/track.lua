@@ -740,6 +740,123 @@ function lib.nearestArc(layout, lx, ly)
     return bestS, math.sqrt(bestD)
 end
 
+---------------------------------------------------------------- editing the points (the inspector's 'verts unlocked')
+-- `verts` is the edited copy of thing.vertices (state.polyEdit.tempVerts, the same space); the body is
+-- made again from it when the drag ends (src/poly-edit.lua maybeUpdateCustomPolygonVertices).
+
+lib.DRAG_REACH = 160 -- dragging a point moves its neighbours this far along the track, less with distance
+
+-- point i's neighbours follow its move (dx, dy, already applied to i), eased off by distance along the line
+-- (measured where the points were before the move)
+function lib.dragNeighbours(verts, i, dx, dy, closed, reach)
+    reach = reach or lib.DRAG_REACH
+    local n = #verts / 2
+    local function at(k) -- where point k was before this move
+        if k == i then return verts[k * 2 - 1] - dx, verts[k * 2] - dy end
+        return verts[k * 2 - 1], verts[k * 2]
+    end
+    for _, step in ipairs({ 1, -1 }) do
+        local moves, prev, along = {}, i, 0
+        for _ = 1, n - 1 do
+            local j = prev + step
+            if closed then
+                j = (j - 1) % n + 1
+            elseif j < 1 or j > n then
+                break
+            end
+            if j == i then break end
+            local px, py = at(prev)
+            local jx, jy = at(j)
+            along = along + math.sqrt((jx - px) ^ 2 + (jy - py) ^ 2)
+            if along >= reach then break end
+            moves[#moves + 1] = { j, 0.5 * (1 + math.cos(math.pi * along / reach)) }
+            prev = j
+        end
+        for _, m in ipairs(moves) do
+            verts[m[1] * 2 - 1] = verts[m[1] * 2 - 1] + dx * m[2]
+            verts[m[1] * 2] = verts[m[1] * 2] + dy * m[2]
+        end
+    end
+end
+
+-- the painted marks follow an inserted (+1) or removed (-1) point at i
+local function shiftMarks(thing, i, change)
+    local marks = thing.track and thing.track.marks
+    if not marks or i > #marks + 1 then return end
+    if change > 0 then
+        local copy = marks:sub(i - 1, i - 1) -- a new point takes the zone of the one before it
+        marks = marks:sub(1, i - 1) .. ((copy ~= '') and copy or '.') .. marks:sub(i)
+    else
+        marks = marks:sub(1, i - 1) .. marks:sub(i + 1)
+    end
+    marks = marks:gsub('%.+$', '')
+    thing.track.marks = (marks ~= '') and marks or nil
+end
+
+-- the point of verts nearest x, y (verts' space) and how far
+local function nearestPoint(verts, x, y)
+    local best, bestD = nil, math.huge
+    for i = 1, #verts / 2 do
+        local d = (verts[i * 2 - 1] - x) ^ 2 + (verts[i * 2] - y) ^ 2
+        if d < bestD then best, bestD = i, d end
+    end
+    return best, math.sqrt(bestD)
+end
+
+-- a point on the edge nearest x, y (an open track has no edge from its end back to its start); true if made
+function lib.insertPoint(thing, verts, x, y)
+    local n = #verts / 2
+    local closed = thing.track and thing.track.closed
+    local edges = closed and n or n - 1
+    local bestE, bestD, bestX, bestY = nil, math.huge, 0, 0
+    for e = 1, edges do
+        local j = e % n + 1
+        local ax, ay, bx, by = verts[e * 2 - 1], verts[e * 2], verts[j * 2 - 1], verts[j * 2]
+        local dx, dy = bx - ax, by - ay
+        local len2 = dx * dx + dy * dy
+        local t = len2 > 0 and math.max(0, math.min(1, ((x - ax) * dx + (y - ay) * dy) / len2)) or 0
+        local px, py = ax + dx * t, ay + dy * t
+        local d = (px - x) ^ 2 + (py - y) ^ 2
+        if d < bestD then bestE, bestD, bestX, bestY = e, d, px, py end
+    end
+    if not bestE then return false end
+    table.insert(verts, bestE * 2 + 1, bestX)
+    table.insert(verts, bestE * 2 + 2, bestY)
+    shiftMarks(thing, bestE + 1, 1)
+    return true
+end
+
+-- remove the point nearest x, y if it's within maxDist (a track keeps at least 3); true if removed
+function lib.removePoint(thing, verts, x, y, maxDist)
+    if #verts / 2 <= 3 then return false end
+    local i, d = nearestPoint(verts, x, y)
+    if not i or d > maxDist then return false end
+    table.remove(verts, i * 2)
+    table.remove(verts, i * 2 - 1)
+    shiftMarks(thing, i, -1)
+    return true
+end
+
+-- close a track into a loop (a bridge of points from its end back to its start) or open it; the new
+-- points, for the body to be made again from
+function lib.setClosed(thing, closed)
+    thing.track = thing.track or {}
+    local verts = {}
+    for i = 1, #thing.vertices do verts[i] = thing.vertices[i] end
+    if closed then
+        local n = #verts / 2
+        local ax, ay, bx, by = verts[n * 2 - 1], verts[n * 2], verts[1], verts[2]
+        local gap = math.sqrt((bx - ax) ^ 2 + (by - ay) ^ 2)
+        local steps = math.floor(gap / lib.SPACING)
+        for k = 1, steps - 1 do
+            verts[#verts + 1] = ax + (bx - ax) * k / steps
+            verts[#verts + 1] = ay + (by - ay) * k / steps
+        end
+    end
+    thing.track.closed = closed
+    return verts
+end
+
 ---------------------------------------------------------------- crossings in the editor (COASTER CO2)
 
 lib.MARKER_PX = 13 -- a crossing's marker, in screen pixels (clicking within it swaps over and under)

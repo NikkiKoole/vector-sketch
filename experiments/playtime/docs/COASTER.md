@@ -115,6 +115,13 @@ the course before writing the file (the bridge's eval stopped at its instruction
   keys; the stroke shows the painted pieces thick in their colour, and after smoothing and resampling
   each point takes the zone at the same share of the way along. The coaster scene's follow key moved
   from f to v.
+- [x] **Editing a track after drawing it** (2026-11-11, Nikki: "we need a way to add, remove, move points
+  after the fact? also to connect the loop"). With 'verts unlocked': dragging a point bends the track
+  around it (neighbours follow over 160 along it, eased off, measured where they were); `i` puts a point
+  on the nearest edge, `d` takes away the nearest one, and the painted zones move with them (the polygon
+  versions looked at an edge from the end back to the start, which an open track doesn't have). The
+  inspector's 'close the loop' bridges the end back to the start with points and makes the chain a loop;
+  'open the loop' opens it. Not yet tried by hand.
 - [ ] **CO5. Riders**: Mipos seated in the cart (TRACKS TR4's pivot servo is a start).
 - [ ] **CO6. Nikki plays with it**; then supports to the ground, the hand-drawn look, sounds
   (achtbaan's clacks and the crowd, dreamengine's `coaster` cart).
