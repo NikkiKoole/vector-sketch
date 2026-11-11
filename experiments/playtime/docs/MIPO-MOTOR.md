@@ -49,4 +49,13 @@ spread over every part by mass (`pushAll`: no different from all on the torso).
   turn-step (or a hop round) may read better.
 - [ ] **MM5. Steps and slopes.** Only flat floors so far; a step up wants a higher swing or a hop.
 - [ ] **MM6. Goals instead of directions**: walk to a point / a Mipo / a door (DOORS, worlds).
+- [ ] **MM8. A weighty walk** (Nikki 2026-11-12: "more weighty, as in animation, that i feel the
+  weight shifting and that it's a nice walk cycle"). Built 2026-11-12 (`lib.weighty`, the weight
+  panel): the standing knee gives after contact (`give`), the push surges at push-off (`pulse`), the
+  arms swing against the legs (`armSwing`, on mipoActions' arm hang: soft, so they lag a little).
+  Measured (torso height averaged by where it is in the step, 6 Mipos): the bob in time with the
+  steps is ~3% of a leg, lost in an irregular bounce of ~25%; the knee give and pulse didn't make it
+  more rhythmic. A gripping standing foot (`stanceGrip` 2) with a gentle push (`driveAccel` 1) is
+  the calmest (71% of the bounce in step, tilt 10 against 15) but a third slower; the legs alone
+  hardly move it (0.7 against 3.6 legs). Next: firmer, keyed leg poses while walking, or the bob drawn.
 - [ ] **MM7. On the phone** (`./playtime.sh bench device`): a few Mipos wandering.

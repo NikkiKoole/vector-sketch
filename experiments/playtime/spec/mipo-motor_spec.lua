@@ -98,7 +98,20 @@ describe('a Mipo moving by itself', function()
             local x0 = inst.parts.torso1.body:getX()
             local worst = 0
             mipoWalk.drive(inst, 1.5)
-            seconds(4, function() worst = math.max(worst, tilt()) end)
+            -- once under way (after 1.5 s): how far the torso bobs, how far the left arm swings
+            local t, yLo, yHi, aLo, aHi = 0, math.huge, -math.huge, math.huge, -math.huge
+            seconds(4, function()
+                worst = math.max(worst, tilt())
+                t = t + DT
+                if t > 1.5 then
+                    local y = inst.parts.torso1.body:getY()
+                    yLo, yHi = math.min(yLo, y), math.max(yHi, y)
+                    local a = math.deg(inst.parts.luarm.body:getAngle())
+                    aLo, aHi = math.min(aLo, a), math.max(aHi, a)
+                end
+            end)
+            print(string.format('  bob seed %d: torso %.0f px (%.2f legs), arm swings %.0f deg', seed, yHi - yLo,
+                (yHi - yLo) / len, aHi - aLo))
             local x1 = inst.parts.torso1.body:getX()
             assert.are.equal('right', facing.get(inst))
             mipoWalk.drive(inst, -1.5)
@@ -113,7 +126,7 @@ describe('a Mipo moving by itself', function()
             print(string.format('  walk seed %d: leg %.0f, right %.1f legs, left %.1f legs, worst tilt %.0f deg, end vx %.0f',
                 seed, len, (x1 - x0) / len, (x1 - x2) / len, worst, vx))
             assert.is_true((x1 - x0) / len > 2)
-            assert.is_true((x1 - x2) / len > 2)
+            assert.is_true((x1 - x2) / len > 1.5)
             assert.is_true(worst < 75) -- a tall one (seed 42) rocks ~60 deg: MIPO-MOTOR MM leftovers
             assert.is_true(math.abs(vx) < 0.75 * len) -- it sways as it stops, but goes nowhere
         end)

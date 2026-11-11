@@ -231,7 +231,8 @@ function s.drawUI()
         x, y = ui.nextLayoutPosition(layout, bw, BH)
         if ui.button(x, y, bw, 'gait: ' .. c.gait .. ' (g)') then c.gait = c.gait == 'walk' and 'hop' or 'walk' end
         x, y = ui.nextLayoutPosition(layout, bw, BH)
-        if ui.button(x, y, bw, 'wander by themselves: ' .. (c.wander and 'on' or 'off') .. ' (w)') then toggleWander() end
+        local wanderLabel = 'wander by themselves: ' .. (c.wander and 'on' or 'off') .. ' (w)'
+        if ui.button(x, y, bw, wanderLabel) then toggleWander() end
         x, y = ui.nextLayoutPosition(layout, bw, BH)
         if ui.button(x, y, half, 'new Mipos (r)') then newMipos() c.hold = true end
         if ui.button(x + half + pad, y, half, 'one more (n)') then addMipo((love.math.random() - 0.5) * 2000) end
@@ -254,6 +255,28 @@ function s.drawUI()
         end
         v = slider(layout, bw, 'upright', 'torso muscle', 0, 60, walk.upright, 5)
         if v then walk.upright = v end
+    end)
+    -- the weighty walk (MIPO-MOTOR MM8), on the right
+    local sw = love.graphics.getDimensions()
+    local rows2 = 6
+    local h2 = BH * rows2 + pad * (rows2 + 1) + 24
+    local x1, y1 = sw - w - 90, sh - h2 - 20 -- room for the labels past the sliders
+    ui.panel(x1, y1, w, h2, '•• weight ••', function()
+        local layout = ui.createLayout({ type = 'columns', spacing = pad,
+            startX = x1 + pad, startY = y1 + pad + 24 })
+        local bw = w - 12
+        local x, y = ui.nextLayoutPosition(layout, bw, BH)
+        if ui.button(x, y, bw, 'weighty walk: ' .. (walk.weighty and 'on' or 'off')) then
+            walk.weighty = not walk.weighty
+        end
+        local v = slider(layout, bw, 'give', 'knee give (deg)', 0, 60, walk.give, 1)
+        if v then walk.give = v end
+        v = slider(layout, bw, 'pulse', 'push pulse', 0, 2, walk.pulse, 0.05)
+        if v then walk.pulse = v end
+        v = slider(layout, bw, 'armSwing', 'arm swing (deg)', 0, 70, walk.armSwing, 1)
+        if v then walk.armSwing = v end
+        v = slider(layout, bw, 'stanceGrip', 'foot grip', 0, 3, walk.stanceGrip, 0.1)
+        if v then walk.stanceGrip = v end
     end)
 end
 

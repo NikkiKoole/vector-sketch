@@ -596,6 +596,8 @@ local function poseArms(instance)
             end
             if lib.armHang then
                 local hang = math.rad(lib.armHangAngle) * (side == 'l' and 1 or -1)
+                -- swinging while it walks by itself (src/mipo-walk.lua, MIPO-MOTOR MM8)
+                if instance._armSwing then hang = hang + (instance._armSwing[side] or 0) end
                 steerArm(instance, side, hang, lib.armHangKp, lib.armHangKd, lib.armHangMaxAlpha)
             end
         end

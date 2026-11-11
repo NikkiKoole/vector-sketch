@@ -67,6 +67,14 @@ local SWITCHES = {
     upright = 0,       -- a torso muscle while it goes by itself (KEEP_ANGLE kp; tried 20: rocked more)
     walkLean = 6,      -- degrees the torso muscle leans it the way it goes
     hopCrouch = 0.1,   -- seconds crouched before a hop
+    -- a weighty walk (MIPO-MOTOR MM8), walking by itself only: the standing knee gives just after
+    -- contact and straightens to push off (the body bobs: contact, down, passing, up), the feet push
+    -- in pulses at push-off, the arms swing against the legs
+    weighty = true,
+    give = 22,         -- degrees the standing knee bends at the down pose
+    pulse = 0.6,       -- how much the push surges at push-off and eases between (0: an even push)
+    armSwing = 25,     -- degrees each arm swings, with the other side's leg
+    stanceGrip = 0.5,  -- the standing foot's grip walking by itself (gripping, the legs move it, not the push)
     hopRest = 0.12,    -- seconds on the ground between hops
 }
 for k, v in pairs(SWITCHES) do lib[k] = v end
@@ -626,6 +634,7 @@ end
 -- standing again: legs straight, feet back on their ankles, hips as the facing set them, full grip
 local function stopWalking(inst)
     uprightTorso(inst, nil)
+    inst._armSwing = nil
     if not inst._walking then return end
     inst._walking = false
     setLegTargets(inst, 0, 0)
@@ -643,18 +652,29 @@ end
 
 -- the legs' step: thighs swing in turn, the knee bends on the swing forward. speed: world units a
 -- second; face: 1 right, -1 left; side: it faces a side (feet held flat)
-local function stepLegs(inst, dt, speed, face, side, legLen)
+local TWO_PI = 2 * math.pi
+
+-- weighty (lib.weighty, walking by itself): returns how much a foot is pushing off now (0..1)
+local function stepLegs(inst, dt, speed, face, side, legLen, weighty)
     -- one step (half a cycle) covers a stride; faster than MAX_STEPS, the strides grow
     local stride = math.max(2 * legLen * math.sin(math.rad(STRIDE)), speed / MAX_STEPS)
     local swing = math.min(MAX_STRIDE, math.deg(math.asin(math.min(1, stride / (2 * legLen)))))
     inst._gait = (inst._gait or 0) + speed * dt / stride * math.pi
-    local swinging = {}
+    local swinging, forward, pushOff = {}, {}, 0
     for i, leg in ipairs(LEG_PAIRS) do
         local phase = inst._gait + (i - 1) * math.pi
         swinging[i] = math.cos(phase) > 0
-        setGrip(inst, FEET[i], swinging[i] and SWING_GRIP or STANCE_GRIP)
+        forward[i] = math.sin(phase)
+        setGrip(inst, FEET[i], swinging[i] and SWING_GRIP or (weighty and lib.stanceGrip or STANCE_GRIP))
         local thigh = -face * math.sin(phase) * swing              -- forward is the way it faces
         local shin = thigh + face * math.max(0, math.cos(phase)) * KNEE -- bent on the way forward
+        if weighty and not swinging[i] then
+            -- through the stance (u 0: contact, thigh forward .. 1: push-off, thigh back): the knee
+            -- gives to the down pose (u 0.25), straight again by passing (0.5), the up pose
+            local u = ((phase - math.pi / 2) % TWO_PI) / math.pi
+            if u < 0.5 then shin = shin + face * lib.give * math.sin(math.pi * u / 0.5) end
+            if u > 0.6 then pushOff = math.max(pushOff, math.sin(math.pi * math.min(1, (u - 0.6) / 0.4))) end
+        end
         local upper = mipoActions.ensureKeepAngle(inst.parts[leg[1]], 0, 40)
         local lower = mipoActions.ensureKeepAngle(inst.parts[leg[2]], 0, 40)
         if upper then upper.angle, upper.enabled = thigh, nil end
@@ -662,6 +682,15 @@ local function stepLegs(inst, dt, speed, face, side, legLen)
     end
     if side then holdFeet(inst, face, swinging) else holdFeet(inst, nil) end
     hipsBack(inst, side and face or nil)
+    -- the arms against the legs: the left arm forward with the right leg (mipoActions' arm hang, world
+    -- angles, + toward the screen's left)
+    if weighty and lib.armSwing > 0 then
+        local a = math.rad(lib.armSwing)
+        inst._armSwing = { l = -face * a * forward[2], r = -face * a * forward[1] }
+    else
+        inst._armSwing = nil
+    end
+    return pushOff
 end
 
 -- both legs the same (degrees): the thigh forward of straight down, the knee bent back
@@ -670,10 +699,10 @@ local function legsTo(inst, face, forward, knee)
     setLegTargets(inst, thigh, thigh + face * knee)
 end
 
--- the feet push the torso toward target (world units a second), at most lib.driveAccel
-local function push(inst, torso, target, legLen, dt)
+-- the feet push the torso toward target (world units a second), at most lib.driveAccel (times boost)
+local function push(inst, torso, target, legLen, dt, boost)
     local vx = torso:getLinearVelocity()
-    local most = lib.driveAccel * legLen * dt
+    local most = lib.driveAccel * legLen * dt * (boost or 1)
     local dv = math.max(-most, math.min(most, target - vx))
     if lib.pushAll then
         for _, part in pairs(inst.parts) do
@@ -732,9 +761,10 @@ local function updateDrive(inst, dt, now, torso, legLen)
     local grounded = mipoActions.isGrounded(inst)
     inst._walking, inst._walkedAt = true, now
     uprightTorso(inst, face)
+    inst._armSwing = nil
     if inst._jumpAt then return end -- crouching for a jump: the legs are the jump's
-    if grounded then push(inst, torso, target, legLen, dt) end
     if inst._driveMode == 'hop' then
+        if grounded then push(inst, torso, target, legLen, dt) end
         holdFeet(inst, faceDir ~= 0 and face or nil, {})
         hipsBack(inst, faceDir ~= 0 and face or nil)
         updateHop(inst, now, torso, legLen, face, grounded, target)
@@ -748,7 +778,16 @@ local function updateDrive(inst, dt, now, torso, legLen)
     local vx = torso:getLinearVelocity()
     if inst._stepsLeft and faceDir ~= dir then inst._gaitFrom = nil end -- steps count once it faces its way
     if inst._stepsLeft then inst._gaitFrom = inst._gaitFrom or (inst._gait or 0) end
-    stepLegs(inst, dt, math.max(math.abs(target) * 0.6, vx * dir), face, faceDir ~= 0, legLen)
+    local pushOff = stepLegs(inst, dt, math.max(math.abs(target) * 0.6, vx * dir), face, faceDir ~= 0, legLen,
+        lib.weighty)
+    if grounded then
+        if lib.weighty and lib.pulse > 0 then
+            -- surging at push-off, easing between (a foot pushes off about a quarter of the time)
+            push(inst, torso, target * (1 + lib.pulse * (pushOff - 0.25)), legLen, dt, 1 + 2 * lib.pulse * pushOff)
+        else
+            push(inst, torso, target, legLen, dt)
+        end
+    end
     if inst._stepsLeft and inst._gaitFrom and inst._gait - inst._gaitFrom >= inst._stepsLeft * math.pi then
         lib.drive(inst, nil)
     end
