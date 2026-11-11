@@ -457,7 +457,15 @@ local function computeLayout(thing)
     L.lane = assignLanes(L, wants)
     L.depth = easeDepth(L, L.lane, L.changes)
     L.mask = edgeMasks(L, L.crossings, L.lane)
-    L.zone = zonesOf(L, track.marks)
+    return L
+end
+
+-- the layout with its painted zones: the base shared (painting doesn't search the crossings again, which
+-- is every edge against every edge), a table of its own so the meshes are made again
+local function withZones(base, marks)
+    local L = setmetatable({}, { __index = base })
+    for k, v in pairs(base) do L[k] = v end
+    L.zone = zonesOf(L, marks)
     L.rolls = rollRuns(L)
     return L
 end
@@ -477,12 +485,12 @@ function lib.layout(thing)
     local fk = flipsKey(thing.track)
     local closed = thing.track and thing.track.closed or false
     local marks = thing.track and thing.track.marks or ''
-    if cached and cached.vertices == thing.vertices and cached.flips == fk and cached.closed == closed
-        and cached.marks == marks then
-        return cached.layout
-    end
-    local layout = computeLayout(thing)
-    layoutCache[thing] = { vertices = thing.vertices, flips = fk, closed = closed, marks = marks, layout = layout }
+    local sameBase = cached and cached.vertices == thing.vertices and cached.flips == fk and cached.closed == closed
+    if sameBase and cached.marks == marks then return cached.layout end
+    local base = sameBase and cached.base or computeLayout(thing)
+    local layout = withZones(base, marks)
+    layoutCache[thing] = { vertices = thing.vertices, flips = fk, closed = closed, marks = marks, base = base,
+        layout = layout }
     return layout
 end
 

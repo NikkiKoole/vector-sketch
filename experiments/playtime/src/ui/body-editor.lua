@@ -211,6 +211,7 @@ function lib.drawUpdateSelectedObjectUI(panelX, panelY, panelWidth, panelH)
                 nextRow()
 
                 if polygonTools() then nextRow() end
+                if body:isDestroyed() then return end -- a track closed / opened: made again, drawn next frame
 
                 if not body:isDestroyed() then
                     local attachedJoints = body:getJoints()
