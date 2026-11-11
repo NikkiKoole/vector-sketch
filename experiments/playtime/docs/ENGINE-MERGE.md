@@ -16,6 +16,12 @@ A spike is merged when it works **without its scene script**, as one of:
   in the scene panel.
 What's neither (the soapbox ride, the burrow) stays a scene, a shorter one, built from the merged parts.
 
+## The flow (Nikki 2026-11-11: "the flow where we add spikes and spikes and then fold everything in after proven")
+
+A spike is where an idea is tried; the engine gets it only once it's proven. So every spike plan ends
+with a **"Nikki plays with it: keep, change or park"** step, and a kept spike gets a step here. A spike
+nobody judged stays open on the board; that's the step to do before starting the next one.
+
 ## The themes
 
 | Theme | Spikes | In the engine as |
@@ -171,6 +177,14 @@ The landing order, what bites what, and Nikki's keep / spike choices of 2026-11-
   scenes snapshot renders a scene's saved bodies without its script, so it doesn't check script-drawn
   things (clouds and wild hash the same, empty); and facing, light-grass-check, mipo-materials vary
   between takes.
+- [ ] **EM8. Depth layers**: back / play / front for every body (what it collides with, where it's
+  drawn), one-way tops on back parts, the Mipos' lanes; from the `depth` spike (DEPTH-LAYERS.md, Nikki
+  2026-11-04: "a good experiment"). Fabuland's door blocks, the plank boat's far side, the treehouse and
+  stacked rooms (DOLL-PLAY R5) all wait on it; boat2 and planks drop their by-hand layers. Decide
+  DEPTH-LAYERS' open questions first (dragging back parts in play mode, toys in front of back parts,
+  categories or a contact filter). The pieces already in `src/`: `state.drawSplits`,
+  `state.passableBodies`, `instance.lane`. Added 2026-11-11 (Nikki: "i want to hear what we have thought
+  about multilayer depth stuff").
 - [x] **EM6. The 7 trial breeds** in spikes/breeds into `src/mipo-breeds.lua` with palettes
   (MIPO-BREEDS B2-B4; that plan owns it, listed here so the spike's copy goes). Done 2026-11-09:
   the spike's table and `randomizeAs` are gone, it reads `mipoBreeds` (in the script env).
