@@ -19,6 +19,9 @@ lib.faceTurn = math.rad(30)
 -- The ear at the back of the head (the one that comes over it) turns less: at the full turn it
 -- sat too far toward the face (Nikki 2026-11-05). 0 = it stays on the head's edge.
 lib.backEarTurn = math.rad(8)
+-- The nose sticks out in front of the face (NOSE-DEPTH N1, 2026-11-11): it turns on a cylinder this much
+-- wider than the head, so on a turn it moves further than the eyes and comes over the near cheek.
+lib.noseOut = 1.35
 -- Idle gaze facing a side: the spot it looks around is this far ahead of the head.
 lib.gazeAhead = 600
 
@@ -139,7 +142,8 @@ function lib.applyFace(instance)
         end
         if e and e.ox and (angle ~= 0 or e.baseOx) then
             if not e.baseOx then e.baseOx, e.baseW, e.baseEyeW = e.ox, e.w, e.eyeW end
-            local ox, width = lib.turnX(instance, e.baseOx, cx, r, angle)
+            local radius = ud.label == 'nose' and r * lib.noseOut or r -- the nose stands out (N1)
+            local ox, width = lib.turnX(instance, e.baseOx, cx, radius, angle)
             if e.mouthCurve and e.curvePoints then
                 e.mouthX = ox
                 local base = e.baseCurve or bases[e.curvePoints]

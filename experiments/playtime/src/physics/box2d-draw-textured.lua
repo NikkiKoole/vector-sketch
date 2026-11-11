@@ -1148,20 +1148,38 @@ local function noseLit(extra)
     return lit
 end
 local NOSE_SHADOW = 0.12 -- of the nose's size, away from the light
+-- The nose sticking out (NOSE-DEPTH N2, N3, 2026-11-11): its shadow on the face, away from the light, with a
+-- soft edge (layers a little bigger each, fainter: a penumbra) instead of one hard copy; and under it a soft
+-- dark ring where it meets the face (layers round it, a touch low), so it sits in the face. lib.noseShadow
+-- and lib.noseRing: how dark (0 = off); state.noseFlat: the nose as drawn, none of this.
+lib.noseShadow, lib.noseRing = 0.22, 0.14
+-- each layer: how much bigger on every side (of the nose's narrow side, so a long thin nose's grows as much
+-- across as along), its share of the darkness
+local SHADOW_LAYERS = { { 0, 0.45 }, { 0.12, 0.33 }, { 0.25, 0.22 } }
+local RING_LAYERS = { { 0.15, 0.5 }, { 0.3, 0.32 }, { 0.45, 0.18 } }
 local function drawNoseShadow(body, img, ox, oy, dw, dh, mirrorX, rot)
     local count, dirs = shaders.gatherLightsForBody(body)
     local lx, ly = -0.7, -0.7 -- the shaders' own light without the scene's: from the upper left
     if count > 0 and dirs[1] then lx, ly = dirs[1][1], dirs[1][2] end
     local len = math.sqrt(lx * lx + ly * ly)
     if len < 1e-6 then return end
-    local size = math.max(dw, dh) * NOSE_SHADOW
-    local sx, sy = ox - lx / len * size, oy - ly / len * size
-    local wx, wy = body:getWorldPoint(sx, sy)
+    local size, narrow = math.max(dw, dh), math.min(dw, dh)
     local imgw, imgh = img:getDimensions()
+    local angle = body:getAngle() + (rot or 0)
     local r, g, b, a = love.graphics.getColor()
-    love.graphics.setColor(0, 0, 0, 0.22 * a)
-    love.graphics.draw(img, wx, wy, body:getAngle() + (rot or 0), dw / imgw * mirrorX * 1.05, dh / imgh * 1.05,
-        imgw / 2, imgh / 2)
+    local function layers(list, x, y, darkness)
+        if darkness <= 0 then return end
+        local wx, wy = body:getWorldPoint(x, y)
+        for _, layer in ipairs(list) do
+            local grow = narrow * layer[1] * 2
+            love.graphics.setColor(0, 0, 0, darkness * layer[2] * a)
+            love.graphics.draw(img, wx, wy, angle, (dw + grow) / imgw * mirrorX, (dh + grow) / imgh,
+                imgw / 2, imgh / 2)
+        end
+    end
+    layers(RING_LAYERS, ox, oy + narrow * 0.1, lib.noseRing) -- where it meets the face, a touch low
+    local away = size * NOSE_SHADOW
+    layers(SHADOW_LAYERS, ox - lx / len * away, oy - ly / len * away, lib.noseShadow) -- its shadow
     love.graphics.setColor(r, g, b, a)
 end
 
