@@ -136,6 +136,61 @@ local function hourLight()
     return h[1], h[2], h[3]
 end
 
+-- a soft disc, opaque in the middle, nothing at its rim (radius 1)
+local disc
+local function glowDisc()
+    if disc then return disc end
+    local verts = { { 0, 0, 0.5, 0.5, 1, 1, 1, 1 } }
+    for i = 0, 40 do
+        local a = i / 40 * math.pi * 2
+        verts[#verts + 1] = { math.cos(a), math.sin(a), 0.5, 0.5, 1, 1, 1, 0 }
+    end
+    disc = love.graphics.newMesh(verts, 'fan', 'static')
+    return disc
+end
+
+-- The point lights' pools on the walls (a campfire, a lamp: the shaders light the things, not the
+-- walls): a soft patch in the light's colour, as strong as the light and as wide as its reach, added
+-- on and only on the walls; fainter by day (how dark the hour is). Nikki 2026-11-11, the campfire.
+local POOL = 0.16 -- how much a light of intensity 1 adds where it's brightest
+local function drawPools(lr, lg, lb)
+    local lights = registry.sfixturesOf(subtypes.LIGHT)
+    if #lights == 0 then return end
+    local dark = 1 - (lr + lg + lb) / 3 -- 0 by day (white light) .. ~0.8 at night
+    if state.hourLight == nil then dark = 0.5 end -- no sky: as at dusk
+    local any = false
+    for _, fixture in ipairs(lights) do
+        local extra = not fixture:isDestroyed() and fixture:getUserData().extra
+        if extra and extra.lightType == 'point' and (extra.intensity or 0) > 0 then any = true break end
+    end
+    if not any then return end
+    love.graphics.stencil(function()
+        for _, wall in ipairs(lib.list()) do
+            local tris = trisOf(wall.thing.vertices)
+            love.graphics.push()
+            love.graphics.translate(wall.body:getX(), wall.body:getY())
+            love.graphics.rotate(wall.body:getAngle())
+            for _, tri in ipairs(tris) do love.graphics.polygon('fill', tri) end
+            love.graphics.pop()
+        end
+    end, 'replace', 1)
+    love.graphics.setStencilTest('greater', 0)
+    love.graphics.setBlendMode('add')
+    for _, fixture in ipairs(lights) do
+        local extra = not fixture:isDestroyed() and fixture:getUserData().extra
+        if extra and extra.lightType == 'point' and (extra.intensity or 0) > 0 then
+            local r, g, b = color.hexToColor(extra.colorHex or 'ffffffff')
+            local amount = math.min(1, extra.intensity * POOL * (0.4 + dark))
+            local reach = (extra.range or 500) * 0.9
+            local x, y = fixture:getBody():getPosition()
+            love.graphics.setColor(r * amount, g * amount, b * amount, 1)
+            love.graphics.draw(glowDisc(), x, y, 0, reach, reach)
+        end
+    end
+    love.graphics.setBlendMode('alpha')
+    love.graphics.setStencilTest()
+end
+
 -- behind everything (src/systems.lua drawBelow)
 function lib.drawBelow()
     if not state.world.showTextures then return end
@@ -148,6 +203,7 @@ function lib.drawBelow()
             love.graphics.draw(mesh, wall.body:getX(), wall.body:getY(), wall.body:getAngle())
         end
     end
+    drawPools(lr, lg, lb)
     love.graphics.setColor(1, 1, 1, 1)
 end
 

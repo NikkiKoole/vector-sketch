@@ -800,8 +800,11 @@ local function refreshFrameLights(list)
         end
     end
     -- a scene without lights of its own: the light level's (src/scene-light.lua: state.sceneDefaultLights,
-    -- { toLight = { x, y } (world), colorHex, groundHex, intensity, lightType }), else the shader's own
-    if count == 0 and not skipped and state.sceneDefaultLights then
+    -- { toLight = { x, y } (world), colorHex, groundHex, intensity, lightType }), else the shader's own.
+    -- A sky's hour lights (src/sky-light.lua, withSceneLights) stay on beside the scene's own lamps: a
+    -- campfire at night still has the moon and the sky light round it
+    local defaults = state.sceneDefaultLights
+    if defaults and ((count == 0 and not skipped) or defaults.withSceneLights) then
         for _, d in ipairs(state.sceneDefaultLights) do
             if count >= SCENE_LIGHTS then break end
             count = count + 1

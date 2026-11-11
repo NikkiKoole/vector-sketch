@@ -1,0 +1,8 @@
+{
+  "camera": { "scale": 0.3, "rotation": 0, "x": 0, "y": 520 },
+  "bodies": [],
+  "joints": [],
+  "version": 2,
+  "sky": { "hour": 22, "dayLength": 120, "horizon": 900 },
+  "light": { "level": "full", "partShadow": 0.6 }
+}

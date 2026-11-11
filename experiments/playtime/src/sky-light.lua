@@ -140,6 +140,7 @@ end
 -- the default lights a sky scene's level starts with (filled by lib.fill): sun, moon, sky light, back light
 function lib.newLights()
     return {
+        withSceneLights = true, -- on beside the scene's own lamps (src/render/shaders.lua)
         { lightType = 'directional', toLight = { 0, -1 }, colorHex = 'fff2d9ff', intensity = 0 },
         { lightType = 'directional', toLight = { 0, -1 }, colorHex = 'a8c0ffff', intensity = 0 },
         { lightType = 'sky', toLight = { 0, -1 }, colorHex = '9cc8ffff', groundHex = '8a7a50ff', intensity = 0 },
