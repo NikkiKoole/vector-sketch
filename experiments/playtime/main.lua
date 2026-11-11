@@ -385,6 +385,7 @@ function love.draw()
         contactShadows.beforeTextured(state.physicsWorld) -- on what things stand on (src/contact-shadows.lua)
         box2dDrawTextured.drawTexturedWorld(state.physicsWorld)
         contactShadows.afterTextured()
+        require('src.part-shadows').draw(state.physicsWorld) -- parts on the parts behind them (LS20)
         projectedShadows.drawOnThings(state.physicsWorld) -- on things further back (src/projected-shadows.lua)
     end
     prof.pop('drawtexturedworld')

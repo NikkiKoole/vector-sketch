@@ -299,12 +299,7 @@
   },
   "light": {
     "wallBehind": 280,
-    "mipo": {
-      "swing": 0.35,
-      "clay": true,
-      "front": 0.75,
-      "round": 0.3
-    },
+    "partShadow": 0.6,
     "level": "full",
     "wallShadow": 1.2
   }

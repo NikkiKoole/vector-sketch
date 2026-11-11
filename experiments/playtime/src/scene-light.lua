@@ -324,6 +324,7 @@ function lib.load(saved)
     if saved then
         local s = state.sceneLight
         s.wall, s.wallShadow, s.wallBehind = saved.wall, saved.wallShadow, saved.wallBehind
+        s.partShadow = tonumber(saved.partShadow)
         if type(saved.mipo) == 'table' then
             s.mipo = { clay = saved.mipo.clay, front = saved.mipo.front, swing = saved.mipo.swing,
                 round = saved.mipo.round }
@@ -338,11 +339,13 @@ function lib.save()
     local mipo = s.mipo and next(s.mipo) and
         { clay = s.mipo.clay, front = s.mipo.front, swing = s.mipo.swing, round = s.mipo.round } or nil
     local wall = s.wall ~= 'auto' and s.wall or nil
-    if s.level == 'off' and not s.floor and not mipo and not wall and not s.wallShadow and not s.wallBehind then
+    local partShadow = (s.partShadow or 0) > 0 and s.partShadow or nil
+    if s.level == 'off' and not s.floor and not mipo and not wall and not s.wallShadow and not s.wallBehind
+        and not partShadow then
         return nil
     end
     return { level = s.level, floor = s.floor and { standY = s.floor.standY, depth = s.floor.depth } or nil,
-        wall = wall, wallShadow = s.wallShadow, wallBehind = s.wallBehind, mipo = mipo }
+        wall = wall, wallShadow = s.wallShadow, wallBehind = s.wallBehind, mipo = mipo, partShadow = partShadow }
 end
 
 -- the floor where the Mipos stand: the lowest point of their feet (a scene without Mipos: none)
@@ -461,6 +464,13 @@ function lib.apply()
     end
     -- a sky: the hour into the level's own tables (src/sky-light.lua)
     if shared and skyOn() then require('src.sky-light').fill(shared, require('src.scene-sky').settings().hour) end
+    -- parts shadowing each other (src/part-shadows.lua, LS20): the light section's 'part shadows', not off
+    if (settings.partShadow or 0) > 0 and level.name ~= 'off' then
+        state.partShadows = state.partShadows or {}
+        state.partShadows.strength = settings.partShadow
+    else
+        state.partShadows = nil
+    end
     -- and the hour's light on what isn't lit by the shaders (walls, ground skins, grass): state.hourLight
     -- { r, g, b }, nil without a sky or with the light off (as drawn)
     if skyOn() and level.name ~= 'off' then

@@ -49,6 +49,7 @@ local frameToken = {} -- a new one each frame (newFrame): what was drawn in an o
 -- from these silhouettes).
 local NO_SHADOW = { decal = true, brow = true, grass = true, liquid = true, ['mouth-backdrop'] = true,
     ['mouth-lower'] = true, ['mouth-upper'] = true, ['mouth-teeth'] = true, ['mouth-tongue'] = true }
+lib.NO_SHADOW = NO_SHADOW -- also the parts' shadows (src/part-shadows.lua)
 -- (state.shadowAllParts puts everything back: to compare)
 local function castsShadow(drawable)
     if require('src.state').shadowAllParts then return true end

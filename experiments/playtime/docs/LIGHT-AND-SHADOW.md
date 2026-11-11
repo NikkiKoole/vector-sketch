@@ -262,8 +262,16 @@ fade, a sun: the panel's `fades` switch, LS4).
   Cheap: the shadow's colour from the sky light, in both shadow modules.
   Done 2026-11-06 for the 3D shadows (LS22): each takes the other lights' and the sky's colour, darkened
   (x / the panel's 'coloured shadows'). The soft wall shadows are still black.
-- [ ] **LS20. Parts shadowing each other.** A Mipo's arm darkening its torso where it lies over it
-  (soft occlusion between a Mipo's own parts, by their z order).
+- [x] **LS20. Parts shadowing each other.** A Mipo's arm darkening its torso where it lies over it
+  (soft occlusion between a Mipo's own parts, by their z order). Built 2026-11-11, Nikki: "beautiful".
+  : the textured world drawn once more as a depth picture (each part its place in
+  the draw order, two bytes), then one screen pass darkens each pixel where a part further forward lies
+  toward the light (8 taps along , 12 world units, a little to either side, jittered per pixel: a
+  soft, grainy edge, no bands). The way to the light from the wall shadows (with a sky: the hour), else
+  the level's first light. Across Mipos too: one standing in front shadows the one behind. The light
+  section's Mipos group: 'part shadows' 0..1 (0 off, saved with the scene); the facing scene at 0.6.
+  . Costs a textured pass + a screen pass: bench the phone before it's on
+  by default.
 - [ ] **LS21. Cloud shadows.** Clouds drifting over the ground and the wall (CLOUDS.md's spike: "near
   clouds cast shadows on the grass"), with the day-night light.
 - [x] **LS22. 3D shadows: along the floor and up the wall, hard.** Nikki (2026-11-06): "the next level of

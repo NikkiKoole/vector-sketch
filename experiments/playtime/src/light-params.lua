@@ -45,6 +45,10 @@ lib.rows = {
     mipoRow('front', 'front', 0, 1.5, 0.05),
     mipoRow('swing', 'swing', 0, 1, 0.05),
     mipoRow('round', 'round', 0, 1, 0.05),
+    -- parts shadowing each other (src/part-shadows.lua): an arm on its torso, a Mipo on the one behind
+    { key = 'part shadows', kind = 'number', min = 0, max = 1, step = 0.05, visible = lit,
+      get = function(s) return s.partShadow or 0 end,
+      set = function(s, v) s.partShadow = v > 0 and v or nil end },
     { kind = 'action', label = 'Mipos as the level', visible = lit,
       run = function(_, s) s.mipo = nil end },
 
