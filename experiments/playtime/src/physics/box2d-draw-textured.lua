@@ -1604,6 +1604,9 @@ function lib.drawTexturedWorld(_world, only)
     -- state.sceneDrawnMipos = { [instance.id] = true }: Mipos a scene draws itself (with `only`, in
     -- its own transform: the tracks spike's riders, at their cart's depth); the world pass skips them
     local sceneDrawn = (not only) and state.sceneDrawnMipos or nil
+    -- state.drawableWrap = function(d, draw): a scene drawing each drawable its own way, calling draw(d) as
+    -- often as it likes (the cutpaper spike: each part a shadow, a torn white fringe, then the piece)
+    local wrap = state.drawableWrap
     for i = 1, #drawables do repeat -- break = the next drawable
         if only and not only(drawables[i].body, drawables[i]) then break end
         if sceneDrawn and drawables[i].mipoThing and sceneDrawn[drawables[i].mipoThing.mipoId] then break end
@@ -1627,7 +1630,9 @@ function lib.drawTexturedWorld(_world, only)
                 love.graphics.applyTransform(faceBend)
             end
             local draw = drawers[drawables[i].type]
-            if draw then draw(drawables[i]) end
+            if draw then
+                if wrap then wrap(drawables[i], draw) else draw(drawables[i]) end
+            end
             if faceBend then love.graphics.pop() end
             if times then
                 local kind = drawables[i].type
