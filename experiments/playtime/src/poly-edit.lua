@@ -104,7 +104,8 @@ function lib.finalizePath()
 end
 
 -- The stroke becomes a coaster track (src/track.lua, docs/COASTER.md): a static body with a chain along
--- the smoothed line, a loop when it ends near its start. The draw mode stays on for the next track.
+-- the smoothed line, a loop when it ends near its start. The tool goes off after one stroke, like freepath:
+-- left on, every click (selecting, the rail) became a too-short track (2026-11-11).
 function lib.finalizeTrack()
     local track = require('src.track')
     local result = nil
@@ -125,8 +126,9 @@ function lib.finalizeTrack()
             end
         end
     else
-        logger:info("Too short for a track.") -- a click, e.g. on the rail to leave the mode
+        logger:info("Too short for a track.")
     end
+    modes.clear()
     state.interaction.capturingPoly = false
     state.interaction.polyVerts = {}
     state.interaction.lastPolyPt = nil

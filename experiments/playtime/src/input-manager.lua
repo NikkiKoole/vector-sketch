@@ -629,11 +629,25 @@ function lib.handleDraggingObj()
     end
 end
 
+-- a press on a crossing marker of the selected track swaps which stretch goes over (src/track.lua,
+-- COASTER CO2); true when it did, so the press doesn't also pick or drag
+local function pressedTrackCrossing(x, y)
+    local obj = state.selection.selectedObj
+    if not (obj and obj.shapeType == ST.TRACK) or state.currentMode then return false end
+    local track = require('src.track')
+    local wx, wy = cam:getWorldCoordinates(x, y)
+    local crossing = track.crossingAt(obj, wx, wy, (track.MARKER_PX + 4) / cam:getScale())
+    if not crossing then return false end
+    track.flipCrossing(obj, crossing)
+    return true
+end
+
 function lib.handleMousePressed(x, y, button, istouch)
     if playMode.isOn() then -- left grabs; right/middle pan (handleMouseMoved)
         if not istouch and button == 1 then handlePointer(x, y, 'mouse', 'pressed', button) end
         return
     end
+    if not istouch and button == 1 and pressedTrackCrossing(x, y) then return end
     if not istouch and button == 1 then
         if modes.isFreehand() then
             -- Start capturing mouse movement
@@ -650,6 +664,7 @@ function lib.handleMousePressed(x, y, button, istouch)
 end
 
 function lib.handleTouchPressed(id, x, y, _dx, _dy, _pressure)
+    if not playMode.isOn() and pressedTrackCrossing(x, y) then return end
     if not playMode.isOn() and modes.isFreehand() then
         -- Start capturing mouse movement
         state.interaction.capturingPoly = true

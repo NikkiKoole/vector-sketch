@@ -277,6 +277,10 @@ function lib.renderActiveEditorThings()
     end
     drawPolyEditHandles()
     drawTexFixtureHandles()
+    local selected = state.selection.selectedObj
+    if selected and selected.shapeType == ST.TRACK then -- its crossings: click one to swap over and under
+        require('src.track').drawCrossings(selected, 1 / cam:getScale())
+    end
     if state.selection.selectedBodies then
         box2dDraw.drawBodies(utils.map(state.selection.selectedBodies, function(thing) return thing.body end))
     end

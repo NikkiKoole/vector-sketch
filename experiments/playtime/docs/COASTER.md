@@ -50,7 +50,7 @@ the 3d layers, go in front or back yourself".
   lanes kept. Check: balls and boxes roll along it and pass in front of and behind themselves
   without touching; a scene saved and loaded keeps it.
   Built 2026-11-11: `src/track.lua` (an engine system: movers' lanes in update, the back lane in
-  drawBelow, the front lane in draw), `modes.DRAW_TRACK` (stays on for the next track), the chain
+  drawBelow, the front lane in draw), `modes.DRAW_TRACK` (off after one stroke, like freepath: left on, it swallowed every click), the chain
   saved as `fixtureData.chain`, `thing.track` through save, load, clone and recreate. The stroke gets 3
   rounds of Chaikin and a point every 20; near a crossing (110 along the track) an edge is solid for
   its own lane only, elsewhere for both; the drawn depth eases over 160 either side of a lane change
@@ -62,7 +62,13 @@ the 3d layers, go in front or back yourself".
   them they fall off (real; holding on is the cart's job, CO3). Not yet tried by hand with the mouse.
   Still open: the front lane is drawn over all bodies (also Mipos walking in front of the track, not
   on it), until the lanes meet EM8's; the editor's cyan debug line draws over the rails.
-- [ ] **CO2. Swap a crossing**: tap a crossing in the editor to swap over and under; saved.
+- [x] **CO2. Swap a crossing**: tap a crossing in the editor to swap over and under; saved.
+  Built 2026-11-11: a selected track shows a marker on each crossing (a ring, the front stretch drawn
+  through it whole, the back one broken, as in a knot drawing); a click or tap on it swaps
+  (`track.crossingAt` / `flipCrossing`, kept in `thing.track.flips`, nothing kept when swapped back).
+  Found on the way, from Nikki trying CO1: the track tool stayed on after a stroke and turned every
+  click into a too-short track; box selection took a track as inside any box (a chain gave it no
+  points). Both fixed. Not yet clicked by hand.
 - [ ] **CO3. The cart and the rail lock.** Drop a cart on the track; it rides it, loops included.
 - [ ] **CO4. Lift, boost, brake**: stretches of the track painted (achtbaan's zones), forces along it.
 - [ ] **CO5. Riders**: Mipos seated in the cart (TRACKS TR4's pivot servo is a start).

@@ -518,6 +518,75 @@ function lib.hits(fixture, wx, wy, tolerance)
     return false
 end
 
+---------------------------------------------------------------- crossings in the editor (COASTER CO2)
+
+lib.MARKER_PX = 13 -- a crossing's marker, in screen pixels (clicking within it swaps over and under)
+
+-- the crossing of this track whose marker is at world x, y (radius in world units), or nil
+function lib.crossingAt(thing, wx, wy, radius)
+    if not lib.isTrack(thing) or thing.body:isDestroyed() then return nil end
+    local lx, ly = thing.body:getLocalPoint(wx, wy)
+    local best, bestD = nil, radius * radius
+    for _, c in ipairs(lib.layout(thing).crossings) do
+        local d = (c.x - lx) ^ 2 + (c.y - ly) ^ 2
+        if d <= bestD then best, bestD = c, d end
+    end
+    return best
+end
+
+-- swap which stretch goes over at this crossing (kept in thing.track.flips, saved with the body); the
+-- layout and the meshes are made again from it, movers take their new lanes next update
+function lib.flipCrossing(thing, crossing)
+    thing.track = thing.track or { closed = false }
+    thing.track.flips = thing.track.flips or {}
+    local now = not thing.track.flips[crossing.key]
+    thing.track.flips[crossing.key] = now or nil
+end
+
+-- the selected track's crossings: a ring each, the stretch in front drawn through it whole and the one
+-- behind broken (a knot drawing). invZoom: world units per screen pixel.
+function lib.drawCrossings(thing, invZoom)
+    if not lib.isTrack(thing) or thing.body:isDestroyed() then return end
+    local layout = lib.layout(thing)
+    if #layout.crossings == 0 then return end
+    local xs, ys, n = layout.xs, layout.ys, layout.n
+    local r = lib.MARKER_PX * invZoom
+    local function dir(e)
+        local j = e % n + 1
+        local dx, dy = xs[j] - xs[e], ys[j] - ys[e]
+        local len = math.sqrt(dx * dx + dy * dy)
+        if len == 0 then return 1, 0 end
+        return dx / len, dy / len
+    end
+    local lineWidth = love.graphics.getLineWidth()
+    love.graphics.push()
+    love.graphics.translate(thing.body:getX(), thing.body:getY())
+    love.graphics.rotate(thing.body:getAngle())
+    for _, c in ipairs(layout.crossings) do
+        local frontE = (layout.lane[c.e2] == lib.FRONT) and c.e2 or c.e1
+        local backE = (frontE == c.e2) and c.e1 or c.e2
+        love.graphics.setColor(0.1, 0.1, 0.12, 0.85)
+        love.graphics.circle('fill', c.x, c.y, r)
+        love.graphics.setColor(1, 0.85, 0.3, 1)
+        love.graphics.setLineWidth(2 * invZoom)
+        love.graphics.circle('line', c.x, c.y, r)
+        -- behind: two stubs with a gap where the front one passes
+        local bx, by = dir(backE)
+        love.graphics.setColor(0.65, 0.68, 0.74, 1)
+        love.graphics.setLineWidth(2.5 * invZoom)
+        love.graphics.line(c.x - bx * r * 0.8, c.y - by * r * 0.8, c.x - bx * r * 0.35, c.y - by * r * 0.35)
+        love.graphics.line(c.x + bx * r * 0.35, c.y + by * r * 0.35, c.x + bx * r * 0.8, c.y + by * r * 0.8)
+        -- in front: whole
+        local fx, fy = dir(frontE)
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.setLineWidth(3.5 * invZoom)
+        love.graphics.line(c.x - fx * r * 0.8, c.y - fy * r * 0.8, c.x + fx * r * 0.8, c.y + fy * r * 0.8)
+    end
+    love.graphics.pop()
+    love.graphics.setLineWidth(lineWidth)
+    love.graphics.setColor(1, 1, 1, 1)
+end
+
 ---------------------------------------------------------------- drawing
 
 local function mix(a, b, t) return { a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t, a[3] + (b[3] - a[3]) * t } end

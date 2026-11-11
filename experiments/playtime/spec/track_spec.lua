@@ -134,6 +134,23 @@ describe('track', function()
         assert.is_true(track.hits(thing.body:getFixtures()[1], front:getX(), front:getY(), 20), 'the front ball is on the rail')
     end)
 
+    it('swaps over and under where a crossing marker is clicked, and back again', function()
+        local thing = makeTrack(CROSSING)
+        local c = track.layout(thing).crossings[1]
+        local wx, wy = thing.body:getWorldPoint(c.x, c.y)
+        assert.is_nil(track.crossingAt(thing, wx + 40, wy, 20)) -- beside it: nothing
+        local hit = track.crossingAt(thing, wx + 5, wy - 5, 20)
+        assert.are.equal(c.key, hit.key)
+        track.flipCrossing(thing, hit)
+        local flipped = track.layout(thing)
+        assert.are.equal(track.FRONT, flipped.lane[c.e1])
+        assert.are.equal(track.BACK, flipped.lane[c.e2])
+        assert.are.equal(track.FRONT, flipped.mask[c.e1])
+        track.flipCrossing(thing, flipped.crossings[1])
+        assert.is_nil(thing.track.flips[c.key]) -- back as drawn: nothing kept
+        assert.are.equal(track.BACK, track.layout(thing).lane[c.e1])
+    end)
+
     it('reads the chain edge a contact is on counting from 1 (as layout.mask is indexed)', function()
         local thing = makeTrack({ { 0, 0 }, { 400, 0 } })
         local layout = track.layout(thing)

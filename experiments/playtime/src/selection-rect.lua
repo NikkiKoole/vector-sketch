@@ -31,7 +31,7 @@ local function getShapeWorldPoints(body, shape)
     if shape:typeOf("CircleShape") then
         -- For circles, represent as the center point
         table.insert(points, { x = xBody, y = yBody })
-    elseif shape:typeOf("PolygonShape") or shape:typeOf("EdgeShape") then
+    elseif shape:typeOf("PolygonShape") or shape:typeOf("EdgeShape") or shape:typeOf("ChainShape") then
         local points2 = { shape:getPoints() }
 
         for i = 1, #points2, 2 do
