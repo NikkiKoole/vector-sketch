@@ -18,7 +18,7 @@ lib.BEHAVIOR = 'RAIL_CART'
 lib.LOCK_MARGIN = 70   -- let go this near the rail (beyond its own half height), it locks on
 lib.DRAG = 0.03        -- rolling drag, per second (a share of the speed)
 lib.AIR_DRAG = 0.00008 -- drag growing with speed squared (per px at 100 px/m)
-lib.MAX_SPEED = 4000   -- px/s at 100 px per metre (src/physics-units.lua): a Mipo-scale drop of 3500 px reaches ~3700 at 200
+lib.MAX_SPEED = 4000   -- px/s at 100 px per metre (src/physics-units.lua): a Mipo-scale drop reaches ~3700
 
 -- the painted zones (src/track.lua ZONES), numbers at 100 px per metre
 lib.LIFT_SPEED = 260   -- a lift chain catches a slower cart and pulls it on at this speed (along the drawn way)
@@ -135,7 +135,8 @@ function lib.tryLock(body)
         local layout = track.layout(thing)
         if layout.n >= 2 then
             local lx, ly = thing.body:getLocalPoint(bx, by)
-            local s, d = track.nearestArc(layout, lx, ly)
+            local s, d = 0, math.huge
+            if not track.farFrom(layout, lx, ly, bestD) then s, d = track.nearestArc(layout, lx, ly) end
             if d <= bestD then
                 local px, py, tx, ty = track.pointAt(layout, s)
                 local side = ((lx - px) * ty - (ly - py) * tx) >= 0 and 1 or -1 -- left of the direction: +1

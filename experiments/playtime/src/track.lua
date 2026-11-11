@@ -271,6 +271,11 @@ local function linePoints(thing, closed)
     end
     local n = #xs
     local L = { n = n, edges = closed and n or n - 1, closed = closed, xs = xs, ys = ys, arc = {}, total = 0 }
+    L.minX, L.maxX, L.minY, L.maxY = math.huge, -math.huge, math.huge, -math.huge -- its bounding box
+    for i = 1, n do
+        L.minX, L.maxX = math.min(L.minX, xs[i]), math.max(L.maxX, xs[i])
+        L.minY, L.maxY = math.min(L.minY, ys[i]), math.max(L.maxY, ys[i])
+    end
     for i = 1, n do
         L.arc[i] = L.total
         if i <= L.edges then
@@ -731,6 +736,11 @@ function lib.curvatureAt(layout, s, h)
     local d = math.atan2(by, bx) - math.atan2(ay, ax)
     if d > math.pi then d = d - 2 * math.pi elseif d < -math.pi then d = d + 2 * math.pi end
     return d / (2 * h)
+end
+
+-- is body-local x, y further than `reach` outside the track's bounding box (nothing on it that near)
+function lib.farFrom(layout, lx, ly, reach)
+    return lx < layout.minX - reach or lx > layout.maxX + reach or ly < layout.minY - reach or ly > layout.maxY + reach
 end
 
 -- the arc position nearest body-local x, y, and how far it is (looks at every edge)

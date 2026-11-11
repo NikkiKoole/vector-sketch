@@ -4,6 +4,7 @@
 -- Draw more track with the draw rail's 'track' tool; select a track to paint lift / boost / brake / roll on it.
 -- A cart goes back to its home, where it last locked on: drop one on your own track and it lives there.
 -- While drawing a track hold h (lift), b (boost), s (brake) or f (roll) to paint that stretch.
+-- On screen (p hides it): reset (every cart home), new cart (in the middle of the view), the view.
 -- keys: n: a new cart at the mouse   r: every cart home now   v: the view: station, follow a cart, all of it
 
 local s = {}
@@ -57,6 +58,7 @@ end
 
 function s.onStart()
     worldState.paused = false
+    camera.follow(nil) -- a script reload left a follow on
     cam:setScale(VIEW.scale)
     cam:setTranslation(VIEW.x, VIEW.y)
     local l = lab()
@@ -107,28 +109,63 @@ function s.update(dt)
     end
 end
 
+local function resetAll()
+    for _, c in ipairs(lab().carts) do goHome(c) end
+end
+
+local function viewName(l)
+    local view = VIEWS[l.view or 1]
+    return view == 'follow' and 'follow' or (l.view or 1) == 1 and 'station' or 'all'
+end
+
+-- the next view: the station, following the newest cart, the whole course
+local function nextView()
+    local l = lab()
+    l.view = (l.view or 1) % #VIEWS + 1
+    local view = VIEWS[l.view]
+    if view == 'follow' and l.carts[1] then
+        camera.follow(l.carts[#l.carts].body)
+        camera.zoomTo(0.3)
+    else
+        if view == 'follow' then view = VIEWS[1] end
+        camera.follow(nil)
+        camera.zoomTo(view.scale)
+        cam:setTranslation(view.x, view.y)
+    end
+end
+
 function s.onKeyPress(key)
     local l = lab()
     if key == 'n' then
         local x, y = mouseWorldPos()
         newCartAt(x, y)
     end
-    if key == 'r' then
-        for _, c in ipairs(l.carts) do goHome(c) end
-    end
-    if key == 'v' then -- not f: f paints a roll while drawing a track
-        l.view = (l.view or 1) % #VIEWS + 1
-        local view = VIEWS[l.view]
-        if view == 'follow' and l.carts[1] then
-            camera.follow(l.carts[#l.carts].body) -- the newest cart
-            camera.zoomTo(0.3)
-        else
-            if view == 'follow' then view = VIEWS[1] end
-            camera.follow(nil)
-            camera.zoomTo(view.scale)
-            cam:setTranslation(view.x, view.y)
+    if key == 'r' then resetAll() end
+    if key == 'v' then nextView() end -- not f: f paints a roll while drawing a track
+    if key == 'p' then l.hidePanel = not l.hidePanel end
+end
+
+-- a small panel at the bottom middle, in the editor and in play mode
+function s.drawUI()
+    local l = lab()
+    if l.hidePanel then return end
+    if state.playMode then ui.startFrame() end -- play mode draws no editor UI, so nothing else starts the frame
+    local BH, pad = 34, 6
+    local bw = 120
+    local w = bw * 3 + pad * 4
+    local h = BH + pad * 2 + 24
+    local sw, sh = love.graphics.getDimensions()
+    local k = ui.scale or 1 -- drawn at the UI's scale: place it in UI units
+    local x0, y0 = math.floor((sw / k - w) / 2), sh / k - h - 16
+    ui.panel(x0, y0, w, h, '•• coaster ••', function()
+        local x, y = x0 + pad, y0 + pad + 24
+        if ui.button(x, y, bw, 'reset') then resetAll() end
+        if ui.button(x + bw + pad, y, bw, 'new cart') then
+            local cx, cy = cam:getWorldCoordinates(sw / 2, sh / 2)
+            newCartAt(cx, cy)
         end
-    end
+        if ui.button(x + 2 * (bw + pad), y, bw, 'view: ' .. viewName(l)) then nextView() end
+    end)
 end
 
 return s

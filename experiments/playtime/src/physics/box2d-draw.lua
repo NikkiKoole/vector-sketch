@@ -251,13 +251,12 @@ local function drawPolygonFixture(body, shape, ud, alpha, drawOutline, customHan
     if drawOutline then love.graphics.polygon('line', body:getWorldPoints(shape:getPoints())) end
 end
 
--- an edge or chain: its segments in cyan
+-- an edge or chain: its segments in cyan, as one line (a coaster track's chain has ~1000: a line call
+-- each was 25 ms a frame, 2026-11-12)
 local function drawEdgeFixture(body, shape, alpha)
     love.graphics.setColor(0, 1, 1, alpha)
     local points = { body:getWorldPoints(shape:getPoints()) }
-    for i = 1, #points, 2 do
-        if i < #points - 2 then love.graphics.line(points[i], points[i + 1], points[i + 2], points[i + 3]) end
-    end
+    if #points >= 4 then love.graphics.line(points) end
 end
 
 local function drawCircleFixture(body, shape, alpha, drawOutline)
