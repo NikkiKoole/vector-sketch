@@ -84,6 +84,26 @@ the eight vowel mouths. **Not heard by me**: how it sounds is VB1.
   `lua export.lua <path>` (refuses a list `check.lua` finds errors in). A sentence: a pronoun or thing + i
   (feeling, quality, where) / a (where, feeling) / o (play, voice, + a thing after give, take, eat, catch,
   push, pull, build, look); 15% a word on its own (mipo, la, na, pomo, mipa).
+  **Questions and the talking heads' notation, 2026-11-11** (Nikki: "i also feel we want ways of a
+  question? where pitch is going up or the other things we have in talking head demo?"; the vowel filter
+  on the made voice: not needed, it already makes its vowels): `voiceBox.speak(line)` says a line in
+  mipomi-lang's notation (`lib.parse`): `{root= swing= stress= rndp= vibrato= intonation= personality=}`,
+  `-` syllables, `,` pause, `?word`/`word?` rise, `_` fall, CAPITALS stressed, `~` glide, `[c4]` note,
+  `<0.5>` volume, a lone consonant closes the word before it. Each syllable follows the talking heads'
+  pitch curve (neutral, emphasis, rise, fall and the emphasis mixes) every frame; a statement falls 2
+  semitones over its length, a question doesn't. The 7 personalities (robotic … deadpan) as speakers.
+  Babble writes its sentence as such a line and says it (a word's first syllable in capitals, the mood
+  consonant after it; with 'ask?' on, one of three at random: ', jo?', ', la?' or just the last word rising:
+  Nikki: "sometimes jo? sometimes la, sometimes nothing just ?"). Panel: the line in a text field (edit it, return or 'say'),
+  the speaker row, 'ask?'. Checked in a test window: parsing, a babble with party + ask, no errors; not heard.
+  **Soft, 2026-11-11** (Nikki: "some of the glyphs click a flip and do weird, F for example"): the engine
+  gates the voice off at once for a voiceless consonant (sound.h: `gl_gain` 0 until 55% of it), so p t k
+  click and f s click with a gap, worst mid-sentence. 'soft' says each as its voiced twin (`lib.SOFT`: p b,
+  t d, k g, f v, s z, sh zh, th dh, ch zh), as small children do; codas too. Not yet: the engine fix (fade
+  the gate ~5 ms, glide the formants at a re-articulation) in dreamengine, if f and s should stay sharp.
+- [ ] **VB7. Grunts, tsks and the rest on the made voice** (Nikki 2026-11-11: "we need ways to make all the
+  grunts and tssk and stuff IN the voicebox voice too"): the talking heads' fx (mipomi-lang samples-fx: hum
+  up/down, huh, tsk, blah) and Puppetmaker's hmpfs/squeaks made, not played: `(humup)` etc. in a line.
 - [ ] **VB5. Singing**: the choir's tunes on the made voice: any note exactly, no takes, no tuning tables;
   the singer model (breath, scoop, vibrato) as its levers.
 - [ ] **VB6. A voice per Mipo**, if kept: size from the body, a pitch and a preset in the DNA (PUPPETMAKER-SOUND

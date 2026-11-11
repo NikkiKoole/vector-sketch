@@ -50,6 +50,15 @@ function s.onSceneUnload() voiceBox.release() end
 
 function s.onKeyPress(key)
     local c = st()
+    if ui.focusedTextInputID then -- typing a line: the keys are the field's, return says it
+        if key == 'return' or key == 'kpenter' then
+            ui.focusedTextInputID = nil
+            voiceBox.speak(voiceBox.settings().text or '')
+        else
+            ui.handleKeyPress(key)
+        end
+        return
+    end
     if key == 'h' then c.showPanel = not c.showPanel end
     if key == 'b' then voiceBox.babble() end
     if key == 'space' and not st().spaceHeld then
@@ -119,7 +128,7 @@ local SLIDERS = {
 }
 local PRESETS = { 'mipo', 'tiny', 'big', 'hum', 'plain' }
 
-local PANEL = { w = 400, row = 28, pad = 8, chartH = 150 }
+local PANEL = { w = 400, row = 26, pad = 8, chartH = 120 }
 function s.drawUI()
     local c = st()
     if not c.showPanel then return end
@@ -127,7 +136,7 @@ function s.drawUI()
     local v = voiceBox.settings()
     local sw, sh = ui.getDimensions()
     local consonantRows = math.ceil(#voiceBox.CONSONANTS / 6)
-    local rows = 1 + #SLIDERS + consonantRows + 6
+    local rows = 1 + #SLIDERS + consonantRows + 7
     local w, h = PANEL.w, PANEL.chartH + PANEL.row * rows + 50
     local x0, y0 = sw - w - 12, math.max(12, (sh - h) / 2)
     ui.panel(x0, y0, w, h, '•• voice box ••', function()
@@ -195,10 +204,28 @@ function s.drawUI()
             end
         end
         y = y + PANEL.row
-        ui.label(x, y + 4, (v.feeling or 'neutral') .. ' says: ' .. (v.saying or '-'))
+        -- the line it says, in the talking heads' notation: edit it and say it again (return or 'say')
+        local text = ui.textinput('voicebox-line', x, y, inner - 54, PANEL.row - 4, nil, v.text or '')
+        if text then v.text = text end
+        if ui.button(x + inner - 50, y, 50, 'say', PANEL.row - 4) then voiceBox.speak(v.text or '') end
         y = y + PANEL.row
-        if ui.button(x, y, 120, 'babble (b)', PANEL.row - 4) then voiceBox.babble() end
-        local oc, ov = ui.checkbox(x + 130, y, c.padOnset, 'chart: consonant first')
+        -- the speaker: the talking heads' personalities (- none), on the babble
+        local speakers = { false }
+        for _, name in ipairs(voiceBox.PERSONALITY_NAMES) do speakers[#speakers + 1] = name end
+        local pw = (inner - (#speakers - 1) * 3) / #speakers
+        for i, name in ipairs(speakers) do
+            if ui.button(x + (i - 1) * (pw + 3), y, pw, name and name:sub(1, 4) or '-', PANEL.row - 4) then
+                v.personality = name or nil
+                voiceBox.babble()
+            end
+        end
+        y = y + PANEL.row
+        if ui.button(x, y, 100, 'babble (b)', PANEL.row - 4) then voiceBox.babble() end
+        local ac, av = ui.checkbox(x + 108, y, v.ask, 'ask?')
+        if ac then v.ask = av end
+        local sc, sv = ui.checkbox(x + 175, y, v.soft, 'soft')
+        if sc then v.soft = sv end
+        local oc, ov = ui.checkbox(x + 250, y, c.padOnset, 'cons. first')
         if oc then c.padOnset = ov end
     end)
     s.drawTakePanel()

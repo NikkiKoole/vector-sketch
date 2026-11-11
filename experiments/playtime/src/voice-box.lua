@@ -140,8 +140,9 @@ local function pushSound(C_, handle)
     aux(C_, handle, VP.jitter, s.jitter)
     aux(C_, handle, VP.shimmer, s.shimmer)
     aux(C_, handle, VP.creak, s.creak)
-    aux(C_, handle, VP.vibDepth, s.vibDepth)
-    aux(C_, handle, VP.vibRate, s.vibRate)
+    local vib = s.babble and s.babble.vib -- a speaker's own vibrato (lib.speak) while it talks
+    aux(C_, handle, VP.vibDepth, vib and vib.depth or s.vibDepth)
+    aux(C_, handle, VP.vibRate, vib and vib.rate or s.vibRate)
 end
 
 -- the held note (one at a time): start, change, stop
@@ -165,8 +166,14 @@ end
 -- a consonant opens the syllable on the held note. 'h' isn't one of the engine's: a breath puff instead, the
 -- voice breathy for a moment (lib.H_PUFF s), then back. 'j' is Mipomi's (the Dutch j): the engine's y.
 lib.H_PUFF = 0.07
+-- soft (s.soft): a voiceless consonant said as its voiced twin, as small children do ("bapa" for papa). The
+-- engine cuts the voice off at once for a voiceless one, which clicks mid-sentence (f and s worst, VB4)
+lib.SOFT = { p = 'b', t = 'd', k = 'g', f = 'v', s = 'z', sh = 'zh', th = 'dh', ch = 'zh' }
+local function softened(s, consonant) return s.soft and lib.SOFT[consonant] or consonant end
+
 function lib.articulate(C_, s, consonant, now)
     if consonant == 'j' then consonant = 'y' end
+    consonant = softened(s, consonant)
     if consonant == 'h' then
         aux(C_, s.handle, VP.breath, 1)
         aux(C_, s.handle, VP.openq, 1)
@@ -191,6 +198,7 @@ end
 lib.SIGH = 0.3
 local function fireCoda(s, coda, now)
     local C_ = s.handle and C()
+    coda = softened(s, coda)
     if C_ and coda == 'h' then
         aux(C_, s.handle, VP.breath, 1)
         aux(C_, s.handle, VP.openq, 1)
@@ -298,9 +306,6 @@ lib.FEEL = {
     shy       = { pitch = 1, pace = 0.9, effort = -0.2, volume = 0.7, ending = 'b',
                   says = { { 'mi', 'i', 'misofo' }, { 'mi', 'i', 'lili' } } },
 }
-lib.STRESS = 1.5        -- semitones up on a word's first syllable (and a little longer)
-lib.WORD_GAP = 0.07     -- seconds of quiet between words
-lib.SYLLABLE_TIME = 0.17 -- seconds a syllable takes (at pace 1)
 local MIPOMI_VOWEL = { a = 'a', i = 'i', o = 'o', u = 'oo', e = 'e' }
 
 local function pick(list) return list[love.math.random(#list)] end
@@ -334,38 +339,197 @@ function lib.syllables(word)
     return list
 end
 
--- babble: a Mipomi sentence on one held note, its syllables re-articulated (connected), a short quiet between
--- words, the first syllable of each word stressed, falling to the end, closing on the feeling's consonant
-function lib.babble(words)
+-- ── speaking a line (VB4): the talking heads' notation (mipomi-lang main.lua parseInput) on the made voice ──
+--   {root=c4 swing=.3:1.7 stress=1:3 rndp=0.5 vibrato=1:5:0.5 intonation=1 personality=sleepy} the speaker
+--   mi-la a word's syllables (a word written whole is split: mola = mo-la), space between words, ',' a pause
+--   ?word / word? rises (a question), _word / word_ falls, CAPITALS stressed, ~ba glides from the one before,
+--   [c4]mi on that note, <0.5>mi that loud, a lone consonant after a word closes on it (mola... m), (fx) skipped
+-- The voice follows each syllable's pitch curve every frame (the talking heads' curves, as ratios over a
+-- syllable), so a rise is heard inside the syllable, not only between them.
+lib.CURVES = {
+    neutral = { 0.0, 1.0, 0.3, 0.98, 0.6, 1.02, 1.0, 1.0 },
+    emphasis = { 0.0, 1.1, 0.3, 1.3, 0.6, 1.0, 1.0, 1.0 },
+    rise = { 0.0, 1.0, 0.5, 1.05, 0.8, 1.1, 1.0, 1.25 },
+    ['rise-emphasis'] = { 0.0, 1.1, 0.3, 1.25, 0.6, 1.1, 1.0, 1.4 },
+    fall = { 0.0, 1.0, 0.4, 1.0, 0.7, 0.95, 1.0, 0.85 },
+    ['fall-emphasis'] = { 0.0, 1.1, 0.3, 1.2, 0.6, 1.0, 1.0, 0.8 },
+}
+-- the talking heads' speakers (vibrato: freq Hz, depth; pause: seconds between syllables, words, at a comma)
+lib.PERSONALITIES = {
+    robotic = { vibrato = { freq = 0, depth = 0 }, rndp = 0, swing = { 1, 1 },
+                pause = { syllable = 0.05, word = 0.2, comma = 0.1 } },
+    slowlearner = { vibrato = { freq = 2, depth = 0.4 }, rndp = 0.2, swing = { 1.3, 1.3 }, stress = { 1, 2 },
+                pause = { syllable = 0.3, word = 0.8, comma = 0.4 } },
+    poopy = { vibrato = { freq = 6, depth = 0.8 }, rndp = 1.5, swing = { 1.2, 1.3 }, stress = { 2, 2 },
+                pause = { syllable = 0.15, word = 0.45, comma = 0.25 } },
+    sleepy = { vibrato = { freq = 1.5, depth = 0.2 }, rndp = 0.1, swing = { 0.9, 1.1 }, stress = { 1, 4 },
+                pause = { syllable = 0.4, word = 1.2, comma = 0.6 } },
+    party = { vibrato = { freq = 8, depth = 0.6 }, rndp = 2.0, swing = { 0.6, 1.4 }, stress = { 1, 2 },
+                pause = { syllable = 0.1, word = 0.35, comma = 0.2 } },
+    simple = { swing = { 0.3, 1.7 }, stress = { 1, 3 } },
+    deadpan = { vibrato = { freq = 0.5, depth = 0 }, rndp = 0, swing = { 1, 1 }, stress = { 2, 99 },
+                pause = { syllable = 0.2, word = 0.5, comma = 0.4 } },
+}
+lib.PERSONALITY_NAMES = { 'robotic', 'slowlearner', 'poopy', 'sleepy', 'party', 'simple', 'deadpan' }
+lib.SYLLABLE_TIME = 0.17 -- seconds a syllable takes at the default pause (0.1), at pace 1
+lib.DECLINE = 2          -- semitones a statement falls over its length (a question doesn't)
+
+local NOTE = { c = 0, d = 2, e = 4, f = 5, g = 7, a = 9, b = 11 }
+local function noteMidi(name)
+    local letter, accidental, octave = (name or ''):lower():match('^([a-g])([#b]?)(%-?%d)$')
+    if not letter then return nil end
+    return 12 * (tonumber(octave) + 1) + NOTE[letter] + (accidental == '#' and 1 or accidental == 'b' and -1 or 0)
+end
+lib.noteMidi = noteMidi
+
+local curves = {}
+local function curveAt(name, t)
+    local c = curves[name]
+    if not c then
+        c = love.math.newBezierCurve(lib.CURVES[name] or lib.CURVES.neutral)
+        curves[name] = c
+    end
+    local _, ratio = c:evaluate(math.max(0, math.min(1, t)))
+    return 12 * log2(math.max(0.01, ratio))
+end
+
+local function pair(v)
+    local a, b = v:match('^([%d.]+):([%d.]+)$')
+    return a and { tonumber(a), tonumber(b) } or nil
+end
+
+local function speakerOf(block)
+    local cfg = { pause = { syllable = 0.1, word = 0.5, comma = 0.2 }, swing = { 1, 1 }, stress = { 0, 0 },
+        rndp = 0, intonation = 1 }
+    for k, v in (block or ''):gmatch('([%w_]+)%s*=%s*([^%s},]+)') do
+        if k == 'personality' and lib.PERSONALITIES[v] then
+            for pk, pv in pairs(lib.PERSONALITIES[v]) do cfg[pk] = pv end
+            cfg.personality = v
+        elseif k == 'root' then cfg.root = noteMidi(v)
+        elseif k == 'swing' or k == 'stress' then cfg[k] = pair(v) or cfg[k]
+        elseif k == 'rndp' or k == 'intonation' then cfg[k] = tonumber(v) or cfg[k]
+        elseif k == 'vibrato' then
+            local _, freq, depth = v:match('^([%d.]+):([%d.]+):([%d.]+)')
+            if freq then cfg.vibrato = { freq = tonumber(freq), depth = tonumber(depth) } end
+        end
+    end
+    return cfg
+end
+
+-- a line of notation as the syllables the voice says: { c, v, pitch (midi), curve, dur, from, vol, coda } and
+-- { pause = s } between words; `base` the pitch (midi) when the line names no root
+function lib.parse(text, base)
+    local block = text:match('^%s*(%b{})')
+    local cfg = speakerOf(block)
+    if block then text = text:gsub('^%s*%b{}', '') end
+    base = cfg.root or base or 60
+    local syllableTime = lib.SYLLABLE_TIME * (0.6 + 2 * cfg.pause.syllable) / 0.8
+    local list, sung, n, question = {}, {}, 0, false
+    local function lastSyllable() return sung[#sung] end
+    text = text:gsub(',', ' , '):gsub('%.%.%.', ' '):gsub('…', ' ')
+    for token in text:gmatch('%S+') do
+        local fx = token:match('^%b()$') -- (fx): the recorded heads' extras, not this voice's
+        if token == ',' then
+            list[#list + 1] = { pause = cfg.pause.comma }
+        elseif fx then
+            list[#list + 1] = { pause = 0.1 }
+        elseif not token:lower():find('[aeiou]') then -- a lone consonant: the last syllable closes on it
+            local c = token:lower():gsub('[^a-z]', '')
+            if lastSyllable() and (CONSONANT_ID[c] or c == 'h') then lastSyllable().coda = c end
+        else
+            local wordRise, wordFall = token:sub(1, 1) == '?', token:sub(1, 1) == '_'
+            if wordRise or wordFall then token = token:sub(2) end
+            if #sung > 0 and not list[#list].pause then list[#list + 1] = { pause = cfg.pause.word * 0.2 } end
+            local parts = {}
+            for raw in token:gmatch('[^%-·]+') do parts[#parts + 1] = raw end
+            local inWord = 0
+            for pi, raw in ipairs(parts) do
+                local glide = raw:sub(1, 1) == '~'
+                if glide then raw = raw:sub(2) end
+                local rise, fall = raw:sub(-1) == '?', raw:sub(-1) == '_'
+                local note = raw:match('%[([^%]]+)%]')
+                local vol = tonumber(raw:match('<([%d.]+)>') or '')
+                local letters = raw:gsub('%b[]', ''):gsub('%b<>', ''):gsub('[^%a]', '')
+                local emphasized = letters:find('%u') and letters == letters:upper()
+                local syllables = lib.syllables(letters)
+                for si, syl in ipairs(syllables) do
+                    n, inWord = n + 1, inWord + 1
+                    local lastOfWord = pi == #parts and si == #syllables
+                    local stressed = (si == 1 and emphasized)
+                        or (cfg.stress[2] > 0 and n % cfg.stress[2] == cfg.stress[1] % cfg.stress[2])
+                    local up = (rise and si == #syllables) or (wordRise and lastOfWord)
+                    local down = (fall and si == #syllables) or (wordFall and lastOfWord)
+                    syl.curve = (up and 'rise' or down and 'fall' or (stressed and 'emphasis' or 'neutral'))
+                    if stressed and (up or down) then syl.curve = syl.curve .. '-emphasis' end
+                    local drift = (wordRise and 1 or wordFall and -1 or 0) * cfg.intonation * (inWord - 1)
+                    syl.pitch = (si == 1 and noteMidi(note) or base) + drift + (love.math.random() * 2 - 1) * cfg.rndp
+                    syl.explicit = si == 1 and note ~= nil
+                    syl.dur = syllableTime * (stressed and 1.2 or 1) * cfg.swing[(n % 2 == 1) and 1 or 2]
+                    syl.from = (glide and si == 1) and true or nil
+                    syl.vol = vol
+                    if up and lastOfWord then question = true end
+                    list[#list + 1] = syl
+                    sung[#sung + 1] = syl
+                end
+            end
+        end
+    end
+    -- a statement falls over its length; a question (its end rising) doesn't
+    local last = sung[#sung]
+    question = question and last and (last.curve == 'rise' or last.curve == 'rise-emphasis')
+    if not question then
+        for i, syl in ipairs(sung) do
+            if not syl.explicit then syl.pitch = syl.pitch - lib.DECLINE * (i - 1) / math.max(1, #sung - 1) end
+        end
+    end
+    return list, cfg
+end
+
+-- say a line of notation, as the current feeling (its pitch, pace, voice) when the line doesn't set its own
+function lib.speak(text)
+    local s = S()
+    local feel = lib.FEEL[s.feeling or 'neutral'] or lib.FEEL.neutral
+    local list, cfg = lib.parse(text, s.pitch + (feel.pitch or 0))
+    local pace = feel.pace or 1
+    for _, syl in ipairs(list) do
+        if syl.pause then syl.pause = syl.pause / pace else syl.dur = syl.dur / pace end
+    end
+    local last
+    for i = #list, 1, -1 do if not list[i].pause then last = list[i] break end end
+    if not last then return end
+    if last.coda then last.dur = last.dur + 0.08 end
+    last.dur = last.dur + 0.1 -- the last one rings
+    local vib = cfg.vibrato and
+        { depth = math.min(1, cfg.vibrato.depth * 0.5), rate = math.min(1, cfg.vibrato.freq / 10) }
+    s.babble = { list = list, i = 0, nextAt = love.timer.getTime(), volume = lib.VOLUME * (feel.volume or 1),
+        vib = vib }
+    s.saying, s.text = text, text
+end
+
+-- babble: a Mipomi sentence (lib.sentence) written as a line and said: words split into syllables, a word's
+-- first syllable stressed, the feeling's mood consonant after it; `ask` makes it a question, one of three ways
+-- like people do: a tag ", jo?" (you?), a tag ", la?" (good? yes?), or only the last word rising
+function lib.babble(words, ask)
     local s = S()
     local feel = lib.FEEL[s.feeling or 'neutral'] or lib.FEEL.neutral
     words = words or lib.sentence(s.feeling)
-    local pace = feel.pace or 1
-    local list = {}
-    local pitch = s.pitch + (feel.pitch or 0)
-    local total = 0
-    for _, w in ipairs(words) do total = total + #lib.syllables(w) end
-    local n = 0
-    for wi, w in ipairs(words) do
-        if wi > 1 then list[#list + 1] = { pause = lib.WORD_GAP / pace } end
+    if ask == nil then ask = s.ask end
+    local out = {}
+    for i, w in ipairs(words) do
+        local parts = {}
         for si, syl in ipairs(lib.syllables(w)) do
-            n = n + 1
-            local stressed = si == 1 and #lib.syllables(w) > 1
-            syl.pitch = pitch - 2.5 * (n - 1) / math.max(1, total - 1) + (stressed and lib.STRESS or 0)
-                + (love.math.random() - 0.5) * 0.6
-            syl.dur = lib.SYLLABLE_TIME * (stressed and 1.2 or 1) * (0.9 + love.math.random() * 0.2) / pace
-            list[#list + 1] = syl
+            local text = (syl.c or '') .. ({ a = 'a', i = 'i', o = 'o', oo = 'u', e = 'e' })[syl.v]
+            parts[si] = (si == 1 and #lib.syllables(w) > 1) and text:upper() or text
         end
+        out[i] = table.concat(parts, '-')
     end
-    local last = list[#list]
-    if last and feel.ending then
-        last.coda = feel.ending
-        last.dur = last.dur + 0.08
-    end
-    if last then last.dur = last.dur + 0.1 end -- the last one rings
-    s.babble = { list = list, i = 0, nextAt = love.timer.getTime(), words = words,
-        volume = lib.VOLUME * (feel.volume or 1) }
-    s.saying = table.concat(words, ' ') .. (feel.ending and ('... ' .. feel.ending) or '')
+    local tag = ask and ({ 'jo', 'la', false })[love.math.random(3)]
+    if ask and (not tag or words[#words] == tag) then out[#out] = out[#out] .. '?' end -- the end rises
+    local line = table.concat(out, ' ')
+    if tag and words[#words] ~= tag then line = line .. ', ' .. tag .. '?' end
+    if feel.ending then line = line .. '... ' .. feel.ending end
+    if s.personality then line = '{personality=' .. s.personality .. '} ' .. line end -- the speaker row
+    lib.speak(line)
 end
 
 local function babbleStep(s, now)
@@ -375,13 +539,22 @@ local function babbleStep(s, now)
         local done = fireCoda(s, b.list[b.i].coda, now)
         b.nextAt = math.max(b.nextAt, now + done)
     end
+    -- the syllable's pitch curve, every frame (a glide comes from the one before over its first 40%)
+    local cur = b.cur
+    if cur and s.handle then
+        local t = (now - b.startAt) / cur.dur
+        local pitch = cur.pitch + curveAt(cur.curve, t)
+        if cur.from and b.fromPitch and t < 0.4 then pitch = b.fromPitch + (pitch - b.fromPitch) * (t / 0.4) end
+        synth.noteSet(s.handle, pitch)
+        b.lastPitch = pitch
+    end
     if now < b.nextAt then return end
     b.i = b.i + 1
     local syl = b.list[b.i]
     if not syl then lib.release() return end
     if syl.pause then -- between words: quiet
         if s.handle then synth.noteSet(s.handle, nil, 0) end
-        s.sounding = false
+        s.sounding, b.cur = false, nil
         b.nextAt = now + syl.pause
         return
     end
@@ -389,11 +562,13 @@ local function babbleStep(s, now)
     s.f1, s.f2 = v.f1, v.f2
     local C_ = C()
     if not C_ then s.babble = nil return end
+    local volume = b.volume * (syl.vol or 1)
+    b.fromPitch = b.lastPitch
     if b.i == 1 or not s.handle then
         start(syl.pitch, syl.c)
-        if s.handle then synth.noteSet(s.handle, nil, b.volume) end
+        if s.handle then synth.noteSet(s.handle, nil, volume) end
     else
-        synth.noteSet(s.handle, syl.pitch, b.volume) -- back up after a word gap or an unvoiced coda
+        synth.noteSet(s.handle, syl.pitch, volume) -- back up after a word gap or an unvoiced coda
         s.quietAt = nil
         pushSound(C_, s.handle)
         pushVowel(C_, s.handle, s.f1, s.f2)
@@ -401,6 +576,7 @@ local function babbleStep(s, now)
         lib.articulate(C_, s, syl.c, now)
     end
     s.sounding = true
+    b.cur, b.startAt = syl, now
     b.nextAt = now + syl.dur
     -- a coda closes in the syllable's back part: its closing ends with the syllable
     b.codaAt = syl.coda and (b.nextAt - (CONSONANT_DUR[syl.coda] or 0.08) - 0.04) or nil
