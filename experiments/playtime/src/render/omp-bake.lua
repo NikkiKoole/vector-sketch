@@ -148,10 +148,14 @@ local function getDrawParams(flipx, flipy, imgw, imgh)
     return sx, sy, ox, oy
 end
 
-lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color2, alpha2, texRot, texScaleX, texScaleY,
-                                  texOffX, texOffY,
-                                  lineColor, lineAlpha,
-                                  flipx, flipy, patches)
+-- A part's picture: outline + mask + pattern (+ patches) flattened at 1/shrinkFactor size. Returns
+-- the Canvas it was drawn into, which is the picture: drawn as it is, the caller releases it.
+-- Reading it back to make an Image of it (makeTexturedCanvas below) was most of a Mipo's bake:
+-- 39 -> 5.5 ms on the iPhone SE 2, same pixels (experiments/omp-bench baked-canvas, OMP-LIVE OL1).
+function lib.bakeCanvas(lineart, mask, color1, alpha1, texture2, color2, alpha2, texRot, texScaleX, texScaleY,
+                        texOffX, texOffY,
+                        lineColor, lineAlpha,
+                        flipx, flipy, patches)
 
     local lineartColor = lineColor or { 0, 0, 0, 1 }
     local lw, lh = lineart:getDimensions()
@@ -232,18 +236,25 @@ lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color
         --- huh?!
         love.graphics.draw(canvas, 0, 0, 0, 1 / shrinkFactor, 1 / shrinkFactor)
         if target then love.graphics.setCanvas({ target, stencil = true }) else love.graphics.setCanvas() end
-        local imageData = otherCanvas:newImageData()
         love.graphics.setColor(0, 0, 0) --- huh?!
 
         canvas:release()
-        otherCanvas:release()
-        return imageData
+        return otherCanvas
+end
+
+-- The same picture as ImageData (read back from the GPU: slow), for scene scripts that want an
+-- Image of their own (mipmaps, setWrap) or pixels: bike, garden, soapbox, scan-test.
+function lib.makeTexturedCanvas(...)
+    local canvas = lib.bakeCanvas(...)
+    local imageData = canvas:newImageData()
+    canvas:release()
+    return imageData
 end
 
 -- A part's picture as it looks on a Mipo, for a thumbnail (the Mipo maker's shape cells, MIPO-MAKER MM6):
 -- outlineURL / maskURL under textures/ ('mipo/eye/eye-03.png'), `look` a texture block's colours and
 -- pattern (bgHex line, fgHex fill, pHex + pURL pattern, pr / psx / psy / ptx / pty its placement).
--- Returns an Image, nil when the outline isn't there. The caller keeps and releases it. Call it
+-- Returns the picture (a Canvas), nil when the outline isn't there. The caller keeps and releases it. Call it
 -- outside drawing (in update): it switches canvases.
 function lib.bakePreview(outlineURL, maskURL, look)
     local outline = getLoveImage('textures/' .. outlineURL)
@@ -260,12 +271,10 @@ function lib.bakePreview(outlineURL, maskURL, look)
     love.graphics.setScissor()
     love.graphics.setShader()
     love.graphics.setBlendMode('alpha')
-    local imgData = lib.makeTexturedCanvas(outline, mask, { fr, fg, fb }, fa, pattern or tex1, { pr, pg, pb },
+    local image = lib.bakeCanvas(outline, mask, { fr, fg, fb }, fa, pattern or tex1, { pr, pg, pb },
         pattern and pa or 0, look.pr or 0, look.psx or 1, look.psy or 1, look.ptx or 0, look.pty or 0,
         { lr, lg, lb }, la, 1, 1, nil)
     love.graphics.pop()
-    local image = love.graphics.newImage(imgData)
-    imgData:release()
     return image
 end
 
@@ -288,7 +297,7 @@ local function makePatch(name, ud)
         local patternImage = layerImage('textures/pat/', ud.extra[name].pURL)
         local pr, pg, pb, pa = color.hexToColor(ud.extra[name].pHex)
         if outlineImage then
-            local imgData = lib.makeTexturedCanvas(
+            local img = lib.bakeCanvas(
                 outlineImage,            -- line art
                 maskImage,               -- mask
                 { mr, mg, mb },          -- color1
@@ -307,8 +316,6 @@ local function makePatch(name, ud)
                 ud.extra[name].fy or 1  -- flipy (normal)
             )
             lib.texturesCreated = lib.texturesCreated + 1
-            local img = love.graphics.newImage(imgData)
-            imgData:release()
             result = {
                 img = img,
                 --img = getLoveImage('textures/' .. ud.extra.patch1URL),
@@ -404,7 +411,7 @@ function lib.makeCombinedImages()
             local patternImage = layerImage('textures/pat/', main.pURL)
 
             if outlineImage or line then
-                local imgData = lib.makeTexturedCanvas(
+                local image = lib.bakeCanvas(
                     outlineImage or line, -- line art
                     maskImage or (hasFgURL and maskTex) or nil, -- mask (nil for outline-only textures)
                     cached.fgRGB,         -- color1
@@ -423,8 +430,6 @@ function lib.makeCombinedImages()
                     main.fy or 1,              -- flipy (normal)
                     patches               -- renderPatch
                 )
-                local image = love.graphics.newImage(imgData)
-                imgData:release()
                 lib.texturesCreated = lib.texturesCreated + 1
                 ud.extra.ompImage = image
             end

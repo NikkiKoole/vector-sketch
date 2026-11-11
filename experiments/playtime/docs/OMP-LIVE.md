@@ -90,6 +90,11 @@ transform and patches mixed in a shader as it draws.
       39** (a litter of 5: 27 ms instead of 150), pixels identical (diff 0), the frame the same. The
       read-back was most of the hitch. Small to do in Playtime: makeTexturedCanvas's three callers are
       all in omp-bake.lua (makePatch, makeCombinedImages, bakePreview); nothing reads the picture's pixels.
+      **In Playtime since 2026-11-12**: `ompBake.bakeCanvas` (those three use it); `makeTexturedCanvas`
+      still returns ImageData for the spike scripts that make their own Image (bike, garden, soapbox,
+      scan-test). Checked: the scenes snapshot pixel-identical (81 scenes; facing, light-grass-check and
+      mipo-materials differ run to run without the change), specs as before (face-patches @ 99 fails
+      without the change too).
     - *mesh+rg-skip*: live parts that show no pattern (216 of 479) skip the pattern read: no gain
       (160 against 170 Mipos, noise). The pattern read isn't what costs.
     With the read-back gone, baked keeps its frame speed (270-280 Mipos) and its hitch is close to
