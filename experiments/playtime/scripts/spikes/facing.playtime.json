@@ -7,10 +7,43 @@
   },
   "bodies": [
     {
-      "dims": {
-        "width": 6000,
-        "height": 700
+      "position": [
+        1100,
+        100
+      ],
+      "linearVelocity": [
+        0,
+        0
+      ],
+      "angularVelocity": 0,
+      "linearDamping": 0,
+      "bodyType": "static",
+      "angle": 0,
+      "vertices": [
+        0,
+        -700,
+        2200,
+        -700,
+        2200,
+        900,
+        0,
+        900
+      ],
+      "id": "3tQ5Xf",
+      "sharedFixtureData": {
+        "shapeType": "polygon",
+        "density": 1,
+        "groupIndex": 0,
+        "restitution": 0.3,
+        "friction": 0.2,
+        "sensor": true
       },
+      "mirrorX": 1,
+      "mirrorY": 1,
+      "dims": [],
+      "shapeType": "custom",
+      "label": "wall far",
+      "angularDamping": 0,
       "fixtures": [
         {
           "points": [
@@ -24,33 +57,74 @@
             -10
           ],
           "userData": {
-            "type": "sfixture",
-            "subtype": "grass",
-            "label": "",
             "extra": {
-              "bands": 16,
-              "bandSpread": 120,
-              "bandShrink": 0.3,
-              "bumps": 25,
-              "bumpSize": 250,
-              "swayRows": 3,
-              "density": 8,
-              "width": 1,
-              "zGroupOffset": 0,
-              "heightVariation": 0.5,
-              "frontShare": 0.25,
-              "maxSlope": 50,
-              "sway": 1,
-              "colorBack": "2a5b3eff",
-              "zOffset": 0,
-              "colorFront": "86a542ff",
-              "height": 90,
-              "seed": 0
+              "main": {
+                "bgURL": "world/walls/concrete-02.jpg"
+              },
+              "tile": 600,
+              "behind": 400
             },
-            "id": "2yqkeL"
+            "label": "",
+            "subtype": "wall",
+            "id": "1XoUcq",
+            "type": "sfixture"
           },
           "sensor": true
         },
+        {
+          "points": [
+            1100,
+            -800,
+            1100,
+            800,
+            -1100,
+            800,
+            -1100,
+            -800
+          ]
+        }
+      ],
+      "fixedRotation": false
+    },
+    {
+      "position": [
+        -1468.4828,
+        -95.191
+      ],
+      "linearVelocity": [
+        0,
+        0
+      ],
+      "angularVelocity": 0,
+      "linearDamping": 0,
+      "bodyType": "static",
+      "angle": 0,
+      "vertices": [
+        -2200,
+        -700,
+        0,
+        -700,
+        0,
+        900,
+        -2200,
+        900
+      ],
+      "id": "3O6oRc",
+      "sharedFixtureData": {
+        "shapeType": "polygon",
+        "density": 1,
+        "groupIndex": 0,
+        "restitution": 0.3,
+        "friction": 0.2,
+        "sensor": true
+      },
+      "mirrorX": 1,
+      "mirrorY": 1,
+      "dims": [],
+      "shapeType": "custom",
+      "label": "wall near",
+      "angularDamping": 0,
+      "fixtures": [
         {
           "points": [
             10,
@@ -63,39 +137,48 @@
             -10
           ],
           "userData": {
-            "type": "sfixture",
-            "subtype": "tile-repeat",
-            "label": "",
             "extra": {
-              "tileHeightM": 0.6,
-              "tileWidthM": 0.6,
-              "opacity": 1,
               "main": {
-                "bgURL": "world/ground/soil-01.jpg"
-              }
+                "bgURL": "world/walls/plaster-03.jpg"
+              },
+              "tile": 4000,
+              "behind": 120
             },
-            "id": "20S9Go"
+            "label": "",
+            "subtype": "wall",
+            "id": "4rB8OM",
+            "type": "sfixture"
           },
           "sensor": true
         },
         {
           "points": [
-            -3000,
-            -350,
-            3000,
-            -350,
-            3000,
-            350,
-            -3000,
-            350
+            1100,
+            -800,
+            1100,
+            800,
+            -1100,
+            800,
+            -1100,
+            -800
           ]
         }
       ],
+      "fixedRotation": false
+    },
+    {
       "position": [
         0,
-        1250
+        1253.9218
       ],
-      "shapeType": "rectangle",
+      "linearVelocity": [
+        0,
+        0
+      ],
+      "angularVelocity": 0,
+      "linearDamping": 0,
+      "bodyType": "static",
+      "angle": 0,
       "vertices": [
         -3000,
         -350,
@@ -106,31 +189,24 @@
         -3000,
         350
       ],
-      "linearVelocity": [
-        0,
-        0
-      ],
-      "fixedRotation": false,
-      "angularDamping": 0,
-      "label": "ground",
-      "mirrorX": 1,
-      "angularVelocity": 0,
-      "linearDamping": 0,
-      "bodyType": "static",
-      "angle": 0,
       "id": "1qrTDs",
-      "mirrorY": 1,
       "sharedFixtureData": {
+        "shapeType": "polygon",
         "density": 1,
         "groupIndex": 0,
-        "shapeType": "polygon",
-        "sensor": false,
+        "restitution": 0.3,
         "friction": 0.9,
-        "restitution": 0.3
-      }
-    },
-    {
-      "dims": [],
+        "sensor": false
+      },
+      "mirrorX": 1,
+      "mirrorY": 1,
+      "dims": {
+        "height": 700,
+        "width": 6000
+      },
+      "shapeType": "rectangle",
+      "label": "ground",
+      "angularDamping": 0,
       "fixtures": [
         {
           "points": [
@@ -144,74 +220,33 @@
             -10
           ],
           "userData": {
-            "type": "sfixture",
-            "subtype": "wall",
-            "label": "",
             "extra": {
-              "behind": 120,
-              "tile": 4000,
-              "main": {
-                "bgURL": "world/walls/plaster-03.jpg"
-              }
+              "bumps": 25,
+              "bumpSize": 250,
+              "swayRows": 3,
+              "zGroupOffset": 0,
+              "bandShrink": 0.3,
+              "zOffset": 0,
+              "heightVariation": 0.5,
+              "frontShare": 0.25,
+              "maxSlope": 50,
+              "sway": 1,
+              "colorBack": "2a5b3eff",
+              "density": 3,
+              "colorFront": "86a542ff",
+              "height": 172,
+              "seed": 0,
+              "bands": 16,
+              "bandSpread": 120,
+              "width": 0.93
             },
-            "id": "4rB8OM"
+            "label": "",
+            "subtype": "grass",
+            "id": "2yqkeL",
+            "type": "sfixture"
           },
           "sensor": true
         },
-        {
-          "points": [
-            1100,
-            -800,
-            1100,
-            800,
-            -1100,
-            800,
-            -1100,
-            -800
-          ]
-        }
-      ],
-      "position": [
-        -1468.4828,
-        -95.191
-      ],
-      "shapeType": "custom",
-      "vertices": [
-        -2200,
-        -700,
-        0,
-        -700,
-        0,
-        900,
-        -2200,
-        900
-      ],
-      "linearVelocity": [
-        0,
-        0
-      ],
-      "fixedRotation": false,
-      "angularDamping": 0,
-      "label": "wall near",
-      "mirrorX": 1,
-      "angularVelocity": 0,
-      "linearDamping": 0,
-      "bodyType": "static",
-      "angle": 0,
-      "id": "3O6oRc",
-      "mirrorY": 1,
-      "sharedFixtureData": {
-        "density": 1,
-        "groupIndex": 0,
-        "shapeType": "polygon",
-        "sensor": true,
-        "friction": 0.2,
-        "restitution": 0.3
-      }
-    },
-    {
-      "dims": [],
-      "fixtures": [
         {
           "points": [
             10,
@@ -224,88 +259,53 @@
             -10
           ],
           "userData": {
-            "type": "sfixture",
-            "subtype": "wall",
-            "label": "",
             "extra": {
-              "behind": 400,
-              "tile": 600,
+              "tileHeightM": 0.6,
+              "opacity": 1,
               "main": {
-                "bgURL": "world/walls/concrete-02.jpg"
-              }
+                "bgURL": "world/ground/soil-01.jpg"
+              },
+              "tileWidthM": 0.6
             },
-            "id": "1XoUcq"
+            "label": "",
+            "subtype": "tile-repeat",
+            "id": "20S9Go",
+            "type": "sfixture"
           },
           "sensor": true
         },
         {
           "points": [
-            1100,
-            -800,
-            1100,
-            800,
-            -1100,
-            800,
-            -1100,
-            -800
+            3000,
+            -350,
+            3000,
+            350,
+            -3000,
+            350,
+            -3000,
+            -350
           ]
         }
       ],
-      "position": [
-        1100,
-        100
-      ],
-      "shapeType": "custom",
-      "vertices": [
-        0,
-        -700,
-        2200,
-        -700,
-        2200,
-        900,
-        0,
-        900
-      ],
-      "linearVelocity": [
-        0,
-        0
-      ],
-      "fixedRotation": false,
-      "angularDamping": 0,
-      "label": "wall far",
-      "mirrorX": 1,
-      "angularVelocity": 0,
-      "linearDamping": 0,
-      "bodyType": "static",
-      "angle": 0,
-      "id": "3tQ5Xf",
-      "mirrorY": 1,
-      "sharedFixtureData": {
-        "density": 1,
-        "groupIndex": 0,
-        "shapeType": "polygon",
-        "sensor": true,
-        "friction": 0.2,
-        "restitution": 0.3
-      }
+      "fixedRotation": false
     }
   ],
   "joints": [],
   "version": 2,
   "sky": {
+    "hour": 7.5,
     "dayLength": 10,
-    "horizon": 917,
-    "hour": 7.5
+    "horizon": 917
   },
   "light": {
     "wallBehind": 280,
     "mipo": {
+      "swing": 0.35,
       "clay": true,
       "front": 0.75,
-      "round": 0.3,
-      "swing": 0.35
+      "round": 0.3
     },
-    "wallShadow": 1.2,
-    "level": "full"
+    "level": "full",
+    "wallShadow": 1.2
   }
 }
