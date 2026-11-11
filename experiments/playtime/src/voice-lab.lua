@@ -67,6 +67,11 @@ local function pcm(path)
     local n = math.floor(count * RATE / rate)
     local ffi = require('ffi') -- here, not on top: the web build has no ffi
     local out = ffi.new('float[?]', n)
+    if rate == RATE and channels == 1 and data:getBitDepth() == 16 then -- as it is: read it straight (~10x faster)
+        local raw = ffi.cast('int16_t *', data:getPointer())
+        for i = 0, n - 1 do out[i] = raw[i] / 32768 end
+        return out, n, count / rate
+    end
     for i = 0, n - 1 do
         local pos = i * rate / RATE
         local i0 = math.floor(pos)
@@ -81,6 +86,7 @@ local function pcm(path)
     end
     return out, n, count / rate
 end
+lib.pcm = pcm -- the voicebox's syllable banks (src/voice-box.lua) load takes the same way
 
 -- Load the take into the sample slot (again only when something changed) and bind
 -- both instruments to it. For 'synth' with shift and size baked in; for 'sing' plain

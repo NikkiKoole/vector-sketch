@@ -59,6 +59,24 @@ the eight vowel mouths. **Not heard by me**: how it sounds is VB1.
   Checked in a test window: effects supported, the EQ follows the chart, the loop repeats. Bare only (the
   synth's own formant filter, `instrument_formant`, would take an FX bus for good: there are 7 and the music
   shares 5). Not yet: a blend of take and made voice.
+  **Cute, 2026-11-11** (Nikki: "still a bit synthetic ... nintendo-esque, cutesy whimsical"; read: Animal
+  Crossing's per-syllable pitch jumps, Springbound's 0.1 s slide per word and real-voice source, Celeste,
+  kawaii voice studies: higher F0 and F1, a smile's raised formants): 'cute' (`lib.CUTE`) sings a line on a
+  pentatonic scale (hops, stressed ones higher, a statement home, a question high), scoops 1.5 semitones
+  into each syllable, 1.3x quicker, 2 higher, smile formants, a smaller throat.
+  **A person's voice, 2026-11-11** (Nikki: "so we have real voices as source sound for all this"): 'says it
+  as' made / theo / nikki / herman. A person's 39 syllables loaded end to end into one sample slot each
+  (12-14, the grunts' fx 15; instruments 120-123), each syllable its chop of it on INSTR_SING once through
+  (held, the engine rocked the vowel's last 60 ms: Nikki "it sometimes repeats a vowel or piece"), at
+  0.4-2x its speed to fit the syllable, the one before faded under it, size from the size slider, the take's own melody 15%
+  (`lib.TAKE_INFLECTION`): every line, cute, question and feeling on it. Grunts with a recording (hum up /
+  down, huh, tsk, blah) play it; the others stay made. The engine's pulse analysis of a bank is ~0.8 s on
+  the game thread, so the scene loads them all at its start (`lib.preloadVoices`; Nikki: "we sometimes have
+  a small hangup where everything stops"). Codas are skipped on a take.
+  **The listen view, 2026-11-11** (Nikki: "the amount of ui in the scene is extreme ... i want a focused
+  thing for listening to the recent changes"): the scene opens on one small panel: who says it (made, theo,
+  nikki, herman), the 8 feelings, new line / again (the same line once more: switch voice or cute and hear
+  the difference), cute, ask?, the line said, 8 grunts. 'all controls' gives the old panels back.
 - [ ] **VB4. More consonants**: endings (`voice_coda`: "mip", "pom"), two in a row, consonants in the babble
   chosen by the mipomi language (`~/Projects/love/mipomi-lang`).
   **Codas, 2026-11-11** (Nikki: "lets do the codas, mip and pom"): `voiceBox.say(onset, coda)` and
@@ -101,9 +119,19 @@ the eight vowel mouths. **Not heard by me**: how it sounds is VB1.
   click and f s click with a gap, worst mid-sentence. 'soft' says each as its voiced twin (`lib.SOFT`: p b,
   t d, k g, f v, s z, sh zh, th dh, ch zh), as small children do; codas too. Not yet: the engine fix (fade
   the gate ~5 ms, glide the formants at a re-articulation) in dreamengine, if f and s should stay sharp.
-- [ ] **VB7. Grunts, tsks and the rest on the made voice** (Nikki 2026-11-11: "we need ways to make all the
+- [x] **VB7. Grunts, tsks and the rest on the made voice** (Nikki 2026-11-11: "we need ways to make all the
   grunts and tssk and stuff IN the voicebox voice too"): the talking heads' fx (mipomi-lang samples-fx: hum
   up/down, huh, tsk, blah) and Puppetmaker's hmpfs/squeaks made, not played: `(humup)` etc. in a line.
+  **Built 2026-11-11** (Nikki: "lets do the grunts now"): `lib.GRUNTS`, 20 of them (humup humdown hmm mmhm
+  uhuh huh eh blah tsk tsktsk hmpf oof squeak ah ooh uhoh yay giggle sigh yawn), each a few steps on the
+  held note: vowel, consonant, a pitch bend over the step, its own nasal / breath / effort / size, a cut
+  (the tsk click is the engine's voiceless pop, cut after 25 ms), a closed mouth for hums. Shapes from the
+  fx recordings, measured: hum down 0.27 s voiced falling 4-5 semitones, hum up 0.13 s rising 2-4, huh
+  0.35 s mostly breath with a voiced end, blah 0.3-0.45 s falling ~7, tsk 30-60 ms. In a line `(yawn)`, and
+  the talking heads' `(humup1)` / `([a3]humup1)` work. Feelings use them 40% of the time
+  (`lib.FEEL_GRUNTS`: sad sigh, angry hmpf / tsktsk, sleepy yawn, happy yay / giggle, ...). Buttons in the
+  left panel. Checked in a test window: parsing, all feelings, five grunts played through, no errors.
+  Heard 2026-11-11, Nikki: "very convincing".
 - [ ] **VB5. Singing**: the choir's tunes on the made voice: any note exactly, no takes, no tuning tables;
   the singer model (breath, scoop, vibrato) as its levers.
 - [ ] **VB6. A voice per Mipo**, if kept: size from the body, a pitch and a preset in the DNA (PUPPETMAKER-SOUND

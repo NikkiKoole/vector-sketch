@@ -128,7 +128,7 @@ local function pushSound(C_, handle)
     local s = S()
     aux(C_, handle, VP.vow2, BASE.row / 9)
     aux(C_, handle, VP.glide, 1)
-    aux(C_, handle, VP.size, s.size)
+    aux(C_, handle, VP.size, clamp01(s.size + (s.cute and lib.CUTE.size or 0)))
     -- effort as dreamengine's voxpad has it: breath, glottal open quotient and tilt together
     local feel = lib.FEEL[s.feeling or 'neutral'] or lib.FEEL.neutral
     local effort = clamp01(s.effort + (feel.effort or 0))
@@ -187,9 +187,11 @@ end
 
 function lib.hold(consonant) return start(S().pitch, consonant) end
 
+local takeOff -- the person's voice, below
 function lib.release()
     local s = S()
     if s.handle then synth.noteOff(s.handle) end
+    takeOff(s)
     s.handle, s.sounding, s.babble, s.codaAt = nil, false, nil, nil
 end
 
@@ -339,6 +341,234 @@ function lib.syllables(word)
     return list
 end
 
+-- ── grunts (VB7): the talking heads' fx and Puppetmaker's sounds, made on the voice, not played ──────────
+-- Each is a few steps on the held note: { v vowel, c consonant (nil: none), dur, bend = { from, to } semitones
+-- over the step (from the speaker's pitch), nasal / breath / effort / size (0..1, over the settings while it
+-- sounds), vol, cut (seconds, then quiet: a click), coda, mouth = 'closed' (a hum) } and { pause = s }.
+-- Shapes measured from mipomi-lang samples-fx (2026-11-11): hum down 0.27 s voiced, falling 4-5 semitones;
+-- hum up 0.13 s rising 2-4; huh 0.35 s mostly breath, a short voiced end; blah 0.3-0.45 s falling ~7, a
+-- breathy end; tsk 30-60 ms, a click. In a line: (humup), (tsk); the talking heads' (humup1) and
+-- ([a3]humup1) work too (digits dropped, the note is its pitch).
+lib.GRUNTS = {
+    humup   = { { c = 'm', v = 'uh', dur = 0.14, bend = { -2, 2 }, nasal = 0.9, mouth = 'closed' } },
+    humdown = { { c = 'm', v = 'uh', dur = 0.28, bend = { 1, -4 }, nasal = 0.9, mouth = 'closed' } },
+    hmm     = { { c = 'm', v = 'uh', dur = 0.55, bend = { 0, -1.5 }, nasal = 0.95, mouth = 'closed' } },
+    mmhm    = { { c = 'm', v = 'uh', dur = 0.16, bend = { 0, 0 }, nasal = 0.9, mouth = 'closed' },
+                { c = 'h', v = 'uh', dur = 0.22, bend = { 3, 4 }, nasal = 0.9, mouth = 'closed' } },
+    uhuh    = { { v = 'uh', dur = 0.15, bend = { 2, 2 } }, { pause = 0.06 },
+                { v = 'uh', dur = 0.22, bend = { -1, -2.5 } } },
+    huh     = { { c = 'h', v = 'uh', dur = 0.16, bend = { 0, 0 }, breath = 1, vol = 0.6 },
+                { v = 'uh', dur = 0.16, bend = { 0, 4 } } },
+    eh      = { { v = 'e', dur = 0.22, bend = { 0, 5 } } },
+    blah    = { { c = 'b', v = 'a', dur = 0.07, bend = { 2, 2 } },
+                { c = 'l', v = 'a', dur = 0.32, bend = { 1, -7 }, breath = 0.45 } },
+    tsk     = { { c = 't', v = 'i', dur = 0.06, cut = 0.025, breath = 1 } },
+    tsktsk  = { { c = 't', v = 'i', dur = 0.06, cut = 0.025, breath = 1 }, { pause = 0.11 },
+                { c = 't', v = 'i', dur = 0.06, cut = 0.025, breath = 1 } },
+    hmpf    = { { c = 'm', v = 'uh', dur = 0.16, bend = { 0, -1 }, nasal = 0.9, mouth = 'closed' },
+                { c = 'p', v = 'uh', dur = 0.14, breath = 1, vol = 0.6, cut = 0.1 } },
+    oof     = { { v = 'oo', dur = 0.24, bend = { 2, -5 }, effort = 0.9, coda = 'f' } },
+    squeak  = { { c = 'y', v = 'i', dur = 0.13, bend = { 8, 12 }, size = 1 } },
+    ah      = { { v = 'a', dur = 0.28, bend = { 3, 7 }, effort = 0.8 } },
+    ooh     = { { v = 'o', dur = 0.2, bend = { 0, 4 } }, { v = 'oo', dur = 0.32, bend = { 4, -1 }, breath = 0.3 } },
+    uhoh    = { { v = 'uh', dur = 0.18, bend = { 4, 4 } }, { pause = 0.04 },
+                { v = 'o', dur = 0.32, bend = { 0, -1 } } },
+    yay     = { { c = 'y', v = 'a', dur = 0.15, bend = { 2, 5 } }, { v = 'i', dur = 0.26, bend = { 7, 9 } } },
+    giggle  = { { c = 'h', v = 'i', dur = 0.08, bend = { 7, 7 }, breath = 0.6 },
+                { c = 'h', v = 'i', dur = 0.08, bend = { 6, 6 }, breath = 0.6 },
+                { c = 'h', v = 'i', dur = 0.08, bend = { 5, 5 }, breath = 0.6 },
+                { c = 'h', v = 'i', dur = 0.12, bend = { 5, 3 }, breath = 0.6 } },
+    sigh    = { { c = 'h', v = 'a', dur = 0.55, bend = { 2, -4 }, breath = 0.85, vol = 0.7 } },
+    yawn    = { { v = 'a', dur = 0.55, bend = { 0, 5 }, effort = 0.2 }, { v = 'a', dur = 0.45, bend = { 5, -3 } },
+                { v = 'uh', dur = 0.2, bend = { -3, -4 }, coda = 'm' } },
+}
+-- the feelings' grunts (a babble starts or ends with one now and then, lib.GRUNT_CHANCE): before the words, or
+-- after them in place of the mood consonant
+lib.FEEL_GRUNTS = {
+    neutral = { before = { 'hmm', 'eh', 'huh' }, after = { 'mmhm' } },
+    happy = { before = { 'yay' }, after = { 'giggle', 'humup' } },
+    sad = { after = { 'sigh', 'humdown' } },
+    angry = { before = { 'hmpf' }, after = { 'tsktsk', 'hmpf' } },
+    scared = { before = { 'uhoh', 'ah' } },
+    surprised = { before = { 'ah', 'ooh', 'huh' } },
+    sleepy = { before = { 'yawn' }, after = { 'hmm', 'yawn' } },
+    shy = { after = { 'giggle', 'humup' } },
+}
+lib.GRUNT_CHANCE = 0.4
+lib.GRUNT_NAMES = { 'humup', 'humdown', 'hmm', 'mmhm', 'uhuh', 'huh', 'eh', 'blah', 'tsk', 'tsktsk', 'hmpf',
+    'oof', 'squeak', 'ah', 'ooh', 'uhoh', 'yay', 'giggle', 'sigh', 'yawn' }
+
+-- ── a person's voice (2026-11-11, Nikki: "so we have real voices as source sound for all this"): the
+-- recorded syllables (assets/voices/<theo|nikki|herman>, all 39 Mipomi roots each) said instead of the made
+-- voice, through dreamengine's INSTR_SING (one grain per vocal pulse: any note exactly, a size lever that
+-- keeps who it is). One speaker's takes loaded end to end into one sample slot (one analysis), a syllable
+-- plays its chop of it once through, sped to fit; the melody, cute, questions, feelings stay. The recorded grunts (assets/voices/fx) the same way, from their own slot.
+lib.TAKE_VOICES = { 'theo', 'nikki', 'herman' }
+lib.TAKE_INFLECTION = 0.15 -- how much of a take's own melody rides on our note (0 flat, 0.5 as recorded)
+lib.TAKE_GAP = 0.04        -- seconds of quiet between takes in a bank
+-- a slot each (the engine's pulse analysis of a bank takes ~0.8 s: once per speaker, then switching is free)
+local BANK_SLOTS = { theo = { sample = 12, instr = 120 }, nikki = { sample = 13, instr = 121 },
+    herman = { sample = 14, instr = 122 }, fx = { sample = 15, instr = 123 } }
+local TAKE_VOWEL = { a = 'a', i = 'i', o = 'o', oo = 'o', e = 'i', uh = 'a' } -- a vowel no take has: the nearest
+-- the recorded grunts; a grunt not here is made on the voice box voice
+local FX_OF = { humup = { 'humup1', 'humup2', 'humup3', 'humup4' },
+    humdown = { 'humdown1', 'humdown2', 'humdown3', 'humdown4' }, blah = { 'blah1', 'blah2', 'blah3' },
+    huh = { 'huh', 'huh2' }, tsk = { 'tsk', 'tsk2' }, tsktsk = { 'tsk', 'tsk2', twice = true } }
+
+-- a set's takes as one bank in the engine: { set, regions = { name = { start, end (0..1), seconds } } }.
+-- Kept on state: the engine keeps the slots over a hot swap; loaded again when the synth restarted.
+-- The first use of a speaker freezes the game ~1 s (the analysis, on the game thread).
+local function bankOf(set)
+    local C_ = C()
+    if not C_ or not set then return nil end
+    local slots = BANK_SLOTS[set]
+    if not slots then return nil end
+    state.voiceBoxBanks = state.voiceBoxBanks or {}
+    local bank = state.voiceBoxBanks[set]
+    if bank and bank.C == C_ then return bank end
+    local lab = require('src.voice-lab')
+    local dir = 'assets/voices/' .. set
+    local parts, total = {}, 0
+    local gap = math.floor(lib.TAKE_GAP * 44100)
+    -- the game runs with the JIT off (main.lua); this sample loop is 1.4 s without it, 0.03 s with
+    local jitOn = jit and pcall(jit.on) -- luacheck: ignore 113 (jit is a LuaJIT global)
+    for _, file in ipairs(love.filesystem.getDirectoryItems(dir)) do
+        local key = file:match('^(.+)%.ogg$')
+        if key then
+            local data, n, seconds = lab.pcm(dir .. '/' .. file)
+            parts[#parts + 1] = { key = key, data = data, n = n, seconds = seconds, at = total + gap }
+            total = total + gap + n
+        end
+    end
+    if jitOn then jit.off() jit.flush() end -- luacheck: ignore 113
+    if #parts == 0 then return nil end
+    total = total + gap
+    local ffi_ = require('ffi')
+    local all = ffi_.new('float[?]', total)
+    local regions = {}
+    for _, part in ipairs(parts) do
+        ffi_.copy(all + part.at, part.data, part.n * 4)
+        regions[part.key] = { part.at / (total - 1), (part.at + part.n - 1) / (total - 1), part.seconds }
+    end
+    C_.sample_load(slots.sample, all, total)
+    C_.instrument(slots.instr, synth.INSTR.SING, 4, 10, 7, 90) -- first: it clears the sample binding
+    C_.instrument_sample(slots.instr, slots.sample, 60)
+    C_.instrument_mode(slots.instr, 0, 1) -- one-shot: the take once through, never rocked (see takeSyllable)
+    C_.instrument_level(slots.instr, 4)   -- the voice lab's level (its measured match with the bare take)
+    C_.instrument_morph(slots.instr, 0.5)
+    pcall(C_.instrument_reverb, slots.instr, 0.15)
+    -- a silent note asks the engine for the analysis now, not on the first syllable said
+    local warm = C_.note_on(60, slots.instr, 0)
+    if warm then C_.note_off(warm) end
+    bank = { set = set, regions = regions, C = C_, instr = slots.instr }
+    state.voiceBoxBanks[set] = bank
+    return bank
+end
+
+-- every speaker's bank and the grunts, at the scene's start (the ~3 s of analysis there, not mid-play)
+function lib.preloadVoices()
+    for _, set in ipairs(lib.TAKE_VOICES) do bankOf(set) end
+    bankOf('fx')
+end
+
+-- speak with a person's syllables (theo, nikki, herman) or the made voice (nil)
+function lib.useVoice(set)
+    local s = S()
+    s.takeVoice = set
+    if set then bankOf(set) bankOf('fx') end
+end
+
+local function takeSize(s)
+    return clamp01(0.5 + (s.size - 0.33) * 0.35 + (s.cute and 0.05 or 0))
+end
+
+-- a recorded grunt's steps, when one is speaking with a person's voice and the grunt was recorded
+local function recordedGrunt(name, base)
+    local files = FX_OF[name]
+    if not (S().takeVoice and files) then return nil end
+    local bank = bankOf('fx')
+    if not bank then return nil end
+    local function step()
+        local file = files[love.math.random(#files)]
+        local r = bank.regions[file]
+        return r and { fx = file, v = 'uh', dur = r[3], pitch = base, curve = 'neutral', explicit = true,
+            grunt = name, bend = { 0, 0 } }
+    end
+    local first = step()
+    if not first then return nil end
+    if files.twice then return { first, { pause = 0.11 }, step() } end
+    return { first }
+end
+
+-- say a syllable (or a recorded grunt) with the person's voice; false when there's no take for it
+local function takeSyllable(s, syl, volume, now)
+    if not s.takeVoice then return false end
+    local bank = syl.fx and bankOf('fx') or bankOf(s.takeVoice)
+    local name = syl.fx or ((syl.c or '') .. (TAKE_VOWEL[syl.v] or 'a'))
+    local r = bank and bank.regions[name]
+    if not r then return false end
+    local C_ = C()
+    if s.takeHandle then -- the last one fades out under this one (one-shot: note_off alone lets it finish)
+        C_.note_vol(s.takeHandle, 0)
+        C_.note_off(s.takeHandle)
+    end
+    if s.handle then synth.noteSet(s.handle, nil, 0) end
+    C_.instrument_sample_region(bank.instr, r[1], r[2])
+    -- once through (held, the engine rocks the last 60 ms of its vowel: a piece said over and over), at the
+    -- speed that fits the take to the syllable: 0.4x .. 2x (the pitch and the voice stay)
+    C_.instrument_mode(bank.instr, 0, 1)
+    local speed = syl.fx and 1 or math.max(0.4, math.min(2, r[3] / (syl.dur * 1.1)))
+    C_.instrument_morph(bank.instr, speed / 2)
+    local h = C_.note_on(math.floor(syl.pitch + 0.5), bank.instr, math.max(0, math.min(7, math.floor(volume + 0.5))))
+    if not h then return false end
+    C_.note_pitch(h, syl.pitch)
+    C_.note_timbre(h, takeSize(s))
+    C_.note_harmonics(h, syl.fx and 0.5 or lib.TAKE_INFLECTION)
+    s.takeHandle = h
+    local c = syl.c == 'j' and 'y' or syl.c
+    if c and CONSONANT_MOUTH[c] then s.consonantMouth, s.consonantUntil = CONSONANT_MOUTH[c], now + CONSONANT_FOR end
+    if syl.fx and name:find('^hum') then s.consonantMouth, s.consonantUntil = 'M_B_P', now + syl.dur end
+    return true
+end
+takeOff = function(s)
+    if s.takeHandle then synth.noteOff(s.takeHandle) end
+    s.takeHandle = nil
+end
+
+-- a grunt's steps as syllables at `base` (midi)
+local function gruntSteps(name, base)
+    local recorded = recordedGrunt(name, base)
+    if recorded then return recorded end
+    local steps = lib.GRUNTS[name]
+    if not steps then return nil end
+    local list = {}
+    for i, step in ipairs(steps) do
+        local syl = {}
+        for k, v in pairs(step) do syl[k] = v end
+        if not syl.pause then
+            syl.pitch, syl.curve, syl.explicit, syl.grunt = base, 'neutral', true, name
+            syl.bend = syl.bend or { 0, 0 }
+        end
+        list[i] = syl
+    end
+    return list
+end
+
+-- say a grunt now (as the current feeling's pitch and pace)
+function lib.grunt(name) lib.speak('(' .. name .. ')') end
+
+-- a step's own sound over the settings: nasal, breath (to a whisper), effort, size
+local function applyStep(C_, s, syl)
+    if not (syl.nasal or syl.breath or syl.effort or syl.size) then return end
+    if syl.size then aux(C_, s.handle, VP.size, syl.size) end
+    if syl.nasal then aux(C_, s.handle, VP.nasal, syl.nasal) end
+    local effort = syl.effort or s.effort
+    local b = syl.breath or 0
+    aux(C_, s.handle, VP.breath, 0.55 * (1 - effort) + (1 - 0.55 * (1 - effort)) * b)
+    aux(C_, s.handle, VP.openq, (0.95 - 0.9 * effort) + (1 - (0.95 - 0.9 * effort)) * b)
+    aux(C_, s.handle, VP.tilt, 0.8 * (1 - effort) + (1 - 0.8 * (1 - effort)) * b)
+end
+
 -- ── speaking a line (VB4): the talking heads' notation (mipomi-lang main.lua parseInput) on the made voice ──
 --   {root=c4 swing=.3:1.7 stress=1:3 rndp=0.5 vibrato=1:5:0.5 intonation=1 personality=sleepy} the speaker
 --   mi-la a word's syllables (a word written whole is split: mola = mo-la), space between words, ',' a pause
@@ -431,8 +661,12 @@ function lib.parse(text, base)
         local fx = token:match('^%b()$') -- (fx): the recorded heads' extras, not this voice's
         if token == ',' then
             list[#list + 1] = { pause = cfg.pause.comma }
-        elseif fx then
-            list[#list + 1] = { pause = 0.1 }
+        elseif fx then -- a grunt (lib.GRUNTS), else a short quiet
+            local inner = token:sub(2, -2)
+            local name = inner:gsub('%b[]', ''):gsub('%d+$', ''):lower()
+            local steps = gruntSteps(name, noteMidi(inner:match('%[([^%]]+)%]')) or base)
+            if #list > 0 and not list[#list].pause then list[#list + 1] = { pause = cfg.pause.word * 0.2 } end
+            for _, step in ipairs(steps or { { pause = 0.1 } }) do list[#list + 1] = step end
         elseif not token:lower():find('[aeiou]') then -- a lone consonant: the last syllable closes on it
             local c = token:lower():gsub('[^a-z]', '')
             if lastSyllable() and (CONSONANT_ID[c] or c == 'h') then lastSyllable().coda = c end
@@ -485,12 +719,55 @@ function lib.parse(text, base)
     return list, cfg
 end
 
+-- cute (2026-11-11, Nikki: "nintendo-esque, cutesy whimsical"): what the critter voices do (Animal Crossing,
+-- Springbound, Celeste) and what makes a voice read cute (higher F0 and F1, a smile's shorter throat):
+-- syllables hop between the notes of a pentatonic scale instead of speaking's small drift, a word scoops up
+-- into its note, quicker, a little higher, smiling formants, a smaller throat
+lib.CUTE = {
+    scale = { 0, 2, 4, 7, 9 }, -- the notes a syllable lands on, above the speaker's pitch
+    low = -3, high = 9,        -- how far a hop goes (semitones)
+    lift = 2,                  -- the whole line higher
+    pace = 1.3,                -- quicker
+    scoop = 1.5, scoopTime = 0.06, -- each syllable slides up into its note
+    smileF1 = 1.08, smileF2 = 1.06, size = 0.1,
+}
+local function snapToScale(semis)
+    local octave = math.floor(semis / 12)
+    local within, best = semis - 12 * octave, 0
+    for _, d in ipairs(lib.CUTE.scale) do
+        if math.abs(d - within) < math.abs(best - within) then best = d end
+    end
+    if math.abs(12 - within) < math.abs(best - within) then best = 12 end
+    return 12 * octave + best
+end
+-- the syllables of a parsed line sung cute: a hop to a scale note each, stressed ones higher, a statement
+-- coming home to the speaker's note, a question ending high; set notes ([c4]) and grunts stay as they are
+local function cuteMelody(list, base)
+    local K = lib.CUTE
+    local sung = {}
+    for _, syl in ipairs(list) do
+        if not syl.pause and not syl.bend and not syl.explicit then sung[#sung + 1] = syl end
+    end
+    local at = snapToScale(love.math.random(2, 5))
+    for i, syl in ipairs(sung) do
+        local hop = love.math.random(-4, 4)
+        if syl.curve and syl.curve:find('emphasis') then hop = hop + 3 end
+        at = math.max(K.low, math.min(K.high, snapToScale(at + hop)))
+        if i == #sung then
+            local asks = syl.curve == 'rise' or syl.curve == 'rise-emphasis'
+            at = asks and snapToScale(love.math.random(5, 9)) or (love.math.random() < 0.7 and 0 or -3)
+        end
+        syl.pitch = base + K.lift + at
+    end
+end
+
 -- say a line of notation, as the current feeling (its pitch, pace, voice) when the line doesn't set its own
 function lib.speak(text)
     local s = S()
     local feel = lib.FEEL[s.feeling or 'neutral'] or lib.FEEL.neutral
     local list, cfg = lib.parse(text, s.pitch + (feel.pitch or 0))
-    local pace = feel.pace or 1
+    if s.cute then cuteMelody(list, cfg.root or (s.pitch + (feel.pitch or 0))) end
+    local pace = (feel.pace or 1) * (s.cute and lib.CUTE.pace or 1)
     for _, syl in ipairs(list) do
         if syl.pause then syl.pause = syl.pause / pace else syl.dur = syl.dur / pace end
     end
@@ -527,10 +804,19 @@ function lib.babble(words, ask)
     if ask and (not tag or words[#words] == tag) then out[#out] = out[#out] .. '?' end -- the end rises
     local line = table.concat(out, ' ')
     if tag and words[#words] ~= tag then line = line .. ', ' .. tag .. '?' end
-    if feel.ending then line = line .. '... ' .. feel.ending end
+    local grunts = lib.FEEL_GRUNTS[s.feeling or 'neutral']
+    local withGrunt = grunts and love.math.random() < lib.GRUNT_CHANCE
+    local before = withGrunt and grunts.before and (not grunts.after or love.math.random() < 0.5)
+    if withGrunt and before then
+        line = '(' .. pick(grunts.before) .. ') ' .. line
+    elseif withGrunt and grunts.after then
+        line = line .. ' (' .. pick(grunts.after) .. ')'
+    end
+    if feel.ending and not (withGrunt and not before) then line = line .. '... ' .. feel.ending end
     if s.personality then line = '{personality=' .. s.personality .. '} ' .. line end -- the speaker row
     lib.speak(line)
 end
+
 
 local function babbleStep(s, now)
     local b = s.babble
@@ -543,9 +829,14 @@ local function babbleStep(s, now)
     local cur = b.cur
     if cur and s.handle then
         local t = (now - b.startAt) / cur.dur
-        local pitch = cur.pitch + curveAt(cur.curve, t)
+        local pitch = cur.bend and (cur.pitch + cur.bend[1] + (cur.bend[2] - cur.bend[1]) * math.min(1, t))
+            or (cur.pitch + curveAt(cur.curve, t))
         if cur.from and b.fromPitch and t < 0.4 then pitch = b.fromPitch + (pitch - b.fromPitch) * (t / 0.4) end
-        synth.noteSet(s.handle, pitch)
+        local into = now - b.startAt
+        if s.cute and not cur.bend and not cur.from and into < lib.CUTE.scoopTime then
+            pitch = pitch - lib.CUTE.scoop * (1 - into / lib.CUTE.scoopTime)
+        end
+        synth.noteSet(b.took and s.takeHandle or s.handle, pitch)
         b.lastPitch = pitch
     end
     if now < b.nextAt then return end
@@ -554,16 +845,26 @@ local function babbleStep(s, now)
     if not syl then lib.release() return end
     if syl.pause then -- between words: quiet
         if s.handle then synth.noteSet(s.handle, nil, 0) end
+        takeOff(s)
         s.sounding, b.cur = false, nil
         b.nextAt = now + syl.pause
         return
     end
     local v = vowelNamed(syl.v)
     s.f1, s.f2 = v.f1, v.f2
+    if s.cute then s.f1, s.f2 = v.f1 * lib.CUTE.smileF1, v.f2 * lib.CUTE.smileF2 end
     local C_ = C()
     if not C_ then s.babble = nil return end
     local volume = b.volume * (syl.vol or 1)
     b.fromPitch = b.lastPitch
+    b.took = takeSyllable(s, syl, volume, now)
+    if b.took then -- a person said it: no made voice, no coda (the take is the syllable)
+        s.sounding, s.quietAt, b.codaAt = true, nil, nil
+        b.cur, b.startAt = syl, now
+        b.nextAt = now + syl.dur
+        return
+    end
+    takeOff(s)
     if b.i == 1 or not s.handle then
         start(syl.pitch, syl.c)
         if s.handle then synth.noteSet(s.handle, nil, volume) end
@@ -575,6 +876,9 @@ local function babbleStep(s, now)
         C_.voice_coda(s.handle, -1) -- open again from the last coda
         lib.articulate(C_, s, syl.c, now)
     end
+    applyStep(C_, s, syl)
+    if syl.mouth == 'closed' then s.consonantMouth, s.consonantUntil = 'M_B_P', now + syl.dur end
+    if syl.cut then s.quietAt = now + syl.cut end
     s.sounding = true
     b.cur, b.startAt = syl, now
     b.nextAt = now + syl.dur
@@ -753,7 +1057,10 @@ function lib.update(dt, instance)
     if s.breathUntil and now >= s.breathUntil then -- an h's puff is over: the voice as set
         s.breathUntil = nil
         local C_ = s.handle and C()
-        if C_ then pushSound(C_, s.handle) end
+        if C_ then
+            pushSound(C_, s.handle)
+            if s.babble and s.babble.cur then applyStep(C_, s, s.babble.cur) end -- a grunt step's own breath
+        end
     end
     if s.quietAt and now >= s.quietAt then -- an unvoiced coda: closed, so quiet
         s.quietAt = nil

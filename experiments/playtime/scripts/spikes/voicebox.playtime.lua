@@ -42,6 +42,7 @@ function s.onStart()
     worldState.paused = false
     st()
     voiceBox.settings()
+    voiceBox.preloadVoices() -- the people's syllables: the engine's analysis freezes ~3 s, here at the start
     ensureGround()
     ensureMipo()
 end
@@ -128,11 +129,84 @@ local SLIDERS = {
 }
 local PRESETS = { 'mipo', 'tiny', 'big', 'hum', 'plain' }
 
+-- the listen view (Nikki 2026-11-11: "the amount of ui in the scene is extreme ... i want a focused thing for
+-- listening to the recent changes"): who says it, the feelings, babble / again, cute and ask, a few grunts.
+-- 'again' says the same line once more: switch the voice or cute and hear the difference. The rest ('all
+-- controls'): the chart, sliders, consonants, codas, the take panel.
+local FEELINGS = { 'neutral', 'happy', 'sad', 'angry', 'scared', 'surprised', 'sleepy', 'shy' }
+local LISTEN_GRUNTS = { 'humup', 'humdown', 'huh', 'tsk', 'blah', 'giggle', 'sigh', 'yay' }
+local function setFeeling(name)
+    voiceBox.settings().feeling = name ~= 'neutral' and name or nil
+    local m = mipo()
+    if m then mipoEmotion.set(m, name) end
+end
+local LISTEN = { w = 440, row = 34, pad = 10 }
+local function drawListen()
+    local c = st()
+    local v = voiceBox.settings()
+    local sw, sh = ui.getDimensions()
+    local w, h = LISTEN.w, LISTEN.row * 8 + 44
+    local x0, y0 = sw - w - 16, sh - h - 16
+    ui.panel(x0, y0, w, h, '•• listen ••', function()
+        local x, y = x0 + LISTEN.pad, y0 + 32
+        local inner = w - LISTEN.pad * 2
+        local bh = LISTEN.row - 6
+        -- who says it
+        local voices = { 'made', 'theo', 'nikki', 'herman' }
+        local vw = (inner - 3 * 4) / 4
+        for i, name in ipairs(voices) do
+            local on = (v.takeVoice or 'made') == name
+            if ui.button(x + (i - 1) * (vw + 4), y, vw, on and ('[' .. name .. ']') or name, bh) then
+                voiceBox.useVoice(name ~= 'made' and name or nil)
+                if v.text then voiceBox.speak(v.text) else voiceBox.babble() end
+            end
+        end
+        y = y + LISTEN.row
+        -- how it feels: the face, and a new line
+        local fw = (inner - 3 * 4) / 4
+        for i, name in ipairs(FEELINGS) do
+            local on = (v.feeling or 'neutral') == name
+            local col, row = (i - 1) % 4, math.floor((i - 1) / 4)
+            if ui.button(x + col * (fw + 4), y + row * LISTEN.row, fw, on and ('[' .. name .. ']') or name, bh) then
+                setFeeling(name)
+                voiceBox.babble()
+            end
+        end
+        y = y + LISTEN.row * 2
+        if ui.button(x, y, 110, 'new line (b)', bh) then voiceBox.babble() end
+        if ui.button(x + 116, y, 80, 'again', bh) then
+            if v.text then voiceBox.speak(v.text) else voiceBox.babble() end
+        end
+        local kc, kv = ui.checkbox(x + 210, y + 2, v.cute, 'cute')
+        if kc then v.cute = kv end
+        local ac, av = ui.checkbox(x + 290, y + 2, v.ask, 'ask?')
+        if ac then v.ask = av end
+        y = y + LISTEN.row
+        -- the line it said (without the speaker block)
+        local said = (v.text or '-'):gsub('^%s*%b{}%s*', '')
+        ui.label(x, y + 6, said)
+        y = y + LISTEN.row
+        local gw = (inner - 3 * 4) / 4
+        local GRUNT_LABEL = { humup = 'hum up', humdown = 'hum down' }
+        for i, name in ipairs(LISTEN_GRUNTS) do
+            local col, row = (i - 1) % 4, math.floor((i - 1) / 4)
+            if ui.button(x + col * (gw + 4), y + row * LISTEN.row, gw, GRUNT_LABEL[name] or name, bh) then
+                voiceBox.grunt(name)
+            end
+        end
+        y = y + LISTEN.row * 2
+        if ui.button(x, y, 130, 'all controls', bh) then c.mode = 'all' end
+        ui.label(x + 140, y + 6, 'b new line   h hide')
+    end)
+end
+
 local PANEL = { w = 400, row = 26, pad = 8, chartH = 120 }
 function s.drawUI()
     local c = st()
     if not c.showPanel then return end
     ui.startFrame()
+    if c.mode ~= 'all' then drawListen() return end
+    if ui.button(ui.getDimensions() / 2 - 70, 12, 140, 'back to listen', 26) then c.mode = nil end
     local v = voiceBox.settings()
     local sw, sh = ui.getDimensions()
     local consonantRows = math.ceil(#voiceBox.CONSONANTS / 6)
@@ -220,12 +294,14 @@ function s.drawUI()
             end
         end
         y = y + PANEL.row
-        if ui.button(x, y, 100, 'babble (b)', PANEL.row - 4) then voiceBox.babble() end
-        local ac, av = ui.checkbox(x + 108, y, v.ask, 'ask?')
+        if ui.button(x, y, 64, 'babble', PANEL.row - 4) then voiceBox.babble() end
+        local ac, av = ui.checkbox(x + 70, y, v.ask, 'ask?')
         if ac then v.ask = av end
-        local sc, sv = ui.checkbox(x + 175, y, v.soft, 'soft')
+        local sc, sv = ui.checkbox(x + 132, y, v.soft, 'soft')
         if sc then v.soft = sv end
-        local oc, ov = ui.checkbox(x + 250, y, c.padOnset, 'cons. first')
+        local kc, kv = ui.checkbox(x + 194, y, v.cute, 'cute')
+        if kc then v.cute = kv end
+        local oc, ov = ui.checkbox(x + 256, y, c.padOnset, 'cons. first')
         if oc then c.padOnset = ov end
     end)
     s.drawTakePanel()
@@ -241,13 +317,24 @@ function s.drawTakePanel()
     local L = state.voiceLab
     local v = voiceBox.settings()
     local _, sh = ui.getDimensions()
-    local rows = 4 + #TAKE_SLIDERS + 9
+    local rows = 5 + #TAKE_SLIDERS + 12
     local w, h = TAKE.w, TAKE.row * rows + 36
     local x0, y0 = 12, math.max(12, (sh - h) / 2)
     ui.panel(x0, y0, w, h, '•• recorded take ••', function()
         local x, y = x0 + TAKE.pad, y0 + 28
         local inner = w - TAKE.pad * 2
         local bw = (inner - 3 * 4) / 4
+        -- who the voice box speaks with: the made voice or a person's recorded syllables
+        ui.label(x, y + 4, 'says it as:')
+        local vw = (inner - 80 - 3 * 3) / 4
+        for i, name in ipairs({ 'made', 'theo', 'nikki', 'herman' }) do
+            local on = (v.takeVoice or 'made') == name
+            if ui.button(x + 80 + (i - 1) * (vw + 3), y, vw, on and ('[' .. name .. ']') or name, TAKE.row - 4) then
+                voiceBox.useVoice(name ~= 'made' and name or nil)
+                voiceBox.babble()
+            end
+        end
+        y = y + TAKE.row
         for i, name in ipairs(SETS) do
             local short = name == 'puppetmaker' and 'pm' or name
             local label = L.set == name and ('[' .. short .. ']') or short
@@ -291,9 +378,17 @@ function s.drawTakePanel()
         ui.label(x, y + 4 + TAKE.row * 2, 'synth: shifted, size  sing: the synth sings it')
         ui.label(x, y + 4 + TAKE.row * 3, 'made: the same syllable, no recording')
         y = y + TAKE.row * 4.2
-        ui.label(x, y, 'drag the chart  space hold  b babble  h panels')
-        ui.label(x, y + TAKE.row, 'right: the row under the consonants is what a')
-        ui.label(x, y + TAKE.row * 2, 'syllable ends on (- none); the feelings babble')
+        -- grunts (VB7): made on the voice box's voice, not played; (name) in the line says one too
+        ui.label(x, y + 4, v.takeVoice and 'grunts (hums, huhs, tsks, blahs recorded):' or
+            'grunts, made on the voice box voice:')
+        y = y + TAKE.row
+        local gw = (inner - 3 * 3) / 4
+        for i, name in ipairs(voiceBox.GRUNT_NAMES) do
+            local col, row = (i - 1) % 4, math.floor((i - 1) / 4)
+            if ui.button(x + col * (gw + 3), y + row * TAKE.row, gw, name, TAKE.row - 4) then voiceBox.grunt(name) end
+        end
+        y = y + math.ceil(#voiceBox.GRUNT_NAMES / 4) * TAKE.row
+        ui.label(x, y + 4, 'space hold  b babble  h panels')
     end)
 end
 
