@@ -75,6 +75,20 @@ describe('backdrop shadows', function()
         assert.is_true(at(img, 130, -20) < 0.9, 'on the wall, just inside its edge')
     end)
 
+    it('a thing mostly off the screen still throws its whole shadow (the silhouettes have a margin)', function()
+        -- a box from x -270 to -190: the canvas shows -200..200, so only 10 of its 80 are on it
+        local box = objectManager.addThing('rectangle', { x = -230, y = -20, width = 80, height = 80,
+            bodyType = 'static' })
+        local fixture = fixtures.createSFixture(box.body, 0, 0, subtypes.TEXFIXTURE, { width = 80, height = 80 })
+        local e = fixture:getUserData().extra
+        e.OMP, e.dirty = true, true
+        e.main = { bgURL = 'mipo/body/body-03.png', fgURL = 'mipo/body/body-03-mask.png', pURL = 'type0.png',
+            bgHex = '000000ff', fgHex = 'ccccccff', pHex = 'ccccccff' }
+        state.backdropShadows.offset = { 100, 0 } -- its shadow at -170..-90, on the wall from -150
+        local img = render(state.physicsWorld)
+        assert.is_true(at(img, -130, -20) < 0.9, 'the part of the shadow from off the screen: ' .. at(img, -130, -20))
+    end)
+
     it('off, nothing', function()
         state.backdropShadows = nil
         assert.are.equal(1, at(render(state.physicsWorld), 0, 10))

@@ -188,8 +188,11 @@ local function silhouettesFor(world, settings, i)
     return silhouettesOf.getLayer(world, i, layer.only)
 end
 
+-- the canvases have a margin round the screen (src/shadow-silhouettes.lua lib.pad): their top left is
+-- -pad, -pad on screen
 local function sendCommon(shader, settings, w, h)
-    local ox, oy = love.graphics.inverseTransformPoint(0, 0)
+    local pad = silhouettesOf.pad()
+    local ox, oy = love.graphics.inverseTransformPoint(-pad, -pad)
     local scale = pixelsPerUnit()
     shader:send('origin', { ox, oy })
     shader:send('screen', { w / scale, h / scale })
@@ -210,14 +213,14 @@ local function castFrom(shader, settings, layer, silhouettes, noGlow)
             shader:send('glow', one.glow)
             shader:send('glowRange', one.glowRange or 800)
             love.graphics.setBlendMode('add')
-            love.graphics.draw(silhouettes, 0, 0)
+            love.graphics.draw(silhouettes, -silhouettesOf.pad(), -silhouettesOf.pad())
             love.graphics.setBlendMode('alpha')
         end
         if strength > 0 then
             shader:send('glowing', 0)
             shader:send('strength', strength)
             shader:send('colour', one.colour or settings.colour or { 0, 0, 0 })
-            love.graphics.draw(silhouettes, 0, 0)
+            love.graphics.draw(silhouettes, -silhouettesOf.pad(), -silhouettesOf.pad())
         end
     end
 end

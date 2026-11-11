@@ -3,7 +3,42 @@
 -- (src/projected-shadows.lua). Drawn once a frame however many use it (LS12: each shadow drawing the world
 -- again cost ~4-5 ms on the phone). main.lua calls newFrame() before the shadows; within a frame the
 -- canvas is drawn again only if the world, the transform or the target's size changed.
+-- With a margin round the screen (lib.pad, screen points): a thing partly off the edge throws its whole
+-- shadow, not one cut straight where the screen ended (Nikki 2026-11-11). As wide as the longest wall
+-- shadow needs this frame, at most PAD_MAX; the cull (src/render/view.lua) reads the canvas, so it widens too.
+-- Who draws it shifts it back by the pad (src/backdrop-shadows.lua, src/projected-shadows.lua).
 local lib = {}
+
+local PAD_MIN, PAD_MAX, PAD_STEP = 64, 384, 64
+local pad = PAD_MIN
+
+-- world units to screen points under the current transform
+local function pointsPerUnit()
+    local x0, y0 = love.graphics.transformPoint(0, 0)
+    local x1, y1 = love.graphics.transformPoint(1, 0)
+    return math.sqrt((x1 - x0) ^ 2 + (y1 - y0) ^ 2)
+end
+
+-- the margin this frame's shadows need: the wall shadows' shift and blur, a bit for the 3D ones
+local function padNeeded()
+    local state = require('src.state')
+    local scale = pointsPerUnit()
+    local need = PAD_MIN
+    local walls = state.backdropShadows
+    if walls then
+        for _, one in ipairs(walls.layers or { walls }) do
+            if one.offset then
+                local reach = math.max(math.abs(one.offset[1]), math.abs(one.offset[2])) + 2 * (one.blur or 8)
+                need = math.max(need, reach * scale)
+            end
+        end
+    end
+    if state.projectedShadows then need = math.max(need, 192) end
+    return math.min(PAD_MAX, math.ceil(need / PAD_STEP) * PAD_STEP)
+end
+
+-- the margin the canvases have now (screen points on each side)
+function lib.pad() return pad end
 
 local canvas
 local key = {}
@@ -39,6 +74,7 @@ local function drawOutlines(world, only)
 end
 
 local function canvasFor(w, h)
+    w, h = w + 2 * pad, h + 2 * pad
     if not canvas or canvas:getWidth() ~= w or canvas:getHeight() ~= h then
         if canvas then canvas:release() end
         canvas = love.graphics.newCanvas(w, h)
@@ -58,24 +94,41 @@ function lib.newFrame()
     key, frameToken = {}, {}
 end
 
--- the silhouettes canvas (the size of the current target, drawn under the current transform) and its size
+-- into a canvas with the margin: the current transform moved by the pad
+local function drawPadded(c, world, only)
+    love.graphics.setCanvas({ c, stencil = true })
+    love.graphics.clear(0, 0, 0, 0)
+    love.graphics.push()
+    -- the same transform one pad further right and down (a camera: a move, a turn, an even scale)
+    local tx, ty = love.graphics.transformPoint(0, 0)
+    local ux, uy = love.graphics.transformPoint(1, 0)
+    local sx = pointsPerUnit()
+    love.graphics.origin()
+    love.graphics.translate(tx + pad, ty + pad)
+    love.graphics.rotate(math.atan2(uy - ty, ux - tx))
+    love.graphics.scale(sx, sx)
+    drawOutlines(world, only)
+    love.graphics.pop()
+end
+
+-- the silhouettes canvas (the current target plus lib.pad() on each side, drawn under the current
+-- transform shifted by the pad: draw it at -pad, -pad) and its size
 function lib.get(world)
     local target = love.graphics.getCanvas()
     local w, h
     if target then w, h = target:getDimensions() else w, h = love.graphics.getDimensions() end
-    local silhouettes = canvasFor(w, h)
     local x0, y0 = love.graphics.transformPoint(0, 0)
     local x1, y1 = love.graphics.transformPoint(1, 1)
     if key.frame == frameToken and key.world == world and key.x0 == x0 and key.y0 == y0 and key.x1 == x1
-        and key.y1 == y1 then
-        return silhouettes, w, h
+        and key.y1 == y1 and canvas then
+        return canvas, canvas:getWidth(), canvas:getHeight()
     end
+    pad = padNeeded()
+    local silhouettes = canvasFor(w, h)
     key = { frame = frameToken, world = world, x0 = x0, y0 = y0, x1 = x1, y1 = y1 }
-    love.graphics.setCanvas({ silhouettes, stencil = true })
-    love.graphics.clear(0, 0, 0, 0)
-    drawOutlines(world, everything)
+    drawPadded(silhouettes, world, everything)
     if target then love.graphics.setCanvas({ target, stencil = true }) else love.graphics.setCanvas() end
-    return silhouettes, w, h
+    return silhouettes, silhouettes:getWidth(), silhouettes:getHeight()
 end
 
 -- one depth's silhouettes (src/projected-shadows.lua layers): only the bodies `only` says yes to, in a
@@ -85,6 +138,7 @@ function lib.getLayer(world, name, only)
     local target = love.graphics.getCanvas()
     local w, h
     if target then w, h = target:getDimensions() else w, h = love.graphics.getDimensions() end
+    w, h = w + 2 * pad, h + 2 * pad -- the same margin as the shared one (lib.get ran first this frame)
     local c = layerCanvases[name]
     if not c or c:getWidth() ~= w or c:getHeight() ~= h then
         if c then c:release() end
@@ -98,9 +152,7 @@ function lib.getLayer(world, name, only)
         return c, w, h
     end
     layerKeys[name] = { frame = frameToken, world = world, x0 = x0, y0 = y0, x1 = x1, y1 = y1 }
-    love.graphics.setCanvas({ c, stencil = true })
-    love.graphics.clear(0, 0, 0, 0)
-    drawOutlines(world, only)
+    drawPadded(c, world, only)
     if target then love.graphics.setCanvas({ target, stencil = true }) else love.graphics.setCanvas() end
     return c, w, h
 end
