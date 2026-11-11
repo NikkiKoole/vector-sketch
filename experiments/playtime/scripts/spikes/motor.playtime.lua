@@ -258,7 +258,7 @@ function s.drawUI()
     end)
     -- the weighty walk (MIPO-MOTOR MM8), on the right
     local sw = love.graphics.getDimensions()
-    local rows2 = 6
+    local rows2 = 7
     local h2 = BH * rows2 + pad * (rows2 + 1) + 24
     local x1, y1 = sw - w - 90, sh - h2 - 20 -- room for the labels past the sliders
     ui.panel(x1, y1, w, h2, '•• weight ••', function()
@@ -268,6 +268,12 @@ function s.drawUI()
         local x, y = ui.nextLayoutPosition(layout, bw, BH)
         if ui.button(x, y, bw, 'weighty walk: ' .. (walk.weighty and 'on' or 'off')) then
             walk.weighty = not walk.weighty
+        end
+        x, y = ui.nextLayoutPosition(layout, bw, BH)
+        local half = (bw - pad) / 2
+        if ui.button(x, y, half, 'poses: ' .. (walk.keyed and 'keyed' or 'sine')) then walk.keyed = not walk.keyed end
+        if ui.button(x + half + pad, y, half, 'motors: ' .. (walk.legMotors and 'on' or 'off')) then
+            walk.legMotors = not walk.legMotors
         end
         local v = slider(layout, bw, 'give', 'knee give (deg)', 0, 60, walk.give, 1)
         if v then walk.give = v end

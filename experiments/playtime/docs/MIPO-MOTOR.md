@@ -58,4 +58,15 @@ spread over every part by mass (`pushAll`: no different from all on the torso).
   more rhythmic. A gripping standing foot (`stanceGrip` 2) with a gentle push (`driveAccel` 1) is
   the calmest (71% of the bounce in step, tilt 10 against 15) but a third slower; the legs alone
   hardly move it (0.7 against 3.6 legs). Next: firmer, keyed leg poses while walking, or the bob drawn.
+  Keyed + motors (Nikki: "lets try 1 but i might want both", 2026-11-12): the legs go through keyed
+  poses (`WALK_KEYS`: contact, down, passing, push-off, toe-off, the lifted swing, reaching; a smooth
+  curve through them, the spacing the timing) and hip and knee motors hold them against the body's
+  weight while it walks (`legMotors`; the KEEP_ANGLE muscles set spin once a frame between substeps,
+  so poses smeared; a motor is solved with the joint, as mipo-stance's knees). With the foot gripping
+  (`stanceGrip` 2) and a gentler push (`driveAccel` 1.5, now the defaults): 77% of the bounce in step
+  (sine 35%), 4.5 legs against 3.6 (the legs carry it now), tilt 18; the tall seed 42 39° (was 56).
+  Stronger motors (0.9-1.2) bob deeper but tilt more (22-26). The in-step bob is still small (±2-4%
+  of a leg). Weight panel: poses keyed / sine, motors on / off.
+- [ ] **MM9. The bob drawn** too, if the physical one isn't enough (Nikki: "i might want both"):
+  torso and head drawn lower at the down pose and a little behind.
 - [ ] **MM7. On the phone** (`./playtime.sh bench device`): a few Mipos wandering.

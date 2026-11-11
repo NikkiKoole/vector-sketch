@@ -59,10 +59,11 @@ local SWITCHES = {
     turnBlink = 0.5, -- the chance a keyed head turn blinks as it sets off (0: never, 1: always)
     relaxAfter = 3,  -- seconds standing before a turned Mipo turns back home (0: it stays turned)
     -- walking by itself (lib.drive, docs/MIPO-MOTOR.md)
-    driveAccel = 4,    -- leg lengths a second^2: the most its feet speed it up or slow it down
+    driveAccel = 1.5,  -- leg lengths a second^2: the most its feet speed it up or slow it down (keyed legs
+                       -- with gripping feet carry it: 1.5 walked furthest and in step, 2026-11-12; was 4)
     turningPace = 0.3, -- of its speed while it still faces the other way
     hopHeight = 0.35,  -- leg lengths a hop lifts it
-    brakeFor = 0.6,    -- seconds its feet brake after it's told to stop
+    brakeFor = 1.2,    -- seconds its feet brake after it's told to stop
     pushAll = false,   -- the push on every part (by its mass) instead of all on the torso (tried: the same)
     upright = 0,       -- a torso muscle while it goes by itself (KEEP_ANGLE kp; tried 20: rocked more)
     walkLean = 6,      -- degrees the torso muscle leans it the way it goes
@@ -74,7 +75,12 @@ local SWITCHES = {
     give = 22,         -- degrees the standing knee bends at the down pose
     pulse = 0.6,       -- how much the push surges at push-off and eases between (0: an even push)
     armSwing = 25,     -- degrees each arm swings, with the other side's leg
-    stanceGrip = 0.5,  -- the standing foot's grip walking by itself (gripping, the legs move it, not the push)
+    stanceGrip = 2,    -- the standing foot's grip walking by itself (gripping, the legs move it, not the push)
+    keyed = true,      -- weighty: the legs go through keyed poses (WALK_KEYS) instead of a sine
+    legMotors = true,  -- weighty: hip and knee motors hold the poses against the body's weight
+    hipStrength = 0.6, -- shares of the Mipo's weight held at a thigh's length (as mipo-stance's knees)
+    kneeStrength = 0.5,
+    motorGain = 12,    -- motor speed (rad/s) per radian off the pose
     hopRest = 0.12,    -- seconds on the ground between hops
 }
 for k, v in pairs(SWITCHES) do lib[k] = v end
@@ -610,6 +616,94 @@ local function legLength(inst)
     return math.sqrt((ax - hx) ^ 2 + (ay - hy) ^ 2)
 end
 
+local TWO_PI = 2 * math.pi
+
+-- The walk's keys (MIPO-MOTOR MM8, Nikki: "as in animation"): one leg's cycle from its contact (t 0..1;
+-- the other leg half a cycle later), the thigh forward as a share of the stride's swing (- is back),
+-- the knee's bend in degrees ('give': lib.give). Through them a smooth curve (Catmull-Rom), so it moves
+-- through the poses without stopping at each; the spacing is the timing.
+local WALK_KEYS = {
+    { t = 0.00, fwd = 1.00, knee = 5 },      -- contact: the heel down, the leg reaching
+    { t = 0.12, fwd = 0.55, knee = 'give' }, -- down: the weight lands, the knee gives
+    { t = 0.28, fwd = 0.00, knee = 2 },      -- passing: straight under the body, the up
+    { t = 0.42, fwd = -0.75, knee = 0 },     -- push-off
+    { t = 0.52, fwd = -1.00, knee = 25 },    -- toe-off
+    { t = 0.68, fwd = -0.20, knee = 75 },    -- the swing: the foot lifted, passing
+    { t = 0.86, fwd = 0.95, knee = 25 },     -- reaching for the next contact
+}
+
+local function keyValue(key, field)
+    local v = key[field]
+    if v == 'give' then return lib.give end
+    return v
+end
+
+-- the keyed pose at u (0..1 from contact): thigh forward share, knee bend (degrees)
+local function walkPose(u)
+    local n = #WALK_KEYS
+    local i = n
+    for k = 1, n do
+        if WALK_KEYS[k].t <= u then i = k end
+    end
+    local t1 = WALK_KEYS[i].t
+    local t2 = i < n and WALK_KEYS[i + 1].t or 1
+    local s = (u - t1) / math.max(t2 - t1, 1e-6)
+    local function at(k) return WALK_KEYS[(k - 1) % n + 1] end
+    local p0, p1, p2, p3 = at(i - 1), at(i), at(i + 1), at(i + 2)
+    local function curve(field)
+        local a, b, c, d = keyValue(p0, field), keyValue(p1, field), keyValue(p2, field), keyValue(p3, field)
+        return 0.5 * (2 * b + (c - a) * s + (2 * a - 5 * b + 4 * c - d) * s * s + (3 * b - a - 3 * c + d) * s * s * s)
+    end
+    return curve('fwd'), curve('knee')
+end
+
+-- the revolute joint that hangs a part from its parent
+local function hangJoint(inst, name)
+    local body = partBody(inst, name)
+    if not body then return nil end
+    for _, joint in ipairs(body:getJoints()) do
+        local _, b = joint:getBodies()
+        if b == body and joint:getType() == 'revolute' then return joint end
+    end
+end
+
+-- the longest reach of a body's collision shapes (a thigh's length)
+local function reach(body)
+    local x1, y1, x2, y2 = math.huge, math.huge, -math.huge, -math.huge
+    for _, fixture in ipairs(body:getFixtures()) do
+        if not fixture:getUserData() then
+            local tx, ty, bx, by = fixture:getBoundingBox(1)
+            x1, y1, x2, y2 = math.min(x1, tx), math.min(y1, ty), math.max(x2, bx), math.max(y2, by)
+        end
+    end
+    if x1 == math.huge then return 0 end
+    return math.max(x2 - x1, y2 - y1)
+end
+
+-- hip and knee motors toward the legs' aims (thigh and shin, degrees, world), or (aims nil) off
+local function legMotors(inst, i, thighAim, shinAim)
+    local leg = LEG_PAIRS[i]
+    local hip, knee = hangJoint(inst, leg[1]), hangJoint(inst, leg[2])
+    if not thighAim then
+        if hip and hip:isMotorEnabled() then hip:setMotorEnabled(false) end
+        if knee and knee:isMotorEnabled() then knee:setMotorEnabled(false) end
+        return
+    end
+    local thigh, shin = partBody(inst, leg[1]), partBody(inst, leg[2])
+    if not (thigh and shin and hip and knee) then return end
+    local _, gy = thigh:getWorld():getGravity()
+    local weight = mipoRegistry.totalMass(inst) * math.abs(gy) * reach(thigh)
+    local wrap = function(a) return (a + math.pi) % TWO_PI - math.pi end
+    local hipErr = wrap(math.rad(thighAim) - thigh:getAngle())
+    local kneeErr = wrap((math.rad(shinAim) - math.rad(thighAim)) - (shin:getAngle() - thigh:getAngle()))
+    hip:setMotorEnabled(true)
+    hip:setMotorSpeed(lib.motorGain * hipErr)
+    hip:setMaxMotorTorque(lib.hipStrength * weight)
+    knee:setMotorEnabled(true)
+    knee:setMotorSpeed(lib.motorGain * kneeErr)
+    knee:setMaxMotorTorque(lib.kneeStrength * weight)
+end
+
 -- the torso held upright (leaning lib.walkLean degrees the way it faces, face 1 / -1) while it goes by
 -- itself; face nil: the torso's muscle as it was before
 local function uprightTorso(inst, face)
@@ -635,6 +729,11 @@ end
 local function stopWalking(inst)
     uprightTorso(inst, nil)
     inst._armSwing = nil
+    if inst._legMotorsOn then
+        inst._legMotorsOn = nil
+        legMotors(inst, 1, nil)
+        legMotors(inst, 2, nil)
+    end
     if not inst._walking then return end
     inst._walking = false
     setLegTargets(inst, 0, 0)
@@ -652,8 +751,6 @@ end
 
 -- the legs' step: thighs swing in turn, the knee bends on the swing forward. speed: world units a
 -- second; face: 1 right, -1 left; side: it faces a side (feet held flat)
-local TWO_PI = 2 * math.pi
-
 -- weighty (lib.weighty, walking by itself): returns how much a foot is pushing off now (0..1)
 local function stepLegs(inst, dt, speed, face, side, legLen, weighty)
     -- one step (half a cycle) covers a stride; faster than MAX_STEPS, the strides grow
@@ -661,14 +758,30 @@ local function stepLegs(inst, dt, speed, face, side, legLen, weighty)
     local swing = math.min(MAX_STRIDE, math.deg(math.asin(math.min(1, stride / (2 * legLen)))))
     inst._gait = (inst._gait or 0) + speed * dt / stride * math.pi
     local swinging, forward, pushOff = {}, {}, 0
+    local keyed = weighty and lib.keyed
     for i, leg in ipairs(LEG_PAIRS) do
         local phase = inst._gait + (i - 1) * math.pi
         swinging[i] = math.cos(phase) > 0
         forward[i] = math.sin(phase)
-        setGrip(inst, FEET[i], swinging[i] and SWING_GRIP or (weighty and lib.stanceGrip or STANCE_GRIP))
         local thigh = -face * math.sin(phase) * swing              -- forward is the way it faces
         local shin = thigh + face * math.max(0, math.cos(phase)) * KNEE -- bent on the way forward
-        if weighty and not swinging[i] then
+        if keyed then
+            -- the sine's contact (thigh furthest forward) is at phase pi/2
+            local u = ((phase - math.pi / 2) % TWO_PI) / TWO_PI
+            local fwd, bend = walkPose(u)
+            swinging[i], forward[i] = u >= 0.5, fwd
+            thigh = -face * fwd * swing
+            shin = thigh + face * bend
+            if u > 0.3 and u < 0.52 then pushOff = math.max(pushOff, math.sin(math.pi * (u - 0.3) / 0.22)) end
+        end
+        setGrip(inst, FEET[i], swinging[i] and SWING_GRIP or (weighty and lib.stanceGrip or STANCE_GRIP))
+        if keyed and lib.legMotors then
+            legMotors(inst, i, thigh, shin)
+            inst._legMotorsOn = true
+        elseif inst._legMotorsOn then
+            legMotors(inst, i, nil)
+        end
+        if weighty and not keyed and not swinging[i] then
             -- through the stance (u 0: contact, thigh forward .. 1: push-off, thigh back): the knee
             -- gives to the down pose (u 0.25), straight again by passing (0.5), the up pose
             local u = ((phase - math.pi / 2) % TWO_PI) / math.pi
