@@ -1,6 +1,6 @@
 # Drawing parts live instead of baking (OMP without the bake)
 
-status: idea
+status: active
 
 Nikki (2026-11-11): "it looks like we might go in a direction where the omp stuff with patches will not be
 the greatest route, i believe not doing that also would help us in some optimization iirc, can you check".
@@ -42,9 +42,28 @@ transform and patches mixed in a shader as it draws.
 
 ## Steps
 
-- [ ] **OL1. The bench first**: 20 Mipos on the iPhone SE 2, baked against live (a shader compositing
+- [x] **OL1. The bench first**: 20 Mipos on the iPhone SE 2, baked against live (a shader compositing
   outline + mask + pattern + patches per part): frame time, draw ms, memory, and the hitch of a litter
-  appearing. omp-bench or a playtime scene; the phone on the cable (`./playtime.sh bench device`).
+  appearing. Done 2026-11-11 in `experiments/omp-bench` (reworked: baked / live, each with and without
+  two torso patches; the crowd scene's 20 Mipos, 479 parts, drawn as quads; on the phone with
+  `LOVE_DIR=../omp-bench native/ios/device.sh`). Results `omp-bench/results/live-iOS.md`, `live-OSX.md`.
+
+  | iPhone SE 2 | MB a Mipo | a Mipo appears | litter of 5 | draw ms (CPU, 20 Mipos) | frame | Mipos in 60 fps |
+  |---|---|---|---|---|---|---|
+  | baked | 1.32 | 41 ms | 238 ms | 3.9 (5.3 with patches) | 16.7 | 260 (230) |
+  | live | 0 | 0.15 ms | 1 ms | 6.0 (5.1 with patches) | 16.7 | 90 (80) |
+
+  - **The hitch is the big one**: on the phone a Mipo's bake is 41 ms, 2-3 lost frames each; a litter of
+    5 in one frame is a quarter of a second. Live: 1 ms.
+  - **Memory**: 1.3 MB a Mipo gone (26 MB for 20). But live wants mipmaps on the sources (without them the
+    grain shimmers at the game's zoom): 50 -> 64 MB shared. Break-even at ~11 Mipos; OL3's r8 masks matter more then.
+  - **Per frame live costs ~1-2 ms more CPU** at 20 Mipos (runs vary by ~1 ms: patches made baked
+    slower and live faster, which is noise), from 9 `shader:send`s a part one by one, the simplest way. Both hold 60 fps at 20;
+    live's limit is 80-90 Mipos against 230-260, still 4x the room's design limit (25). Cheaper sends
+    (one array send, or the colours as vertex attributes) not tried.
+  - **Looks**: the same picture (diff 0.6/255 at the game zoom), sharper close up (11% of pixels differ
+    there, the bake's half size); patches land where the bake puts them.
+  - Mac M1 for comparison: bake 21 ms a Mipo, live +1.2 ms draw, 150 Mipos in 60 fps against >300.
 - [ ] **OL2. Decide**, with Nikki: if live wins or ties, the plan to switch (the Mipo editor's thumbnails,
   saves, the materials and lights that read the baked picture today, the spine skin and ribbons).
 - [ ] **OL3. r8 masks** for the sources (a quarter of their memory), either way.

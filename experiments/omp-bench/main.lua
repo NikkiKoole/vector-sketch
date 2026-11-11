@@ -1,97 +1,96 @@
--- OMP bench: what Playtime's baked part textures (outline + mask + pattern, "OMP")
--- cost in texture memory, bake time and frame time, per option.
+-- OMP bench: baked part pictures against drawing them live (docs/OMP-LIVE.md OL1).
 --
--- It uses Playtime's own bake code (src/ is a symlink to ../playtime/src) and the
--- real Mipo parts from scripts/dollhouse.playtime.json, so the baseline is honest.
+-- Baked is what Playtime does today: each part's outline + mask + pattern (+ patches) flattened
+-- once into its own picture (src/render/omp-bake.lua makeTexturedCanvas, half size), drawn as that.
+-- Live draws the shared source pictures straight, the same layers mixed in a shader per draw:
+-- nothing per Mipo in memory, nothing to bake, a few uniforms sent per part.
 --
---   love .          interactive: 1-4 picks an option, z toggles game/close zoom
---   love . --auto   runs every option, writes results/ and quits
+-- The parts are the 20 Mipos of scripts/tests/crowd.playtime.json (the design limit per room),
+-- drawn as quads at the dollhouse's zoom: ribbons (limbs, hair) as quads too, so the frame test is
+-- a load test, not a pose. '+patches' gives each Mipo's torso two skin patches (the DNA's default
+-- patch1/patch2), the most any Mipo has today (randomize clears them).
 --
--- Options (EXPERIMENTS-HARVEST follow-up, 2026-10-29):
---   baseline    what Playtime does today: bake at full source size, old images left to the GC
---   shrink-1.5  bake at 1/1.5 of the source size (box2d-draw-textured's shrinkFactor)
---   shrink-2    bake at half size
---   release     baseline, but :release() the old image when a part is re-baked
+--   love .          look for yourself: 1-4 option, z zoom
+--   love . --auto   every option, writes results/live-<os>.md and quits (~1 min)
+--   on the phone:   LOVE_DIR=../omp-bench native/ios/device.sh (from ../playtime): runs --auto by
+--                   itself, the table on screen and in the save folder (omp-live-results.md)
+--
+-- The old shrink/release options (results/results.md, 2026-10-29) are in git history: shrink 2
+-- and release went into Playtime.
 
--- an unattended run must not sit on LÖVE's error screen
+if jit then jit.off() end -- luacheck: ignore 113 (Playtime runs with the JIT off, iOS has none)
+
+local IOS = love.system.getOS() == 'iOS'
+local AUTO = IOS
 for _, a in ipairs(arg or {}) do
-    if a == '--auto' then
-        love.errorhandler = function(msg)
-            print(debug.traceback('Error: ' .. tostring(msg), 3))
-        end
+    if a == '--auto' then AUTO = true end
+end
+if AUTO then -- an unattended run must not sit on LÖVE's error screen
+    love.errorhandler = function(msg)
+        print(debug.traceback('Error: ' .. tostring(msg), 3))
     end
 end
 
-local textured = require('src.physics.box2d-draw-textured')
+local ompBake = require('src.render.omp-bake')
+local color = require('src.color')
 local json = require('vendor.dkjson')
 
-local SCENE = 'scripts/dollhouse.playtime.json'
+local SCENE = 'scripts/tests/crowd.playtime.json'
 local CAMERA_SCALE = 0.35 -- the dollhouse's saved camera zoom
-local CLOSE_SCALE = 1.0 -- a close look, for judging sharpness
-local MIPO_COUNTS = { 5, 10, 30, 60 }
-local FRAME_TEST_MIPOS = 30
+local CLOSE_SCALE = 1.0
 local FRAME_TEST_FRAMES = 600
-local RANDOMIZES = 25
-local GC_EVERY = 32 -- main.lua: one full collect after this many new textures
+local LITTER = 5          -- Mipos appearing at once (a litter, a randomize of a few)
+local RAMP_STEP, RAMP_FRAMES, RAMP_MAX = 10, 60, 300
+local RAMP_BUDGET_MS = 17.5 -- a frame later than this has missed 60 fps
+local MB = 1024 * 1024
+local PATTERN_WRAP = { wrapX = 'mirroredrepeat', wrapY = 'mirroredrepeat' }
 
-local RUN_SUFFIX = '' -- results-<N>.md for a --mipos=N run, so the default results stay
--- --mipos=N: measure memory up to N Mipos and draw N in the frame test
-for _, a in ipairs(arg or {}) do
-    local n = tonumber(a:match('^%-%-mipos=(%d+)$'))
-    if n then
-        MIPO_COUNTS = { 5, math.floor(n / 4), math.floor(n / 2), n }
-        FRAME_TEST_MIPOS = n
-        RUN_SUFFIX = '-' .. n
-    end
-end
-
-local OPTIONS = {
-    { name = 'baseline',   shrink = 1,   release = false },
-    { name = 'shrink-1.5', shrink = 1.5, release = false },
-    { name = 'shrink-2',   shrink = 2,   release = false },
-    { name = 'release',    shrink = 1,   release = true },
+-- the DNA's default skin patches (src/mipo-dna.lua humanoid torso skin)
+local PATCHES = {
+    { bgURL = 'mipo/patch/patch-02.png', fgURL = 'mipo/patch/patch-02-mask.png', pURL = 'type2t.png',
+        bgHex = '020202ff', fgHex = 'd94f3dff', pHex = '3d6bd9ff', tx = -0.33, ty = 0 },
+    { bgURL = 'mipo/patch/patch-01.png', fgURL = 'mipo/patch/patch-01-mask.png', pURL = 'type2t.png',
+        bgHex = '020202ff', fgHex = 'f2c94cff', pHex = '4cf28aff', tx = 0.33, ty = 0 },
 }
 
-local MB = 1024 * 1024
+local OPTIONS = {
+    { name = 'baked',          live = false, patches = false },
+    { name = 'baked+patches',  live = false, patches = true },
+    { name = 'live',           live = true,  patches = false },
+    { name = 'live+patches',   live = true,  patches = true },
+}
 
--- Source images, loaded once and shared, with the same rules as getLoveImage
--- in box2d-draw-textured (a missing file or a folder gives nil).
-local sourceCache = {}
-local function getSource(path)
-    if sourceCache[path] == nil then
-        local info = love.filesystem.getInfo(path)
-        sourceCache[path] = (info and info.type == 'file') and love.graphics.newImage(path) or false
-    end
-    return sourceCache[path] or nil
+---------------------------------------------------------------- sources
+
+-- Baked: the pictures through Playtime's own cache (no mipmaps, as in the game).
+local function bakedSource(url, isPattern)
+    if not url or url == '' then return nil end
+    return (ompBake.getLoveImage(url, isPattern and PATTERN_WRAP or nil))
 end
 
-local tex1, lineFallback, maskFallback
-local mipos = {}        -- { {extra, ...}, ... } grouped by zGroupOffset, from the scene
-local results = {}      -- one row per option
-local runner            -- the --auto coroutine
-local view = { baked = {}, scale = CAMERA_SCALE, layout = 'scatter' }
-local hud = ''
-local lastFrameTime = 0
+-- Live: the same files with mipmaps. Drawn at the crowd's zoom a source carries ~4.5 of its pixels
+-- per screen pixel; without mipmaps the grain shimmers. (The bake hides that by halving.)
+local liveCache = {}
+local function liveSource(url, isPattern)
+    if not url or url == '' then return nil end
+    if liveCache[url] == nil then
+        local info = love.filesystem.getInfo(url)
+        local img = false
+        if info and info.type == 'file' then
+            img = love.graphics.newImage(url, { mipmaps = true })
+            img:setMipmapFilter('linear')
+            if isPattern then img:setWrap('mirroredrepeat', 'mirroredrepeat') end
+        end
+        liveCache[url] = img
+    end
+    return liveCache[url] or nil
+end
 
 local function texMB()
     return love.graphics.getStats().texturememory / MB
 end
 
-local function sorted(list)
-    local copy = {}
-    for i = 1, #list do copy[i] = list[i] end
-    table.sort(copy)
-    return copy
-end
-
-local function percentile(list, p)
-    local copy = sorted(list)
-    return copy[math.max(1, math.min(#copy, math.ceil(#copy * p)))]
-end
-
-local function median(list)
-    return percentile(list, 0.5)
-end
+---------------------------------------------------------------- the scene's Mipos
 
 local function bboxSize(vertices)
     local minX, minY, maxX, maxY = math.huge, math.huge, -math.huge, -math.huge
@@ -102,15 +101,13 @@ local function bboxSize(vertices)
     return maxX - minX, maxY - minY
 end
 
+-- { { part, part, ... }, ... } a list per Mipo; a part is { main = layer, w, h, torso }
 local function loadMipos()
-    local contents = love.filesystem.read(SCENE) -- read's second return (size) would be decode's start position
-    local data = json.decode(contents, 1, nil)
+    local data = json.decode((love.filesystem.read(SCENE)), 1, nil)
     local groups, order = {}, {}
     for _, body in ipairs(data.bodies) do
         for _, fixture in ipairs(body.fixtures or {}) do
             local extra = fixture.userData and fixture.userData.extra
-            -- parts without vertices are connected-texture ribbons (limbs, hair, neck skin):
-            -- baked the same way, drawn along a curve in Playtime
             if extra and extra.OMP and extra.main and extra.main.bgURL and extra.main.bgURL ~= '' then
                 local key = extra.zGroupOffset or 0
                 if not groups[key] then
@@ -122,164 +119,336 @@ local function loadMipos()
         end
     end
     table.sort(order)
-    local result = {}
+    local mipos = {}
     for _, key in ipairs(order) do
-        if #groups[key] >= 5 then table.insert(result, groups[key]) end -- props aren't Mipos
+        if #groups[key] >= 5 then -- props aren't Mipos
+            local parts, biggest = {}, nil
+            for _, extra in ipairs(groups[key]) do
+                local outline = bakedSource('textures/' .. extra.main.bgURL)
+                if outline then
+                    local w, h
+                    if extra.vertices then w, h = bboxSize(extra.vertices) else w, h = outline:getDimensions() end
+                    local part = { main = extra.main, w = w, h = h }
+                    parts[#parts + 1] = part
+                    -- the torso: the biggest part with a fill that isn't a ribbon
+                    if extra.vertices and extra.main.fgURL and extra.main.fgURL ~= ''
+                        and (not biggest or w * h > biggest.w * biggest.h) then
+                        biggest = part
+                    end
+                end
+            end
+            if biggest then biggest.torso = true end
+            mipos[#mipos + 1] = parts
+        end
     end
-    return result
+    return mipos
 end
 
--- A copy of a part's main layer with other colours: an extra Mipo for the counts.
-local rng = love.math.newRandomGenerator(42)
-local function randomHex()
-    return string.format('%02X%02X%02XFF', rng:random(0, 255), rng:random(0, 255), rng:random(0, 255))
+---------------------------------------------------------------- baked (today)
+
+local function rgbOf(hex)
+    local r, g, b, a = color.hexToColor(hex)
+    return { r, g, b }, a
 end
 
-local function recoloured(main)
-    local copy = {}
-    for k, v in pairs(main) do copy[k] = v end
-    copy.fgHex, copy.pHex = randomHex(), randomHex()
-    copy.cached = nil
-    return copy
-end
-
--- Same steps as makePatch in box2d-draw-textured.
+-- the same steps as makePatch in omp-bake
 local function bakePatch(p)
-    if not (p and p.bgURL) then return nil end
-    local outline = getSource('textures/' .. p.bgURL)
-    if not outline then return nil end
-    local olr, olg, olb, ola = textured.hexToColor(p.bgHex)
-    local mr, mg, mb, ma = textured.hexToColor(p.fgHex)
-    local pr, pg, pb, pa = textured.hexToColor(p.pHex)
-    local imgData = textured.makeTexturedCanvas(
-        outline, getSource('textures/' .. (p.fgURL or '')),
-        { mr, mg, mb }, ma * 5,
-        getSource('textures/pat/' .. (p.pURL or '')) or tex1, { pr, pg, pb }, pa * 5,
-        p.pr or 0, p.psx or 1, p.psy or 1, p.ptx or 0, p.pty or 0,
-        { olr, olg, olb }, ola * 5, p.fx or 1, p.fy or 1)
-    return {
-        img = love.graphics.newImage(imgData), imgData = imgData,
-        tint = p.tint or 'ffffff', tx = p.tx, ty = p.ty, sx = p.sx, sy = p.sy, r = p.r,
-    }
+    local outline = bakedSource('textures/' .. p.bgURL)
+    local fill, fillA = rgbOf(p.fgHex)
+    local pat, patA = rgbOf(p.pHex)
+    local line, lineA = rgbOf(p.bgHex)
+    local imgData = ompBake.makeTexturedCanvas(outline, bakedSource('textures/' .. p.fgURL),
+        fill, fillA, bakedSource('textures/pat/' .. p.pURL, true), pat, patA,
+        0, 1, 1, 0, 0, line, lineA, 1, 1)
+    local img = love.graphics.newImage(imgData)
+    imgData:release()
+    return { img = img, tint = 'ffffff', tx = p.tx, ty = p.ty }
 end
 
--- Same steps as makeCombinedImages in box2d-draw-textured, for one part.
-local function bakePart(extra, main)
-    if not main.cached then textured.makeCached(main) end
+-- the same steps as makeCombinedImages in omp-bake, for one part
+local tex1
+local function bakePart(part, withPatches)
+    local main = part.main
+    if not main.cached then ompBake.makeCached(main) end
     local c = main.cached
-    local patches = {}
-    for i, name in ipairs({ 'patch1', 'patch2', 'patch3' }) do
-        patches[i] = bakePatch(extra[name]) or false
+    local patches = nil
+    if withPatches and part.torso then
+        patches = {}
+        for i, p in ipairs(PATCHES) do patches[i] = bakePatch(p) end
     end
     local hasFg = main.fgURL and main.fgURL ~= ''
-    local imgData = textured.makeTexturedCanvas(
-        getSource('textures/' .. main.bgURL) or lineFallback,
-        hasFg and (getSource('textures/' .. main.fgURL) or maskFallback) or nil,
-        c.fgRGB, c.fgA * 5,
-        getSource('textures/pat/' .. (main.pURL or '')) or tex1, c.pRGB, c.pA * 5,
+    local imgData = ompBake.makeTexturedCanvas(
+        bakedSource('textures/' .. main.bgURL), hasFg and bakedSource('textures/' .. main.fgURL) or nil,
+        c.fgRGB, c.fgA, bakedSource('textures/pat/' .. (main.pURL or ''), true) or tex1, c.pRGB, c.pA,
         main.pr or 0, main.psx or 1, main.psy or 1, main.ptx or 0, main.pty or 0,
-        c.bgRGB, c.bgA * 5, main.fx or 1, main.fy or 1, patches)
-    -- a ribbon's on-screen size depends on its joints; draw it at its source size (1 px = 1 unit)
-    local w, h
-    if extra.vertices then
-        w, h = bboxSize(extra.vertices)
-    else
-        local source = getSource('textures/' .. main.bgURL) or lineFallback
-        w, h = source:getDimensions()
-    end
-    return { img = love.graphics.newImage(imgData), imgData = imgData, patches = patches, w = w, h = h }
+        c.bgRGB, c.bgA, main.fx or 1, main.fy or 1, patches)
+    local img = love.graphics.newImage(imgData)
+    imgData:release()
+    if patches then for _, p in ipairs(patches) do p.img:release() end end
+    return { img = img, w = part.w, h = part.h }
 end
 
-local function releaseBaked(baked)
-    baked.img:release()
-    baked.imgData:release()
-    for _, patch in ipairs(baked.patches) do
-        if patch then
-            patch.img:release()
-            patch.imgData:release()
+---------------------------------------------------------------- live
+
+-- One pass of what makeTexturedCanvas draws onto its canvas: the fill (mask, coloured, pattern
+-- mixed in) over the outline colour at alpha 0, patches into the colour only (the bake's
+-- setColorMask), the outline on top. src = the source's uv with the part's flip (mask, pattern
+-- and outline are drawn flipped in the bake, patches aren't).
+local LIVE_CODE = [[
+uniform Image maskTex;
+uniform Image patTex;
+uniform vec4 fillColor;  // rgb, alpha (fgHex)
+uniform vec4 patColor;   // rgb, alpha (pHex)
+uniform vec4 lineColor;  // rgb, alpha (bgHex)
+uniform mat2 uvTransform;
+uniform vec2 uvTranslation;
+uniform vec2 flip;       // 1 where the part is flipped on that axis
+uniform float hasMask;
+#ifdef PATCHES
+uniform Image pLine[2];
+uniform Image pMask[2];
+uniform Image pPat[2];
+uniform vec3 pRow1[2];   // the part's uv -> the patch's uv (affine, two rows)
+uniform vec3 pRow2[2];
+uniform vec4 pFill[2];
+uniform vec4 pPatColor[2];
+uniform vec4 pLineColor[2];
+uniform float patchCount;
+
+vec4 patchColor(Image line, Image mask, Image pat, vec2 puv, vec4 fill, vec4 pc, vec4 lc) {
+    if (puv.x < 0.0 || puv.y < 0.0 || puv.x > 1.0 || puv.y > 1.0) return vec4(0.0);
+    float m = Texel(mask, puv).r * fill.a;
+    float pa = Texel(pat, puv).a * pc.a;
+    vec3 rgb = mix(lc.rgb, mix(fill.rgb, pc.rgb, pa), m);
+    vec4 lt = Texel(line, puv);
+    float la = lt.a * lc.a;
+    return vec4(mix(rgb, lc.rgb * lt.rgb, la), la + m * (1.0 - la));
+}
+#endif
+
+vec4 effect(vec4 vcolor, Image outline, vec2 uv, vec2 fc) {
+    vec2 src = mix(uv, 1.0 - uv, flip);
+    float m = hasMask * Texel(maskTex, src).r * fillColor.a;
+    float pa = Texel(patTex, src * uvTransform + uvTranslation).a * patColor.a;
+    vec3 rgb = mix(lineColor.rgb, mix(fillColor.rgb, patColor.rgb, pa), m);
+    float a = m;
+#ifdef PATCHES
+    if (patchCount > 0.5) {
+        vec3 u = vec3(uv, 1.0);
+        vec4 p = patchColor(pLine[0], pMask[0], pPat[0], vec2(dot(pRow1[0], u), dot(pRow2[0], u)),
+            pFill[0], pPatColor[0], pLineColor[0]);
+        rgb = mix(rgb, p.rgb, p.a);
+        p = patchColor(pLine[1], pMask[1], pPat[1], vec2(dot(pRow1[1], u), dot(pRow2[1], u)),
+            pFill[1], pPatColor[1], pLineColor[1]);
+        rgb = mix(rgb, p.rgb, p.a);
+    }
+#endif
+    vec4 lt = Texel(outline, src);
+    float la = lt.a * lineColor.a;
+    rgb = mix(rgb, lineColor.rgb * lt.rgb, la);
+    a = la + a * (1.0 - la);
+    return vec4(rgb, a) * vcolor;
+}
+]]
+local liveShader, livePatchShader
+local blackPixel
+
+local function vec4Of(hex)
+    local r, g, b, a = color.hexToColor(hex)
+    return { r, g, b, a }
+end
+
+-- the part's uv -> a patch's uv, as makeTexturedCanvas places a patch on the canvas
+local function patchRows(lw, lh, pw, ph, p)
+    local t = love.math.newTransform()
+    t:translate(lw / 2 + (p.tx or 0) * pw, lh / 2 + (p.ty or 0) * ph)
+    t:rotate((p.r or 0) * math.pi * 2 / 16)
+    t:scale(p.sx or 1, p.sy or 1)
+    t:translate(-pw / 2, -ph / 2) -- patch px -> part px
+    t = t:inverse()               -- part px -> patch px
+    local m = love.math.newTransform():scale(1 / pw, 1 / ph):apply(t):apply(love.math.newTransform():scale(lw, lh))
+    local a, b, _, c, d, e, _, f = m:getMatrix()
+    return { a, b, c }, { d, e, f }
+end
+
+-- What a part sends each draw, worked out once (a colour change would just change these)
+local function prepareLive(part, withPatches)
+    local main = part.main
+    local outline = liveSource('textures/' .. main.bgURL)
+    local mask = liveSource('textures/' .. (main.fgURL or ''))
+    local pattern = liveSource('textures/pat/' .. (main.pURL or ''), true) or liveSource('textures/pat/type0.png', true)
+    local t = love.math.newTransform():rotate(main.pr or 0):scale(main.psx or 1, main.psy or 1)
+    local m1, m2, _, _, m5, m6 = t:getMatrix()
+    local lw, lh = outline:getDimensions()
+    local live = {
+        outline = outline, w = part.w, h = part.h, lw = lw, lh = lh,
+        mask = mask or blackPixel, pattern = pattern, hasMask = mask and 1 or 0,
+        fill = vec4Of(main.fgHex), pat = vec4Of(main.pHex), line = vec4Of(main.bgHex),
+        uvTransform = { { m1, m2 }, { m5, m6 } }, uvTranslation = { main.ptx or 0, main.pty or 0 },
+        flip = { (main.fx or 1) < 0 and 1 or 0, (main.fy or 1) < 0 and 1 or 0 },
+    }
+    if withPatches and part.torso then
+        live.patches = { line = {}, mask = {}, pat = {}, row1 = {}, row2 = {}, fill = {}, patColor = {}, lineColor = {} }
+        local ps = live.patches
+        for i, p in ipairs(PATCHES) do
+            local pl = liveSource('textures/' .. p.bgURL)
+            ps.line[i], ps.mask[i] = pl, liveSource('textures/' .. p.fgURL)
+            ps.pat[i] = liveSource('textures/pat/' .. p.pURL, true)
+            local pw, ph = pl:getDimensions()
+            ps.row1[i], ps.row2[i] = patchRows(lw, lh, pw, ph, p)
+            ps.fill[i], ps.patColor[i], ps.lineColor[i] = vec4Of(p.fgHex), vec4Of(p.pHex), vec4Of(p.bgHex)
         end
     end
+    return live
 end
 
-local function bakeMipo(parts, fresh)
-    local list = {}
-    for _, extra in ipairs(parts) do
-        local main = fresh and recoloured(extra.main) or extra.main
-        table.insert(list, bakePart(extra, main))
-    end
-    return list
-end
-
-local function preloadSources()
-    for _, parts in ipairs(mipos) do
-        for _, extra in ipairs(parts) do
-            local m = extra.main
-            getSource('textures/' .. m.bgURL)
-            if m.fgURL and m.fgURL ~= '' then getSource('textures/' .. m.fgURL) end
-            getSource('textures/pat/' .. (m.pURL or ''))
+local function sendLive(shader, live)
+    shader:send('maskTex', live.mask)
+    shader:send('patTex', live.pattern)
+    shader:send('fillColor', live.fill)
+    shader:send('patColor', live.pat)
+    shader:send('lineColor', live.line)
+    shader:send('uvTransform', live.uvTransform)
+    shader:send('uvTranslation', live.uvTranslation)
+    shader:send('flip', live.flip)
+    shader:send('hasMask', live.hasMask)
+    if shader == livePatchShader then
+        local ps = live.patches
+        if ps then
+            shader:send('pLine', unpack(ps.line))
+            shader:send('pMask', unpack(ps.mask))
+            shader:send('pPat', unpack(ps.pat))
+            shader:send('pRow1', unpack(ps.row1))
+            shader:send('pRow2', unpack(ps.row2))
+            shader:send('pFill', unpack(ps.fill))
+            shader:send('pPatColor', unpack(ps.patColor))
+            shader:send('pLineColor', unpack(ps.lineColor))
         end
+        shader:send('patchCount', ps and #ps.line or 0)
     end
-end
-
--- Texture pixels per screen pixel at a zoom, at full size: how much headroom shrinking has.
-local function oversampling(scale)
-    local values = {}
-    for _, parts in ipairs(mipos) do
-        for _, extra in ipairs(parts) do
-            local img = getSource('textures/' .. extra.main.bgURL)
-            if img and extra.vertices then -- ribbons have no fixed size
-                local w = bboxSize(extra.vertices)
-                if w > 0 then table.insert(values, img:getWidth() / (w * scale)) end
-            end
-        end
-    end
-    return median(values), percentile(values, 0.1), percentile(values, 0.9)
 end
 
 ---------------------------------------------------------------- drawing
 
-local function drawPart(baked, x, y, scale)
-    local iw, ih = baked.img:getDimensions()
-    love.graphics.draw(baked.img, x, y, 0, baked.w * scale / iw, baked.h * scale / ih)
-end
+local current = { option = OPTIONS[1], mipos = {} } -- mipos: a list per Mipo of baked or live parts
+local view = { scale = CAMERA_SCALE, layout = 'scatter', count = 20 }
 
-local function drawScatter(list, scale)
-    local w, h = love.graphics.getDimensions()
-    local placeRng = love.math.newRandomGenerator(7) -- the same layout every frame and every option
-    love.graphics.setColor(1, 1, 1)
-    for _, baked in ipairs(list) do
-        drawPart(baked, placeRng:random(-50, w - 50), placeRng:random(-50, h - 50), scale)
+local function drawPart(option, p, x, y, scale)
+    if option.live then
+        love.graphics.draw(p.outline, x, y, 0, p.w * scale / p.lw, p.h * scale / p.lh)
+    else
+        local iw, ih = p.img:getDimensions()
+        love.graphics.draw(p.img, x, y, 0, p.w * scale / iw, p.h * scale / ih)
     end
 end
 
--- One Mipo's parts side by side, for looking at and for the screenshot diff.
-local function drawGrid(list, scale)
-    local w = love.graphics.getWidth()
-    local x, y, rowH = 10, 30, 0
-    love.graphics.setColor(1, 1, 1)
-    for _, baked in ipairs(list) do
-        local pw, ph = baked.w * scale, baked.h * scale
-        if x + pw > w - 10 then
-            x, y, rowH = 10, y + rowH + 10, 0
+local function shaderOf(option)
+    return option.live and (option.patches and livePatchShader or liveShader) or nil
+end
+
+-- count Mipos (the scene's, over and over), each part somewhere on screen
+local function drawScatter(option, list, count, scale)
+    local w, h = love.graphics.getDimensions()
+    local rng = love.math.newRandomGenerator(7) -- the same layout every frame and every option
+    local shader = shaderOf(option)
+    love.graphics.setShader(shader)
+    for i = 1, count do
+        for _, p in ipairs(list[(i - 1) % #list + 1]) do
+            if shader then sendLive(shader, p) end
+            drawPart(option, p, rng:random(-50, w - 50), rng:random(-50, h - 50), scale)
         end
-        drawPart(baked, x, y, scale)
+    end
+    love.graphics.setShader()
+end
+
+-- one Mipo's parts side by side, for looking and for the pixel diff
+local function drawGrid(option, parts, scale, width)
+    local x, y, rowH = 10, 30, 0
+    local shader = shaderOf(option)
+    love.graphics.setShader(shader)
+    for _, p in ipairs(parts) do
+        local pw, ph = p.w * scale, p.h * scale
+        if x + pw > width - 10 then x, y, rowH = 10, y + rowH + 10, 0 end
+        if shader then sendLive(shader, p) end
+        drawPart(option, p, x, y, scale)
         x = x + pw + 10
         rowH = math.max(rowH, ph)
     end
+    love.graphics.setShader()
 end
 
-local function renderLooks(list, scale)
-    local canvas = love.graphics.newCanvas(love.graphics.getDimensions())
+---------------------------------------------------------------- the --auto run
+
+local sourceMipos = {}
+local results = {}
+local hud = ''
+local timing = { submit = 0, dt = 0 }
+local runner
+
+local function percentile(list, p)
+    local copy = {}
+    for i = 1, #list do copy[i] = list[i] end
+    table.sort(copy)
+    return copy[math.max(1, math.min(#copy, math.ceil(#copy * p)))]
+end
+local function median(list) return percentile(list, 0.5) end
+
+local function settle()
+    collectgarbage('collect')
+    collectgarbage('collect')
+    coroutine.yield()
+end
+
+local function frames(n)
+    local submit, dt = {}, {}
+    for _ = 1, n do
+        coroutine.yield()
+        submit[#submit + 1] = timing.submit
+        dt[#dt + 1] = timing.dt
+    end
+    return submit, dt
+end
+
+local function prepareMipo(option, parts)
+    local list = {}
+    for i, part in ipairs(parts) do
+        list[i] = option.live and prepareLive(part, option.patches) or bakePart(part, option.patches)
+    end
+    return list
+end
+
+local function releaseAll(option, mipos)
+    if option.live then return end
+    for _, list in ipairs(mipos) do
+        for _, p in ipairs(list) do p.img:release() end
+    end
+end
+
+-- Mipo 1's parts with the torso first, so the close look shows its patches
+local function torsoFirst(list)
+    local out = {}
+    for i, part in ipairs(sourceMipos[1]) do
+        if part.torso then table.insert(out, 1, list[i]) else out[#out + 1] = list[i] end
+    end
+    return out
+end
+
+local LOOKS_W, LOOKS_H = 1000, 800
+local function renderLooks(option, parts, scale)
+    local canvas = love.graphics.newCanvas(LOOKS_W, LOOKS_H, { dpiscale = 1 })
+    love.graphics.push('all')
+    love.graphics.origin()
     love.graphics.setCanvas(canvas)
     love.graphics.clear(0.85, 0.8, 0.75, 1)
-    drawGrid(list, scale)
-    love.graphics.setCanvas()
+    love.graphics.setColor(1, 1, 1)
+    drawGrid(option, parts, scale, LOOKS_W)
+    love.graphics.pop()
     local data = canvas:newImageData()
     canvas:release()
     return data
 end
 
--- Mean difference per channel (0-255) and the share of pixels that differ visibly.
+-- mean difference per channel (0-255) and the share of pixels that differ visibly
 local function compareLooks(a, b)
     local w, h = a:getDimensions()
     local sum, visible = 0, 0
@@ -295,276 +464,191 @@ local function compareLooks(a, b)
     return sum / (w * h) * 255, visible / (w * h) * 100
 end
 
----------------------------------------------------------------- the --auto run
-
-local function writeFile(name, contents)
-    local file = assert(io.open(love.filesystem.getSource() .. '/results/' .. name, 'wb'))
-    file:write(contents)
-    file:close()
+local looksOf = {}
+-- the save folder always (the phone has nowhere else); results/ too where the source folder is writable
+local function writeResultFile(name, contents)
+    love.filesystem.write(name, contents)
+    if IOS then return end
+    local file = io.open(love.filesystem.getSource() .. '/results/' .. name, 'wb')
+    if file then
+        file:write(contents)
+        file:close()
+    end
 end
 
-local function settle()
-    collectgarbage('collect')
-    collectgarbage('collect')
-    coroutine.yield()
-end
-
-local baselineLooks = {}
-
-local function runOption(opt)
-    local row = { name = opt.name }
-    textured.setShrinkFactor(opt.shrink)
+local function runOption(option)
+    local row = { name = option.name }
+    current.option, current.mipos = option, {}
     settle()
     local startMB = texMB()
 
-    -- 1. memory and bake time for growing numbers of Mipos
-    local all, bakeTimes = {}, {}
-    local mipoCount = 0
-    for _, target in ipairs(MIPO_COUNTS) do
-        while mipoCount < target do
-            mipoCount = mipoCount + 1
-            local parts = mipos[(mipoCount - 1) % #mipos + 1]
-            local t0 = love.timer.getTime()
-            local list = bakeMipo(parts, mipoCount > #mipos)
-            table.insert(bakeTimes, (love.timer.getTime() - t0) * 1000)
-            for _, baked in ipairs(list) do table.insert(all, baked) end
-            hud = opt.name .. ': baking Mipo ' .. mipoCount
-            coroutine.yield()
-        end
-        settle()
-        row['mb' .. target] = texMB() - startMB
-    end
-    local first, last = MIPO_COUNTS[1], MIPO_COUNTS[#MIPO_COUNTS]
-    row.mbPerMipo = (row['mb' .. last] - row['mb' .. first]) / (last - first)
-    row.bakeMsPerMipo = median(bakeTimes)
-
-    -- 2. frame time with FRAME_TEST_MIPOS on screen at the dollhouse zoom
-    local onScreen = {}
-    local partsPerMipo = #all / mipoCount
-    for i = 1, math.floor(FRAME_TEST_MIPOS * partsPerMipo) do onScreen[i] = all[i] end
-    view.baked, view.scale, view.layout = onScreen, CAMERA_SCALE, 'scatter'
-    local frames = {}
-    hud = opt.name .. ': frame test'
-    coroutine.yield()
-    coroutine.yield() -- skip the first frames after a layout change
-    for _ = 1, FRAME_TEST_FRAMES do
+    -- 1. the Mipos appear: a bake per part (baked), uniforms worked out (live)
+    local perMipo = {}
+    for i, parts in ipairs(sourceMipos) do
+        local t0 = love.timer.getTime()
+        current.mipos[i] = prepareMipo(option, parts)
+        perMipo[#perMipo + 1] = (love.timer.getTime() - t0) * 1000
+        hud = option.name .. ': Mipo ' .. i
         coroutine.yield()
-        table.insert(frames, lastFrameTime * 1000)
     end
-    row.frameMedian = median(frames)
-    row.frameP95 = percentile(frames, 0.95)
-    row.drawcalls = view.drawcalls
+    row.prepareMs = median(perMipo)
+    settle()
+    row.perMipoMB = (texMB() - startMB) / #sourceMipos
+    -- a litter: LITTER Mipos in one frame, again (and let go again)
+    local t0 = love.timer.getTime()
+    local litter = {}
+    for i = 1, LITTER do litter[i] = prepareMipo(option, sourceMipos[i]) end
+    row.litterMs = (love.timer.getTime() - t0) * 1000
+    releaseAll(option, litter)
+    settle()
 
-    -- 3. looks: Mipo 1 at the dollhouse zoom and close up, against the baseline
-    local firstMipo = {}
-    for i = 1, #mipos[1] do firstMipo[i] = all[i] end
+    -- 2. the frame with the 20 on screen at the dollhouse zoom
+    view.layout, view.scale, view.count = 'scatter', CAMERA_SCALE, #sourceMipos
+    hud = option.name .. ': ' .. #sourceMipos .. ' Mipos'
+    frames(10) -- skip the frames after a change (a shader's first use)
+    local submit, dt = frames(FRAME_TEST_FRAMES)
+    row.submitMs, row.submitP95 = median(submit), percentile(submit, 0.95)
+    row.frameMs, row.frameP95 = median(dt), percentile(dt, 0.95)
+    row.drawcalls = timing.drawcalls
+
+    -- 3. more Mipos until a frame takes longer than 60 fps allows
+    row.fits = '>' .. RAMP_MAX
+    for count = #sourceMipos, RAMP_MAX, RAMP_STEP do
+        view.count = count
+        hud = option.name .. ': ramp ' .. count
+        frames(10)
+        local _, rampDt = frames(RAMP_FRAMES)
+        if median(rampDt) > RAMP_BUDGET_MS then
+            row.fits = count == #sourceMipos and ('<' .. count) or (count - RAMP_STEP)
+            break
+        end
+    end
+
+    -- 4. looks: Mipo 1 at the dollhouse zoom and close, live against baked
+    view.layout = 'none'
     for _, zoom in ipairs({ { 'game', CAMERA_SCALE }, { 'close', CLOSE_SCALE } }) do
-        local data = renderLooks(firstMipo, zoom[2])
-        writeFile('looks-' .. opt.name .. '-' .. zoom[1] .. '.png', data:encode('png'):getString())
-        if opt.name == 'baseline' then
-            baselineLooks[zoom[1]] = data
+        local data = renderLooks(option, torsoFirst(current.mipos[1]), zoom[2])
+        writeResultFile('looks-' .. option.name .. '-' .. zoom[1] .. '.png', data:encode('png'):getString())
+        local key = (option.patches and 'p' or '') .. zoom[1]
+        if not option.live then
+            looksOf[key] = data
         else
-            row['diff_' .. zoom[1]], row['changed_' .. zoom[1]] = compareLooks(baselineLooks[zoom[1]], data)
+            row['diff_' .. zoom[1]], row['changed_' .. zoom[1]] = compareLooks(looksOf[key], data)
             data:release()
         end
     end
 
-    -- clear everything before the randomize test
-    view.baked = {}
-    for _, baked in ipairs(all) do releaseBaked(baked) end
-    all = nil
-    settle()
-
-    -- 4. randomize one Mipo RANDOMIZES times, the way the Mipo editor re-bakes
-    local current = {}
-    for i, parts in ipairs(mipos) do current[i] = bakeMipo(parts, false) end
-    settle()
-    local beforeMB = texMB()
-    local peakMB, created = beforeMB, 0
-    for r = 1, RANDOMIZES do
-        for i, extra in ipairs(mipos[1]) do
-            local old = current[1][i]
-            current[1][i] = bakePart(extra, recoloured(extra.main))
-            if opt.release then
-                releaseBaked(old)
-            else
-                created = created + 1
-                if created >= GC_EVERY then
-                    created = 0
-                    collectgarbage('collect')
-                end
-            end
-            peakMB = math.max(peakMB, texMB())
-        end
-        hud = opt.name .. ': randomize ' .. r
-        coroutine.yield()
-        peakMB = math.max(peakMB, texMB())
-    end
-    row.randomizePeakExtraMB = peakMB - beforeMB
-    row.randomizeEndExtraMB = texMB() - beforeMB -- what's still held, before any extra collect
-    for _, list in ipairs(current) do
-        for _, baked in ipairs(list) do releaseBaked(baked) end
-    end
+    releaseAll(option, current.mipos)
+    current.mipos = {}
     settle()
     return row
 end
 
 local function fmt(v, digits)
-    return string.format('%.' .. (digits or 1) .. 'f', v)
+    return type(v) == 'number' and string.format('%.' .. (digits or 1) .. 'f', v) or tostring(v or '')
 end
 
-local function writeResults(sourcesMB, mipoCount, partCount)
-    local columns = { { 'option', 'name' } }
-    for _, count in ipairs(MIPO_COUNTS) do
-        table.insert(columns, { 'MB@' .. count, 'mb' .. count })
-    end
-    for _, col in ipairs({
-        { 'MB per Mipo', 'mbPerMipo', 2 },
-        { 'bake ms/Mipo', 'bakeMsPerMipo' },
-        { 'frame ms median', 'frameMedian', 2 }, { 'frame ms p95', 'frameP95', 2 },
-        { 'draw calls', 'drawcalls', 0 },
-        { 'diff game', 'diff_game', 2 }, { '% px changed game', 'changed_game' },
-        { 'diff close', 'diff_close', 2 }, { '% px changed close', 'changed_close' },
-        { 'randomize peak +MB', 'randomizePeakExtraMB' },
-        { 'randomize end +MB', 'randomizeEndExtraMB' },
-    }) do
-        table.insert(columns, col)
-    end
-    local csv, md = {}, {}
+local function resultsText(sourcesMB, liveSourcesMB)
+    local columns = {
+        { 'option', 'name' }, { 'MB per Mipo', 'perMipoMB', 2 }, { 'appear ms/Mipo', 'prepareMs', 2 },
+        { 'litter of ' .. LITTER .. ' ms', 'litterMs' },
+        { 'draw ms', 'submitMs', 2 }, { 'draw p95', 'submitP95', 2 },
+        { 'frame ms', 'frameMs', 2 }, { 'frame p95', 'frameP95', 2 }, { 'draw calls', 'drawcalls', 0 },
+        { 'Mipos in 60 fps', 'fits', 0 },
+        { 'diff game', 'diff_game', 2 }, { '% px game', 'changed_game' },
+        { 'diff close', 'diff_close', 2 }, { '% px close', 'changed_close' },
+    }
     local header, sep = {}, {}
-    for _, col in ipairs(columns) do
-        table.insert(header, col[1])
-        table.insert(sep, '---')
-    end
-    table.insert(csv, table.concat(header, ','))
-    table.insert(md, '| ' .. table.concat(header, ' | ') .. ' |')
-    table.insert(md, '|' .. table.concat(sep, '|') .. '|')
+    for _, col in ipairs(columns) do header[#header + 1] = col[1]; sep[#sep + 1] = '---' end
+    local lines = { '| ' .. table.concat(header, ' | ') .. ' |', '|' .. table.concat(sep, '|') .. '|' }
     for _, row in ipairs(results) do
         local cells = {}
-        for _, col in ipairs(columns) do
-            local v = row[col[2]]
-            table.insert(cells, type(v) == 'number' and fmt(v, col[3]) or tostring(v or ''))
-        end
-        table.insert(csv, table.concat(cells, ','))
-        table.insert(md, '| ' .. table.concat(cells, ' | ') .. ' |')
+        for _, col in ipairs(columns) do cells[#cells + 1] = fmt(row[col[2]], col[3]) end
+        lines[#lines + 1] = '| ' .. table.concat(cells, ' | ') .. ' |'
     end
-    local o50, o10, o90 = oversampling(CAMERA_SCALE)
-    local c50 = oversampling(CLOSE_SCALE)
+    local parts = 0
+    for _, list in ipairs(sourceMipos) do parts = parts + #list end
     local name, version, vendor, device = love.graphics.getRendererInfo()
+    local w, h, flags = love.window.getMode()
     local intro = {
-        '# OMP bench results',
+        '# OMP bench: baked against live',
         '',
-        string.format('Run: %s on %s %s (%s, %s).', os.date('%Y-%m-%d %H:%M'), name, version, vendor, device),
-        string.format('Scene: %s, %d Mipos, %d OMP parts. Extra Mipos are recoloured copies. '
-            .. 'Ribbon parts (connected-texture) are drawn as quads at their source size.',
-            SCENE, mipoCount, partCount),
-        string.format('Source images (outline/mask/pattern, shared, not in the MB columns): %.1f MB.', sourcesMB),
-        string.format('Oversampling at full size (texture px per screen px): median %.1f (p10 %.1f, p90 %.1f) '
-            .. 'at the dollhouse zoom %.2f; median %.1f at zoom %.1f.', o50, o10, o90, CAMERA_SCALE, c50, CLOSE_SCALE),
+        string.format('Run: %s on %s (%s %s, %s %s), window %dx%d at dpi scale %.0f, msaa %d, vsync %s.',
+            os.date('%Y-%m-%d %H:%M'), love.system.getOS(), name, version, vendor, device, w, h,
+            love.graphics.getDPIScale(), flags.msaa or 0, tostring(flags.vsync)),
+        string.format('Scene: %s, %d Mipos, %d OMP parts (ribbons drawn as quads). JIT off.', SCENE,
+            #sourceMipos, parts),
+        string.format('Shared source pictures: %.1f MB as the game loads them; %.1f MB more for live\'s mipmapped copies.',
+            sourcesMB, liveSourcesMB),
         '',
-        string.format('Frame test: %d Mipos scattered at the dollhouse zoom, vsync off, %d frames.',
-            FRAME_TEST_MIPOS, FRAME_TEST_FRAMES),
-        'diff = mean difference per channel (0-255) against baseline; % px changed = pixels off by more than 8/255.',
-        string.format('Randomize: Mipo 1 re-baked %d times next to the others; +MB over the start.', RANDOMIZES),
+        'MB per Mipo: texture memory the 20 Mipos added, over 20. appear: making one Mipo\'s pictures (baked) or',
+        'working out its uniforms (live). litter: ' .. LITTER .. ' Mipos in one frame. draw ms: love.draw\'s CPU time',
+        string.format('for the 20 (median of %d frames, sends included); frame ms: the time between frames.',
+            FRAME_TEST_FRAMES),
+        string.format('Mipos in 60 fps: Mipos added %d at a time until the median frame is over %.1f ms.', RAMP_STEP,
+            RAMP_BUDGET_MS),
+        'diff: live against baked (each with its own patches or not), mean per channel 0-255; % px: off by more than 8/255.',
         '',
     }
-    writeFile('results' .. RUN_SUFFIX .. '.csv', table.concat(csv, '\n') .. '\n')
-    writeFile('results' .. RUN_SUFFIX .. '.md', table.concat(intro, '\n') .. '\n' .. table.concat(md, '\n') .. '\n')
-    print(table.concat(intro, '\n') .. '\n' .. table.concat(md, '\n'))
+    return table.concat(intro, '\n') .. table.concat(lines, '\n') .. '\n'
 end
 
+local finalText
 local function autoRun()
-    preloadSources()
-    settle()
-    local sourcesMB = texMB()
-    local partCount = 0
-    for _, parts in ipairs(mipos) do partCount = partCount + #parts end
-    for _, opt in ipairs(OPTIONS) do
-        table.insert(results, runOption(opt))
-    end
-    writeResults(sourcesMB, #mipos, partCount)
-    love.event.quit()
-end
-
--- --patch-check: does a part with patches look the same baked at shrink 1 and 2?
--- (makeTexturedCanvas multiplies patch offset and scale by shrinkFactor; the patch
--- image itself is baked at 1/shrinkFactor, so that multiply should cancel it out)
-local function patchCheck()
-    local part
-    for _, extra in ipairs(mipos[1]) do
-        if extra.vertices then
-            local w, h = bboxSize(extra.vertices)
-            if not part or w * h > part.size then part = { extra = extra, size = w * h } end
+    -- the sources each way, loaded once before measuring
+    for _, parts in ipairs(sourceMipos) do
+        for _, part in ipairs(parts) do
+            local m = part.main
+            bakedSource('textures/' .. (m.fgURL or ''))
+            bakedSource('textures/pat/' .. (m.pURL or ''), true)
         end
     end
-    -- the default skin patches from character-manager.lua (two eye spots, a wide snout)
-    local function patch(url, fields)
-        local p = { bgURL = url .. '.png', fgURL = url .. '-mask.png', pURL = 'type2t.png',
-            bgHex = '020202ff', fgHex = 'ff0000ff', pHex = 'ffff00ff' }
-        for k, v in pairs(fields) do p[k] = v end
-        return p
+    for _, p in ipairs(PATCHES) do
+        for _, url in ipairs({ p.bgURL, p.fgURL }) do bakedSource('textures/' .. url) end
     end
-    local extra = {}
-    for k, v in pairs(part.extra) do extra[k] = v end
-    extra.patch1 = patch('patch2', { tx = -0.33, ty = 0 })
-    extra.patch2 = patch('patch1', { tx = 0.33, ty = 0 })
-    extra.patch3 = patch('patch1', { tx = 0, ty = 0.83, sx = 2 })
-
-    local looks = {}
-    for _, shrink in ipairs({ 1, 2 }) do
-        textured.setShrinkFactor(shrink)
-        local baked = bakePart(extra, extra.main)
-        baked.w, baked.h = baked.w * 2, baked.h * 2 -- big enough to see the patches
-        looks[shrink] = renderLooks({ baked }, CLOSE_SCALE)
-        writeFile('patch-check-shrink-' .. shrink .. '.png', looks[shrink]:encode('png'):getString())
-        releaseBaked(baked)
+    settle()
+    local sourcesMB = texMB()
+    for i = 1, #sourceMipos do prepareMipo(OPTIONS[4], sourceMipos[i]) end
+    settle()
+    local liveSourcesMB = texMB() - sourcesMB
+    for _, option in ipairs(OPTIONS) do
+        results[#results + 1] = runOption(option)
     end
-    local diff, changed = compareLooks(looks[1], looks[2])
-    local report = string.format('patch check (%s): diff %.2f/255, %.1f%% px changed between shrink 1 and 2',
-        part.extra.main.bgURL, diff, changed)
-    print(report)
-    writeFile('patch-check.txt', report .. '\n')
-    love.event.quit()
-end
-
----------------------------------------------------------------- interactive
-
-local interactive = { list = {} }
-
-local function bakeInteractive(index)
-    for _, baked in ipairs(interactive.list) do releaseBaked(baked) end
-    collectgarbage('collect')
-    textured.setShrinkFactor(OPTIONS[index].shrink)
-    interactive.list = bakeMipo(mipos[1], false)
-    view.baked, view.layout = interactive.list, 'grid'
-    hud = OPTIONS[index].name .. ' (1-4 option, z zoom, esc quit)'
+    finalText = resultsText(sourcesMB, liveSourcesMB)
+    love.filesystem.write('omp-live-results.md', finalText)
+    writeResultFile('live-' .. love.system.getOS():gsub(' ', '') .. '.md', finalText)
+    print(finalText)
+    if not IOS then love.event.quit() end
+    hud = 'done'
 end
 
 ---------------------------------------------------------------- LÖVE
 
-function love.load(args)
-    tex1 = getSource('textures/pat/type0.png')
-    tex1:setWrap('mirroredrepeat', 'mirroredrepeat')
-    lineFallback = getSource('textures/shapes6.png')
-    maskFallback = getSource('textures/shapes6-mask.png')
-    mipos = loadMipos()
+local function pickInteractive(index)
+    local option = OPTIONS[index]
+    if current.mipos[1] then releaseAll(current.option, current.mipos) end
+    current.option = option
+    current.mipos = { prepareMipo(option, sourceMipos[1]) }
+    view.layout = 'grid'
+    hud = option.name .. '  (1-4 option, z zoom, esc quit)'
+end
 
-    local auto, checkPatches = false, false
-    for _, a in ipairs(args) do
-        if a == '--auto' then auto = true end
-        if a == '--patch-check' then checkPatches = true end
-    end
-    if checkPatches then
-        patchCheck()
-    elseif auto then
+function love.load()
+    love.filesystem.remove('omp-live-results.md') -- the last run's: an install keeps the save folder
+    tex1 = ompBake.getLoveImage('textures/pat/type0.png', PATTERN_WRAP)
+    blackPixel = love.graphics.newImage(love.image.newImageData(1, 1))
+    liveShader = love.graphics.newShader(LIVE_CODE)
+    livePatchShader = love.graphics.newShader('#define PATCHES\n' .. LIVE_CODE)
+    sourceMipos = loadMipos()
+    if AUTO then
         runner = coroutine.create(autoRun)
     else
-        bakeInteractive(1)
+        pickInteractive(1)
     end
 end
 
 function love.update(dt)
-    lastFrameTime = dt
+    timing.dt = dt * 1000
     if runner and coroutine.status(runner) ~= 'dead' then
         local ok, err = coroutine.resume(runner)
         if not ok then error(debug.traceback(runner, err)) end
@@ -573,22 +657,31 @@ end
 
 function love.draw()
     love.graphics.clear(0.85, 0.8, 0.75, 1)
+    -- on iOS the frame's first graphics call waits for vsync: time from after the clear
+    local t0 = love.timer.getTime()
+    love.graphics.setColor(1, 1, 1)
     if view.layout == 'grid' then
-        drawGrid(view.baked, view.scale)
-    else
-        drawScatter(view.baked, view.scale)
+        drawGrid(current.option, current.mipos[1], view.scale, love.graphics.getWidth())
+    elseif view.layout == 'scatter' and current.mipos[1] then
+        drawScatter(current.option, current.mipos, view.count, view.scale)
     end
-    view.drawcalls = love.graphics.getStats().drawcalls
-    love.graphics.setColor(0, 0, 0)
-    love.graphics.print(string.format('%s   tex %.1f MB   %d fps', hud, texMB(), love.timer.getFPS()), 10, 10)
+    timing.submit = (love.timer.getTime() - t0) * 1000
+    timing.drawcalls = love.graphics.getStats().drawcalls
+    if finalText then
+        love.graphics.setColor(1, 1, 1, 0.92)
+        love.graphics.rectangle('fill', 0, 0, love.graphics.getDimensions())
+        love.graphics.setColor(0, 0, 0)
+        love.graphics.printf(finalText, 8, 8, love.graphics.getWidth() - 16)
+    else
+        love.graphics.setColor(0, 0, 0)
+        love.graphics.print(string.format('%s   tex %.1f MB   %d fps', hud, texMB(), love.timer.getFPS()), 10, 10)
+    end
 end
 
 function love.keypressed(key)
     if key == 'escape' then love.event.quit() end
     if runner then return end
     local index = tonumber(key)
-    if index and OPTIONS[index] then bakeInteractive(index) end
-    if key == 'z' then
-        view.scale = view.scale == CAMERA_SCALE and CLOSE_SCALE or CAMERA_SCALE
-    end
+    if index and OPTIONS[index] then pickInteractive(index) end
+    if key == 'z' then view.scale = view.scale == CAMERA_SCALE and CLOSE_SCALE or CAMERA_SCALE end
 end

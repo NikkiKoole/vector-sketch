@@ -148,7 +148,8 @@ fi
 STAGE="$IOS_DIR/build/stage"
 rm -rf "$STAGE"; mkdir -p "$STAGE/scripts"
 if [ -n "$LOVE_DIR" ]; then
-    rm -rf "$STAGE"; cp -r "$LOVE_DIR" "$STAGE"
+    # -L: a bench's symlinks into Playtime (omp-bench's src, textures) are copied as files
+    rm -rf "$STAGE"; cp -RL "$LOVE_DIR" "$STAGE"
     rm -f "$IOS_DIR/flap.love"
     (cd "$STAGE" && zip -q -r -9 "$IOS_DIR/flap.love" . -x '.*' -x '*/.DS_Store')
     echo "▸ packed: $LOVE_DIR (not Playtime)"
