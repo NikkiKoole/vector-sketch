@@ -46,6 +46,7 @@ lib.SHORT_NAMES = {
     [modes.DRAW_FREE_PATH] = 'freepath',
     [modes.DRAW_FREE_POLY] = 'freeform',
     [modes.DRAW_CLICK] = 'click',
+    [modes.DRAW_TRACK] = 'track',
 }
 
 -- The thing a rail/flyout press spawned, so a release back over the rail can undo it.
@@ -221,11 +222,12 @@ lib.groups = {
         key = 'draw',
         default = modes.DRAW_FREE_POLY,
         sections = {
-            { modes.DRAW_FREE_POLY, modes.DRAW_FREE_PATH, modes.DRAW_CLICK },
+            { modes.DRAW_FREE_POLY, modes.DRAW_FREE_PATH, modes.DRAW_CLICK, modes.DRAW_TRACK },
         },
         onClick = startDraw,
         isActive = function()
             return modes.is(modes.DRAW_FREE_POLY) or modes.is(modes.DRAW_FREE_PATH) or modes.is(modes.DRAW_CLICK)
+                or modes.is(modes.DRAW_TRACK)
         end,
         drawOptions = drawDrawOptions,
     },
@@ -373,6 +375,18 @@ local function drawIcon(item, cx, cy, r)
     elseif item == modes.DRAW_FREE_PATH then
         lg.line(cx - r, cy + r * 0.6, cx - r * 0.5, cy - r * 0.3, cx, cy + r * 0.2, cx + r * 0.5, cy - r * 0.6,
             cx + r, cy - r * 0.2)
+    elseif item == modes.DRAW_TRACK then -- two rails over a hill, with sleepers
+        local function rail(o)
+            local pts = {}
+            for k = 0, 8 do
+                local t = k / 8
+                pts[#pts + 1] = cx - r + 2 * r * t
+                pts[#pts + 1] = cy + r * 0.5 - math.sin(t * math.pi) * r * 1.1 + o
+            end
+            return pts
+        end
+        lg.line(rail(-r * 0.12))
+        lg.line(rail(r * 0.12))
     elseif item == modes.DRAW_CLICK then
         local pts = { cx - r, cy + r * 0.6, cx - r * 0.2, cy - r, cx + r, cy + r * 0.2 }
         lg.polygon('line', pts)

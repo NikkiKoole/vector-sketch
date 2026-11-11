@@ -225,7 +225,9 @@ function lib.handlePointerPressed(wx, wy, id, onPressedParams, allowMouseJointMa
         if body:getType() ~= BT.KINEMATIC then
             local fixtures = body:getFixtures()
             for _, fixture in ipairs(fixtures) do
+                -- a coaster track is a line (a chain has no inside): near it counts (src/track.lua)
                 local hitThisOne = fixture:testPoint(wx, wy)
+                    or (fixture:getType() == 'chain' and require('src.track').hits(fixture, wx, wy))
                 local isSensor = fixture:isSensor()
                 if (hitThisOne) then
                     table.insert(hitted, fixture)

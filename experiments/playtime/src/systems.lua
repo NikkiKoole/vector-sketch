@@ -23,6 +23,14 @@ lib.list = {
         drawBelow = function(m) m.drawBelow() end,
     },
     {
+        -- coaster tracks: movers' lanes, the back lane behind the bodies, the front over (src/track.lua)
+        name = 'track',
+        module = 'src.track',
+        update = function(m, dt) m.update(dt) end,
+        drawBelow = function(m) m.drawBelow() end,
+        draw = function(m) m.draw() end,
+    },
+    {
         name = 'sky', -- the scene's clock: the hour goes round while the day runs (src/scene-sky.lua, SKY.md)
         module = 'src.scene-sky',
         update = function(m, dt) m.update(dt) end,

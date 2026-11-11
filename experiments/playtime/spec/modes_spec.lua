@@ -9,20 +9,21 @@ describe('modes', function()
     end)
 
     describe('constants', function()
-        it('has 12 mode constants', function()
+        it('has 13 mode constants', function()
             local count = 0
             for k, v in pairs(modes) do
                 if type(v) == 'string' and k == k:upper() then
                     count = count + 1
                 end
             end
-            assert.are.equal(12, count)
+            assert.are.equal(13, count)
         end)
 
         it('has expected mode values', function()
             assert.are.equal('drawClickMode', modes.DRAW_CLICK)
             assert.are.equal('drawFreePath', modes.DRAW_FREE_PATH)
             assert.are.equal('drawFreePoly', modes.DRAW_FREE_POLY)
+            assert.are.equal('drawTrack', modes.DRAW_TRACK)
             assert.are.equal('pickAutoRopifyMode', modes.PICK_AUTO_ROPIFY)
             assert.are.equal('editMeshTriangles', modes.EDIT_MESH_TRIS)
             assert.are.equal('jointCreationMode', modes.JOINT_CREATION)

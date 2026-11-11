@@ -5,6 +5,7 @@ local modes = {}
 modes.DRAW_CLICK             = 'drawClickMode'
 modes.DRAW_FREE_PATH         = 'drawFreePath'
 modes.DRAW_FREE_POLY         = 'drawFreePoly'
+modes.DRAW_TRACK             = 'drawTrack' -- a coaster track (src/track.lua)
 modes.PICK_AUTO_ROPIFY       = 'pickAutoRopifyMode'
 modes.EDIT_MESH_TRIS         = 'editMeshTriangles'
 modes.JOINT_CREATION         = 'jointCreationMode'
@@ -21,6 +22,12 @@ for k, v in pairs(modes) do
     if type(v) == 'string' then
         validModes[v] = k
     end
+end
+
+-- drawing by dragging: a freeform polygon, a freepath ribbon or a coaster track
+function modes.isFreehand()
+    local m = state.currentMode
+    return m == modes.DRAW_FREE_POLY or m == modes.DRAW_FREE_PATH or m == modes.DRAW_TRACK
 end
 
 function modes.set(mode)

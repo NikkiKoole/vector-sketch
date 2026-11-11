@@ -165,7 +165,7 @@ end
 -- the handles for dragging a custom or ribbon shape's vertices, while they're unlocked
 local function drawPolyEditHandles()
     local obj = state.selection.selectedObj
-    local rightShape = obj and (obj.shapeType == ST.CUSTOM or obj.shapeType == ST.RIBBON)
+    local rightShape = obj and (obj.shapeType == ST.CUSTOM or obj.shapeType == ST.RIBBON or obj.shapeType == ST.TRACK)
     if not (state.polyEdit.tempVerts and rightShape and state.polyEdit.lockedVerts == false) then return end
     local verts = mathutils.getLocalVerticesForCustomSelected(state.polyEdit.tempVerts, obj,
         state.polyEdit.centroid.x, state.polyEdit.centroid.y)
@@ -272,6 +272,9 @@ function lib.renderActiveEditorThings()
     if drawing and #state.interaction.polyVerts >= 6 then
         love.graphics.polygon('line', state.interaction.polyVerts)
     end
+    if modes.is(modes.DRAW_TRACK) and #state.interaction.polyVerts >= 4 then -- a track is a line, not closed
+        love.graphics.line(state.interaction.polyVerts)
+    end
     drawPolyEditHandles()
     drawTexFixtureHandles()
     if state.selection.selectedBodies then
@@ -285,7 +288,12 @@ function lib.renderActiveEditorThings()
         local verts = mathutils.getLocalVerticesForCustomSelected(state.polyEdit.tempVerts,
             state.selection.selectedObj, state.polyEdit.centroid.x, state.polyEdit.centroid.y)
         love.graphics.setColor(1, 0, 0)
-        love.graphics.polygon('line', verts)
+        local track = state.selection.selectedObj.shapeType == ST.TRACK
+        if track and not (state.selection.selectedObj.track and state.selection.selectedObj.track.closed) then
+            if #verts >= 4 then love.graphics.line(verts) end -- an open track: no closing edge
+        elseif #verts >= 6 then
+            love.graphics.polygon('line', verts)
+        end
         love.graphics.setColor(1, 1, 1)
     end
     drawTrianglePainter()

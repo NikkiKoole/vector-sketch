@@ -133,6 +133,11 @@ local function fixtureForFile(fixture)
         local points = { shape:getPoints() }
         for i = 1, #points do points[i] = round(points[i], 3) end
         fixtureData.points = points
+    elseif shape:typeOf("ChainShape") then
+        -- a coaster track's rail (src/track.lua); a loop repeats its first point at the end
+        local points = { shape:getPoints() }
+        for i = 1, #points do points[i] = round(points[i], 3) end
+        fixtureData.chain = points
     else
         fixtureData.shapeType = "unknown"
     end
@@ -168,6 +173,7 @@ local function bodyForFile(body, thing)
         fixtures = {},
         sharedFixtureData = sharedFixtureData(body, thing),
         behaviors = thing.behaviors,
+        track = thing.track, -- a coaster track's { closed, flips } (src/track.lua)
     }
     for _, fixture in ipairs(body:getFixtures()) do
         table.insert(bodyData.fixtures, fixtureForFile(fixture))

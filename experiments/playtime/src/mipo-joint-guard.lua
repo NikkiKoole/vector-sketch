@@ -185,6 +185,8 @@ end
 local function isWall(fixture)
     local body = fixture:getBody()
     if body:getType() ~= 'static' or fixture:isSensor() then return false end
+    -- a coaster track's rail: crossed by whatever rides its other lane (src/track.lua)
+    if fixture:getType() == 'chain' and require('src.track').trackOf(fixture) then return false end
     local passable = state.passableBodies
     return not (passable and passable[body])
 end

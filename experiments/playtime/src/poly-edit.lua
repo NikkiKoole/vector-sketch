@@ -103,6 +103,36 @@ function lib.finalizePath()
     return result
 end
 
+-- The stroke becomes a coaster track (src/track.lua, docs/COASTER.md): a static body with a chain along
+-- the smoothed line, a loop when it ends near its start. The draw mode stays on for the next track.
+function lib.finalizeTrack()
+    local track = require('src.track')
+    local result = nil
+    local vertices, closed = track.fromStroke(state.interaction.polyVerts)
+    if vertices then
+        local cx, cy = mathutils.getCenterOfPoints(vertices)
+        result = objectManager.addThing(ST.TRACK, {
+            x = cx,
+            y = cy,
+            bodyType = 'static',
+            vertices = vertices,
+            track = { closed = closed, flips = {} },
+        })
+        if result then
+            for _, fixture in ipairs(result.body:getFixtures()) do
+                fixture:setRestitution(0) -- things roll on it, not bounce
+                fixture:setFriction(0.4)
+            end
+        end
+    else
+        logger:info("Too short for a track.") -- a click, e.g. on the rail to leave the mode
+    end
+    state.interaction.capturingPoly = false
+    state.interaction.polyVerts = {}
+    state.interaction.lastPolyPt = nil
+    return result
+end
+
 function lib.finalizePolygon()
     local result = nil
     if #state.interaction.polyVerts >= 6 then

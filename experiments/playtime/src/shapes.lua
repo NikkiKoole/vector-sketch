@@ -438,6 +438,8 @@ function shapes.createShape(shapeType, settings)
     elseif shapeType == ST.SHAPE8 then
         vertices = settings.optionalVertices
         shapesList = makeShapeListFromPolygon(vertices, true) or {}
+    elseif shapeType == ST.TRACK then
+        shapesList, vertices = require('src.track').createShapes(settings)
     elseif shapeType == ST.RIBBON then
         vertices = settings.optionalVertices or ribbon(settings.width, settings.height * 10, 0, 0, 5, 'vertical')
         local tris = triangulateRibbon(vertices)

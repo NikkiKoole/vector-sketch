@@ -1,6 +1,6 @@
 # Tracks — pipes and rails through depth layers, a cart that carries Mipos
 
-status: idea
+status: parked — tried 2026-11-06 (TR1-TR5d); Nikki 2026-11-11 not a fan: the glass pipe and the fake depth (drawn shrunk toward a vanishing point while the Box2D walls stay flat); the coaster is built from the editor up in COASTER.md
 
 A track that runs through depth: a marble or a cart rolls down a pipe, goes behind the house,
 comes out in front, crosses itself on another layer. A Mipo rides along in a cart. It's a

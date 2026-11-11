@@ -85,7 +85,8 @@ function lib.drawUpdateSelectedObjectUI(panelX, panelY, panelWidth, panelH)
                 if (state.selection.selectedObj) then
                     if state.selection.selectedObj
                         and state.selection.selectedObj.shapeType == ST.CUSTOM
-                        or state.selection.selectedObj.shapeType == ST.RIBBON then
+                        or state.selection.selectedObj.shapeType == ST.RIBBON
+                        or state.selection.selectedObj.shapeType == ST.TRACK then
                         if ui.button(x, y, 260,
                             state.polyEdit.lockedVerts and 'verts locked' or 'verts unlocked') then
                             state.polyEdit.lockedVerts = not state.polyEdit.lockedVerts

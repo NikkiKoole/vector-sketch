@@ -15,5 +15,6 @@ lib.HEXAGON   = 'hexagon'
 lib.HEPTAGON  = 'heptagon'
 lib.OCTAGON   = 'octagon'
 lib.CUSTOM    = 'custom'
+lib.TRACK     = 'track' -- a coaster track: a chain along a drawn line (src/track.lua, docs/COASTER.md)
 
 return lib

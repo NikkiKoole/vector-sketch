@@ -155,6 +155,7 @@ into named steps, checked by a snapshot or the music trace before and after.
 **Physics & rendering:**
 - `src/physics/` — Box2D modules (box2d-draw, box2d-draw-textured, box2d-pointerjoints, physics-callbacks, snap)
 - `src/joints.lua` — joint creation/recreation
+- `src/track.lua` — coaster tracks: a drawn line as a chain, crossings in front/back lanes (`docs/COASTER.md`)
 - `src/joint-handlers.lua` — per-type joint create/update handlers
 - `src/shapes.lua` — shape generation: rect, capsule, polygon, etc.
 

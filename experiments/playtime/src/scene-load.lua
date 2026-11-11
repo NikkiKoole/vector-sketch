@@ -129,6 +129,17 @@ local function shapeFromFile(fixtureData)
         local ok, shape = pcall(shapes.newPolygon, fixtureData.points)
         if ok then return shape end
         logger:info('failed creating a polygonshape, will add a circle instead')
+    elseif fixtureData.chain then
+        -- a coaster track's rail (src/track.lua): first point repeated at the end = a loop
+        local points = fixtureData.chain
+        local n = #points
+        local loop = n >= 8 and points[1] == points[n - 1] and points[2] == points[n]
+        if loop then
+            points = { unpack(points, 1, n - 2) }
+        end
+        local ok, shape = pcall(love.physics.newChainShape, loop, points)
+        if ok then return shape end
+        logger:error('failed creating a chain shape')
     else
         logger:error("Unsupported shape type:", fixtureData.shapeType)
     end
@@ -190,6 +201,7 @@ local function buildBody(bodyData, world, builtSFixtures)
         mirrorY = bodyData.mirrorY or 1,
         vertices = bodyData.vertices,
         behaviors = bodyData.behaviors,
+        track = bodyData.track, -- a coaster track's { closed, flips } (src/track.lua)
         extraSteiner = bodyData.extraSteiner, -- body-local Steiner points (Path B)
         mipoId = bodyData.mipoId,
         mipoPartName = bodyData.mipoPartName,

@@ -228,6 +228,7 @@ end
 local releasedHandlers = {
     [modes.DRAW_FREE_POLY] = releasedDrawFreePoly,
     [modes.DRAW_FREE_PATH] = releasedDrawFreePath,
+    [modes.DRAW_TRACK] = function() polyEdit.finalizeTrack() end, -- a coaster track (src/track.lua)
 }
 
 local mipoMass = mipoRegistry.totalMass
@@ -376,7 +377,7 @@ local function pressedOnPanel(x, y)
     end
     local panelOpen = state.selection.selectedJoint or state.selection.selectedObj
         or state.selection.selectedSFixture or state.selection.selectedBodies
-        or modes.is(modes.DRAW_FREE_POLY) or modes.is(modes.DRAW_FREE_PATH)
+        or modes.isFreehand()
     return panelOpen and x > w - PANEL_WIDTH or false
 end
 
@@ -398,7 +399,7 @@ end
 
 local function pressedEditedCorner(cx, cy)
     local obj = state.selection.selectedObj
-    local rightShape = obj and (obj.shapeType == ST.CUSTOM or obj.shapeType == ST.RIBBON)
+    local rightShape = obj and (obj.shapeType == ST.CUSTOM or obj.shapeType == ST.RIBBON or obj.shapeType == ST.TRACK)
     if state.polyEdit.tempVerts and rightShape and state.polyEdit.lockedVerts == false then
         local verts = mathutils.getLocalVerticesForCustomSelected(state.polyEdit.tempVerts,
             obj, state.polyEdit.centroid.x, state.polyEdit.centroid.y)
@@ -571,7 +572,7 @@ local function handlePointer(x, y, id, action, button)
         end
 
         -- if we have released a mousebutton but it isnt nr1, then we keep on drawing free polygon
-        if (modes.is(modes.DRAW_FREE_POLY) or modes.is(modes.DRAW_FREE_PATH))
+        if modes.isFreehand()
             and not love.mouse.isDown(1) then
             state.interaction.capturingPoly = false
 
@@ -634,7 +635,7 @@ function lib.handleMousePressed(x, y, button, istouch)
         return
     end
     if not istouch and button == 1 then
-        if modes.is(modes.DRAW_FREE_POLY) or modes.is(modes.DRAW_FREE_PATH) then
+        if modes.isFreehand() then
             -- Start capturing mouse movement
             state.interaction.capturingPoly = true
             state.interaction.polyVerts = {}
@@ -649,7 +650,7 @@ function lib.handleMousePressed(x, y, button, istouch)
 end
 
 function lib.handleTouchPressed(id, x, y, _dx, _dy, _pressure)
-    if not playMode.isOn() and (modes.is(modes.DRAW_FREE_POLY) or modes.is(modes.DRAW_FREE_PATH)) then
+    if not playMode.isOn() and modes.isFreehand() then
         -- Start capturing mouse movement
         state.interaction.capturingPoly = true
         state.interaction.polyVerts = {}
@@ -793,8 +794,7 @@ function lib.handleMouseMoved(x, y, dx, dy)
         ud.extra.vertices[index + 1] = state.texFixtureEdit.tempVerts[index + 1]
         state.selection.selectedSFixture:setUserData(ud)
     elseif state.interaction.capturingPoly
-        and (modes.is(modes.DRAW_FREE_POLY)
-            or modes.is(modes.DRAW_FREE_PATH))
+        and modes.isFreehand()
         and (not (love.mouse.isDown(3) or love.mouse.isDown(2))) then
         local wx, wy = cam:getWorldCoordinates(x, y)
         -- Check if the distance from the last point is greater than minPointDistance

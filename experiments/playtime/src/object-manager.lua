@@ -24,6 +24,7 @@ local function createThing(shapeType, conf)
     local body = love.physics.newBody(state.physicsWorld, conf.x or 0, conf.y or 0, bodyType)
 
     local settings = shapes.copyDims(conf, { optionalVertices = conf.vertices })
+    settings.track = conf.track -- a coaster track's { closed, flips } (src/track.lua)
     local shapeList, vertices = shapes.createShape(shapeType, settings)
 
     if not shapeList then
@@ -55,6 +56,7 @@ local function createThing(shapeType, conf)
         vertices = vertices, -- Store vertices if needed
         -- textures = { bgURL = '', bgEnabled = false, bgHex = 'ffffffff' },
         behaviors = conf.behaviors,
+        track = conf.track, -- a coaster track's { closed, flips } (src/track.lua)
         -- NOTE: z-order lives on sfixture extra.zOffset, not on the thing
         id = uuid.generateID(),
     }
@@ -158,6 +160,7 @@ function lib.recreateThingFromBody(body, newSettings)
     -- Create a new shape
 
     local settings = shapes.copyDims(thing, { optionalVertices = newSettings.optionalVertices }, newSettings)
+    settings.track = thing.track -- a coaster track keeps its { closed, flips }
     local shapeList, newVertices = shapes.createShape(
         newSettings.shapeType or thing.shapeType,
         settings
