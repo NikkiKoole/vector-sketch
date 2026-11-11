@@ -749,6 +749,74 @@ function lib.poseTpose(instance)
     end
 end
 
+-- Posing a Mipo by hand, before physics takes over (sitting it in a cart, on a bike): find a joint, swing a
+-- chain of parts about it, slide the whole Mipo, measure it. ENGINE-MERGE EM5, 2026-11-11: the copies in
+-- the bike, facing, rides and soapbox spikes (the same code) moved here; in a scene script through
+-- characterManager.
+local function alive(body) return body and not body:isDestroyed() end
+
+-- where the joint between parent and part sits (a hip, a knee, an ankle): world x, y, nil if there's none
+function lib.jointPoint(instance, parentName, partName)
+    local part, parent = instance.parts[partName], instance.parts[parentName]
+    if not (part and parent) then return nil end
+    for _, joint in ipairs(part.body:getJoints()) do
+        local a, b = joint:getBodies()
+        if a == parent.body and b == part.body then
+            local x, y = joint:getAnchors()
+            return x, y
+        end
+    end
+end
+
+-- bodies turned rigidly by delta (radians) about px, py: a Mipo's leg, a whole bike
+function lib.turnBodies(bodies, px, py, delta)
+    local cs, sn = math.cos(delta), math.sin(delta)
+    for _, b in ipairs(bodies) do
+        if alive(b) then
+            local x, y = b:getPosition()
+            local rx, ry = x - px, y - py
+            b:setPosition(px + rx * cs - ry * sn, py + rx * sn + ry * cs)
+            b:setAngle(b:getAngle() + delta)
+        end
+    end
+end
+
+-- the same for a Mipo's parts by name: lib.turnParts(inst, { 'luleg', 'llleg', 'lfoot' }, hipX, hipY, a)
+function lib.turnParts(instance, names, px, py, delta)
+    local bodies = {}
+    for _, name in ipairs(names) do
+        if instance.parts[name] then bodies[#bodies + 1] = instance.parts[name].body end
+    end
+    lib.turnBodies(bodies, px, py, delta)
+end
+
+-- the whole Mipo slid by dx, dy, and stilled
+function lib.moveAll(instance, dx, dy)
+    for _, part in pairs(instance.parts) do
+        local b = part.body
+        if alive(b) then
+            local px, py = b:getPosition()
+            b:setPosition(px + dx, py + dy)
+            b:setLinearVelocity(0, 0)
+            b:setAngularVelocity(0)
+        end
+    end
+end
+
+-- how tall it stands: its solid shapes, top to bottom (world units)
+function lib.mipoHeight(instance)
+    local top, bottom = math.huge, -math.huge
+    for _, part in pairs(instance.parts) do
+        for _, fixture in ipairs(alive(part.body) and part.body:getFixtures() or {}) do
+            if not fixture:isSensor() then
+                local _, y0, _, y1 = fixture:getBoundingBox()
+                top, bottom = math.min(top, y0), math.max(bottom, y1)
+            end
+        end
+    end
+    return bottom - top
+end
+
 function lib.createCharacter(template, x, y, scale)
     if dna[template] then
         local instance = newInstance(dna[template], scale)

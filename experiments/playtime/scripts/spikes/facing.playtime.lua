@@ -89,17 +89,7 @@ local function rebuildAll()
 end
 
 -- where a joint between parent and part sits (hip, knee)
-local function jointPoint(inst, parentName, partName)
-    local part, parent = inst.parts[partName], inst.parts[parentName]
-    if not (part and parent) then return nil end
-    for _, joint in ipairs(part.body:getJoints()) do
-        local a, b = joint:getBodies()
-        if a == parent.body and b == part.body then
-            local x, y = joint:getAnchors()
-            return x, y
-        end
-    end
-end
+local jointPoint = characterManager.jointPoint -- src/mipo-build.lua
 
 local LEGS = { l = { 'luleg', 'llleg' }, r = { 'ruleg', 'rlleg' } }
 
@@ -115,31 +105,9 @@ end
 local function dist(ax, ay, bx, by) return math.sqrt((bx - ax) ^ 2 + (by - ay) ^ 2) end
 
 -- turn these parts rigidly about a point (as characterManager.poseTpose does with arms)
-local function turnParts(inst, names, px, py, delta)
-    local cs, sn = math.cos(delta), math.sin(delta)
-    for _, name in ipairs(names) do
-        local part = inst.parts[name]
-        if part and part.body and not part.body:isDestroyed() then
-            local b = part.body
-            local x, y = b:getPosition()
-            local rx, ry = x - px, y - py
-            b:setPosition(px + rx * cs - ry * sn, py + rx * sn + ry * cs)
-            b:setAngle(b:getAngle() + delta)
-        end
-    end
-end
+local turnParts = characterManager.turnParts -- src/mipo-build.lua
 
-local function moveAll(inst, dx, dy)
-    for _, part in pairs(inst.parts) do
-        local b = part.body
-        if b and not b:isDestroyed() then
-            local px, py = b:getPosition()
-            b:setPosition(px + dx, py + dy)
-            b:setLinearVelocity(0, 0)
-            b:setAngularVelocity(0)
-        end
-    end
-end
+local moveAll = characterManager.moveAll -- src/mipo-build.lua
 
 -- A stool as high as a shin plus a foot, and the Mipo put on it already sitting: each leg folded
 -- (thigh turned forward about the hip, shin and foot turned back down about the knee), hips just

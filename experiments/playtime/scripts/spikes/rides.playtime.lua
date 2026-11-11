@@ -25,37 +25,11 @@ local function liveMipo(inst) return inst and inst.parts and inst.parts.torso1 a
 
 -- ─── Mipo helpers (as the soapbox's) ───
 
-local function jointPoint(inst, parentName, partName)
-    local part, parent = inst.parts[partName], inst.parts[parentName]
-    if not (part and parent) then return nil end
-    for _, joint in ipairs(part.body:getJoints()) do
-        local a, b = joint:getBodies()
-        if a == parent.body and b == part.body then
-            local x, y = joint:getAnchors()
-            return x, y
-        end
-    end
-end
+local jointPoint = characterManager.jointPoint -- src/mipo-build.lua
 
-local function turnBodies(bodies, px, py, delta)
-    local cs, sn = math.cos(delta), math.sin(delta)
-    for _, b in ipairs(bodies) do
-        if alive(b) then
-            local x, y = b:getPosition()
-            local rx, ry = x - px, y - py
-            b:setPosition(px + rx * cs - ry * sn, py + rx * sn + ry * cs)
-            b:setAngle(b:getAngle() + delta)
-        end
-    end
-end
+local turnBodies = characterManager.turnBodies -- src/mipo-build.lua
 
-local function turnParts(inst, names, px, py, delta)
-    local bodies = {}
-    for _, name in ipairs(names) do
-        if inst.parts[name] then bodies[#bodies + 1] = inst.parts[name].body end
-    end
-    turnBodies(bodies, px, py, delta)
-end
+local turnParts = characterManager.turnParts -- src/mipo-build.lua
 
 local function allBodies(inst)
     local bodies = {}
@@ -82,18 +56,7 @@ local function localExtent(inst, frame)
     return x0, y0, x1, y1
 end
 
-local function mipoHeight(inst)
-    local top, bottom = math.huge, -math.huge
-    for _, b in ipairs(allBodies(inst)) do
-        for _, fixture in ipairs(b:getFixtures()) do
-            if not fixture:isSensor() then
-                local _, y0, _, y1 = fixture:getBoundingBox()
-                top, bottom = math.min(top, y0), math.max(bottom, y1)
-            end
-        end
-    end
-    return bottom - top
-end
+local mipoHeight = characterManager.mipoHeight -- src/mipo-build.lua
 
 local function setAnkleLimits(inst, on)
     for _, foot in ipairs({ 'lfoot', 'rfoot' }) do

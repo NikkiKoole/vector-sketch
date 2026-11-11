@@ -62,51 +62,15 @@ end
 -- ─── Mipo helpers ───
 
 -- where the joint between parent and part sits (hip, knee, ankle)
-local function jointPoint(inst, parentName, partName)
-    local part, parent = inst.parts[partName], inst.parts[parentName]
-    if not (part and parent) then return nil end
-    for _, joint in ipairs(part.body:getJoints()) do
-        local a, b = joint:getBodies()
-        if a == parent.body and b == part.body then
-            local x, y = joint:getAnchors()
-            return x, y
-        end
-    end
-end
+local jointPoint = characterManager.jointPoint -- src/mipo-build.lua
 
 -- turn bodies rigidly about a point
-local function turnBodies(bodies, px, py, delta)
-    local cs, sn = math.cos(delta), math.sin(delta)
-    for _, b in ipairs(bodies) do
-        if alive(b) then
-            local x, y = b:getPosition()
-            local rx, ry = x - px, y - py
-            b:setPosition(px + rx * cs - ry * sn, py + rx * sn + ry * cs)
-            b:setAngle(b:getAngle() + delta)
-        end
-    end
-end
+local turnBodies = characterManager.turnBodies -- src/mipo-build.lua
 
 -- the same for a Mipo's parts by name (as characterManager.poseTpose does with arms)
-local function turnParts(inst, names, px, py, delta)
-    local bodies = {}
-    for _, name in ipairs(names) do
-        if inst.parts[name] then bodies[#bodies + 1] = inst.parts[name].body end
-    end
-    turnBodies(bodies, px, py, delta)
-end
+local turnParts = characterManager.turnParts -- src/mipo-build.lua
 
-local function moveAll(inst, dx, dy)
-    for _, part in pairs(inst.parts) do
-        local b = part.body
-        if alive(b) then
-            local px, py = b:getPosition()
-            b:setPosition(px + dx, py + dy)
-            b:setLinearVelocity(0, 0)
-            b:setAngularVelocity(0)
-        end
-    end
-end
+local moveAll = characterManager.moveAll -- src/mipo-build.lua
 
 -- ─── Pedalling by muscle ───
 
@@ -170,18 +134,7 @@ end
 -- ─── The bike, sized from the Mipo's legs ───
 
 -- how tall the Mipo stands (its solid shapes, top to bottom)
-local function mipoHeight(inst)
-    local top, bottom = math.huge, -math.huge
-    for _, part in pairs(inst.parts) do
-        for _, fixture in ipairs(alive(part.body) and part.body:getFixtures() or {}) do
-            if not fixture:isSensor() then
-                local _, y0, _, y1 = fixture:getBoundingBox()
-                top, bottom = math.min(top, y0), math.max(bottom, y1)
-            end
-        end
-    end
-    return bottom - top
-end
+local mipoHeight = characterManager.mipoHeight -- src/mipo-build.lua
 
 local function makeBike(inst, x, y)
     -- Sized from the whole Mipo (from the legs alone, a Mipo that's mostly body and head got a

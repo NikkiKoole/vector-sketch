@@ -164,8 +164,10 @@ The landing order, what bites what, and Nikki's keep / spike choices of 2026-11-
   DNA and depth's lanes keep their own); planks uses `drawnStroke()`; the grass blades: clouds and wild read
   `grass.ATLAS` / `grass.QUADS` (`grass` in the script env). `clamp` stays copied (13 one-liners;
   `mathutils.clamp` differs only with the bounds reversed: plants' `clamp(i, 1, #sp.bodies)` with no bodies,
-  plant-look's droop if negative; tried 2026-11-11: Nikki chose to leave them, the gain is small). Left:
-  burrow's stroke extras, the pose helpers. Note: the
+  plant-look's droop if negative; tried 2026-11-11: Nikki chose to leave them, the gain is small). The pose
+  helpers (`jointPoint`, `turnBodies`, `turnParts`, `moveAll`, `mipoHeight`) in `src/mipo-build.lua`, through
+  `characterManager` in scenes; bike, facing, rides and soapbox drop their copies (the same code; checked by
+  running each: soapbox and bike sit their Mipo as before, facing's sit runs). Left: burrow's stroke extras. Note: the
   scenes snapshot renders a scene's saved bodies without its script, so it doesn't check script-drawn
   things (clouds and wild hash the same, empty); and facing, light-grass-check, mipo-materials vary
   between takes.

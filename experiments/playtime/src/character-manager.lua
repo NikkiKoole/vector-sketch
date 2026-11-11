@@ -45,6 +45,11 @@ function lib.switchEars(...) return build.switchEars(...) end -- the ears alone 
 function lib.createCharacterFromExistingDNA(...) return build.createCharacterFromExistingDNA(...) end
 function lib.createCharacterFromJustDNA(...) return build.createCharacterFromJustDNA(...) end
 function lib.poseTpose(...) return build.poseTpose(...) end
+function lib.jointPoint(...) return build.jointPoint(...) end -- posing by hand: where a joint sits
+function lib.turnBodies(...) return build.turnBodies(...) end -- bodies turned rigidly about a point
+function lib.turnParts(...) return build.turnParts(...) end -- a Mipo's parts by name, the same
+function lib.moveAll(...) return build.moveAll(...) end -- the whole Mipo slid and stilled
+function lib.mipoHeight(...) return build.mipoHeight(...) end -- how tall it stands
 function lib.createCharacter(...) return build.createCharacter(...) end
 function lib.removeCharacter(...) return build.removeCharacter(...) end
 function lib.serializeCharacters(...) return build.serializeCharacters(...) end
