@@ -142,6 +142,13 @@ the course before writing the file (the bridge's eval stopped at its instruction
   below the station; carts top out at 4000 (at 100 px/m, was 2500). Nikki's two tracks drawn there are
   in the library as `nikki-tracks-2026-11-11`. Checked live (seated over the bridge, followed down the
   drop and along the hills); not yet dragged in by hand.
+- [ ] **CO7. The flip as the 2D trick for 3D** (Nikki 2026-11-12: "flipping a cart is kinda like our 2d trick
+  to fake 3d"). The roll built in CO4 spins the cart in the screen plane through the rail: a cartwheel
+  round the rail, not a roll about the track. Asked, not answered yet: (1) a roll drawn as a squash
+  through the rail (the cart flattens at the rail and opens upside down under it, the rider facing front
+  halfway: a corkscrew from the side); (2) a 'turn' stretch: the cart drawn turning end-on (short) and the
+  rider side -> front -> other side, reading as the track turning toward and away from you, a U-turn on
+  the ground, the physics still flat (as Mipos turn, MIPO-FACING); (3) both.
 - [ ] **CO6. Nikki plays with it**; then supports to the ground, the hand-drawn look, sounds
   (achtbaan's clacks and the crowd, dreamengine's `coaster` cart).
 
