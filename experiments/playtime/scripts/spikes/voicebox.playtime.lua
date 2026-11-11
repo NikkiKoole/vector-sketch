@@ -68,6 +68,7 @@ function s.update(dt)
         voiceBox.release()
     end
     voiceBox.update(dt, mipo())
+    mipoEmotion.update(dt, false) -- the feeling row's face (no reactions to play here)
 end
 
 -- the vowel chart: front on the left, open at the bottom; drag to move between the vowels
@@ -118,7 +119,7 @@ local SLIDERS = {
 }
 local PRESETS = { 'mipo', 'tiny', 'big', 'hum', 'plain' }
 
-local PANEL = { w = 400, row = 28, pad = 8, chartH = 200 }
+local PANEL = { w = 400, row = 28, pad = 8, chartH = 150 }
 function s.drawUI()
     local c = st()
     if not c.showPanel then return end
@@ -126,7 +127,7 @@ function s.drawUI()
     local v = voiceBox.settings()
     local sw, sh = ui.getDimensions()
     local consonantRows = math.ceil(#voiceBox.CONSONANTS / 6)
-    local rows = 1 + #SLIDERS + consonantRows + 4
+    local rows = 1 + #SLIDERS + consonantRows + 6
     local w, h = PANEL.w, PANEL.chartH + PANEL.row * rows + 50
     local x0, y0 = sw - w - 12, math.max(12, (sh - h) / 2)
     ui.panel(x0, y0, w, h, '•• voice box ••', function()
@@ -163,14 +164,13 @@ function s.drawUI()
         end
         y = y + consonantRows * PANEL.row
         -- codas (VB4): what a said syllable closes on; then two whole words
-        ui.label(x, y + 4, 'ends on')
         local codas = { false }
         for _, name in ipairs(voiceBox.CODAS) do codas[#codas + 1] = name end
-        local kw = (inner - 70 - (#codas - 1) * 3) / #codas
+        local kw = (inner - (#codas - 1) * 3) / #codas
         for i, name in ipairs(codas) do
             local label = name or '-'
-            if (v.coda or false) == name then label = '[' .. label .. ']' end
-            if ui.button(x + 70 + (i - 1) * (kw + 3), y, kw, label, PANEL.row - 4) then
+            if (v.coda or false) == name then label = name and label:upper() or '=' end -- picked: capitals
+            if ui.button(x + (i - 1) * (kw + 3), y, kw, label, PANEL.row - 4) then
                 v.coda = name or nil
                 voiceBox.say(v.onset, v.coda)
             end
@@ -182,6 +182,20 @@ function s.drawUI()
                 voiceBox.word(word[1], word[2], word[3])
             end
         end
+        y = y + PANEL.row
+        -- feelings (VB4): the face, what it says in Mipomi, its voice and the consonant it ends on
+        local feelings = { 'neutral', 'happy', 'sad', 'angry', 'scared', 'surprised', 'sleepy', 'shy' }
+        local fw = (inner - 7 * 3) / 8
+        for i, name in ipairs(feelings) do
+            if ui.button(x + (i - 1) * (fw + 3), y, fw, name:sub(1, 4), PANEL.row - 4) then
+                v.feeling = name ~= 'neutral' and name or nil
+                local m = mipo()
+                if m then mipoEmotion.set(m, name) end
+                voiceBox.babble()
+            end
+        end
+        y = y + PANEL.row
+        ui.label(x, y + 4, (v.feeling or 'neutral') .. ' says: ' .. (v.saying or '-'))
         y = y + PANEL.row
         if ui.button(x, y, 120, 'babble (b)', PANEL.row - 4) then voiceBox.babble() end
         local oc, ov = ui.checkbox(x + 130, y, c.padOnset, 'chart: consonant first')
@@ -200,7 +214,7 @@ function s.drawTakePanel()
     local L = state.voiceLab
     local v = voiceBox.settings()
     local _, sh = ui.getDimensions()
-    local rows = 4 + #TAKE_SLIDERS + 7
+    local rows = 4 + #TAKE_SLIDERS + 9
     local w, h = TAKE.w, TAKE.row * rows + 36
     local x0, y0 = 12, math.max(12, (sh - h) / 2)
     ui.panel(x0, y0, w, h, '•• recorded take ••', function()
@@ -251,6 +265,8 @@ function s.drawTakePanel()
         ui.label(x, y + 4 + TAKE.row * 3, 'made: the same syllable, no recording')
         y = y + TAKE.row * 4.2
         ui.label(x, y, 'drag the chart  space hold  b babble  h panels')
+        ui.label(x, y + TAKE.row, 'right: the row under the consonants is what a')
+        ui.label(x, y + TAKE.row * 2, 'syllable ends on (- none); the feelings babble')
     end)
 end
 

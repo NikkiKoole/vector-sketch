@@ -7,7 +7,10 @@
 --           jitter / shimmer / creak (roughness), vibrato
 --   speech  a consonant opens a syllable (voice_consonant, 22 of them: b d g m n l s sh ng r w y dh f v
 --           z zh th p t k ch); a coda closes it (voice_coda: "mip", "pom", VB4); babble: a phrase of
---           mipomi syllables on one held note, some closing on a coda
+--           Mipomi sentence on one held note (VB4: the language's own words, ~/Projects/love/mipomi-lang)
+--   feeling a Mipo's feeling (src/mipo-emotion.lua) picks what it says ("mi i mola", I am happy), tints the
+--           voice (pitch, pace, effort) and the mood consonant the sentence closes on (Mipomi's paragrammar:
+--           m warm, p tense, h a sigh, f cross, b aww)
 -- The mouth: each vowel on the chart has a mouth shape, a point between them blends those by nearness;
 -- a consonant shows its own shape for its moment; quiet, the Mipo's own mouth.
 -- Synth: the 'voiceBox' patch in a shared pool slot (src/synth.lua lib.poolSlots), held notes.
@@ -70,7 +73,7 @@ local CONSONANT_DUR = { b = 0.055, d = 0.055, g = 0.055, m = 0.09, n = 0.09, l =
 local UNVOICED = { s = true, sh = true, f = true, th = true, p = true, t = true, k = true, ch = true }
 -- codas (VB4): the engine keeps the voice on through a coda, so an unvoiced one (p t k, s f) goes quiet once
 -- it's closed: "mi-p" stops, "po-m" hums on a little
-lib.CODAS = { 'm', 'n', 'ng', 'l', 'p', 't', 'k', 's' }
+lib.CODAS = { 'm', 'n', 'ng', 'l', 'p', 't', 'k', 's', 'f', 'b', 'd', 'h' }
 lib.CODA_HUM = 0.1    -- seconds a voiced coda (m n ng l) hums on, closed, before the release
 lib.CODA_STOP = 0.03  -- seconds an unvoiced one holds, closed and quiet
 lib.SYLLABLE = 0.2    -- seconds of vowel before a said syllable's coda (no coda: rung out 0.32)
@@ -127,9 +130,11 @@ local function pushSound(C_, handle)
     aux(C_, handle, VP.glide, 1)
     aux(C_, handle, VP.size, s.size)
     -- effort as dreamengine's voxpad has it: breath, glottal open quotient and tilt together
-    aux(C_, handle, VP.breath, 0.55 * (1 - s.effort))
-    aux(C_, handle, VP.openq, 0.95 - 0.9 * s.effort)
-    aux(C_, handle, VP.tilt, 0.8 * (1 - s.effort))
+    local feel = lib.FEEL[s.feeling or 'neutral'] or lib.FEEL.neutral
+    local effort = clamp01(s.effort + (feel.effort or 0))
+    aux(C_, handle, VP.breath, 0.55 * (1 - effort))
+    aux(C_, handle, VP.openq, 0.95 - 0.9 * effort)
+    aux(C_, handle, VP.tilt, 0.8 * (1 - effort))
     aux(C_, handle, VP.nasal, s.nasal)
     aux(C_, handle, VP.buzz, s.buzz)
     aux(C_, handle, VP.jitter, s.jitter)
@@ -152,13 +157,25 @@ local function start(pitch, consonant)
     synth.noteSet(s.handle, pitch)
     pushSound(C_, s.handle)
     pushVowel(C_, s.handle, s.f1, s.f2)
-    if consonant and CONSONANT_ID[consonant] then
-        C_.voice_consonant(s.handle, CONSONANT_ID[consonant])
-        s.consonantMouth, s.consonantUntil = CONSONANT_MOUTH[consonant] or 'C_D_E_G_K_N_R_S',
-            love.timer.getTime() + CONSONANT_FOR
-    end
+    lib.articulate(C_, s, consonant, love.timer.getTime())
     s.sounding = true
     return s.handle
+end
+
+-- a consonant opens the syllable on the held note. 'h' isn't one of the engine's: a breath puff instead, the
+-- voice breathy for a moment (lib.H_PUFF s), then back. 'j' is Mipomi's (the Dutch j): the engine's y.
+lib.H_PUFF = 0.07
+function lib.articulate(C_, s, consonant, now)
+    if consonant == 'j' then consonant = 'y' end
+    if consonant == 'h' then
+        aux(C_, s.handle, VP.breath, 1)
+        aux(C_, s.handle, VP.openq, 1)
+        aux(C_, s.handle, VP.tilt, 1)
+        s.breathUntil = now + lib.H_PUFF
+    elseif consonant and CONSONANT_ID[consonant] then
+        C_.voice_consonant(s.handle, CONSONANT_ID[consonant])
+        s.consonantMouth, s.consonantUntil = CONSONANT_MOUTH[consonant] or 'C_D_E_G_K_N_R_S', now + CONSONANT_FOR
+    end
 end
 
 function lib.hold(consonant) return start(S().pitch, consonant) end
@@ -169,9 +186,18 @@ function lib.release()
     s.handle, s.sounding, s.babble, s.codaAt = nil, false, nil, nil
 end
 
--- close the held note on a consonant now; returns how long until it's closed and done
+-- close the held note on a consonant now; returns how long until it's closed and done.
+-- 'h' closes on a sigh: the voice goes breathy and fades (lib.SIGH s)
+lib.SIGH = 0.3
 local function fireCoda(s, coda, now)
     local C_ = s.handle and C()
+    if C_ and coda == 'h' then
+        aux(C_, s.handle, VP.breath, 1)
+        aux(C_, s.handle, VP.openq, 1)
+        aux(C_, s.handle, VP.tilt, 1)
+        s.quietAt = now + lib.SIGH * 0.4
+        return lib.SIGH
+    end
     if not (C_ and CONSONANT_ID[coda]) then return 0 end
     C_.voice_coda(s.handle, CONSONANT_ID[coda])
     local closed = CONSONANT_DUR[coda] or 0.08
@@ -227,53 +253,134 @@ function lib.word(consonant, vowelName, coda)
     lib.say(consonant, coda)
 end
 
--- babble: mipomi syllables on one held note, re-articulated (connected), a falling tune with a lift
-local BABBLE_C = { 'm', 'p', 'b', 'l', 'n', 'd', 'm', 'p' }
-local BABBLE_V = { 'i', 'o', 'a', 'oo', 'e', 'o', 'i', 'a' }
-local BABBLE_CODA = { 'm', 'p', 'n', 'm', 'ng' } -- mipomi's endings: mip, pom, min, pong
-lib.BABBLE_CODA_LAST, lib.BABBLE_CODA_MID = 0.6, 0.15 -- how often the last syllable / the others close
-function lib.babble(count)
-    local s = S()
-    count = count or love.math.random(3, 6)
-    local list = {}
-    local pitch = s.pitch + love.math.random(0, 3)
-    for i = 1, count do
-        local last = i == count
-        local closes = love.math.random() < (last and lib.BABBLE_CODA_LAST or lib.BABBLE_CODA_MID)
-        list[i] = { c = BABBLE_C[love.math.random(#BABBLE_C)], v = BABBLE_V[love.math.random(#BABBLE_V)],
-            coda = closes and BABBLE_CODA[love.math.random(#BABBLE_CODA)] or nil,
-            pitch = pitch + (last and love.math.random(-4, 4) or 0),
-            dur = last and 0.34 or (0.15 + love.math.random() * 0.08) }
-        if list[i].coda then list[i].dur = list[i].dur + 0.06 end -- room to close
-        pitch = pitch - love.math.random(0, 2) + (love.math.random() < 0.2 and 3 or 0)
+-- ── babble in Mipomi (VB4) ──────────────────────────────────────────────────────────────────────
+-- Mipomi (~/Projects/love/mipomi-lang grammar.txt): CV syllables only, 13 consonants (m b p f k l t j n d s h
+-- w), three vowels (a i o). A sentence: subject, an aspect vowel (i is, a becomes / goes, o does), what.
+-- "mi i mola" I am happy. A whispered consonant after it carries the mood (its paragrammar).
+lib.MIPOMI = {
+    subjects = { 'mi', 'jo', 'bo', 'bi', 'ba', 'koka', 'wobo' }, -- I, you, creature, friend, child, box, ball
+    i = { 'lala', 'mola', 'lili', 'doka', 'koti', 'koto', 'wala', 'kola', 'lali', 'momo', 'koko', 'foko' },
+    a = { 'koto', 'koti', 'foko', 'fiko', 'kofo', 'koko', 'mola' },
+    o = { 'hafa', 'hihi', 'soso', 'fowo', 'paki', 'faha', 'pifo', 'jaja', 'jojo', 'mowa', 'pahi', 'di' },
+    objects = { 'wobo', 'koka', 'wawa', 'jiki' }, -- after an o-verb now and then (ball, box, water, book)
+}
+-- per feeling: what it says, how it sounds, the mood consonant it ends on (Mipomi's paragrammar: m comfort,
+-- p tension, h sigh / awe, f frustration, b affectionate aww; nil: no ending). pitch in semitones, pace x
+lib.FEEL = {
+    neutral   = { pitch = 0, pace = 1, effort = 0 },
+    happy     = { pitch = 2, pace = 1.1, effort = 0.1, ending = 'm',
+                  says = { { 'mi', 'i', 'mola' }, { 'mi', 'i', 'lala' }, { 'mi', 'o', 'mowa' }, { 'momo' } } },
+    sad       = { pitch = -3, pace = 0.8, effort = -0.15, ending = 'h',
+                  says = { { 'mi', 'i', 'mino' }, { 'mi', 'o', 'miso' }, { 'mino', 'mino' } } },
+    angry     = { pitch = -1, pace = 1.15, effort = 0.3, ending = 'f',
+                  says = { { 'mi', 'i', 'faho' }, { 'mi', 'o', 'jaho' }, { 'no', 'no' }, { 'lana' } } },
+    scared    = { pitch = 4, pace = 1.3, effort = 0, ending = 'p',
+                  says = { { 'mi', 'i', 'fowa' }, { 'mi', 'a', 'fowa' }, { 'nako' } } },
+    surprised = { pitch = 3, pace = 1, effort = 0.15, ending = 'h',
+                  says = { { 'moja' }, { 'mi', 'i', 'moja' }, { 'jo', 'i', 'moja' } } },
+    sleepy    = { pitch = -4, pace = 0.7, effort = -0.25, ending = 'm',
+                  says = { { 'mi', 'i', 'nini' }, { 'mi', 'a', 'nisa' }, { 'nini' } } },
+    shy       = { pitch = 1, pace = 0.9, effort = -0.2, volume = 0.7, ending = 'b',
+                  says = { { 'mi', 'i', 'misofo' }, { 'mi', 'i', 'lili' } } },
+}
+lib.STRESS = 1.5        -- semitones up on a word's first syllable (and a little longer)
+lib.WORD_GAP = 0.07     -- seconds of quiet between words
+lib.SYLLABLE_TIME = 0.17 -- seconds a syllable takes (at pace 1)
+local MIPOMI_VOWEL = { a = 'a', i = 'i', o = 'o', u = 'oo', e = 'e' }
+
+local function pick(list) return list[love.math.random(#list)] end
+
+-- a sentence as words: the feeling's own, else subject + aspect + what (+ an object after a doing)
+function lib.sentence(feeling)
+    local feel = lib.FEEL[feeling or 'neutral']
+    if feel and feel.says and love.math.random() < 0.75 then
+        local words = {}
+        for i, w in ipairs(pick(feel.says)) do words[i] = w end
+        return words
     end
-    s.babble = { list = list, i = 0, nextAt = love.timer.getTime() }
+    local M = lib.MIPOMI
+    local aspect = pick({ 'i', 'a', 'o' })
+    local words = { pick(M.subjects), aspect, pick(M[aspect]) }
+    if aspect == 'o' and love.math.random() < 0.4 then words[#words + 1] = pick(M.objects) end
+    return words
+end
+
+-- a word's syllables: { consonant (nil: a bare vowel), vowel name }
+function lib.syllables(word)
+    local list = {}
+    for c, v in word:lower():gmatch('([^aeiou]*)([aeiou])') do
+        list[#list + 1] = { c = c ~= '' and c or nil, v = MIPOMI_VOWEL[v] }
+    end
+    return list
+end
+
+-- babble: a Mipomi sentence on one held note, its syllables re-articulated (connected), a short quiet between
+-- words, the first syllable of each word stressed, falling to the end, closing on the feeling's consonant
+function lib.babble(words)
+    local s = S()
+    local feel = lib.FEEL[s.feeling or 'neutral'] or lib.FEEL.neutral
+    words = words or lib.sentence(s.feeling)
+    local pace = feel.pace or 1
+    local list = {}
+    local pitch = s.pitch + (feel.pitch or 0)
+    local total = 0
+    for _, w in ipairs(words) do total = total + #lib.syllables(w) end
+    local n = 0
+    for wi, w in ipairs(words) do
+        if wi > 1 then list[#list + 1] = { pause = lib.WORD_GAP / pace } end
+        for si, syl in ipairs(lib.syllables(w)) do
+            n = n + 1
+            local stressed = si == 1 and #lib.syllables(w) > 1
+            syl.pitch = pitch - 2.5 * (n - 1) / math.max(1, total - 1) + (stressed and lib.STRESS or 0)
+                + (love.math.random() - 0.5) * 0.6
+            syl.dur = lib.SYLLABLE_TIME * (stressed and 1.2 or 1) * (0.9 + love.math.random() * 0.2) / pace
+            list[#list + 1] = syl
+        end
+    end
+    local last = list[#list]
+    if last and feel.ending then
+        last.coda = feel.ending
+        last.dur = last.dur + 0.08
+    end
+    if last then last.dur = last.dur + 0.1 end -- the last one rings
+    s.babble = { list = list, i = 0, nextAt = love.timer.getTime(), words = words,
+        volume = lib.VOLUME * (feel.volume or 1) }
+    s.saying = table.concat(words, ' ') .. (feel.ending and ('... ' .. feel.ending) or '')
 end
 
 local function babbleStep(s, now)
     local b = s.babble
     if b.codaAt and now >= b.codaAt then -- this syllable closes on its coda, late in it
         b.codaAt = nil
-        fireCoda(s, b.list[b.i].coda, now)
+        local done = fireCoda(s, b.list[b.i].coda, now)
+        b.nextAt = math.max(b.nextAt, now + done)
     end
     if now < b.nextAt then return end
     b.i = b.i + 1
     local syl = b.list[b.i]
     if not syl then lib.release() return end
+    if syl.pause then -- between words: quiet
+        if s.handle then synth.noteSet(s.handle, nil, 0) end
+        s.sounding = false
+        b.nextAt = now + syl.pause
+        return
+    end
     local v = vowelNamed(syl.v)
     s.f1, s.f2 = v.f1, v.f2
     local C_ = C()
     if not C_ then s.babble = nil return end
     if b.i == 1 or not s.handle then
         start(syl.pitch, syl.c)
+        if s.handle then synth.noteSet(s.handle, nil, b.volume) end
     else
-        synth.noteSet(s.handle, syl.pitch, lib.VOLUME) -- back up after an unvoiced coda
+        synth.noteSet(s.handle, syl.pitch, b.volume) -- back up after a word gap or an unvoiced coda
         s.quietAt = nil
+        pushSound(C_, s.handle)
         pushVowel(C_, s.handle, s.f1, s.f2)
         C_.voice_coda(s.handle, -1) -- open again from the last coda
-        C_.voice_consonant(s.handle, CONSONANT_ID[syl.c])
-        s.consonantMouth, s.consonantUntil = CONSONANT_MOUTH[syl.c] or 'C_D_E_G_K_N_R_S', now + CONSONANT_FOR
+        lib.articulate(C_, s, syl.c, now)
     end
+    s.sounding = true
     b.nextAt = now + syl.dur
     -- a coda closes in the syllable's back part: its closing ends with the syllable
     b.codaAt = syl.coda and (b.nextAt - (CONSONANT_DUR[syl.coda] or 0.08) - 0.04) or nil
@@ -446,6 +553,11 @@ function lib.update(dt, instance)
     if s.codaAt and now >= s.codaAt then -- a said syllable closes ("mi-p")
         s.codaAt = nil
         s.releaseAt = now + fireCoda(s, s.pendingCoda, now)
+    end
+    if s.breathUntil and now >= s.breathUntil then -- an h's puff is over: the voice as set
+        s.breathUntil = nil
+        local C_ = s.handle and C()
+        if C_ then pushSound(C_, s.handle) end
     end
     if s.quietAt and now >= s.quietAt then -- an unvoiced coda: closed, so quiet
         s.quietAt = nil

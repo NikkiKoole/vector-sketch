@@ -70,6 +70,15 @@ the eight vowel mouths. **Not heard by me**: how it sounds is VB1.
   the time, the others 15% (m p n ng); the next syllable opens again (`voice_coda(-1)`, volume back).
   Checked in a test window: timing and mouth state right, no errors; not heard. Still open here: two
   consonants in a row, consonants chosen by mipomi-lang.
+  **Mipomi, h, feelings, 2026-11-11** (Nikki: "yes do 1 to 3"): babble now says Mipomi sentences
+  (`lib.MIPOMI`, `lib.sentence`): CV syllables, vowels a i o only, subject + aspect vowel (i is, a becomes,
+  o does) + a word; first syllable of a word stressed, falling to the end, a short quiet between words. 'h'
+  (not one of the engine's 22) is a breath puff (`lib.H_PUFF`); 'j' is the engine's y (the Dutch j). The
+  scene's feeling row (neutral … shy) sets the Mipo's face (src/mipo-emotion.lua), what it says ("mi i
+  mola"), a voice tint (`lib.FEEL`: pitch, pace, effort, volume) and the mood consonant it ends on, from
+  Mipomi's paragrammar: happy m, sad h (a sigh: breathy fade), angry f, scared p, surprised h, sleepy m,
+  shy b. Endings row gains f b d h. Notes and the dictionary's open questions written to mipomi-lang
+  `VOICE-NOTES.md`. Checked in a test window: sentences, word gaps, the h puff and sigh, no errors; not heard.
 - [ ] **VB5. Singing**: the choir's tunes on the made voice: any note exactly, no takes, no tuning tables;
   the singer model (breath, scoop, vibrato) as its levers.
 - [ ] **VB6. A voice per Mipo**, if kept: size from the body, a pitch and a preset in the DNA (PUPPETMAKER-SOUND
