@@ -34,6 +34,7 @@ local inspector = require('src.ui.inspector')
 local mipoRegistry = require('src.mipo-registry')
 local rightColumn = require('src.ui.right-column')
 local toolRail = require('src.ui.tool-rail')
+local selectionBar = require('src.ui.selection-bar')
 local PANEL_WIDTH = ui.theme.panelWidth
 local BUTTON_HEIGHT = ui.theme.lineHeight
 local ROW_WIDTH = ui.theme.rowWidth
@@ -223,6 +224,7 @@ function lib.drawUI()
     if not modes.is(modes.PICK_AUTO_ROPIFY) then
         rightColumn.draw(lib.drawSelectionProperties)
     end
+    selectionBar.draw() -- dice, copy, flip, delete under what's selected (EA2)
 
     if modes.is(modes.JOINT_CREATION) and state.jointParams.body1 and state.jointParams.body2 then
         lib.drawJointCreateUI()

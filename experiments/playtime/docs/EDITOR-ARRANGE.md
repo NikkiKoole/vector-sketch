@@ -38,6 +38,12 @@ on its own.
   `objectManager.scaleThing`). Not on Mipo parts or blobs. Done 2026-11-06, liked.
 - [ ] **EA2. The selection bar.** 🎲 (Mipos: it exists, at the bottom of their panel), copy,
   flip, delete, "…". The properties panel stops opening by itself.
+  **Parked, switched off: tried 2026-11-11**, Nikki "not sold on the bar (yet)", "lets leave the bar disabled";
+  `state.selectionBar = true` shows it (`src/ui/selection-bar.lua`): a bar under the selection (above it
+  near the screen's bottom). A Mipo: dice (randomize all, undo in its panel), copy (the whole Mipo, the
+  copy's same part selected), flip (left <-> right facing), delete (the whole Mipo). A thing: copy, flip
+  (x), delete. A box selection: copy, delete. ••• opens the properties tab. Not yet: dice for props (EA3);
+  the properties panel still shows when its tab is open (the column has no closed state yet).
 - [ ] **EA3. 🎲 for props.** First look at what each `src/props.lua` recipe varies today.
 - [ ] **EA4. The shelf** as a strip of pictures, for placing things.
 - [ ] **EA5. The workshop toggle**: tool rail and full inspector behind it.
