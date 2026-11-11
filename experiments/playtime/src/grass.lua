@@ -7,6 +7,7 @@
 -- setting changes; the sway only moves the sprites already in it.
 local lib = {}
 local mathutils = require('src.math-utils')
+local state = require('src.state')
 
 -- physics-testbed's blade atlas (the same 8 drawings as puppet-maker2's spriet1-8)
 lib.ATLAS = 'textures/world/sprieten.png'
@@ -292,7 +293,9 @@ function lib.draw(extra, thing, body, layer)
     for i, id in pairs(part.moving) do
         setBlade(part.batch, id, entry.blades[i], extra, angle, time)
     end
-    love.graphics.setColor(1, 1, 1, 1)
+    -- the hour's light with a sky (state.hourLight, src/scene-light.lua), else as drawn
+    local h = state.hourLight
+    love.graphics.setColor(h and h[1] or 1, h and h[2] or 1, h and h[3] or 1, 1)
     -- the far rows sway in the shader, only when no other shader is on (a lit or shadow pass keeps its own)
     local amount = setting(extra, 'sway')
     if part.shaderSway and amount > 0 and love.graphics.getShader() == nil then
@@ -306,6 +309,7 @@ function lib.draw(extra, thing, body, layer)
     else
         love.graphics.draw(part.batch, body:getX(), body:getY(), angle)
     end
+    love.graphics.setColor(1, 1, 1, 1)
 end
 
 return lib

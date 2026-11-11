@@ -199,6 +199,8 @@ lib.bySubtype = {
           set = function(fixture, v) mainOf(fixture).tint = v; textureChanged(extraOf(fixture)) end },
         extraNumber('tileWidthM', 'tile width', 0.01, 100, 1, tileMeshChanged),
         extraNumber('tileHeightM', 'tile height', 0.01, 100, 1, tileMeshChanged),
+        -- how solid (WORLD-BUILDING G3, a ground skin: 1; none set: the old fixed 140/255)
+        extraNumber('opacity', 'opacity', 0, 1, 140 / 255, tileMeshChanged),
         { key = 'rotation', kind = 'number', min = 0, max = 360, step = 1,
           get = function(fixture) return math.deg(extraOf(fixture).tileRotation or 0) end,
           set = function(fixture, v)

@@ -230,7 +230,10 @@ It grows out of the click-in stacking above:
   `light-grass-check`: the ground 16 rows, 120 deep, bumps 25; the spinning turf 1 row.
   - Open: should a finger or mouse dragged through the grass part it too (the pointer as one more pusher)?
 - [ ] **G3. tile-repeat as a ground skin.** An alpha setting instead of the fixed 140 (old
-  scenes keep 140). An optional top band: a strip texture along the up-facing edges with the
+  scenes keep 140). Opacity done 2026-11-11 (Nikki: "lets do a grass ground"): the panel's 'opacity' (none
+  set: 140/255 as before); the facing scene's ground is soil (`textures/world/ground/soil-01`, CC0 ambientCG
+  Ground048; also earth-01, grass-01, moss-01) under 16 grass rows, ground and grass in the sky's hour
+  light (state.hourLight, src/scene-light.lua). Still open: An optional top band: a strip texture along the up-facing edges with the
   fill below, like downhill's road. A grass lip over dirt is then one attach.
 - [ ] **G4. Parallax backdrops.** First look at the ready-made parallax in 1d (`lib/camera.lua`
   `createCamData`, brady's `addLayer`). A `parallax` value 0..1 per backdrop (0 = fixed to the

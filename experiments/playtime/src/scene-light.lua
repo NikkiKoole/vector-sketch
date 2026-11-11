@@ -461,6 +461,15 @@ function lib.apply()
     end
     -- a sky: the hour into the level's own tables (src/sky-light.lua)
     if shared and skyOn() then require('src.sky-light').fill(shared, require('src.scene-sky').settings().hour) end
+    -- and the hour's light on what isn't lit by the shaders (walls, ground skins, grass): state.hourLight
+    -- { r, g, b }, nil without a sky or with the light off (as drawn)
+    if skyOn() and level.name ~= 'off' then
+        local r, g, b = require('src.sky-light').ambient(require('src.scene-sky').settings().hour)
+        state.hourLight = state.hourLight or {}
+        state.hourLight[1], state.hourLight[2], state.hourLight[3] = r, g, b
+    else
+        state.hourLight = nil
+    end
 end
 
 return lib

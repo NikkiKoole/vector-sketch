@@ -193,6 +193,7 @@ end
 
 local function makeGround()
     local c = check()
+    if getObjectsByLabel('ground')[1] then return end -- the scene's own (soil and grass, saved with it)
     if c.ground and not c.ground:isDestroyed() then return end
     c.ground = love.physics.newBody(world, 0, GROUND_Y + 50, 'static')
     love.physics.newFixture(c.ground, love.physics.newRectangleShape(SPACING * 5, 100)):setFriction(0.9)

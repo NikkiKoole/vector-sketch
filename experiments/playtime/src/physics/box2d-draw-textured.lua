@@ -852,7 +852,8 @@ local function drawTileRepeat(d)
                     table.insert(meshVertices, {
                         x - centroidX, y - centroidY,
                         u, v,
-                        255, 255, 255, 140
+                        -- its opacity (sfixture-params; old scenes: none set, the fixed 140 as before)
+                        255, 255, 255, math.floor((d.extra.opacity or 140 / 255) * 255 + 0.5)
                     })
                 end
             end
@@ -869,6 +870,8 @@ local function drawTileRepeat(d)
         end
 
         local r, g, b, a = color.hexToColor(d.extra.main.tint or 'ffffffff')
+        local h = state.hourLight -- the hour's light with a sky (src/scene-light.lua), else as drawn
+        if h then r, g, b = r * h[1], g * h[2], b * h[3] end
         love.graphics.setColor(r, g, b, a)
 
         local body = d.thing.body
