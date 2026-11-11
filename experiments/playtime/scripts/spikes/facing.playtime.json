@@ -1,15 +1,28 @@
 {
   "camera": {
-    "scale": 0.45,
+    "x": -86.3393,
+    "y": 25.5392,
+    "scale": 0.2317,
     "rotation": 0,
-    "x": 0,
-    "y": 520
+    "settings": {
+      "speed": 3,
+      "edgeLag": 150,
+      "follow": true,
+      "edgeSpeed": 900,
+      "deadZone": 0.3,
+      "lookAhead": 0.35,
+      "maxLead": 0.25,
+      "minZoom": 0.1,
+      "maxZoom": 5,
+      "edgePan": true,
+      "edgeMargin": 80
+    }
   },
   "bodies": [
     {
       "position": [
-        1100,
-        100
+        1642.6565,
+        -143.9572
       ],
       "linearVelocity": [
         0,
@@ -58,10 +71,10 @@
           ],
           "userData": {
             "extra": {
+              "tile": 600,
               "main": {
                 "bgURL": "world/walls/concrete-02.jpg"
               },
-              "tile": 600,
               "behind": 400
             },
             "label": "",
@@ -88,8 +101,8 @@
     },
     {
       "position": [
-        -1468.4828,
-        -95.191
+        -1665.6593,
+        -128.4832
       ],
       "linearVelocity": [
         0,
@@ -138,10 +151,10 @@
           ],
           "userData": {
             "extra": {
+              "tile": 4000,
               "main": {
                 "bgURL": "world/walls/plaster-03.jpg"
               },
-              "tile": 4000,
               "behind": 120
             },
             "label": "",
@@ -293,7 +306,8 @@
   "joints": [],
   "version": 2,
   "sky": {
-    "hour": 7.5,
+    "hour": 16.3056,
+    "runs": true,
     "dayLength": 10,
     "horizon": 917
   },

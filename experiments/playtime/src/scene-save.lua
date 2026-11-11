@@ -105,6 +105,7 @@ local function sfixtureUserData(ud)
         local extra = utils.shallowCopy(ud.extra)
         extra._mesh = nil
         extra.rigidLookup = nil -- holds bodies (userdata)
+        extra.skinFixture = nil -- a face patch's skin (src/face-patches.lua): a fixture, found again when placed
         if extra.ompImage or subtypes.is(ud, subtypes.TEXFIXTURE) then
             extra.ompImage = nil
             extra.dirty = true -- composed again after a load
