@@ -420,6 +420,9 @@ function love.draw()
     end
 
     doors.drawFade()
+    -- 'over a panel' is found again by this frame's panels (ui.panel sets it): in play mode a scene without
+    -- a panel of its own never starts a UI frame, and a stale one would keep clicks from the world
+    ui.overPanel = false
     if editing then -- the UI at its own scale (ui.scale, src/ui/all.lua)
         love.graphics.push()
         love.graphics.scale(ui.scale)

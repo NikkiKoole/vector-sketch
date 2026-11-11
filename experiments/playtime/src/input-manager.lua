@@ -304,6 +304,9 @@ end
 -- Play mode (src/play-mode.lua): the pointer only plays. No selection, tool modes or panel gates.
 local function handlePlayPointer(x, y, id, action)
     if action == "pressed" then
+        -- on a scene's own panel (or the exit button): the UI's, not the world's (Nikki 2026-11-11: a click
+        -- on a panel also grabbed the thing behind it)
+        if ui.overPanel or ui.activeElementID then return end
         local cx, cy = cam:getWorldCoordinates(x, y)
         local _, hitted, madedata = box2dPointerJoints.handlePointerPressed(cx, cy, id, pointerParams(), true)
         if #hitted > 0 then playPressed(hitted, cx, cy) else doors.onPressed({}, cx, cy) end
@@ -494,6 +497,9 @@ local function handlePointer(x, y, id, action, button)
     if action == "pressed" then
         -- Track whether press originated over a UI element
         state.interaction.pressedOverUI = ui.activeElementID or ui.overPanel or false
+        -- a press on a panel is the panel's: it doesn't reach the world behind it (Nikki 2026-11-11: clicking
+        -- a button also started dragging the thing under it). Before, it only kept the selection on release.
+        if state.interaction.pressedOverUI then return end
         -- this is a nice pattern, early return!
         if modes.is(modes.EDIT_MESH_TRIS) then return end
 

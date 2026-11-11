@@ -587,9 +587,54 @@ describe("input-manager: play mode", function()
         assert.are.equal(0, #pointerJoints.getInteractedWithPointer())
     end)
 
+    it("a press on a panel stays the panel's: nothing behind it is grabbed", function()
+        local ui = require('src.ui.all')
+        addBodyAtScreen('rectangle', SX1, SY1)
+        ui.overPanel = true
+        press(SX1, SY1)
+        ui.overPanel = false
+        assert.are.equal(0, #pointerJoints.getInteractedWithPointer())
+    end)
+
     it("reads --play <scene> from the command line", function()
         assert.are.equal('dollhouse', playMode.sceneFromArgs({ '--bridge', '--play', 'dollhouse' }))
         assert.is_nil(playMode.sceneFromArgs({ '--scene', 'dollhouse' }))
+    end)
+end)
+
+-- Nikki 2026-11-11: clicking a button also started dragging (and selected) the thing behind it.
+describe("input-manager: a press on a panel in the editor", function()
+    local ui = require('src.ui.all')
+
+    before_each(function()
+        state.physicsWorld = makeWorld()
+        registry.reset()
+        cam:setTranslation(0, 0)
+        cam:setScale(1)
+        resetInteractionState()
+    end)
+
+    after_each(function()
+        ui.overPanel = false
+        release(SX1, SY1)
+        if state.physicsWorld and not state.physicsWorld:isDestroyed() then
+            state.physicsWorld:destroy()
+        end
+    end)
+
+    it("doesn't select or grab what's behind the panel", function()
+        addBodyAtScreen('rectangle', SX1, SY1)
+        ui.overPanel = true
+        press(SX1, SY1)
+        assert.is_nil(state.selection.selectedObj)
+        assert.are.equal(0, #pointerJoints.getInteractedWithPointer())
+    end)
+
+    it("off the panel, the same press selects it", function()
+        addBodyAtScreen('rectangle', SX1, SY1)
+        ui.overPanel = false
+        press(SX1, SY1)
+        assert.is_truthy(state.selection.selectedObj)
     end)
 end)
 
