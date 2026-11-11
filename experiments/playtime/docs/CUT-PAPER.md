@@ -1,6 +1,6 @@
 # Cut paper — every drawn part a piece of painted paper, in draw order
 
-status: active
+status: parked — kept as a spike (Nikki 2026-11-11: "like the look of all of them and want to keep them in that spike"); the next step when it comes back is below
 
 Nikki (2026-11-11): "the cutpaper not great, like your idea to see if run on draw order changes it, can we
 spike that?". The riso spike's cut paper (RISO.md) worked on the finished picture: busy textures broke into
@@ -35,7 +35,8 @@ fringe can't grow past a picture's own transparent margin.
 
 ## Steps
 
-- [ ] **CP1. Nikki plays with it**: keep, change or park.
+- [x] **CP1. Nikki plays with it**: keep, change or park.
+  Kept 2026-11-11 (Nikki 2026-11-11: "like the look of all of them and want to keep them in that spike"): liked, kept as a spike.
 - [ ] **CP2. Real torn paper**: scans of torn paper edges and painted sheets (scan2tex) instead of noise,
   as MATERIALS learnt.
 - [ ] **CP3. If kept**: a look per Mipo or per scene (a setting, not a scene script), the background as

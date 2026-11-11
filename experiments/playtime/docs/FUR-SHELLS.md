@@ -1,6 +1,6 @@
 # Fur from shells — Mipos with fur past their outline
 
-status: active
+status: parked — kept as a spike (Nikki 2026-11-11: "like the look of all of them and want to keep them in that spike"); the next step when it comes back is below
 
 Nikki (2026-11-11): "another sort of effect, fur, i know we have sort of this material but can we play with it
 here too, might get better". The fur material (MATERIALS MT7, 2026-11-06) draws inside the shape only; its
@@ -82,7 +82,8 @@ a check for that before fur goes into the engine.
 
 ## Steps
 
-- [ ] **FS1. Nikki plays with it**: keep, change or park. Plush, shaggy, or none?
+- [x] **FS1. Nikki plays with it**: keep, change or park. Plush, shaggy, or none?
+  Kept 2026-11-11 (Nikki 2026-11-11: "like the look of all of them and want to keep them in that spike"): liked, kept as a spike.
 - [ ] **FS3. No re-bake pops**: the fur baked without droop and the droop a live shift (above, way 3), zoom
   bakes crossfaded or after the zoom settles, a bake again when the part's picture changes.
   **Built 2026-11-11** (Nikki: "show me your recommendation"): mode 'shift' (now the default; 'baked' and

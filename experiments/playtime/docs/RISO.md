@@ -1,6 +1,6 @@
 # Riso, photocopy, watercolour, woodcut, CMYK, gouache, cut paper — the textures and the world, printed or painted
 
-status: active
+status: parked — kept as a spike (Nikki 2026-11-11: "like the look of all of them and want to keep them in that spike"); the next step when it comes back is below
 
 Nikki (2026-11-11): "initially when i started the mipos i was about 'hand draw everything' now with the
 shaders and materials and light i see more options, i still dont like us to use some random textures but
@@ -95,9 +95,10 @@ there we are forgetting that might be good for us too"; then "y" to the first fo
 
 ## Steps
 
-- [ ] **RI1. Nikki plays with it**: riso, photocopy, watercolour, woodcut, CMYK, gouache or cut paper, on the textures only or the whole picture? Which inks,
+- [x] **RI1. Nikki plays with it**: riso, photocopy, watercolour, woodcut, CMYK, gouache or cut paper, on the textures only or the whole picture? Which inks,
   grain or dots, which paper?
   Keep, change or park.
+  Kept 2026-11-11 (Nikki 2026-11-11: "like the look of all of them and want to keep them in that spike"): liked, kept as a spike.
 - [ ] **RI2. If kept, where it goes**: on the textures only (a riso look baked into the tile-repeat and wall
   pictures, so the hand-drawn Mipos stay as drawn), or a picture pass over a whole scene (SHADER-LOOKS
   SH3's effects stack; the water look's canvas, `src/water-look.lua`, is the same shape). Inks per scene
