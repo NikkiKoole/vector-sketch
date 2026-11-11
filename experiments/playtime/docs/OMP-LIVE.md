@@ -64,6 +64,25 @@ transform and patches mixed in a shader as it draws.
   - **Looks**: the same picture (diff 0.6/255 at the game zoom), sharper close up (11% of pixels differ
     there, the bake's half size); patches land where the bake puts them.
   - Mac M1 for comparison: bake 21 ms a Mipo, live +1.2 ms draw, 150 Mipos in 60 fps against >300.
+  - **Cheaper sends, tried 2026-11-11** (Nikki: "try the cheaper sends first, then rerun on the phone"):
+    *packed* (one array send a part, pictures sent only when they change), *mesh* (the numbers as vertex
+    attributes, only pictures sent) and *mesh+rg* (as mesh, outline alpha and mask in one shared rg8
+    picture per shape, 14.6 MB for all of them mipmapped, against 64 MB of mipmapped outlines and masks;
+    only the pattern sent). Pixels the same as the naive shader. On the phone:
+
+    | iPhone SE 2 | draw ms (20 Mipos) | Mipos in 60 fps |
+    |---|---|---|
+    | baked | 5.1 | 280 |
+    | live (9 sends) | 6.2 | 100 |
+    | packed | 5.9 | 100 |
+    | mesh | 5.9 | 100 |
+    | mesh+rg | 6.0 | 160 |
+
+    On the phone the sends weren't the cost: the CPU time hardly moves (5-6 ms for all, most of it
+    waiting on the GPU, not our Lua: 479 draws are ~1 ms at 1.9 us), and only reading fewer pictures
+    raised the ceiling (100 -> 160). Live's limit there is the GPU reading 3 pictures a pixel where baked
+    reads 1. 160 is still 6x the room's 25. On the Mac the sends did count: draw 2.0 -> 1.5 ms (baked 1.0).
+    So if live: mesh+rg, the two-channel outline+mask made once per shape (offline, as a build step).
 - [ ] **OL2. Decide**, with Nikki: if live wins or ties, the plan to switch (the Mipo editor's thumbnails,
   saves, the materials and lights that read the baked picture today, the spine skin and ribbons).
 - [ ] **OL3. r8 masks** for the sources (a quarter of their memory), either way.

@@ -10,7 +10,7 @@
 -- a load test, not a pose. '+patches' gives each Mipo's torso two skin patches (the DNA's default
 -- patch1/patch2), the most any Mipo has today (randomize clears them).
 --
---   love .          look for yourself: 1-4 option, z zoom
+--   love .          look for yourself: 1-8 option, z zoom
 --   love . --auto   every option, writes results/live-<os>.md and quits (~1 min)
 --   on the phone:   LOVE_DIR=../omp-bench native/ios/device.sh (from ../playtime): runs --auto by
 --                   itself, the table on screen and in the save folder (omp-live-results.md)
@@ -53,11 +53,23 @@ local PATCHES = {
         bgHex = '020202ff', fgHex = 'f2c94cff', pHex = '4cf28aff', tx = 0.33, ty = 0 },
 }
 
+-- send: how live gets a part's numbers to the shader
+--   naive   9 sends a part (17 with patches), one per uniform
+--   packed  one send of an array of vec4s; mask/pattern pictures sent only when they change
+--   mesh    each part its own mesh with the numbers as vertex attributes; only the pictures sent,
+--           when they change (no patches: they'd be 25 more floats a vertex)
+--   mesh+rg as mesh, outline and mask in one shared two-channel picture per shape (outline alpha in
+--           red, mask in green: the outlines are white, a mask only uses red), so only the pattern
+--           is sent, when it changes; a quarter of the two pictures' memory
 local OPTIONS = {
     { name = 'baked',          live = false, patches = false },
     { name = 'baked+patches',  live = false, patches = true },
-    { name = 'live',           live = true,  patches = false },
-    { name = 'live+patches',   live = true,  patches = true },
+    { name = 'live',           live = true,  patches = false, send = 'naive' },
+    { name = 'live+patches',   live = true,  patches = true,  send = 'naive' },
+    { name = 'packed',         live = true,  patches = false, send = 'packed' },
+    { name = 'packed+patches', live = true,  patches = true,  send = 'packed' },
+    { name = 'mesh',           live = true,  patches = false, send = 'mesh' },
+    { name = 'mesh+rg',        live = true,  patches = false, send = 'mesh', combined = true },
 }
 
 ---------------------------------------------------------------- sources
@@ -84,6 +96,31 @@ local function liveSource(url, isPattern)
         liveCache[url] = img
     end
     return liveCache[url] or nil
+end
+
+-- outline alpha + mask red in one rg8 picture, mipmapped, made on the GPU once per shape
+local combinedCache = {}
+local combineShader
+local function combinedSource(outlineURL, maskURL)
+    local key = outlineURL .. '|' .. (maskURL or '')
+    if not combinedCache[key] then
+        local outline = liveSource(outlineURL)
+        local mask = liveSource(maskURL)
+        local w, h = outline:getDimensions()
+        local canvas = love.graphics.newCanvas(w, h, { format = 'rg8', mipmaps = 'auto', dpiscale = 1 })
+        canvas:setMipmapFilter('linear')
+        love.graphics.push('all')
+        love.graphics.origin()
+        love.graphics.setCanvas(canvas)
+        love.graphics.clear(0, 0, 0, 1)
+        love.graphics.setBlendMode('replace')
+        love.graphics.setShader(combineShader)
+        combineShader:send('maskTex', mask or love.graphics.newImage(love.image.newImageData(1, 1)))
+        love.graphics.draw(outline)
+        love.graphics.pop()
+        combinedCache[key] = canvas
+    end
+    return combinedCache[key]
 end
 
 local function texMB()
@@ -250,8 +287,95 @@ vec4 effect(vec4 vcolor, Image outline, vec2 uv, vec2 fc) {
     return vec4(rgb, a) * vcolor;
 }
 ]]
+-- The same mix with a part's numbers in one array (packed) or in vertex attributes (mesh).
+-- P[0] fill, P[1] pattern colour, P[2] line colour, P[3] the pattern's uv matrix (columns),
+-- P[4] = (pattern offset x, y, flip x + 2 flip y, hasMask + 2 patchCount); with patches 5 more
+-- per patch: its uv rows (xyz), fill, pattern colour, line colour.
+local PACKED_CODE = [[
+#ifdef PATCHES
+#define NP 15
+#else
+#define NP 5
+#endif
+#ifdef MESH
+varying vec4 vP0, vP1, vP2, vP3, vP4;
+#endif
+#ifdef VERTEX
+#ifdef MESH
+attribute vec4 A0, A1, A2, A3, A4;
+#endif
+vec4 position(mat4 transform_projection, vec4 vertex_position) {
+#ifdef MESH
+    vP0 = A0; vP1 = A1; vP2 = A2; vP3 = A3; vP4 = A4;
+#endif
+    return transform_projection * vertex_position;
+}
+#endif
+#ifdef PIXEL
+uniform Image maskTex;
+uniform Image patTex;
+#ifndef MESH
+uniform vec4 P[NP];
+#endif
+#ifdef PATCHES
+uniform Image pLine[2];
+uniform Image pMask[2];
+uniform Image pPat[2];
+vec4 patchColor(Image line, Image mask, Image pat, vec2 puv, vec4 fill, vec4 pc, vec4 lc) {
+    if (puv.x < 0.0 || puv.y < 0.0 || puv.x > 1.0 || puv.y > 1.0) return vec4(0.0);
+    float m = Texel(mask, puv).r * fill.a;
+    float pa = Texel(pat, puv).a * pc.a;
+    vec3 rgb = mix(lc.rgb, mix(fill.rgb, pc.rgb, pa), m);
+    vec4 lt = Texel(line, puv);
+    float la = lt.a * lc.a;
+    return vec4(mix(rgb, lc.rgb * lt.rgb, la), la + m * (1.0 - la));
+}
+#endif
+vec4 effect(vec4 vcolor, Image outline, vec2 uv, vec2 fc) {
+#ifdef MESH
+    vec4 fill = vP0, patC = vP1, lineC = vP2, M = vP3, E = vP4;
+#else
+    vec4 fill = P[0], patC = P[1], lineC = P[2], M = P[3], E = P[4];
+#endif
+    vec2 flip = vec2(mod(E.z, 2.0), floor(E.z / 2.0 + 0.25));
+    float hasMask = mod(E.w, 2.0);
+    vec2 src = mix(uv, 1.0 - uv, flip);
+#ifdef COMBINED
+    vec4 c = Texel(outline, src);
+    float m = c.g * fill.a;
+    vec4 lt = vec4(1.0, 1.0, 1.0, c.r);
+#else
+    float m = hasMask * Texel(maskTex, src).r * fill.a;
+    vec4 lt = Texel(outline, src);
+#endif
+    float pa = Texel(patTex, src * mat2(M.x, M.y, M.z, M.w) + E.xy).a * patC.a;
+    vec3 rgb = mix(lineC.rgb, mix(fill.rgb, patC.rgb, pa), m);
+    float a = m;
+#ifdef PATCHES
+    if (E.w > 1.5) {
+        vec3 u = vec3(uv, 1.0);
+        vec4 p = patchColor(pLine[0], pMask[0], pPat[0], vec2(dot(P[5].xyz, u), dot(P[6].xyz, u)),
+            P[7], P[8], P[9]);
+        rgb = mix(rgb, p.rgb, p.a);
+        p = patchColor(pLine[1], pMask[1], pPat[1], vec2(dot(P[10].xyz, u), dot(P[11].xyz, u)),
+            P[12], P[13], P[14]);
+        rgb = mix(rgb, p.rgb, p.a);
+    }
+#endif
+    float la = lt.a * lineC.a;
+    rgb = mix(rgb, lineC.rgb * lt.rgb, la);
+    a = la + a * (1.0 - la);
+    return vec4(rgb, a) * vcolor;
+}
+#endif
+]]
 local liveShader, livePatchShader
+local packedShader, packedPatchShader, meshShader, combinedShader
 local blackPixel
+local MESH_FORMAT = {
+    { 'VertexPosition', 'float', 2 }, { 'VertexTexCoord', 'float', 2 },
+    { 'A0', 'float', 4 }, { 'A1', 'float', 4 }, { 'A2', 'float', 4 }, { 'A3', 'float', 4 }, { 'A4', 'float', 4 },
+}
 
 local function vec4Of(hex)
     local r, g, b, a = color.hexToColor(hex)
@@ -272,7 +396,7 @@ local function patchRows(lw, lh, pw, ph, p)
 end
 
 -- What a part sends each draw, worked out once (a colour change would just change these)
-local function prepareLive(part, withPatches)
+local function prepareLive(part, withPatches, send)
     local main = part.main
     local outline = liveSource('textures/' .. main.bgURL)
     local mask = liveSource('textures/' .. (main.fgURL or ''))
@@ -299,10 +423,78 @@ local function prepareLive(part, withPatches)
             ps.fill[i], ps.patColor[i], ps.lineColor[i] = vec4Of(p.fgHex), vec4Of(p.pHex), vec4Of(p.bgHex)
         end
     end
+    if send == 'packed' or send == 'mesh' then
+        local ps = live.patches
+        local packed = {
+            live.fill, live.pat, live.line,
+            { m1, m5, m2, m6 }, -- the matrix's columns (the naive send gives it as rows)
+            { main.ptx or 0, main.pty or 0, live.flip[1] + 2 * live.flip[2], live.hasMask + 2 * (ps and #ps.line or 0) },
+        }
+        if ps then
+            for i = 1, #ps.line do
+                local r1, r2 = ps.row1[i], ps.row2[i]
+                packed[#packed + 1] = { r1[1], r1[2], r1[3], 0 }
+                packed[#packed + 1] = { r2[1], r2[2], r2[3], 0 }
+                packed[#packed + 1] = ps.fill[i]
+                packed[#packed + 1] = ps.patColor[i]
+                packed[#packed + 1] = ps.lineColor[i]
+            end
+        end
+        live.packed = packed
+    end
+    if send == 'mesh' then
+        if withPatches == 'combined' then
+            live.combined = combinedSource('textures/' .. main.bgURL, mask and 'textures/' .. main.fgURL)
+        end
+        local vertices = {}
+        for _, c in ipairs({ { 0, 0 }, { 1, 0 }, { 1, 1 }, { 0, 1 } }) do
+            local v = { c[1] * lw, c[2] * lh, c[1], c[2] }
+            for k = 1, 5 do
+                for j = 1, 4 do v[#v + 1] = live.packed[k][j] end
+            end
+            vertices[#vertices + 1] = v
+        end
+        live.mesh = love.graphics.newMesh(MESH_FORMAT, vertices, 'fan', 'static')
+        live.mesh:setTexture(live.combined or outline)
+    end
     return live
 end
 
+-- the pictures a shader has now: only sent when they change (packed, mesh)
+local lastSent = setmetatable({}, { __mode = 'k' })
+local function sendImage(shader, name, img)
+    local sent = lastSent[shader]
+    if not sent then
+        sent = {}
+        lastSent[shader] = sent
+    end
+    if sent[name] ~= img then
+        shader:send(name, img)
+        sent[name] = img
+    end
+end
+
+local function sendPacked(shader, live)
+    if not live.combined then sendImage(shader, 'maskTex', live.mask) end
+    sendImage(shader, 'patTex', live.pattern)
+    if not live.mesh then
+        local ps = live.patches
+        if ps then
+            -- an array of pictures goes in one send; every torso has the same patches here
+            local sent = lastSent[shader]
+            if sent.patches ~= ps.line[1] then
+                shader:send('pLine', unpack(ps.line))
+                shader:send('pMask', unpack(ps.mask))
+                shader:send('pPat', unpack(ps.pat))
+                sent.patches = ps.line[1]
+            end
+        end
+        shader:send('P', unpack(live.packed))
+    end
+end
+
 local function sendLive(shader, live)
+    if live.packed then return sendPacked(shader, live) end
     shader:send('maskTex', live.mask)
     shader:send('patTex', live.pattern)
     shader:send('fillColor', live.fill)
@@ -334,7 +526,9 @@ local current = { option = OPTIONS[1], mipos = {} } -- mipos: a list per Mipo of
 local view = { scale = CAMERA_SCALE, layout = 'scatter', count = 20 }
 
 local function drawPart(option, p, x, y, scale)
-    if option.live then
+    if p.mesh then
+        love.graphics.draw(p.mesh, x, y, 0, p.w * scale / p.lw, p.h * scale / p.lh)
+    elseif option.live then
         love.graphics.draw(p.outline, x, y, 0, p.w * scale / p.lw, p.h * scale / p.lh)
     else
         local iw, ih = p.img:getDimensions()
@@ -343,7 +537,11 @@ local function drawPart(option, p, x, y, scale)
 end
 
 local function shaderOf(option)
-    return option.live and (option.patches and livePatchShader or liveShader) or nil
+    if not option.live then return nil end
+    if option.combined then return combinedShader end
+    if option.send == 'mesh' then return meshShader end
+    if option.send == 'packed' then return option.patches and packedPatchShader or packedShader end
+    return option.patches and livePatchShader or liveShader
 end
 
 -- count Mipos (the scene's, over and over), each part somewhere on screen
@@ -412,7 +610,8 @@ end
 local function prepareMipo(option, parts)
     local list = {}
     for i, part in ipairs(parts) do
-        list[i] = option.live and prepareLive(part, option.patches) or bakePart(part, option.patches)
+        local withPatches = option.combined and 'combined' or option.patches
+        list[i] = option.live and prepareLive(part, withPatches, option.send) or bakePart(part, option.patches)
     end
     return list
 end
@@ -548,6 +747,7 @@ local function fmt(v, digits)
     return type(v) == 'number' and string.format('%.' .. (digits or 1) .. 'f', v) or tostring(v or '')
 end
 
+local combinedMB = 0 -- mesh+rg's pictures, measured in autoRun
 local function resultsText(sourcesMB, liveSourcesMB)
     local columns = {
         { 'option', 'name' }, { 'MB per Mipo', 'perMipoMB', 2 }, { 'appear ms/Mipo', 'prepareMs', 2 },
@@ -578,8 +778,9 @@ local function resultsText(sourcesMB, liveSourcesMB)
             love.graphics.getDPIScale(), flags.msaa or 0, tostring(flags.vsync)),
         string.format('Scene: %s, %d Mipos, %d OMP parts (ribbons drawn as quads). JIT off.', SCENE,
             #sourceMipos, parts),
-        string.format('Shared source pictures: %.1f MB as the game loads them; %.1f MB more for live\'s mipmapped copies.',
+        string.format('Shared source pictures: %.1f MB as the game loads them; %.1f MB more for live\'s mipmapped copies;',
             sourcesMB, liveSourcesMB),
+        string.format('mesh+rg\'s outline+mask pictures (rg8, mipmapped) %.1f MB, in place of the outlines and masks.', combinedMB),
         '',
         'MB per Mipo: texture memory the 20 Mipos added, over 20. appear: making one Mipo\'s pictures (baked) or',
         'working out its uniforms (live). litter: ' .. LITTER .. ' Mipos in one frame. draw ms: love.draw\'s CPU time',
@@ -611,6 +812,9 @@ local function autoRun()
     for i = 1, #sourceMipos do prepareMipo(OPTIONS[4], sourceMipos[i]) end
     settle()
     local liveSourcesMB = texMB() - sourcesMB
+    for i = 1, #sourceMipos do prepareMipo(OPTIONS[#OPTIONS], sourceMipos[i]) end
+    settle()
+    combinedMB = texMB() - sourcesMB - liveSourcesMB
     for _, option in ipairs(OPTIONS) do
         results[#results + 1] = runOption(option)
     end
@@ -630,7 +834,7 @@ local function pickInteractive(index)
     current.option = option
     current.mipos = { prepareMipo(option, sourceMipos[1]) }
     view.layout = 'grid'
-    hud = option.name .. '  (1-4 option, z zoom, esc quit)'
+    hud = option.name .. '  (1-8 option, z zoom, esc quit)'
 end
 
 function love.load()
@@ -639,6 +843,16 @@ function love.load()
     blackPixel = love.graphics.newImage(love.image.newImageData(1, 1))
     liveShader = love.graphics.newShader(LIVE_CODE)
     livePatchShader = love.graphics.newShader('#define PATCHES\n' .. LIVE_CODE)
+    packedShader = love.graphics.newShader(PACKED_CODE)
+    packedPatchShader = love.graphics.newShader('#define PATCHES\n' .. PACKED_CODE)
+    meshShader = love.graphics.newShader('#define MESH\n' .. PACKED_CODE)
+    combinedShader = love.graphics.newShader('#define MESH\n#define COMBINED\n' .. PACKED_CODE)
+    combineShader = love.graphics.newShader([[
+        uniform Image maskTex;
+        vec4 effect(vec4 c, Image outline, vec2 uv, vec2 fc) {
+            return vec4(Texel(outline, uv).a, Texel(maskTex, uv).r, 0.0, 1.0);
+        }
+    ]])
     sourceMipos = loadMipos()
     if AUTO then
         runner = coroutine.create(autoRun)

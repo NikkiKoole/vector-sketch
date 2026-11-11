@@ -14,7 +14,7 @@ The parts are the 20 Mipos of `scripts/tests/crowd.playtime.json`. `src`, `vendo
 ```bash
 cd experiments/omp-bench
 /Applications/love115.app/Contents/MacOS/love . --auto   # every option, writes results/, quits (~80 s)
-/Applications/love115.app/Contents/MacOS/love .          # look for yourself: 1-4 option, z zoom
+/Applications/love115.app/Contents/MacOS/love .          # look for yourself: 1-7 option, z zoom
 # on the phone (replaces Playtime there until the next plain ./playtime.sh device); runs by itself,
 # the table stays on screen and goes to omp-live-results.md in the save folder:
 cd ../playtime && LOVE_DIR=../omp-bench native/ios/device.sh
