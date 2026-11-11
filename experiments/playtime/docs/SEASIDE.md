@@ -23,6 +23,9 @@ How it's put together:
 - Our vessels and the table draw themselves (pottery and ink); in play mode the plain body shapes
   are off, like the sea's props.
 
+The water shader lives in `src/render/water-shader.lua` since 2026-11-11 (ENGINE-MERGE EM3), shared with
+`src/water-look.lua`, which gives cups and baths in every other scene the same thin water.
+
 Keys in play mode: m b c o u (Mipo, boat, crate, ball, cup), w a wave, r reset, h the panel.
 A second game next to a running one: `PLAYTIME_BRIDGE_PORT=8004 love . --bridge --play seaside`.
 

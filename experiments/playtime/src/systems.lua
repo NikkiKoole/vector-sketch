@@ -6,6 +6,8 @@
 --                  before the first picture at z or higher; a Mipo's places are src/mipo-layers.lua.
 --                  Skipped with its Mipo when that's off screen (mipoId), and in the shadow passes
 --   draw(m)        after the textured world, before the scene script's draw (so a script can draw over)
+--   drawStart(m)   before anything of the frame is drawn (the clear, the sky): may set a canvas to draw into
+--   drawEnd(m)     after the scene script's draw, under the camera, before the editor's overlays
 --   unload(m)      when a scene's data loads, before the old bodies are destroyed
 -- `m` is the system's module, looked up in package.loaded on every call, so a lurker hot swap of
 -- that module is used straight away. Its state lives on the instances or on `state`, not here.
@@ -36,6 +38,12 @@ lib.list = {
         update = function(m) m.update() end,
     },
     {
+        name = 'water', -- cups and baths in see-through water (src/water-look.lua, ENGINE-MERGE EM3)
+        module = 'src.water-look',
+        drawStart = function(m) m.drawStart() end,
+        drawEnd = function(m) m.drawEnd() end,
+    },
+    {
         name = 'hair', -- hair locks on Mipos and on bodies (src/hair-locks.lua, docs/HAIR-LOCKS.md)
         module = 'src.hair-locks',
         update = function(m, dt) m.update(dt) end,
@@ -54,6 +62,8 @@ end
 function lib.update(dt) run('update', dt) end
 function lib.drawBelow() run('drawBelow') end
 function lib.draw() run('draw') end
+function lib.drawStart() run('drawStart') end
+function lib.drawEnd() run('drawEnd') end
 function lib.splits(add) run('splits', add) end
 function lib.unload() run('unload') end
 

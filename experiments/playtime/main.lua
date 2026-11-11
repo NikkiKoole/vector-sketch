@@ -314,6 +314,7 @@ function love.draw()
     prof.push('frame')
 
     Peeker.attach()
+    systems.drawStart() -- before the frame: water draws it into a canvas to bend it (src/water-look.lua)
     local w, h = love.graphics.getDimensions()
 
     love.graphics.clear(120 / 255, 125 / 255, 120 / 255)
@@ -392,6 +393,7 @@ function love.draw()
     systems.draw() -- over the bodies: bangs and coats over the faces
     script.call('draw')
     doors.draw()
+    systems.drawEnd() -- the frame onto the screen, the water over it
 
     if state.backdrops then
         for i = 1, #state.backdrops do

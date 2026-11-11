@@ -106,6 +106,29 @@ Worth a home in `src/` (take arguments, no scene state):
 
 Not in `src/physics-units` yet: the water spikes' wave speeds and forces are raw pixel numbers.
 
+## Shelf candidates (a read of the scene scripts, 2026-11-11)
+
+What a scene builds that could go on the library shelf (EM2), easiest first. Kind: **data** = bodies,
+joints and sfixtures alone (a saved prefab works today); **system** = needs code every frame, so it
+first becomes an sfixture or behavior type plus an engine system that finds its things by label or
+subtype (as walls and fabuland do); then the bodies alone are the prefab.
+
+- Quick: **fabuland parts** into `src/toys.lua` (its drawing is on only when a scene sets
+  `state.fabuland.on`: switch it on when a `fab:` body exists); **a lamp** (a body with a light
+  sfixture, the engine draws it: campfire's `fireLight`, light-grass-check's lamps); **stone, crate,
+  table** as `src/props.lua` recipes (stapelaar `spawnStone`, seaside's crate and `spawnTable`), so 🎲
+  has something to vary (EA3).
+- Medium, a system each: the **catapult** (rooms/catapult: pull and fling as a behavior), the **campfire**
+  (`src/fire.lua`: a fire sfixture + system, the light, flicker and shadows with it), **glass beads**
+  (name and tint on an sfixture, `src/render/form-bake.lua`), **cloth** (`src/cloth.lua`; the flag pole is
+  raw love.physics), the **festoon** (`src/festoon.lua`, its hooks a constant), **drawn planks** (the look
+  kept on `state.planks`, nails pop), **wearables** (`src/wearables.lua`, putting on is scene code).
+- Large: rides, the plank boat (waits on water), soapbox cart and lift, garden critters (EM4), plants.
+
+What blocks prefabs in general: a prefab has no per-frame code; looks kept in a scene's own tables;
+bodies made with raw `love.physics` aren't registered (rides, soapbox, garden, the cloth pole, the
+waterjar crate) and can't be selected or saved; a prefab freezes randomness (recipes keep it).
+
 ## Order
 
 The landing order, what bites what, and Nikki's keep / spike choices of 2026-11-10: LANDING-2026-11.md.
@@ -122,6 +145,13 @@ The landing order, what bites what, and Nikki's keep / spike choices of 2026-11-
   glass beads; tries spike thing -> prop recipe -> shelf. Read each spike's script first.
 - [ ] **EM3. Water**, as one piece of work, from seaside (into the engine (Nikki 2026-11-10, LANDING-2026-11.md); its speeds
   and forces through src/physics-units.lua).
+  **First slice 2026-11-11** (Nikki: "adding a bath from the library shows it"): the water shader moved out of
+  seaside into `src/render/water-shader.lua` (byte-identical source; seaside uses it, `waterLook` in the
+  script env), and an engine system `src/water-look.lua` (systems' new `drawStart` / `drawEnd` hooks): with
+  any LIQUID in a scene the frame is drawn into a canvas and the cups and baths get the shader at seaside's
+  thin-water values (`THIN`). A scene with its own hook (seaside) is left alone. Next: tweak the look with
+  Nikki (the liquid's own colour is ignored now; settings on a panel or on the liquid), the cost on the
+  phone, pouring outside seaside (spills are still lost without a hook), floating (SS4), the sea itself.
 - [ ] **EM4. Garden critters**, once the shelf and 🎲 exist (EDITOR-ARRANGE EA2-EA4).
 - [ ] **EM5. The cheap shared bits**, any time, each checked by a scene snapshot before/after:
   a `mipoKit` (spawn / alive / isAlive) for the scene scripts, `mathutils.clamp` instead of the copies,

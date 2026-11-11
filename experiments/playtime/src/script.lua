@@ -93,6 +93,7 @@ local baseEnv = {
     mipoFacing               = require('src.mipo-facing'), -- facing left / front / right (facing spike)
     festoon                  = require('src.festoon'), -- a wire of bulbs in swags (light-grass-check, LS26)
     fire                     = require('src.fire'), -- a campfire: flames, glow, sparks, its light's flicker
+    waterLook                = require('src.render.water-shader'), -- the see-through water shader (seaside)
     torsoLobes               = require('src.torso-lobes'), -- applySoftness / setSprings: live softness (maker)
     facePatches              = require('src.face-patches'), -- eye hollows, cheeks, a snout (breeds, facing)
     mipoBreeds               = require('src.mipo-breeds'), -- randomize(instance, name): a Mipo of a breed (breeds)
