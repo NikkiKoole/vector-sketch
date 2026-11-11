@@ -257,13 +257,28 @@ end
 -- Mipomi (~/Projects/love/mipomi-lang grammar.txt): CV syllables only, 13 consonants (m b p f k l t j n d s h
 -- w), three vowels (a i o). A sentence: subject, an aspect vowel (i is, a becomes / goes, o does), what.
 -- "mi i mola" I am happy. A whispered consonant after it carries the mood (its paragrammar).
+-- The words: the language's core (~/Projects/love/mipomi-lang words.tsv, column core; exported to
+-- src/mipomi-words.lua by its export.lua). A sentence takes its parts from the core's groups.
+local mipomiWords = require('src.mipomi-words')
+local function coreOf(group) return mipomiWords.core[group] or {} end
+local function join(...)
+    local list = {}
+    for _, group in ipairs({ ... }) do
+        for _, w in ipairs(type(group) == 'table' and group or coreOf(group)) do list[#list + 1] = w end
+    end
+    return list
+end
 lib.MIPOMI = {
-    subjects = { 'mi', 'jo', 'bo', 'bi', 'ba', 'koka', 'wobo' }, -- I, you, creature, friend, child, box, ball
-    i = { 'lala', 'mola', 'lili', 'doka', 'koti', 'koto', 'wala', 'kola', 'lali', 'momo', 'koko', 'foko' },
-    a = { 'koto', 'koti', 'foko', 'fiko', 'kofo', 'koko', 'mola' },
-    o = { 'hafa', 'hihi', 'soso', 'fowo', 'paki', 'faha', 'pifo', 'jaja', 'jojo', 'mowa', 'pahi', 'di' },
-    objects = { 'wobo', 'koka', 'wawa', 'jiki' }, -- after an o-verb now and then (ball, box, water, book)
+    subjects = join({ 'mi', 'jo', 'bi', 'mibi' }, { 'wobo', 'koka', 'bofo', 'bowa' }), -- the pronouns, some things
+    i = join('feeling', 'quality', 'where'),  -- is: how it feels, what it's like, where it is
+    a = join('where', 'feeling'),             -- becomes / goes: somewhere, a feeling
+    o = join('play', 'voice'),                -- does
+    objects = coreOf('thing'),                -- after a doing that takes one, now and then
+    takes = { po = true, pi = true, di = true, paki = true, faha = true, pifo = true, haka = true, lapi = true },
+    alone = { { 'mipo' }, { 'la' }, { 'na' }, { 'pomo' }, { 'mipa' }, { 'mipo', 'mibi' } }, -- said on its own
 }
+lib.words = mipomiWords
+
 -- per feeling: what it says, how it sounds, the mood consonant it ends on (Mipomi's paragrammar: m comfort,
 -- p tension, h sigh / awe, f frustration, b affectionate aww; nil: no ending). pitch in semitones, pace x
 lib.FEEL = {
@@ -273,7 +288,7 @@ lib.FEEL = {
     sad       = { pitch = -3, pace = 0.8, effort = -0.15, ending = 'h',
                   says = { { 'mi', 'i', 'mino' }, { 'mi', 'o', 'miso' }, { 'mino', 'mino' } } },
     angry     = { pitch = -1, pace = 1.15, effort = 0.3, ending = 'f',
-                  says = { { 'mi', 'i', 'faho' }, { 'mi', 'o', 'jaho' }, { 'no', 'no' }, { 'lana' } } },
+                  says = { { 'mi', 'i', 'faho' }, { 'mi', 'o', 'jaho' }, { 'na', 'na' }, { 'lana' } } },
     scared    = { pitch = 4, pace = 1.3, effort = 0, ending = 'p',
                   says = { { 'mi', 'i', 'fowa' }, { 'mi', 'a', 'fowa' }, { 'nako' } } },
     surprised = { pitch = 3, pace = 1, effort = 0.15, ending = 'h',
@@ -299,9 +314,14 @@ function lib.sentence(feeling)
         return words
     end
     local M = lib.MIPOMI
+    if love.math.random() < 0.15 then
+        local words = {}
+        for i, w in ipairs(pick(M.alone)) do words[i] = w end
+        return words
+    end
     local aspect = pick({ 'i', 'a', 'o' })
     local words = { pick(M.subjects), aspect, pick(M[aspect]) }
-    if aspect == 'o' and love.math.random() < 0.4 then words[#words + 1] = pick(M.objects) end
+    if aspect == 'o' and M.takes[words[3]] and love.math.random() < 0.6 then words[#words + 1] = pick(M.objects) end
     return words
 end
 

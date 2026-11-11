@@ -79,6 +79,11 @@ the eight vowel mouths. **Not heard by me**: how it sounds is VB1.
   Mipomi's paragrammar: happy m, sad h (a sigh: breathy fade), angry f, scared p, surprised h, sleepy m,
   shy b. Endings row gains f b d h. Notes and the dictionary's open questions written to mipomi-lang
   `VOICE-NOTES.md`. Checked in a test window: sentences, word gaps, the h puff and sigh, no errors; not heard.
+  **From the core, 2026-11-11** (Nikki: "y"): the words come from mipomi-lang's word list now
+  (`words.tsv`, its core of 57 in 7 groups), exported to `src/mipomi-words.lua` by mipomi-lang's
+  `lua export.lua <path>` (refuses a list `check.lua` finds errors in). A sentence: a pronoun or thing + i
+  (feeling, quality, where) / a (where, feeling) / o (play, voice, + a thing after give, take, eat, catch,
+  push, pull, build, look); 15% a word on its own (mipo, la, na, pomo, mipa).
 - [ ] **VB5. Singing**: the choir's tunes on the made voice: any note exactly, no takes, no tuning tables;
   the singer model (breath, scoop, vibrato) as its levers.
 - [ ] **VB6. A voice per Mipo**, if kept: size from the body, a pitch and a preset in the DNA (PUPPETMAKER-SOUND
