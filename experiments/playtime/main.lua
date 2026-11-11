@@ -134,6 +134,7 @@ local projectedShadows = require('src.projected-shadows') -- off unless a scene 
 local shaders = require('src.render.shaders')
 local shadowSilhouettes = require('src.shadow-silhouettes') -- the world drawn once for both
 local liquid = require('src.liquid')
+local railCart = require('src.rail-cart')
 local systems = require('src.systems') -- what runs in every scene without a script: hair (src/systems.lua)
 local signals = require('src.signals')
 local doors = require('src.doors')
@@ -250,6 +251,7 @@ function love.update(dt)
         prof.push('physicsWorld:update')
         for _ = 1, substeps do
             state.physicsWorld:update(step, state.world.velocityIterations, state.world.positionIterations)
+            railCart.afterStep(step) -- coaster carts back on their rails after every step (src/rail-cart.lua)
         end
         prof.pop('physicsWorld:update')
 

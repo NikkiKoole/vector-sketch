@@ -448,6 +448,10 @@ function lib.onPreSolve(fix1, fix2, contact)
     end
     local body = other:getBody()
     if body:getType() == 'static' then return end
+    if state.railCarts and state.railCarts[body] then -- a cart on its rail: held by the lock, touches no rail
+        contact:setEnabled(false)
+        return
+    end
     local layout = lib.layout(thing)
     local mask = layout.mask[edge]
     if not mask then return end
@@ -516,6 +520,60 @@ function lib.hits(fixture, wx, wy, tolerance)
         if px * px + py * py <= tol2 then return true end
     end
     return false
+end
+
+---------------------------------------------------------------- along the line (for carts, src/rail-cart.lua)
+
+-- the point and unit direction at arc position s (body-local), and its edge; s wraps on a loop and is
+-- clamped on an open line (inside reports whether s was on it)
+function lib.pointAt(layout, s)
+    local total = layout.total
+    local inside = true
+    if layout.closed then
+        s = s % total
+    elseif s < 0 or s > total then
+        inside = false
+        s = math.max(0, math.min(total, s))
+    end
+    local arc, xs, ys, n = layout.arc, layout.xs, layout.ys, layout.n
+    local lo, hi = 1, layout.edges -- the last edge whose start is at or before s
+    while lo < hi do
+        local mid = math.floor((lo + hi + 1) / 2)
+        if arc[mid] <= s then lo = mid else hi = mid - 1 end
+    end
+    local e = lo
+    local j = e % n + 1
+    local dx, dy = xs[j] - xs[e], ys[j] - ys[e]
+    local len = math.sqrt(dx * dx + dy * dy)
+    if len == 0 then return xs[e], ys[e], 1, 0, e, inside end
+    local t = math.max(0, math.min(1, (s - arc[e]) / len))
+    return xs[e] + dx * t, ys[e] + dy * t, dx / len, dy / len, e, inside
+end
+
+-- how fast the direction turns at s (radians per unit of arc, + turning clockwise on screen)
+function lib.curvatureAt(layout, s, h)
+    h = h or lib.SPACING
+    local _, _, ax, ay = lib.pointAt(layout, s - h)
+    local _, _, bx, by = lib.pointAt(layout, s + h)
+    local d = math.atan2(by, bx) - math.atan2(ay, ax)
+    if d > math.pi then d = d - 2 * math.pi elseif d < -math.pi then d = d + 2 * math.pi end
+    return d / (2 * h)
+end
+
+-- the arc position nearest body-local x, y, and how far it is (looks at every edge)
+function lib.nearestArc(layout, lx, ly)
+    local xs, ys, n = layout.xs, layout.ys, layout.n
+    local bestS, bestD = 0, math.huge
+    for e = 1, layout.edges do
+        local j = e % n + 1
+        local dx, dy = xs[j] - xs[e], ys[j] - ys[e]
+        local len2 = dx * dx + dy * dy
+        local t = len2 > 0 and math.max(0, math.min(1, ((lx - xs[e]) * dx + (ly - ys[e]) * dy) / len2)) or 0
+        local px, py = xs[e] + dx * t - lx, ys[e] + dy * t - ly
+        local d = px * px + py * py
+        if d < bestD then bestS, bestD = layout.arc[e] + t * math.sqrt(len2), d end
+    end
+    return bestS, math.sqrt(bestD)
 end
 
 ---------------------------------------------------------------- crossings in the editor (COASTER CO2)

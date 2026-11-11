@@ -31,6 +31,12 @@ lib.list = {
         draw = function(m) m.draw() end,
     },
     {
+        -- carts let go near a coaster track lock on (src/rail-cart.lua; the riding: main.lua's substeps)
+        name = 'rail-cart',
+        module = 'src.rail-cart',
+        update = function(m) m.update() end,
+    },
+    {
         name = 'sky', -- the scene's clock: the hour goes round while the day runs (src/scene-sky.lua, SKY.md)
         module = 'src.scene-sky',
         update = function(m, dt) m.update(dt) end,

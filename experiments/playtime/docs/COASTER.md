@@ -69,7 +69,22 @@ the 3d layers, go in front or back yourself".
   Found on the way, from Nikki trying CO1: the track tool stayed on after a stroke and turned every
   click into a too-short track; box selection took a track as inside any box (a chain gave it no
   points). Both fixed. Not yet clicked by hand.
-- [ ] **CO3. The cart and the rail lock.** Drop a cart on the track; it rides it, loops included.
+- [x] **CO3. The cart and the rail lock.** Drop a cart on the track; it rides it, loops included.
+  Built 2026-11-11: `src/rail-cart.lua` and the `RAIL_CART` behavior (any body: give it the behavior,
+  let it go near a track while the world runs). Locks onto the nearest track within its half height
+  + 30, on the side it was dropped on; after every physics substep (`main.lua`'s loop: between
+  substeps it would fly straight) the change in its velocity along the track is kept, the rest goes,
+  and it's moved on along the line by its speed, turned along it, given the matching spin. Picked up
+  by the pointer, it lets go; off an open end it flies on and doesn't lock on again until it has been
+  clear of every rail. Locked carts touch no rail (track preSolve), so crossings don't matter to them.
+  Drag: 0.03 of the speed per second, plus air drag with speed. `railCart.setSpeed` for launches.
+  Measured (`spec/rail-cart_spec.lua`): with no drag a cart climbs back to within 4% of its starting
+  height over a valley; round a vertical loop (r 300, launched at 3000) upside down and out. Live: a
+  drop of 700 into a loop of r 320 isn't enough (it climbs half way and rolls back, still on the rail:
+  honest); launched at 2900 it goes over the top and on over two hills to the end.
+  Found: the bridge's eval stops at its instruction limit when a stroke of ~400 points is made into a
+  track in the same call (the crossing search is every edge against every edge, once per change).
+  Not yet tried by hand: making a cart in the inspector, picking it off the rail.
 - [ ] **CO4. Lift, boost, brake**: stretches of the track painted (achtbaan's zones), forces along it.
 - [ ] **CO5. Riders**: Mipos seated in the cart (TRACKS TR4's pivot servo is a start).
 - [ ] **CO6. Nikki plays with it**; then supports to the ground, the hand-drawn look, sounds

@@ -29,6 +29,12 @@ lib.allBehaviors = {
     { name = 'LIMB_HUB',
       description = 'a polygon that has things attached, the location where is defined in here, '
         .. 'by its edge number and a lerp between vertex -1 and vertex.' },
+    { name = 'RAIL_CART',
+      description = 'a cart for a coaster track (src/rail-cart.lua): let go near a track, it locks on and rides it; '
+        .. 'picked up, it lets go.',
+      params = {
+          { key = 'enabled', kind = 'bool', default = true },
+      } },
     { name = 'SIGNAL_BUTTON',
       description = 'tap it to send its signal (default gate1) to receivers (src/signals.lua).',
       params = {
