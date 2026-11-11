@@ -113,6 +113,7 @@ function lib.playNow()
     source:setPitch(2 ^ (L.speed / 12))
     source:setVolume(0.8)
     source:play()
+    return source -- the voicebox spike puts its vowel filter on it
 end
 
 -- The lab's own level, set on every play: the music panel's volume scales every synth

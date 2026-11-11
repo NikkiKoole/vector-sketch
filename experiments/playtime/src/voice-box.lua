@@ -62,6 +62,7 @@ for i, name in ipairs(lib.CONSONANTS) do CONSONANT_ID[name] = i - 1 end
 local CONSONANT_MOUTH = { m = 'M_B_P', b = 'M_B_P', p = 'M_B_P', f = 'F_V', v = 'F_V', th = 'TH_L', dh = 'TH_L',
     l = 'TH_L', w = 'O_U_W_Q', r = 'L_OU', sh = 'O_U_W_Q', zh = 'O_U_W_Q', ch = 'O_U_W_Q' }
 local CONSONANT_FOR = 0.08 -- seconds its mouth shows
+lib.LOOP_GAP = 0.12 -- seconds between a looped take's repeats
 lib.MOUTH_CLOSE = 0.4 -- how far a close vowel (i, oo) opens the mouth, of the open ones' way
 
 -- the presets: how a Mipo might sound (pitch in midi)
@@ -254,8 +255,46 @@ end
 local function sayingFor(seconds, vowelName)
     local s = S()
     local v = vowelNamed(vowelName)
-    if v then s.f1, s.f2 = v.f1, v.f2 end
+    -- with the vowel filter on, the chart's point is the vowel (the mouth shows what the filter makes)
+    if v and (s.takeFilter or 0) <= 0 then s.f1, s.f2 = v.f1, v.f2 end
     s.sounding, s.takeUntil = true, love.timer.getTime() + seconds
+end
+
+-- The vowel filter on a bare take: LÖVE's equalizer on an effect send, its two mid bands boosted at the
+-- chart point's F1 and F2, the rest and the dry path turned down by s.takeFilter (0..1): a 2-band
+-- talkbox, as the choir's (there along a u-o-a-e-i line; here anywhere on the chart). The EQ's upper band
+-- can't go under 1000 Hz, so the back vowels' F2 (840-870) sits a little high.
+lib.FILTER_WIDTH = 0.4
+local effectsOk
+local function effects()
+    if effectsOk == nil then
+        effectsOk = false
+        if love.audio then
+            local ok, yes = pcall(love.audio.isEffectsSupported)
+            effectsOk = ok and yes or false
+        end
+    end
+    return effectsOk
+end
+local function updateFilter(s)
+    local amount = s.takeFilter or 0
+    if amount <= 0 or not effects() then return end
+    local boost, cut = 1 + amount * 6.9, 1 - amount * 0.87 -- up to +-18 dB
+    local width = 0.05 + lib.FILTER_WIDTH * 0.95
+    love.audio.setEffect('voiceBoxVowel', {
+        type = 'equalizer',
+        lowgain = cut, lowcut = 200,
+        lowmidgain = boost, lowmidfrequency = math.max(200, math.min(3000, s.f1)), lowmidbandwidth = width,
+        highmidgain = boost, highmidfrequency = math.max(1000, math.min(8000, s.f2)), highmidbandwidth = width,
+        highgain = cut, highcut = 4000,
+    })
+end
+local function sendThroughFilter(s, source)
+    local amount = s.takeFilter or 0
+    if not source or amount <= 0 or not effects() then return end
+    updateFilter(s)
+    source:setFilter({ type = 'lowpass', volume = 1 - amount, highgain = 1 })
+    pcall(source.setEffect, source, 'voiceBoxVowel')
 end
 
 -- how: 'bare' (the take through LÖVE, its rate taking it to the pitch: pitch and length together, as
@@ -275,12 +314,13 @@ function lib.playTake(how)
         lib.say(consonant)
         return
     end
+    s.lastHow = how -- the loop plays it again
     local measured, dur = lib.takeMidi()
     local delta = (s.takeAtPitch ~= false and measured) and (s.pitch - measured) or nil
     local speed, shift = L.speed, L.shift
     if how == 'bare' then
         if delta then L.speed = delta end
-        voiceLab.playNow()
+        sendThroughFilter(s, voiceLab.playNow())
         sayingFor((dur or 0.4) / 2 ^ (L.speed / 12), vowelName)
     elseif how == 'synth' then
         if delta then L.speed, L.shift = 0, math.floor(delta + 0.5) end -- whole semitones: baked per value
@@ -350,7 +390,15 @@ function lib.update(dt, instance)
     local s = S()
     local now = love.timer.getTime()
     if s.babble then babbleStep(s, now) end
-    if s.takeUntil and now >= s.takeUntil then s.takeUntil, s.sounding = nil, false end
+    if s.takeUntil and now >= s.takeUntil then
+        s.takeUntil, s.sounding = nil, false
+        if s.takeLoop and s.lastHow and s.lastHow ~= 'made' then s.loopAt = now + lib.LOOP_GAP end
+    end
+    if s.loopAt and now >= s.loopAt then
+        s.loopAt = nil
+        if s.takeLoop then lib.playTake(s.lastHow) end
+    end
+    if s.takeUntil then updateFilter(s) end -- the chart steers a take's vowel while it plays
     if s.releaseAt and now >= s.releaseAt and not s.babble then
         s.releaseAt = nil
         lib.release()

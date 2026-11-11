@@ -37,7 +37,7 @@ the eight vowel mouths. **Not heard by me**: how it sounds is VB1.
 
 ## Steps
 
-- [ ] **VB1. Nikki listens**: does a made voice sound like a Mipo, or like a robot? Which preset, which
+- [ ] **VB1. Nikki listens** (2026-11-11: "sounds ok lets continue"): does a made voice sound like a Mipo, or like a robot? Which preset, which
   levers matter (the "more Mipo, less recorded people" question from this side).
 - [ ] **VB2. The mouths**: do the vowel mouths read, does the crossing look right; the shapes per vowel in
   `lib.VOWELS`.
@@ -51,8 +51,14 @@ the eight vowel mouths. **Not heard by me**: how it sounds is VB1.
   to the pitch in whole semitones, length kept, size baked in), **sing** (INSTR_SING at the pitch, size as its
   throat), **made** (the same syllable on the made voice: 'ba' -> b + a). At the pitch only when the take is
   measured (`src/voice-pitch-data.lua`: theo, herman, nikki; not the Puppetmaker takes, which use the lab's
-  speed/shift as set). The Mipo's mouth says the take's vowel for its length. Not yet: a vowel filter on
-  takes, a blend of take and made voice.
+  speed/shift as set). The Mipo's mouth says the take's vowel for its length.
+  **Vowel filter on takes, 2026-11-11** (after Nikki's "sounds ok lets continue"): on a bare take, LÖVE's
+  equalizer boosts the chart point's F1 and F2 and turns the rest and the dry path down (the choir's 2-band
+  talkbox, here at any chart point; 'vowel filter' 0..1). 'loop it' repeats the take, and then the chart
+  only steers the filter (no made note): drag across and the take's vowel moves, the mouth with it.
+  Checked in a test window: effects supported, the EQ follows the chart, the loop repeats. Bare only (the
+  synth's own formant filter, `instrument_formant`, would take an FX bus for good: there are 7 and the music
+  shares 5). Not yet: a blend of take and made voice.
 - [ ] **VB4. More consonants**: endings (`voice_coda`: "mip", "pom"), two in a row, consonants in the babble
   chosen by the mipomi language (`~/Projects/love/mipomi-lang`).
 - [ ] **VB5. Singing**: the choir's tunes on the made voice: any note exactly, no takes, no tuning tables;

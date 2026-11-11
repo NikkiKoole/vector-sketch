@@ -101,7 +101,8 @@ local function drawChart(x, y, w, h)
     if down and inside and not wasDown then
         c.padHeld = true
         voiceBox.setVowel(voiceBox.chartFormants((mx - x) / w, (my - y) / h))
-        voiceBox.hold(c.padOnset and v.onset or nil)
+        -- a looping take: the chart only steers its vowel filter
+        if not v.takeLoop then voiceBox.hold(c.padOnset and v.onset or nil) end
     elseif down and c.padHeld then
         voiceBox.setVowel(voiceBox.chartFormants((mx - x) / w, (my - y) / h))
     end
@@ -178,7 +179,7 @@ function s.drawTakePanel()
     local L = state.voiceLab
     local v = voiceBox.settings()
     local _, sh = ui.getDimensions()
-    local rows = 4 + #TAKE_SLIDERS + 4
+    local rows = 4 + #TAKE_SLIDERS + 7
     local w, h = TAKE.w, TAKE.row * rows + 36
     local x0, y0 = 12, math.max(12, (sh - h) / 2)
     ui.panel(x0, y0, w, h, '•• recorded take ••', function()
@@ -212,10 +213,22 @@ function s.drawTakePanel()
             if value then L[sl[1]] = value + 0 end
             y = y + TAKE.row
         end
-        ui.label(x, y + 4, 'bare: sped up to the pitch (the choir)')
-        ui.label(x, y + 4 + TAKE.row, 'synth: shifted, size  sing: the synth sings it')
-        ui.label(x, y + 4 + TAKE.row * 2, 'made: the same syllable, no recording')
-        y = y + TAKE.row * 3.2
+        ui.label(x, y + 4, 'vowel filter')
+        local fv = ui.sliderWithInput('voicebox-take-filter', x + 85, y - 6, inner - 170, 0, 1, v.takeFilter or 0,
+            nil, 0.05)
+        if fv then v.takeFilter = fv + 0 end
+        y = y + TAKE.row
+        local lc, lv = ui.checkbox(x, y, v.takeLoop, 'loop it (then the chart steers the filter)')
+        if lc then
+            v.takeLoop = lv
+            if not lv then v.loopAt = nil end
+        end
+        y = y + TAKE.row
+        ui.label(x, y + 4, 'bare: sped up to the pitch (the choir);')
+        ui.label(x, y + 4 + TAKE.row, '  the vowel filter: bare only')
+        ui.label(x, y + 4 + TAKE.row * 2, 'synth: shifted, size  sing: the synth sings it')
+        ui.label(x, y + 4 + TAKE.row * 3, 'made: the same syllable, no recording')
+        y = y + TAKE.row * 4.2
         ui.label(x, y, 'drag the chart  space hold  b babble  h panels')
     end)
 end
