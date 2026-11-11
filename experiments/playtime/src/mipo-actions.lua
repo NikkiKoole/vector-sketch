@@ -83,8 +83,9 @@ function lib.breathe(instance)
     end
 end
 
--- Crouch wind-up (legs go limp for 0.1s), then the jump fires from lib.update.
-function lib.jump(instance)
+-- Crouch wind-up (legs go limp for 0.1s), then the jump fires from lib.update. forward: an optional
+-- sideways speed added (world units a second at 100 px per metre, + right), a jump the way it faces.
+function lib.jump(instance, forward)
     if not lib.isGrounded(instance) or instance._jumpAt then return false end
     if not instance._isRagdoll then
         for _, pname in ipairs(legPartNames) do
@@ -93,6 +94,7 @@ function lib.jump(instance)
         end
     end
     instance._jumpAt = love.timer.getTime() + 0.1
+    instance._jumpForward = forward
     tellMusic('jump')
     return true
 end
@@ -101,7 +103,9 @@ local function fireJump(instance)
     instance._jumpAt = nil
     local torso = instance.parts and instance.parts.torso1
     if torso and torso.body and not torso.body:isDestroyed() then
-        torso.body:applyLinearImpulse(0, -totalMass(instance) * units.speed(lib.jumpSpeed))
+        local mass = totalMass(instance)
+        local forward = units.speed(instance._jumpForward or 0)
+        torso.body:applyLinearImpulse(mass * forward, -mass * units.speed(lib.jumpSpeed))
     end
     if not instance._isRagdoll then
         local flipped = instance._isFlipped

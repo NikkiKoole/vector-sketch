@@ -1,0 +1,234 @@
+-- motor: Mipos that move by themselves — walk, hop, jump — instead of standing like dolls (docs/MIPO-MOTOR.md).
+-- mipoWalk.drive(inst, speed, 'walk' | 'hop'): it turns to face its way, its legs step (or both feet
+-- hop) and its feet push it, only while one touches the floor. mipoActions.jump(inst, forward).
+-- keys: left/right (hold): walk or hop that way   up: jump (the way it faces)   g: walk / hop
+--       w: wander by themselves (on/off)   r: new Mipos   n: one more   p: pause   h: panel
+
+local s = {}
+
+local walk = mipoWalk     -- src/mipo-walk.lua
+local actions = mipoActions -- src/mipo-actions.lua
+local alive = mipoKit.isAlive
+
+local GROUND_Y = 900
+local HALF = 6000       -- the floor runs from -HALF to HALF, a wall at each end
+local ZOOM = 0.22
+local SCALE = 0.3
+local COUNT = 3
+
+local function check() -- on state: a script hot reload keeps the Mipos
+    state.motorSpike = state.motorSpike or {
+        mipos = {}, bodies = {}, showPanel = true,
+        gait = 'walk',  -- the keys' gait: 'walk' or 'hop'
+        speed = 1.5,    -- leg lengths a second
+        jumpForward = 400,
+        wander = false,
+    }
+    return state.motorSpike
+end
+
+local function removeMipos()
+    local c = check()
+    for _, inst in pairs(c.mipos) do
+        if alive(inst) then characterManager.removeCharacter(inst) end
+    end
+    c.mipos = {}
+end
+
+local function addMipo(x)
+    local c = check()
+    local inst = characterManager.createCharacter('humanoid', x, GROUND_Y - 600, SCALE)
+    if not inst then return end
+    characterManager.randomizeMipo(inst)
+    table.insert(c.mipos, inst)
+end
+
+local function newMipos()
+    removeMipos()
+    for i = 1, COUNT do addMipo((i - (COUNT + 1) / 2) * 900) end
+end
+
+local function makeGround()
+    local c = check()
+    for _, b in ipairs(c.bodies) do if not b:isDestroyed() then return end end
+    c.bodies = {}
+    local floor = love.physics.newBody(world, 0, GROUND_Y + 50, 'static')
+    love.physics.newFixture(floor, love.physics.newRectangleShape(HALF * 2, 100)):setFriction(0.9)
+    table.insert(c.bodies, floor)
+    for _, side in ipairs({ -1, 1 }) do
+        local wall = love.physics.newBody(world, side * (HALF + 50), GROUND_Y - 1000, 'static')
+        love.physics.newFixture(wall, love.physics.newRectangleShape(100, 2000)):setFriction(0.5)
+        table.insert(c.bodies, wall)
+    end
+end
+
+local function each(fn)
+    for _, inst in pairs(check().mipos) do
+        if alive(inst) then fn(inst) end
+    end
+end
+
+local function jumpAll()
+    local c = check()
+    each(function(inst)
+        local face = mipoFacing.dir(inst)
+        actions.jump(inst, face * c.jumpForward)
+    end)
+end
+
+---------------------------------------------------------------- wandering
+
+-- each Mipo by itself: stand a while, walk or hop a way a while, now and then a jump; away from walls
+local function wander(inst, now)
+    local c = check()
+    local w = inst._wander
+    if not w or now >= w.untilT then
+        local x = inst.parts.torso1.body:getX()
+        local r = love.math.random()
+        w = { untilT = now + 1 + love.math.random() * 3 }
+        if r < 0.35 then
+            w.speed = 0
+        else
+            local dir = love.math.random() < 0.5 and -1 or 1
+            if x > HALF * 0.7 then dir = -1 elseif x < -HALF * 0.7 then dir = 1 end
+            w.speed = dir * c.speed * (0.6 + love.math.random() * 0.6)
+            w.gait = love.math.random() < 0.3 and 'hop' or 'walk'
+            w.jumpAt = love.math.random() < 0.25 and now + love.math.random() * 1.5 or nil
+        end
+        inst._wander = w
+    end
+    walk.drive(inst, w.speed, w.gait)
+    if w.jumpAt and now >= w.jumpAt then
+        w.jumpAt = nil
+        actions.jump(inst, mipoFacing.dir(inst) * c.jumpForward * 0.5)
+    end
+end
+
+---------------------------------------------------------------- the scene
+
+local function lookAt()
+    local sx, n = 0, 0
+    each(function(inst) sx, n = sx + inst.parts.torso1.body:getX(), n + 1 end)
+    cam:setScale(ZOOM)
+    cam:setTranslation(n > 0 and sx / n or 0, GROUND_Y - 500)
+end
+
+function s.onStart()
+    worldState.paused = false
+    makeGround()
+    local any = false
+    for _, inst in pairs(check().mipos) do any = any or alive(inst) end
+    if not any then newMipos() end
+    check().hold = true
+    lookAt()
+end
+
+function s.onUnload()
+    local c = state.motorSpike
+    if not c then return end
+    each(function(inst) walk.drive(inst, nil) end)
+    if c.jumpSpeedWas then actions.jumpSpeed, c.jumpSpeedWas = c.jumpSpeedWas, nil end
+    for _, b in ipairs(c.bodies) do if not b:isDestroyed() then b:destroy() end end
+    c.bodies = {}
+end
+
+function s.update()
+    local c = check()
+    local now = love.timer.getTime()
+    local dir = (love.keyboard.isDown('right') and 1 or 0) - (love.keyboard.isDown('left') and 1 or 0)
+    local released = dir == 0 and (c.keyDir or 0) ~= 0 -- a key let go: stop (the panel's go keeps going)
+    c.keyDir = dir
+    each(function(inst)
+        if dir ~= 0 then
+            walk.drive(inst, dir * c.speed, c.gait)
+        elseif c.wander then
+            wander(inst, now)
+        elseif released then
+            walk.drive(inst, nil)
+        end
+    end)
+    -- the camera goes with the Mipos until you touch, drag or zoom
+    if c.hold then
+        if love.mouse.isDown(1, 2, 3) or #love.touch.getTouches() > 0 or cam.scale ~= ZOOM then
+            c.hold = false
+        else
+            lookAt()
+        end
+    end
+end
+
+local function toggleWander()
+    local c = check()
+    c.wander = not c.wander
+    if not c.wander then each(function(inst) inst._wander = nil walk.drive(inst, nil) end) end
+end
+
+function s.onKeyPress(key)
+    local c = check()
+    if key == 'up' then jumpAll() end
+    if key == 'g' then c.gait = c.gait == 'walk' and 'hop' or 'walk' end
+    if key == 'w' then toggleWander() end
+    if key == 'r' then newMipos() c.hold = true end
+    if key == 'n' then addMipo((love.math.random() - 0.5) * 2000) end
+    if key == 'p' then worldState.paused = not worldState.paused end
+    if key == 'h' then c.showPanel = not c.showPanel end
+    if key == 'f' then c.hold = true end
+end
+
+local function slider(layout, w, id, label, lo, hi, value, stepSize)
+    local x, y = ui.nextLayoutPosition(layout, w, 34)
+    local v = ui.sliderWithInput('motor-' .. id, x, y, 150, lo, hi, value, nil, stepSize)
+    ui.label(x + 225, y, label)
+    return v and (v + 0) or nil
+end
+
+function s.drawUI()
+    local c = check()
+    if not (state.playMode and c.showPanel) then return end
+    ui.startFrame() -- play mode draws no editor UI, so nothing else starts the frame
+    local BH, pad, w = 34, 6, 330
+    local rows = 13
+    local h = BH * rows + pad * (rows + 1) + 24
+    local _, sh = love.graphics.getDimensions()
+    local x0, y0 = 20, sh - h - 20
+    ui.panel(x0, y0, w, h, '•• motor ••', function()
+        local layout = ui.createLayout({ type = "columns", spacing = pad,
+            startX = x0 + pad, startY = y0 + pad + 24 })
+        local bw = w - 12
+        local half = (bw - pad) / 2
+        local x, y = ui.nextLayoutPosition(layout, bw, BH)
+        if ui.button(x, y, half, '< go') then each(function(i) walk.drive(i, -c.speed, c.gait) end) end
+        if ui.button(x + half + pad, y, half, 'go >') then each(function(i) walk.drive(i, c.speed, c.gait) end) end
+        x, y = ui.nextLayoutPosition(layout, bw, BH)
+        if ui.button(x, y, half, 'stop') then each(function(i) walk.drive(i, nil) end) end
+        if ui.button(x + half + pad, y, half, 'jump (up)') then jumpAll() end
+        x, y = ui.nextLayoutPosition(layout, bw, BH)
+        if ui.button(x, y, bw, 'gait: ' .. c.gait .. ' (g)') then c.gait = c.gait == 'walk' and 'hop' or 'walk' end
+        x, y = ui.nextLayoutPosition(layout, bw, BH)
+        if ui.button(x, y, bw, 'wander by themselves: ' .. (c.wander and 'on' or 'off') .. ' (w)') then toggleWander() end
+        x, y = ui.nextLayoutPosition(layout, bw, BH)
+        if ui.button(x, y, half, 'new Mipos (r)') then newMipos() c.hold = true end
+        if ui.button(x + half + pad, y, half, 'one more (n)') then addMipo((love.math.random() - 0.5) * 2000) end
+        local v = slider(layout, bw, 'speed', 'speed (legs/s)', 0.3, 4, c.speed, 0.1)
+        if v then c.speed = v end
+        v = slider(layout, bw, 'accel', 'push (legs/s2)', 0.5, 12, walk.driveAccel, 0.5)
+        if v then walk.driveAccel = v end
+        v = slider(layout, bw, 'turning', 'pace turning', 0, 1, walk.turningPace, 0.05)
+        if v then walk.turningPace = v end
+        v = slider(layout, bw, 'hopH', 'hop height (legs)', 0.05, 1.2, walk.hopHeight, 0.05)
+        if v then walk.hopHeight = v end
+        v = slider(layout, bw, 'hopRest', 'hop rest (s)', 0, 0.6, walk.hopRest, 0.02)
+        if v then walk.hopRest = v end
+        v = slider(layout, bw, 'jumpF', 'jump forward', 0, 1200, c.jumpForward, 50)
+        if v then c.jumpForward = v end
+        v = slider(layout, bw, 'jumpUp', 'jump up', 300, 2400, actions.jumpSpeed, 50)
+        if v then
+            c.jumpSpeedWas = c.jumpSpeedWas or actions.jumpSpeed -- back on unload: it's every scene's
+            actions.jumpSpeed = v
+        end
+        v = slider(layout, bw, 'upright', 'torso muscle', 0, 60, walk.upright, 5)
+        if v then walk.upright = v end
+    end)
+end
+
+return s
