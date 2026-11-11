@@ -812,7 +812,8 @@ local function refreshFrameLights(list)
             L.type = LIGHT_TYPES[d.lightType] or 0
             L.gr, L.gg, L.gb = color.hexToColor(d.groundHex or '6b5a40ff')
             L.x, L.y = 0, 0
-            L.range = 0 -- no falloff
+            -- no falloff; a back light's slot carries how far in its rim reaches (as a light sfixture's)
+            L.range = d.lightType == 'back' and (d.rimWidth or 0.045) or 0
         end
     end
     frameLights.count, frameLights.skipped, frameLights.stale = count, skipped, false

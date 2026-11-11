@@ -89,7 +89,7 @@ local function wallShadowFrom(toLight, behind, strength, wall)
     local length = behind * math.min(4, 1 / (high + 0.25))
     return { wall = type(wall) == 'function' and wall or WALLS[wall], offset = { -tx * length, high * length },
         blur = 5 + length * 0.06,
-        strength = strength }
+        strength = strength, behind = behind, baseStrength = strength } -- the last two: the sky's hour
 end
 
 -- the day's sun (light-grass-check's, high on the left)
@@ -127,15 +127,27 @@ local LIT = {
         -- clay off: light and roundness only
         plasticineStrength = 0, plasticineBump = 0, plasticineSpecStrength = 0, plasticineSSSstrength = 0,
     },
-    shared = {
-        contactShadows = { strength = 0.45 },
-        sceneDefaultLights = {
-            { lightType = 'directional', toLight = SUN, colorHex = 'fff2d9ff', intensity = 1.2 },
-            -- the sky light at light-grass-check's 1.3 strength
-            { lightType = 'sky', toLight = { 0, -1 }, colorHex = '9cc8ffff', groundHex = '8a7a50ff', intensity = 0.78 },
-        },
+}
+local LIT_SHARED = {
+    contactShadows = { strength = 0.45 },
+    sceneDefaultLights = {
+        { lightType = 'directional', toLight = SUN, colorHex = 'fff2d9ff', intensity = 1.2 },
+        -- the sky light at light-grass-check's 1.3 strength
+        { lightType = 'sky', toLight = { 0, -1 }, colorHex = '9cc8ffff', groundHex = '8a7a50ff', intensity = 0.78 },
     },
 }
+
+-- A scene with a sky (src/scene-sky.lua, docs/SKY.md SK2): its light follows the hour (src/sky-light.lua
+-- fills it every frame), so it gets tables of its own, not the shared noon defaults above
+local function skyOn()
+    local sky = package.loaded['src.scene-sky']
+    return sky ~= nil and sky.isOn()
+end
+local function base()
+    if not skyOn() then return LIT_SHARED end
+    return { contactShadows = { strength = 0.45, baseStrength = 0.45 },
+        sceneDefaultLights = require('src.sky-light').newLights() }
+end
 
 -- the shared settings made once per level and settings (the same table while they stay: what apply
 -- compares)
@@ -152,7 +164,12 @@ lib.DEFAULT_BEHIND = DEFAULT_BEHIND
 
 local function wallKey(settings)
     return lib.wallOf(settings) .. '|' .. (settings.wallShadow or 1) .. '|'
-        .. (settings.wallBehind or DEFAULT_BEHIND)
+        .. (settings.wallBehind or DEFAULT_BEHIND) .. (skyOn() and '|sky' or '')
+end
+
+LIT.shared = function()
+    if not skyOn() then return LIT_SHARED end
+    return cached('lit', 'sky', base)
 end
 
 -- + soft shadows on the wall behind (~4 ms on the phone; every other frame, half that: LS25)
@@ -161,15 +178,15 @@ local function shadowsShared(settings)
     if wall == 'walls' then
         local layers, key = require('src.walls').layers()
         return cached('shadows', wallKey(settings) .. '|' .. key, function()
-            return extend(LIT.shared, {
+            return extend(base(), {
                 backdropShadows = wallLayers(layers, 0.35 * (settings.wallShadow or 1)),
                 shadowEveryOther = true,
             })
         end)
     end
     return cached('shadows', wallKey(settings), function()
-        if wall == 'nothing' then return LIT.shared end
-        return extend(LIT.shared, {
+        if wall == 'nothing' then return base() end
+        return extend(base(), {
             backdropShadows = wallShadowFrom(SUN, settings.wallBehind or DEFAULT_BEHIND,
                 0.35 * (settings.wallShadow or 1), wall),
             shadowEveryOther = true,
@@ -211,7 +228,8 @@ local function fullShared(settings)
         local more = {
             shadowEveryOther = true,
             projectedShadows = { area = area, floorY = floorY, depth = floor.depth, lights = {
-                { light = { kind = 'sun', x = SUN[1], h = high, z = 0.5 }, strength = 0.5, softness = 0.03 },
+                { light = { kind = 'sun', x = SUN[1], h = high, z = 0.5 }, strength = 0.5, baseStrength = 0.5,
+                  softness = 0.03 },
             } },
         }
         if wall == 'walls' then
@@ -224,7 +242,7 @@ local function fullShared(settings)
             more.backdropShadows = wallShadowFrom(SUN, settings.wallBehind or DEFAULT_BEHIND,
                 0.35 * 0.7 * (settings.wallShadow or 1), wallAbove)
         end
-        return extend(LIT.shared, more)
+        return extend(base(), more)
     end)
 end
 
@@ -441,6 +459,8 @@ function lib.apply()
             mine[key] = v
         end
     end
+    -- a sky: the hour into the level's own tables (src/sky-light.lua)
+    if shared and skyOn() then require('src.sky-light').fill(shared, require('src.scene-sky').settings().hour) end
 end
 
 return lib

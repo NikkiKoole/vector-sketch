@@ -30,7 +30,11 @@ time of day with the cycle").
   palettes and shader drawn behind everything, the hour and "the day runs" (day length) on state; a sky
   section in the settings panel (on/off, hour, day runs, day length, the horizon's y), saved with the
   scene (nothing when off). Altitude counted up from the scene's horizon.
-- [ ] **SK2. The clock lights the scene.** At the light levels (src/scene-light.lua), the default sun and
+- [x] **SK2. The clock lights the scene.** Done 2026-11-11 (Nikki: "now the light and sky"): `src/sky-light.lua`,
+  the light scene's five looks (golden hour included) and arcs; a sky scene's level gets its own lights
+  (sun, moon, sky light, back light) filled every frame, the contact, wall and 3D shadows turned and
+  stretched with them, a no-sky scene's noon defaults untouched (spec/sky-light_spec.lua, minute by minute:
+  no jumps). The walls take the hour's light too (`skyLight.ambient`; Nikki "y walls"). Was: At the light levels (src/scene-light.lua), the default sun and
   sky light follow the hour: the light scene's five looks, the sun and moon on their arcs, the back light.
   A scene without sky keeps today's fixed noon.
 - [ ] **SK3. The light scene on the engine clock.** light-grass-check drops its own clock and day looks

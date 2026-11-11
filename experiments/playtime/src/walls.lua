@@ -127,14 +127,24 @@ local function meshOf(wall)
     return mesh
 end
 
+-- the light on the walls: with a sky and the light on, the hour's (src/sky-light.lua: dark and blue at
+-- night, warm at dusk; Nikki 2026-11-11: walls bright at night stood out), else as drawn
+local function hourLight()
+    local sky = package.loaded['src.scene-sky']
+    local light = package.loaded['src.scene-light']
+    if not (sky and sky.isOn() and light and light.level().name ~= 'off') then return 1, 1, 1 end
+    return require('src.sky-light').ambient(sky.settings().hour)
+end
+
 -- behind everything (src/systems.lua drawBelow)
 function lib.drawBelow()
     if not state.world.showTextures then return end
+    local lr, lg, lb = hourLight()
     for _, wall in ipairs(lib.list()) do
         local mesh = meshOf(wall)
         if mesh then
             local r, g, b, a = color.hexToColor(wall.extra.main.tint or 'ffffffff')
-            love.graphics.setColor(r, g, b, a)
+            love.graphics.setColor(r * lr, g * lg, b * lb, a)
             love.graphics.draw(mesh, wall.body:getX(), wall.body:getY(), wall.body:getAngle())
         end
     end
