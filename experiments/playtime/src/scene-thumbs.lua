@@ -38,6 +38,7 @@ lib.FRAMES = {
     ['mudready'] = 'crowd',
     ['meta'] = 'fit',
     ['sm-demo'] = 'fit',
+    ['voicebox'] = 'crowd', -- its one big Mipo
 }
 
 -- ── the tab's side ──────────────────────────────────────────────────────────────────────────

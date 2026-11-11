@@ -133,8 +133,9 @@ function lib.playSynth()
     C.hit(60 + L.speed, PLAYER, VOL, math.floor(L.seconds / rate * 1000) + 60)
 end
 
--- 'sing': INSTR_SING at speed's note, the take's own length, size as its throat.
-function lib.playSing()
+-- 'sing': INSTR_SING at speed's note (or `midi`: the voicebox spike's pitch), the take's own length,
+-- size as its throat.
+function lib.playSing(midi)
     local s, C = synth()
     if not s or not prepare(C, true) then return end
     C.instrument_level(SINGER, lib.level)
@@ -143,7 +144,7 @@ function lib.playSing()
     C.instrument_morph(SINGER, 0.5) -- its own speed
     -- one-shot: the note's length doesn't matter, the take plays through once (morph must
     -- stay above 0: frozen, the take never ends and it falls back to the key)
-    C.hit(60 + L.speed, SINGER, VOL, 20)
+    C.hit(midi or (60 + L.speed), SINGER, VOL, 20)
 end
 
 function lib.status()

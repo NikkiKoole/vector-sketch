@@ -1,0 +1,61 @@
+# Voice box — a Mipo voice made from scratch: vowels, consonants, who's talking
+
+status: active — VB0 and VB3's first part built 2026-11-11, Nikki to listen (VB1)
+
+Nikki (2026-11-11): "i kinda feel like another voice spike ... i also want to figure out more with: all sorts
+of vowels crossing visually and audible, the other settings how we can adjust these sounds to make them more
+mipo and less just recorded people, and some consonants".
+
+Where the voices stand: the Mipos speak and sing with recorded takes (Theo, Herman, Nikki, the Puppetmaker
+takes: `src/mipo-voice.lua`, the choir spike `docs/CHOIR.md`, tuned per syllable; WORLD re-tuning and morphs
+offline, liked), and the voice lab (`src/voice-lab.lua`) tries a take's speed, shift and size on the synth.
+A take is always a person. This spike tries the other end: a voice with no recording in it.
+
+## VB0. The spike (built 2026-11-11)
+
+Scene `voicebox` (`./playtime.sh play voicebox`), engine `src/voice-box.lua` (`voiceBox` in scene scripts).
+dreamengine's formant voice, `INSTR_VOICE` (24; navkit's VoicForm: a glottal pulse through four vowel
+formants, measured Peterson-Barney tables), already in our libdesound with all its levers, but never used
+in Playtime. A shared pool slot (patch `voiceBox`, added to `synth.patches` at run time).
+
+- **The vowel chart**: F1 (how open) down, F2 (how front) across, log scale, the vowels at their measured
+  places (i e ae a uh er o oo). Press and drag: a held note, the vowel moving under the finger, any point
+  between the vowels (the engine's AH formants scaled to the point's F1/F2: its open/front levers,
+  note_aux 8/9). The Mipo's mouth follows: each vowel has a mouth shape (`lib.VOWELS`), a point blends them
+  by nearness (smooth, never a pick), and close vowels open the mouth less (`lib.MOUTH_CLOSE` 0.4).
+- **Who's talking**: pitch, size (throat: giant .. tiny), effort (soft breathy .. bright pressed: breath,
+  glottal open quotient and tilt together, as dreamengine's voxpad), nasal, buzz (smooth .. buzzy),
+  jitter / shimmer / creak (roughness), vibrato and its speed. Presets mipo, tiny, big, hum, plain.
+- **Consonants**: 22 buttons (b d g m n l s sh ng r w y dh f v z zh th p t k ch), each says itself with the
+  current vowel (`voice_consonant`, a timed onset into the vowel); the mouth shows its shape for 80 ms (m b p
+  closed, f v, th l, rounded w sh). "chart: consonant first" makes the chart's notes start with the last one.
+- **Babble** (b): 3-6 mipomi syllables (m p b l n d + i o a oo e) on one held note, re-articulated, a falling
+  tune with a lift and a held last syllable.
+
+Checked in a test window: notes start and stop, babble steps through, consonants ring out; contact sheet of
+the eight vowel mouths. **Not heard by me**: how it sounds is VB1.
+
+## Steps
+
+- [ ] **VB1. Nikki listens**: does a made voice sound like a Mipo, or like a robot? Which preset, which
+  levers matter (the "more Mipo, less recorded people" question from this side).
+- [ ] **VB2. The mouths**: do the vowel mouths read, does the crossing look right; the shapes per vowel in
+  `lib.VOWELS`.
+- [ ] **VB3. Recorded takes made more Mipo**: the same question from the other side. The takes through what
+  this spike has: their size (INSTR_SING, `sample_formant`), a vowel filter (the choir's EFX talkbox), a
+  blend of a take and the made voice. A/B in the same panel.
+  **First part built 2026-11-11** (Nikki: "can we still get the bare samples with some settings?"): the left
+  panel, 'recorded take': the voice lab's sets and takes (theo, herman, nikki, pm) and its sliders (speed,
+  shift, size, inflection: the same `state.voiceLab`), played four ways on one note: **bare** (the take through
+  LÖVE, its rate taking it to the voice box pitch: pitch and length together, as the choir), **synth** (shifted
+  to the pitch in whole semitones, length kept, size baked in), **sing** (INSTR_SING at the pitch, size as its
+  throat), **made** (the same syllable on the made voice: 'ba' -> b + a). At the pitch only when the take is
+  measured (`src/voice-pitch-data.lua`: theo, herman, nikki; not the Puppetmaker takes, which use the lab's
+  speed/shift as set). The Mipo's mouth says the take's vowel for its length. Not yet: a vowel filter on
+  takes, a blend of take and made voice.
+- [ ] **VB4. More consonants**: endings (`voice_coda`: "mip", "pom"), two in a row, consonants in the babble
+  chosen by the mipomi language (`~/Projects/love/mipomi-lang`).
+- [ ] **VB5. Singing**: the choir's tunes on the made voice: any note exactly, no takes, no tuning tables;
+  the singer model (breath, scoop, vibrato) as its levers.
+- [ ] **VB6. A voice per Mipo**, if kept: size from the body, a pitch and a preset in the DNA (PUPPETMAKER-SOUND
+  P6 / V5), and its mouth flaps from the voice instead of random shapes.

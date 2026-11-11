@@ -88,6 +88,7 @@ local baseEnv = {
     mipoRegistry             = require('src.mipo-registry'),
     mipoKit                  = require('src.mipo-kit'), -- spawn(list, x, y), alive(list), isAlive(inst)
     mipoEmotion              = require('src.mipo-emotion'), -- faces that show feelings (EMOTIONS.md)
+    voiceBox                 = require('src.voice-box'), -- a Mipo voice from scratch: vowels, consonants (VOICEBOX.md)
     -- turning and walking, every Mipo (src/mipo-walk.lua): turn(inst, dir), turnHead, turnTo, hold
     mipoWalk                 = require('src.mipo-walk'),
     mipoLayers               = require('src.mipo-layers'), -- where a hat, pants, hair go between a Mipo's parts
