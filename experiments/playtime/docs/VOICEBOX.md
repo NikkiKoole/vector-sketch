@@ -61,6 +61,15 @@ the eight vowel mouths. **Not heard by me**: how it sounds is VB1.
   shares 5). Not yet: a blend of take and made voice.
 - [ ] **VB4. More consonants**: endings (`voice_coda`: "mip", "pom"), two in a row, consonants in the babble
   chosen by the mipomi language (`~/Projects/love/mipomi-lang`).
+  **Codas, 2026-11-11** (Nikki: "lets do the codas, mip and pom"): `voiceBox.say(onset, coda)` and
+  `voiceBox.word('m', 'i', 'p')`: 0.2 s of vowel, then `voice_coda` closes it over the consonant's own length
+  (the engine's table). The engine keeps the voice on through a coda, so an unvoiced one (p t k s) turns the
+  note's volume down once closed ("mi-p" stops), a voiced one (m n ng l) hums on 0.1 s ("po-m"). The mouth
+  goes to the consonant's shape fully (an m or p shut) until the end. Panel: an 'ends on' row (- m n ng l p
+  t k s; the consonant buttons use it) and mip / pom / min / pong. Babble: the last syllable closes 60% of
+  the time, the others 15% (m p n ng); the next syllable opens again (`voice_coda(-1)`, volume back).
+  Checked in a test window: timing and mouth state right, no errors; not heard. Still open here: two
+  consonants in a row, consonants chosen by mipomi-lang.
 - [ ] **VB5. Singing**: the choir's tunes on the made voice: any note exactly, no takes, no tuning tables;
   the singer model (breath, scoop, vibrato) as its levers.
 - [ ] **VB6. A voice per Mipo**, if kept: size from the body, a pitch and a preset in the DNA (PUPPETMAKER-SOUND

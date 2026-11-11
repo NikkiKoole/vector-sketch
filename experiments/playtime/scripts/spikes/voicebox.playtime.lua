@@ -126,7 +126,7 @@ function s.drawUI()
     local v = voiceBox.settings()
     local sw, sh = ui.getDimensions()
     local consonantRows = math.ceil(#voiceBox.CONSONANTS / 6)
-    local rows = 1 + #SLIDERS + consonantRows + 2
+    local rows = 1 + #SLIDERS + consonantRows + 4
     local w, h = PANEL.w, PANEL.chartH + PANEL.row * rows + 50
     local x0, y0 = sw - w - 12, math.max(12, (sh - h) / 2)
     ui.panel(x0, y0, w, h, '•• voice box ••', function()
@@ -158,10 +158,31 @@ function s.drawUI()
             local label = (c.padOnset and v.onset == name) and ('[' .. name .. ']') or name
             if ui.button(x + col * (cw + 4), y + row * PANEL.row, cw, label, PANEL.row - 4) then
                 v.onset = name
-                voiceBox.say(name)
+                voiceBox.say(name, v.coda)
             end
         end
         y = y + consonantRows * PANEL.row
+        -- codas (VB4): what a said syllable closes on; then two whole words
+        ui.label(x, y + 4, 'ends on')
+        local codas = { false }
+        for _, name in ipairs(voiceBox.CODAS) do codas[#codas + 1] = name end
+        local kw = (inner - 70 - (#codas - 1) * 3) / #codas
+        for i, name in ipairs(codas) do
+            local label = name or '-'
+            if (v.coda or false) == name then label = '[' .. label .. ']' end
+            if ui.button(x + 70 + (i - 1) * (kw + 3), y, kw, label, PANEL.row - 4) then
+                v.coda = name or nil
+                voiceBox.say(v.onset, v.coda)
+            end
+        end
+        y = y + PANEL.row
+        local ww = (inner - 3 * 4) / 4
+        for i, word in ipairs({ { 'm', 'i', 'p' }, { 'p', 'o', 'm' }, { 'm', 'i', 'n' }, { 'p', 'o', 'ng' } }) do
+            if ui.button(x + (i - 1) * (ww + 4), y, ww, word[1] .. word[2] .. word[3], PANEL.row - 4) then
+                voiceBox.word(word[1], word[2], word[3])
+            end
+        end
+        y = y + PANEL.row
         if ui.button(x, y, 120, 'babble (b)', PANEL.row - 4) then voiceBox.babble() end
         local oc, ov = ui.checkbox(x + 130, y, c.padOnset, 'chart: consonant first')
         if oc then c.padOnset = ov end

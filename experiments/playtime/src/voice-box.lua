@@ -6,7 +6,8 @@
 --   sound   size (the throat: giant -> tiny), effort (soft breathy -> bright pressed), nasal, buzz,
 --           jitter / shimmer / creak (roughness), vibrato
 --   speech  a consonant opens a syllable (voice_consonant, 22 of them: b d g m n l s sh ng r w y dh f v
---           z zh th p t k ch); babble: a phrase of mipomi syllables on one held note
+--           z zh th p t k ch); a coda closes it (voice_coda: "mip", "pom", VB4); babble: a phrase of
+--           mipomi syllables on one held note, some closing on a coda
 -- The mouth: each vowel on the chart has a mouth shape, a point between them blends those by nearness;
 -- a consonant shows its own shape for its moment; quiet, the Mipo's own mouth.
 -- Synth: the 'voiceBox' patch in a shared pool slot (src/synth.lua lib.poolSlots), held notes.
@@ -62,6 +63,18 @@ for i, name in ipairs(lib.CONSONANTS) do CONSONANT_ID[name] = i - 1 end
 local CONSONANT_MOUTH = { m = 'M_B_P', b = 'M_B_P', p = 'M_B_P', f = 'F_V', v = 'F_V', th = 'TH_L', dh = 'TH_L',
     l = 'TH_L', w = 'O_U_W_Q', r = 'L_OU', sh = 'O_U_W_Q', zh = 'O_U_W_Q', ch = 'O_U_W_Q' }
 local CONSONANT_FOR = 0.08 -- seconds its mouth shows
+-- the engine's consonant lengths (dreamengine runtime/sound.h vox_cons_dur) and which are unvoiced
+local CONSONANT_DUR = { b = 0.055, d = 0.055, g = 0.055, m = 0.09, n = 0.09, l = 0.07, s = 0.11, sh = 0.11,
+    ng = 0.09, r = 0.07, w = 0.07, y = 0.07, dh = 0.09, f = 0.11, v = 0.10, z = 0.11, zh = 0.11, th = 0.11,
+    p = 0.055, t = 0.055, k = 0.055, ch = 0.09 }
+local UNVOICED = { s = true, sh = true, f = true, th = true, p = true, t = true, k = true, ch = true }
+-- codas (VB4): the engine keeps the voice on through a coda, so an unvoiced one (p t k, s f) goes quiet once
+-- it's closed: "mi-p" stops, "po-m" hums on a little
+lib.CODAS = { 'm', 'n', 'ng', 'l', 'p', 't', 'k', 's' }
+lib.CODA_HUM = 0.1    -- seconds a voiced coda (m n ng l) hums on, closed, before the release
+lib.CODA_STOP = 0.03  -- seconds an unvoiced one holds, closed and quiet
+lib.SYLLABLE = 0.2    -- seconds of vowel before a said syllable's coda (no coda: rung out 0.32)
+lib.VOLUME = 6
 lib.LOOP_GAP = 0.12 -- seconds between a looped take's repeats
 lib.MOUTH_CLOSE = 0.4 -- how far a close vowel (i, oo) opens the mouth, of the open ones' way
 
@@ -78,6 +91,10 @@ lib.PRESETS = {
     plain = { pitch = 57, size = 0.33, effort = 0.5, nasal = 0, buzz = 1, jitter = 0, shimmer = 0,
               creak = 0, vibDepth = 0, vibRate = 0.5 },
 }
+
+local function vowelNamed(name)
+    for _, v in ipairs(lib.VOWELS) do if v.name == name then return v end end
+end
 
 local function S()
     if not state.voiceBox then
@@ -129,7 +146,8 @@ local function start(pitch, consonant)
     ensurePatch()
     local s = S()
     if s.handle then synth.noteOff(s.handle) end
-    s.handle = synth.noteOn(PATCH, math.floor(pitch + 0.5), 6)
+    s.quietAt, s.codaAt = nil, nil -- a new note: the last one's coda is done with
+    s.handle = synth.noteOn(PATCH, math.floor(pitch + 0.5), lib.VOLUME)
     if not s.handle then return nil end
     synth.noteSet(s.handle, pitch)
     pushSound(C_, s.handle)
@@ -148,7 +166,20 @@ function lib.hold(consonant) return start(S().pitch, consonant) end
 function lib.release()
     local s = S()
     if s.handle then synth.noteOff(s.handle) end
-    s.handle, s.sounding, s.babble = nil, false, nil
+    s.handle, s.sounding, s.babble, s.codaAt = nil, false, nil, nil
+end
+
+-- close the held note on a consonant now; returns how long until it's closed and done
+local function fireCoda(s, coda, now)
+    local C_ = s.handle and C()
+    if not (C_ and CONSONANT_ID[coda]) then return 0 end
+    C_.voice_coda(s.handle, CONSONANT_ID[coda])
+    local closed = CONSONANT_DUR[coda] or 0.08
+    local done = closed + (UNVOICED[coda] and lib.CODA_STOP or lib.CODA_HUM)
+    if UNVOICED[coda] then s.quietAt = now + closed end
+    -- the mouth goes to the consonant as it closes, and stays there till the end
+    s.consonantMouth, s.consonantUntil = CONSONANT_MOUTH[coda] or 'C_D_E_G_K_N_R_S', now + done
+    return done
 end
 
 -- the chart point moves (while held: heard at once, the engine slews it)
@@ -176,20 +207,31 @@ function lib.preset(name)
     lib.refresh()
 end
 
--- one syllable: the consonant, then the current vowel, rung out
-function lib.say(consonant)
+-- one syllable: the consonant, then the current vowel, rung out or closed on a coda ("mip")
+function lib.say(consonant, coda)
     local s = S()
     s.babble = nil
     start(s.pitch, consonant)
-    s.releaseAt = love.timer.getTime() + 0.32
+    local now = love.timer.getTime()
+    if coda and CONSONANT_ID[coda] then
+        s.codaAt, s.pendingCoda, s.releaseAt = now + lib.SYLLABLE, coda, nil
+    else
+        s.codaAt, s.releaseAt = nil, now + 0.32
+    end
+end
+
+-- a whole word: onset, vowel (a chart vowel's name), coda; 'mip' = say('m', 'i', 'p')
+function lib.word(consonant, vowelName, coda)
+    local v = vowelNamed(vowelName)
+    if v then lib.setVowel(v.f1, v.f2) end
+    lib.say(consonant, coda)
 end
 
 -- babble: mipomi syllables on one held note, re-articulated (connected), a falling tune with a lift
 local BABBLE_C = { 'm', 'p', 'b', 'l', 'n', 'd', 'm', 'p' }
 local BABBLE_V = { 'i', 'o', 'a', 'oo', 'e', 'o', 'i', 'a' }
-local function vowelNamed(name)
-    for _, v in ipairs(lib.VOWELS) do if v.name == name then return v end end
-end
+local BABBLE_CODA = { 'm', 'p', 'n', 'm', 'ng' } -- mipomi's endings: mip, pom, min, pong
+lib.BABBLE_CODA_LAST, lib.BABBLE_CODA_MID = 0.6, 0.15 -- how often the last syllable / the others close
 function lib.babble(count)
     local s = S()
     count = count or love.math.random(3, 6)
@@ -197,9 +239,12 @@ function lib.babble(count)
     local pitch = s.pitch + love.math.random(0, 3)
     for i = 1, count do
         local last = i == count
+        local closes = love.math.random() < (last and lib.BABBLE_CODA_LAST or lib.BABBLE_CODA_MID)
         list[i] = { c = BABBLE_C[love.math.random(#BABBLE_C)], v = BABBLE_V[love.math.random(#BABBLE_V)],
+            coda = closes and BABBLE_CODA[love.math.random(#BABBLE_CODA)] or nil,
             pitch = pitch + (last and love.math.random(-4, 4) or 0),
             dur = last and 0.34 or (0.15 + love.math.random() * 0.08) }
+        if list[i].coda then list[i].dur = list[i].dur + 0.06 end -- room to close
         pitch = pitch - love.math.random(0, 2) + (love.math.random() < 0.2 and 3 or 0)
     end
     s.babble = { list = list, i = 0, nextAt = love.timer.getTime() }
@@ -207,6 +252,10 @@ end
 
 local function babbleStep(s, now)
     local b = s.babble
+    if b.codaAt and now >= b.codaAt then -- this syllable closes on its coda, late in it
+        b.codaAt = nil
+        fireCoda(s, b.list[b.i].coda, now)
+    end
     if now < b.nextAt then return end
     b.i = b.i + 1
     local syl = b.list[b.i]
@@ -218,12 +267,16 @@ local function babbleStep(s, now)
     if b.i == 1 or not s.handle then
         start(syl.pitch, syl.c)
     else
-        synth.noteSet(s.handle, syl.pitch)
+        synth.noteSet(s.handle, syl.pitch, lib.VOLUME) -- back up after an unvoiced coda
+        s.quietAt = nil
         pushVowel(C_, s.handle, s.f1, s.f2)
+        C_.voice_coda(s.handle, -1) -- open again from the last coda
         C_.voice_consonant(s.handle, CONSONANT_ID[syl.c])
         s.consonantMouth, s.consonantUntil = CONSONANT_MOUTH[syl.c] or 'C_D_E_G_K_N_R_S', now + CONSONANT_FOR
     end
     b.nextAt = now + syl.dur
+    -- a coda closes in the syllable's back part: its closing ends with the syllable
+    b.codaAt = syl.coda and (b.nextAt - (CONSONANT_DUR[syl.coda] or 0.08) - 0.04) or nil
 end
 
 -- ── recorded takes (VB3) ─────────────────────────────────────────────────────────────────────────
@@ -390,6 +443,14 @@ function lib.update(dt, instance)
     local s = S()
     local now = love.timer.getTime()
     if s.babble then babbleStep(s, now) end
+    if s.codaAt and now >= s.codaAt then -- a said syllable closes ("mi-p")
+        s.codaAt = nil
+        s.releaseAt = now + fireCoda(s, s.pendingCoda, now)
+    end
+    if s.quietAt and now >= s.quietAt then -- an unvoiced coda: closed, so quiet
+        s.quietAt = nil
+        if s.handle then synth.noteSet(s.handle, nil, 0) end
+    end
     if s.takeUntil and now >= s.takeUntil then
         s.takeUntil, s.sounding = nil, false
         if s.takeLoop and s.lastHow and s.lastHow ~= 'made' then s.loopAt = now + lib.LOOP_GAP end
@@ -418,12 +479,12 @@ function lib.update(dt, instance)
     local own = face and face.mouth and mouthShapes.normalized[face.mouth.shape]
     local rest = own and own.points or pointsOf('closed')
     local shape = vowelMouth(s.f1, s.f2)
-    if s.consonantUntil and now < s.consonantUntil and pointsOf(s.consonantMouth) then
-        shape = pointsOf(s.consonantMouth)
-    end
-    -- how far from its own mouth: the open vowels all the way, the close ones (i, oo) about half (F1)
+    local consonant = s.consonantUntil and now < s.consonantUntil and pointsOf(s.consonantMouth)
+    if consonant then shape = consonant end
+    -- how far from its own mouth: the open vowels all the way, the close ones (i, oo) about half (F1);
+    -- a consonant's shape all the way (an m or p shut)
     local _, openness = lib.chartXY(s.f1, s.f2)
-    local amount = s.mouthOpen * (lib.MOUTH_CLOSE + (1 - lib.MOUTH_CLOSE) * clamp01(openness))
+    local amount = s.mouthOpen * (consonant and 1 or (lib.MOUTH_CLOSE + (1 - lib.MOUTH_CLOSE) * clamp01(openness)))
     local vec = {}
     for i = 1, 16 do vec[i] = rest[i] + (shape[i] - rest[i]) * amount end
     thing.pulledFaceUntil, thing.mouthTweenStart, thing.mouthLetGo = nil, nil, nil
