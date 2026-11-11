@@ -95,11 +95,82 @@ local function resample(pts, spacing)
     return out
 end
 
--- A drawn stroke (flat world x, y, ...) -> the centre line (flat) and whether it closes, or nil.
-function lib.fromStroke(flat)
+---------------------------------------------------------------- painting while drawing (keys held)
+
+-- the zone the held keys paint while drawing a track, as in dreamengine's coaster: h hoist (lift),
+-- b boost, s slow (brake), f flip (roll); nil: plain
+lib.STROKE_KEYS = { { 'h', 'lift' }, { 'b', 'boost' }, { 's', 'brake' }, { 'f', 'roll' } }
+function lib.heldBrush()
+    for _, pair in ipairs(lib.STROKE_KEYS) do
+        if love.keyboard.isDown(pair[1]) then return pair[2] end
+    end
+    return nil
+end
+
+-- the zones recorded for a stroke's points (one per point of polyVerts, false: plain), kept with that
+-- very table so a new stroke starts clean
+function lib.strokeBrushes(polyVerts)
+    local rec = state.trackStroke
+    if not rec or rec.verts ~= polyVerts then
+        rec = { verts = polyVerts, list = {} }
+        state.trackStroke = rec
+    end
+    return rec.list
+end
+
+-- the stroke just got a point: note the zone the held keys paint there
+function lib.recordStrokePoint(polyVerts)
+    lib.strokeBrushes(polyVerts)[#polyVerts / 2] = lib.heldBrush() or false
+end
+
+-- the stroke being drawn, each piece in the colour of the zone painted on it
+function lib.drawStroke(polyVerts)
+    local list = lib.strokeBrushes(polyVerts)
+    local lineWidth = love.graphics.getLineWidth()
+    for i = 1, #polyVerts / 2 - 1 do
+        local zone = list[i] and lib.ZONES[list[i]]
+        if zone then
+            love.graphics.setColor(zone.colour[1], zone.colour[2], zone.colour[3], 1)
+            love.graphics.setLineWidth(lineWidth * 4)
+        else
+            love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.setLineWidth(lineWidth)
+        end
+        love.graphics.line(polyVerts[i * 2 - 1], polyVerts[i * 2], polyVerts[i * 2 + 1], polyVerts[i * 2 + 2])
+    end
+    love.graphics.setLineWidth(lineWidth)
+    love.graphics.setColor(1, 1, 1, 1)
+end
+
+-- the marks for the centre line: each of its points takes the zone of the stroke at the same share of the
+-- way along (smoothing and resampling change the points, not where along it a zone is)
+local function marksAlong(pts, brushes, out)
+    local rawArc, rawTotal = { 0 }, 0
+    for i = 2, #pts do
+        rawTotal = rawTotal + math.sqrt((pts[i][1] - pts[i - 1][1]) ^ 2 + (pts[i][2] - pts[i - 1][2]) ^ 2)
+        rawArc[i] = rawTotal
+    end
+    local outTotal = lengthOf(out)
+    local chars, any, acc, k = {}, false, 0, 1
+    for j = 1, #out do
+        if j > 1 then acc = acc + math.sqrt((out[j][1] - out[j - 1][1]) ^ 2 + (out[j][2] - out[j - 1][2]) ^ 2) end
+        local target = outTotal > 0 and acc / outTotal * rawTotal or 0
+        while k < #pts - 1 and rawArc[k + 1] <= target do k = k + 1 end
+        local zone = brushes[k] and lib.ZONES[brushes[k]]
+        chars[j] = zone and zone.char or '.'
+        any = any or zone ~= nil
+    end
+    if not any then return nil end
+    return (table.concat(chars):gsub('%.+$', ''))
+end
+
+-- A drawn stroke (flat world x, y, ...) -> the centre line (flat), whether it closes, and the marks for
+-- its points (from `brushes`, a zone or false per stroke point, as held while drawing), or nil.
+function lib.fromStroke(flat, brushes)
     local pts = {}
     for i = 1, #flat - 1, 2 do pts[#pts + 1] = { flat[i], flat[i + 1] } end
     if #pts < 2 or lengthOf(pts) < lib.SPACING * 3 then return nil end
+    local raw = pts
     local first, last = pts[1], pts[#pts]
     local closed = #pts > 8 and lengthOf(pts) > lib.CLOSE_DIST * 4
         and (first[1] - last[1]) ^ 2 + (first[2] - last[2]) ^ 2 < lib.CLOSE_DIST ^ 2
@@ -121,7 +192,8 @@ function lib.fromStroke(flat)
         out[#out + 1] = p[1]
         out[#out + 1] = p[2]
     end
-    return out, closed
+    local marks = brushes and marksAlong(raw, brushes, pts) or nil
+    return out, closed, marks
 end
 
 ---------------------------------------------------------------- the chain

@@ -272,8 +272,8 @@ function lib.renderActiveEditorThings()
     if drawing and #state.interaction.polyVerts >= 6 then
         love.graphics.polygon('line', state.interaction.polyVerts)
     end
-    if modes.is(modes.DRAW_TRACK) and #state.interaction.polyVerts >= 4 then -- a track is a line, not closed
-        love.graphics.line(state.interaction.polyVerts)
+    if modes.is(modes.DRAW_TRACK) and #state.interaction.polyVerts >= 4 then -- a line, its painted zones coloured
+        require('src.track').drawStroke(state.interaction.polyVerts)
     end
     drawPolyEditHandles()
     drawTexFixtureHandles()

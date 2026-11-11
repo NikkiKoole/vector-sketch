@@ -856,6 +856,9 @@ function lib.handleMouseMoved(x, y, dx, dy)
             table.insert(state.interaction.polyVerts, wx)
             table.insert(state.interaction.polyVerts, wy)
             state.interaction.lastPolyPt = { x = wx, y = wy }
+            if modes.is(modes.DRAW_TRACK) then -- h / b / s / f held: that stretch painted (src/track.lua)
+                require('src.track').recordStrokePoint(state.interaction.polyVerts)
+            end
         end
     elseif love.mouse.isDown(3) or love.mouse.isDown(2) then
         panCamera(dx, dy)

@@ -109,7 +109,8 @@ end
 function lib.finalizeTrack()
     local track = require('src.track')
     local result = nil
-    local vertices, closed = track.fromStroke(state.interaction.polyVerts)
+    local polyVerts = state.interaction.polyVerts
+    local vertices, closed, marks = track.fromStroke(polyVerts, track.strokeBrushes(polyVerts)) -- keys held: zones
     if vertices then
         local cx, cy = mathutils.getCenterOfPoints(vertices)
         result = objectManager.addThing(ST.TRACK, {
@@ -117,7 +118,7 @@ function lib.finalizeTrack()
             y = cy,
             bodyType = 'static',
             vertices = vertices,
-            track = { closed = closed, flips = {} },
+            track = { closed = closed, flips = {}, marks = marks },
         })
         if result then
             for _, fixture in ipairs(result.body:getFixtures()) do

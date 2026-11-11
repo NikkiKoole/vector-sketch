@@ -110,6 +110,11 @@ the course before writing the file (the bridge's eval stopped at its instruction
   back there, `n` makes a new cart at the mouse, and the lock-on reach is half height + 70.
   Specs: a lift pulls a still cart up a slope at its speed; a brake slows to the crawl; a boost speeds
   up; a roll leaves the cart under the rail, upside down. Not yet painted by hand.
+  Then (Nikki: "while dragging/drawing the track, if you could hold some keys to paint them live"): while
+  drawing a track, hold h (lift / hoist), b (boost), s (brake / slow) or f (roll / flip), dreamengine's
+  keys; the stroke shows the painted pieces thick in their colour, and after smoothing and resampling
+  each point takes the zone at the same share of the way along. The coaster scene's follow key moved
+  from f to v.
 - [ ] **CO5. Riders**: Mipos seated in the cart (TRACKS TR4's pivot servo is a start).
 - [ ] **CO6. Nikki plays with it**; then supports to the ground, the hand-drawn look, sounds
   (achtbaan's clacks and the crowd, dreamengine's `coaster` cart).

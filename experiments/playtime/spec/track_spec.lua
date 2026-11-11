@@ -151,6 +151,29 @@ describe('track', function()
         assert.are.equal(track.BACK, track.layout(thing).lane[c.e1])
     end)
 
+    it('paints the stretch drawn with a key held: the zone lands at the same share of the way along', function()
+        local flat = stroke({ { 0, 0 }, { 900, 0 } })
+        local brushes = {}
+        local n = #flat / 2
+        for i = 1, n do
+            local x = flat[i * 2 - 1]
+            brushes[i] = (x >= 300 and x < 600) and 'lift' or false -- h held over the middle third
+        end
+        local vertices, closed, marks = track.fromStroke(flat, brushes)
+        assert.is_false(closed)
+        assert.is_truthy(marks)
+        for i = 1, #vertices / 2 do
+            local x = vertices[i * 2 - 1]
+            local c = marks:sub(i, i)
+            if x < 280 or x > 620 then
+                assert.is_true(c == '' or c == '.', 'plain at x ' .. x)
+            elseif x > 320 and x < 580 then
+                assert.are.equal('l', c, 'lift at x ' .. x)
+            end
+        end
+        assert.is_nil(select(3, track.fromStroke(flat, {}))) -- nothing held: no marks
+    end)
+
     it('paints zones on the points under the brush, kept as a character per point, and clears them', function()
         local thing = makeTrack({ { 0, 0 }, { 1000, 0 } })
         local layout = track.layout(thing)

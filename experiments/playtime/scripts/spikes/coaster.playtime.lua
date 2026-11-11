@@ -2,7 +2,8 @@
 -- round the loop upside down, over two hills and off the ski jump, then back to the station by itself.
 -- Draw more track with the draw rail's 'track' tool; select a track to paint lift / boost / brake / roll on it.
 -- A cart goes back to its home, where it last locked on: drop one on your own track and it lives there.
--- keys: n: a new cart at the mouse   r: every cart home now   f: follow the cart (again: the whole course)
+-- While drawing a track hold h (lift), b (boost), s (brake) or f (roll) to paint that stretch.
+-- keys: n: a new cart at the mouse   r: every cart home now   v: follow the cart (again: the whole course)
 
 local s = {}
 
@@ -108,7 +109,7 @@ function s.onKeyPress(key)
     if key == 'r' then
         for _, c in ipairs(l.carts) do goHome(c) end
     end
-    if key == 'f' and l.carts[1] then
+    if key == 'v' and l.carts[1] then -- not f: f paints a roll while drawing a track
         l.follow = not l.follow
         if l.follow then
             camera.follow(l.carts[#l.carts].body) -- the newest cart
