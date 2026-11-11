@@ -18,7 +18,7 @@ lib.BEHAVIOR = 'RAIL_CART'
 lib.LOCK_MARGIN = 70   -- let go this near the rail (beyond its own half height), it locks on
 lib.DRAG = 0.03        -- rolling drag, per second (a share of the speed)
 lib.AIR_DRAG = 0.00008 -- drag growing with speed squared (per px at 100 px/m)
-lib.MAX_SPEED = 2500   -- px/s at 100 px per metre (src/physics-units.lua)
+lib.MAX_SPEED = 4000   -- px/s at 100 px per metre (src/physics-units.lua): a Mipo-scale drop of 3500 px reaches ~3700 at 200
 
 -- the painted zones (src/track.lua ZONES), numbers at 100 px per metre
 lib.LIFT_SPEED = 260   -- a lift chain catches a slower cart and pulls it on at this speed (along the drawn way)
@@ -74,6 +74,48 @@ local function place(body, lock)
     return inside
 end
 
+-- the bodies that ride along in a cart (a seated Mipo, src/rail-rider.lua)
+local function passengers(body)
+    local seat = state.railRiders and state.railRiders[body]
+    local out = {}
+    if seat and seat.inst and seat.inst.parts then
+        for _, part in pairs(seat.inst.parts) do
+            if part.body and not part.body:isDestroyed() then out[#out + 1] = part.body end
+        end
+    end
+    return out
+end
+
+-- place the cart, and give its passengers the same correction rigidly, in the cart's frame: moved and
+-- turned with it, their velocity turned and shifted as its was. The rail's pull on the cart is theirs too,
+-- so the seat's pivot only carries their own movement (left behind, they were dragged back by it and the
+-- cart lost its speed to them: a loop's worth of energy)
+local function placeAll(body, lock)
+    local riders = passengers(body)
+    if #riders == 0 then return place(body, lock) end
+    local x0, y0 = body:getPosition()
+    local a0 = body:getAngle()
+    local vx0, vy0 = body:getLinearVelocity()
+    local w0 = body:getAngularVelocity()
+    local inside = place(body, lock)
+    local x1, y1 = body:getPosition()
+    local da = body:getAngle() - a0
+    local vx1, vy1 = body:getLinearVelocity()
+    local dw = body:getAngularVelocity() - w0
+    local cs, sn = math.cos(da), math.sin(da)
+    for _, b in ipairs(riders) do
+        local px, py = b:getPosition()
+        local rx, ry = px - x0, py - y0
+        b:setPosition(x1 + rx * cs - ry * sn, y1 + rx * sn + ry * cs)
+        b:setAngle(b:getAngle() + da)
+        local vx, vy = b:getLinearVelocity()
+        local ux, uy = vx - vx0, vy - vy0
+        b:setLinearVelocity(vx1 + ux * cs - uy * sn, vy1 + ux * sn + uy * cs)
+        b:setAngularVelocity(b:getAngularVelocity() + dw)
+    end
+    return inside
+end
+
 -- lock a body onto a track at arc position s, on `side` of the line (+1: left of the drawn way), still
 function lib.lockAt(body, thing, s, side)
     local lock = { track = thing, s = s, side = side, height = halfHeight(body), speed = 0 }
@@ -125,7 +167,7 @@ function lib.setSpeed(body, speed)
     local lock = lib.lockOf(body)
     if not lock then return end
     lock.speed = speed
-    place(body, lock)
+    placeAll(body, lock) -- its riders launched with it
 end
 
 function lib.release(body)
@@ -170,7 +212,7 @@ local function ride(body, lock, dt)
     local max = units.speed(lib.MAX_SPEED)
     lock.speed = math.max(-max, math.min(max, speed))
     lock.s = lock.s + lock.speed * dt
-    if not place(body, lock) then
+    if not placeAll(body, lock) then
         lib.release(body) -- off an open end: it flies on with its speed,
         state.railCartsFlown = state.railCartsFlown or setmetatable({}, { __mode = 'k' })
         state.railCartsFlown[body] = true -- and doesn't lock on again until it's been clear of every rail

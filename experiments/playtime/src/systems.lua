@@ -37,6 +37,12 @@ lib.list = {
         update = function(m) m.update() end,
     },
     {
+        -- Mipos dragged over a coaster cart sit down in it, and ride (src/rail-rider.lua)
+        name = 'rail-rider',
+        module = 'src.rail-rider',
+        update = function(m) m.update() end,
+    },
+    {
         name = 'sky', -- the scene's clock: the hour goes round while the day runs (src/scene-sky.lua, SKY.md)
         module = 'src.scene-sky',
         update = function(m, dt) m.update(dt) end,

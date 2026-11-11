@@ -620,7 +620,8 @@ function lib.onPreSolve(fix1, fix2, contact)
     end
     local body = other:getBody()
     if body:getType() == 'static' then return end
-    if state.railCarts and state.railCarts[body] then -- a cart on its rail: held by the lock, touches no rail
+    if (state.railCarts and state.railCarts[body]) -- a cart on its rail: held by the lock, touches no rail
+        or (state.railRiderBodies and state.railRiderBodies[body]) then -- nor does a Mipo riding in one
         contact:setEnabled(false)
         return
     end

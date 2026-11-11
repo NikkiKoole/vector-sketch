@@ -43,10 +43,11 @@ the 3d layers, go in front or back yourself".
 
 ## The scene
 
-`coaster` (scripts/spikes): a station, a drop, a loop (r 260), two hills and a ski jump, drawn as one
-track, and a cart (a RAIL_CART box). It plays by itself: the cart waits at the station, gets a nudge,
-makes the loop on gravity alone, flies off the jump and is put back at the station (also when it's stuck
-on the rail). `r` back to the station, `f` follow the cart. Made by a throwaway headless run that rode
+`coaster` (scripts/spikes): a station, a drop, a loop (r 780), two hills and a ski jump, drawn as one
+track at Mipo scale, a cart (a RAIL_CART box, 260 x 90), a ground with three Mipos to drag into it. It
+plays by itself: the cart waits at its home, gets a nudge, makes the loop on gravity alone (with a rider
+too), flies off the jump and is put back home (also when it's stuck on the rail). `n` a new cart at the
+mouse, `r` every cart home, `v` the view (the station, following a cart, the whole course). Made by a throwaway headless run that rode
 the course before writing the file (the bridge's eval stopped at its instruction limit on it).
 
 ## Steps
@@ -122,7 +123,25 @@ the course before writing the file (the bridge's eval stopped at its instruction
   versions looked at an edge from the end back to the start, which an open track doesn't have). The
   inspector's 'close the loop' bridges the end back to the start with points and makes the chain a loop;
   'open the loop' opens it. Not yet tried by hand.
-- [ ] **CO5. Riders**: Mipos seated in the cart (TRACKS TR4's pivot servo is a start).
+- [x] **CO5. Riders**: Mipos seated in the cart (TRACKS TR4's pivot servo is a start).
+  Built 2026-11-12 (Nikki: "riders, lets make a point where if i hover a mipo he sits in the cart"):
+  `src/rail-rider.lua`, an engine system. A Mipo being dragged whose hips come over a free cart's seat
+  (within 1.3 cart half-lengths) sits down at once, the pointer letting go of it: turned with the cart,
+  facing the way it goes, legs forward. Pulled out by dragging it (the pointer 1.6 half-lengths from the
+  seat); it doesn't sit again until it has been away from every seat. Seated: hips on a pivot whose motor
+  keeps the torso upright in the cart (TR4's servo), legs forward and head along the cart's up by
+  KEEP_ANGLE every frame, arms loose; it and its cart don't touch (the Mipo's group), it touches no rail;
+  the cart weighs 3 riders while it carries one; `mipoWalk.hold` keeps its feet out of standing.
+  Found: the lock moved only the cart onto the curve each substep, the rider was dragged after it by
+  the pivot and the cart lost its speed to it (2648 into a loop, 382 over the top with no drag; a launch
+  lost a quarter at once). Now the lock's correction moves the cart's passengers rigidly with it; with a
+  rider a cart rides as an empty one (no drag: within 1% over a loop), hips within 2.4 px of the seat and
+  the torso within 2 degrees of the cart (`spec/rail-rider_spec.lua`).
+  Scale: a Mipo of 0.3 is ~530 tall, the toy course's 80 x 36 carts a 29th of its weight. The coaster
+  scene is now 3x as big (a loop of r 780, a drop of 3450), carts 260 x 90, a ground with three Mipos
+  below the station; carts top out at 4000 (at 100 px/m, was 2500). Nikki's two tracks drawn there are
+  in the library as `nikki-tracks-2026-11-11`. Checked live (seated over the bridge, followed down the
+  drop and along the hills); not yet dragged in by hand.
 - [ ] **CO6. Nikki plays with it**; then supports to the ground, the hand-drawn look, sounds
   (achtbaan's clacks and the crowd, dreamengine's `coaster` cart).
 
