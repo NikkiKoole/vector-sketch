@@ -88,8 +88,12 @@ pools. Static bodies would be stamped into the grid as rock.
   line inside a stencil of the hollow. Visual only, not saved; runs in `liquid.draw`, also in the
   editor. Inspector: slosh, settle.
 - [~] **W3b. Splash** (not wanted yet): rings when something drops in, the crown/spray particles
-  from mudready.
-- [ ] **W4. Floating.** In `src/liquid.lua`. Bodies overlapping the water (`queryBoundingBox`, not
+  from mudready. **The surface part done 2026-11-11** (with W4, `liquid.floatIn`): falling in fast pushes
+  the springs down where it lands, coming out fast lifts them, bobbing stirs; `splash` setting. No drops yet.
+- [x] **W4. Floating.** Done 2026-11-11 from seaside's sea (`liquid.floatIn`, from `lib.update` while
+  playing): per fixture, the part inside the water (clipped to the water's polygon, so a body next to a
+  bath isn't wet) lifts it at its middle (`buoyancy` 1.6) and drags against the container's motion (`drag`
+  1.2); spec: a ball floats at the surface, sinks with buoyancy 0. The plan as it was: In `src/liquid.lua`. Bodies overlapping the water (`queryBoundingBox`, not
   only ones with `ud.thing`) get `mass x g x submerged fraction x density` up, at the centre of
   the submerged part. They get drag by depth, and their own damping back when they leave. Blob
   rims (`state.blobRims[body]`, no userData) float per rim circle; tell playtime-ef when it lands.

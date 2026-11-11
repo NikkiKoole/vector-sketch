@@ -13,7 +13,8 @@
 -- The surface sloshes (W3): a row of springs across the container that moving, shaking or
 -- rotating it sets rocking, and that settle again; a level change glides instead of
 -- snapping. Visual only (not saved): it runs in lib.draw, playing or not.
--- W2 turns what spills into a stream, W4 floating.
+-- W2 turns what spills into a stream. Floating and splashing (W4, W3b; from seaside's sea, 2026-11-11):
+-- lib.floatIn, from lib.update while playing.
 local lib = {}
 local mathutils = require('src.math-utils')
 
@@ -24,6 +25,10 @@ lib.defaults = {
     front = false,            -- drawn in front of the Mipos (a bath) instead of at its own z
     slosh = 1,                -- how much moving the container rocks the surface (0 = flat)
     settle = 1,               -- how quickly it calms down again
+    buoyancy = 1.6,           -- how hard the water lifts what's in it (seaside's 'density': 1 = just floats
+                              -- a thing as heavy as water; more, things ride higher)
+    drag = 1.2,               -- how much the water slows what moves in it (against the container's motion)
+    splash = 1,               -- how much falling in pushes the surface down (0 = never)
 }
 lib.SPRINGS = 24              -- points across the surface
 lib.FRONT_Z = 1000000 + 500   -- above every Mipo z-group, like the grass's front layer
@@ -478,9 +483,201 @@ function lib.spill(extra, body)
     return amount - capacity
 end
 
--- Once per frame after the physics step: while playing, every container spills what it can't hold.
+-- ---------------------------------------------------------------------------
+-- Floating and splashing (W4, W3b; from seaside's sea, ENGINE-MERGE EM3, 2026-11-11). Each frame while
+-- playing, every dynamic body in a container's water is lifted by how much of it is under the surface
+-- (per fixture, at the middle of its wet part, so a tipped thing rights itself) and slowed against the
+-- water, which moves with the container. One falling in fast pushes the surface down where it lands (the
+-- springs carry that out as waves), one coming out fast lifts it, and bobbing at the surface stirs it.
+-- Forces from masses read off the bodies, so no tuned masses (light Mipos float as they are).
+
+local units = require('src.physics-units')
+local SPLASH_IN, SPLASH_OUT = 125, 200 -- px/s at 100 px per metre: seaside's 250 and 400 at 200
+
+-- signed shoelace area: its sign says which way round the polygon goes
+local function signedArea(poly)
+    local a, n = 0, #poly
+    for i = 1, n, 2 do
+        local j = (i + 2 > n) and 1 or i + 2
+        a = a + poly[i] * poly[j + 1] - poly[j] * poly[i + 1]
+    end
+    return a / 2
+end
+
+-- area and middle of a flat polygon { x1, y1, ... }
+local function areaCentroid(poly)
+    local a, cx, cy, n = 0, 0, 0, #poly
+    for i = 1, n, 2 do
+        local j = (i + 2 > n) and 1 or i + 2
+        local cr = poly[i] * poly[j + 1] - poly[j] * poly[i + 1]
+        a, cx, cy = a + cr, cx + (poly[i] + poly[j]) * cr, cy + (poly[i + 1] + poly[j + 1]) * cr
+    end
+    if math.abs(a) < 1e-6 then return 0, 0, 0 end
+    return math.abs(a) / 2, cx / (3 * a), cy / (3 * a)
+end
+
+-- the part of `poly` inside the convex polygon `clip`, either way round (Sutherland-Hodgman)
+local function clipConvex(poly, clip)
+    local out, n = poly, #clip
+    local orient = signedArea(clip) > 0 and 1 or -1
+    for i = 1, n, 2 do
+        local j = (i + 2 > n) and 1 or i + 2
+        local ax, ay, bx, by = clip[i], clip[i + 1], clip[j], clip[j + 1]
+        local input, m = out, #out
+        if m < 6 then return {} end
+        out = {}
+        local function side(x, y) return ((bx - ax) * (y - ay) - (by - ay) * (x - ax)) * orient end
+        local px, py = input[m - 1], input[m]
+        local ps = side(px, py)
+        for k = 1, m, 2 do
+            local cx, cy = input[k], input[k + 1]
+            local cs = side(cx, cy)
+            if cs >= 0 then
+                if ps < 0 then
+                    local t = ps / (ps - cs)
+                    out[#out + 1], out[#out + 2] = px + (cx - px) * t, py + (cy - py) * t
+                end
+                out[#out + 1], out[#out + 2] = cx, cy
+            elseif ps >= 0 then
+                local t = ps / (ps - cs)
+                out[#out + 1], out[#out + 2] = px + (cx - px) * t, py + (cy - py) * t
+            end
+            px, py, ps = cx, cy, cs
+        end
+    end
+    return out
+end
+lib._clipConvex = clipConvex -- for specs
+
+-- a fixture's shape in the world, as a polygon (a circle as 12 sides); nil for chains and edges
+local function fixturePolygon(body, shape)
+    local kind = shape:getType()
+    if kind == 'polygon' then
+        return { body:getWorldPoints(shape:getPoints()) }
+    elseif kind == 'circle' then
+        local cx, cy = body:getWorldPoint(shape:getPoint())
+        local r, out = shape:getRadius(), {}
+        for k = 0, 11 do
+            local a = k / 12 * math.pi * 2
+            out[k * 2 + 1], out[k * 2 + 2] = cx + math.cos(a) * r, cy + math.sin(a) * r
+        end
+        return out
+    end
+end
+
+-- push the springs around t (0..1 across the surface), halfWidth (0..1) wide; dv up (world units/s)
+local function splashWave(wave, t, halfWidth, dv)
+    local n = #wave.h
+    halfWidth = math.max(halfWidth, 0.06)
+    for i = 1, n do
+        local d = ((i - 1) / (n - 1) - t) / halfWidth
+        if math.abs(d) < 1 then wave.v[i] = wave.v[i] + dv * (0.5 + 0.5 * math.cos(d * math.pi)) end
+    end
+end
+
+local inWater = setmetatable({}, { __mode = 'k' }) -- by extra: { [body] = its wet share last frame }
+
+-- one container's water on what's in it (dt: this frame's)
+function lib.floatIn(extra, container, dt)
+    local wet = inWater[extra]
+    if not wet then
+        wet = setmetatable({}, { __mode = 'k' })
+        inWater[extra] = wet
+    end
+    local level, water, hull = lib.water(extra, container)
+    local seen = {}
+    if level and #water >= 6 then
+        local minX, minY, maxX, maxY = math.huge, math.huge, -math.huge, -math.huge
+        for i = 1, #water, 2 do
+            minX, maxX = math.min(minX, water[i]), math.max(maxX, water[i])
+            minY, maxY = math.min(minY, water[i + 1]), math.max(maxY, water[i + 1])
+        end
+        local world = container:getWorld()
+        world:queryBoundingBox(minX, minY, maxX, maxY, function(fixture)
+            local body = fixture:getBody()
+            if body ~= container and body:getType() == 'dynamic' then seen[body] = true end
+            return true
+        end)
+    end
+    -- the surface's springs run across the hull (as lib.draw lays them out)
+    local entry = waves[extra]
+    local hullX1, hullX2 = math.huge, -math.huge
+    for i = 1, #(hull or {}), 2 do hullX1, hullX2 = math.min(hullX1, hull[i]), math.max(hullX2, hull[i]) end
+    local hullW = math.max(1, hullX2 - hullX1)
+    local _, gy = container:getWorld():getGravity()
+    local buoyancy, drag, splash = setting(extra, 'buoyancy'), setting(extra, 'drag'), setting(extra, 'splash')
+    local _, containerVy = container:getLinearVelocity()
+
+    local function stir(body, share, x1, x2)
+        local was = wet[body] or 0
+        wet[body] = share > 0 and share or nil
+        if not entry or splash <= 0 or x1 > x2 then return end
+        local _, vy = body:getLinearVelocity()
+        vy = vy - containerVy
+        local speed = units.toReferenceSpeed(vy)
+        local t, half = ((x1 + x2) / 2 - hullX1) / hullW, (x2 - x1) / 2 / hullW
+        local limit = hullW * 4
+        if share > 0 and was == 0 and speed > SPLASH_IN then
+            local push = vy * 0.35 * mathutils.clamp((x2 - x1) / 400, 0.3, 1) * splash
+            splashWave(entry.wave, t, half, -math.min(push, limit)) -- in: the surface goes down there
+        elseif share == 0 and was > 0 and speed < -SPLASH_OUT then
+            local push = -vy * 0.17 * splash
+            splashWave(entry.wave, t, math.max(half, 0.1), math.min(push, limit)) -- out: lifted after it
+        elseif share > 0 and share < 0.95 then
+            splashWave(entry.wave, t, half, -vy * dt * 0.8 * share * splash) -- bobbing stirs it
+        end
+    end
+
+    for body in pairs(seen) do
+        local wetArea, totalArea = 0, 0
+        local x1, x2 = math.huge, -math.huge
+        for _, fixture in ipairs(body:getFixtures()) do
+            local _, _, mass = fixture:getMassData()
+            local poly = not fixture:isSensor() and fixture:getUserData() == nil and mass > 0
+                and fixturePolygon(body, fixture:getShape())
+            if poly and #poly >= 6 then
+                local full = areaCentroid(poly)
+                totalArea = totalArea + full
+                local inside = clipConvex(poly, water)
+                local area, cx, cy = 0, 0, 0
+                if #inside >= 6 then area, cx, cy = areaCentroid(inside) end
+                if area > 0 and full > 0 then
+                    local frac = math.min(area / full, 1)
+                    wetArea = wetArea + area
+                    for i = 1, #inside, 2 do x1, x2 = math.min(x1, inside[i]), math.max(x2, inside[i]) end
+                    -- lifted at the middle of its wet part, slowed against the water
+                    local vx, vy = body:getLinearVelocityFromWorldPoint(cx, cy)
+                    local wx, wy = container:getLinearVelocityFromWorldPoint(cx, cy)
+                    local k = mass * frac * drag
+                    body:applyForce(-(vx - wx) * k, -mass * gy * frac * buoyancy - (vy - wy) * k, cx, cy)
+                end
+            end
+        end
+        local share = totalArea > 0 and wetArea / totalArea or 0
+        if share > 0 then
+            local spin = body:getAngularVelocity() - container:getAngularVelocity()
+            body:applyTorque(-body:getInertia() * spin * drag * 0.8 * share)
+        end
+        stir(body, share, x1, x2)
+    end
+    -- what was in the water last frame and isn't near it now: out (a fast one lifts the surface)
+    for body in pairs(wet) do
+        if not seen[body] then
+            if body:isDestroyed() then
+                wet[body] = nil
+            else
+                local x = body:getPosition()
+                stir(body, 0, x - 20, x + 20)
+            end
+        end
+    end
+end
+
+-- Once per frame after the physics step: while playing, every container spills what it can't hold,
+-- and lifts and slows what's in its water (lib.floatIn).
 function lib.update(paused)
     if paused then return end
+    local dt = love.timer.getDelta()
     for _, fixture in ipairs(registry.sfixturesOf(subtypes.LIQUID)) do -- not all of them (registry)
         if not fixture:isDestroyed() then
             local ud = fixture:getUserData()
@@ -489,6 +686,7 @@ function lib.update(paused)
                 -- a scene can catch what spills (the seaside spike pours it out as drops)
                 local hook = state.liquidSpillHook
                 if spilled > 0 and hook then hook(ud.extra, fixture:getBody(), spilled) end
+                lib.floatIn(ud.extra, fixture:getBody(), dt)
             end
         end
     end

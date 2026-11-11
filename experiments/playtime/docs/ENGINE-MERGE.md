@@ -151,7 +151,10 @@ The landing order, what bites what, and Nikki's keep / spike choices of 2026-11-
   any LIQUID in a scene the frame is drawn into a canvas and the cups and baths get the shader at seaside's
   thin-water values (`THIN`). A scene with its own hook (seaside) is left alone. Next: tweak the look with
   Nikki (the liquid's own colour is ignored now; settings on a panel or on the liquid), the cost on the
-  phone, pouring outside seaside (spills are still lost without a hook), floating (SS4), the sea itself.
+  phone, pouring outside seaside (spills are still lost without a hook), the sea itself. Floating and the
+  surface's splash in cups and baths done the same day (`liquid.floatIn`, WATER W4 / W3b). A bake during the
+  frame (`omp-bake.makeTexturedCanvas`) put the screen back as the target: with the frame in the water's
+  canvas that flickered while dragging Mipos; it puts back what it found now.
 - [ ] **EM4. Garden critters**, once the shelf and 🎲 exist (EDITOR-ARRANGE EA2-EA4).
 - [ ] **EM5. The cheap shared bits**, any time, each checked by a scene snapshot before/after:
   a `mipoKit` (spawn / alive / isAlive) for the scene scripts, `mathutils.clamp` instead of the copies,

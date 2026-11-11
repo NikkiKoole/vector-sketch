@@ -45,7 +45,8 @@ A second game next to a running one: `PLAYTIME_BRIDGE_PORT=8004 love . --bridge 
       Since WATERJAR WJ4 (2026-11-06) the poured water is particle water (`src/fluid.lua`): it
       splashes, puddles on the table and the sand and soaks away, instead of drops that splat.
 - [ ] **SS3. Dipping.** A cup held under the sea fills up to its mouth.
-- [ ] **SS4. Floating in cups and the bath** (WATER.md W4), from the sea's `float`.
+- [x] **SS4. Floating in cups and the bath** (WATER.md W4), from the sea's `float`. Done 2026-11-11 in
+      `src/liquid.lua`, so in every scene.
 - [ ] **SS5. Glass touches** from `glass` (GLASS-BEADS.md): a bright line where the water meets
       the wall, the light gathered at the bottom. Only if the plain shader looks short in a cup.
 

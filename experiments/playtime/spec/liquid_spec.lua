@@ -229,3 +229,47 @@ describe('liquid in the kitchen scene', function()
     end)
 end)
 
+
+describe('liquid floating (clipping into the water)', function()
+    it('keeps the part of a polygon inside a convex one, whatever the winding', function()
+        local square = { 50, 50, 150, 50, 150, 150, 50, 150 } -- half over BOX's right edge
+        for _, clip in ipairs({ BOX, { 0, 0, 0, 200, 100, 200, 100, 0 } }) do
+            local inside = liquid._clipConvex(square, clip)
+            assert.is_true(near(50 * 100, liquid.area(inside)))
+        end
+        assert.are.same({}, liquid._clipConvex({ 300, 300, 310, 300, 310, 310 }, BOX))
+    end)
+end)
+
+describe('liquid floating (a ball in a bath)', function()
+    if not love or not love.physics then return end
+
+    -- a static U-shaped bath 400 wide and 300 deep (inside), and a ball dropped into it from above
+    local function drop(buoyancy)
+        local meter = love.physics.getMeter()
+        local world = love.physics.newWorld(0, 9.8 * meter, true)
+        local bath = love.physics.newBody(world, 0, 0, 'static')
+        love.physics.newFixture(bath, love.physics.newRectangleShape(0, 310, 440, 20))   -- the floor
+        love.physics.newFixture(bath, love.physics.newRectangleShape(-210, 150, 20, 340)) -- the left wall
+        love.physics.newFixture(bath, love.physics.newRectangleShape(210, 150, 20, 340))  -- the right wall
+        local extra = liquid.newExtra()
+        extra.fill, extra.buoyancy = 0.6, buoyancy
+        local ball = love.physics.newBody(world, 0, -200, 'dynamic')
+        love.physics.newFixture(ball, love.physics.newCircleShape(30), 1)
+        for _ = 1, 600 do
+            world:update(1 / 60)
+            liquid.floatIn(extra, bath, 1 / 60)
+        end
+        local level = liquid.water(extra, bath)
+        local _, y = ball:getPosition()
+        world:destroy()
+        return y, level
+    end
+
+    it('floats a ball at the surface, and lets it sink without buoyancy', function()
+        local floating, level = drop(1.6)
+        local sunk = drop(0)
+        assert.is_true(sunk > 260, 'without buoyancy it lies on the floor: ' .. sunk)
+        assert.is_true(math.abs(floating - level) < 30, 'it rides at the surface: ' .. floating .. ' vs ' .. level)
+    end)
+end)

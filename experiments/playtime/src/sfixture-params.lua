@@ -287,6 +287,9 @@ lib.bySubtype = {
         extraNumber('fill', 'fill', 0, 1, 0.6),
         extraNumber('slosh', 'slosh', 0, 3, 1), -- how much moving it rocks the surface
         extraNumber('settle', 'settle', 0.1, 4, 1), -- how quickly that calms down
+        extraNumber('buoyancy', 'buoyancy', 0, 4, 1.6), -- how hard it lifts what's in it (1: just floats)
+        extraNumber('drag', 'drag', 0, 4, 1.2), -- how much it slows what moves in it
+        extraNumber('splash', 'splash', 0, 3, 1), -- how much falling in pushes the surface down
         { key = 'color', kind = 'color',
           get = function(fixture) return extraOf(fixture).color or '3aa7d9b3' end,
           set = function(fixture, v) extraOf(fixture).color = v end },

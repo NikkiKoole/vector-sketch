@@ -155,6 +155,10 @@ lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color
 
     local lineartColor = lineColor or { 0, 0, 0, 1 }
     local lw, lh = lineart:getDimensions()
+    -- what was being drawn into, put back at the end: a bake during the frame (a new Mipo, a reroll) went
+    -- back to the screen, so with the frame in a canvas (src/water-look.lua, seaside) the rest of the frame
+    -- went to the screen and was covered: flicker while dragging Mipos (2026-11-11)
+    local target = love.graphics.getCanvas()
         local canvas = love.graphics.newCanvas(lw, lh, { dpiscale = 1 })
 
         love.graphics.setCanvas({ canvas, stencil = false }) --<<<
@@ -227,7 +231,7 @@ lib.makeTexturedCanvas = function(lineart, mask, color1, alpha1, texture2, color
         love.graphics.setColor(1, 1, 1)
         --- huh?!
         love.graphics.draw(canvas, 0, 0, 0, 1 / shrinkFactor, 1 / shrinkFactor)
-        love.graphics.setCanvas()       --- <<<<<
+        if target then love.graphics.setCanvas({ target, stencil = true }) else love.graphics.setCanvas() end
         local imageData = otherCanvas:newImageData()
         love.graphics.setColor(0, 0, 0) --- huh?!
 
