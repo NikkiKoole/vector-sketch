@@ -41,7 +41,9 @@ spread over every part by mass (`pushAll`: no different from all on the torso).
 ## Open
 
 - [x] **MM1. Drive, walk, hop, jump** — the spike (2026-11-11).
-- [ ] **MM2. Nikki plays with it.** Walk, hop, wander: keep, change or park?
+- [x] **MM2. Nikki plays with it.** Kept (2026-11-11: "i like it"); jumps went high easily (the jump is
+  a fixed speed, so small Mipos jump many times their height: a jump in leg lengths, as the hop, next);
+  one-go buttons asked for and added; then the weighty walk (MM8).
 - [ ] **MM3. Tall Mipos rock.** A long-legged one (spec seed 42) rocks ~60° forward and back as it
   walks: its torso lurches with each step (torso speed 350 <-> 800 px/s at 450). Not the push's
   strength nor a torso muscle; next try: stride by the leg's length, or the stance foot's grip.
