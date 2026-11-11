@@ -83,6 +83,18 @@ transform and patches mixed in a shader as it draws.
     raised the ceiling (100 -> 160). Live's limit there is the GPU reading 3 pictures a pixel where baked
     reads 1. 160 is still 6x the room's 25. On the Mac the sends did count: draw 2.0 -> 1.5 ms (baked 1.0).
     So if live: mesh+rg, the two-channel outline+mask made once per shape (offline, as a build step).
+  - **Leaving things out, tried 2026-11-11** (Nikki: "could we get the cost down by simplifying something,
+    leaving something out we do now that is most costly?"). Two cuts, on the phone:
+    - *baked-canvas*: the bake keeps its small canvas instead of reading it back from the GPU
+      (`canvas:newImageData`) and making an image of it again. A Mipo appears in **5.5 ms instead of
+      39** (a litter of 5: 27 ms instead of 150), pixels identical (diff 0), the frame the same. The
+      read-back was most of the hitch. Small to do in Playtime: makeTexturedCanvas's three callers are
+      all in omp-bake.lua (makePatch, makeCombinedImages, bakePreview); nothing reads the picture's pixels.
+    - *mesh+rg-skip*: live parts that show no pattern (216 of 479) skip the pattern read: no gain
+      (160 against 170 Mipos, noise). The pattern read isn't what costs.
+    With the read-back gone, baked keeps its frame speed (270-280 Mipos) and its hitch is close to
+    live's: what's left for live is memory (1.3 MB a Mipo) and sharpness, and the looks that want
+    the layers apart.
 - [ ] **OL2. Decide**, with Nikki: if live wins or ties, the plan to switch (the Mipo editor's thumbnails,
   saves, the materials and lights that read the baked picture today, the spine skin and ribbons).
   The trade-off in short (from OL1, iPhone SE 2): baked is the fastest per frame (60 fps up to ~280

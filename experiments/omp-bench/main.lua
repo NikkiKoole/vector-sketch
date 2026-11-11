@@ -10,7 +10,7 @@
 -- a load test, not a pose. '+patches' gives each Mipo's torso two skin patches (the DNA's default
 -- patch1/patch2), the most any Mipo has today (randomize clears them).
 --
---   love .          look for yourself: 1-8 option, z zoom
+--   love .          look for yourself: 1-11 option, z zoom
 --   love . --auto   every option, writes results/live-<os>.md and quits (~1 min)
 --   on the phone:   LOVE_DIR=../omp-bench native/ios/device.sh (from ../playtime): runs --auto by
 --                   itself, the table on screen and in the save folder (omp-live-results.md)
@@ -61,6 +61,10 @@ local PATCHES = {
 --   mesh+rg as mesh, outline and mask in one shared two-channel picture per shape (outline alpha in
 --           red, mask in green: the outlines are white, a mask only uses red), so only the pattern
 --           is sent, when it changes; a quarter of the two pictures' memory
+--   mesh+rg-skip  as mesh+rg, a part that shows no pattern (no mask, or the pattern or fill at alpha 0:
+--           216 of the crowd's 479) doesn't read the pattern picture
+-- baked-canvas: the bake without reading each picture back from the GPU and uploading it again
+-- (makeTexturedCanvas's newImageData + newImage): the small canvas is kept and drawn
 local OPTIONS = {
     { name = 'baked',          live = false, patches = false },
     { name = 'baked+patches',  live = false, patches = true },
@@ -70,6 +74,9 @@ local OPTIONS = {
     { name = 'packed+patches', live = true,  patches = true,  send = 'packed' },
     { name = 'mesh',           live = true,  patches = false, send = 'mesh' },
     { name = 'mesh+rg',        live = true,  patches = false, send = 'mesh', combined = true },
+    { name = 'mesh+rg-skip',   live = true,  patches = false, send = 'mesh', combined = true, skipPattern = true },
+    { name = 'baked-canvas',   live = false, patches = false, canvas = true },
+    { name = 'baked-canvas+p', live = false, patches = true,  canvas = true },
 }
 
 ---------------------------------------------------------------- sources
@@ -188,39 +195,107 @@ local function rgbOf(hex)
     return { r, g, b }, a
 end
 
+-- makeTexturedCanvas from omp-bake as it is (shrink 2), but it returns the small canvas instead of
+-- reading it back (canvas:newImageData) to make an image of it
+local maskShaderCode = [[
+    uniform Image fill;
+    uniform vec4 backgroundColor;
+    uniform mat2 uvTransform;
+    uniform vec2 uvTranslation;
+    vec4 effect(vec4 color, Image mask, vec2 uv, vec2 fc) {
+        vec2 transformedUV = uv * uvTransform;
+        transformedUV.x += uvTranslation.x;
+        transformedUV.y += uvTranslation.y;
+        vec3 patternMix = mix(backgroundColor.rgb, color.rgb, Texel(fill, transformedUV).a * color.a);
+        return vec4(patternMix, Texel(mask, uv).r * backgroundColor.a);
+    }
+]]
+local bakeMaskShader
+local SHRINK = 2
+local function bakeToCanvas(lineart, mask, color1, alpha1, texture2, color2, alpha2, texRot, texScaleX, texScaleY,
+                            texOffX, texOffY, lineColor, lineAlpha, flipx, flipy, patches)
+    bakeMaskShader = bakeMaskShader or love.graphics.newShader(maskShaderCode)
+    local lw, lh = lineart:getDimensions()
+    love.graphics.push('all')
+    love.graphics.origin()
+    local canvas = love.graphics.newCanvas(lw, lh, { dpiscale = 1 })
+    love.graphics.setCanvas(canvas)
+    love.graphics.clear(lineColor[1], lineColor[2], lineColor[3], 0)
+    love.graphics.setShader(bakeMaskShader)
+    local m1, m2, _, _, m5, m6 = love.math.newTransform():rotate(texRot):scale(texScaleX, texScaleY):getMatrix()
+    if texture2 then bakeMaskShader:send('fill', texture2) end
+    bakeMaskShader:send('backgroundColor', { color1[1], color1[2], color1[3], alpha1 })
+    bakeMaskShader:send('uvTransform', { { m1, m2 }, { m5, m6 } })
+    bakeMaskShader:send('uvTranslation', { texOffX, texOffY })
+    local ox, oy = flipx == -1 and lw or 0, flipy == -1 and lh or 0
+    if mask then
+        love.graphics.setColor(color2[1], color2[2], color2[3], alpha2)
+        love.graphics.draw(mask, 0, 0, 0, flipx, flipy, ox, oy)
+    end
+    love.graphics.setShader()
+    if patches then
+        for _, patch in ipairs(patches) do
+            love.graphics.setColorMask(true, true, true, false)
+            love.graphics.setColor(color.hexToColor(patch.tint))
+            local iw, ih = patch.img:getDimensions()
+            love.graphics.draw(patch.img, lw / 2 + (patch.tx or 0) * iw * SHRINK, lh / 2 + (patch.ty or 0) * ih * SHRINK,
+                0, SHRINK, SHRINK, iw / 2, ih / 2)
+            love.graphics.setColorMask(true, true, true, true)
+        end
+    end
+    love.graphics.setColor(lineColor[1], lineColor[2], lineColor[3], lineAlpha)
+    love.graphics.draw(lineart, 0, 0, 0, flipx, flipy, ox, oy)
+    local small = love.graphics.newCanvas(lw / SHRINK, lh / SHRINK, { dpiscale = 1 })
+    love.graphics.setCanvas(small)
+    love.graphics.clear(lineColor[1], lineColor[2], lineColor[3], 0)
+    love.graphics.setColor(1, 1, 1)
+    love.graphics.draw(canvas, 0, 0, 0, 1 / SHRINK, 1 / SHRINK)
+    love.graphics.pop()
+    canvas:release()
+    return small
+end
+
 -- the same steps as makePatch in omp-bake
-local function bakePatch(p)
+local function bakePatch(p, keepCanvas)
     local outline = bakedSource('textures/' .. p.bgURL)
     local fill, fillA = rgbOf(p.fgHex)
     local pat, patA = rgbOf(p.pHex)
     local line, lineA = rgbOf(p.bgHex)
-    local imgData = ompBake.makeTexturedCanvas(outline, bakedSource('textures/' .. p.fgURL),
+    local bake = keepCanvas and bakeToCanvas or ompBake.makeTexturedCanvas
+    local result = bake(outline, bakedSource('textures/' .. p.fgURL),
         fill, fillA, bakedSource('textures/pat/' .. p.pURL, true), pat, patA,
         0, 1, 1, 0, 0, line, lineA, 1, 1)
-    local img = love.graphics.newImage(imgData)
-    imgData:release()
+    local img = result
+    if not keepCanvas then
+        img = love.graphics.newImage(result)
+        result:release()
+    end
     return { img = img, tint = 'ffffff', tx = p.tx, ty = p.ty }
 end
 
 -- the same steps as makeCombinedImages in omp-bake, for one part
 local tex1
-local function bakePart(part, withPatches)
+local function bakePart(part, withPatches, keepCanvas)
     local main = part.main
     if not main.cached then ompBake.makeCached(main) end
     local c = main.cached
     local patches = nil
     if withPatches and part.torso then
         patches = {}
-        for i, p in ipairs(PATCHES) do patches[i] = bakePatch(p) end
+        for i, p in ipairs(PATCHES) do patches[i] = bakePatch(p, keepCanvas) end
     end
     local hasFg = main.fgURL and main.fgURL ~= ''
-    local imgData = ompBake.makeTexturedCanvas(
+    local bake = keepCanvas and bakeToCanvas or ompBake.makeTexturedCanvas
+    local result = bake(
         bakedSource('textures/' .. main.bgURL), hasFg and bakedSource('textures/' .. main.fgURL) or nil,
         c.fgRGB, c.fgA, bakedSource('textures/pat/' .. (main.pURL or ''), true) or tex1, c.pRGB, c.pA,
         main.pr or 0, main.psx or 1, main.psy or 1, main.ptx or 0, main.pty or 0,
         c.bgRGB, c.bgA, main.fx or 1, main.fy or 1, patches)
-    local img = love.graphics.newImage(imgData)
-    imgData:release()
+    local img = result
+    if not keepCanvas then
+        img = love.graphics.newImage(result)
+        result:release()
+    end
     if patches then for _, p in ipairs(patches) do p.img:release() end end
     return { img = img, w = part.w, h = part.h }
 end
@@ -348,7 +423,12 @@ vec4 effect(vec4 vcolor, Image outline, vec2 uv, vec2 fc) {
     float m = hasMask * Texel(maskTex, src).r * fill.a;
     vec4 lt = Texel(outline, src);
 #endif
+#ifdef SKIPPAT
+    float pa = 0.0;
+    if (patC.a > 0.0) pa = Texel(patTex, src * mat2(M.x, M.y, M.z, M.w) + E.xy).a * patC.a;
+#else
     float pa = Texel(patTex, src * mat2(M.x, M.y, M.z, M.w) + E.xy).a * patC.a;
+#endif
     vec3 rgb = mix(lineC.rgb, mix(fill.rgb, patC.rgb, pa), m);
     float a = m;
 #ifdef PATCHES
@@ -370,7 +450,7 @@ vec4 effect(vec4 vcolor, Image outline, vec2 uv, vec2 fc) {
 #endif
 ]]
 local liveShader, livePatchShader
-local packedShader, packedPatchShader, meshShader, combinedShader
+local packedShader, packedPatchShader, meshShader, combinedShader, combinedSkipShader
 local blackPixel
 local MESH_FORMAT = {
     { 'VertexPosition', 'float', 2 }, { 'VertexTexCoord', 'float', 2 },
@@ -396,7 +476,7 @@ local function patchRows(lw, lh, pw, ph, p)
 end
 
 -- What a part sends each draw, worked out once (a colour change would just change these)
-local function prepareLive(part, withPatches, send)
+local function prepareLive(part, withPatches, send, skipPattern)
     local main = part.main
     local outline = liveSource('textures/' .. main.bgURL)
     local mask = liveSource('textures/' .. (main.fgURL or ''))
@@ -439,6 +519,10 @@ local function prepareLive(part, withPatches, send)
                 packed[#packed + 1] = ps.patColor[i]
                 packed[#packed + 1] = ps.lineColor[i]
             end
+        end
+        -- skip: a part that shows no pattern says so with its pattern colour's alpha at 0
+        if skipPattern and not (mask and main.pURL and main.pURL ~= '' and live.pat[4] > 0 and live.fill[4] > 0) then
+            packed[2] = { live.pat[1], live.pat[2], live.pat[3], 0 }
         end
         live.packed = packed
     end
@@ -538,6 +622,7 @@ end
 
 local function shaderOf(option)
     if not option.live then return nil end
+    if option.skipPattern then return combinedSkipShader end
     if option.combined then return combinedShader end
     if option.send == 'mesh' then return meshShader end
     if option.send == 'packed' then return option.patches and packedPatchShader or packedShader end
@@ -611,7 +696,8 @@ local function prepareMipo(option, parts)
     local list = {}
     for i, part in ipairs(parts) do
         local withPatches = option.combined and 'combined' or option.patches
-        list[i] = option.live and prepareLive(part, withPatches, option.send) or bakePart(part, option.patches)
+        list[i] = option.live and prepareLive(part, withPatches, option.send, option.skipPattern)
+            or bakePart(part, option.patches, option.canvas)
     end
     return list
 end
@@ -729,7 +815,7 @@ local function runOption(option)
         local data = renderLooks(option, torsoFirst(current.mipos[1]), zoom[2])
         writeResultFile('looks-' .. option.name .. '-' .. zoom[1] .. '.png', data:encode('png'):getString())
         local key = (option.patches and 'p' or '') .. zoom[1]
-        if not option.live then
+        if not option.live and not option.canvas then
             looksOf[key] = data
         else
             row['diff_' .. zoom[1]], row['changed_' .. zoom[1]] = compareLooks(looksOf[key], data)
@@ -788,7 +874,7 @@ local function resultsText(sourcesMB, liveSourcesMB)
             FRAME_TEST_FRAMES),
         string.format('Mipos in 60 fps: Mipos added %d at a time until the median frame is over %.1f ms.', RAMP_STEP,
             RAMP_BUDGET_MS),
-        'diff: live against baked (each with its own patches or not), mean per channel 0-255; % px: off by more than 8/255.',
+        'diff: against baked (each with its own patches or not), mean per channel 0-255; % px: off by more than 8/255.',
         '',
     }
     return table.concat(intro, '\n') .. table.concat(lines, '\n') .. '\n'
@@ -812,7 +898,7 @@ local function autoRun()
     for i = 1, #sourceMipos do prepareMipo(OPTIONS[4], sourceMipos[i]) end
     settle()
     local liveSourcesMB = texMB() - sourcesMB
-    for i = 1, #sourceMipos do prepareMipo(OPTIONS[#OPTIONS], sourceMipos[i]) end
+    for i = 1, #sourceMipos do prepareMipo(OPTIONS[8], sourceMipos[i]) end -- mesh+rg
     settle()
     combinedMB = texMB() - sourcesMB - liveSourcesMB
     for _, option in ipairs(OPTIONS) do
@@ -834,7 +920,7 @@ local function pickInteractive(index)
     current.option = option
     current.mipos = { prepareMipo(option, sourceMipos[1]) }
     view.layout = 'grid'
-    hud = option.name .. '  (1-8 option, z zoom, esc quit)'
+    hud = option.name .. '  (1-11 option, z zoom, esc quit)'
 end
 
 function love.load()
@@ -847,6 +933,7 @@ function love.load()
     packedPatchShader = love.graphics.newShader('#define PATCHES\n' .. PACKED_CODE)
     meshShader = love.graphics.newShader('#define MESH\n' .. PACKED_CODE)
     combinedShader = love.graphics.newShader('#define MESH\n#define COMBINED\n' .. PACKED_CODE)
+    combinedSkipShader = love.graphics.newShader('#define MESH\n#define COMBINED\n#define SKIPPAT\n' .. PACKED_CODE)
     combineShader = love.graphics.newShader([[
         uniform Image maskTex;
         vec4 effect(vec4 c, Image outline, vec2 uv, vec2 fc) {

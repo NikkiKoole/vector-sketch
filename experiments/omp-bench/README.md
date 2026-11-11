@@ -15,6 +15,9 @@ Options (`OPTIONS` in main.lua), the live ones differing in how a part's numbers
 7. `mesh`: each part its own mesh, the numbers as vertex attributes; only pictures sent.
 8. `mesh+rg`: as mesh, with outline alpha + mask in one shared rg8 picture per shape (outlines are
    white, masks only use red), so a pixel reads two pictures instead of three. The fastest live one.
+9. `mesh+rg-skip`: as 8, parts that show no pattern skip the pattern read (no gain).
+10. `baked-canvas`, 11. `baked-canvas+p`: today's bake without the read-back from the GPU (the small
+    canvas is kept and drawn): the same pixels, a Mipo appears ~7x faster.
 
 The parts are the 20 Mipos of `scripts/tests/crowd.playtime.json`. `src`, `vendor`, `textures` and
 `scripts` are symlinks into `../playtime`, so it always measures the current code.
@@ -22,7 +25,7 @@ The parts are the 20 Mipos of `scripts/tests/crowd.playtime.json`. `src`, `vendo
 ```bash
 cd experiments/omp-bench
 /Applications/love115.app/Contents/MacOS/love . --auto   # every option, writes results/, quits (~2 min; ~6 min on the phone)
-/Applications/love115.app/Contents/MacOS/love .          # look for yourself: 1-8 option, z zoom
+/Applications/love115.app/Contents/MacOS/love .          # look for yourself: 1-11 option, z zoom
 # on the phone (replaces Playtime there until the next plain ./playtime.sh device); runs by itself,
 # the table stays on screen and goes to omp-live-results.md in the save folder:
 cd ../playtime && LOVE_DIR=../omp-bench native/ios/device.sh
