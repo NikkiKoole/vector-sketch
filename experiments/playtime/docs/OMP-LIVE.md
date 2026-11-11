@@ -100,12 +100,19 @@ transform and patches mixed in a shader as it draws.
     With the read-back gone, baked keeps its frame speed (270-280 Mipos) and its hitch is close to
     live's: what's left for live is memory (1.3 MB a Mipo) and sharpness, and the looks that want
     the layers apart.
-- [ ] **OL2. Decide**, with Nikki: if live wins or ties, the plan to switch (the Mipo editor's thumbnails,
+- [x] **OL2. Decide**, with Nikki: if live wins or ties, the plan to switch (the Mipo editor's thumbnails,
   saves, the materials and lights that read the baked picture today, the spine skin and ribbons).
   The trade-off in short (from OL1, iPhone SE 2): baked is the fastest per frame (60 fps up to ~280
   Mipos, live mesh+rg ~160) and costs ~1.3 MB a Mipo on top of 50 MB of shared sources (~76 MB with
   20), plus a 25-46 ms hitch each time a Mipo appears or changes (a litter of 5: 150-270 ms). Live
   mesh+rg: no hitch (~1 ms), 14.6 MB of rg8 outline+mask pictures plus the patterns (not measured
   apart, a small part), sharper close up. Both hold 60 fps at the room's 20-25 Mipos.
-- [ ] **OL3. r8 masks** for the sources (a quarter of their memory), either way. If live: mesh+rg's
+  **Decided 2026-11-12** (Nikki: "y"): **keep baked**, now that the bake keeps its canvas (hitch 39 ->
+  5.5 ms a Mipo): fastest per frame, 1.3 MB a Mipo is fine for a room of 20. **Live part by part, later**:
+  when the first look that needs the layers apart (leather LEATHER.md, shoes SHOES.md, fur FUR-SHELLS.md,
+  cut paper CUT-PAPER.md) goes into the engine, only those parts draw live (mesh+rg: numbers as vertex
+  attributes, outline + mask in one rg8 picture per shape); the rest stays baked. Not worth doing:
+  cheaper uniform sends or skipping the pattern read (no gain on the phone).
+- [ ] **OL3. r8 masks** for the sources (a quarter of their memory): outline alpha + mask in one rg8
+  picture per shape, which the bake can read too (50 MB of sources for the crowd). If live: mesh+rg's
   rg8 outline+mask per shape already is this (14.6 MB for the crowd's shapes, mipmapped).
