@@ -128,4 +128,40 @@ describe('the scene light level', function()
         sceneLight.apply()
         assert.are.equal(own, state.contactShadows)
     end)
+
+    it('the wall shadows land on the backdrops with a sky (none on open sky), or nowhere', function()
+        local sceneSky = require('src.scene-sky')
+        sceneLight.load({ level = 'shadows' })
+        sceneLight.apply()
+        assert.are.equal('everything', sceneLight.wallOf(sceneLight.settings()), 'no sky: everything')
+        assert.are.equal(sceneLight.WALLS.everything, state.backdropShadows.wall)
+
+        sceneSky.settings().on = true
+        sceneLight.apply()
+        assert.are.equal('backdrops', sceneLight.wallOf(sceneLight.settings()), 'a sky: the backdrops')
+        assert.are.equal(sceneLight.WALLS.backdrops, state.backdropShadows.wall)
+
+        sceneLight.settings().wall = 'nothing'
+        sceneLight.apply()
+        assert.is_nil(state.backdropShadows, 'nothing: no wall shadows')
+        assert.is_truthy(state.contactShadows, 'the contact shadows stay')
+        assert.are.same({ level = 'shadows', wall = 'nothing' }, sceneLight.save())
+        sceneSky.load(nil)
+    end)
+
+    it("the scene's own Mipo rows on top of the level's, saved, and back to the level's", function()
+        local extra = { main = { fgURL = 'x.png' } }
+        world = fakeMipo(extra)
+        sceneLight.load({ level = 'lit', mipo = { clay = true, front = 0.4 } })
+        sceneLight.apply()
+        assert.are.equal(0.4, extra.plasticineLightZ)
+        assert.is_nil(extra.plasticineStrength, 'clay on: its own strength, not 0')
+        assert.are.same({ level = 'lit', mipo = { clay = true, front = 0.4 } }, sceneLight.save())
+
+        sceneLight.settings().mipo = nil -- 'Mipos as the level'
+        sceneLight.apply()
+        assert.are.equal(0.75, extra.plasticineLightZ)
+        assert.are.equal(0, extra.plasticineStrength, 'the lit level: clay off')
+        assert.are.same({ level = 'lit' }, sceneLight.save())
+    end)
 end)

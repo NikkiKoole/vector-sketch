@@ -163,6 +163,7 @@ local editorRenderer = require('src.editor-render')
 local transformHandles = require('src.transform-handles')
 local floorGuide = require('src.floor-guide')
 local sceneLight = require('src.scene-light')
+local sceneSky = require('src.scene-sky')
 local rightColumn = require('src.ui.right-column')
 
 -- Request window focus so mouse events work when launched from terminal
@@ -323,6 +324,7 @@ function love.draw()
         local creamy = { 245 / 255, 245 / 255, 220 / 255 } --#F5F5DC Creamy White:
         love.graphics.clear(creamy)
     end
+    sceneSky.draw() -- the scene's sky, under everything (src/scene-sky.lua; nothing while it's off)
 
     box2dDrawTextured.makeCombinedImages()
     shaders.newFrame() -- the lights worked out once this frame, not per lit part (src/render/shaders.lua)

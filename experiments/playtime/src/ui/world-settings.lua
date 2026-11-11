@@ -12,6 +12,7 @@ local worldParams = require('src.world-params')
 local musicParams = require('src.music-params')
 local cameraParams = require('src.camera-params')
 local lightParams = require('src.light-params')
+local skyParams = require('src.sky-params')
 local roomMusicParams = require('src.room-music-params')
 local voiceLabParams = require('src.voice-lab-params')
 local hairBounce = require('src.hair-bounce')
@@ -94,6 +95,13 @@ function lib.drawWorldSettingsUI()
             if clicked then f.light = not f.light end
             if f.light then
                 y = y + inspector.drawParams('light', lightParams.rows, lightParams.target(), nil, x, y, w)
+            end
+
+            -- the scene's sky and the hour (src/scene-sky.lua, docs/SKY.md)
+            clicked, y = sectionHeader(x, y, w, 'sky', f.sky)
+            if clicked then f.sky = not f.sky end
+            if f.sky then
+                y = y + inspector.drawParams('sky', skyParams.rows, skyParams.target(), nil, x, y, w)
             end
 
             -- the scene's Mipos: walking when dragged along the floor (src/mipo-walk.lua), saved with it

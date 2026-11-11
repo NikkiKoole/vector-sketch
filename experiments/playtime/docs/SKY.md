@@ -25,7 +25,8 @@ time of day with the cycle").
 
 ## Steps
 
-- [ ] **SK1. The sky gradient and the clock in the engine.** `src/scene-sky.lua`: sky-atmosphere's
+- [x] **SK1. The sky gradient and the clock in the engine.** Done 2026-11-11 (no stars: Nikki "take the stars
+  out"). With a sky, the wall shadows fall on the backdrops only (scene-light 'falls on' auto). `src/scene-sky.lua`: sky-atmosphere's
   palettes and shader drawn behind everything, the hour and "the day runs" (day length) on state; a sky
   section in the settings panel (on/off, hour, day runs, day length, the horizon's y), saved with the
   scene (nothing when off). Altitude counted up from the scene's horizon.

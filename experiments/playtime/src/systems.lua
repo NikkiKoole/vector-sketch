@@ -15,6 +15,11 @@ local lib = {}
 
 lib.list = {
     {
+        name = 'sky', -- the scene's clock: the hour goes round while the day runs (src/scene-sky.lua, SKY.md)
+        module = 'src.scene-sky',
+        update = function(m, dt) m.update(dt) end,
+    },
+    {
         name = 'walk', -- Mipos turn, and walk when dragged along the floor (src/mipo-walk.lua, MIPO-FACING MF6)
         module = 'src.mipo-walk',
         update = function(m, dt) m.update(dt) end,

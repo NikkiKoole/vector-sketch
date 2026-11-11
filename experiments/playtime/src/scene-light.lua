@@ -23,8 +23,12 @@ local camera = require('src.camera')
 -- face stays as drawn)
 local LIT_PARTS = { texfixture = true, ['connected-texture'] = true, ['trace-vertices'] = true }
 
--- What the wall shadows land on. 'everything': all of what's behind the things (Nikki 2026-11-06: right
--- for rooms; be flexible, other choices later: the backdrops only, bodies marked as wall).
+-- What the wall shadows land on (the light section's 'shadows land on', Nikki 2026-11-11):
+-- 'everything' behind the things (2026-11-06: right for rooms), 'backdrops' (the pictures behind), 'nothing'
+-- (no wall shadows; the 3D ones only along the floor), 'auto' (the default): backdrops when the scene has a
+-- sky (src/scene-sky.lua: no shadow on open sky), else everything.
+lib.WALL_CHOICES = { 'auto', 'backdrops', 'everything', 'nothing' }
+
 -- the screen's world rectangle, with room around
 local function view()
     local cam = camera.getInstance()
@@ -35,13 +39,42 @@ local function view()
     return math.min(x1, x2) - pad, math.min(y1, y2) - pad, math.max(x1, x2) + pad, math.max(y1, y2) + pad
 end
 
-local WALLS = {
-    everything = function()
+-- the wall's shape, drawn in world space (a stencil), down to bottom (nil: all of it)
+local function everything(bottom)
+    return function()
         local x1, y1, x2, y2 = view()
-        love.graphics.rectangle('fill', x1, y1, x2 - x1, y2 - y1)
-    end,
-}
+        y2 = bottom and math.min(y2, bottom) or y2
+        if y2 > y1 then love.graphics.rectangle('fill', x1, y1, x2 - x1, y2 - y1) end
+    end
+end
+
+local function backdrops(bottom)
+    return function()
+        for _, b in ipairs(state.backdrops or {}) do
+            local w, h = b.w, b.h
+            if b.image and not (w and h) then w, h = b.image:getDimensions() end
+            if not b.foreground and w and h then
+                local s = b.scale or 1
+                local x, y = b.x or 0, b.y or 0
+                local y2 = bottom and math.min(y + h * s, bottom) or y + h * s
+                if y2 > y then love.graphics.rectangle('fill', x, y, w * s, y2 - y) end
+            end
+        end
+    end
+end
+
+local WALLS = { everything = everything(), backdrops = backdrops() }
 lib.WALLS = WALLS
+
+-- the wall this scene's shadows land on: one of WALL_CHOICES but 'auto'
+function lib.wallOf(settings)
+    local wall = settings.wall or 'auto'
+    if wall == 'auto' then
+        local sky = package.loaded['src.scene-sky']
+        wall = (sky and sky.isOn()) and 'backdrops' or 'everything'
+    end
+    return wall
+end
 
 -- the soft wall shadow from a sun (the way to it, world): away from it, longer the lower it is (as
 -- light-grass-check's wallShadow), `behind` how far the wall is behind the things
@@ -51,7 +84,8 @@ local function wallShadowFrom(toLight, behind, strength, wall)
     tx, ty = tx / len, ty / len
     local high = math.max(0, -ty)
     local length = behind * math.min(4, 1 / (high + 0.25))
-    return { wall = WALLS[wall], offset = { -tx * length, high * length }, blur = 5 + length * 0.06,
+    return { wall = type(wall) == 'function' and wall or WALLS[wall], offset = { -tx * length, high * length },
+        blur = 5 + length * 0.06,
         strength = strength }
 end
 
@@ -88,12 +122,37 @@ local LIT = {
     },
 }
 
+-- the shared settings made once per level and settings (the same table while they stay: what apply
+-- compares)
+local sharedCache = {}
+local function cached(name, key, make)
+    local c = sharedCache[name]
+    if c and c.key == key then return c.shared end
+    sharedCache[name] = { key = key, shared = make() }
+    return sharedCache[name].shared
+end
+
+local DEFAULT_BEHIND = 90 -- how far the wall is behind the things (how far their shadows shift)
+lib.DEFAULT_BEHIND = DEFAULT_BEHIND
+
+local function wallKey(settings)
+    return lib.wallOf(settings) .. '|' .. (settings.wallShadow or 1) .. '|'
+        .. (settings.wallBehind or DEFAULT_BEHIND)
+end
+
 -- + soft shadows on the wall behind (~4 ms on the phone; every other frame, half that: LS25)
-local SHADOWS = { name = 'shadows', mipoParts = LIT.mipoParts,
-    shared = extend(LIT.shared, {
-        backdropShadows = wallShadowFrom(SUN, 90, 0.35, 'everything'),
-        shadowEveryOther = true,
-    }) }
+local function shadowsShared(settings)
+    return cached('shadows', wallKey(settings), function()
+        local wall = lib.wallOf(settings)
+        if wall == 'nothing' then return LIT.shared end
+        return extend(LIT.shared, {
+            backdropShadows = wallShadowFrom(SUN, settings.wallBehind or DEFAULT_BEHIND,
+                0.35 * (settings.wallShadow or 1), wall),
+            shadowEveryOther = true,
+        })
+    end)
+end
+local SHADOWS = { name = 'shadows', mipoParts = LIT.mipoParts, shared = shadowsShared }
 
 -- full: the Mipos in clay (their own clay values: the clay-off ones left out)
 local CLAY = {}
@@ -103,34 +162,74 @@ CLAY.plasticineStrength, CLAY.plasticineBump, CLAY.plasticineSpecStrength, CLAY.
 
 -- with a floor: the 3D shadows (src/projected-shadows.lua) from the sun, a little out of the wall (as
 -- light-grass-check's SUN_TOWARDS), and the soft ones only on the wall above the floor, lighter (the two
--- together, Nikki 2026-11-06). Made once per floor (the same tables while it stays: what apply compares).
-local fullCache = {}
+-- together, Nikki 2026-11-06). The wall as chosen: the soft ones on it above the floor, the 3D ones on it
+-- and on the floor (the floor alone with 'nothing').
 local function fullShared(settings)
     local floor = settings.floor
-    if not floor then return SHADOWS.shared end
-    local key = floor.standY .. '|' .. floor.depth
-    if fullCache.key == key then return fullCache.shared end
-    local floorY = floor.standY - floor.depth
-    local function aboveFloor()
-        local x1, y1, x2 = view()
-        love.graphics.rectangle('fill', x1, y1, x2 - x1, floorY - y1)
+    if not floor then return shadowsShared(settings) end
+    return cached('full', floor.standY .. '|' .. floor.depth .. '|' .. wallKey(settings), function()
+        local floorY = floor.standY - floor.depth
+        local wall = lib.wallOf(settings)
+        local wallAbove = wall == 'backdrops' and backdrops(floorY) or everything(floorY)
+        local wallDown = wall == 'backdrops' and backdrops(floor.standY) or everything(floor.standY)
+        local function floorBand() -- the floor, under the wall
+            local x1, _, x2 = view()
+            love.graphics.rectangle('fill', x1, floorY, x2 - x1, floor.standY - floorY)
+        end
+        local area = wall == 'everything' and wallDown or wall == 'nothing' and floorBand
+            or function() wallDown() floorBand() end
+        local high = -SUN[2] / math.sqrt(SUN[1] * SUN[1] + SUN[2] * SUN[2])
+        local more = {
+            shadowEveryOther = true,
+            projectedShadows = { area = area, floorY = floorY, depth = floor.depth, lights = {
+                { light = { kind = 'sun', x = SUN[1], h = high, z = 0.5 }, strength = 0.5, softness = 0.03 },
+            } },
+        }
+        if wall ~= 'nothing' then
+            more.backdropShadows = wallShadowFrom(SUN, settings.wallBehind or DEFAULT_BEHIND,
+                0.35 * 0.7 * (settings.wallShadow or 1), wallAbove)
+        end
+        return extend(LIT.shared, more)
+    end)
+end
+
+-- The light section's Mipo rows (Nikki 2026-11-11): the level's Mipo settings with this scene's own on top,
+-- settings.mipo = { clay = true/false, front = plasticineLightZ, swing = plasticineLightGain,
+-- round = plasticineFormRise }; nil each = the level's.
+local CLAY_OFF = { 'plasticineStrength', 'plasticineBump', 'plasticineSpecStrength', 'plasticineSSSstrength' }
+local MIPO_KEYS = { front = 'plasticineLightZ', swing = 'plasticineLightGain', round = 'plasticineFormRise' }
+lib.MIPO_KEYS = MIPO_KEYS
+
+local function mipoKey(settings)
+    local m = settings.mipo
+    if not m then return '' end
+    return tostring(m.clay) .. '|' .. tostring(m.front) .. '|' .. tostring(m.swing) .. '|' .. tostring(m.round)
+end
+
+local mipoCache = {}
+local function mipoValues(level, settings)
+    if not level.mipoParts then return level.materialParts end -- off: the material parts as they are
+    local m = settings.mipo
+    if not m or next(m) == nil then return level.mipoParts end
+    local key = level.name .. '|' .. mipoKey(settings)
+    if mipoCache.key == key then return mipoCache.values end
+    local values = {}
+    for k, v in pairs(level.mipoParts) do values[k] = v end
+    if m.clay == true then for _, k in ipairs(CLAY_OFF) do values[k] = nil end end
+    if m.clay == false then for _, k in ipairs(CLAY_OFF) do values[k] = 0 end end
+    for name, k in pairs(MIPO_KEYS) do
+        if m[name] ~= nil then values[k] = m[name] end
     end
-    local function wallAndFloor()
-        local x1, y1, x2 = view()
-        love.graphics.rectangle('fill', x1, y1, x2 - x1, floor.standY - y1)
-    end
-    local soft = wallShadowFrom(SUN, 90, 0.35 * 0.7, 'everything')
-    soft.wall = aboveFloor
-    local high = -SUN[2] / math.sqrt(SUN[1] * SUN[1] + SUN[2] * SUN[2])
-    fullCache.key = key
-    fullCache.shared = extend(LIT.shared, {
-        backdropShadows = soft,
-        shadowEveryOther = true,
-        projectedShadows = { area = wallAndFloor, floorY = floorY, depth = floor.depth, lights = {
-            { light = { kind = 'sun', x = SUN[1], h = high, z = 0.5 }, strength = 0.5, softness = 0.03 },
-        } },
-    })
-    return fullCache.shared
+    mipoCache.key, mipoCache.values = key, values
+    return values
+end
+
+-- what a Mipo row shows when the scene hasn't set it: the level's (clay: whether the level has it)
+function lib.mipoDefault(name)
+    local level = lib.level()
+    local parts = level.mipoParts or level.materialParts or {}
+    if name == 'clay' then return parts.plasticineStrength == nil end
+    return parts[MIPO_KEYS[name]]
 end
 
 lib.LEVELS = {
@@ -169,14 +268,28 @@ function lib.load(saved)
     lib.unapply()
     state.sceneLight = { level = saved and saved.level or 'off',
         floor = saved and saved.floor and { standY = saved.floor.standY, depth = saved.floor.depth } or nil }
+    if saved then
+        local s = state.sceneLight
+        s.wall, s.wallShadow, s.wallBehind = saved.wall, saved.wallShadow, saved.wallBehind
+        if type(saved.mipo) == 'table' then
+            s.mipo = { clay = saved.mipo.clay, front = saved.mipo.front, swing = saved.mipo.swing,
+                round = saved.mipo.round }
+        end
+    end
     return state.sceneLight
 end
 
--- for a scene file (off and no floor: nothing, the file stays as it was)
+-- for a scene file (off and nothing else set: nothing, the file stays as it was)
 function lib.save()
     local s = lib.settings()
-    if s.level == 'off' and not s.floor then return nil end
-    return { level = s.level, floor = s.floor and { standY = s.floor.standY, depth = s.floor.depth } or nil }
+    local mipo = s.mipo and next(s.mipo) and
+        { clay = s.mipo.clay, front = s.mipo.front, swing = s.mipo.swing, round = s.mipo.round } or nil
+    local wall = s.wall ~= 'auto' and s.wall or nil
+    if s.level == 'off' and not s.floor and not mipo and not wall and not s.wallShadow and not s.wallBehind then
+        return nil
+    end
+    return { level = s.level, floor = s.floor and { standY = s.floor.standY, depth = s.floor.depth } or nil,
+        wall = wall, wallShadow = s.wallShadow, wallBehind = s.wallBehind, mipo = mipo }
 end
 
 -- the floor where the Mipos stand: the lowest point of their feet (a scene without Mipos: none)
@@ -250,12 +363,15 @@ end
 -- rebuilt or added has new parts; one already lit is skipped)
 function lib.apply()
     local level = lib.level()
-    if state.sceneLightApplied ~= level.name then
-        lib.unapply() -- another level: its settings off first
-        state.sceneLightApplied = level.name
+    local settings = lib.settings()
+    -- another level, or other Mipo rows: the parts' settings off first, then on again as they are now
+    local applied = level.name .. '|' .. mipoKey(settings)
+    if state.sceneLightApplied ~= applied then
+        lib.unapply()
+        state.sceneLightApplied = applied
     end
     local lit = litParts()
-    local values = level.mipoParts or level.materialParts
+    local values = mipoValues(level, settings)
     local onlyMaterials = level.mipoParts == nil -- off: only the parts in a material
     -- look for parts again only when an sfixture came or went (a Mipo added or rerolled: lit in that
     -- frame), or once a second (a part's picture remade on the same fixture); walking every Mipo's
@@ -263,9 +379,9 @@ function lib.apply()
     local now = love.timer.getTime()
     local version = registry.sfixtureVersion
     local due = state.sceneLightScan == nil or state.sceneLightScan.version ~= version
-        or now - state.sceneLightScan.at > 1 or state.sceneLightScan.level ~= level.name
+        or now - state.sceneLightScan.at > 1 or state.sceneLightScan.level ~= applied
     if values and due then
-        state.sceneLightScan = { version = version, at = now, level = level.name }
+        state.sceneLightScan = { version = version, at = now, level = applied }
         eachMipoPartExtra(function(extra)
             if lit[extra] or (onlyMaterials and not extra.material) then return end
             local before = {}
@@ -278,7 +394,7 @@ function lib.apply()
     end
     local mine = owned()
     local shared = level.shared
-    if type(shared) == 'function' then shared = shared(lib.settings()) end
+    if type(shared) == 'function' then shared = shared(settings) end
     -- a field the level had and doesn't now (full without a floor after with one): cleared
     for key, v in pairs(mine) do
         if not (shared and shared[key]) and state[key] == v then state[key] = nil; mine[key] = nil end
