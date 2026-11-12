@@ -76,9 +76,10 @@ lib.KIT = {
 -- the harmony a bar (for what plays along): C sus2 (Eb7 its second half), the same twice more, A7#9 (Dm7)
 lib.HARMONY = { { 0, 'sus2' }, { 0, 'sus2' }, { 0, 'sus2' }, { 9, 's9' } }
 
+-- one loop on and on, as the record: no ending bar (it stopped, then the next song started: Nikki 2026-11-12
+-- "it stopped and then started"); after 40 bars the next song carries straight on with the same take
 lib.FORM = {
     { 'A', 40, { keys = true, bass = true, kit = true } },
-    { 'end', 1, { ending = true } },
 }
 
 local function human() return state.musicSettings.humanize ~= false end
@@ -89,13 +90,15 @@ end
 -- One take, played every pass: the record is one sampled loop, the same every time, so the humanizing nudges
 -- (timing, loudness, pitch) are drawn once a song, on the loop's first pass, and every later pass reuses them
 -- (Nikki 2026-11-12: "might as well just play the exact thing you play first phrase and repeat"). take(song,
--- key, sd) is the note's nudge for that key: drawn the first time, the same after.
-local function take(song, key, sd)
-    song.earthTake = song.earthTake or {}
-    local v = song.earthTake[key]
+-- key, sd) is the note's nudge for that key: drawn the first time, the same after, and kept on state.music so
+-- the next song (after 40 bars) plays the same take, the loop running on without a seam.
+local function take(_song, key, sd)
+    local m = state.music
+    m.earthTake = m.earthTake or {}
+    local v = m.earthTake[key]
     if v == nil then
         v = gauss(sd)
-        song.earthTake[key] = v
+        m.earthTake[key] = v
     end
     return v
 end
