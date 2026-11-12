@@ -236,7 +236,7 @@ end
 local function wallFixtureBetween(x1, y1, x2, y2)
     -- Box2D asserts on a zero-length ray (anchors exactly on top of each other), and on a NaN one (a blown-up
     -- body's anchors: NaN fails every comparison, so `< 1` let it through; 2026-11-12 in burrow)
-    if not ((x2 - x1) ^ 2 + (y2 - y1) ^ 2 >= 1) then return nil end
+    if not ((x2 - x1) ^ 2 + (y2 - y1) ^ 2 >= 1) then return nil end -- luacheck: ignore 581 (NaN)
     local found
     state.physicsWorld:rayCast(x1, y1, x2, y2, function(fixture)
         if isWall(fixture) then
