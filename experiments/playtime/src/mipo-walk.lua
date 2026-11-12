@@ -764,16 +764,20 @@ local RUN_KEYS = {
 
 -- the gaits walking by itself (lib.drive's mode): keys, the stance's share of the cycle (duty; under a
 -- half, both feet are off the floor between steps), the stride (degrees each thigh swings), steps a
--- second at most, lean (degrees; nil: lib.walkLean), arm swing (nil: lib.armSwing), the push
+-- second at most, lean (degrees; nil: lib.walkLean), arm swing (nil: lib.armSwing; the elbow bent
+-- elbow degrees, elbowFwd more on the forward swing, armStiff: a jog's and a run's arms bent to a
+-- shorter pendulum that keeps up with the legs), the push
 -- (times driveAccel), the bounce at push-off (leg lengths up), the speed the spike asks (times its
 -- walk speed). 'hop' is its own (updateHop).
 lib.gaits = {
     walk = { keys = WALK_KEYS, duty = 0.5, stride = 28, maxSteps = 2.5, maxStride = 48, accel = 1, bounce = 0,
-        speed = 1 },
-    jog = { keys = JOG_KEYS, duty = 0.42, stride = 30, maxSteps = 3.0, maxStride = 50, lean = 10, arms = 40,
-        accel = 2, bounce = 0.04, speed = 1.8 },
-    run = { keys = RUN_KEYS, duty = 0.4, stride = 34, maxSteps = 3.4, maxStride = 55, lean = 16, arms = 55,
-        accel = 3, bounce = 0.08, speed = 2.8 },
+        speed = 1, elbow = 12, elbowFwd = 18, armStiff = 1 },
+    jog = { keys = JOG_KEYS, duty = 0.42, stride = 30, maxSteps = 3.0, maxStride = 50, lean = 10, arms = 35,
+        accel = 2, bounce = 0.04, speed = 1.8, elbow = 70, elbowFwd = 15, armStiff = 1.5 },
+    run = { keys = RUN_KEYS, duty = 0.4, stride = 34, maxSteps = 3.4, maxStride = 55, lean = 16, arms = 40,
+        accel = 3, bounce = 0.08, speed = 2.8, elbow = 88, elbowFwd = 10, armStiff = 2 },
+    -- (arms, LO11: the run's 55 degrees at stiffness 3 whirled the arms over the shoulders once they had
+    -- room behind; 40 at 2 swings ~100 in all. Elbows reach 55-65 of their 70-98: gravity and the swing)
     -- (spec/mipo-gaits_spec: walk 1.1, jog 2.4, run 3.2 legs/s; both feet off the floor 12 / 30 / 47% of
     -- the time. The run tops out near 3 whatever its push (accel 4.5, a gaitCap, a longer stride: the
     -- same); duty 0.34 tilted more)
@@ -882,11 +886,42 @@ local function uprightTorso(inst, face)
     end
 end
 
+-- The arms (LO11, Nikki 2026-11-12: "how do people use them when walking, running, jumping, think
+-- anticipation and weight distribution"), for mipoActions' arm hang: fwd, degrees each upper arm swings
+-- forward of hanging (- back; facing a side), elbow, degrees the forearm bends further forward, out,
+-- degrees the arms lift out to the sides (facing front, where forward doesn't show), stiff, how
+-- stiffly they follow (1: the hang's soft spring, lagging a little; a run's swing needs 3). One value
+-- or { l, r }. nil fwd: the arms hang as they do (and elbows straight).
+local function setArms(inst, face, fwd, elbow, out, stiff)
+    if fwd == nil and out == nil then
+        inst._armSwing, inst._armElbow, inst._armStiff, inst._armSide = nil, nil, nil, nil
+        return
+    end
+    local function pick(v, side)
+        if type(v) == 'table' then return v[side] or 0 end
+        return v or 0
+    end
+    local swing, bend = {}, {}
+    for _, side in ipairs({ 'l', 'r' }) do
+        local outward = side == 'l' and 1 or -1 -- + world is toward the screen's left (the left arm out)
+        if face ~= 0 then
+            swing[side] = -face * math.rad(pick(fwd, side))
+            bend[side] = -face * math.rad(pick(elbow, side))
+        else
+            swing[side] = outward * math.rad(pick(out, side))
+            bend[side] = 0
+        end
+    end
+    inst._armSwing, inst._armElbow, inst._armStiff = swing, bend, stiff
+    inst._armSide = face ~= 0 and face or nil -- facing a side: the shoulders get room behind (mipoActions)
+end
+
 -- standing again: legs straight, feet back on their ankles, hips as the facing set them, full grip
 local function stopWalking(inst)
     inst._goAt, inst._stepTurning = nil, nil
     uprightTorso(inst, nil)
     inst._armSwing, inst._driveTarget, inst._stance = nil, nil, nil
+    inst._armElbow, inst._armStiff, inst._armSide = nil, nil, nil
     if inst._legMotorsOn then
         inst._legMotorsOn = nil
         legMotors(inst, 1, nil)
@@ -1147,10 +1182,13 @@ local function stepLegs(inst, dt, speed, face, side, legLen, weighty)
     -- angles, + toward the screen's left)
     local arms = g.arms or lib.armSwing
     if weighty and arms > 0 then
-        local a = math.rad(arms)
-        inst._armSwing = { l = -face * a * forward[2], r = -face * a * forward[1] }
+        -- each arm with the other side's leg, the elbow bending more as it comes forward
+        local fl, fr = forward[2], forward[1]
+        local base, more = g.elbow or 0, g.elbowFwd or 0
+        setArms(inst, face, { l = arms * fl, r = arms * fr },
+            { l = base + more * math.max(0, fl), r = base + more * math.max(0, fr) }, nil, g.armStiff)
     else
-        inst._armSwing = nil
+        setArms(inst, 0, nil)
     end
     return pushOff
 end
@@ -1352,13 +1390,14 @@ local function updateDrive(inst, dt, now, torso, legLen)
             jumpLegs(inst, face, 14 * d, 30 * d, 1.2)
             jumpFeet(inst, face, 0)
             jumpTorso(inst, face, 6 * d)
+            setArms(inst, face, -15 * d, 10 * d, nil, 1) -- arms a little back, then off
             return
         end
     end
     inst._walking, inst._walkedAt = true, now
     inst._driveTarget = target
     uprightTorso(inst, face)
-    inst._armSwing = nil
+    setArms(inst, 0, nil)
     if inst._jumpAt then return end -- crouching for a jump: the legs are the jump's
     if inst._driveMode == 'hop' then
         if grounded then push(inst, torso, target, legLen, dt) end
@@ -1407,7 +1446,7 @@ end
 
 local function endJump(inst, now)
     inst._jump = nil
-    inst._armSwing = nil
+    setArms(inst, 0, nil)
     jumpTorso(inst, 0, nil)
     inst._walkedAt = now
     stopWalking(inst) -- legs straight, feet and grip back; a drive picks up again next frame
@@ -1450,7 +1489,8 @@ local function updateJump(inst, dt, now)
         jumpLegs(inst, face, 50 * depth * x, 95 * depth * x, 1.6)
         jumpTorso(inst, swingDir, 22 * depth * x)
         jumpFeet(inst, face, 0)
-        inst._armSwing = { l = swingDir * math.rad(55) * x, r = swingDir * math.rad(55) * x } -- arms back
+        -- anticipation: the arms swing back (and the elbows a little bent) as the knees load
+        setArms(inst, face, -60 * x, 15 * x, 10 * x, 1.6)
         if t >= lib.jumpCrouch + lib.jumpHold then j.phase, j.at = 'push', now end
         return true
     end
@@ -1461,7 +1501,8 @@ local function updateJump(inst, dt, now)
         jumpLegs(inst, face, 0, 0, 3)
         jumpTorso(inst, swingDir, 4)
         jumpFeet(inst, face, -35)
-        inst._armSwing = { l = -swingDir * math.rad(140), r = -swingDir * math.rad(140) }
+        -- the arms whip forward and up with the legs' push (front: up in a V)
+        setArms(inst, face, 150, 5, 130, 3)
         local mass = mipoRegistry.totalMass(inst)
         local target = lib.jumpHeight > 0 and math.sqrt(2 * g * lib.jumpHeight * legLen)
             or units.speed(mipoActions.jumpSpeed)
@@ -1486,8 +1527,8 @@ local function updateJump(inst, dt, now)
         jumpLegs(inst, face, 35 * tuck, 60 * tuck, 1)
         jumpTorso(inst, swingDir, 0)
         jumpFeet(inst, face, -20 * (1 - tuck) + 8 * tuck)
-        local arms = -swingDir * math.rad(140 - 110 * tuck)
-        inst._armSwing = { l = arms, r = arms }
+        -- up at first, then coming forward and down for the landing
+        setArms(inst, face, 150 - 100 * tuck, 25 * tuck, 130 - 80 * tuck, 2)
         if t > 0.15 and mipoActions.isGrounded(inst) then j.phase, j.at = 'land', now
         elseif t > 4 then endJump(inst, now) return false end
         return true
@@ -1499,7 +1540,8 @@ local function updateJump(inst, dt, now)
     jumpLegs(inst, face, 35 * give, 65 * give, 1.4)
     jumpTorso(inst, swingDir, 12 * give)
     jumpFeet(inst, face, 0)
-    inst._armSwing = { l = -swingDir * math.rad(30) * give, r = -swingDir * math.rad(30) * give }
+    -- forward as the knees give: the weight kept over the feet
+    setArms(inst, face, 35 * give, 30 * give, 35 * give, 1.4)
     if x >= 1 then endJump(inst, now) return false end
     return true
 end
@@ -1515,7 +1557,7 @@ end
 
 local function endStop(inst, now)
     inst._stop = nil
-    inst._armSwing = nil
+    setArms(inst, 0, nil)
     jumpTorso(inst, 0, nil)
     inst._walkedAt = now
     stopWalking(inst)
@@ -1593,7 +1635,8 @@ local function updateStop(inst, dt, now)
         setGrip(inst, FEET[st.leg], x < 0.8 and SWING_GRIP or lib.stopGrip)
         setGrip(inst, FEET[st.stance], lib.stopGrip)
         jumpTorso(inst, face, -5 * e) -- leaning back a touch, against the stop
-        inst._armSwing = { l = face * math.rad(15) * e, r = face * math.rad(15) * e }
+        -- follow-through: the arms carry on forward with the momentum the legs are stopping
+        setArms(inst, face, 30 * e, 20 * e, nil, 1.2)
         if lib.stopBrake > 0 and x >= lib.stopBrakeFrom and mipoActions.isGrounded(inst) then
             push(inst, torso, 0, legLen, dt, lib.stopBrake)
         end
@@ -1629,7 +1672,7 @@ local function updateStop(inst, dt, now)
         setGrip(inst, FEET[st.stance], x < 0.85 and SWING_GRIP or lib.stopGrip)
         setGrip(inst, FEET[st.leg], lib.stopGrip)
         jumpTorso(inst, face, -5 * (1 - e))
-        inst._armSwing = { l = face * math.rad(15) * (1 - e), r = face * math.rad(15) * (1 - e) }
+        setArms(inst, face, 30 * (1 - e) + 10 * e, 20 * (1 - e), nil, 1.2) -- easing back
         if lib.stopBrake > 0 and mipoActions.isGrounded(inst) then push(inst, torso, 0, legLen, dt) end
         if x >= 1 then
             st.phase, st.at = 'settle', now
@@ -1658,7 +1701,7 @@ local function updateStop(inst, dt, now)
     inst._legMotorsOn = true
     holdFeet(inst, face, {}, { -face * 90, -face * 90 })
     jumpTorso(inst, face, 7 * give - 5 * (1 - x)) -- on past upright, then back
-    inst._armSwing = { l = -face * math.rad(22) * give, r = -face * math.rad(22) * give }
+    setArms(inst, face, 10 * (1 - x) - 15 * give, 10 * give, nil, 1) -- swinging back past hanging, settling
     if lib.stopBrake > 0 and mipoActions.isGrounded(inst) then push(inst, torso, 0, legLen, dt) end
     if x >= 1 then endStop(inst, now) return false end
     return true
@@ -1689,7 +1732,7 @@ local function updateSquat(inst, dt, now)
     sq.amount = sq.on and math.min(1, sq.amount + step) or math.max(0, sq.amount - step)
     if not sq.on and sq.amount <= 0 then
         inst._squat = nil
-        inst._armSwing = nil
+        setArms(inst, 0, nil)
         jumpTorso(inst, 0, nil)
         stopWalking(inst)
         inst._walking = false
@@ -1704,7 +1747,8 @@ local function updateSquat(inst, dt, now)
     jumpLegs(inst, face, 50 * d * a, 95 * d * a, 1.6)
     jumpTorso(inst, face, 22 * d * a)
     jumpFeet(inst, face, 0)
-    inst._armSwing = { l = -face * math.rad(25) * a, r = -face * math.rad(25) * a } -- arms forward, balancing
+    -- arms reaching forward: a counterweight for the hips going back (front: a little out)
+    setArms(inst, face, 75 * a, 20 * a, 25 * a, 1.2)
     return true
 end
 
@@ -1788,7 +1832,7 @@ end
 
 local function endRecover(inst, now)
     inst._recover = nil
-    inst._armSwing = nil
+    setArms(inst, 0, nil)
     inst._recoveredAt = now
     stopWalking(inst)
     inst._walking = false
@@ -1848,7 +1892,8 @@ local function updateRecover(inst, dt, now)
         thighs[r.other], knees[r.other] = r.hold, 6
         setGrip(inst, FEET[r.leg], x < 0.8 and SWING_GRIP or lib.stopGrip)
         setGrip(inst, FEET[r.other], lib.stopGrip)
-        inst._armSwing = { l = r.dir * math.rad(-35) * lift, r = r.dir * math.rad(-35) * lift } -- arms out to catch
+        -- arms flung out: forward to counter the fall (facing a side), up and out (facing front)
+        setArms(inst, face, 70 * lift, 35 * lift, 75 * lift, 2)
         if lib.recoverBrake > 0 and x >= 0.8 then push(inst, torso, 0, legLen, dt, lib.recoverBrake) end
         poseLegs(inst, face, thighs, knees, 1.4)
         if face ~= 0 then holdFeet(inst, face, {}, { -face * 90, -face * 90 }) end
@@ -1867,7 +1912,7 @@ local function updateRecover(inst, dt, now)
         thighs[r.leg], knees[r.leg] = r.stepAt, 6
         setGrip(inst, FEET[r.other], x < 0.8 and SWING_GRIP or lib.stopGrip)
         setGrip(inst, FEET[r.leg], lib.stopGrip)
-        inst._armSwing = nil
+        setArms(inst, 0, nil)
         poseLegs(inst, face, thighs, knees, 1.4)
         if face ~= 0 then holdFeet(inst, face, {}, { -face * 90, -face * 90 }) end
         if x >= 1 then

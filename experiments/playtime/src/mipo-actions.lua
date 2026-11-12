@@ -539,8 +539,11 @@ local function knotPulling(instance, side, upperBody, shoulderJoint)
     return false
 end
 
-local function steerArm(instance, side, angle, kp, kd, maxAlpha)
+-- elbow (optional, radians, world sign): the forearm steered that much further than the upper arm
+local function steerArm(instance, side, angle, kp, kd, maxAlpha, elbow)
     for _, name in ipairs({ side .. 'uarm', side .. 'larm' }) do
+        local target = angle
+        if elbow and name == side .. 'larm' then target = angle + elbow end
         local part = instance.parts[name]
         local parent = instance.parts[armParentOf(instance, name)]
         if part and parent and part.body and parent.body and not part.body:isDestroyed()
@@ -554,7 +557,7 @@ local function steerArm(instance, side, angle, kp, kd, maxAlpha)
                     if p and p.body then chain[#chain + 1] = p.body end
                 end
             end
-            lib.steerJointToward(parent.body, part.body, angle, kp, kd,
+            lib.steerJointToward(parent.body, part.body, target, kp, kd,
                 chain and math.min(maxAlpha, lib.knotMaxAlpha) or maxAlpha, chain)
         end
     end
@@ -580,8 +583,102 @@ local function setArmKeepAngle(instance, side, degrees)
     end
 end
 
+-- Arms on motors (MIPO-LOCOMOTION LO11), while src/mipo-walk.lua poses them (a walk, a run, a jump):
+-- the soft hang's torque counted the forearm alone, not the hand on it, and acts on a frame's first
+-- physics step only, so a bent elbow sagged (13-26 of 70-90 degrees) and a jump's arm swing hardly
+-- showed. A motor is solved with the joint, its torque from the arm (and hand) below it.
+lib.armMotorGain = 10      -- motor speed (rad/s) per radian off, times the pose's stiffness (15-20:
+                           -- the arms whirled, an upper arm sweeping 200-355 degrees in a run)
+lib.armMotorStrength = 0.8 -- the weight below held at its reach, times the pose's stiffness
+-- Facing a side a shoulder only goes from hanging forward and up (mipo-build armRange), so an arm
+-- couldn't swing back behind the body at all (a walk's back swing, a jump's wind-up). Posed facing a
+-- side, the shoulder gets this much room behind; its limit goes back when the pose ends.
+lib.armBackRoom = math.rad(70)
+
+-- the shoulder with room behind (on true), or its limits as they were
+local function shoulderBack(instance, name, joint, on)
+    instance._shoulderBase = instance._shoulderBase or {}
+    local base = instance._shoulderBase[name]
+    if on then
+        if base and base.joint == joint then return end
+        local lo, hi = joint:getLowerLimit(), joint:getUpperLimit()
+        instance._shoulderBase[name] = { joint = joint, lo = lo, hi = hi }
+        local hang = -joint:getReferenceAngle() -- hanging straight, in the joint's angles
+        if math.abs(hi - hang) < 0.05 then
+            joint:setLimits(lo, hi + lib.armBackRoom)
+        elseif math.abs(lo - hang) < 0.05 then
+            joint:setLimits(lo - lib.armBackRoom, hi)
+        end
+    elseif base then
+        instance._shoulderBase[name] = nil
+        if base.joint == joint and not joint:isDestroyed() then joint:setLimits(base.lo, base.hi) end
+    end
+end
+
+local function armMotor(instance, side, angle, elbow, stiff)
+    for _, name in ipairs({ side .. 'uarm', side .. 'larm' }) do
+        local part = instance.parts[name]
+        local parent = instance.parts[armParentOf(instance, name)]
+        if part and parent and part.body and parent.body and not part.body:isDestroyed()
+            and not parent.body:isDestroyed() and not part.limp then
+            local joint = jointBetween(parent.body, part.body)
+            if joint and joint:getType() == 'revolute' then
+                if name == side .. 'uarm' then shoulderBack(instance, name, joint, instance._armSide ~= nil) end
+                local target = angle + ((name == side .. 'larm') and (elbow or 0) or 0)
+                local desired = target - parent.body:getAngle() - joint:getReferenceAngle()
+                if joint:areLimitsEnabled() then
+                    local lower, upper = joint:getLowerLimit(), joint:getUpperLimit()
+                    local mid = (lower + upper) / 2
+                    desired = desired - 2 * math.pi * math.floor((desired - mid) / (2 * math.pi) + 0.5)
+                    desired = mathutils.clamp(desired, lower, upper)
+                else
+                    desired = joint:getJointAngle() + mathutils.wrapAngle(desired - joint:getJointAngle())
+                end
+                -- the weight below this joint and how far out it hangs
+                local mass, far = 0, nil
+                for _, below in ipairs(name == side .. 'uarm' and { side .. 'uarm', side .. 'larm', side .. 'hand' }
+                    or { side .. 'larm', side .. 'hand' }) do
+                    local p = instance.parts[below]
+                    if p and p.body and not p.body:isDestroyed() then
+                        mass = mass + p.body:getMass()
+                        far = p.body
+                    end
+                end
+                local ax, ay = joint:getAnchors()
+                local fx, fy = far:getPosition()
+                local reach = math.sqrt((fx - ax) ^ 2 + (fy - ay) ^ 2)
+                local _, gy = part.body:getWorld():getGravity()
+                joint:setMotorEnabled(true)
+                joint:setMotorSpeed(lib.armMotorGain * stiff * (desired - joint:getJointAngle()))
+                joint:setMaxMotorTorque(lib.armMotorStrength * stiff * mass * math.abs(gy) * math.max(reach, 1))
+            end
+        end
+    end
+    instance._armMotorsOn = true
+end
+
+local function armMotorsOff(instance)
+    if not instance._armMotorsOn then return end
+    instance._armMotorsOn = nil
+    for _, side in ipairs({ 'l', 'r' }) do
+        for _, name in ipairs({ side .. 'uarm', side .. 'larm' }) do
+            local part = instance.parts[name]
+            local parent = instance.parts[armParentOf(instance, name)]
+            if part and parent and part.body and parent.body and not part.body:isDestroyed()
+                and not parent.body:isDestroyed() then
+                local joint = jointBetween(parent.body, part.body)
+                if joint and joint:getType() == 'revolute' then
+                    joint:setMotorEnabled(false)
+                    if name == side .. 'uarm' then shoulderBack(instance, name, joint, false) end
+                end
+            end
+        end
+    end
+end
+lib.armMotorsOff = armMotorsOff
+
 local function poseArms(instance)
-    if instance._isRagdoll or instance._isFlipped or instance._dazedUntil then return end
+    if instance._isRagdoll or instance._isFlipped or instance._dazedUntil then armMotorsOff(instance) return end
     local pointingSide
     if instance._pointTarget then
         local tx, ty = resolveTarget(instance._pointTarget)
@@ -606,11 +703,22 @@ local function poseArms(instance)
                 local hang = math.rad(lib.armHangAngle) * (side == 'l' and 1 or -1)
                 -- swinging while it walks by itself (src/mipo-walk.lua, MIPO-MOTOR MM8)
                 if instance._armSwing then hang = hang + (instance._armSwing[side] or 0) end
-                steerArm(instance, side, hang, lib.armHangKp, lib.armHangKd, lib.armHangMaxAlpha)
+                -- the elbow's bend and how stiffly the arm follows (a run's arms swing faster than a
+                -- walk's: src/mipo-walk.lua's arms, MIPO-LOCOMOTION LO11)
+                local elbow = instance._armElbow and instance._armElbow[side] or nil
+                local stiff = instance._armStiff or 1
+                local knot = instance._armKnot and instance._armKnot[side]
+                if instance._armSwing and not (knot and knot.pullUntil) then
+                    armMotor(instance, side, hang, elbow, stiff) -- posed: on motors
+                else
+                    steerArm(instance, side, hang, lib.armHangKp * stiff, lib.armHangKd * math.sqrt(stiff),
+                        lib.armHangMaxAlpha * stiff, elbow)
+                end
             end
         end
     end
     instance._pointedSide = pointingSide and 'both' or nil
+    if not instance._armSwing or pointingSide then armMotorsOff(instance) end
 end
 
 -- Spine (creation.torsoSpine, docs/MIPO-SPINE.md): each spine joint's motor turns it back

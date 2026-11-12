@@ -102,6 +102,28 @@ Baseline 2026-11-12 (before LO1): tilt 9-25°, seed 42 39°; seed 9 walks 1.4 le
   a longer stride, more steps: the same or more tilt); Mipos differ a lot (run 2.2-5.2 legs/s; one
   runs a little under its jog). Not yet: bent elbows for jog and run (the arms hang straight).
   For Nikki to try.
+- [ ] **LO11. The arms** (Nikki 2026-11-12: "how do people use them when walking, running, jumping etc,
+  think anticipation and weight distribution"). How people do: walking, each arm swings opposite its
+  leg (it cancels the legs' twist), loose from the shoulder, the elbow a little bent, more on the
+  forward swing, peaking just after the other heel lands (a lag: follow-through), wider the faster;
+  jogging and running, elbows ~90 (a shorter pendulum that keeps up with the legs), driven from the
+  shoulder, hands to chest height in front and past the hip behind; jumping, back as the knees load
+  (anticipation), forward and up hard at push-off (it adds height), up or out in the air, forward for
+  the landing (the weight over the feet); stopping, on forward with the momentum, then back;
+  stumbling, flung out; squatting, forward as a counterweight for the hips.
+  Built 2026-11-12: `setArms` in src/mipo-walk.lua (forward/back, elbow, out to the sides facing
+  front, stiffness) for every move above; while posed the arms are on joint motors (mipoActions
+  `armMotor`: the soft hang's torque counted the forearm alone, not the hand on it, and acted on a
+  frame's first physics step only: elbows sagged to 13-26 of 70-90 degrees), and facing a side the
+  shoulders get room behind (`armBackRoom` 70: a shoulder only went from hanging forward and up, so
+  no arm could swing back, not even the walk's). `spec/mipo-arms_spec.lua`: walk elbows ~20, jog
+  ~45, run ~55-60; the jump's wind-up takes the arms back to -25..-49, after the push up to 48-57.
+  tried: stronger arm motors (gain 15-20, strength 3-5: the arms whirled, an upper arm sweeping
+  200-355 degrees in a run); strength 1.5 (the arms' reaction rocked the body: run tilt worst 64);
+  0.8 now (31). The run's arms at 55 degrees / stiffness 3 whirled once they had room behind: 40 / 2.
+  Open: with the arms swinging, three spec Mipos fall just short of a check each (motor seed 9 walks
+  1.2 of 1.5 legs left, as on master this morning; stop seed 5 drifts back and doesn't come still;
+  gaits seed 42 runs a little under 0.9 of its jog). For Nikki to look at.
 - [ ] **LO2. Gravity compensation**, so the motors can be soft and the bob deeper (MM8).
 - [ ] **LO3. Steps by distance, the stride by leg length** (MM3's "stride by the leg's length").
   Tried 2026-11-12. The stride was already by leg length (2·L·sin 28°). Measured with a new count in
