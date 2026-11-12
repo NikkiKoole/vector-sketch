@@ -346,13 +346,37 @@ local function drawBox(bodies, alpha, width)
     love.graphics.setColor(r, g, b, a)
 end
 
+-- The clicked part of a Mipo, thin, inside the Mipo's box (docs/KINDS.md KD3): its collision shapes' outlines.
+local function drawPartOutline(body)
+    local scale = cam:getScale()
+    local r, g, b, a = love.graphics.getColor()
+    local lineWidth = love.graphics.getLineWidth()
+    love.graphics.setColor(242 / 255, 133 / 255, 0, 0.8)
+    love.graphics.setLineWidth(2 / scale)
+    for _, fixture in ipairs(body:getFixtures()) do
+        if fixture:getUserData() == nil then
+            local shape = fixture:getShape()
+            if shape:type() == 'PolygonShape' then
+                love.graphics.polygon('line', body:getWorldPoints(shape:getPoints()))
+            elseif shape:type() == 'CircleShape' then
+                local cx, cy = body:getWorldPoint(shape:getPoint())
+                love.graphics.circle('line', cx, cy, shape:getRadius())
+            end
+        end
+    end
+    love.graphics.setLineWidth(lineWidth)
+    love.graphics.setColor(r, g, b, a)
+end
+
 -- Boxes on the stage, whatever the view (in 'tex/body' a Mipo's own shapes
 -- aren't drawn): a strong one around the selection (a whole Mipo for a Mipo
 -- part), light ones around what the hovered on-stage row stands for.
 function lib.renderSelectionBox()
     local thing = state.selection.selectedObj
     if thing and thing.body and not thing.body:isDestroyed() then
-        drawBox((boxBodies(thing.body)), 0.9, 3)
+        local bodies, instance = boxBodies(thing.body)
+        drawBox(bodies, 0.9, 3)
+        if instance then drawPartOutline(thing.body) end
     end
     -- set by the on-stage list while its row is hovered; used up here so it
     -- doesn't linger once the pointer leaves

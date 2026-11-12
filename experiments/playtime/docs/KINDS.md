@@ -66,7 +66,7 @@ questions that eat weeks; they wait for a real case.
 - [ ] **KD2. The layer, with the Mipo through a thin adapter.** `mipoRegistry` stays, DNA and actions stay;
   the layer only asks "your bodies, roll again, dissolve, your panel". The four places that look up a
   Mipo from a body ask the layer instead. Checked by the scenes snapshot before/after (nothing changes).
-- [ ] **KD3. Select the whole.** A click on any part selects the instance: one quiet outline round it, not
+- [x] **KD3. Select the whole.** A click on any part selects the instance: one quiet outline round it, not
   orange over every part, and its panel. The editor cleanup Nikki started from.
   **The panel half, 2026-11-12** (Nikki: "i like your plan, as long as we can get to every part"): the Mipo
   panel in that order (`src/ui/mipo/kind-panel.lua`): breed < > with roll and undo, the actions, copy and
@@ -84,7 +84,28 @@ questions that eat weeks; they wait for a real case.
   the neck and the nose their own sections, picked on the skeleton even when off (a faint neck or nose).
   Copy and delete in the panel's top row. Which sections are open is kept on `state` (`state.mipoPanelOpen`):
   a hot swap of widgets.lua forked the table and the tabs stopped opening anything.
-- [ ] **KD4. Prop recipes as the second kind.** A placed prop keeps its recipe name and settings (saved),
+  **The stage half, 2026-11-12**: the box round the whole Mipo was there already (src/editor-render.lua);
+  the orange over every part was the sfixtures' fills, now off unless turned on (world settings
+  'sfixtures', 'sfixture lines'). The clicked part gets a thin outline inside the box. Done.
+- [ ] **KD4. Vehicles as the second kind** (Nikki 2026-11-12: "maybe we do vehicles next to get the
+  meta-object built from physics parts under our belt"; before: props). The rides spike's four (kart, car,
+  skateboard, banana car; RIDES.md, parked "i think vehicles is done") are raw Box2D bodies in one scene
+  script: not selectable, not saved, nowhere else. As a kind they're made of ordinary things (objectManager
+  bodies, joints), so the workshop, save and dissolve work on them as on anything. Slices:
+  - **KD4a. The layer, as small as it can be, and a kart.** `src/kinds.lua`: register a kind, make one, which
+    instance a body belongs to (a `kindId` on each body's thing, saved beside it as `mipoId` is), the
+    instances' kind and settings saved in the scene, dissolve. The kart from `objectManager` bodies and
+    joints, on the library's toys shelf; selected as a whole (the Mipo's box); saved and loaded; dissolved
+    to plain bodies. No driving yet: it rolls when pushed.
+  - **KD4b. Its panel**, the Mipo panel's shape: the kind's row (type kart / car / skateboard / banana,
+    roll, copy, delete), its settings as inspector rows (colour, size), the parts picked on a picture of it
+    (frame, wheels), the workshop folded.
+  - **KD4c. What it does**, from the spike into an engine system (`src/vehicles.lua`, through
+    src/physics-units.lua): a Mipo dropped on the seat gets in (two kinds side by side, joined by
+    joints), tap to drive, pick up kept upright, wind up; actions in the panel (drive, turn round, throw
+    out the rider).
+  - **KD4d. The other three types**; the rides spike builds its street and places the engine's vehicles.
+- [ ] **KD4p. Prop recipes as a kind** (was KD4): a placed prop keeps its recipe name and settings (saved),
   🎲 rebuilds it (EDITOR-ARRANGE EA3), dissolve leaves plain bodies. Each recipe says what 🎲 varies.
 - [ ] **KD5. The bar again** (EA2): with 🎲 and ••• meaning something for everything selected, Nikki looks
   at it once more.
