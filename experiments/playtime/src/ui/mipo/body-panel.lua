@@ -1,12 +1,7 @@
 -- src/ui/mipo/body-panel.lua (split from ui/mipo-editor.lua, SPLIT3)
 local lib = {}
 
-local mipoVoice = require('src.mipo-voice')
-local utils = require('src.utils')
 local CharacterManager = require('src.character-manager')
-local mipoBreeds = require('src.mipo-breeds')
-local mipoRegistry = require('src.mipo-registry')
-local mipoActions = require('src.mipo-actions')
 local torsoLobes = require('src.torso-lobes')
 local torsoJiggle = require('src.torso-jiggle')
 local ST = require('src.shape-types')
@@ -36,7 +31,7 @@ local function shapePartFor(instance, partName)
 end
 lib.shapePartFor = shapePartFor
 
--- === CREATION ACCORDION ===
+-- === THE DNA'S CREATION: rows for the torso, neck and nose sections below ===
 local function rebuild(instance, patch)
     CharacterManager.rebuildFromCreation(instance, patch)
     CharacterManager.rebuildTextures(instance)
@@ -48,9 +43,19 @@ local function clearOverlayNose(instance, creation)
     CharacterManager.updateFaceOfPart(instance, startParent, { noseShape = 0 })
 end
 
+-- back to a nose drawn on the face: going physics set its shape to none (clearOverlayNose), so it gets one
+local function restoreOverlayNose(instance, creation)
+    local owner = creation.isPotatoHead and 'torso1' or 'head'
+    local part = instance.dna.parts[owner]
+    local nose = part and part.appearance and part.appearance.face and part.appearance.face.nose
+    if not (nose and (nose.shape or 0) > 0) then
+        CharacterManager.updateFaceOfPart(instance, owner, { noseShape = math.random(#C.noseShapes) })
+    end
+end
+
 -- potato head, torso segments, spine (bend, sway)
 local function drawTorsoRows(instance, creation, x, y, ROW)
-    local cbClicked, cbChecked = ui.checkbox(x, y, creation.isPotatoHead or false, 'isPotatoHead')
+    local cbClicked, cbChecked = ui.checkbox(x, y, creation.isPotatoHead or false, 'potato head')
     if cbClicked then rebuild(instance, { isPotatoHead = cbChecked }) end
     y = y + ROW
 
@@ -208,149 +213,130 @@ local function drawNoseRows(instance, creation, x, y, ROW)
     end
     y = y + ROW
 
-    if (creation.noseSegments or 0) == 1 then
-        local currentMode = creation.noseMode or 'overlay'
-        local clicked, checked = ui.checkbox(x, y, currentMode == 'physics', 'physics nose')
+    -- a body or drawn on the face; 2+ segments are always bodies, so unticking goes back to one drawn nose
+    local segments = creation.noseSegments or 0
+    if segments >= 1 then
+        local physics = segments >= 2 or (creation.noseMode or 'overlay') == 'physics'
+        local clicked, checked = ui.checkbox(x, y, physics, 'physics nose')
         if clicked then
-            local newMode = checked and 'physics' or 'overlay'
-            if newMode == 'physics' then clearOverlayNose(instance, creation) end
-            rebuild(instance, { noseMode = newMode })
+            if checked then
+                clearOverlayNose(instance, creation)
+                rebuild(instance, { noseMode = 'physics' })
+            else
+                restoreOverlayNose(instance, creation)
+                rebuild(instance, { noseSegments = 1, noseMode = 'overlay' })
+            end
         end
         y = y + ROW
     end
     return y
 end
 
-function lib.drawCreation(p, y)
+-- === THE NECK (picked on the skeleton: a neck band's tab, or the faint neck of a Mipo without one) ===
+-- on or off (off: no neck bodies, the strip from body to head stays), its segments, height and skin.
+-- asTab: as a neck band's tab (a header the tab row collects); else drawn straight away.
+function lib.drawNeck(p, y, asTab)
     local instance, x, panelX, ROW = p.instance, p.x, p.panelX, p.ROW
-    y = widgets.accordionHeader(p, y, 'creation')
-    if widgets.isOpen('creation') then
-        -- read once: a rebuild may give the dna a new creation table, the rows below keep this one
-        local creation = instance.dna.creation
-        y = drawTorsoRows(instance, creation, x, y, ROW)
-        y = drawNeckRows(instance, creation, x, panelX, y, ROW)
-        y = drawNoseRows(instance, creation, x, y, ROW)
+    if asTab then
+        local key = p.partName .. ' neck'
+        y = widgets.accordionHeader(p, y, key)
+        if not widgets.isOpen(key) then return y end
     end
-    return y
+    local creation = instance.dna.creation -- read once: a rebuild may give the dna a new creation table
+    if creation.isPotatoHead then
+        ui.label(x, y, 'a potato head has no neck')
+        return y + ROW
+    end
+    local on = (creation.neckSegments or 0) > 0
+    local clicked, checked = ui.checkbox(x, y, on, 'neck')
+    if clicked then rebuild(instance, { neckSegments = checked and 1 or 0 }) end
+    y = y + ROW
+    if on then return drawNeckRows(instance, creation, x, panelX, y, ROW) end
+    return drawNeckSkin(instance, creation, x, panelX, y, ROW)
 end
 
--- === POSITIONERS ACCORDION ===
-function lib.drawPositioners(p, y)
+-- === THE TORSO'S BUILD (a torso band's 'body' tab): potato head, segments, spine, lobes, jiggle ===
+function lib.drawTorso(p, y)
     local instance, x, ROW = p.instance, p.x, p.ROW
-    local function drawAccordion(key, content)
-        y = widgets.accordionHeader(p, y, key)
-        if widgets.isOpen(key) then content() end
-    end
-    drawAccordion('positioners', function()
-        local pos = instance.dna.positioners
+    if not (p.partName and p.partName:match('^torso%d')) then return y end
+    local key = p.partName .. ' body'
+    y = widgets.accordionHeader(p, y, key)
+    if not widgets.isOpen(key) then return y end
+    return drawTorsoRows(instance, instance.dna.creation, x, y, ROW) -- creation read once: a rebuild may replace it
+end
 
-        -- Leg stance width
+-- === THE NOSE (picked on the skeleton: a nose band's tab, or the faint nose of a Mipo without a nose body) ===
+-- its segments; with one, a body or drawn on the face (its look is in the face section's nose)
+function lib.drawNose(p, y, asTab)
+    local instance, x, ROW = p.instance, p.x, p.ROW
+    if asTab then
+        local key = p.partName .. ' nose'
+        y = widgets.accordionHeader(p, y, key)
+        if not widgets.isOpen(key) then return y end
+    end
+    return drawNoseRows(instance, instance.dna.creation, x, y, ROW)
+end
+
+-- === PLACE (a part's tab: where the legs and ears sit on the body, the dna's positioners) ===
+-- the upper legs: their stance; the ears: height, this ear's angle (with symmetric the other ear mirrored),
+-- over or behind the head
+local EAR_ANGLE = { lear = -math.pi / 2 + math.pi / 5, rear = math.pi / 2 - math.pi / 5 } -- the defaults
+
+function lib.drawPlace(p, y)
+    local instance, partName, x, ROW = p.instance, p.partName, p.x, p.ROW
+    local pos = instance.dna.positioners
+    local isLeg, isEar = partName == 'luleg' or partName == 'ruleg', EAR_ANGLE[partName] ~= nil
+    if not (isLeg or isEar) then return y end
+    y = widgets.accordionHeader(p, y, partName .. ' place')
+    if not widgets.isOpen(partName .. ' place') then return y end
+
+    if isLeg then
         local legX = ui.sliderWithInput('mipo_leg_x', x, y, 120, 0, 1, pos.leg.x)
         ui.alignedLabel(x, y, '  leg stance')
         if legX and legX ~= pos.leg.x then
             CharacterManager.updatePositioners(instance, { legX = legX })
             rebuild(instance, {})
         end
-        y = y + ROW
+        return y + ROW
+    end
 
-        -- Ear vertical position
-        local earY = ui.sliderWithInput('mipo_ear_y', x, y, 120, 0, 1, pos.ear.y)
-        ui.alignedLabel(x, y, '  ear vertical')
-        if earY and earY ~= pos.ear.y then
-            CharacterManager.updatePositioners(instance, { earY = earY })
+    local earY = ui.sliderWithInput('mipo_ear_y', x, y, 120, 0, 1, pos.ear.y)
+    ui.alignedLabel(x, y, '  ear height')
+    if earY and earY ~= pos.ear.y then
+        CharacterManager.updatePositioners(instance, { earY = earY })
+        rebuild(instance, {})
+    end
+    y = y + ROW
+
+    local earPart = instance.dna.parts[partName]
+    if earPart then
+        local angle = earPart.stanceAngle or EAR_ANGLE[partName]
+        local value = ui.sliderWithInput('mipo_ear_angle', x, y, 120, -math.pi, math.pi, angle)
+        ui.alignedLabel(x, y, '  ear angle')
+        if value and value ~= angle then
+            earPart.stanceAngle = value
+            local other = instance.dna.parts[partName == 'lear' and 'rear' or 'lear']
+            if other and widgets.isOpen('symmetricEditing') then other.stanceAngle = -value end
             rebuild(instance, {})
         end
         y = y + ROW
+    end
 
-        -- Ear stance angle (left ear)
-        local learPart = instance.dna.parts['lear']
-        if learPart then
-            local lAngle = learPart.stanceAngle or (-math.pi / 2 + math.pi / 5)
-            local lVal = ui.sliderWithInput('mipo_lear_angle', x, y, 120, -math.pi, math.pi, lAngle)
-            ui.alignedLabel(x, y, '  L ear angle')
-            if lVal and lVal ~= lAngle then
-                learPart.stanceAngle = lVal
-                rebuild(instance, {})
-            end
-            y = y + ROW
-        end
-
-        -- Ear stance angle (right ear)
-        local rearPart = instance.dna.parts['rear']
-        if rearPart then
-            local rAngle = rearPart.stanceAngle or (math.pi / 2 - math.pi / 5)
-            local rVal = ui.sliderWithInput('mipo_rear_angle', x, y, 120, -math.pi, math.pi, rAngle)
-            ui.alignedLabel(x, y, '  R ear angle')
-            if rVal and rVal ~= rAngle then
-                rearPart.stanceAngle = rVal
-                rebuild(instance, {})
-            end
-            y = y + ROW
-        end
-
-        -- Ears over head checkbox
-        local learSkin = instance.dna.parts['lear'] and instance.dna.parts['lear'].appearance
-            and instance.dna.parts['lear'].appearance['skin']
-        if learSkin then
-            local earsOver = (learSkin.zOffset or 190) > 200
-            local eohClicked, eohChecked = ui.checkbox(x, y, earsOver, 'ears over head')
-            if eohClicked then
-                local newZ = eohChecked and 210 or 190
-                learSkin.zOffset = newZ
-                local rearSkin = instance.dna.parts['rear'] and instance.dna.parts['rear'].appearance
-                    and instance.dna.parts['rear'].appearance['skin']
-                if rearSkin then rearSkin.zOffset = newZ end
-                CharacterManager.rebuildTextures(instance)
-            end
-            y = y + ROW
-        end
-
-        -- Face magnitude (global face feature scaler)
-        local fmVal = ui.sliderWithInput('mipo_face_mag', x, y, 120, 0.25, 2, instance.dna.faceMagnitude or 1)
-        ui.alignedLabel(x, y, '  face magnitude')
-        if fmVal and fmVal ~= (instance.dna.faceMagnitude or 1) then
-            CharacterManager.updatePositioners(instance, { faceMagnitude = fmVal })
+    local learSkin = instance.dna.parts['lear'] and instance.dna.parts['lear'].appearance
+        and instance.dna.parts['lear'].appearance['skin']
+    if learSkin then
+        local earsOver = (learSkin.zOffset or 190) > 200
+        local clicked, checked = ui.checkbox(x, y, earsOver, 'ears over head')
+        if clicked then
+            local newZ = checked and 210 or 190
+            learSkin.zOffset = newZ
+            local rearSkin = instance.dna.parts['rear'] and instance.dna.parts['rear'].appearance
+                and instance.dna.parts['rear'].appearance['skin']
+            if rearSkin then rearSkin.zOffset = newZ end
             CharacterManager.rebuildTextures(instance)
         end
         y = y + ROW
-    end)
-    return y
-end
-
--- === ACTIONS ACCORDION ===
-function lib.drawActions(p, y)
-    local instance, x, panelWidth, ROW = p.instance, p.x, p.panelWidth, p.ROW
-    local function drawAccordion(key, content)
-        y = widgets.accordionHeader(p, y, key)
-        if widgets.isOpen(key) then content() end
     end
-    drawAccordion('actions', function()
-        -- two per row: one-shot actions as buttons, on/off states as checkboxes
-        local hw = math.floor((panelWidth - 40) / 2) - 2
-        if ui.button(x, y, hw, 'breathe') then
-            mipoActions.breathe(instance)
-        end
-        local grounded = mipoActions.isGrounded(instance)
-        if ui.button(x + hw + 4, y, hw, grounded and 'jump' or 'jump (air)') then
-            mipoActions.jump(instance)
-        end
-        y = y + ROW
-
-        local ragdollClicked = ui.checkbox(x, y, mipoActions.isRagdoll(instance), 'ragdoll')
-        if ragdollClicked then mipoActions.setRagdoll(instance, not mipoActions.isRagdoll(instance)) end
-        local flipClicked = ui.checkbox(x + hw + 4, y, mipoActions.isFlipped(instance), 'flip')
-        if flipClicked then mipoActions.setFlipped(instance, not mipoActions.isFlipped(instance)) end
-        y = y + ROW
-
-        local isPointing = mipoActions.isPointing(instance)
-        if ui.checkbox(x, y, isPointing, 'point at cursor') then
-            if isPointing then mipoActions.stopPointing(instance) else mipoActions.pointAt(instance, 'cursor') end
-        end
-        if ui.button(x + hw + 4, y, hw, 'raspberry') then
-            require('src.mipo-raspberry').blow(instance)
-        end
-        y = y + ROW
-    end)
     return y
 end
 
@@ -453,73 +439,6 @@ function lib.drawDims(p, y)
             end
         end)
     end
-    return y
-end
-
--- === RANDOMIZE BUTTONS ===
-function lib.drawRandomize(p, y)
-    local instance, partName, x, panelWidth, ROW = p.instance, p.partName, p.x, p.panelWidth, p.ROW
-    y = y + BUTTON_SPACING
-    love.graphics.line(x, y, x + panelWidth - 40, y)
-    y = y + BUTTON_SPACING
-
-    local partLabel = partName
-    if partName == 'lear' or partName == 'rear' then partLabel = 'ears'
-    elseif partName == 'lfoot' or partName == 'rfoot' then partLabel = 'feet'
-    elseif partName == 'lhand' or partName == 'rhand' then partLabel = 'hands'
-    elseif partName:match('arm') then partLabel = 'arms'
-    elseif partName:match('leg') then partLabel = 'legs'
-    end
-    -- every roll keeps the Mipo from before it: undo goes back a step at a time (mipo-breeds)
-    if ui.button(x, y, panelWidth - 40, 'randomize ' .. partLabel) then
-        mipoBreeds.remember(instance)
-        CharacterManager.randomizePart(instance, partName)
-        mipoVoice.dice(instance)
-    end
-    y = y + ROW
-    local hw = math.floor((panelWidth - 40) / 2) - 2
-    if ui.button(x, y, hw, 'randomize all') then
-        mipoBreeds.remember(instance)
-        CharacterManager.randomizeMipo(instance)
-        mipoVoice.dice(instance)
-    end
-    if ui.button(x + hw + 4, y, hw, 'randomize *') then
-        mipoBreeds.remember(instance)
-        CharacterManager.randomizeMipoConstrained(instance)
-        mipoVoice.dice(instance)
-    end
-    y = y + ROW
-    if ui.button(x, y, panelWidth - 40, 'random rubberleg-pearbod') then
-        mipoBreeds.remember(instance)
-        mipoBreeds.randomize(instance, 'rubberleg-pearbod')
-        mipoVoice.dice(instance)
-    end
-    y = y + ROW
-    if mipoBreeds.canUndo(instance) and ui.button(x, y, hw, 'undo') then
-        mipoBreeds.undo(instance)
-    end
-    y = y + ROW
-    if ui.button(x, y, hw, 'mutate sizes') then
-        mipoBreeds.remember(instance)
-        CharacterManager.mutateSizes(instance)
-        mipoVoice.dice(instance)
-    end
-
-    -- === DISSOLVE BUTTON === (next to mutate sizes)
-    if ui.button(x + hw + 4, y, hw, 'dissolve') then
-        for pName, part in pairs(instance.parts) do
-            if part and part.body and not part.body:isDestroyed() then
-                local thing = utils.thingOf(part.body)
-                if thing then
-                    thing.mipoId = nil
-                    thing.mipoPartName = nil
-                end
-            end
-            local _ = pName
-        end
-        mipoRegistry.unregister(instance.id)
-    end
-    y = y + ROW
     return y
 end
 

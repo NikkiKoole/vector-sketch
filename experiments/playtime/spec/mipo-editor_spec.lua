@@ -67,7 +67,8 @@ describe('mipo editor', function()
                 opened[#opened + 1] = name .. suffix
             end
         end
-        for _, key in ipairs({ 'creation', 'positioners', 'actions', 'torso shape' }) do
+        for _, key in ipairs({ 'workshop', 'torso shape', 'luleg place', 'lear place', 'rear place', 'neck1 neck', 'nose1 nose', 'torso1 body',
+            'torso2 body' }) do
             states[key] = true
             opened[#opened + 1] = key
         end

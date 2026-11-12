@@ -503,6 +503,18 @@ end
 -- panelX, panelY, panelWidth, panelH: the panel rect (default: the right edge, full height)
 -- The part the shape panel edits for `partName`: a spine's bands all take torso1's shape
 -- (CharacterManager.applySpine), so on a spine any torso band means torso1.
+-- The accordion keys of a face's features when `partName` is selected: { brows, eyes, nose, mouth }
+-- (the nose's own rows when it's a body). nil for a part without the face.
+function lib.featureKeys(instance, partName)
+    if not (partName and topology.faceOwner(instance, partName)) then return nil end
+    local noseSegs = instance.dna.creation.noseSegments or 0
+    local noseMode = instance.dna.creation.noseMode or 'overlay'
+    local physicsNose = (noseSegs >= 2) or (noseSegs == 1 and noseMode == 'physics')
+    return { face = partName .. ' face', brows = partName .. ' face > brows', eyes = partName .. ' face > eyes',
+        nose = partName .. ' face > nose' .. (physicsNose and ' (physics)' or ''),
+        mouth = partName .. ' face > mouth' }
+end
+
 -- === FACE ACCORDION (eyes + pupils) ===
 -- Face decals render on head (non-potato) or torso1 (potato).
 function lib.draw(p, y)
@@ -516,12 +528,25 @@ function lib.draw(p, y)
     if faceData and faceData.appearance and faceData.appearance['face'] then
         drawAccordion(partName .. ' face', function()
             local face = faceData.appearance['face']
+            local size = instance.dna.faceMagnitude or 1
+            local fmVal = ui.sliderWithInput('mipo_face_mag', x, y, 120, 0.25, 2, size)
+            ui.alignedLabel(x, y, '  face size')
+            if fmVal and fmVal ~= size then
+                CharacterManager.updatePositioners(instance, { faceMagnitude = fmVal })
+                CharacterManager.rebuildTextures(instance)
+            end
+            y = y + ROW
+            -- the features are picked on the face at the top of the panel (kind-panel, part-map.lua),
+            -- one open at a time; no header rows
+            local function drawFeature(key, content) -- a feature's rows, without a header
+                if widgets.isOpen(key) then content() end
+            end
 
-            drawAccordion(partName .. ' face > eyes', function()
+            drawFeature(partName .. ' face > eyes', function()
                 y = drawFaceEyesUI(instance, faceOwner, partName, face, x, y, panelX, ROW)
             end)
 
-            drawAccordion(partName .. ' face > brows', function()
+            drawFeature(partName .. ' face > brows', function()
                 y = drawFaceBrowsUI(instance, faceOwner, partName, face, x, y, panelX, ROW)
             end)
 
@@ -529,7 +554,7 @@ function lib.draw(p, y)
             local nMode = instance.dna.creation.noseMode or 'overlay'
             local isPhysicsNose = (noseSegs >= 2) or (noseSegs == 1 and nMode == 'physics')
             if isPhysicsNose then
-                drawAccordion(partName .. ' face > nose (physics)', function()
+                drawFeature(partName .. ' face > nose (physics)', function()
                     local nose1Data = instance.dna.parts['nose1']
                     if not nose1Data then return end
 
@@ -720,12 +745,12 @@ function lib.draw(p, y)
                     end
                 end)
             else
-                drawAccordion(partName .. ' face > nose', function()
+                drawFeature(partName .. ' face > nose', function()
                     y = drawFaceNoseUI(instance, faceOwner, partName, face, x, y, panelX, ROW)
                 end)
             end
 
-            drawAccordion(partName .. ' face > mouth', function()
+            drawFeature(partName .. ' face > mouth', function()
                 y = drawFaceMouthUI(instance, faceOwner, partName, face, x, y, panelX, ROW)
             end)
         end)

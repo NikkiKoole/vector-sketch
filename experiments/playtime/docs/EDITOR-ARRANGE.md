@@ -48,6 +48,9 @@ on its own.
 - [ ] **EA4. The shelf** as a strip of pictures, for placing things.
 - [ ] **EA5. The workshop toggle**: tool rail and full inspector behind it.
 
+The layer underneath (2026-11-12): KINDS.md. The bar, 🎲 and ••• need every placed thing to know what it
+is (a Mipo does; a prop forgets its recipe), so EA2/EA3 wait on its KD2-KD4.
+
 ## Open questions
 
 - Does a turned body get a turned selection box (the handles sit off the straight one)?

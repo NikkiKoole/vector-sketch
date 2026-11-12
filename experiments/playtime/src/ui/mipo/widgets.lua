@@ -37,9 +37,13 @@ local BUTTON_SPACING = ui.theme.spacing
 
 local imageCache = {}
 
-local accordionStates = {}
-accordionStates.symmetricEditing = true
-accordionStates.actions = true
+-- which sections are open, on `state` so a hot swap of this file keeps the table the other panel files
+-- hold (a fresh one here: the tabs opened one table and the panel read the other, 2026-11-12)
+local accordionStates = state.mipoPanelOpen
+if not accordionStates then
+    accordionStates = { symmetricEditing = true }
+    state.mipoPanelOpen = accordionStates
+end
 
 -- Shape categories for thumbnail grids (shared with character-manager via shape-catalogs)
 local torsoHeadShapes = C.torsoHeadShapes
@@ -259,8 +263,24 @@ local function drawMaterialRow(instance, x, y, current, blocks)
     end
 end
 
+-- The part's sections as tabs (kind-panel draws them as small buttons in a row): between
+-- beginTabs and endTabs a header isn't drawn, its key is noted instead; open state as before.
+local tabs -- the keys noted while collecting, else nil
+local lastTabs = {} -- partName -> the keys noted on the last frame drawn for it
+
+function lib.beginTabs() tabs = {} end
+function lib.endTabs(partName)
+    if tabs and partName then lastTabs[partName] = tabs end
+    tabs = nil
+end
+function lib.tabsOf(partName) return lastTabs[partName] or {} end
+
 -- The panel's accordions: a header row that opens and closes `key`, open state kept here.
 function lib.accordionHeader(p, y, key)
+    if tabs then
+        tabs[#tabs + 1] = key
+        return y
+    end
     local clicked = ui.header_button(p.x, y, p.panelWidth - 40, (accordionStates[key] and " ÷  " or " •") ..
         ' ' .. key, accordionStates[key])
     if clicked then
