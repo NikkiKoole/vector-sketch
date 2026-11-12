@@ -24,8 +24,10 @@ draw) each glyph (three times)". Before printing a sheet and drawing 120 letters
 
 - [ ] LF1. Nikki looks at it in the spike: the wobble right? boil speed? Keep, change or park?
 - [ ] LF2. If kept: where it's used first (a sign in a room, the scene titles), and whether it ships with
-  every build (it's named in src/, so ship-list packs it: 350 KB)
-- [ ] LF3. Other fonts through the forge (a rounder one, or Nikki's own drawn alphabet when the sheet route
+  every build (it's named in src/, so ship-list packs it: ~360 KB a font, three now)
+- [x] LF3. Other fonts through the forge: Windsor (WindsorBT-Roman.otf) and Cooper Bold
+  (assets/cooper_bold_bt.ttf, the fridge letters), `textures/lettering/windsor.*`, `cooper.*`; f in the spike.
+  Next maybe: a rounder one, (a rounder one, or Nikki's own drawn alphabet when the sheet route
   happens): `--font`, `--name`
 
 ## What the three versions are for

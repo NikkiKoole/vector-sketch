@@ -20,7 +20,10 @@ local lib = {}
 -- both names in full: claudetools/ship-list.py packs what the code names
 local FONTS = {
     comic = { metrics = 'textures/lettering/comic.lua', image = 'textures/lettering/comic.png' },
+    windsor = { metrics = 'textures/lettering/windsor.lua', image = 'textures/lettering/windsor.png' },
+    cooper = { metrics = 'textures/lettering/cooper.lua', image = 'textures/lettering/cooper.png' },
 }
+lib.FONTS = { 'comic', 'windsor', 'cooper' }
 
 local loaded = {}
 

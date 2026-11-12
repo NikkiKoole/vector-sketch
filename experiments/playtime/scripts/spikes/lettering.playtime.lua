@@ -1,13 +1,15 @@
--- lettering: hand-drawn letters, three drawings of each (Comic Sans redrawn by claudetools/lettering-forge.py),
+-- lettering: hand-drawn letters, three drawings of each (Comic Sans, Windsor, Cooper redrawn by
+-- claudetools/lettering-forge.py),
 -- still or boiling (docs/HANDDRAWN-FONT.md; Nikki 2026-11-12: "3 slightly varying textures per glyph ... same
 -- character next could pick a new 1 out of 3"). Views: 'text' (titles, a sign, a long line) and 'sheet' (all
--- the drawings). Keys: v view, h panel, r new seed.
+-- the drawings). Keys: f font, v view, h panel, r new seed.
 local s = {}
 -- lettering: src/lettering.lua, handed to scripts by src/script.lua
 
 local function st()
     if not state.lettering then
-        state.lettering = { showPanel = true, view = 'text', size = 72, boil = 0, jiggle = 0.5, seed = 1,
+        state.lettering = { showPanel = true, view = 'text', font = 'comic', size = 72, boil = 0, jiggle = 0.5,
+            seed = 1,
             text = 'Hola Mipo! llama aaa' }
     end
     return state.lettering
@@ -23,12 +25,17 @@ function s.onKeyPress(key)
     if key == 'h' then c.showPanel = not c.showPanel end
     if key == 'v' then c.view = c.view == 'text' and 'sheet' or 'text' end
     if key == 'r' then c.seed = c.seed + 1 end
+    if key == 'f' then
+        local list, at = lettering.FONTS, 1
+        for i, name in ipairs(list) do if name == c.font then at = i end end
+        c.font = list[at % #list + 1]
+    end
 end
 
 local PAPER, INK = { 0.96, 0.93, 0.87 }, { 0.17, 0.14, 0.12 }
 
 local function drawText(c, sw)
-    local o = { size = c.size, boil = c.boil, jiggle = c.jiggle, seed = c.seed }
+    local o = { font = c.font, size = c.size, boil = c.boil, jiggle = c.jiggle, seed = c.seed }
     love.graphics.setColor(INK)
     lettering.draw(c.text, 40, 40, o)
     -- a title, centred, bigger
@@ -36,7 +43,7 @@ local function drawText(c, sw)
     local w = lettering.measure('The Bathhouse', o)
     lettering.draw('The Bathhouse', (sw - w) / 2, 60 + c.size * 1.4, o)
     -- a sign: a board with two lines on it
-    local sign = { size = c.size * 0.7, boil = c.boil, jiggle = c.jiggle, seed = c.seed + 7, align = 'center' }
+    local sign = { font = c.font, size = c.size * 0.7, boil = c.boil, jiggle = c.jiggle, seed = c.seed + 7, align = 'center' }
     local text = 'MIPO SHOP\nopen 9 - 5'
     local tw, th = lettering.measure(text, sign)
     local sx, sy = 60, 120 + c.size * 3.4
@@ -46,13 +53,13 @@ local function drawText(c, sw)
     lettering.draw(text, sx + 30, sy + 20, sign)
     -- the alphabet, small
     love.graphics.setColor(INK)
-    local small = { size = c.size * 0.45, boil = c.boil, jiggle = c.jiggle, seed = c.seed }
+    local small = { font = c.font, size = c.size * 0.45, boil = c.boil, jiggle = c.jiggle, seed = c.seed }
     lettering.draw('ABCDEFGHIJKLMNOPQRSTUVWXYZ\nabcdefghijklmnopqrstuvwxyz\n0123456789 !?.,:;\'"()+-=&@#%',
         sx + tw + 140, sy, small)
 end
 
-local function drawSheet(sw, sh)
-    local f = lettering.font()
+local function drawSheet(c, sw, sh)
+    local f = lettering.font(c.font)
     local iw, ih = f.image:getDimensions()
     local k = math.min((sw - 40) / iw, (sh - 40) / ih)
     love.graphics.setColor(INK)
@@ -64,18 +71,27 @@ function s.drawUI()
     local sw, sh = ui.getDimensions()
     love.graphics.setColor(PAPER)
     love.graphics.rectangle('fill', 0, 0, sw, sh)
-    if c.view == 'sheet' then drawSheet(sw, sh) else drawText(c, sw) end
+    if c.view == 'sheet' then drawSheet(c, sw, sh) else drawText(c, sw) end
     love.graphics.setColor(1, 1, 1)
     if not c.showPanel then return end
     ui.startFrame()
     local w, row = 380, 30
-    local h = row * 7 + 40
+    local h = row * 8 + 40
     local x0, y0 = sw - w - 16, sh - h - 16
     ui.panel(x0, y0, w, h, '•• lettering ••', function()
         local x, y, inner = x0 + 10, y0 + 36, w - 20
         local t = ui.textinput('lettering-text', x, y, inner, 26, 'text...', c.text)
         if t then c.text = t end
         y = y + row + 4
+        local fonts = lettering.FONTS
+        local bw = (inner - (#fonts - 1) * 4) / #fonts
+        for i, name in ipairs(fonts) do
+            local label = c.font == name and ('[' .. name .. ']') or name
+            if ui.button(x + (i - 1) * (bw + 4), y, bw, label, row - 6) then
+                c.font = name
+            end
+        end
+        y = y + row
         for _, sl in ipairs({ { 'size', 'size', 16, 160, 1 }, { 'boil', 'boil (fps)', 0, 15, 1 },
             { 'jiggle', 'jiggle', 0, 2, 0.05 } }) do
             ui.label(x, y + 5, sl[2])
@@ -89,7 +105,7 @@ function s.drawUI()
             c.view = c.view == 'text' and 'sheet' or 'text'
         end
         y = y + row
-        ui.label(x, y + 5, 'v view   r seed   h panel')
+        ui.label(x, y + 5, 'f font   v view   r seed   h panel')
     end)
 end
 

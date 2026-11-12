@@ -22,6 +22,12 @@ describe('lettering', function()
         assert.are.equal(0, #f.letters[' '].versions)
     end)
 
+    it('has windsor and cooper too', function()
+        for _, name in ipairs(lettering.FONTS) do
+            assert.are.equal(3, #lettering.font(name).letters.M.versions)
+        end
+    end)
+
     it('draws every letter but spaces', function()
         assert.are.equal(8, #drawn('Hola Mipo', {}))
     end)
@@ -72,6 +78,8 @@ describe('lettering', function()
         lettering.draw('MIPO SHOP\nopen 9 - 5', 30, 240, { size = 48, align = 'center', jiggle = 1 })
         lettering.draw('tiny text for a label, 24 px', 500, 260, { size = 24 })
         lettering.draw('fourteen px: Mipo walks', 500, 300, { size = 14 })
+        lettering.draw('Windsor: The Bathhouse', 30, 380, { size = 56, font = 'windsor' })
+        lettering.draw('Cooper: MIPO fridge', 30, 450, { size = 56, font = 'cooper' })
         love.graphics.setCanvas()
         love.graphics.pop()
         local file = io.open(path, 'wb')
