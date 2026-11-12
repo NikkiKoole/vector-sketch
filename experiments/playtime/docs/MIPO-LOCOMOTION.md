@@ -121,9 +121,10 @@ Baseline 2026-11-12 (before LO1): tilt 9-25°, seed 42 39°; seed 9 walks 1.4 le
   tried: stronger arm motors (gain 15-20, strength 3-5: the arms whirled, an upper arm sweeping
   200-355 degrees in a run); strength 1.5 (the arms' reaction rocked the body: run tilt worst 64);
   0.8 now (31). The run's arms at 55 degrees / stiffness 3 whirled once they had room behind: 40 / 2.
-  Open: with the arms swinging, three spec Mipos fall just short of a check each (motor seed 9 walks
-  1.2 of 1.5 legs left, as on master this morning; stop seed 5 drifts back and doesn't come still;
-  gaits seed 42 runs a little under 0.9 of its jog). For Nikki to look at.
+  Open then: with the arms swinging, three spec Mipos fell just short of a check each (motor seed 9,
+  stop seed 5, gaits seed 42); passing again since LO13's swing leg and walk glue. The jump's wind-up
+  arms at stiffness 3 (from 1.6: a Mipo coming out of a stop with its arms still forward didn't get
+  them back in the crouch's quarter second). For Nikki to look at.
 - [ ] **LO12. Skipping, and hop step jump** (Nikki 2026-11-12: "do you know hop step jump? and can we also
   add the hopping alternative, where you hop with one leg, the way small children do, hop one leg then
   the other"). Skipping is the 'skip' gait: a step onto a foot, a hop on it, a step onto the other, a
@@ -136,6 +137,46 @@ Baseline 2026-11-12 (before LO1): tilt 9-25°, seed 42 39°; seed 9 walks 1.4 le
   `spec/mipo-skip_spec.lua` (8 Mipos): skipping leaves the floor 7-13 times in 3.5 s, 6-13 of the
   landings on one foot, 3-6.5 legs; every triple jump goes run-up > hop > step > jump > land and
   ends standing, 1.7-4.1 legs from the hop on. Checked live. For Nikki to try.
+- [ ] **LO13. A walker that floats** (Nikki 2026-11-12: "the middle green one seems to almost float when
+  walking"). Found it in the spike (its DNA now `spec/fixtures/floaty-mipo.json`): long thin legs
+  (615 against 375-528), short arms, a light torso; off the floor 5-11% of a walk (the others 0),
+  26% with the old walk (`weighty` off): its build, not the new walk. Not the lobes (without them
+  12%), not its leg weight (lighter legs floated more), nothing touching the floor meanwhile. At the
+  moments it leaves the floor the swinging foot is coming down fast (up to 1264 px/s) mid-swing and
+  the standing foot hovers. Done: walking, the swinging leg's motors at `swingStrength` 0.35 of the
+  standing leg's (a loose swing; 8-9% -> 4-7%); `walkGlue` 0.2, a walker that's left the floor
+  doesn't go on rising (on the floor too it damped each step's push: walks fell short); with both,
+  every motor, stop, gaits, skate, skip, arms, jump and recover spec passes (the three LO11 Mipos
+  too), and live the three spike Mipos stayed on the floor. Still: `spec/mipo-float_spec.lua` has it
+  off the floor ~7% (it checks under 12%; the goal is 3%). tried: the swinging leg's muscles off
+  (every Mipo floated more); less knee give (4%, but runs vary 5-11%, so not clear); tucking the legs
+  later (`tuckAfter` 2: the same; with `tuckFall` 2, 3%); the glue on the floor too (0-3%, but the
+  walk slowed).
+  Then (Nikki: "if i just keep left pressed 2 of the 3 mipos end up just floating while making walking
+  movements"): not reproduced in the air (the old three's DNA, walk / jog / run / skip held left into a
+  wall 25 s: off the floor 0-7%, the skip 17%); but held left they all end at the wall, going nowhere
+  with their legs still stepping and the push still on, which reads as treading air. Now a Mipo walking
+  by itself that gets under `blockedSpeed` 0.15 of its speed for `blockedAfter` 0.6 s stands facing it
+  (`mipoWalk.blocked`), tries again after `blockedRetry` 1.5 s; the other way clears it. Not yet seen
+  by Nikki whether that was it (asked for a screenshot if they still float).
+  Next: watch the floaty one frame by frame (which leg, which motor, at what speed).
+- [ ] **LO14. Hopscotch** (hinkelen; Nikki 2026-11-12: "you know hopscotch, hinkelen, can you really figure
+  out the legs and arm movements for that one"). How it goes: a hop lands on the ball of the foot, the
+  knee gives 30-40 degrees (that's the next hop's anticipation), then knee and ankle push off over the
+  toes; the free leg is bent with the heel up behind (it never touches), swinging a little forward
+  with the push; the double squares land on both feet; at the end a jump turning round. The arms
+  balance and lift: back and down as the knee gives, forward and up with the push, out wide in the
+  air (elbows bent), forward on a two-feet landing; the torso a little forward, more in the give.
+  `mipoWalk.hopscotch(inst, pattern)` ('1' one foot, '2' both, 'T' the turn; `lib.HOPSCOTCH`
+  1 1 2 1 2 1 1 2 T 2 1 1 2 1 2 1 1), after it faces a side. Spike: `k`.
+  `spec/mipo-hopscotch_spec.lua` (8 Mipos): all play it through, out 2-4 legs and back near the start,
+  ending standing; 11-16 of 16 landings on the right feet (~88%; the shortest legs the fewest).
+  Found on the way: `mipoActions.isGrounded` counts any contact, the other foot's sensors too, so
+  hopscotch lands on `mipoWalk.onFloor` (something solid that isn't the Mipo). tried: the free leg's
+  thigh forward with the knee bent (the foot a third of a leg up: the standing knee's give put it on
+  the floor; now thigh behind, knee at the joint's 90, the heel up); folding the free leg only in the
+  air after a two-feet landing (still down at the landing: now it comes up in the give); hops of 0.22
+  and 0.34 legs (0.28 best). Checked live. For Nikki to try.
 - [ ] **LO2. Gravity compensation**, so the motors can be soft and the bob deeper (MM8).
 - [ ] **LO3. Steps by distance, the stride by leg length** (MM3's "stride by the leg's length").
   Tried 2026-11-12. The stride was already by leg length (2·L·sin 28°). Measured with a new count in

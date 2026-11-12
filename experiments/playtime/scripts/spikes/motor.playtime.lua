@@ -3,7 +3,7 @@
 -- hop) and its feet push it, only while one touches the floor. mipoActions.jump(inst, forward).
 -- keys: left/right (hold): walk, jog, run or hop that way   up: jump (the way it faces)   g: the next gait
 --       down (hold): squat (up from a squat: jump)   b: bump them (a shove each, to see them catch themselves)
---       t: hop, step and jump (a run-up, then the triple jump the way it faces)
+--       t: hop, step and jump (a run-up, then the triple jump the way it faces)   k: hopscotch (hinkelen)
 --       w: wander by themselves (on/off)   r: new Mipos   n: one more   p: pause   h: panel
 
 local s = {}
@@ -189,6 +189,7 @@ function s.onKeyPress(key)
     local c = check()
     if key == 'up' then jumpAll() end
     if key == 't' then each(function(inst) walk.tripleJump(inst) end) end -- hop, step and jump (LO12)
+    if key == 'k' then each(function(inst) walk.hopscotch(inst) end) end -- hopscotch (LO14)
     if key == 'b' then -- a shove each, either way, to see them catch themselves (MIPO-LOCOMOTION LO4b)
         each(function(inst)
             local torso = inst.parts.torso1.body

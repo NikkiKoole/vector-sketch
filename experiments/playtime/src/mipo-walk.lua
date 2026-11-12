@@ -83,6 +83,21 @@ local SWITCHES = {
     hipStrength = 1,   -- shares of the Mipo's weight held at a thigh's length (as mipo-stance's knees; was 0.6)
     kneeStrength = 0.5,
     motorGain = 12,    -- motor speed (rad/s) per radian off the pose
+    swingStrength = 0.35, -- walking, the swinging leg's motors at this share of the standing leg's (LO13; a
+                          -- skip's knee lift needs its full strength)
+    swingMuscles = true, -- false: the swinging leg's KEEP_ANGLE muscles off (its motors alone move it; tried:
+                         -- every Mipo floated more, bob doubled, so the muscles stay)
+    -- walked into something (a wall, another Mipo): hardly getting anywhere for blockedAfter seconds, it
+    -- stands facing it instead of stepping and pushing on the spot (legs walking, body still: it looked
+    -- like floating, Nikki 2026-11-12: "if i keep left pressed 2 of the 3 end up floating while making
+    -- walking movements"), and tries again after blockedRetry seconds (LO13)
+    blockedAfter = 0.6,
+    blockedRetry = 1.5,
+    blockedSpeed = 0.15, -- of the speed it wants: slower than that is not getting anywhere
+    tuckAfter = 0.3,   -- walking, seconds off the floor before the legs tuck (a jump, a fall)
+    tuckFall = 99,     -- or sooner, once going down faster than this many leg lengths a second
+    walkGlue = 0.2,    -- walking (the walk gait only), the weight's upward speed held to at most this many leg
+                       -- lengths a second (0: off): a game's cheat against a walker lifting off its feet
     hopRest = 0.12,    -- seconds on the ground between hops
     -- SIMBICON (docs/MIPO-LOCOMOTION.md LO1), weighty keyed walking by itself: the torso held at a world
     -- angle (walkLean) by the standing hip, its torque taken off the standing thigh (nothing from
@@ -157,6 +172,14 @@ local SWITCHES = {
     tripleHop = 0.35,
     tripleStep = 0.3,
     tripleJumpHeight = 0.45,
+    -- hopscotch (lib.hopscotch, the spike's k): one hop's height and length (leg lengths), a two-feet
+    -- landing's and the turn's height, how long a landing gives (and loads the next push)
+    hopscotchHop = 0.28, -- (0.22: the tucked foot touched more; 0.34: worse again)
+    hopscotchLength = 0.55,
+    hopscotchTwo = 0.26,
+    hopscotchTurn = 0.34,
+    hopscotchGive = 0.14,
+    hopscotchTuck = -15, -- degrees the free leg's thigh is forward of straight down (-: behind)
     -- the squat (lib.squat, the spike's down key)
     squatTime = 0.25,  -- seconds into the squat (and out)
     squatDepth = 1,    -- as jumpDepth: 1 thighs 50 degrees forward, knees 95 bent
@@ -261,6 +284,7 @@ function lib.drive(inst, speed, mode)
     local stepping = lib.stopStep and was and stepGait(wasMode) and inst._walking and not inst._jump
         and not inst._stop and (inst._goAt == nil or love.timer.getTime() - inst._goAt > lib.setOff)
     if speed and speed ~= 0 then
+        if was and was * speed < 0 then inst._blockedAt, inst._slowFor = nil, 0 end -- the other way: not blocked
         if stepping and was * speed < 0 then inst._stop = { at = love.timer.getTime(), phase = 'step' } end
         inst._drive, inst._driveMode = speed, mode or 'walk'
     else
@@ -270,8 +294,10 @@ function lib.drive(inst, speed, mode)
             inst._brakeUntil = love.timer.getTime() + lib.brakeFor
         end
         inst._drive, inst._driveMode = nil, nil
+        inst._blockedAt, inst._slowFor = nil, 0
     end
 end
+function lib.blocked(inst) return inst._blockedAt ~= nil end
 function lib.driving(inst) return inst._drive, inst._driveMode end
 
 -- one go, then it stops: n steps (counted once it faces its way), or one hop
@@ -1169,7 +1195,16 @@ local function stepLegs(inst, dt, speed, face, side, legLen, weighty)
         setGrip(inst, FEET[i], swinging[i] and SWING_GRIP or (weighty and lib.stanceGrip or STANCE_GRIP))
         local stanceFree = holding and lib.freeStance and not lib.torsoByMotor and not swinging[i] -- (holdTorso)
         if keyed and lib.legMotors then
-            legMotors(inst, i, thigh, shin)
+            if swinging[i] and lib.swingStrength ~= 1 and (inst._driveMode or 'walk') == 'walk' then
+                -- a swinging leg is loose: at the standing leg's strength, a long leg's foot that met the
+                -- floor mid-swing pushed off it and lifted the whole Mipo (it floated, Nikki 2026-11-12)
+                local hs, ks = lib.hipStrength, lib.kneeStrength
+                lib.hipStrength, lib.kneeStrength = hs * lib.swingStrength, ks * lib.swingStrength
+                legMotors(inst, i, thigh, shin)
+                lib.hipStrength, lib.kneeStrength = hs, ks
+            else
+                legMotors(inst, i, thigh, shin)
+            end
             if holding and lib.torsoByMotor and not swinging[i] then
                 torsoByHip(inst, i, face, legLen, thigh)
             elseif stanceFree then
@@ -1196,6 +1231,12 @@ local function stepLegs(inst, dt, speed, face, side, legLen, weighty)
             end
         end
         if lower then lower.angle, lower.enabled = shin, nil end
+        -- the swinging leg on its (weaker) motors alone: the muscles set a part's spin outright, so a foot
+        -- meeting the floor mid-swing pushed off with no limit (LO13)
+        if keyed and lib.legMotors and swinging[i] and lib.swingMuscles == false then
+            if upper then upper.enabled = false end
+            if lower then lower.enabled = false end
+        end
     end
     inst._stance = (not swinging[1]) and 1 or ((not swinging[2]) and 2 or inst._stance)
     if holding and not lib.torsoByMotor and inst._stance then holdTorso(inst, dt, face, inst._stance, legLen) end
@@ -1441,11 +1482,38 @@ local function updateDrive(inst, dt, now, torso, legLen)
         return
     end
     inst._hopFireAt = nil
-    if not grounded and now - (inst._groundAt or 0) > GROUND_GRACE then
-        legsTo(inst, face, 30, 45) -- off the ground a while (a jump, a fall): tucked
-        return
+    -- off the ground a while (a jump, a fall): tucked. Only once really falling (lib.tuckAfter seconds,
+    -- or going down fast): a long-legged walker whose feet left the floor a moment tucked its legs up
+    -- and hung there, feet off the floor (it floated, LO13)
+    local airFor = now - (inst._groundAt or 0)
+    if not grounded and airFor > GROUND_GRACE then
+        local _, vy = torso:getLinearVelocity()
+        if airFor > lib.tuckAfter or vy > lib.tuckFall * legLen then
+            legsTo(inst, face, 30, 45)
+            return
+        end
     end
     local vx = torso:getLinearVelocity()
+    -- blocked: going nowhere a while (a wall ahead), it stands facing it; tries again after a while
+    if lib.blockedAfter > 0 and grounded and faceDir == dir and not inst._stepsLeft then
+        local wants = math.abs(target)
+        if vx * dir < lib.blockedSpeed * wants and inst._goAt and now - inst._goAt > lib.setOff + 0.4 then
+            inst._slowFor = (inst._slowFor or 0) + dt
+        else
+            inst._slowFor = 0
+        end
+        if inst._blockedAt and now - inst._blockedAt > lib.blockedRetry then
+            inst._blockedAt, inst._slowFor = nil, 0 -- a try again
+        elseif (inst._slowFor or 0) > lib.blockedAfter and not inst._blockedAt then
+            inst._blockedAt = now
+        end
+        if inst._blockedAt then
+            if inst._walking then stopWalking(inst) end
+            inst._walking, inst._walkedAt = false, now
+            inst._goAt = now - lib.setOff -- back to walking without the set-off dip when it tries again
+            return
+        end
+    end
     if inst._stepsLeft and faceDir ~= dir then inst._gaitFrom = nil end -- steps count once it faces its way
     if inst._stepsLeft then inst._gaitFrom = inst._gaitFrom or (inst._gait or 0) end
     -- the steps go at the body's speed, but at most gaitCap times the speed it wants: faster legs carried
@@ -1454,6 +1522,13 @@ local function updateDrive(inst, dt, now, torso, legLen)
     local gaitSpeed = math.max(math.abs(target) * lib.gaitFloor, math.min(vx * dir, math.abs(target) * cap))
     local pushOff = stepLegs(inst, dt, gaitSpeed, face, faceDir ~= 0, legLen, lib.weighty)
     local g = gaitOf(inst)
+    -- the walk's glue (lib.walkGlue): a walker whose feet have all left the floor doesn't go on rising
+    -- (capping it on the floor too damped each step's push: three spec walks fell short)
+    if lib.walkGlue > 0 and inst._driveMode == 'walk' and not grounded then
+        local vy = centreVelocity(inst)
+        local most = lib.walkGlue * legLen
+        if -vy > most then torso:applyLinearImpulse(0, mipoRegistry.totalMass(inst) * (-vy - most)) end
+    end
     local accel = g.accel or 1
     if grounded then
         if lib.weighty and lib.pulse > 0 then
@@ -1532,7 +1607,7 @@ local function updateJump(inst, dt, now)
         jumpTorso(inst, swingDir, 22 * depth * x)
         jumpFeet(inst, face, 0)
         -- anticipation: the arms swing back (and the elbows a little bent) as the knees load
-        setArms(inst, face, -60 * x, 15 * x, 10 * x, 1.6)
+        setArms(inst, face, -60 * x, 15 * x, 10 * x, 3)
         if t >= lib.jumpCrouch + lib.jumpHold then j.phase, j.at = 'push', now end
         return true
     end
@@ -1883,6 +1958,7 @@ end
 -- a standing Mipo: should it step? (and starts it)
 local function maybeRecover(inst, now)
     if not lib.recoverStep or inst._drive or inst._walking or inst._jump or inst._stop or inst._squat or inst._triple
+        or inst._hopscotch
         or inst._recover or inst._noWalk or held(inst) or not mayWalk(inst) then return end
     -- standing a moment first: not straight after a walk, a squat, a jump or a step (rising from a squat
     -- shifts the weight enough to set it off)
@@ -2098,6 +2174,181 @@ local function updateTriple(inst, dt, now)
     return true
 end
 
+---------------------------------------------------------------- hopscotch (hinkelen)
+
+-- Hopscotch (Nikki 2026-11-12: "you know hopscotch, hinkelen, can you really figure out the legs and arm
+-- movements"), by a pattern: '1' a hop landing on one foot, '2' a jump landing on both (the double
+-- squares), 'T' a jump turning round, landing on both. Every landing gives (the knee 30-40 degrees, the
+-- torso a little forward, the arms back and down: loading) and is the next push's anticipation; the
+-- push straightens knee and ankle over the toes, the arms go forward and up with it; in the air the
+-- arms are out wide for balance, elbows bent. On one foot the other leg is tucked up behind (knee 100,
+-- its foot never touches), swinging a little forward at the push. lib.hopscotch(inst, pattern) after
+-- it faces a side; inst._hopscotch = { list, i, phase 'ready' | 'give' | 'air' | 'done', at, face, a }.
+lib.HOPSCOTCH = '1 1 2 1 2 1 1 2 T 2 1 1 2 1 2 1 1'
+
+function lib.hopscotch(inst, pattern)
+    if not (alive(inst) and mayWalk(inst)) or inst._hopscotch or inst._jump or inst._triple then return false end
+    local list = {}
+    for c in (pattern or lib.HOPSCOTCH):gmatch('%S') do list[#list + 1] = c end
+    if #list == 0 then return false end
+    local f = facing.dir(inst)
+    inst._squat, inst._recover = nil, nil
+    lib.drive(inst, nil)
+    inst._hopscotch = { list = list, i = 0, phase = 'ready', at = love.timer.getTime(), face = f ~= 0 and f or nil,
+        landed = '2' }
+    if f == 0 then lib.turnTo(inst, 'right') end
+    return true
+end
+function lib.hopscotching(inst) return inst._hopscotch ~= nil end
+
+local function endHopscotch(inst, now)
+    inst._hopscotch = nil
+    jumpTorso(inst, 0, nil)
+    setArms(inst, 0, nil)
+    inst._walkedAt = now
+    stopWalking(inst)
+    inst._walking = false
+end
+
+-- the legs: on = '1' (on leg a, the other tucked behind) or '2' (both); give 0..1 (knees bent as it
+-- lands), stretch (in the air: the landing leg(s) reaching, 0..1)
+local function hopscotchLegs(inst, face, a, on, give, stretch, tuckAll)
+    if tuckAll then -- the turn: both tucked
+        tripleLegs(inst, face, 30, 60, 30, 60, a, 1.4)
+        return
+    end
+    local standFwd = 12 * give + 10 * stretch
+    local standKnee = 38 * give + 15 * stretch
+    if on == '1' then
+        -- the free leg: thigh a little behind, knee bent all the way (the joint's 90), the heel kicked up
+        -- to the bottom; swinging a little forward with the push (stretch). Thigh forward with the knee
+        -- bent left the foot a third of a leg up: the standing knee's give put it on the floor
+        tripleLegs(inst, face, standFwd, standKnee, lib.hopscotchTuck + 10 * stretch, 90, a, 1.8)
+    else
+        tripleLegs(inst, face, standFwd + 4, standKnee, standFwd - 4, standKnee, a, 1.6)
+    end
+end
+
+-- a part touching something solid that isn't the Mipo itself (mipoActions.isGrounded counts any contact,
+-- sensors and the other foot too: a tucked foot brushing the standing one counted as down, and the
+-- feet touching each other in the air as a landing)
+local function onFloor(inst, name)
+    local body = partBody(inst, name)
+    if not body then return false end
+    for _, c in ipairs(body:getContacts()) do
+        if c:isTouching() then
+            local fa, fb = c:getFixtures()
+            local other = (fa:getBody() == body) and fb or fa
+            if not other:isSensor() then
+                local ud = other:getBody():getUserData()
+                local thing = ud and ud.thing
+                if not (thing and thing.mipoId == inst.id) then return true end
+            end
+        end
+    end
+    return false
+end
+lib.onFloor = onFloor
+
+local function updateHopscotch(inst, dt, now)
+    local hs = inst._hopscotch
+    local torso = partBody(inst, 'torso1')
+    local legLen = legLength(inst)
+    if not (torso and legLen) or held(inst) or not mayWalk(inst) or inst._jump or inst._drive then
+        endHopscotch(inst, now)
+        return false
+    end
+    local t = now - hs.at
+    if hs.phase == 'ready' then -- facing a side first
+        local f = facing.dir(inst)
+        if f == 0 or lib.isTurning(inst) then return false end -- standing, turning (updateWalk's frame)
+        hs.face, hs.a = f, inst._stance or 1
+        hs.phase, hs.at, hs.first = 'give', now, true
+        return true
+    end
+    inst._walking, inst._walkedAt = true, now
+    local face, a = hs.face, hs.a
+    local b = 3 - a
+    hipsBack(inst, face)
+    local _, gy = torso:getWorld():getGravity()
+    local g = math.max(math.abs(gy), 1)
+    if hs.phase == 'give' or hs.phase == 'done' then
+        -- landed: the knee(s) give and load; the first one (from standing) a longer wind-up
+        local dur = hs.first and lib.hopscotchGive * 1.8 or lib.hopscotchGive
+        local x = math.min(1, t / dur)
+        local give = math.sin(math.pi * math.min(1, x * 1.15)) -- down, and on its way up by the push
+        if hs.phase == 'done' then give = 1 - x end
+        local upNext = hs.phase == 'give' and hs.landed ~= '1' and hs.list[hs.i + 1] == '1'
+        if upNext and x > 0.5 then
+            -- from both feet onto one: the free foot comes up with the push, not after it (folding it in
+            -- the air alone, it was still on the floor at the landing)
+            local lift = (x - 0.5) / 0.5
+            local standFwd, standKnee = 12 * math.max(give, 0.15), 38 * math.max(give, 0.15)
+            tripleLegs(inst, face, standFwd, standKnee, standFwd + (lib.hopscotchTuck - standFwd) * lift,
+                standKnee + (90 - standKnee) * lift, a, 1.8)
+        else
+            hopscotchLegs(inst, face, a, hs.landed, math.max(give, 0.15), 0)
+        end
+        local feet = {}
+        feet[a] = -face * 90
+        feet[b] = hs.landed == '1' and -face * (90 - 30) or -face * 90 -- the tucked foot pointing down
+        holdFeet(inst, face, {}, feet)
+        setGrip(inst, FEET[a], lib.stopGrip)
+        setGrip(inst, FEET[b], hs.landed == '1' and SWING_GRIP or lib.stopGrip)
+        jumpTorso(inst, face, 6 + 8 * give)
+        setArms(inst, face, -25 * give + 10 * (1 - give), 30, 30 + 15 * give, 2)
+        push(inst, torso, 0, legLen, dt, 2) -- the landing stops it; the push gives the next speed
+        if hs.phase == 'done' and x >= 1 then endHopscotch(inst, now) return false end
+        if hs.phase == 'give' and x >= 1 then
+            hs.i, hs.first = hs.i + 1, nil
+            local next = hs.list[hs.i]
+            if not next then
+                hs.phase, hs.at = 'done', now
+                return true
+            end
+            -- the push: up to its height, forward to cover its length in the time up there
+            local h = (next == '1' and lib.hopscotchHop) or (next == '2' and lib.hopscotchTwo) or lib.hopscotchTurn
+            local up = math.sqrt(2 * g * h * legLen)
+            local flight = 2 * up / g
+            local fwd = next == 'T' and 0 or face * lib.hopscotchLength * legLen / flight
+            local mass = mipoRegistry.totalMass(inst)
+            local vx = torso:getLinearVelocity()
+            local vy = centreVelocity(inst)
+            torso:applyLinearImpulse(mass * (fwd - vx), -mass * math.max(0, up + vy))
+            if next == 'T' then -- round in the air: the other side
+                hs.face = -face
+                lib.turnTo(inst, hs.face > 0 and 'right' or 'left')
+            end
+            hs.next, hs.phase, hs.at = next, 'air', now
+        end
+        return true
+    end
+    -- in the air: arms out wide, elbows bent; the leg(s) it lands on reaching for the floor
+    local x = math.min(1, t / 0.25)
+    local on = hs.next == '1' and '1' or '2'
+    hopscotchLegs(inst, face, a, on, 0, 0.3 + 0.7 * x, hs.next == 'T' and x < 0.6)
+    local feet = {}
+    feet[a] = -face * (90 - 25 * (1 - x)) -- toes down off the push, flat for the landing
+    feet[b] = on == '1' and -face * (90 - 30) or -face * (90 - 25 * (1 - x))
+    holdFeet(inst, face, {}, feet)
+    setGrip(inst, FEET[b], on == '1' and SWING_GRIP or lib.stopGrip)
+    jumpTorso(inst, face, 8)
+    if hs.next == 'T' then
+        setArms(inst, face, 110 - 60 * x, 20, 120 - 70 * x, 2.5) -- up, then in as it comes round
+    else
+        setArms(inst, face, 60 - 30 * x, 35, 70 - 20 * x, 2)
+    end
+    -- landed: the foot it lands on (a '1'), either foot (a '2', a 'T') on the floor
+    local landedNow = onFloor(inst, FEET[a]) or (on == '2' and onFloor(inst, FEET[b]))
+    if t > 0.12 and landedNow then
+        hs.landed, hs.phase, hs.at = on, 'give', now
+    elseif t > 2.5 then
+        endHopscotch(inst, now)
+        return false
+    end
+    return true
+end
+
 local function updateWalk(inst, dt, now)
     if not mayWalk(inst) then
         stopWalking(inst)
@@ -2164,7 +2415,8 @@ function lib.update(dt)
     ranAt = now
     for _, inst in utils.sortedPairs(mipoRegistry.getAll()) do
         if alive(inst) then
-            if not (inst._triple and updateTriple(inst, dt, now))
+            if not (inst._hopscotch and updateHopscotch(inst, dt, now))
+                and not (inst._triple and updateTriple(inst, dt, now))
                 and not (inst._jump and updateJump(inst, dt, now))
                 and not (inst._stop and updateStop(inst, dt, now))
                 and not (inst._recover and updateRecover(inst, dt, now))
