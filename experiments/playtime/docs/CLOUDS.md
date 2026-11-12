@@ -128,6 +128,11 @@ steeply with cold), below evaporates. Pulled up past the point where it's warmer
   edge near the sun lit (silver lining). Slider 'light through cloud' (0 = the first light).
   First try was black inside a big heap (the overlapping field summed to ~25). 60 fps on the Mac
   with ~16 lobes; the hour's colours not yet (the spike has its own sky).
+- **Billows** (2026-11-12, Nikki: "i would like to see what you got for better cloud shapes"): painted
+  clouds came out as smooth potatoes (lobes melting into one blob). Domes packed in cells (a
+  jittered grid, each its own size) at two sizes, 230 m and 95 m: bumps on bumps push the outline
+  out and in, each dome lit on its own (bright towards the sun and on top, dark in the creases),
+  churning slowly upwards. Slider 'billows' (0 = smooth). Not yet seen by Nikki in play.
 - [ ] **CG5. Wind with height.** Faster wind higher up leans towers and stretches tops; the
       existing fling and shake become pushes on the thermals.
 - [ ] **CG6. On the iPhone SE 2** (`./playtime.sh bench device`), then: into the engine with the

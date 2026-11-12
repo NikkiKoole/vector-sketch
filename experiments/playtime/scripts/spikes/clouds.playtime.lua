@@ -66,7 +66,7 @@ local HILLS = {
 -- growing clouds (CG1): the air, how fast the sky's time runs (x real), the wind; the panel's
 -- 'defaults' puts these back
 local GROW_DEFAULTS = { groundT = 22, groundRH = 70, aloftRH = 45, lapse = 7.5, lidKm = 3.5, lidK = 4,
-    speed = 25, wind = 1, morph = 1, light = 2, cotton = 1, through = 1 }
+    speed = 25, wind = 1, morph = 1, light = 2, cotton = 1, through = 1, billows = 1 }
 
 local function clouds()
     local b = state.clouds or {}
@@ -651,6 +651,7 @@ uniform float light;
 uniform float cotton;
 uniform float smoke;           // 1: smoke (lobeBase is then each lobe's glow, no flat bottoms)
 uniform float through;         // 0 the first light (edges towards the sun) .. 1 light through the cloud
+uniform float billows;         // 0 smooth .. 1 cauliflower: domes on domes
 
 float h21(vec2 p) {
     p = fract(p * vec2(123.34, 456.21));
@@ -701,6 +702,26 @@ float field(vec2 p, float rag) {
     return field(p, rag, h);
 }
 
+// Billows: round domes packed in cells (a jittered grid, each cell a dome of its own size), the
+// height of the tallest one over p; two sizes summed: bumps on bumps, the cauliflower of a cumulus
+float dome(vec2 g) {
+    vec2 gi = floor(g);
+    float best = 0.0;
+    for (int j = -1; j <= 1; j++) {
+        for (int i = -1; i <= 1; i++) {
+            vec2 cell = gi + vec2(float(i), float(j));
+            vec2 c = cell + 0.5 + (vec2(h21(cell), h21(cell + 17.3)) - 0.5) * 0.7;
+            float d = length(g - c) / (0.6 + 0.35 * h21(cell + 3.1));
+            best = max(best, sqrt(max(0.0, 1.0 - d * d)));
+        }
+    }
+    return best;
+}
+// lp in metres; they churn slowly upwards
+float billow(vec2 lp, float t) {
+    return 0.62 * dome(lp / 230.0 + vec2(0.0, t * 0.025)) + 0.38 * dome(lp / 95.0 + vec2(5.3, t * 0.06));
+}
+
 // smoke: billowing, soft-edged, see-through where thin, dark in its thick middle, glowing hot
 vec4 smokeColour(vec2 sc, vec2 lp, float t) {
     float rag = fbm(vec2(lp.x / 320.0 + t * 0.06, lp.y / 260.0 - t * 0.08)) - 0.5;
@@ -732,7 +753,10 @@ vec4 effect(vec4 color, Image tex, vec2 uv, vec2 sc) {
     float rag = fbm(vec2(lp.x / 260.0 + t * 0.05, lp.y / 160.0 - t * 0.03)) - 0.5;
     float lumps = fbm(lp / 110.0 + t * 0.02) - 0.5;
     float F = field(sc, rag);
-    float E = F - 0.42 + rag * 0.22 + lumps * 0.12 * (0.4 + cotton);
+    // the domes push the outline out and in: a cauliflower edge, the noise's raggedness less
+    float H = billow(lp, t);
+    float E = F - 0.42 + rag * 0.22 * (1.0 - 0.6 * billows) + lumps * 0.12 * (0.4 + cotton) * (1.0 - billows)
+            + (H - 0.5) * 0.38 * billows;
     float dens = smoothstep(0.0, 0.22, E);
     if (dens <= 0.001) return vec4(0.0);
     float sh = 90.0 * pxPerM;
@@ -745,7 +769,15 @@ vec4 effect(vec4 color, Image tex, vec2 uv, vec2 sc) {
     lit -= light * clamp(Fu - 0.5, 0.0, 1.0) * 0.18;
     vec3 top = vec3(1.0, 1.0, 0.98);
     vec3 belly = mix(vec3(0.70, 0.79, 0.90), vec3(0.83, 0.82, 0.84), cotton);
+    // each dome lit on its own: brighter on the side towards the sun (where the domes fall away
+    // towards it) and on top, dark in the creases between them
+    if (billows > 0.001) {
+        float Hs = billow(lp + sunDir * 35.0, t);
+        float Hu = billow(lp + vec2(0.0, -35.0), t);
+        lit += billows * ((H - Hs) * 1.1 + (H - Hu) * 0.5);
+    }
     vec3 col = mix(belly, top, clamp(lit, 0.0, 1.0));
+    col *= mix(1.0, 0.8 + 0.2 * smoothstep(0.1, 0.8, H), billows);
     // CG4, light through the cloud: how much cloud lies between here and the sun (four steps of
     // 180 m towards it) and above (two of 270 m; each sample counts as at most solid cloud: where
     // many lobes overlap the field adds up past 1, the cloud doesn't get denser for it); the sun's
@@ -1231,6 +1263,7 @@ local function drawGrown(b, w, h, cx, cy, scale)
     grownShader:send('sunPos', { SUN[1] * w * dpi, SUN[2] * h * dpi })
     local shift = LIGHT_REACH * k -- the shader's light samples, this far towards the sun and up
     grownShader:send('through', b.settings.through)
+    grownShader:send('billows', b.settings.billows)
     -- the lobes that reach into a rectangle: as far as their field still shows (1.9 radii; at
     -- 1.3 the cut showed as a faint line), plus the light samples' shift
     local function reaching(list, x0, y0, x1, y1)
@@ -1661,7 +1694,7 @@ function s.drawUI()
     local b = state.clouds
     if not (b and state.playMode and b.showPanel) then return end
     ui.startFrame()
-    local BH, pad, w = 36, 8, 400
+    local BH, pad, w = b.grow and 30 or 36, 8, 400 -- (the grow panel has more rows)
     local rows = {
         { 'wind', -3, 3 }, { 'morph', 0, 4 }, { 'strokes', 0, 2 },
         { 'grain', 0, 2 }, { 'light', 0, 2 }, { 'cotton', 0, 1 },
@@ -1674,7 +1707,8 @@ function s.drawUI()
             { 'aloftRH', 10, 100, 1, 'humidity up high %' }, { 'lapse', 4, 10, nil, 'cools °C per km' },
             { 'lidKm', 1, 10, nil, 'lid km' }, { 'lidK', 0, 8, nil, 'lid warmer °C' },
             { 'speed', 1, 200, 1, 'time x real' }, { 'wind', -3, 3 }, { 'morph', 0, 4, nil, 'breathing' },
-            { 'light', 0, 2 }, { 'through', 0, 1, nil, 'light through cloud' }, { 'cotton', 0, 1 },
+            { 'light', 0, 2 }, { 'through', 0, 1, nil, 'light through cloud' },
+            { 'billows', 0, 1 }, { 'cotton', 0, 1 },
         }
     end
     local h = (BH + pad) * (#rows + (b.grow and 4 or 3)) + pad + 24
