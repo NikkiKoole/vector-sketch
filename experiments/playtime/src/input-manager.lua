@@ -501,6 +501,9 @@ local function handlePointer(x, y, id, action, button)
         -- a press on a panel is the panel's: it doesn't reach the world behind it (Nikki 2026-11-11: clicking
         -- a button also started dragging the thing under it). Before, it only kept the selection on release.
         if state.interaction.pressedOverUI then return end
+        -- a press on the stage with the scenes tab open goes back to properties (Nikki 2026-11-12: "when i
+        -- have scenes ui open and click stage i'd like to go back to properties, of nothing or selected item")
+        if state.rightColumn and state.rightColumn.tab == 'scenes' then state.rightColumn.tab = 'properties' end
         -- this is a nice pattern, early return!
         if modes.is(modes.EDIT_MESH_TRIS) then return end
 
