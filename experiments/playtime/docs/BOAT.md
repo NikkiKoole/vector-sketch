@@ -40,6 +40,10 @@ The same sea, sky, smoke, fish and buoy; the boat built from planks with the dra
   water dips or lifts the surface there, which springs back fast and spreads as ripples (springy
   columns every 20 units, in the water's own x so they drift back with the travel). Only the Mipos'
   layer (3) and the front layer just in front of them (4, at 0.7); the *splash* slider, 0 off.
+- **The fish are alive** (2026-11-12, for fun): a swimming wave down the drawing to the tail (a
+  vertex shader; faster and wider the faster it swims), a cruise speed and depth they change now and
+  then, darts, turns round through flat, the nose tilted where it's heading, and they bolt from a
+  Mipo part in the water within 380 units.
 
 ## Left, if picked up
 

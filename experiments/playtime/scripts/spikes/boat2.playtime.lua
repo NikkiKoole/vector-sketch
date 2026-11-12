@@ -538,6 +538,41 @@ function s.onKeyPress(key)
 end
 
 
+-- A fish alive (Nikki 2026-11-12: "make the fish seem alive", for fun): it cruises at a speed it
+-- changes now and then, sometimes darts or turns round (its facing eases through flat, a flip),
+-- drifts to a new depth, and bolts away from a Mipo part in the water near it. Its tail beats
+-- faster and wider the faster it swims (drawFish bends the drawing).
+local FISH_TOP, FISH_BOTTOM = 200, 560 -- the depths they keep to
+local FISH_FLEE = 380                 -- a Mipo part in the water nearer than this scares them
+local function swimFish(f, wet, dt)
+    f.face, f.sp, f.phase = f.face or f.dir, f.sp or f.speed, f.phase or 0
+    f.cruise, f.ty, f.vy = f.cruise or f.speed, f.ty or f.y, f.vy or 0
+    f.think, f.dart = (f.think or rnd(0.5, 3)) - dt, math.max(0, (f.dart or 0) - dt)
+    if f.think <= 0 then
+        f.think = rnd(1.5, 4)
+        local r = love.math.random()
+        if r < 0.15 then f.dir = -f.dir elseif r < 0.35 then f.dart = rnd(0.3, 0.6) end
+        f.cruise = rnd(30, 140)
+        f.ty = math.max(FISH_TOP, math.min(FISH_BOTTOM, f.y + rnd(-120, 120)))
+    end
+    for i = 1, #wet, 2 do
+        local dx, dy = f.x - wet[i], f.y - wet[i + 1]
+        if dx * dx + dy * dy < FISH_FLEE * FISH_FLEE then
+            f.dir = dx < 0 and -1 or 1
+            f.dart = math.max(f.dart, 0.7)
+            f.ty = math.max(FISH_TOP, math.min(FISH_BOTTOM, f.y + (dy < 0 and -150 or 150)))
+            break
+        end
+    end
+    local target = f.cruise * (f.dart > 0 and 4 or 1)
+    f.sp = f.sp + (target - f.sp) * math.min(1, dt * (f.dart > 0 and 6 or 1.5))
+    f.face = f.face + (f.dir - f.face) * math.min(1, dt * 6)
+    f.vy = f.vy + ((f.ty - f.y) * 1.5 - f.vy) * math.min(1, dt * 2)
+    f.y = f.y + f.vy * dt
+    f.phase = f.phase + dt * (5 + f.sp * 0.06)
+    f.amp = math.min(12, 3 + f.sp * 0.03)
+end
+
 function s.update(dt)
     local b = state.boat2
     if not b or dt <= 0 or worldState.paused then return end
@@ -568,6 +603,7 @@ function s.update(dt)
     b.mipos = aliveMipos(b)
     local rip = ripples(b)
     local rh, rv = rip.h, rip.v
+    local wet = {} -- Mipo parts under the surface (x, y pairs), for the fish to flee
     for _, inst in ipairs(b.mipos) do
         for _, body in ipairs(partBodies(inst)) do
             local m = body:getMass()
@@ -586,6 +622,8 @@ function s.update(dt)
                 rv[i % RIP_N + 1] = rv[i % RIP_N + 1] + push * 0.5
             end
             if depth > 0 then
+                wet[#wet + 1] = px
+                wet[#wet + 1] = py
                 local vx, vy = body:getLinearVelocity()
                 local up = m * g * math.min(depth / 80, 1.6) * set.float
                 local flow = -b.speed * SCROLL
@@ -625,11 +663,14 @@ function s.update(dt)
 
     -- fish swim both ways; the travel carries them back; past the edge they come round again
     for _, f in ipairs(b.fish) do
-        f.x = f.x + (f.dir * f.speed - b.speed * SCROLL) * dt
+        swimFish(f, wet, dt)
+        f.x = f.x + (f.face * f.sp - b.speed * SCROLL) * dt
         if f.x < -2200 or f.x > 2200 then
             f.dir = f.x < 0 and 1 or -1
+            f.face = f.dir
             f.x = f.x < 0 and -2100 or 2100
             f.y = rnd(260, 520)
+            f.ty = f.y
         end
     end
     for _, c in ipairs(b.clouds) do
@@ -675,13 +716,42 @@ local function drawBoat(b, front)
     end
 end
 
+-- the fish drawing bent by its swimming: a wave running from the head (left, x < 0 in the drawings)
+-- to the tail, the head stiff and the tail swinging most (swimFish's phase and amp)
+local fishShader
+local function getFishShader()
+    if fishShader == nil then
+        local ok, sh = pcall(love.graphics.newShader, [[
+            uniform float phase;
+            uniform float amp;
+            vec4 position(mat4 transform_projection, vec4 vertex_position) {
+                float w = clamp((vertex_position.x + 30.0) / 70.0, 0.0, 1.0);
+                vertex_position.y += sin(vertex_position.x * 0.08 - phase) * amp * w * w;
+                return transform_projection * vertex_position;
+            }
+        ]])
+        fishShader = ok and sh or false
+    end
+    return fishShader
+end
+
 local function drawFish(b, d)
+    local shader = getFishShader()
+    local before = love.graphics.getShader()
     for _, f in ipairs(b.fish) do
+        local face = f.face or f.dir
+        local pitch = math.max(-0.5, math.min(0.5, math.atan2(f.vy or 0, math.max(40, f.sp or f.speed))))
         love.graphics.push()
-        love.graphics.translate(f.x, f.y + math.sin(b.time * 2 + f.wiggle) * 8)
-        love.graphics.rotate(math.sin(b.time * 3 + f.wiggle) * 0.08)
-        love.graphics.scale(-f.dir * f.size, f.size) -- the drawings swim left
+        love.graphics.translate(f.x, f.y)
+        love.graphics.rotate(pitch * (face < 0 and -1 or 1)) -- nose toward where it's heading
+        love.graphics.scale(-face * f.size, f.size) -- the drawings swim left
+        if shader then
+            shader:send('phase', f.phase or 0)
+            shader:send('amp', f.amp or 4)
+            love.graphics.setShader(shader)
+        end
         drawShape(d.fish[f.kind], 0.9)
+        love.graphics.setShader(before)
         love.graphics.pop()
     end
 end
