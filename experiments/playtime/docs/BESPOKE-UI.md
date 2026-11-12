@@ -39,6 +39,15 @@ pad's only if it starts on it; a drag carries on outside it. In scene scripts as
 - [ ] **BU3. Face handles**: the Mipo editor's face panel is 27 sliders (eye spacing, height, size,
       pupils, brows, nose, mouth, teeth). A small face to drag the eyes on (move: spacing and height;
       a corner: size), the same for brows, nose and mouth. The biggest one, and the Puppetmaker way.
+      **Built 2026-11-12, Nikki to try** — on the Mipo itself rather than a small copy
+      (`src/ui/mipo/face-handles.lua`): while the editor's face section is open, each eye, brow, the
+      nose and the mouth get a frame, a dot in the middle (drag: move; eyes: spacing and height
+      together, both eyes as one; brows, nose, mouth: up and down) and a square on the corner (drag:
+      size). The same values the sliders set, so they follow. Where the features are comes from
+      `mipo-textures.faceLayout` (the face box taken out of addFaceDecals, so the handles sit where the
+      pictures are: checked on a live Mipo, eye, brow and nose to the decimal). A press on a handle is
+      the handle's (ui.overPanel), not a drag of the head. Seen in a screenshot, the drag not tried by
+      Claude (no mouse over the bridge). Not yet: pupils, rotation, teeth.
 - [ ] **BU4. Body handles**: the body panel's 21 sliders as handles on a silhouette.
 - [ ] **BU5. The clouds' air as a chart**: height against temperature; drag the air's line and the lid's
       bump, the cloud base and the take-off height show where the lines cross (CLOUDS.md CG1's six sliders).

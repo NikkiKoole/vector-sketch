@@ -8,6 +8,7 @@ local widgets = require('src.ui.mipo.widgets')
 local bodyPanel = require('src.ui.mipo.body-panel')
 local lookPanel = require('src.ui.mipo.look-panel')
 local facePanel = require('src.ui.mipo.face-panel')
+local faceHandles = require('src.ui.mipo.face-handles')
 local ui = widgets.ui
 local accordionStates = widgets.accordionStates
 
@@ -63,6 +64,9 @@ function lib.drawMipoEditor(instance, partName, panelX, panelY, panelWidth, pane
 
         return y - startY
     end)
+    -- the face's handles on the Mipo itself while its face section is open (BESPOKE-UI BU3), after
+    -- the list (it clips to itself)
+    if partName and widgets.isOpen(partName .. ' face') then faceHandles.draw(instance) end
 end
 
 lib._test = { accordionStates = accordionStates, -- for specs

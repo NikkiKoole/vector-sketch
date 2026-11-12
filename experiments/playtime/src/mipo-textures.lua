@@ -448,13 +448,8 @@ local function placeMouth(body, face, box)
     addDecal(body, 'teeth', part)
 end
 
--- Eyes, pupils, brows, nose and mouth, on the head (or torso1 on a potato head), placed by
--- the face's positioners within the head shape's box.
-local function addFaceDecals(body, partName, partData, faceData, instance, scale)
-    local faceOwner = instance.dna.creation.isPotatoHead and 'torso1' or 'head'
-    if partName ~= faceOwner or not (partData.shape8URL and shape8Dict[partData.shape8URL]) then return end
-    D.ensureDefaults(faceData, D.face)
-
+-- The head shape's box (body-local) and where the eyes go in it, from the face's positioners.
+local function faceBox(partData, faceData, instance, scale)
     local verts = makeTransformedVertices(shape8Dict[partData.shape8URL].vertices,
         (partData.dims.sx or 1) * scale, (partData.dims.sy or 1) * scale)
     -- a spine's torso1 (potato head): the face is on the whole torso, like its picture
@@ -472,11 +467,62 @@ local function addFaceDecals(body, partName, partData, faceData, instance, scale
     box.leftEyeX = lerp(box.leftX, box.rightX, 0.5 - eyePos.x)
     box.rightEyeX = lerp(box.leftX, box.rightX, 0.5 + eyePos.x)
     box.eyeY = lerp(box.topY, box.botY, eyePos.y)
+    return box
+end
+
+-- Eyes, pupils, brows, nose and mouth, on the head (or torso1 on a potato head), placed by
+-- the face's positioners within the head shape's box.
+local function addFaceDecals(body, partName, partData, faceData, instance, scale)
+    local faceOwner = instance.dna.creation.isPotatoHead and 'torso1' or 'head'
+    if partName ~= faceOwner or not (partData.shape8URL and shape8Dict[partData.shape8URL]) then return end
+    D.ensureDefaults(faceData, D.face)
+    local box = faceBox(partData, faceData, instance, scale)
 
     placeEyes(body, faceData, box)
     placeBrows(body, faceData, box)
     placeNose(body, faceData, box)
     placeMouth(body, faceData, box)
+end
+
+-- Where the face's features sit on its owner's body (body-local), as addFaceDecals places them:
+-- for each a middle and a half width / height. For the editor's face handles (BESPOKE-UI BU3).
+-- nil when the Mipo has no drawn face.
+function lib.faceLayout(instance)
+    local owner = instance.dna.creation.isPotatoHead and 'torso1' or 'head'
+    local partData, part = instance.dna.parts[owner], instance.parts[owner]
+    if not (partData and part and part.body and not part.body:isDestroyed()) then return nil end
+    local face = partData.appearance and partData.appearance.face
+    if not (face and partData.shape8URL and shape8Dict[partData.shape8URL]) then return nil end
+    D.ensureDefaults(face, D.face)
+    local box = faceBox(partData, face, instance, instance.scale)
+    local fm = box.fm
+    local out = { owner = owner, body = part.body, box = box, face = face }
+    local eyeHW = box.headW * lib.EYE_UNIT * fm * face.eye.wMul / 2
+    local eyeHH = box.headH * lib.EYE_UNIT * fm * face.eye.hMul / 2
+    out.rightEye = { x = box.rightEyeX, y = box.eyeY, hw = eyeHW, hh = eyeHH }
+    out.leftEye = { x = box.leftEyeX, y = box.eyeY, hw = eyeHW, hh = eyeHH }
+    local browY = lerp(box.topY, box.botY, face.positioners.brow.y)
+    local browHW = box.headW * lib.BROW_UNIT_W * face.brow.wMul * fm / 2
+    local browHH = box.headH * lib.BROW_UNIT_H * face.brow.hMul * fm / 2
+    out.rightBrow = { x = box.rightEyeX, y = browY, hw = browHW, hh = browHH }
+    out.leftBrow = { x = box.leftEyeX, y = browY, hw = browHW, hh = browHH }
+    if face.nose.shape > 0 then
+        out.nose = { x = (box.leftX + box.rightX) / 2, y = lerp(box.topY, box.botY, face.positioners.nose.y),
+            hw = box.headW * 0.15 * face.nose.wMul * fm / 2, hh = box.headH * 0.15 * face.nose.hMul * fm / 2 }
+    end
+    local mouthShape = mouthShapes.normalized[face.mouth.shape]
+    if mouthShape then
+        local mx, my = (box.leftX + box.rightX) / 2, lerp(box.topY, box.botY, face.positioners.mouth.y)
+        local sx = box.headW * lib.MOUTH_UNIT * face.mouth.wMul * fm
+        local sy = box.headH * lib.MOUTH_UNIT * face.mouth.hMul * fm
+        local x0, x1, y0, y1 = math.huge, -math.huge, math.huge, -math.huge
+        for ci = 1, 16, 2 do
+            local px, py = mouthShape.points[ci] * sx, mouthShape.points[ci + 1] * sy
+            x0, x1, y0, y1 = math.min(x0, px), math.max(x1, px), math.min(y0, py), math.max(y1, py)
+        end
+        out.mouth = { x = mx + (x0 + x1) / 2, y = my + (y0 + y1) / 2, hw = (x1 - x0) / 2, hh = (y1 - y0) / 2 }
+    end
+    return out
 end
 
 function lib.rebuildTextures(instance)
