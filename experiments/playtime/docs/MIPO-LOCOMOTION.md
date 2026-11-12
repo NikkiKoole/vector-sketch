@@ -90,7 +90,7 @@ Baseline 2026-11-12 (before LO1): tilt 9-25°, seed 42 39°; seed 9 walks 1.4 le
   of 1.3: the torso runs ahead of the legs it drags). Kept (Nikki 2026-11-12: "ok pretty good").
 - [ ] **LO2. Gravity compensation**, so the motors can be soft and the bob deeper (MM8).
 - [ ] **LO3. Steps by distance, the stride by leg length** (MM3's "stride by the leg's length").
-- [ ] **LO4. Capture point**: stop in a step, turn round (MM4), a recovery step when bumped.
+- [x] **LO4. Capture point**: stop in a step, turn round (MM4), a recovery step when bumped.
   Built 2026-11-12 (stopping and turning; the recovery step not yet, LO4b). Told to stop, a walking
   Mipo facing a side takes the stopping step (`stopStep`): the leg that isn't standing steps to the
   capture point (x + v·√(h/g), at most `stopReach` 0.75 legs ahead), lifted mid-way and heel first,
@@ -118,7 +118,7 @@ Baseline 2026-11-12 (before LO1): tilt 9-25°, seed 42 39°; seed 9 walks 1.4 le
   (toes up 45°, swapped, down) ran at both switches, and the first foot's turn began a frame before
   the step-turn flag was set. Now a step-turn's foot turns in the air without the lean, and a Mipo
   walking by itself always turns its feet as steps (checked live: both feet `step`, two turns).
-  For Nikki to try.
+  Kept (Nikki 2026-11-12: "ok great"). The recovery step is LO4b.
 - [ ] **LO4b. The recovery step**: a standing Mipo pushed or bumped steps toward its capture point
   instead of tipping over.
 - [ ] **LO5. Raibert hop**: hops even and steerable, landing where it means to.

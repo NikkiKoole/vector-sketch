@@ -50,7 +50,7 @@ Methods from games and robotics for these (SIMBICON, capture point, Raibert, foo
 - [ ] **MM3. Tall Mipos rock.** A long-legged one (spec seed 42) rocks ~60° forward and back as it
   walks: its torso lurches with each step (torso speed 350 <-> 800 px/s at 450). Not the push's
   strength nor a torso muscle; next try: stride by the leg's length, or the stance foot's grip.
-- [ ] **MM4. Turning on the spot.** Reversing is a brake, a keyed turn and a slow start; a little
+- [x] **MM4. Turning on the spot.** Done 2026-11-12 as MIPO-LOCOMOTION LO4 (the stopping step, the step-turn). Reversing is a brake, a keyed turn and a slow start; a little
   turn-step (or a hop round) may read better.
 - [ ] **MM5. Steps and slopes.** Only flat floors so far; a step up wants a higher swing or a hop.
 - [ ] **MM6. Goals instead of directions**: walk to a point / a Mipo / a door (DOORS, worlds).
