@@ -95,6 +95,43 @@ function lib.remove(instance)
     state.kindInstances[instance.id] = nil
 end
 
+-- Made again with new settings (another type, size): the same instance and id, in the same place (its
+-- `anchor` part, the kind's or the first by name, where it was), upright. A part selected before is
+-- selected again by its name. Changes made to its bodies in the workshop since are lost (they're the
+-- kind's again). Returns the instance, or nil (the old bodies stay when the new ones can't be made).
+function lib.rebuild(instance, settings)
+    local kind = lib.kindOf(instance.kind)
+    if not kind then return nil end
+    local function anchorOf(parts)
+        if kind.anchor and parts[kind.anchor] then return parts[kind.anchor] end
+        local names = {}
+        for name in pairs(parts) do names[#names + 1] = name end
+        table.sort(names)
+        return parts[names[1]]
+    end
+    local old = anchorOf(instance.parts)
+    if not (old and alive(old.body)) then return nil end
+    local ox, oy = old.body:getPosition()
+    local parts = kind.make(settings, 0, 0)
+    if not parts then return nil end
+    local sel = state.selection
+    local selectedName = sel.selectedObj and sel.selectedObj.kindId == instance.id and sel.selectedObj.kindPart
+    local objectManager = require('src.object-manager')
+    for _, body in ipairs(lib.bodies(instance)) do
+        require('src.physics.snap').destroySnapJointAboutBody(body)
+        objectManager.destroyBody(body)
+    end
+    instance.settings, instance.parts = settings, {}
+    local nx, ny = anchorOf(parts).body:getPosition()
+    for partName, thing in pairs(parts) do
+        local x, y = thing.body:getPosition()
+        thing.body:setPosition(x + ox - nx, y + oy - ny)
+        tag(instance, partName, thing)
+    end
+    if selectedName and instance.parts[selectedName] then sel.selectedObj = instance.parts[selectedName] end
+    return instance
+end
+
 -- every instance with a live part
 function lib.all()
     local list = {}

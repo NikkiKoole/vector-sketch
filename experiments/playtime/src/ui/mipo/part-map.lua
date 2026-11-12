@@ -10,6 +10,7 @@
 local lib = {}
 
 local ui = require('src.ui.all')
+local mathutils = require('src.math-utils')
 local theme = ui.theme
 
 local BODY_H = 204
@@ -32,7 +33,18 @@ local function distToSeg(px, py, x1, y1, x2, y2)
     return math.sqrt((px - cx) ^ 2 + (py - cy) ^ 2)
 end
 
+local function insidePolygon(points, px, py)
+    local inside, j = false, #points - 1
+    for i = 1, #points, 2 do
+        local xi, yi, xj, yj = points[i], points[i + 1], points[j], points[j + 1]
+        if (yi > py) ~= (yj > py) and px < (xj - xi) * (py - yi) / (yj - yi) + xi then inside = not inside end
+        j = i
+    end
+    return inside
+end
+
 local function hits(z, mx, my)
+    if z.kind == 'poly' then return insidePolygon(z.points, mx, my) end
     if z.kind == 'circle' then return (mx - z.x) ^ 2 + (my - z.y) ^ 2 <= (z.r + 2) ^ 2 end
     if z.kind == 'seg' then return distToSeg(mx, my, z.x1, z.y1, z.x2, z.y2) <= z.r + 2 end
     if z.kind == 'rect' then return mx >= z.x and mx <= z.x + z.w and my >= z.y and my <= z.y + z.h end
@@ -41,7 +53,17 @@ local function hits(z, mx, my)
 end
 
 local function shape(z, mode)
-    if z.kind == 'circle' then
+    if z.kind == 'poly' then
+        if mode == 'fill' and #z.points > 6 then
+            -- a concave outline (a tray) filled as triangles: polygon('fill') takes it as convex
+            local ok, tris = pcall(love.math.triangulate, z.points)
+            if ok then
+                for _, tri in ipairs(tris) do love.graphics.polygon('fill', tri) end
+                return
+            end
+        end
+        love.graphics.polygon(mode, z.points)
+    elseif z.kind == 'circle' then
         love.graphics.circle(mode, z.x, z.y, z.r)
     elseif z.kind == 'seg' then
         if mode == 'fill' then
@@ -189,6 +211,73 @@ function lib.drawBody(id, x, y, w, partNames, selected, opts)
     local zones = bodyZones(x, y, w, has)
     local isLit = (opts and opts.isLit) or function(name) return name == selected end
     return drawZones(id, zones, isLit, x, y, w, BODY_H), BODY_H
+end
+
+-- === ANY INSTANCE, FROM ITS OWN SHAPES ===
+-- A kind's instance (src/kinds.lua) drawn from its parts' collision shapes, upright with its anchor
+-- body (as if that stood straight), fitted into the box: a vehicle's frame and wheels to tap.
+-- parts: { [name] = thing }. Returns the picked part's name or nil, the height used.
+local SHAPES_H = 120
+
+function lib.drawShapes(id, x, y, w, parts, selected, anchorBody)
+    local zones, minX, minY, maxX, maxY = {}, math.huge, math.huge, -math.huge, -math.huge
+    local function grow(px, py)
+        minX, minY, maxX, maxY = math.min(minX, px), math.min(minY, py), math.max(maxX, px), math.max(maxY, py)
+    end
+    local names = {}
+    for name in pairs(parts) do names[#names + 1] = name end
+    table.sort(names, function(a, b) return a == 'frame' or (b ~= 'frame' and a < b) end) -- the frame first
+    local raw = {}
+    for _, name in ipairs(names) do
+        local thing = parts[name]
+        local body = thing.body
+        local outline = thing.shapeType ~= 'circle' and thing.vertices
+        if body and not body:isDestroyed() and outline and #outline >= 6 then
+            -- its outline, one shape (the fixtures of a concave one are its pieces): body-local is the
+            -- vertices less their centroid, as the body uses them
+            local mx, my = mathutils.computeCentroid(outline)
+            local pts = {}
+            for i = 1, #outline, 2 do
+                local px, py = anchorBody:getLocalPoint(body:getWorldPoint(outline[i] - mx, outline[i + 1] - my))
+                pts[#pts + 1], pts[#pts + 2] = px, py
+                grow(px, py)
+            end
+            raw[#raw + 1] = { name = name, kind = 'poly', points = pts }
+        elseif body and not body:isDestroyed() then
+            for _, fixture in ipairs(body:getFixtures()) do
+                if fixture:getUserData() == nil then
+                    local sh = fixture:getShape()
+                    if sh:type() == 'PolygonShape' then
+                        local pts = { body:getWorldPoints(sh:getPoints()) }
+                        for i = 1, #pts, 2 do
+                            pts[i], pts[i + 1] = anchorBody:getLocalPoint(pts[i], pts[i + 1])
+                            grow(pts[i], pts[i + 1])
+                        end
+                        raw[#raw + 1] = { name = name, kind = 'poly', points = pts }
+                    elseif sh:type() == 'CircleShape' then
+                        local cx, cy = anchorBody:getLocalPoint(body:getWorldPoint(sh:getPoint()))
+                        local r = sh:getRadius()
+                        grow(cx - r, cy - r); grow(cx + r, cy + r)
+                        raw[#raw + 1] = { name = name, kind = 'circle', x = cx, y = cy, r = r }
+                    end
+                end
+            end
+        end
+    end
+    if #raw == 0 then return nil, 0 end
+    local pad = 10
+    local k = math.min((w - 2 * pad) / math.max(1, maxX - minX), (SHAPES_H - 2 * pad) / math.max(1, maxY - minY))
+    local ox = x + w / 2 - (minX + maxX) / 2 * k
+    local oy = y + SHAPES_H / 2 - (minY + maxY) / 2 * k
+    for _, z in ipairs(raw) do
+        if z.kind == 'poly' then
+            for i = 1, #z.points, 2 do z.points[i], z.points[i + 1] = ox + z.points[i] * k, oy + z.points[i + 1] * k end
+        else
+            z.x, z.y, z.r = ox + z.x * k, oy + z.y * k, math.max(4, z.r * k)
+        end
+        zones[#zones + 1] = z
+    end
+    return drawZones(id, zones, function(name) return name == selected end, x, y, w, SHAPES_H), SHAPES_H
 end
 
 -- === THE FACE ===

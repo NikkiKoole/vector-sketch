@@ -94,6 +94,44 @@ describe('kinds', function()
         assert.are.equal(0, #kinds.all())
     end)
 
+    it('makes each of the four types, a frame and two wheels', function()
+        for _, name in ipairs(require('src.vehicles').order) do
+            local v = kinds.make('vehicle', { type = name }, 0, 0)
+            assert.is_not_nil(v, name)
+            assert.are.equal(3, partCount(v), name)
+            assert.are.equal(name, v.parts.frame.label)
+        end
+    end)
+
+    it('is made again in place with new settings: the same id, where it was, its part still selected', function()
+        local kart = kinds.make('vehicle', { type = 'kart' }, 300, 50)
+        local id = kart.id
+        local fx, fy = kart.parts.frame.body:getPosition()
+        local oldWheel = kart.parts.frontWheel.body
+        state.selection.selectedObj = kart.parts.frontWheel
+        local again = kinds.rebuild(kart, { type = 'banana', size = 1.4 })
+        assert.are.equal(kart, again)
+        assert.are.equal(id, again.id)
+        assert.are.equal('banana', again.settings.type)
+        assert.is_true(oldWheel:isDestroyed())
+        local nx, ny = again.parts.frame.body:getPosition()
+        assert.is_near(fx, nx, 0.01)
+        assert.is_near(fy, ny, 0.01)
+        assert.are.equal(again.parts.frontWheel, state.selection.selectedObj)
+        assert.are.equal(again, (kinds.ofBody(again.parts.backWheel.body)))
+        assert.are.equal(1, #kinds.all())
+        state.selection.selectedObj = nil
+    end)
+
+    it('rolls another of its kind: a type it has, a size near the usual', function()
+        local vehicles = require('src.vehicles')
+        for _ = 1, 20 do
+            local settings = vehicles.roll()
+            assert.is_not_nil(vehicles.TYPES[settings.type])
+            assert.is_true(settings.size >= 0.8 and settings.size <= 1.3)
+        end
+    end)
+
     it('rolls when pushed', function()
         local floor = love.physics.newBody(world, 0, 200, 'static')
         love.physics.newFixture(floor, love.physics.newRectangleShape(20000, 40))

@@ -104,6 +104,13 @@ questions that eat weeks; they wait for a real case.
     body, `kinds` in the scene; library copies and prefabs bring the whole instance with new ids.
     spec/kinds_spec.lua (made, saved and loaded, copied, dissolved, removed, rolls). Not yet: the on-stage
     list shows its parts as separate bodies.
+  - **KD4b done 2026-11-12** (with KD4d's types): the four from the spike as data in `src/vehicles.lua`
+    (kart, car, banana, skateboard: a tray or deck and two wheels); the panel (`src/ui/kind-editor.lua`):
+    name, copy, delete; the kind's settings rows (type < >, size) and roll, each making it again in place
+    (`kinds.rebuild`: the same instance and id, its frame where it was, the selected part selected again);
+    a picture of it drawn from its own parts' outlines (`part-map.drawShapes`, any kind) to pick a part on;
+    the part's own rows live on its body (frame: drag; wheels: grip, suspension); dissolve. Colours wait
+    for the drawn looks (RIDES RD3); a rebuild starts the part rows over.
   - **KD4b. Its panel**, the Mipo panel's shape: the kind's row (type kart / car / skateboard / banana,
     roll, copy, delete), its settings as inspector rows (colour, size), the parts picked on a picture of it
     (frame, wheels), the workshop folded.
@@ -111,7 +118,8 @@ questions that eat weeks; they wait for a real case.
     src/physics-units.lua): a Mipo dropped on the seat gets in (two kinds side by side, joined by
     joints), tap to drive, pick up kept upright, wind up; actions in the panel (drive, turn round, throw
     out the rider).
-  - **KD4d. The other three types**; the rides spike builds its street and places the engine's vehicles.
+  - **KD4d. The other three types** (built with KD4b); left: the rides spike builds its street and places
+    the engine's vehicles.
 - [ ] **KD4p. Prop recipes as a kind** (was KD4): a placed prop keeps its recipe name and settings (saved),
   🎲 rebuilds it (EDITOR-ARRANGE EA3), dissolve leaves plain bodies. Each recipe says what 🎲 varies.
 - [ ] **KD5. The bar again** (EA2): with 🎲 and ••• meaning something for everything selected, Nikki looks

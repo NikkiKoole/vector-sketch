@@ -1,7 +1,7 @@
 -- src/vehicles.lua: vehicles as a kind (docs/KINDS.md KD4), out of the rides spike (scripts/spikes/rides,
 -- docs/RIDES.md): a frame and two wheels on wheel joints, made of ordinary things, so they select, save,
--- copy and dissolve like anything else. KD4a: the kart, rolling when pushed. Driving, getting in and
--- the other types (car, skateboard, banana car) come in KD4c / KD4d.
+-- copy and dissolve like anything else: a kart, a car, a banana car, a skateboard (KD4a, KD4d), rolling
+-- when pushed. Driving and getting in come in KD4c.
 local lib = {}
 
 local objectManager = require('src.object-manager')
@@ -48,34 +48,85 @@ end
 
 lib.TYPES = {}
 
--- The kart (the spike's): a low tray, sides a hand high, small fat wheels near its ends. Sizes in S.
-lib.TYPES.kart = function(x, y, size)
+-- The four from the rides spike, in S (a Mipo's standing height): length, the sides' height (none: a
+-- deck), thickness, wheel radius, how far below the floor's top the axles sit (in wheel radii), the
+-- floor's share of the length (the banana's ends curl past it), where the wheels are (share of length).
+lib.TYPES.kart = { len = 1.0, H = 0.2, T = 0.05, r = 0.1, drop = 0.2, floor = 1, wheels = 0.38 }
+lib.TYPES.car = { len = 1.05, H = 0.32, T = 0.05, r = 0.13, drop = 0.1, floor = 1, wheels = 0.33 }
+lib.TYPES.banana = { len = 1.3, H = 0.26, T = 0.05, r = 0.1, drop = 0.3, floor = 0.8, wheels = 0.27 }
+lib.TYPES.skateboard = { len = 0.75, T = 0.045, r = 0.06, drop = 1.4, floor = 0.8, wheels = 0.3 }
+lib.order = { 'kart', 'car', 'banana', 'skateboard' }
+
+-- the frame: a tray (a floor and two low sides, one body), or a deck; its floor's top at y = 0
+local function frameVertices(t, S)
+    local hl, T = t.len * t.floor * S / 2, t.T * S
+    if not t.H then return { -hl, 0, hl, 0, hl, T, -hl, T } end
+    local H = t.H * S
+    -- the outer top-left corner, down the inside, across the floor, up and out
+    return { -hl, -H, -hl + T, -H, -hl + T, 0, hl - T, 0, hl - T, -H, hl, -H, hl, T, -hl, T }
+end
+
+local function build(t, label, x, y, size)
     local S = lib.S * size
-    local len, H, T, r = S * 1.0, S * 0.2, S * 0.05, S * 0.1
-    local hl = len / 2
-    -- the tray, one body: the outer top-left corner, down the inside, across the floor, up and out
-    local verts = { -hl, -H, -hl + T, -H, -hl + T, 0, hl - T, 0, hl - T, -H, hl, -H, hl, T, -hl, T }
+    local verts = frameVertices(t, S)
     local cx, cy = mathutils.computeCentroid(verts)
     for i = 1, #verts, 2 do verts[i], verts[i + 1] = verts[i] - cx, verts[i + 1] - cy end
-    local frame = objectManager.addThing('custom', { x = x + cx, y = y + cy, vertices = verts, label = 'kart' })
+    local frame = objectManager.addThing('custom', { x = x + cx, y = y + cy, vertices = verts, label = label })
     if not frame then return nil end
     setMaterial(frame.body, 0.8, 0.1, 1)
     frame.body:setLinearDamping(0.15)
+    local r, wx, wy = t.r * S, t.len * t.wheels * S, t.drop * t.r * S
     local parts = { frame = frame }
-    parts.backWheel = addWheel(frame, x, y, cx, cy, -len * 0.38, T + r * 0.6, r)
-    parts.frontWheel = addWheel(frame, x, y, cx, cy, len * 0.38, T + r * 0.6, r)
+    parts.backWheel = addWheel(frame, x, y, cx, cy, -wx, wy, r)
+    parts.frontWheel = addWheel(frame, x, y, cx, cy, wx, wy, r)
     return parts
 end
-
-lib.order = { 'kart' }
 
 -- the kind (src/kinds.lua): settings { type = 'kart', size = 1 }
 function lib.make(settings, x, y)
     settings.type = lib.TYPES[settings.type] and settings.type or 'kart'
     settings.size = settings.size or 1
-    return lib.TYPES[settings.type](x, y, settings.size)
+    return build(lib.TYPES[settings.type], settings.type, x, y, settings.size)
 end
 
 function lib.label(instance) return instance.settings.type or 'vehicle' end
+
+-- its settings in the panel (src/ui/kind-editor.lua): a change makes it again (kinds.rebuild)
+lib.rows = {
+    { key = 'type', kind = 'choice', options = lib.order },
+    { key = 'size', kind = 'number', min = 0.5, max = 2 },
+}
+
+-- another one of the same kind: any type, a size near the usual
+function lib.roll()
+    return { type = lib.order[love.math.random(#lib.order)], size = 0.8 + love.math.random() * 0.5 }
+end
+
+-- a part's own rows, live on its body or joint (kept with the bodies; a rebuild starts them over)
+local function wheelJoint(thing)
+    for _, joint in ipairs(thing.body:getJoints()) do
+        if joint:getType() == 'wheel' then return joint end
+    end
+end
+
+function lib.partRows(partName, thing)
+    if partName == 'frame' then
+        return { { label = 'drag', min = 0, max = 2,
+            get = function() return thing.body:getLinearDamping() end,
+            set = function(v) thing.body:setLinearDamping(v) end } }
+    end
+    local joint = wheelJoint(thing)
+    local fixture = thing.body:getFixtures()[1]
+    local rows = { { label = 'grip', min = 0, max = 2,
+        get = function() return fixture:getFriction() end,
+        set = function(v) fixture:setFriction(v) end } }
+    if joint then
+        rows[#rows + 1] = { label = 'suspension (Hz)', min = 1, max = 20,
+            get = function() return joint:getSpringFrequency() end,
+            set = function(v) joint:setSpringFrequency(v) end }
+    end
+    return rows
+end
+lib.anchor = 'frame' -- where a rebuilt vehicle stays (src/kinds.lua rebuild)
 
 return lib
