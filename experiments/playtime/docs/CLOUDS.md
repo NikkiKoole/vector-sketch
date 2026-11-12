@@ -118,7 +118,7 @@ steeply with cold), below evaporates. Pulled up past the point where it's warmer
       more rain, a longer life), drops reaching the ground or drying up halfway, a dark belly,
       lobes flattening into an anvil at the lid, dying clouds going ragged. In git: commit ad1f56a1,
       reverted; back to it when rain is wanted.
-- [ ] **CG4. Real light.** Self-shadowing towards the sun in the shader: bright tops, bellies grey
+- [x] **CG4. Real light.** Kept 2026-11-12 (Nikki: "ok fine"). Self-shadowing towards the sun in the shader: bright tops, bellies grey
       by depth, a silver lining with the sun behind, the sky's hour colours (SKY).
   Built 2026-11-12, for Nikki to judge: the cloud shader looks for cloud between each pixel and
   the sun (4 samples, 180 m apart) and above it (2), each counting as at most solid cloud (where
