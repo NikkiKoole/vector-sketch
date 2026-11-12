@@ -316,9 +316,13 @@ lib.patches = {
                    filter = { mode = 1, cutoff = 700, resonance = 1 } },
     -- the earth style (src/music-earth.lua), MF Grimm's 'Earth': patch-match on a Db5 of the keys (the parts but
     -- the drums, high-passed) and an Eb3 of the bass (low-passed) put FM first for both; the voices of its best
-    -- plain fits (keys: candidate 2; bass: candidate 4, without the band filter the cut's filtering asked for)
-    earthKeys = { pool = true, wave = 'FM', adsr = { 0, 2839, 6, 900 }, harmonics = 0.05, timbre = 0.224,
-                  morph = 0.634, filter = { mode = 1, cutoff = 989, resonance = 2 }, reverb = 0.3, level = 0.45 },
+    -- plain fits (keys: candidate 2; bass: candidate 4, without the band filter the cut's filtering asked for).
+    -- The keys made whimsical (Nikki 2026-11-12: "can we make it more whimsical"): a soft vibraphone-ish mallet
+    -- with a slow tape wow instead of the fitted FM (that was: FM adsr 0 2839 6 900, harmonics 0.05, timbre
+    -- 0.224, morph 0.634, lowpass 989)
+    earthKeys = { pool = true, wave = 'MALLET', adsr = { 1, 0, 7, 1100 }, harmonics = 0.25, timbre = 0.45,
+                  morph = 0.9, filter = { mode = 1, cutoff = 2600, resonance = 0 }, reverb = 0.35, level = 1.0,
+                  lfo = { { 0, 0.6, 0.06 } } },
     earthBass = { pool = true, wave = 'FM', adsr = { 0, 86, 7, 264 }, harmonics = 0.355, timbre = 0.026,
                   morph = 0.636, filter = { mode = 1, cutoff = 700, resonance = 1 }, reverb = 0.05, level = 0.9 },
     brewGuitar = { pool = true, wave = 'GUITAR', adsr = { 2, 0, 7, 900 }, harmonics = 0.4, timbre = 0.22, morph = 0.1,

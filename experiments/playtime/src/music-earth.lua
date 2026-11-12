@@ -7,6 +7,10 @@
 --   keys   a slow sigh on top: G4, G4+D5 on 1&, G4, then Db5 on 3& held and G4 on 4 (the top D -> Db over the
 --          Eb: its 7th); the 4th bar C5 over A7#9 (C# G), Bb4 over A7b9 (F#), F4 (Dm7), C5 back up to the D
 --   kit    boom-bap: kick 1 and 3, snare 2 and 4, 8th hats, a dragged ghost (kick, snare, hat) on the 'a' of 1
+-- Made whimsical (Nikki 2026-11-12: "can we make it more whimsical"): the same notes, lighter sounds: the keys
+-- a soft mallet with a slow tape wow (synth.lua earthKeys), the kit a toy one on the record's pattern (a soft
+-- kick, rim and brush for the snare, shaker for the hats, a woodblock tick on the dragged ghost); and the
+-- loop from the first bar, no intro without the drums ("the start shouldn't have cut this off").
 -- Registered as loop = 'earth' (music-plan, music-parts), the same way as music-neige.lua. The music panel's
 -- 'humanize' row plays it all on the grid.
 local state = require('src.state')
@@ -59,20 +63,18 @@ add(lib.KEYS, {
     { 14, 1.15, 0.6, 65, 69 },           -- Dm7: F4 A4
     { 15, 0.7, 1, 72 },                  -- C5, back up to the D
 })
--- the kit, one bar (the record's drums repeat within ~5 ms: a looped bar). { beat, patch, midi, vol, ms }
+-- the kit, one bar (the record's drums repeat within ~5 ms: a looped bar), on toy sounds. { beat, patch, midi,
+-- vol, ms }; the record had bapKick for the kicks and the snare where the rim and brush are
 lib.KIT = {
-    { 0, 'bapKick', 36, 6, 220 }, { DRAG, 'bapKick', 36, 2, 120 }, { 1.5, 'bapKick', 36, 3, 160 },
-    { 2, 'bapKick', 36, 6, 220 },
-    { 1, 'snare', 60, 5, 140 }, { 1, 'bapKick', 50, 3, 90 }, { 3, 'snare', 60, 5, 140 }, { 3, 'bapKick', 50, 3, 90 },
-    { DRAG, 'snare', 60, 2, 80 }, { 2.5, 'snare', 60, 2, 80 }, { 3.5, 'snare', 60, 2, 90 },
+    { 0, 'bapKick', 36, 3, 160 }, { 1.5, 'bapKick', 36, 2, 120 }, { 2, 'bapKick', 36, 3, 160 },
+    { 1, 'rim', 72, 5, 60 }, { 1, 'brush', 60, 3, 200 }, { 3, 'rim', 72, 5, 60 }, { 3, 'brush', 60, 3, 200 },
+    { DRAG, 'wood', 84, 3, 120 }, { 2.5, 'rim', 72, 2, 40 }, { 3.5, 'rim', 72, 2, 40 },
 }
 -- the harmony a bar (for what plays along): C sus2 (Eb7 its second half), the same twice more, A7#9 (Dm7)
 lib.HARMONY = { { 0, 'sus2' }, { 0, 'sus2' }, { 0, 'sus2' }, { 9, 's9' } }
 
 lib.FORM = {
-    { 'intro', 4, { keys = true, bass = true } },
-    { 'A', 32, { keys = true, bass = true, kit = true } },
-    { 'outro', 4, { keys = true, bass = true } },
+    { 'A', 40, { keys = true, bass = true, kit = true } },
     { 'end', 1, { ending = true } },
 }
 
@@ -146,9 +148,8 @@ local function bookKit(play, synth, t0, song)
         play(synth, 'drums', k[2], t0 + k[1] * song.beat, k[3], k[4], k[5], math.floor(k[1] * 4 + 0.5))
     end
     for s = 0, 14, 2 do
-        play(synth, 'drums', 'hat', t0 + s / 4 * song.beat, 60, s % 4 == 0 and 3 or 2, 30, s)
+        play(synth, 'drums', 'shaker', t0 + s / 4 * song.beat, 60, s % 4 == 0 and 4 or 3, 40, s)
     end
-    play(synth, 'drums', 'hat', t0 + DRAG * song.beat, 60, 1, 25, 3) -- the dragged ghost
 end
 
 function lib.bookBar(play, remember, synth, t0, song, b)
