@@ -37,6 +37,10 @@ lib.LIST = {
         for _, hold in ipairs(holds or {}) do things[#things + 1] = hold end
         return things
     end },
+    { 'kart', function(wx, wy) -- a kind (src/kinds.lua, src/vehicles.lua): selected, saved and copied whole
+        local instance = require('src.kinds').make('vehicle', { type = 'kart' }, wx, wy)
+        return instance and require('src.kinds').things(instance) or {}
+    end },
     { 'gate', function(wx, wy)
         local base = objectManager.addThing('rectangle', { x = wx, y = wy, width = 300, height = 30,
             bodyType = 'static', label = 'gate-base' })

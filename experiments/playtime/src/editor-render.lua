@@ -312,6 +312,8 @@ end
 -- detail, not body collision (by design).
 -- What one box goes around: a body, or every part of the Mipo it belongs to.
 local function boxBodies(body)
+    local made = require('src.kinds').ofBody(body) -- a kind's instance (src/kinds.lua): all its parts
+    if made then return require('src.kinds').bodies(made), made end
     local instance = mipoRegistry.getFromBody(body)
     if not instance then return { body }, nil end
     local bodies = {}

@@ -143,7 +143,10 @@ function lib.drawSelectionProperties(x, y, panelWidth, panelH)
         lib.drawSelectedBodiesUI(x, y, panelWidth, panelH)
     elseif selection.selectedObj then
         local mipoInstance, mipoPartName = mipoRegistry.getFromBody(selection.selectedObj.body)
-        if mipoInstance then
+        local made, madePart = require('src.kinds').ofBody(selection.selectedObj.body) -- src/kinds.lua
+        if made then
+            require('src.ui.kind-editor').draw(made, madePart, x, y, panelWidth, panelH)
+        elseif mipoInstance then
             uiMipoEditor.drawMipoEditor(mipoInstance, mipoPartName, x, y, panelWidth, panelH)
         else
             lib.drawUpdateSelectedObjectUI(x, y, panelWidth, panelH)

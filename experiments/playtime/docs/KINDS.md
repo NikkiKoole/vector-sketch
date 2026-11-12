@@ -97,6 +97,13 @@ questions that eat weeks; they wait for a real case.
     instances' kind and settings saved in the scene, dissolve. The kart from `objectManager` bodies and
     joints, on the library's toys shelf; selected as a whole (the Mipo's box); saved and loaded; dissolved
     to plain bodies. No driving yet: it rolls when pushed.
+    **Done 2026-11-12**: `src/kinds.lua` (make, ofBody, things/bodies, dissolve, remove, save/load,
+    entriesFor; instances on `state.kindInstances`), `src/vehicles.lua` (the kart: a U tray as one custom
+    body, two wheels on wheel joints), 'kart' on the toys shelf, the box round the whole kart, a small panel
+    (`src/ui/kind-editor.lua`: name, copy, delete, the part, dissolve). Saved: `kindId` / `kindPart` on each
+    body, `kinds` in the scene; library copies and prefabs bring the whole instance with new ids.
+    spec/kinds_spec.lua (made, saved and loaded, copied, dissolved, removed, rolls). Not yet: the on-stage
+    list shows its parts as separate bodies.
   - **KD4b. Its panel**, the Mipo panel's shape: the kind's row (type kart / car / skateboard / banana,
     roll, copy, delete), its settings as inspector rows (colour, size), the parts picked on a picture of it
     (frame, wheels), the workshop folded.

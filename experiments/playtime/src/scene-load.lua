@@ -62,6 +62,7 @@ function lib.clearWorld(world)
     end
     registry.reset()
     mipoRegistry.reset()
+    require('src.kinds').reset()
 end
 
 -- JSON makes integer keys strings; the draw path looks them up as integers.
@@ -206,6 +207,8 @@ local function buildBody(bodyData, world, builtSFixtures)
         extraSteiner = bodyData.extraSteiner, -- body-local Steiner points (Path B)
         mipoId = bodyData.mipoId,
         mipoPartName = bodyData.mipoPartName,
+        kindId = bodyData.kindId, -- a part of a kind's instance (src/kinds.lua)
+        kindPart = bodyData.kindPart,
     }
     shapes.copyDims(bodyData, thing, bodyData.dims) -- older files: sizes on bodyData itself
     if type(thing.vertices) ~= 'table' then
@@ -304,6 +307,7 @@ function lib.buildWorld(data, world, cam, opts)
         table.insert(builtThings, buildBody(bodyData, world, builtSFixtures))
     end
     buildJoints(data.joints)
+    require('src.kinds').load(data.kinds, builtThings) -- the things made of bodies, whole again
 
     if additive then
         -- a placed prefab saved before resourceId existed: link its meshes to its own RESOURCE

@@ -162,6 +162,8 @@ local function bodyForFile(body, thing)
         extraSteiner = thing.extraSteiner, -- body-local Steiner points (Path B)
         mipoId = thing.mipoId,
         mipoPartName = thing.mipoPartName,
+        kindId = thing.kindId, -- a part of a kind's instance (src/kinds.lua)
+        kindPart = thing.kindPart,
         bodyType = body:getType(), -- 'dynamic', 'kinematic' or 'static'
         position = { round(body:getX(), 4), round(body:getY(), 4) },
         angle = round(body:getAngle(), 4),
@@ -259,6 +261,7 @@ function lib.gatherSaveData(world, camera)
     saveData.sky = require('src.scene-sky').save() -- nil while the sky is off (src/scene-sky.lua)
     saveData.mipos = require('src.mipo-walk').save() -- nil while walking is on (src/mipo-walk.lua)
     saveData.feelings = require('src.mipo-emotion').save() -- nil while they feel (src/mipo-emotion.lua)
+    saveData.kinds = require('src.kinds').save() -- the things made of bodies: kind + settings (src/kinds.lua)
     return saveData
 end
 

@@ -47,7 +47,22 @@ end
 
 -- The save data of these things, the joints between them and the Mipos any of
 -- them belong to, positions relative to their centre. nil when nothing is left.
+-- a part of a kind's instance (src/kinds.lua) brings the whole instance along
+local function withWholeKinds(things)
+    local kinds = require('src.kinds')
+    local list, seen = {}, {}
+    for _, thing in ipairs(things) do
+        local instance = thing.body and kinds.ofBody(thing.body)
+        local group = instance and kinds.things(instance) or { thing }
+        for _, t in ipairs(group) do
+            if not seen[t] then seen[t] = true; list[#list + 1] = t end
+        end
+    end
+    return list
+end
+
 function lib.gather(things)
+    things = withWholeKinds(things)
     local ids, mipoIds = {}, {}
     for _, thing in ipairs(things) do
         if thing.body and not thing.body:isDestroyed() then
@@ -105,6 +120,11 @@ function lib.trim(data, ids, mipoIds)
             table.insert(prefab.joints, jointData)
         end
     end
+    local kindIds = {}
+    for _, bodyData in ipairs(prefab.bodies) do
+        if bodyData.kindId then kindIds[bodyData.kindId] = true end
+    end
+    prefab.kinds = require('src.kinds').entriesFor(data.kinds, kindIds)
     lib.move(prefab, -cx, -cy)
     return prefab
 end
@@ -145,6 +165,7 @@ function lib.renewIds(prefab)
     end
     for _, jointData in ipairs(prefab.joints) do claim(jointData.id) end
     for _, character in ipairs(prefab.characters or {}) do claim(character.id) end
+    for _, entry in ipairs(prefab.kinds or {}) do claim(entry.id) end -- src/kinds.lua
 
     local function walk(t)
         local renamed = {}
@@ -262,6 +283,7 @@ end
 -- nodes, influences, snap points, resources) point at the copies. A Mipo comes along
 -- whole and in the pose it's in (a prefab's Mipo grows fresh from its DNA instead).
 function lib.clone(things)
+    things = withWholeKinds(things)
     local ids, mipoIds, bodies = {}, {}, {}
     for _, thing in ipairs(things) do
         if thing.body and not thing.body:isDestroyed() then
@@ -288,6 +310,11 @@ function lib.clone(things)
     for _, character in ipairs(data.characters or {}) do
         if mipoIds[character.id] then table.insert(copy.characters, character) end
     end
+    local kindIds = {}
+    for _, bodyData in ipairs(copy.bodies) do
+        if bodyData.kindId then kindIds[bodyData.kindId] = true end
+    end
+    copy.kinds = require('src.kinds').entriesFor(data.kinds, kindIds)
     -- save data shares some tables with the live scene (a body's behaviors): the copy gets its own
     copy = utils.deepCopy(copy)
     dropLinksOutside(copy, rigIdsLeftBehind(data, copy))
