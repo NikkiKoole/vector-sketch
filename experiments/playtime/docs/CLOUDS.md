@@ -143,3 +143,12 @@ steeply with cold), below evaporates. Pulled up past the point where it's warmer
       sky as a scene setting (ENGINE-MERGE EM7)?
 - [ ] **CG7. Later, only if wanted:** the Harris grid as its own spike, if thermals look too
       blobby and real swirls and wisps are wanted.
+
+## Where we left it (2026-11-12)
+
+Built today in the clouds scene: the air panel and growing (CG1, CG2: not ticked, Nikki to say keep),
+painted clouds that float, drift and breathe, smoke (fires, booms, the pyrocumulus cap), light through
+the cloud (CG4, kept), billows that travel with their cloud. Rain (CG3) tried and taken out again.
+Nikki's look then: light through cloud 0, billows 0.34, cotton 0.22 (the panel's defaults are still
+1 / 1 / 1). Next: CG5 wind with height, CG6 the phone (the cloud shader got heavier today: light
+samples, billows), then the sky and clouds into the engine as a scene setting (ENGINE-MERGE EM7).

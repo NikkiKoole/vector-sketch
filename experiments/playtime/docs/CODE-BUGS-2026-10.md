@@ -118,3 +118,7 @@ Each is small (under half an hour) unless it says otherwise.
 - [x] **BUG18. `blinkStates` leaks.** `box2d-draw-textured.lua:32` is keyed by `thing` but not
   weak-keyed, so every rebuilt thing stays. Fix: `setmetatable({}, { __mode = 'k' })`.
   **Done 2026-10-30.** `spec/draw-debug_spec.lua`.
+- [ ] **BUG19. Two specs fail on master (found 2026-11-12).** `love . --specs`: 1796 pass, 2 fail, the
+  same on a clean HEAD (5e1cad39's parent), so not from that day's face handles:
+  `spec/face-patches_spec.lua:114` (a snout's x on a turned face no longer moves with the nose's) and
+  `spec/io_spec.lua:709` (a double save round trip finds 30 differences). Neither looked into yet.

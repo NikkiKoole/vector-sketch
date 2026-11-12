@@ -57,3 +57,10 @@ pad's only if it starts on it; a drag carries on outside it. In scene scripts as
       wheel to point at a mix.
 
 Where it doesn't fit: settings with one number and no picture (a speed, a count) stay sliders.
+
+## Where we left it (2026-11-12)
+
+BU1 (the pad) and BU2 (feelings on it) done and kept. BU3 (face handles) built, Nikki to try: select a
+Mipo's head in the editor, open 'head face'. Then: pupils, rotation and teeth handles if wanted, or
+BU4 (body handles) / BU5 (the clouds' air chart). The voicebox's vowel chart moved onto the pad and
+hasn't been opened since: check it still sounds and moves as before.
