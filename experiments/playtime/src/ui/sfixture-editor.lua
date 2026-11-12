@@ -8,6 +8,7 @@ local ui = require('src.ui.all')
 local state = require('src.state')
 local subtypes = require('src.subtypes')
 local inspector = require('src.ui.inspector')
+local palette = require('src.ui.palette')
 local sfixtureParams = require('src.sfixture-params')
 local meshusertPanel = require('src.ui.meshusert-panel')
 local resourcePanel = require('src.ui.resource-panel')
@@ -42,10 +43,7 @@ function lib.drawSelectedSFixture(panelX, panelY, panelWidth, panelH)
     panelX, panelY, panelH = panelX or (w - panelWidth - 20), panelY or 20, panelH or (h - 40)
     if lastSFixtureForCleanup ~= state.selection.selectedSFixture then
         lastSFixtureForCleanup = state.selection.selectedSFixture
-        if state.panelVisibility.showPalette then
-            state.panelVisibility.showPalette = nil
-            state.showPaletteFunc = nil
-        end
+        if palette.isOpen() then palette.close() end
         state.texFixtureEdit.tempVerts = nil
         state.texFixtureEdit.centroid = nil
         state.texFixtureEdit.lockedVerts = true

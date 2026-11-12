@@ -3,30 +3,44 @@
 -- '#' and the short forms allowed) and the editor's palette.
 local lib = {}
 
-lib.palette = {
-    '020202', '4f3166', '69445D', '613D41', 'efebd8',
-    '6f323a', '872f44', '8d184c', 'be193b', 'd2453a',
-    'd6642f', 'd98524', 'dca941', 'e6c800', 'f8df00',
-    'ddc340', 'dbd054', 'ddc490', 'ded29c', 'dad3bf',
-    '9c9d9f', '938541', '808b1c', '8A934E', '86a542',
-    '57843d', '45783c', '2a5b3e', '1b4141', '1e294b',
-    '0d5f7f', '065966', '1b9079', '3ca37d', '49abac',
-    '5cafc9', '159cb3', '1d80af', '2974a5', '1469a3',
-    '045b9f', '9377b2', '686094', '5f4769', '815562',
-    '6e5358', '493e3f', '4a443c', '7c3f37', 'a93d34',
-    'CB433A', 'a95c42', 'c37c61', 'd19150', 'de9832',
-    'bd7a3e', '865d3e', '706140', '7e6f53', '948465',
-    '252f38', '42505f', '465059', '57595a', '6e7c8c',
-    '75899c', 'aabdce', '807b7b', '857b7e', '8d7e8a',
-    'b38e91', 'a2958d', 'd2a88d', 'ceb18c', 'cf9267',
-    'f0644d', 'ff7376', 'd76656', 'b16890', '020202',
-    '333233', '814800', 'efebd8', '1a5f8f', '66a5bc',
-    '87727b', 'a23d7e', 'fa8a00', 'fef1d0', 'ffa8a2',
-    '6e614c', '418090', 'b5d9a4', 'c0b99e', '4D391F',
-    '4B6868', '9F7344', '9D7630', 'D3C281', '8F4839',
-    'EEC488', 'C77D52', 'C2997A', '9C5F43', '9C8D81',
-    '965D64', '798091', '4C5575', '6E4431', '626964',
+-- The editor's palette (src/ui/palette.lua), one row per family of colours, each light to dark.
+-- Pictures and scenes keep the hex itself, never a place in this list, so it can be reordered.
+lib.paletteRows = {
+    { -- greys
+        '9c9d9f', 'a2958d', '8d7e8a', '857b7e', '807b7b', '87727b', '626964', '57595a', '465059', '4a443c',
+        '493e3f', '333233', '252f38', '020202',
+    },
+    { -- reds and pinks
+        'ffa8a2', 'b38e91', 'ff7376', 'f0644d', 'd76656', 'b16890', '965d64', 'd2453a', '815562', 'cb433a',
+        '6e5358', 'a23d7e', '8f4839', 'a93d34', '69445d', '7c3f37', '613d41', '872f44', '6f323a', 'be193b',
+        '8d184c',
+    },
+    { -- oranges
+        'eec488', 'dca941', 'de9832', 'cf9267', 'd19150', 'fa8a00', 'd98524', 'c77d52', 'c37c61', 'bd7a3e',
+        '9d7630', '9f7344', 'd6642f', 'a95c42', '814800',
+    },
+    { -- creams and browns
+        'fef1d0', 'efebd8', 'dad3bf', 'ded29c', 'ddc490', 'd3c281', 'c0b99e', 'ceb18c', 'd2a88d', 'c2997a',
+        '9c8d81', '948465', '7e6f53', '9c5f43', '865d3e', '6e614c', '706140', '6e4431', '4d391f',
+    },
+    { -- yellows and greens
+        'f8df00', 'b5d9a4', 'dbd054', 'e6c800', 'ddc340', '86a542', '8a934e', '3ca37d', '938541', '808b1c',
+        '57843d', '45783c', '2a5b3e',
+    },
+    { -- teals
+        '5cafc9', '49abac', '159cb3', '1b9079', '418090', '4b6868', '065966', '1b4141',
+    },
+    { -- blues and purples
+        'aabdce', '66a5bc', '75899c', '9377b2', '798091', '6e7c8c', '1d80af', '2974a5', '686094', '1469a3',
+        '4c5575', '1a5f8f', '0d5f7f', '5f4769', '42505f', '045b9f', '4f3166', '1e294b',
+    },
 }
+
+-- the same colours as one list
+lib.palette = {}
+for _, row in ipairs(lib.paletteRows) do
+    for _, hex in ipairs(row) do lib.palette[#lib.palette + 1] = hex end
+end
 
 local function parse(hex)
     if type(hex) ~= "string" then

@@ -7,6 +7,7 @@ local color = require('src.color')
 local fileBrowser = require('src.file-browser')
 local state = require('src.state')
 local materialPicker = require('src.ui.material-picker')
+local palette = require('src.ui.palette')
 
 local lib = {}
 
@@ -151,13 +152,7 @@ drawers.color = function(c) -- swatch (opens the palette) + hex field
     local hex = valueOf(row, target)
     local r, g, b, a = color.hexToColor(hex or 'ffffffff')
     if ui.button(c.wx, c.y + DY, 30, '', nil, { r, g, b, a }) then
-        if state.panelVisibility.showPalette then
-            state.panelVisibility.showPalette = nil
-            state.showPaletteFunc = nil
-        else
-            state.panelVisibility.showPalette = true
-            state.showPaletteFunc = function(picked) setValue(row, target, picked) end
-        end
+        palette.toggle(hex, function(picked) setValue(row, target, picked) end)
     end
     return textField(c, c.wx + 36, c.w - lib.labelWidth - 36, 'hex', hex or '')
 end

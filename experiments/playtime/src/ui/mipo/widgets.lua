@@ -30,6 +30,7 @@ local colors = require('src.color')
 
 local C = require('src.shape-catalogs')
 local materialPicker = require('src.ui.material-picker')
+local palette = require('src.ui.palette')
 
 local PANEL_WIDTH = ui.theme.panelWidth
 local BUTTON_HEIGHT = ui.theme.lineHeight
@@ -174,17 +175,11 @@ local function handlePaletteButton(idPrefix, px, py, pw, currentHex, onColorChan
     local r, g, b, a = colors.hexToColor(currentHex or '000000ff')
     local paletteShow = ui.button(px - 10, py, 20, '', BUTTON_HEIGHT, { r, g, b, a })
     if paletteShow then
-        if state.panelVisibility.showPalette then
-            state.panelVisibility.showPalette = nil
-            state.showPaletteFunc = nil
-        else
-            state.panelVisibility.showPalette = true
-            local instance = editing
-            state.showPaletteFunc = function(color)
-                onColorChange(color)
-                if instance then mipoVoice.edited(instance) end
-            end
-        end
+        local instance = editing
+        palette.toggle(currentHex, function(color)
+            onColorChange(color)
+            if instance then mipoVoice.edited(instance) end
+        end)
     end
     local hex = ui.textinput(idPrefix, px + 10, py, pw, BUTTON_HEIGHT, "", currentHex or '')
     if hex and hex ~= currentHex then

@@ -20,6 +20,7 @@ local transformHandles = require('src.transform-handles')
 local floorGuide = require('src.floor-guide')
 local modes = require('src.modes')
 local ui = require('src.ui.all')
+local palette = require('src.ui.palette')
 local fixtures = require('src.fixtures')
 local cdt = require('src.cdt')
 local subtypes = require('src.subtypes')
@@ -32,7 +33,6 @@ local units = require('src.physics-units')
 local cameraFollow = require('src.camera-follow')
 
 local PANEL_WIDTH = 300        -- presses this close to the right edge belong to the open panel
-local PALETTE_HEIGHT = 400     -- the colour palette along the bottom
 local CORNER_GRAB_RADIUS = 10  -- world units: a polygon or texfixture corner being edited
 local STEINER_GRAB_RADIUS = 20 -- body-local units: an extra Steiner point
 local NODE_GRAB_RADIUS = 30    -- world units: an anchor or joint, for connected-texture/meshusert nodes
@@ -365,16 +365,12 @@ local function releasedPlaceSteiner()
 end
 
 -- True when a press belongs to an open panel (the save dialog, the palette, the right column)
--- and not to the bodies under it. A press outside the palette closes it.
-local function pressedOnPanel(x, y)
+-- and not to the bodies under it. While the palette is open every press is its (it closes itself on
+-- a release outside it, src/ui/palette.lua), so a click beside it doesn't also grab a body.
+local function pressedOnPanel(x, _y)
     if state.panelVisibility.saveDialogOpened then return true end
-    local w, h = love.graphics.getDimensions()
-    if state.panelVisibility.showPalette then
-        if y < h - PALETTE_HEIGHT or x > w - PANEL_WIDTH then
-            state.panelVisibility.showPalette = nil
-        end
-        return true
-    end
+    if palette.isOpen() then return true end
+    local w = love.graphics.getDimensions()
     local panelOpen = state.selection.selectedJoint or state.selection.selectedObj
         or state.selection.selectedSFixture or state.selection.selectedBodies
         or modes.isFreehand()
@@ -884,6 +880,10 @@ function lib.keyPressed(key)
 end
 
 function lib.handleKeyPressed(key)
+    if key == 'escape' and palette.isOpen() then
+        palette.close()
+        return
+    end
     if key == 'escape' then
         if state.panelVisibility.quitDialogOpened == true then
             love.event.quit()

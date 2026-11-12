@@ -8,7 +8,6 @@ local joints = require('src.joints')
 local objectManager = require('src.object-manager')
 local polyEdit = require('src.poly-edit')
 local library = require('src.library')
-local color = require('src.color')
 local camera = require('src.camera')
 local cam = camera.getInstance()
 local utils = require('src.utils')
@@ -28,6 +27,7 @@ local uiSFixtureEditor = require('src.ui.sfixture-editor')
 local uiBodyEditor = require('src.ui.body-editor')
 local fileBrowser  = require('src.file-browser')
 local materialPicker = require('src.ui.material-picker')
+local palette = require('src.ui.palette')
 local uiMipoEditor = require('src.ui.mipo-editor')
 local playMode = require('src.play-mode')
 local inspector = require('src.ui.inspector')
@@ -252,26 +252,6 @@ function lib.drawUI()
         end
     end
 
-    if state.panelVisibility.showPalette then
-        w, h = ui.getDimensions()
-        ui.panel(10, h - 400, w - 300, 400, '• pick color •', function()
-            local cellHeight = 50
-            local itemsPerRow = math.floor((w - 300) / cellHeight)
-
-            for i = 1, #color.palette do
-                local row = math.floor((i - 1) / itemsPerRow)
-                local column = (i - 1) % itemsPerRow
-                local x = column * cellHeight
-                local y = row * cellHeight
-
-                if ui.coloredRect(10 + x, h - 300 + y,
-                    { color.hexToColor(color.palette[i]) }, 40) then
-                    state.showPaletteFunc(color.palette[i])
-                end
-            end
-        end)
-    end
-
     if state.panelVisibility.saveDialogOpened then
         love.graphics.setColor(0, 0, 0, 0.5)
         love.graphics.rectangle('fill', 0, 0, w, h)
@@ -452,7 +432,8 @@ function lib.drawUI()
     end
 
     fileBrowser:draw()
-    materialPicker.drawPopup() -- on top of everything
+    palette.draw() -- on top of everything
+    materialPicker.drawPopup()
 end
 
 return lib
