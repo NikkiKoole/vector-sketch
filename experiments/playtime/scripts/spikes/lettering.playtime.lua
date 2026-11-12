@@ -43,7 +43,8 @@ local function drawText(c, sw)
     local w = lettering.measure('The Bathhouse', o)
     lettering.draw('The Bathhouse', (sw - w) / 2, 60 + c.size * 1.4, o)
     -- a sign: a board with two lines on it
-    local sign = { font = c.font, size = c.size * 0.7, boil = c.boil, jiggle = c.jiggle, seed = c.seed + 7, align = 'center' }
+    local sign = { font = c.font, size = c.size * 0.7, boil = c.boil, jiggle = c.jiggle, seed = c.seed + 7,
+        align = 'center' }
     local text = 'MIPO SHOP\nopen 9 - 5'
     local tw, th = lettering.measure(text, sign)
     local sx, sy = 60, 120 + c.size * 3.4
