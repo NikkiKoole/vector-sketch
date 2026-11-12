@@ -4,6 +4,7 @@
 -- (tufts) runs on the scene that's open. Loading replaces what's on the stage.
 -- The search box on top finds scenes by name and description as you type (src/fuzzy-find.lua),
 -- best first, groups set aside; enter loads the best one.
+local utf8 = require('utf8')
 local lib = {}
 
 local ui = require('src.ui.all')
@@ -27,10 +28,15 @@ local function groupsOpen()
     return state.rightColumn.sceneGroups
 end
 
--- `text` cut to fit `width` in the UI font, with an ellipsis
+-- `text` cut to fit `width` in the UI font, with an ellipsis. Cut a character at a time, not a byte: a
+-- byte off a '—' left half a character and the font threw (UTF-8 decoding error, 2026-11-12)
 local function fit(text, width)
     if ui.font:getWidth(text) <= width then return text end
-    while #text > 1 and ui.font:getWidth(text .. '…') > width do text = text:sub(1, -2) end
+    while #text > 1 and ui.font:getWidth(text .. '…') > width do
+        local last = utf8.offset(text, -1) -- where the last character starts
+        if not last or last <= 1 then break end
+        text = text:sub(1, last - 1)
+    end
     return text .. '…'
 end
 
