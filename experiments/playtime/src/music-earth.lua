@@ -295,9 +295,25 @@ local function solo(song)
     return song.earthSolo
 end
 
+-- the arrangement grid's choices (src/ui/music-arrange.lua, settings -> music): state.musicSettings.arrange.earth
+-- = { bpm = nil | number, passes = { [1..10] = { keys, bass, kit = bool, solo = false | 'A' | 'B' } } }, nil
+-- until a cell is clicked. Read every bar, each field defaulted (lib.FORM's roles, lib.SOLO_ROUNDS, style bpm)
+local function arrangement()
+    local a = state.musicSettings and state.musicSettings.arrange
+    return a and a.earth
+end
+-- which pass of the song a bar is in (1..10, the grid's columns and SOLO_ROUNDS' index)
+local function passOf(b) return math.floor((b - 1) / 4) % #lib.SOLO_ROUNDS + 1 end
+local function passChoices(b)
+    local arr = arrangement()
+    return arr and arr.passes and arr.passes[passOf(b)]
+end
+
 local function bookSolo(play, synth, t0, song, b, h)
-    local round = lib.SOLO_ROUNDS[(math.floor((b - 1) / 4) % #lib.SOLO_ROUNDS) + 1]
-    if not round then return end
+    local p = passChoices(b)
+    local round
+    if p and p.solo ~= nil then round = p.solo else round = lib.SOLO_ROUNDS[passOf(b)] end
+    if round ~= 'A' and round ~= 'B' then return end
     local lo = ((b - 1) % 4) * 16
     for _, n in ipairs(solo(song)[round]) do
         if n[1] >= lo and n[1] < lo + 16 then
@@ -323,11 +339,25 @@ function lib.bookBar(play, remember, synth, t0, song, b)
         pcs[#pcs + 1] = (root + interval) % 12
     end
     remember(t0, pcs)
+    -- the grid's tempo, from this bar on: the music asks for the bar's length after booking it
+    -- (song.barLength), so the next bar line falls at the new tempo; nil goes back to the song's own
+    local arr = arrangement()
+    song.earthBeat0 = song.earthBeat0 or song.beat
+    local beat = arr and arr.bpm and 60 / arr.bpm or song.earthBeat0
+    if math.abs(beat - song.beat) > 1e-9 then
+        song.beat, song.barLength = beat, 4 * beat
+    end
     local h = human()
     local roles = song.barSection[b].roles
-    if roles.bass or roles.ending then bookBass(play, synth, t0, song, b, roles, h) end
-    if roles.keys then bookKeys(play, synth, t0, song, b, h) end
-    if roles.kit then bookKit(play, synth, t0, song) end
+    local p = passChoices(b)
+    local function on(part)
+        if not roles[part] then return false end
+        if p and p[part] ~= nil then return p[part] and true or false end
+        return true
+    end
+    if on('bass') or roles.ending then bookBass(play, synth, t0, song, b, roles, h) end
+    if on('keys') then bookKeys(play, synth, t0, song, b, h) end
+    if on('kit') then bookKit(play, synth, t0, song) end
     if roles.solo then bookSolo(play, synth, t0, song, b, h) end
 end
 
