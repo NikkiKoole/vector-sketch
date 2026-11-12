@@ -213,6 +213,12 @@ track). Built as the style **`earth`** (`src/music-earth.lua`). Working files we
   start straight away. Now the same notes on lighter sounds: the keys a soft mallet with a slow tape wow (6 dB
   under the bass instead of 11), a toy kit on the record's pattern (soft kick, rim and brush, shaker, a woodblock
   tick on the dragged ghost), the loop from bar 1.
+- **Lessons from the listen**: a fixed loop has no odds (a note heard in some passes only is the transcriber
+  missing it); and **a note must be quiet, ring included, before its own pitch comes again**: two overlapping
+  copies of one pitch cancel or double by phase, so with humanized timing a repeated note vanished in some passes
+  (the last bar's D2 −15 dB in pass 2) and boomed in others ("the second and maybe 5th skips a note at the end").
+  `music-earth.lua` `fit` shortens length and release to the next same pitch. Worth checking in other styles with
+  repeated notes and long rings.
 
 ## The score pieces next to our styles (2026-11-02)
 
