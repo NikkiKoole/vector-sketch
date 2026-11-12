@@ -91,5 +91,22 @@ Baseline 2026-11-12 (before LO1): tilt 9-25°, seed 42 39°; seed 9 walks 1.4 le
 - [ ] **LO2. Gravity compensation**, so the motors can be soft and the bob deeper (MM8).
 - [ ] **LO3. Steps by distance, the stride by leg length** (MM3's "stride by the leg's length").
 - [ ] **LO4. Capture point**: stop in a step, turn round (MM4), a recovery step when bumped.
+  Built 2026-11-12 (stopping and turning; the recovery step not yet, LO4b). Told to stop, a walking
+  Mipo facing a side takes the stopping step (`stopStep`): the leg that isn't standing steps to the
+  capture point (x + v·√(h/g), at most `stopReach` 0.9 legs ahead), lifted mid-way and heel first,
+  the torso leaning back a touch, the feet braking from the start (`stopBrake` 4); then the back
+  foot steps up beside the front one (`closeTime`: lifted, not slid), then the settle (knees give,
+  torso on past upright and back, arms swing, `settleTime`). Told to go the other way: the stopping
+  step, then it turns on the spot and dips (`setOff`) before it sets off (`turnFirst`, walking only).
+  Facing front: the old brake. `spec/mipo-stop_spec.lua` (8 Mipos): goes 0.45 legs after the stop
+  (old 0.33), still after 1.5 s (old 1.3), going the other way after 1.1 s (old 0.9), no moonwalk.
+  Weight panel: jump anim / old, stop step / old, turn first / old.
+  tried 2026-11-12: braking only once the foot was down (went 0.8 legs); no brake, the planted leg
+  alone (0.9 legs, 1.8 s); sliding the feet together in the settle (both skidded, so the closing
+  step); firmer grip while stopping (1 to 6: no difference). The spec's 'feet skid' counts a foot
+  rocking on its heel or toe too (a standing Mipo shows it): compare it, don't read it alone.
+  For Nikki to try.
+- [ ] **LO4b. The recovery step**: a standing Mipo pushed or bumped steps toward its capture point
+  instead of tipping over.
 - [ ] **LO5. Raibert hop**: hops even and steerable, landing where it means to.
 - [ ] **LO6. Foot IK on the ground**: steps and slopes (MM5).

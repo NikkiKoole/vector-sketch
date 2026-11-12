@@ -319,9 +319,16 @@ function s.drawUI()
         if v then walk.toeOff = v end
         v = slider(layout, bw, 'footFollow', 'foot with shin', 0, 1, walk.footFollow, 0.05)
         if v then walk.footFollow = v end
-        -- the jump as animation (LO8): squat, POING, tuck, land; off: the old jump
+        -- the jump as animation (LO8), the stopping step and turning on the spot (LO4); off: as before
         x, y = ui.nextLayoutPosition(layout, bw, BH)
-        if ui.button(x, y, bw, 'jump: ' .. (walk.animJump and 'animated' or 'old')) then walk.animJump = not walk.animJump end
+        local third = (bw - 2 * pad) / 3
+        if ui.button(x, y, third, 'jump: ' .. (walk.animJump and 'anim' or 'old')) then walk.animJump = not walk.animJump end
+        if ui.button(x + third + pad, y, third, 'stop: ' .. (walk.stopStep and 'step' or 'old')) then
+            walk.stopStep = not walk.stopStep
+        end
+        if ui.button(x + 2 * (third + pad), y, third, 'turn: ' .. (walk.turnFirst and 'first' or 'old')) then
+            walk.turnFirst = not walk.turnFirst
+        end
         v = slider(layout, bw, 'jumpDepth', 'squat depth', 0.2, 1.5, walk.jumpDepth, 0.05)
         if v then walk.jumpDepth = v end
     end)

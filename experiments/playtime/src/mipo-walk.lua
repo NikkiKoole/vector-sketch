@@ -111,6 +111,22 @@ local SWITCHES = {
     jumpPush = 0.08,   -- seconds the legs push off (the lift spread over it, while a foot touches)
     jumpHeight = 1.3,  -- leg lengths it lifts (0: mipoActions.jumpSpeed, the old fixed speed)
     jumpLand = 0.22,   -- seconds the knees give on landing and come back
+    -- stopping and turning round (LO4): told to stop, a walking Mipo takes a step to where its momentum
+    -- would carry it (the capture point), plants, and settles; told to go back, it stops that way,
+    -- turns on the spot, dips and goes
+    stopStep = true,   -- false: the old stop (legs straight, the feet braking brakeFor seconds)
+    stopStepTime = 0.26, -- seconds the stopping step takes (lift, reach, plant)
+    closeTime = 0.24,  -- seconds the back foot takes to step up beside the front one (lifted, not slid)
+    settleTime = 0.4,  -- seconds settling after: knees give, torso and arms follow through
+    stopBrake = 4,     -- the feet's braking push during the stopping step (times driveAccel; 0: the planted leg
+                       -- alone: went 0.9 legs, still after 1.8 s; 4 from the start: 0.5 legs, 1.6 s)
+    stopBrakeFrom = 0, -- how far into the step the braking starts (0: at once; 0.8, once the foot's down: 0.8 legs)
+    stopReach = 0.9,   -- the stopping step's longest reach (leg lengths forward of the hip; 0.6-0.9 the same)
+    stopGrip = 3,      -- the planted feet's grip while stopping (1 or 6: the same)
+    turnFirst = true,  -- going the other way: stop, turn on the spot, then go (false: turn while walking).
+                       -- Walking only: a hop turning as it goes doesn't moonwalk (and a single hop facing
+                       -- front, made to turn first, didn't hop once, spec/mipo-motor_spec)
+    setOff = 0.16,     -- seconds dipping before it sets off once it faces its way
     stancePose = 1,    -- torsoByMotor: the standing hip also holds the thigh's pose (0: the torso only: skated)
     freeStance = true, -- torque torsoHold: the standing hip's motor and muscle off (SIMBICON: that hip is the torso's)
 }
@@ -197,10 +213,19 @@ function lib.hold(instance, on) instance._noWalk = on or nil end
 -- carries it in the air). A hand on it wins.
 function lib.drive(inst, speed, mode)
     inst._stepsLeft, inst._hopsLeft, inst._gaitFrom = nil, nil, nil
+    local was, wasMode = inst._drive, inst._driveMode
+    -- a walk stopping, or turning back: the stopping step (LO4) while it walks on the floor
+    local stepping = lib.stopStep and was and wasMode == 'walk' and inst._walking and not inst._jump
+        and not inst._stop and (inst._goAt == nil or love.timer.getTime() - inst._goAt > lib.setOff)
     if speed and speed ~= 0 then
+        if stepping and was * speed < 0 then inst._stop = { at = love.timer.getTime(), phase = 'step' } end
         inst._drive, inst._driveMode = speed, mode or 'walk'
     else
-        if inst._drive then inst._brakeUntil = love.timer.getTime() + lib.brakeFor end
+        if stepping then
+            inst._stop = { at = love.timer.getTime(), phase = 'step' }
+        elseif inst._drive then
+            inst._brakeUntil = love.timer.getTime() + lib.brakeFor
+        end
         inst._drive, inst._driveMode = nil, nil
     end
 end
@@ -761,6 +786,7 @@ end
 
 -- standing again: legs straight, feet back on their ankles, hips as the facing set them, full grip
 local function stopWalking(inst)
+    inst._goAt = nil
     uprightTorso(inst, nil)
     inst._armSwing, inst._driveTarget, inst._stance = nil, nil, nil
     if inst._legMotorsOn then
@@ -1035,50 +1061,6 @@ local function updateHop(inst, now, torso, legLen, face, grounded, target)
     end
 end
 
--- walking (or hopping) by itself: lib.drive
-local function updateDrive(inst, dt, now, torso, legLen)
-    local dir = inst._drive > 0 and 1 or -1
-    local side = SIDE_OF[dir]
-    if facing.get(inst) ~= side and inst._turnGoal ~= side then lib.turnTo(inst, side) end
-    local faceDir = facing.dir(inst)
-    local face = faceDir ~= 0 and faceDir or dir
-    local target = inst._drive * legLen * (faceDir == dir and 1 or lib.turningPace)
-    local grounded = mipoActions.isGrounded(inst)
-    inst._walking, inst._walkedAt = true, now
-    inst._driveTarget = target
-    uprightTorso(inst, face)
-    inst._armSwing = nil
-    if inst._jumpAt then return end -- crouching for a jump: the legs are the jump's
-    if inst._driveMode == 'hop' then
-        if grounded then push(inst, torso, target, legLen, dt) end
-        holdFeet(inst, faceDir ~= 0 and face or nil, {})
-        hipsBack(inst, faceDir ~= 0 and face or nil)
-        updateHop(inst, now, torso, legLen, face, grounded, target)
-        return
-    end
-    inst._hopFireAt = nil
-    if not grounded and now - (inst._groundAt or 0) > GROUND_GRACE then
-        legsTo(inst, face, 30, 45) -- off the ground a while (a jump, a fall): tucked
-        return
-    end
-    local vx = torso:getLinearVelocity()
-    if inst._stepsLeft and faceDir ~= dir then inst._gaitFrom = nil end -- steps count once it faces its way
-    if inst._stepsLeft then inst._gaitFrom = inst._gaitFrom or (inst._gait or 0) end
-    local pushOff = stepLegs(inst, dt, math.max(math.abs(target) * 0.6, vx * dir), face, faceDir ~= 0, legLen,
-        lib.weighty)
-    if grounded then
-        if lib.weighty and lib.pulse > 0 then
-            -- surging at push-off, easing between (a foot pushes off about a quarter of the time)
-            push(inst, torso, target * (1 + lib.pulse * (pushOff - 0.25)), legLen, dt, 1 + 2 * lib.pulse * pushOff)
-        else
-            push(inst, torso, target, legLen, dt)
-        end
-    end
-    if inst._stepsLeft and inst._gaitFrom and inst._gait - inst._gaitFrom >= inst._stepsLeft * math.pi then
-        lib.drive(inst, nil)
-    end
-end
-
 ---------------------------------------------------------------- the jump (LO8)
 
 -- One jump as an animator draws it: anticipation (squat, torso in, arms back, eased into the lowest
@@ -1148,6 +1130,69 @@ local function jumpFeet(inst, face, lift)
     if face == 0 then holdFeet(inst, nil) return end
     local a = -face * (90 + lift)
     holdFeet(inst, face, {}, { a, a })
+end
+
+-- walking (or hopping) by itself: lib.drive
+local function updateDrive(inst, dt, now, torso, legLen)
+    local dir = inst._drive > 0 and 1 or -1
+    local side = SIDE_OF[dir]
+    if facing.get(inst) ~= side and inst._turnGoal ~= side then lib.turnTo(inst, side) end
+    local faceDir = facing.dir(inst)
+    local face = faceDir ~= 0 and faceDir or dir
+    local target = inst._drive * legLen * (faceDir == dir and 1 or lib.turningPace)
+    local grounded = mipoActions.isGrounded(inst)
+    -- turn first (LO4): not facing its way yet, it stands and turns on the spot; once it does, a dip
+    -- (anticipation) and off
+    if lib.turnFirst and inst._driveMode == 'walk' and faceDir ~= dir and grounded then
+        if inst._walking then stopWalking(inst) end
+        inst._goAt = nil
+        return
+    end
+    if lib.turnFirst and inst._driveMode == 'walk' then
+        if not inst._goAt then inst._goAt = now end
+        local t = now - inst._goAt
+        if t < lib.setOff then
+            local d = math.sin(math.pi * t / lib.setOff)
+            inst._walking, inst._walkedAt = true, now
+            jumpLegs(inst, face, 14 * d, 30 * d, 1.2)
+            jumpFeet(inst, face, 0)
+            jumpTorso(inst, face, 6 * d)
+            return
+        end
+    end
+    inst._walking, inst._walkedAt = true, now
+    inst._driveTarget = target
+    uprightTorso(inst, face)
+    inst._armSwing = nil
+    if inst._jumpAt then return end -- crouching for a jump: the legs are the jump's
+    if inst._driveMode == 'hop' then
+        if grounded then push(inst, torso, target, legLen, dt) end
+        holdFeet(inst, faceDir ~= 0 and face or nil, {})
+        hipsBack(inst, faceDir ~= 0 and face or nil)
+        updateHop(inst, now, torso, legLen, face, grounded, target)
+        return
+    end
+    inst._hopFireAt = nil
+    if not grounded and now - (inst._groundAt or 0) > GROUND_GRACE then
+        legsTo(inst, face, 30, 45) -- off the ground a while (a jump, a fall): tucked
+        return
+    end
+    local vx = torso:getLinearVelocity()
+    if inst._stepsLeft and faceDir ~= dir then inst._gaitFrom = nil end -- steps count once it faces its way
+    if inst._stepsLeft then inst._gaitFrom = inst._gaitFrom or (inst._gait or 0) end
+    local pushOff = stepLegs(inst, dt, math.max(math.abs(target) * 0.6, vx * dir), face, faceDir ~= 0, legLen,
+        lib.weighty)
+    if grounded then
+        if lib.weighty and lib.pulse > 0 then
+            -- surging at push-off, easing between (a foot pushes off about a quarter of the time)
+            push(inst, torso, target * (1 + lib.pulse * (pushOff - 0.25)), legLen, dt, 1 + 2 * lib.pulse * pushOff)
+        else
+            push(inst, torso, target, legLen, dt)
+        end
+    end
+    if inst._stepsLeft and inst._gaitFrom and inst._gait - inst._gaitFrom >= inst._stepsLeft * math.pi then
+        lib.drive(inst, nil)
+    end
 end
 
 local function endJump(inst, now)
@@ -1241,6 +1286,166 @@ local function updateJump(inst, dt, now)
     return true
 end
 
+---------------------------------------------------------------- stopping (LO4)
+
+-- The stopping step, as a capture point (Pratt): a body over a leg is an inverted pendulum, and a foot
+-- set down at x + v * sqrt(h / g) brings it to rest over that foot. The leg that isn't standing steps
+-- there (lifted mid-way, reaching, heel down), the standing one holds; once the foot is down the feet
+-- brake (both on the floor, as a person digging in). Then the settle: the feet come together under
+-- the body, the knees give and straighten, the torso tips on past upright and back, the arms swing.
+-- inst._stop = { phase 'step' | 'settle', at, face, leg, aim (degrees forward) }.
+
+local function endStop(inst, now)
+    inst._stop = nil
+    inst._armSwing = nil
+    jumpTorso(inst, 0, nil)
+    inst._walkedAt = now
+    stopWalking(inst)
+    inst._walking = false
+end
+
+-- the thigh's angle forward of straight down (degrees, + the way it faces)
+local function thighForward(inst, i, face)
+    local thigh = partBody(inst, LEG_PAIRS[i][1])
+    if not thigh then return 0 end
+    local a = (thigh:getAngle() + math.pi) % TWO_PI - math.pi
+    return -face * math.deg(a)
+end
+
+local function updateStop(inst, dt, now)
+    local st = inst._stop
+    local torso = partBody(inst, 'torso1')
+    local legLen = legLength(inst)
+    if not (torso and legLen) or held(inst) or not mayWalk(inst) or inst._jump then
+        endStop(inst, now)
+        return false
+    end
+    if not st.face then
+        local f = facing.dir(inst)
+        if f == 0 then -- facing front: nothing to step with; brake as before
+            inst._stop = nil
+            inst._brakeUntil = now + lib.brakeFor
+            return false
+        end
+        local stance = inst._stance or 1
+        st.face, st.leg, st.stance = f, 3 - stance, stance
+        st.from = thighForward(inst, st.leg, f)
+        st.standFrom = thighForward(inst, stance, f)
+    end
+    inst._walking, inst._walkedAt = true, now
+    local face, t = st.face, now - st.at
+    local _, gy = torso:getWorld():getGravity()
+    local g = math.max(math.abs(gy), 1)
+    hipsBack(inst, face)
+    if st.phase == 'step' then
+        local x = math.min(1, t / lib.stopStepTime)
+        -- where the momentum carries the body (forward of the hip, in leg lengths)
+        local cx = centreOf(inst)
+        local hx = jointPoint(inst, 'torso1', LEG_PAIRS[st.leg][1])
+        local vx = torso:getLinearVelocity()
+        local ahead = 0
+        if cx and hx then ahead = face * (cx + vx * math.sqrt(legLen / g) - hx) / legLen end
+        local aim = math.deg(math.asin(math.max(0.05, math.min(lib.stopReach, ahead))))
+        st.aim = st.aim and (st.aim + (aim - st.aim) * math.min(1, dt * 10)) or aim
+        -- the stepping leg: from where it was to the aim, lifted mid-way (knee) and reaching at the end
+        local e = x * x * (3 - 2 * x)
+        local fwd = st.from + (st.aim - st.from) * e
+        local knee = 55 * math.sin(math.pi * math.min(1, x * 1.1))
+        local thighW = -face * fwd
+        legMotors(inst, st.leg, thighW, thighW + face * knee)
+        -- the standing leg holds where it is, the knee a little soft
+        local standW = -face * st.standFrom
+        legMotors(inst, st.stance, standW, standW + face * 8)
+        inst._legMotorsOn = true
+        for i = 1, 2 do
+            local leg = LEG_PAIRS[i]
+            local upper = mipoActions.ensureKeepAngle(inst.parts[leg[1]], 0, 40)
+            local lower = mipoActions.ensureKeepAngle(inst.parts[leg[2]], 0, 40)
+            local th = i == st.leg and thighW or standW
+            local sh = i == st.leg and (thighW + face * knee) or (standW + face * 8)
+            if upper then upper.angle, upper.enabled = th, nil end
+            if lower then lower.angle, lower.enabled = sh, nil end
+        end
+        -- feet: the stepping one toes up as it reaches (heel strike), the standing one flat
+        local stepLift = 18 * math.max(0, (x - 0.5) / 0.5)
+        local angles = {}
+        angles[st.leg] = -face * (90 + stepLift)
+        angles[st.stance] = -face * 90
+        holdFeet(inst, face, {}, angles)
+        setGrip(inst, FEET[st.leg], x < 0.8 and SWING_GRIP or lib.stopGrip)
+        setGrip(inst, FEET[st.stance], lib.stopGrip)
+        jumpTorso(inst, face, -5 * e) -- leaning back a touch, against the stop
+        inst._armSwing = { l = face * math.rad(15) * e, r = face * math.rad(15) * e }
+        if lib.stopBrake > 0 and x >= lib.stopBrakeFrom and mipoActions.isGrounded(inst) then
+            push(inst, torso, 0, legLen, dt, lib.stopBrake)
+        end
+        if x >= 1 then
+            if inst._drive then endStop(inst, now) return false end -- turning back: no settle, it turns
+            st.phase, st.at = 'close', now
+            st.closeFrom = thighForward(inst, st.stance, face)
+        end
+        return true
+    end
+    if st.phase == 'close' then
+        -- the back foot lifts and steps up beside the front one (sliding it in skidded both feet); the
+        -- front leg holds where it is, a strut the body comes to rest over
+        local x = math.min(1, t / lib.closeTime)
+        local e = x * x * (3 - 2 * x)
+        local front = thighForward(inst, st.leg, face)
+        local fwd = st.closeFrom + (front - st.closeFrom) * e
+        local knee = 50 * math.sin(math.pi * x)
+        local closeW, frontW = -face * fwd, -face * front
+        legMotors(inst, st.stance, closeW, closeW + face * knee)
+        legMotors(inst, st.leg, frontW, frontW + face * 6)
+        inst._legMotorsOn = true
+        for i = 1, 2 do
+            local leg = LEG_PAIRS[i]
+            local upper = mipoActions.ensureKeepAngle(inst.parts[leg[1]], 0, 40)
+            local lower = mipoActions.ensureKeepAngle(inst.parts[leg[2]], 0, 40)
+            local th = i == st.stance and closeW or frontW
+            local sh = th + face * (i == st.stance and knee or 6)
+            if upper then upper.angle, upper.enabled = th, nil end
+            if lower then lower.angle, lower.enabled = sh, nil end
+        end
+        holdFeet(inst, face, {}, { -face * 90, -face * 90 })
+        setGrip(inst, FEET[st.stance], x < 0.85 and SWING_GRIP or lib.stopGrip)
+        setGrip(inst, FEET[st.leg], lib.stopGrip)
+        jumpTorso(inst, face, -5 * (1 - e))
+        inst._armSwing = { l = face * math.rad(15) * (1 - e), r = face * math.rad(15) * (1 - e) }
+        if lib.stopBrake > 0 and mipoActions.isGrounded(inst) then push(inst, torso, 0, legLen, dt) end
+        if x >= 1 then
+            st.phase, st.at = 'settle', now
+            st.stepAt = thighForward(inst, st.leg, face)
+            st.standAt = thighForward(inst, st.stance, face)
+        end
+        return true
+    end
+    -- settle: both feet in under the body, knees giving and straightening, torso and arms following through
+    local x = math.min(1, t / lib.settleTime)
+    local e = x * x * (3 - 2 * x)
+    local give = math.sin(math.pi * x)
+    for _, n in ipairs(FEET) do setGrip(inst, n, lib.stopGrip) end
+    for i = 1, 2 do
+        local from = i == st.leg and st.stepAt or st.standAt
+        local fwd = from * (1 - e)
+        local thighW = -face * (fwd + 10 * give)
+        local shinW = thighW + face * 22 * give
+        legMotors(inst, i, thighW, shinW)
+        local leg = LEG_PAIRS[i]
+        local upper = mipoActions.ensureKeepAngle(inst.parts[leg[1]], 0, 40)
+        local lower = mipoActions.ensureKeepAngle(inst.parts[leg[2]], 0, 40)
+        if upper then upper.angle, upper.enabled = thighW, nil end
+        if lower then lower.angle, lower.enabled = shinW, nil end
+    end
+    inst._legMotorsOn = true
+    holdFeet(inst, face, {}, { -face * 90, -face * 90 })
+    jumpTorso(inst, face, 7 * give - 5 * (1 - x)) -- on past upright, then back
+    inst._armSwing = { l = -face * math.rad(22) * give, r = -face * math.rad(22) * give }
+    if lib.stopBrake > 0 and mipoActions.isGrounded(inst) then push(inst, torso, 0, legLen, dt) end
+    if x >= 1 then endStop(inst, now) return false end
+    return true
+end
+
 local function updateWalk(inst, dt, now)
     if not mayWalk(inst) then
         stopWalking(inst)
@@ -1307,7 +1512,10 @@ function lib.update(dt)
     ranAt = now
     for _, inst in utils.sortedPairs(mipoRegistry.getAll()) do
         if alive(inst) then
-            if not (inst._jump and updateJump(inst, dt, now)) then updateWalk(inst, dt, now) end
+            if not (inst._jump and updateJump(inst, dt, now))
+                and not (inst._stop and updateStop(inst, dt, now)) then
+                updateWalk(inst, dt, now)
+            end
             updateTurn(inst, dt, now)
             updateRelax(inst, now)
         end
