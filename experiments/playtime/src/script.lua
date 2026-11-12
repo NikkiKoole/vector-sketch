@@ -56,6 +56,7 @@ local baseEnv = {
     generateID               = uuid.generateID,
     objectManager            = objectManager,
     ui                       = scriptUi,
+    pad                      = require('src.ui.pad'), -- a 2D pad with labelled spots (BESPOKE-UI.md BU1)
     cam                      = cam,
     camera                   = cameraFollow.script, -- follow, setBounds, shake, zoomTo
     mathutils                = mathutils,

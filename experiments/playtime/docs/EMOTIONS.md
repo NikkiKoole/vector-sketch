@@ -30,6 +30,7 @@ mouth was let go past the frown. The brows move as meant but are thin and often 
 
 ## Next
 
+- Feelings on a pad (2026-11-12, BESPOKE-UI.md BU2): a mood map at the top of the panel, drag to blend.
 - [ ] **EMO1. Nikki plays with it**: which feelings read, which need more (the numbers are `lib.EMOTIONS`).
 - [ ] **EMO2. Feelings from play**: picked up (surprised, then happy while held), thrown hard (scared),
   a hard landing (sad, dizzy), left alone a long while (sleepy), another Mipo near (shy or happy). The voice

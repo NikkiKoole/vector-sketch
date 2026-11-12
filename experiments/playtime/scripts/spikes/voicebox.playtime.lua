@@ -81,43 +81,28 @@ function s.update(dt)
     mipoEmotion.update(dt, false) -- the feeling row's face (no reactions to play here)
 end
 
--- the vowel chart: front on the left, open at the bottom; drag to move between the vowels
-local wasDown = false
+-- the vowel chart: front on the left, open at the bottom; drag to move between the vowels (the
+-- shared pad, src/ui/pad.lua, came out of this chart)
 local function drawChart(x, y, w, h)
     local v = voiceBox.settings()
-    love.graphics.setColor(0.13, 0.12, 0.11, 0.9)
-    love.graphics.rectangle('fill', x, y, w, h, 8, 8)
-    love.graphics.setColor(1, 1, 1, 0.12)
-    for i = 1, 3 do
-        love.graphics.line(x + w * i / 4, y + 4, x + w * i / 4, y + h - 4)
-        love.graphics.line(x + 4, y + h * i / 4, x + w - 4, y + h * i / 4)
-    end
+    local spots = {}
     for _, vowel in ipairs(voiceBox.VOWELS) do
-        local cx, cy = voiceBox.chartXY(vowel.f1, vowel.f2)
-        love.graphics.setColor(1, 0.85, 0.6, 0.9)
-        love.graphics.circle('fill', x + cx * w, y + cy * h, 4)
-        love.graphics.print(vowel.name, x + cx * w + 6, y + cy * h - 9)
+        local cu, cv = voiceBox.chartXY(vowel.f1, vowel.f2)
+        spots[#spots + 1] = { u = cu, v = cv, label = vowel.name }
     end
-    local px, py = voiceBox.chartXY(v.f1, v.f2)
-    love.graphics.setColor(v.sounding and { 1, 0.4, 0.45, 1 } or { 0.6, 0.9, 1, 1 })
-    love.graphics.circle('fill', x + px * w, y + py * h, v.sounding and 9 or 7)
-    love.graphics.setColor(1, 1, 1, 0.5)
-    love.graphics.print('front', x + 6, y + h - 18)
-    love.graphics.print('back', x + w - 36, y + h - 18)
-    -- press and drag: hold the note, move the vowel
-    local mx, my = ui.mouseX, ui.mouseY
-    local down = love.mouse.isDown(1)
-    local inside = mx >= x and mx <= x + w and my >= y and my <= y + h
-    local c = st()
-    if down and inside and not wasDown then
-        c.padHeld = true
-        voiceBox.setVowel(voiceBox.chartFormants((mx - x) / w, (my - y) / h))
-        -- a looping take: the chart only steers its vowel filter
-        if not v.takeLoop then voiceBox.hold(c.padOnset and v.onset or nil) end
-    elseif down and c.padHeld then
-        voiceBox.setVowel(voiceBox.chartFormants((mx - x) / w, (my - y) / h))
+    local pu, pv = voiceBox.chartXY(v.f1, v.f2)
+    local changed, u, vv = pad.draw('vowels', x, y, w, h,
+        { value = { pu, pv }, spots = spots, corners = { bl = 'front', br = 'back' }, lit = v.sounding })
+    if changed then
+        -- press and drag: hold the note, move the vowel
+        voiceBox.setVowel(voiceBox.chartFormants(u, vv))
+        local c = st()
+        if pad.pressed('vowels') then
+            c.padHeld = true
+            -- a looping take: the chart only steers its vowel filter
+            if not v.takeLoop then voiceBox.hold(c.padOnset and v.onset or nil) end
+        end
     end
-    wasDown = down
 end
 
 local SLIDERS = {

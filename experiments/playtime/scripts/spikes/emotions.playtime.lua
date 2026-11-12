@@ -48,9 +48,38 @@ local function targets()
     return picked and mipoKit.isAlive(picked) and { picked } or {}
 end
 
+-- the feelings on a pad (BESPOKE-UI BU2): pleasant to the right, excited at the top (a mood map,
+-- valence and arousal); neutral in the middle. Drag on it and the faces follow: on a feeling's
+-- spot that feeling, between two a blend of both, near the middle hardly any.
+local FEEL_SPOTS = {
+    { name = 'happy', u = 0.82, v = 0.38 }, { name = 'surprised', u = 0.62, v = 0.1 },
+    { name = 'scared', u = 0.3, v = 0.12 }, { name = 'angry', u = 0.12, v = 0.32 },
+    { name = 'sad', u = 0.2, v = 0.78 }, { name = 'sleepy', u = 0.52, v = 0.92 },
+    { name = 'shy', u = 0.8, v = 0.72 },
+}
+for _, spot in ipairs(FEEL_SPOTS) do spot.label = spot.name end
+local FEEL_REACH = 0.32
+
+local function feelAt(u, v)
+    local c = st()
+    c.padU, c.padV = u, v
+    local weights = pad.weights(FEEL_SPOTS, u, v, FEEL_REACH)
+    for _, inst in ipairs(targets()) do
+        mipoEmotion.set(inst, 'neutral')
+        for i, spot in ipairs(FEEL_SPOTS) do
+            if weights[i] > 0.01 then mipoEmotion.set(inst, spot.name, weights[i] * c.amount, nil, true) end
+        end
+    end
+end
+
 local function feel(name)
     local c = st()
     for _, inst in ipairs(targets()) do mipoEmotion.set(inst, name, c.amount, nil, c.mix) end
+    -- the pad's dot to that feeling's spot (the middle for neutral)
+    c.padU, c.padV = 0.5, 0.5
+    for _, spot in ipairs(FEEL_SPOTS) do
+        if spot.name == name then c.padU, c.padV = spot.u, spot.v end
+    end
 end
 
 function s.onStart()
@@ -63,7 +92,10 @@ end
 function s.onKeyPress(key)
     local c = st()
     if key == 'h' then c.showPanel = not c.showPanel end
-    if key == 'n' then for _, inst in ipairs(mipos()) do mipoEmotion.clear(inst) end end
+    if key == 'n' then
+        for _, inst in ipairs(mipos()) do mipoEmotion.clear(inst) end
+        c.padU, c.padV = 0.5, 0.5
+    end
     if key == 'e' then
         for _, inst in ipairs(mipos()) do
             mipoEmotion.set(inst, mipoEmotion.NAMES[love.math.random(#mipoEmotion.NAMES)], c.amount)
@@ -103,12 +135,17 @@ function s.drawUI()
     local buttons = { 'neutral' }
     for _, name in ipairs(mipoEmotion.NAMES) do buttons[#buttons + 1] = name end
     local rows = math.ceil(#buttons / 2) + 5
-    local w, h = PANEL.w, PANEL.row * rows + 34
+    local PAD_H = 170
+    local w, h = PANEL.w, PANEL.row * rows + 34 + PAD_H + PANEL.pad
     local x0, y0 = sw - w - 12, math.max(12, sh - h - 12)
     local half = (w - PANEL.pad * 3) / 2
     ui.panel(x0, y0, w, h, '•• feelings ••', function()
         local layout = ui.createLayout({ type = 'columns', spacing = 0, startX = x0 + PANEL.pad, startY = y0 + 28 })
         local function row() return ui.nextLayoutPosition(layout, w - PANEL.pad * 2, PANEL.row) end
+        local px, py = ui.nextLayoutPosition(layout, w - PANEL.pad * 2, PAD_H + PANEL.pad)
+        local changed, padU, padV = pad.draw('feelings', px, py, w - PANEL.pad * 2, PAD_H, {
+            value = { c.padU or 0.5, c.padV or 0.5 }, spots = FEEL_SPOTS })
+        if changed then feelAt(padU, padV) end
         for i = 1, #buttons, 2 do
             local x, y = row()
             for k = 0, 1 do
