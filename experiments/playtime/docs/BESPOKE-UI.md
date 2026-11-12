@@ -66,6 +66,13 @@ pad's only if it starts on it; a drag carries on outside it. In scene scripts as
       `state.musicSettings.arrange[style]`, saved by setups; earth reads it per bar (music-earth.lua, the earth
       session's hook). Seen in a screenshot, clicks not tried by Claude. Next: brew and neige (the same loop
       shape, their own role names), if wanted.
+      **Every other style, 2026-11-12** (Nikki: "how does this translate to all our other songs"): their songs
+      are rolled fresh, so a column is a kind of section (intro, A, B, break, outro ...: "no drums in any
+      break"), which holds across songs; rows are the parts the style has played. Takes notes away only.
+      Kinds and parts appear as the style first plays them (`state.musicArrangeSeen`), so drums that haven't
+      come in yet (band 'auto', calm play) have no row yet. Kept in `arrange[style].kinds[kind][part] = false`,
+      read in music-parts.lua's voiceOf (the music session's hook, a9927282; drums are one part, not per sound).
+      Drawn off-screen for bossa (intro A B outro, A lit); clicks not tried by Claude.
 - [ ] **BU10. The band on a stage**, **BU11. styles on a pad**, **BU12. ideas as a fader bank**: the other
       music panel ideas (2026-11-12), not started.
 
