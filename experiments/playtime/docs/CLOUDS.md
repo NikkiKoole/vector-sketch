@@ -98,16 +98,17 @@ steeply with cold), below evaporates. Pulled up past the point where it's warmer
   the speed. Lines: cloud base, goes on by itself, lid. Time x25 by default (x80 was gone in 6 s).
   Seen in screenshots: a pulled cloud climbs to the lid in ~5 s, spreads under it and tatters away;
   painted air low down becomes a flat-based cloud that stays under the take-off line.
-- [ ] **CG3. Its life.** Young clouds crisp, older ones ragged, evaporating at the edges into dry
-      air. A big one hits the lid and spreads into an anvil; the base goes heavy and dark, it rains
-      (the existing drops), a cold downdraft under it, then it dies.
-  Built 2026-11-12, for Nikki to try: rain in `src/cloud-air.lua` (past 0.8 g/kg of cloud water
-  drops form, weigh the cloud down and fall out; half of what falls evaporates under it, more in dry
-  air, and cools it: a shower ends its own updraft; spec: it dies, and under a higher lid it rains
-  more and lives longer). In the scene: drops under a raining cloud that reach the ground in humid
-  air and dry up halfway (virga) in dry air, a dark belly from the rain in it, lobes flattening and
-  spreading near the lid (the anvil), and a cloud past its most going ragged and soft. Not yet: the
-  cold outflow along the ground (a gust that pushes Mipos) and the cloud's shadow.
+  Painting changed 2026-11-12 (Nikki: "i just want to paint clouds and have them be friendly, do
+  not care about the rain just yet"): a dab is cloud straight away (`cloudAir.newCloud`), as heavy
+  as the air, and it **floats** where it's put, fading over minutes; painted ones don't push each
+  other apart. Pulled and let go gently it floats again where it's left; flung, or lifted past
+  the take-off line, the air takes over (rises to the lid, or sinks and clears).
+- [ ] **CG3. Its life.** Tried 2026-11-12 and taken out again (Nikki liked the clouds better
+      before it; rain not wanted yet): rain from 0.8 g/kg of cloud water weighing the cloud down,
+      its evaporation cooling it until it sank (a shower ending its own updraft; under a higher lid
+      more rain, a longer life), drops reaching the ground or drying up halfway, a dark belly,
+      lobes flattening into an anvil at the lid, dying clouds going ragged. In git: commit ad1f56a1,
+      reverted; back to it when rain is wanted.
 - [ ] **CG4. Real light.** Self-shadowing towards the sun in the shader: bright tops, bellies grey
       by depth, a silver lining with the sun behind, the sky's hour colours (SKY).
 - [ ] **CG5. Wind with height.** Faster wind higher up leans towers and stretches tops; the

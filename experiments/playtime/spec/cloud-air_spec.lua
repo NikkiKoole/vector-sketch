@@ -59,27 +59,4 @@ describe('cloud-air', function()
         air.moveTo(down, 300)
         assert.are.equal(0, down.qc)
     end)
-
-    it('a big cloud rains, the rain cools it and it dies; under a higher lid it rains more', function()
-        local function shower(lidZ)
-            local a = newAir({ groundRH = 85, lidZ = lidZ })
-            local p = air.newThermal(a, 0, 600, 0.97, 0.3, 400)
-            air.moveTo(p, 1500)
-            p.w = 3
-            local rained = 0
-            for i = 1, 4000 do
-                air.step(a, p, 1)
-                rained = rained + p.rainRate
-                if air.spent(p) then return rained, i end
-            end
-            return rained, nil
-        end
-        local low, lowEnd = shower(3500)
-        local high, highEnd = shower(6000)
-        assert.is_truthy(lowEnd)
-        assert.is_truthy(highEnd)
-        assert.is_true(low > 0.5)
-        assert.is_true(high > low)
-        assert.is_true(highEnd > lowEnd)
-    end)
 end)
