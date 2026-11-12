@@ -20,12 +20,13 @@ local lib = {}
 -- the 16th 'a' of a beat lands this far into it (bass, keys and drums: ~+45..65 ms at 91 BPM)
 local DRAG = 0.83
 
--- the bass: { beat in the cycle, midi, length beats, short, odds }. Lengths and odds from the fold (in how
--- many of the 16 passes a note was there); the shorts are stopped, the held notes ring
+-- the bass: { beat in the cycle, midi, length beats, short, odds }. Lengths from the fold; no odds: the record
+-- is one fixed loop, so a note heard in only some passes was the transcriber missing it (Nikki 2026-11-12: "the
+-- second time the whole phrase is played it misses the ending note"); the shorts are stopped, the held ones ring
 local function pulse(bar)
     local o = bar * 4
     return { o, 48, 0.2, true }, { o + 0.25, 48, 0.18, true }, { o + 0.5, 48, 0.2, true },
-        { o + DRAG, 48, 0.22, true }, { o + 1, 48, 0.25, true }, { o + 1.25, 48, 0.3, true, 0.6 }
+        { o + DRAG, 48, 0.22, true }, { o + 1, 48, 0.25, true }, { o + 1.25, 48, 0.3, true }
 end
 lib.BASS = {}
 for bar = 0, 2 do
@@ -34,16 +35,16 @@ end
 local function add(list, entries) for _, e in ipairs(entries) do list[#list + 1] = e end end
 add(lib.BASS, {
     { 2, 51, 0.5, false },               -- Eb3, bar 1: half a beat
-    { 3, 51, 0.35, false, 0.4 },
+    { 3, 51, 0.35, false },
     { 6, 51, 0.95, false },              -- bar 2: held
-    { 7, 51, 0.4, false, 0.55 },
+    { 7, 51, 0.4, false },
     { 10, 51, 0.9, false },              -- bar 3
-    { 11, 51, 0.2, false, 0.45 },
+    { 11, 51, 0.2, false },
     { 12, 45, 0.12, true },              -- A2, a short one, then held
     { 12.25, 45, 0.6, false },
     { 14.25, 38, 0.85, false },          -- D2 on the 'e' of 3 (a 16th late)
-    { 15, 38, 0.35, false, 0.8 },
-    { 15.5, 38, 0.3, false, 0.5 },
+    { 15, 38, 0.35, false },
+    { 15.5, 38, 0.3, false },
 })
 -- the keys: { beat, length beats, odds, midi... }; top line as heard over the passes (13-16 of 16). Odds all 1:
 -- the record is one fixed loop, so a note heard in only some passes was the transcriber missing it, not the
