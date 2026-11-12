@@ -56,6 +56,19 @@ pad's only if it starts on it; a drag carries on outside it. In scene scripts as
 - [ ] **BU8. Weather**: rain, storm, fog, snow, wind and heat are blended by amount (WEATHER.md): a pad or
       wheel to point at a mix.
 
+- [ ] **BU9. The arrangement grid** (music panel, earth; Nikki with the earth session 2026-11-12: "an arrangement
+      grid for earth (a BPM slider + passes x parts toggles)"). **Built 2026-11-12, Nikki to try** —
+      `src/ui/music-arrange.lua`, above the music rows while earth plays: a column per pass (10 of the 4-bar
+      loop), a row per part (vibes, bass, drums, solo); click a cell: that part on/off in that pass, the solo
+      rest -> A (call) -> B (answer); click a part's name: the whole row off, again: back to the record's. The
+      pass you hear is lit and fills as its bars go (from the audio clock, not the booked bar); a name gets a
+      dot while it sounds. bpm slider: from the next bar line. 'the record's arrangement' clears it. Kept in
+      `state.musicSettings.arrange[style]`, saved by setups; earth reads it per bar (music-earth.lua, the earth
+      session's hook). Seen in a screenshot, clicks not tried by Claude. Next: brew and neige (the same loop
+      shape, their own role names), if wanted.
+- [ ] **BU10. The band on a stage**, **BU11. styles on a pad**, **BU12. ideas as a fader bank**: the other
+      music panel ideas (2026-11-12), not started.
+
 Where it doesn't fit: settings with one number and no picture (a speed, a count) stay sliders.
 
 ## Where we left it (2026-11-12)
