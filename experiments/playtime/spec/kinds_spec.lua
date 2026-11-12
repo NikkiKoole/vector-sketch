@@ -45,6 +45,14 @@ describe('kinds', function()
             assert.are.equal(name, partName)
         end
         assert.are.equal(2, #kart.parts.frame.body:getJoints()) -- the wheels on their joints
+        -- the wheels wear their picture, before their own shape (the fixture ordering invariant)
+        local fixtures = require('src.fixtures')
+        for _, name in ipairs({ 'backWheel', 'frontWheel' }) do
+            local body = kart.parts[name].body
+            assert.is_true(fixtures.hasFixturesWithUserDataAtBeginning(body:getFixtures()), name)
+            local textured = #fixtures.sfixtureData(body, require('src.subtypes').TEXFIXTURE)
+            assert.are.equal(1, textured, name)
+        end
         assert.are.equal('kart', kinds.label(kart))
     end)
 

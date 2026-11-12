@@ -282,7 +282,7 @@ local function setMotors(instance, ride, g, driving, speed, accel)
     for _, w in ipairs(list) do
         local joint = wheelJoint(w)
         if joint and not joint:isDestroyed() then
-            local r = w.body:getFixtures()[1]:getShape():getRadius()
+            local r = require('src.vehicles').solidFixture(w.body):getShape():getRadius()
             joint:setMotorEnabled(true)
             if driving then
                 joint:setMotorSpeed(ride.dir * (speed or g.topSpeed) / r)
@@ -350,7 +350,7 @@ local function rolled(instance, ride)
     local a = w.body:getAngle()
     local d = a - (ride.lastWheelAngle or a)
     ride.lastWheelAngle = a
-    return d * w.body:getFixtures()[1]:getShape():getRadius() * ride.dir
+    return d * require('src.vehicles').solidFixture(w.body):getShape():getRadius() * ride.dir
 end
 
 -- a wheel touching something that doesn't move (the ground)

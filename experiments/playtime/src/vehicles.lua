@@ -9,6 +9,30 @@ local joints = require('src.joints')
 local JT = require('src.joint-types')
 local uuid = require('src.uuid')
 local mathutils = require('src.math-utils')
+local fixtures = require('src.fixtures')
+local subtypes = require('src.subtypes')
+
+-- a body's own shape (its first fixture without userdata): the sfixtures (its pictures) come first
+function lib.solidFixture(body)
+    for _, fixture in ipairs(body:getFixtures()) do
+        if fixture:getUserData() == nil then return fixture end
+    end
+end
+
+-- The wheels' picture (RIDES RD3, the look's first bit): Nikki's crayon wheel from the mipoworld experiment,
+-- as an outline (the tread and rim lines, in ink) and a mask (the tyre, in rubber); it turns with the wheel.
+lib.WHEEL_PICTURE = 'world/vehicles/wheel-01'
+lib.WHEEL_INK, lib.WHEEL_RUBBER = '1c1a18ff', '4a4440ff'
+
+local function dressWheel(body, r)
+    local size = 2 * r * 1.06 -- the drawn tyre's outside is a little inside the picture's edge
+    local fixture = fixtures.createSFixture(body, 0, 0, subtypes.TEXFIXTURE, { width = size, height = size })
+    if not fixture then return end
+    local extra = fixture:getUserData().extra
+    extra.OMP, extra.dirty = true, true
+    extra.main = { bgURL = lib.WHEEL_PICTURE .. '.png', fgURL = lib.WHEEL_PICTURE .. '-mask.png',
+        bgHex = lib.WHEEL_INK, fgHex = lib.WHEEL_RUBBER }
+end
 
 -- the rides spike's S: a Mipo's standing height (it took its first Mipo's, ~900). Random Mipos at scale 0.3
 -- stand 445-923 (measured 2026-11-12, mipoHeight), mostly 650-920; at 600 (the props' size) they hung over
@@ -32,6 +56,7 @@ local function addWheel(frame, x, y, cx, cy, wx, wy, r)
     local wheel = objectManager.addThing('circle', { x = x + wx, y = y + wy, radius = r, label = 'wheel' })
     if not wheel then return nil end
     setMaterial(wheel.body, 1.2, 0.1, 1)
+    dressWheel(wheel.body, r)
     joints.createJoint({
         body1 = frame.body,
         body2 = wheel.body,
@@ -151,7 +176,7 @@ function lib.partRows(partName, thing)
             set = function(v) thing.body:setLinearDamping(v) end } }
     end
     local joint = wheelJoint(thing)
-    local fixture = thing.body:getFixtures()[1]
+    local fixture = lib.solidFixture(thing.body)
     local rows = { { label = 'grip', min = 0, max = 2,
         get = function() return fixture:getFriction() end,
         set = function(v) fixture:setFriction(v) end } }

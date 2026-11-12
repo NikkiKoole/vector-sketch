@@ -76,4 +76,7 @@ kicked the bike back over when it landed upside down).
 - [ ] **RD2. A moped**: two wheels, sits astride, feet on a footboard (not pedals: the bike's
   pedal legs were the fragile part).
 - [ ] **RD3. The look**: drawn vehicles, wheel pictures as the soapbox's.
+  Started 2026-11-12 in the engine's vehicles (src/vehicles.lua, KINDS KD4): every wheel wears Nikki's crayon
+  tyre from the mipoworld experiment (textures/world/vehicles/wheel-01 + -mask: tread lines in ink, the tyre
+  in rubber). The frames are still plain shapes.
 - [ ] **RD4. Sound**: a motor hum pitched by speed (synth), a squeak getting in.
