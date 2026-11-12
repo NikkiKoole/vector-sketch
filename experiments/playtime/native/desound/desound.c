@@ -80,3 +80,52 @@ DESOUND_API void de_lua_render_s16(int16_t *out, int frames) {
         frames -= n;
     }
 }
+
+// ---- the Steinway hybrid (dreamengine runtime/steinway.h, docs/design/piano-engine.md there) ----
+// A real Steinway D's first 2.6 s on every piano note, fading into the modelled string (the model
+// switched to the Steinway-matched grand). Piano: bitKlavier Grand Sample Library, Daniel Trueman,
+// Princeton University (CC BY 4.0): the credit has to show where this ships (src/synth.lua lib.STEINWAY_CREDIT).
+// The engine has 16 sample slots and Playtime uses 7 (the voice lab) and 12-15 (the voicebox's banks),
+// so 11 of the 13 recordings load, F#1..F#6, into slots 0-6 and 8-11; the outer two (C1, C7) stay out and
+// their notes play from the nearest recording (Nikki 2026-11-12: "the hybrid as an option for the songs
+// that have a piano").
+#ifndef DESOUND_NO_STEINWAY // the web build leaves it out (build-web.sh): 896 KB nobody calls there
+#include "steinway.h"
+static const int STEINWAY_SLOT[STEINWAY_ZONES] = { -1, 0, 1, 2, 3, 4, 5, 6, 8, 9, 10, 11, -1 };
+static int steinway_loaded = 0;
+
+// decode the recordings into their sample slots, once; returns how many loaded (11, or 0 on no memory)
+DESOUND_API int de_steinway_load(void) {
+    if (steinway_loaded) return steinway_loaded;
+    int n = 0;
+    for (int z = 0; z < STEINWAY_ZONES; z++) {
+        if (STEINWAY_SLOT[z] < 0) continue;
+        float *buf = (float *)malloc((size_t)STEINWAY_ZONE[z].samples * sizeof(float));
+        if (!buf) return 0;
+        steinway_decode(z, buf);
+        sample_load(STEINWAY_SLOT[z], buf, STEINWAY_ZONE[z].samples); // sample_load copies
+        free(buf);
+        n++;
+    }
+    steinway_loaded = n;
+    return n;
+}
+
+// a piano slot plays the recordings (loaded first): the Steinway-matched model under them, every zone
+// registered with the late hand-over
+DESOUND_API void de_steinway_use(int instr_slot) {
+    if (!de_steinway_load()) return;
+    instrument_mode(instr_slot, MODE_PIANO_MODEL, 1.0f);
+    for (int z = 0; z < STEINWAY_ZONES; z++) {
+        if (STEINWAY_SLOT[z] < 0) continue;
+        instrument_piano_attack(instr_slot, STEINWAY_SLOT[z], STEINWAY_ZONE[z].root_midi,
+                                STEINWAY_SPLICE_MS, STEINWAY_XFADE_MS);
+    }
+}
+
+// back to the classic modelled grand on that slot (the recordings stay loaded)
+DESOUND_API void de_steinway_detach(int instr_slot) {
+    for (int z = 0; z < STEINWAY_ZONES; z++) instrument_piano_attack(instr_slot, -1, STEINWAY_ZONE[z].root_midi, 0, 0);
+    instrument_mode(instr_slot, MODE_PIANO_MODEL, 0.0f);
+}
+#endif // DESOUND_NO_STEINWAY

@@ -531,6 +531,9 @@ if ffi then
     -- Playtime's own (native/desound/desound.c), not the engine's: for audioReport and the NoteOpts check
     pcall(ffi.cdef, 'int de_lua_pool_overflow(int which);')
     pcall(ffi.cdef, 'int de_note_opts_size(void);')
+    pcall(ffi.cdef, 'int de_steinway_load(void);') -- the Steinway hybrid (steinwayFor)
+    pcall(ffi.cdef, 'void de_steinway_use(int slot);')
+    pcall(ffi.cdef, 'void de_steinway_detach(int slot);')
 end
 
 -- Lives on `state` so a lurker hot-swap of this file doesn't load the library or start the thread twice.
@@ -685,11 +688,47 @@ local function pedalsOff(slot)
     if leslie then leslie(slot, 1, 0, 0.5, 0, 0) end -- mix 0: bypassed
 end
 
+-- The Steinway hybrid (native/desound/desound.c de_steinway_*, dreamengine runtime/steinway.h): with the
+-- music panel's 'steinway piano' on (state.musicSettings.steinway), every grand (wave PIANO: piano,
+-- pianoLead, feltKeys, hPiano) plays a real Steinway D's first 2.6 s, then fades into the Steinway-matched
+-- model; off, the classic modelled grand. Applied when a piano takes its slot, and to every piano already
+-- in one when the option changes (lib.setSteinway). The licence wants the credit where this ships.
+lib.STEINWAY_CREDIT = 'Piano: bitKlavier Grand Sample Library, Daniel Trueman, Princeton University (CC BY 4.0)'
+local function steinwayOn()
+    return state.musicSettings ~= nil and state.musicSettings.steinway == true
+end
+-- The recordings come out louder than the model at our levels: each piano turned down by what it measured
+-- (offline renders, the patch alone on its style, classic against Steinway: guaraldi's piano +8.5 dB, its
+-- tune +4.8, dusk's felt piano +8.6, the parlour's +8.2), so the option changes the sound, not the loudness
+lib.STEINWAY_DB = { piano = -8.5, pianoLead = -4.8, feltKeys = -8.6, hPiano = -8.2 }
+local function slotLevel(slot, name, patch)
+    local level = lib.volume * (patch.level or 1)
+    if S.steinwaySlots and S.steinwaySlots[slot] then level = level * 10 ^ ((lib.STEINWAY_DB[name] or -8.4) / 20) end
+    return level
+end
+local function steinwayFor(slot, patch, name)
+    S.steinwaySlots = S.steinwaySlots or {}
+    if steinwayOn() and patch.wave == 'PIANO' then
+        local use = optionalFn('de_steinway_use')
+        if use then
+            use(slot)
+            S.steinwaySlots[slot] = true
+            S.C.instrument_level(slot, slotLevel(slot, name, patch))
+        end
+    elseif S.steinwaySlots[slot] then -- off now, or another sound took the slot
+        local detach = optionalFn('de_steinway_detach')
+        if detach then detach(slot) end
+        S.steinwaySlots[slot] = nil
+        S.C.instrument_level(slot, slotLevel(slot, name, patch))
+    end
+end
+
 local function definePatch(slot, patch, name)
     defineVoice(slot, patch)
     definePlaying(slot, patch)
     restLanes(slot, patch)
     defineModulation(slot, patch)
+    steinwayFor(slot, patch, name)
     if patch.pool then return end -- inserts take an FX bus for good: never on a pool slot
     if patch.fx then pedalsOff(slot) end -- then put on these
     S.pedals[name] = pedalsFromPatch(patch) -- a load starts from the patch's own settings
@@ -1419,12 +1458,29 @@ function lib.setVolume(v)
     lib.volume = v
     S.volume = v
     if not S.started then return end
-    for _, patch in pairs(lib.patches) do
-        if patch.slot then S.C.instrument_level(patch.slot, v * (patch.level or 1)) end
+    for name, patch in pairs(lib.patches) do
+        if patch.slot then S.C.instrument_level(patch.slot, slotLevel(patch.slot, name, patch)) end
     end
     for _, residents in ipairs({ S.pool or {}, S.fx or {} }) do
         for slot, resident in pairs(residents) do
-            S.C.instrument_level(slot, v * (lib.patches[resident.name].level or 1))
+            S.C.instrument_level(slot, slotLevel(slot, resident.name, lib.patches[resident.name]))
+        end
+    end
+end
+
+-- The Steinway on or off (the music panel's 'steinway piano'), now: every piano in a slot switches, the
+-- rest when they next take one (steinwayFor)
+function lib.setSteinway(on)
+    state.musicSettings = state.musicSettings or {}
+    state.musicSettings.steinway = on and true or nil
+    if not S.started then return end
+    for name, patch in pairs(lib.patches) do
+        if patch.slot and patch.wave == 'PIANO' then steinwayFor(patch.slot, patch, name) end
+    end
+    for _, residents in ipairs({ S.pool or {}, S.fx or {} }) do
+        for slot, resident in pairs(residents) do
+            local patch = lib.patches[resident.name]
+            if patch and patch.wave == 'PIANO' then steinwayFor(slot, patch, resident.name) end
         end
     end
 end

@@ -56,6 +56,23 @@ The main thread calls the dreamengine API, which drops commands into a lock-free
 - A picked style starts at the next bar, at its first A, with the tune and the band in (`audition`).
 - The settings are at the top of `src/music.lua`: style ('set' or one style), set, rhythmSection, upright, melody, melodyPatch, and more. `music.nowPlaying()` says which style, key and section is playing.
 
+## The Steinway hybrid (2026-11-12)
+
+The music panel's **steinway piano** (sound fold) puts dreamengine's hybrid grand on every piano sound (wave
+PIANO: `piano`, `pianoLead`, `feltKeys`, `hPiano`; guaraldi, bossa, dusk, parlour, the scores): a real Steinway
+D's first 2.6 s of each note, then a 0.5 s fade into the Steinway-matched model. Off: the classic modelled grand.
+Saved with the music settings (`steinway`), applied live (`synth.setSteinway`).
+- **C side**: `native/desound/desound.c` `de_steinway_load / use / detach`, including dreamengine's
+  `runtime/steinway.h` (896 KB of ADPCM recordings). Rebuild the library after changing it. The web build leaves it
+  out (`-DDESOUND_NO_STEINWAY` in build-web.sh). The iOS build has it.
+- **Sample slots**: the engine has 16; the voice lab uses 7 and the voicebox 12-15, so 11 of the 13 recordings load
+  (F#1..F#6 into slots 0-6 and 8-11). C1 and C7 stay out; those notes play from the nearest recording. A new
+  `sample_load` user must pick a slot outside 0-11, or the Steinway's notes go wrong.
+- **Levels**: the recordings are louder than the model, so `synth.STEINWAY_DB` turns each piano down by what it
+  measured (piano -8.5, pianoLead -4.8, feltKeys -8.6, hPiano -8.2 dB). With it on, each piano is within 0.2 dB
+  of its classic level.
+- **Credit** (CC BY 4.0): `CREDITS.md` and `synth.STEINWAY_CREDIT`; the panel shows it while it's on.
+
 ## Gotchas
 - **128 instrument slots since dreamengine 9f2b18dd (2026-11-04)**; Playtime's fixed slots now run past 47
   (48-61 the 808, 62 jamPad, 63-76 the 909, 77-80 the funk guitar's strings; 81-127 free). A library built

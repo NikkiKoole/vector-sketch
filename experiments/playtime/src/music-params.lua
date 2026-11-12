@@ -233,6 +233,14 @@ lib.rows = {
             return require('src.state').synth.fxVolume or fallback or 1
         end,
         set = function(_, v) synth().setFxVolume(v) end },
+    -- the Steinway hybrid on every grand (src/synth.lua steinwayFor): a real Steinway D's first 2.6 s of each
+    -- note, then the Steinway-matched model; off, the classic modelled grand. Its credit shows while it's on
+    { key = 'steinway piano', kind = 'bool',
+        get = function() local ms = require('src.state').musicSettings return ms and ms.steinway == true end,
+        set = function(_, v) synth().setSteinway(v) end },
+    { key = 'steinway credit', kind = 'note',
+        visible = function() local ms = require('src.state').musicSettings return ms and ms.steinway == true end,
+        label = function() return synth().STEINWAY_CREDIT or '' end },
     field('style', 'style', 'choice',
           { 'set', 'bossa', 'guaraldi', 'island', 'dusk', 'dumont', 'supermarket', 'herbs', 'lofi', 'puppetmaker',
             'strum', 'rollo', 'jingle', 'vibesnight', 'wave', 'sesame', 'citypop', 'buymode', 'satie', 'ambient',
@@ -388,6 +396,7 @@ local GROUP_OF = {
     band = 'band',
     humanize = 'feel', spice = 'feel', tune = 'feel',
     volume = 'sound', ['fx volume'] = 'sound', effects = 'sound',
+    ['steinway piano'] = 'sound', ['steinway credit'] = 'sound',
     ['drum jam'] = 'world', ['jam impacts'] = 'world', ['ball sounds'] = 'world', ['box sounds'] = 'world',
     ['Mipo bump sounds'] = 'world', stingers = 'world', ['stinger voice'] = 'world', ['part rests'] = 'world',
     ['stinger moments'] = 'world', ['try stinger'] = 'world',

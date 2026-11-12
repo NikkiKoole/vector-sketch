@@ -103,7 +103,7 @@ state.musicSettings = state.musicSettings
     or { enabled = true, style = 'set', rhythmSection = 'auto', melody = true }
 local SETTINGS = { enabled = true, style = true, rhythmSection = true, melody = true,
                    melodyPatch = true, voices = true, partsOff = true, soundsOff = true, soundVoices = true,
-                   tune = true, spice = true, ideas = true }
+                   tune = true, spice = true, ideas = true, steinway = true }
 do -- the per-part settings that came before voices
     local s = state.musicSettings
     s.voices = s.voices or {}
