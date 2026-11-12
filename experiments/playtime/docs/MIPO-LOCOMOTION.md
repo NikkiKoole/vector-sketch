@@ -93,7 +93,7 @@ Baseline 2026-11-12 (before LO1): tilt 9-25°, seed 42 39°; seed 9 walks 1.4 le
 - [ ] **LO4. Capture point**: stop in a step, turn round (MM4), a recovery step when bumped.
   Built 2026-11-12 (stopping and turning; the recovery step not yet, LO4b). Told to stop, a walking
   Mipo facing a side takes the stopping step (`stopStep`): the leg that isn't standing steps to the
-  capture point (x + v·√(h/g), at most `stopReach` 0.9 legs ahead), lifted mid-way and heel first,
+  capture point (x + v·√(h/g), at most `stopReach` 0.75 legs ahead), lifted mid-way and heel first,
   the torso leaning back a touch, the feet braking from the start (`stopBrake` 4); then the back
   foot steps up beside the front one (`closeTime`: lifted, not slid), then the settle (knees give,
   torso on past upright and back, arms swing, `settleTime`). Told to go the other way: the stopping

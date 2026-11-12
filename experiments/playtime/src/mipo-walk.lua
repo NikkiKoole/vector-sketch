@@ -121,7 +121,8 @@ local SWITCHES = {
     stopBrake = 4,     -- the feet's braking push during the stopping step (times driveAccel; 0: the planted leg
                        -- alone: went 0.9 legs, still after 1.8 s; 4 from the start: 0.5 legs, 1.6 s)
     stopBrakeFrom = 0, -- how far into the step the braking starts (0: at once; 0.8, once the foot's down: 0.8 legs)
-    stopReach = 0.9,   -- the stopping step's longest reach (leg lengths forward of the hip; 0.6-0.9 the same)
+    stopReach = 0.75,  -- the stopping step's longest reach (leg lengths forward of the hip; 0.9: seed 11 walked short
+                       -- in spec/mipo-motor_spec, 0.75: seed 4 stops in 1.56 legs, from its 2.1 legs/s)
     stopGrip = 3,      -- the planted feet's grip while stopping (1 or 6: the same)
     turnFirst = true,  -- going the other way: stop, turn on the spot, then go (false: turn while walking).
                        -- Walking only: a hop turning as it goes doesn't moonwalk (and a single hop facing
