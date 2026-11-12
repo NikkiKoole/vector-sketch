@@ -105,6 +105,34 @@ local function inBar(list, b)
     return out, lo
 end
 
+-- beats from `beat` to the next note of the same pitch in the cycle (wrapping round; 16 if none). A note must
+-- be done, its ring too, before its pitch comes again: two copies of one pitch overlapping cancel or add up by
+-- how their waves happen to line up, so the second note vanished in some passes and boomed in others (the D2
+-- on the last bar's 4 nearly gone in pass 2; Nikki 2026-11-12: "the second and maybe 5th skips a note at the end")
+local function gapToSame(list, beat, midi)
+    local best = 16
+    for _, e in ipairs(list) do
+        local has = e[2] == midi and list == lib.BASS
+        if list == lib.KEYS then
+            for k = 4, #e do has = has or e[k] == midi end
+        end
+        if has then
+            local d = (e[1] - beat) % 16
+            if d > 0.001 and d < best then best = d end
+        end
+    end
+    return best
+end
+-- the note's length and release (ms) so it's quiet before its pitch comes again
+local function fit(list, beat, midi, lenMs, rel, song)
+    local gap = gapToSame(list, beat, midi) * song.beat * 1000 - 15
+    if lenMs + rel > gap then
+        rel = math.max(40, math.min(rel, gap - lenMs))
+        lenMs = math.max(30, math.min(lenMs, gap - rel))
+    end
+    return lenMs, rel
+end
+
 local function bookBass(play, synth, t0, song, b, roles, h)
     local notes, lo = inBar(lib.BASS, b)
     for _, n in ipairs(notes) do
@@ -114,32 +142,37 @@ local function bookBass(play, synth, t0, song, b, roles, h)
             local at = t0 + (beat - lo) * song.beat
             local s = math.floor((beat - lo) * 4 + 0.5)
             if final then len, short = 4, false end
+            local lenMs, rel = len * song.beat * 1000, short and 60 or 120
+            if not final then lenMs, rel = fit(lib.BASS, beat, midi, lenMs, rel, song) end
             if not h then
                 if not odds or odds >= 0.5 then
-                    play(synth, 'bass', 'earthBass', at, midi, 6, len * song.beat * 1000, s)
+                    play(synth, 'bass', 'earthBass', at, midi, 6, lenMs, s, nil, nil, { release = rel })
                 end
             elseif not odds or love.math.random() < odds then
-                local opts = { gain = math.min(1, 0.8 * 10 ^ (gauss(1.2) / 20)), cents = gauss(4) }
-                if short then opts.damp = 0.8 else opts.release = 120 end
-                play(synth, 'bass', 'earthBass', at + gauss(0.006), midi, 6, len * song.beat * 1000, s, nil, nil, opts)
+                local opts = { gain = math.min(1, 0.8 * 10 ^ (gauss(1.2) / 20)), cents = gauss(4), release = rel }
+                if short then opts.damp = 0.8 end
+                play(synth, 'bass', 'earthBass', at + gauss(0.006), midi, 6, lenMs, s, nil, nil, opts)
             end
         end
     end
 end
 
+-- the keys' mallet rings 1.1 s after a note (synth.lua earthKeys): shortened before its pitch comes again
+local KEYS_RING = 1100
 local function bookKeys(play, synth, t0, song, b, h)
     local events, lo = inBar(lib.KEYS, b)
     for _, e in ipairs(events) do
         local at = t0 + (e[1] - lo) * song.beat
         local s = math.floor((e[1] - lo) * 4 + 0.5)
-        local len, odds = e[2] * song.beat * 1000, e[3]
+        local odds = e[3]
         if (h and love.math.random() < odds) or (not h and odds >= 0.5) then
             for k = 4, #e do
+                local len, rel = fit(lib.KEYS, e[1], e[k], e[2] * song.beat * 1000, KEYS_RING, song)
                 if h then
                     play(synth, 'keys', 'earthKeys', at + 0.012 + gauss(0.006) + (k - 4) * 0.004, e[k], 4, len, s, nil,
-                         nil, { gain = math.min(1, 0.85 * 10 ^ (gauss(1.0) / 20)), cents = gauss(3) })
+                         nil, { gain = math.min(1, 0.85 * 10 ^ (gauss(1.0) / 20)), cents = gauss(3), release = rel })
                 else
-                    play(synth, 'keys', 'earthKeys', at, e[k], 4, len, s)
+                    play(synth, 'keys', 'earthKeys', at, e[k], 4, len, s, nil, nil, { release = rel })
                 end
             end
         end
