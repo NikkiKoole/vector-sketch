@@ -3,7 +3,7 @@
 -- character next could pick a new 1 out of 3"). Views: 'text' (titles, a sign, a long line) and 'sheet' (all
 -- the drawings). Keys: v view, h panel, r new seed.
 local s = {}
-local lettering = require('src.lettering')
+-- lettering: src/lettering.lua, handed to scripts by src/script.lua
 
 local function st()
     if not state.lettering then
