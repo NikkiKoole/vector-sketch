@@ -2460,4 +2460,30 @@ function lib.update(dt)
     end
 end
 
+-- the spikes' sliders (scripts/spikes/facing, scripts/spikes/motor), live in the settings panel's 'tuning'
+-- section (src/tuning.lua), with their ranges. A scene load puts the facing switches back (lib.load).
+local tuning = require('src.tuning')
+local function rowsOf(numbers, bools)
+    local rows = tuning.numbers(numbers)
+    for _, row in ipairs(tuning.bools(bools or {})) do rows[#rows + 1] = row end
+    return rows
+end
+lib.tuning = {
+    { label = 'turning', target = function() return lib end, rows = rowsOf({
+        { 'armAt', 0, 1, 0.05 }, { 'headTime', 0.1, 1, 0.05 }, { 'headBack', 0, 4, 0.1 },
+        { 'relaxAfter', 0, 10, 0.5 }, { 'turnBlink', 0, 1, 0.05 }, { 'earAt', 0.1, 1, 0.05 },
+        { 'armLag', 0, 0.5, 0.02 } }, { 'lean', 'hop', 'headKeys', 'stagger', 'auto', 'rebuild' }) },
+    { label = 'going', target = function() return lib end, rows = rowsOf({
+        { 'driveAccel', 0.5, 12, 0.5 }, { 'turningPace', 0, 1, 0.05 }, { 'hopHeight', 0.05, 1.2, 0.05 },
+        { 'hopRest', 0, 0.6, 0.02 }, { 'upright', 0, 60, 5 } }, { 'turnFirst', 'stopStep' }) },
+    { label = 'weighty walk', target = function() return lib end, rows = rowsOf({
+        { 'give', 0, 60, 1 }, { 'pulse', 0, 2, 0.05 }, { 'armSwing', 0, 70, 1 }, { 'stanceGrip', 0, 3, 0.1 },
+        { 'torsoHold', 0, 2, 0.05 }, { 'placeV', 0, 2, 0.05 }, { 'walkLean', 0, 20, 1 },
+        { 'heelStrike', 0, 40, 1 }, { 'toeOff', 0, 60, 1 }, { 'footFollow', 0, 1, 0.05 } },
+        { 'weighty', 'keyed', 'legMotors', 'footRoll' }) },
+    { label = 'jump', target = function() return lib end, rows = rowsOf({
+        { 'jumpHeight', 0.3, 4, 0.1 }, { 'jumpCrouch', 0.05, 0.6, 0.01 }, { 'jumpDepth', 0.2, 1.5, 0.05 } },
+        { 'animJump' }) },
+}
+
 return lib

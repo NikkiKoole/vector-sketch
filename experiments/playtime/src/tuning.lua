@@ -38,6 +38,17 @@ function lib.numbers(spec)
     return rows
 end
 
+-- on/off rows over a table's fields: names = { 'field', ... }
+function lib.bools(names)
+    local rows = {}
+    for _, name in ipairs(names) do
+        rows[#rows + 1] = { key = name, kind = 'bool',
+            get = function(s) return s[name] and true or false end,
+            set = function(s, v) s[name] = v and true or false end }
+    end
+    return rows
+end
+
 -- every loaded src module with tuning: { { name = 'mipo-emotion', groups = {...} }, ... }, by name
 function lib.entries()
     local list = {}
