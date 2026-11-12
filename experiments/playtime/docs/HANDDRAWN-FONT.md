@@ -1,6 +1,6 @@
 # A hand-drawn font — three drawings per letter
 
-status: active
+status: done
 
 Nikki (2026-11-12): "fonts, that are handdrawn, say 3 glyphs per glyph, any ideas?"; for signs and titles
 first, "but its just an idea at this point". Nothing on hand-drawn fonts tried before (`./playtime.sh tried font`:
@@ -29,8 +29,9 @@ draw) each glyph (three times)". Before printing a sheet and drawing 120 letters
   gold, toxic; each a gradient face with a bevel, a band, a thin line, an extruded block, a drop shadow,
   sparkles. Canvases (mask, band, rim) stamped in rings, the block swept a pixel at a time. Sliders: band,
   line, depth, angle, bevel, shadow, sparkles, hue (turns all its colours). l in the spike.
-- [ ] LF2. If kept: where it's used first (a sign in a room, the scene titles), and whether it ships with
-  every build (it's named in src/, so ship-list packs it: ~360 KB a font, three now)
+- Later, when it's wanted (Nikki 2026-11-12: "cool spike done!"): where it's used first (a sign in a room, the
+  scene titles), and whether it ships with every build (named in src/, so ship-list packs it: ~360 KB a font,
+  four now). The looks would land in the engine with their sliders as lib.tuning.
 - [x] LF3. Other fonts through the forge: Windsor (WindsorBT-Roman.otf) and Cooper Bold
   (assets/cooper_bold_bt.ttf, the fridge letters), `textures/lettering/windsor.*`, `cooper.*`; f in the spike.
   Comic Sans MS Bold too (`comicbold`, 2026-11-12).
