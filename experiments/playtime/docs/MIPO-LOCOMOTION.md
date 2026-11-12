@@ -136,6 +136,21 @@ Baseline 2026-11-12 (before LO1): tilt 9-25°, seed 42 39°; seed 9 walks 1.4 le
   walking by itself always turns its feet as steps (checked live: both feet `step`, two turns).
   Kept (Nikki 2026-11-12: "ok great"). The recovery step is LO4b.
 - [ ] **LO4b. The recovery step**: a standing Mipo pushed or bumped steps toward its capture point
-  instead of tipping over.
+  instead of tipping over. Built 2026-11-12 (`recoverStep`): standing a moment (`recoverCalm` 0.4 s;
+  rising from a squat set it off), moving over `recoverSpeed` 0.6 legs/s with its capture point past
+  its feet, it steps there (facing a side the further foot, past the other; facing front the leg on
+  that side, out sideways, the front hips only open outward), arms out, the feet braking once it's
+  down (`recoverBrake` 4); the other foot follows in as far apart as they stood; it settles.
+  `spec/mipo-recover_spec.lua` (8 Mipos facing right and front, shoved 1.5 / 3 / 4.5 legs/s): the
+  finding is that bumped Mipos don't fall, with or without it; they slide on planted feet (0.36 /
+  1.4 / 4.1 legs). With the step they step about twice and go 0.47 / 1.67 / 3.25 legs: further from a
+  soft shove, less from a hard one. So it's a look: a stumble against a glide. tried: no braking
+  (0.78 legs from a soft shove), a slower step (0.22 s, further), a wider margin (the same).
+  Spike: `b` shoves them. For Nikki to look at.
+- [ ] **LO9. The squat** (Nikki 2026-11-12: "can we get the down button to make them squat"): held
+  (`mipoWalk.squat(inst, true)`, the spike's down key), it sinks into a squat over `squatTime` 0.25 s
+  (torso in, arms forward; facing front a frog squat), let go it comes up; up from a squat jumps
+  without the jump's own crouch (it's down already). Spec: down 0.24 legs facing a side, 0.13 front,
+  standing again after. Checked live (down ~80 px and back). For Nikki to try.
 - [ ] **LO5. Raibert hop**: hops even and steerable, landing where it means to.
 - [ ] **LO6. Foot IK on the ground**: steps and slopes (MM5).

@@ -2,6 +2,7 @@
 -- mipoWalk.drive(inst, speed, 'walk' | 'hop'): it turns to face its way, its legs step (or both feet
 -- hop) and its feet push it, only while one touches the floor. mipoActions.jump(inst, forward).
 -- keys: left/right (hold): walk or hop that way   up: jump (the way it faces)   g: walk / hop
+--       down (hold): squat (up from a squat: jump)   b: bump them (a shove each, to see them catch themselves)
 --       w: wander by themselves (on/off)   r: new Mipos   n: one more   p: pause   h: panel
 
 local s = {}
@@ -138,6 +139,12 @@ function s.update()
     local dir = (love.keyboard.isDown('right') and 1 or 0) - (love.keyboard.isDown('left') and 1 or 0)
     local released = dir == 0 and (c.keyDir or 0) ~= 0 -- a key let go: stop (the panel's go keeps going)
     c.keyDir = dir
+    -- down held: squat (let go: up again)
+    local down = love.keyboard.isDown('down')
+    if down ~= (c.keyDown or false) then
+        each(function(inst) walk.squat(inst, down) end)
+    end
+    c.keyDown = down
     each(function(inst)
         if dir ~= 0 then
             walk.drive(inst, dir * c.speed, c.gait)
@@ -166,6 +173,15 @@ end
 function s.onKeyPress(key)
     local c = check()
     if key == 'up' then jumpAll() end
+    if key == 'b' then -- a shove each, either way, to see them catch themselves (MIPO-LOCOMOTION LO4b)
+        each(function(inst)
+            local torso = inst.parts.torso1.body
+            local _, ty = torso:getPosition()
+            local _, fy = inst.parts.lfoot.body:getPosition()
+            local dir = love.math.random() < 0.5 and -1 or 1
+            torso:applyLinearImpulse(dir * mipoRegistry.totalMass(inst) * 2.5 * math.abs(fy - ty), 0)
+        end)
+    end
     if key == 'g' then c.gait = c.gait == 'walk' and 'hop' or 'walk' end
     if key == 'w' then toggleWander() end
     if key == 'r' then newMipos() c.hold = true end
