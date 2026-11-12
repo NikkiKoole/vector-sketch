@@ -28,6 +28,7 @@ draw) each glyph (three times)". Before printing a sheet and drawing 120 letters
   every build (it's named in src/, so ship-list packs it: ~360 KB a font, three now)
 - [x] LF3. Other fonts through the forge: Windsor (WindsorBT-Roman.otf) and Cooper Bold
   (assets/cooper_bold_bt.ttf, the fridge letters), `textures/lettering/windsor.*`, `cooper.*`; f in the spike.
+  Comic Sans MS Bold too (`comicbold`, 2026-11-12).
   Next maybe: a rounder one, (a rounder one, or Nikki's own drawn alphabet when the sheet route
   happens): `--font`, `--name`
 
