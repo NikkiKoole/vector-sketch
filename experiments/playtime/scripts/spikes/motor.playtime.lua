@@ -284,7 +284,7 @@ function s.drawUI()
         v = slider(layout, bw, 'stanceGrip', 'foot grip', 0, 3, walk.stanceGrip, 0.1)
         if v then walk.stanceGrip = v end
         -- SIMBICON (docs/MIPO-LOCOMOTION.md LO1): the torso held by the standing hip, the foot placed
-        -- for balance. The button sets the best of the spec's sweep (worst tilt 39 -> 28 deg) or off.
+        -- for balance (the default since 2026-11-12). The button: on (the defaults) or off (as before LO1).
         x, y = ui.nextLayoutPosition(layout, bw, BH)
         local lo1 = walk.torsoHold > 0 or walk.placeV > 0
         if ui.button(x, y, bw, 'simbicon: ' .. (lo1 and 'on' or 'off')) then

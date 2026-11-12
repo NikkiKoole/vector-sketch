@@ -59,8 +59,9 @@ local SWITCHES = {
     turnBlink = 0.5, -- the chance a keyed head turn blinks as it sets off (0: never, 1: always)
     relaxAfter = 3,  -- seconds standing before a turned Mipo turns back home (0: it stays turned)
     -- walking by itself (lib.drive, docs/MIPO-MOTOR.md)
-    driveAccel = 1.5,  -- leg lengths a second^2: the most its feet speed it up or slow it down (keyed legs
-                       -- with gripping feet carry it: 1.5 walked furthest and in step, 2026-11-12; was 4)
+    driveAccel = 2.5,  -- leg lengths a second^2: the most its feet speed it up or slow it down (keyed legs
+                       -- with gripping feet carry it: 1.5 walked furthest and in step, 2026-11-12; was 4;
+                       -- 2.5 with the torso held by the standing hip, LO1, which doesn't drive it forward)
     turningPace = 0.3, -- of its speed while it still faces the other way
     hopHeight = 0.35,  -- leg lengths a hop lifts it
     brakeFor = 1.2,    -- seconds its feet brake after it's told to stop
@@ -86,9 +87,9 @@ local SWITCHES = {
     -- angle (walkLean) by the standing hip, its torque taken off the standing thigh (nothing from
     -- outside); the swinging thigh aims further forward the faster it goes than it wants (placeV) and
     -- the further its centre is ahead of the standing ankle (placeD)
-    torsoHold = 0,     -- the torso's stiffness: shares of its weight times a leg's length per radian (0: off)
+    torsoHold = 0.5,   -- the torso's stiffness: shares of its weight times a leg's length per radian (0: off)
     torsoDamp = 0,     -- its damping, in the same per (radian per sqrt(leg/g)) (0.5 tried: no better)
-    placeV = 0,        -- radians the swing thigh aims forward per (speed too fast in sqrt(g*leg))
+    placeV = 0.5,      -- radians the swing thigh aims forward per (speed too fast in sqrt(g*leg))
     placeD = 0,        -- radians per leg length its centre is ahead of the standing ankle
     torsoByMotor = true, -- torsoHold through the standing hip's motor (its aim: the torso at its angle);
                          -- false: as torques on torso and standing thigh (tried: the light thigh whips

@@ -42,9 +42,10 @@ Baseline 2026-11-12 (before LO1): tilt 9-25°, seed 42 39°; seed 9 walks 1.4 le
 
 ## Steps
 
-- [ ] **LO1. SIMBICON: the torso upright through the standing hip, the foot placed for balance.**
-  Built 2026-11-12, off by default; the spike's weight panel has a `simbicon` button (sets the
-  sweep's best) and sliders for torso by hip, foot placement, lean. For Nikki to try.
+- [x] **LO1. SIMBICON: the torso upright through the standing hip, the foot placed for balance.**
+  Built 2026-11-12. Kept, now the default (Nikki: "it looks better, but still a far way from great");
+  the spike's weight panel has a `simbicon` button (on / off as before) and sliders for torso by
+  hip, foot placement, lean.
   - `lib.torsoHold`: the standing hip's *motor* aims the torso at its world angle (`walkLean`)
     instead of the thigh at its pose (`torsoByHip`); that thigh's muscle off.
   - `lib.placeV` / `placeD`: the swinging thigh aims further forward by the speed error and by how far
