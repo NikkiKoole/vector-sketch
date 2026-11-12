@@ -1,7 +1,8 @@
 -- motor: Mipos that move by themselves — walk, hop, jump — instead of standing like dolls (docs/MIPO-MOTOR.md).
 -- mipoWalk.drive(inst, speed, 'walk' | 'hop'): it turns to face its way, its legs step (or both feet
 -- hop) and its feet push it, only while one touches the floor. mipoActions.jump(inst, forward).
--- keys: left/right (hold): walk, jog, run or hop that way   up: jump (the way it faces)   g: the next gait
+-- keys: left/right (hold): walk, jog, run, skip, hinkel (hop along on one leg) or hop that way
+--       up: jump (the way it faces)   g: the next gait
 --       down (hold): squat (up from a squat: jump)   b: bump them (a shove each, to see them catch themselves)
 --       t: hop, step and jump (a run-up, then the triple jump the way it faces)   k: hopscotch (hinkelen)
 --       w: wander by themselves (on/off)   r: new Mipos   n: one more   p: pause   h: panel
@@ -11,7 +12,7 @@ local s = {}
 local walk = mipoWalk     -- src/mipo-walk.lua
 
 -- the gaits in turn (g), and each one's speed against the walk's (a jog, a run: MIPO-LOCOMOTION LO10)
-local GAITS = { 'walk', 'jog', 'run', 'skip', 'hop' }
+local GAITS = { 'walk', 'jog', 'run', 'skip', 'hinkel', 'hop' }
 local function nextGait(g)
     for i, name in ipairs(GAITS) do
         if name == g then return GAITS[i % #GAITS + 1] end
@@ -34,7 +35,7 @@ local COUNT = 3
 local function check() -- on state: a script hot reload keeps the Mipos
     state.motorSpike = state.motorSpike or {
         mipos = {}, bodies = {}, showPanel = true,
-        gait = 'walk',  -- the keys' gait: 'walk', 'jog', 'run', 'skip' or 'hop' (g goes round them)
+        gait = 'walk',  -- the keys' gait: 'walk', 'jog', 'run', 'skip', 'hinkel' (on one leg) or 'hop' (g goes round)
         speed = 1.5,    -- leg lengths a second
         jumpForward = 400,
         wander = false,

@@ -179,7 +179,9 @@ local SWITCHES = {
     hopscotchTwo = 0.26,
     hopscotchTurn = 0.34,
     hopscotchGive = 0.14,
-    hopscotchTuck = -15, -- degrees the free leg's thigh is forward of straight down (-: behind)
+    hopscotchTuck = -15,
+    hinkelHop = 0.12,  -- hinkelen (the 'hinkel' drive): smaller, quicker hops than hopscotch's (leg lengths)
+    hinkelLength = 0.4, -- degrees the free leg's thigh is forward of straight down (-: behind)
     -- the squat (lib.squat, the spike's down key)
     squatTime = 0.25,  -- seconds into the squat (and out)
     squatDepth = 1,    -- as jumpDepth: 1 thighs 50 degrees forward, knees 95 bent
@@ -281,7 +283,8 @@ function lib.drive(inst, speed, mode)
     inst._stepsLeft, inst._hopsLeft, inst._gaitFrom = nil, nil, nil
     local was, wasMode = inst._drive, inst._driveMode
     -- a walk stopping, or turning back: the stopping step (LO4) while it walks on the floor
-    local stepping = lib.stopStep and was and stepGait(wasMode) and inst._walking and not inst._jump
+    local stepping = lib.stopStep and was and stepGait(wasMode) and wasMode ~= 'hinkel' and inst._walking
+        and not inst._jump
         and not inst._stop and (inst._goAt == nil or love.timer.getTime() - inst._goAt > lib.setOff)
     if speed and speed ~= 0 then
         if was and was * speed < 0 then inst._blockedAt, inst._slowFor = nil, 0 end -- the other way: not blocked
@@ -827,6 +830,10 @@ lib.gaits = {
     skip = { keys = SKIP_KEYS, deg = true, duty = 0.5, stride = 17, maxSteps = 2.8, maxStride = 40, lean = 4,
         arms = 50, accel = 1.5, bounce = 0, hopAt = 0.18, hopHeight = 0.12, speed = 1.1, elbow = 30, elbowFwd = 20,
         armStiff = 1.5 },
+    -- hinkelen (Dutch: hopping on along one leg; LO15): not keyed, it's the hopscotch's one-foot hop over
+    -- and over (updateHopscotch); speed: as the spike asks it (each hop's length is lib.hopscotchLength)
+    hinkel = { keys = WALK_KEYS, duty = 0.5, stride = 28, maxSteps = 2.5, maxStride = 48, accel = 1, bounce = 0,
+        speed = 1 },
     -- (arms, LO11: the run's 55 degrees at stiffness 3 whirled the arms over the shoulders once they had
     -- room behind; 40 at 2 swings ~100 in all. Elbows reach 55-65 of their 70-98: gravity and the swing)
     -- (spec/mipo-gaits_spec: walk 1.1, jog 2.4, run 3.2 legs/s; both feet off the floor 12 / 30 / 47% of
@@ -1456,6 +1463,16 @@ local function updateDrive(inst, dt, now, torso, legLen)
         return
     end
     inst._stepTurning = nil
+    -- hinkelen: hopping on one leg, by the hopscotch's one-foot hop (updateHopscotch runs it from here on)
+    if inst._driveMode == 'hinkel' and faceDir == dir and grounded then
+        if not inst._hopscotch then
+            stopWalking(inst)
+            inst._hopscotch = { list = { '1', '1', '1', '1', '1', '1', '1', '1' }, i = 0, phase = 'give', at = now,
+                face = dir, a = inst._stance or 1, landed = '2', first = true, driven = true,
+                hop = lib.hinkelHop, length = lib.hinkelLength }
+        end
+        return
+    end
     if lib.turnFirst and stepGait(inst._driveMode) then
         if not inst._goAt then inst._goAt = now end
         local t = now - inst._goAt
@@ -2254,9 +2271,21 @@ local function updateHopscotch(inst, dt, now)
     local hs = inst._hopscotch
     local torso = partBody(inst, 'torso1')
     local legLen = legLength(inst)
-    if not (torso and legLen) or held(inst) or not mayWalk(inst) or inst._jump or inst._drive then
+    if not (torso and legLen) or held(inst) or not mayWalk(inst) or inst._jump or (inst._drive and not hs.driven) then
         endHopscotch(inst, now)
         return false
+    end
+    -- hinkelen (the 'hinkel' drive): hopping on as long as it's driven its way; let go, or the other way,
+    -- or another gait, and the hop under way is the last: it comes down on both feet and stands
+    if hs.driven and not hs.stopping then
+        local dir = inst._drive and (inst._drive > 0 and 1 or -1)
+        if inst._driveMode ~= 'hinkel' or dir ~= hs.face then
+            hs.stopping = true
+            for k = #hs.list, hs.i + 1, -1 do hs.list[k] = nil end
+            hs.list[hs.i + 1] = '2' -- a last little jump down onto both feet
+        elseif hs.i > #hs.list - 4 then
+            for _ = 1, 8 do hs.list[#hs.list + 1] = '1' end -- on and on
+        end
     end
     local t = now - hs.at
     if hs.phase == 'ready' then -- facing a side first
@@ -2307,10 +2336,11 @@ local function updateHopscotch(inst, dt, now)
                 return true
             end
             -- the push: up to its height, forward to cover its length in the time up there
-            local h = (next == '1' and lib.hopscotchHop) or (next == '2' and lib.hopscotchTwo) or lib.hopscotchTurn
+            local h = (next == '1' and (hs.hop or lib.hopscotchHop)) or (next == '2' and lib.hopscotchTwo)
+                or lib.hopscotchTurn
             local up = math.sqrt(2 * g * h * legLen)
             local flight = 2 * up / g
-            local fwd = next == 'T' and 0 or face * lib.hopscotchLength * legLen / flight
+            local fwd = next == 'T' and 0 or face * (hs.length or lib.hopscotchLength) * legLen / flight
             local mass = mipoRegistry.totalMass(inst)
             local vx = torso:getLinearVelocity()
             local vy = centreVelocity(inst)

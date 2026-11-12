@@ -95,6 +95,38 @@ describe('a Mipo playing hopscotch', function()
 
     local DETAIL = os.getenv("DETAIL")
     for _, seed in ipairs(SEEDS) do
+        it('hinkelen: hops along on one leg while driven, the other never down, then stands (seed ' .. seed .. ')', function()
+            setup(seed)
+            local len = legLen()
+            local x0, hops, otherDown, n, t, a = nil, 0, 0, 0, 0, nil
+            local wasUp = false
+            seconds(5, function()
+                t = t + DT
+                mipoWalk.drive(inst, 1.5, 'hinkel')
+                local hs = inst._hopscotch
+                if hs and hs.phase ~= 'ready' and hs.a and not hs.first and not hs.stopping then
+                    x0 = x0 or inst.parts.torso1.body:getX()
+                    a = hs.a
+                    local fa, fb = (a == 1) and 'lfoot' or 'rfoot', (a == 1) and 'rfoot' or 'lfoot'
+                    n = n + 1
+                    if down(fb) then otherDown = otherDown + 1 end
+                    local up = not down(fa)
+                    if up and not wasUp then hops = hops + 1 end
+                    wasUp = up
+                end
+            end)
+            local went = x0 and (inst.parts.torso1.body:getX() - x0) / len or 0
+            mipoWalk.drive(inst, nil)
+            seconds(2)
+            print(string.format('  hinkel seed %d: %d hops in ~4 s (after the first), the other foot down %.0f%% of the time, %.1f legs, then %s, tilt %.0f',
+                seed, hops, 100 * otherDown / math.max(n, 1), went, mipoWalk.hopscotching(inst) and 'still hopping' or 'standing', tilt()))
+            assert.is_true(hops >= 5)
+            assert.is_true(otherDown / math.max(n, 1) < 0.2) -- the shortest legs (seed 13, big feet for them): 18%
+            assert.is_true(went > 1)
+            assert.is_false(mipoWalk.hopscotching(inst))
+            assert.is_true(tilt() < 30)
+        end)
+
         it('hops, lands right, turns, ends standing (seed ' .. seed .. ')', function()
             setup(seed)
             local len = legLen()

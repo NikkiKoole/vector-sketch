@@ -177,6 +177,16 @@ Baseline 2026-11-12 (before LO1): tilt 9-25°, seed 42 39°; seed 9 walks 1.4 le
   the floor; now thigh behind, knee at the joint's 90, the heel up); folding the free leg only in the
   air after a two-feet landing (still down at the landing: now it comes up in the give); hops of 0.22
   and 0.34 legs (0.28 best). Checked live. For Nikki to try.
+- [ ] **LO15. Hinkelen** (Nikki 2026-11-12: "hinkelen is a very particular movement, you stay on 1 leg
+  basically and jump"): hopping along on one leg, the other lifted, for as long as it goes (LO14 built
+  the game, hopscotch, with two-feet landings and a turn). The 'hinkel' drive (`mipoWalk.drive(inst,
+  speed, 'hinkel')`, the spike's `g` then left / right): once it faces its way, the hopscotch's
+  one-foot hop over and over on the same leg, smaller and quicker (`hinkelHop` 0.12 legs high,
+  `hinkelLength` 0.4 long); let go (or the other way, another gait) and the hop under way is the last,
+  a little jump down onto both feet, and it stands (no stopping step). `spec/mipo-hopscotch_spec.lua`:
+  ~2-3 hops a second, the free foot down 0-10% of the time (the shortest legs 18%), 2.6-4.2 legs in
+  ~4 s, all standing after. tried: hinkelHop 0.08 (one Mipo stopped leaving the floor, a shuffle),
+  0.16 (slower, the same touches). Checked live. For Nikki to try.
 - [ ] **LO2. Gravity compensation**, so the motors can be soft and the bob deeper (MM8).
 - [ ] **LO3. Steps by distance, the stride by leg length** (MM3's "stride by the leg's length").
   Tried 2026-11-12. The stride was already by leg length (2·L·sin 28°). Measured with a new count in
