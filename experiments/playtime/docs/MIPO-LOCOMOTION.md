@@ -124,6 +124,18 @@ Baseline 2026-11-12 (before LO1): tilt 9-25°, seed 42 39°; seed 9 walks 1.4 le
   Open: with the arms swinging, three spec Mipos fall just short of a check each (motor seed 9 walks
   1.2 of 1.5 legs left, as on master this morning; stop seed 5 drifts back and doesn't come still;
   gaits seed 42 runs a little under 0.9 of its jog). For Nikki to look at.
+- [ ] **LO12. Skipping, and hop step jump** (Nikki 2026-11-12: "do you know hop step jump? and can we also
+  add the hopping alternative, where you hop with one leg, the way small children do, hop one leg then
+  the other"). Skipping is the 'skip' gait: a step onto a foot, a hop on it, a step onto the other, a
+  hop on that (SKIP_KEYS, the thighs in degrees: the free knee lifted to 55 degrees while the other
+  leg hops; a hop at `hopAt` in each leg's cycle while that foot is down, `hopHeight` 0.12 legs; arms
+  opposite the lifted knee). Hop, step and jump is `mipoWalk.tripleJump(inst)`: a run-up
+  (`tripleRunUp` 1.2 s), the hop (off one foot, the same foot lands: in the air that leg cycles round),
+  the step (a bound, the legs split, landing on the other foot), the jump (both legs swung forward,
+  landing on both, knees giving), then it stands. Spike: `g` includes skip, `t` triple-jumps.
+  `spec/mipo-skip_spec.lua` (8 Mipos): skipping leaves the floor 7-13 times in 3.5 s, 6-13 of the
+  landings on one foot, 3-6.5 legs; every triple jump goes run-up > hop > step > jump > land and
+  ends standing, 1.7-4.1 legs from the hop on. Checked live. For Nikki to try.
 - [ ] **LO2. Gravity compensation**, so the motors can be soft and the bob deeper (MM8).
 - [ ] **LO3. Steps by distance, the stride by leg length** (MM3's "stride by the leg's length").
   Tried 2026-11-12. The stride was already by leg length (2·L·sin 28°). Measured with a new count in

@@ -152,6 +152,11 @@ local SWITCHES = {
     recoverCalm = 0.4,   -- seconds standing (not walking, squatting, jumping) before it may step
     recoverBrake = 4,    -- the feet's braking push once the step is down (times driveAccel; 0: the step alone,
                          -- went 0.78 legs from a soft bump, 4: 0.47; with no step at all it slides 0.36)
+    -- hop, step and jump (lib.tripleJump, the spike's t): the run-up's seconds, each part's height (leg lengths)
+    tripleRunUp = 1.2,
+    tripleHop = 0.35,
+    tripleStep = 0.3,
+    tripleJumpHeight = 0.45,
     -- the squat (lib.squat, the spike's down key)
     squatTime = 0.25,  -- seconds into the squat (and out)
     squatDepth = 1,    -- as jumpDepth: 1 thighs 50 degrees forward, knees 95 bent
@@ -762,6 +767,21 @@ local RUN_KEYS = {
     { t = 0.90, fwd = 1.05, knee = 40 },  -- reaching for the ground
 }
 
+-- Skipping, the way small children go (Nikki 2026-11-12: "hop with one leg, the way small children do, hop
+-- one leg then the other"): a step onto a foot, a hop on it, a step onto the other, a hop on that. One
+-- leg's cycle; the thigh in degrees forward (lib.gaits.skip.deg: a knee lift isn't a share of a stride).
+local SKIP_KEYS = {
+    { t = 0.00, fwd = 25, knee = 15 },  -- the step lands on it
+    { t = 0.10, fwd = 12, knee = 30 },  -- the weight on it, the knee giving
+    { t = 0.18, fwd = 0, knee = 10 },   -- straightening: the hop (hopAt)
+    { t = 0.30, fwd = -8, knee = 25 },  -- in the air under the body
+    { t = 0.40, fwd = -12, knee = 30 }, -- the hop lands, on the same foot
+    { t = 0.50, fwd = -25, knee = 10 }, -- pushing off: the other foot steps
+    { t = 0.60, fwd = 10, knee = 70 },  -- swinging through, the knee lifting
+    { t = 0.72, fwd = 55, knee = 90 },  -- the knee high (while the other leg hops)
+    { t = 0.88, fwd = 40, knee = 45 },  -- reaching down for the step
+}
+
 -- the gaits walking by itself (lib.drive's mode): keys, the stance's share of the cycle (duty; under a
 -- half, both feet are off the floor between steps), the stride (degrees each thigh swings), steps a
 -- second at most, lean (degrees; nil: lib.walkLean), arm swing (nil: lib.armSwing; the elbow bent
@@ -776,6 +796,11 @@ lib.gaits = {
         accel = 2, bounce = 0.04, speed = 1.8, elbow = 70, elbowFwd = 15, armStiff = 1.5 },
     run = { keys = RUN_KEYS, duty = 0.4, stride = 34, maxSteps = 3.4, maxStride = 55, lean = 16, arms = 40,
         accel = 3, bounce = 0.08, speed = 2.8, elbow = 88, elbowFwd = 10, armStiff = 2 },
+    -- (skip: hopAt, where in a leg's cycle it hops on that foot, hopHeight leg lengths up; deg: the keys'
+    -- thighs in degrees)
+    skip = { keys = SKIP_KEYS, deg = true, duty = 0.5, stride = 17, maxSteps = 2.8, maxStride = 40, lean = 4,
+        arms = 50, accel = 1.5, bounce = 0, hopAt = 0.18, hopHeight = 0.12, speed = 1.1, elbow = 30, elbowFwd = 20,
+        armStiff = 1.5 },
     -- (arms, LO11: the run's 55 degrees at stiffness 3 whirled the arms over the shoulders once they had
     -- room behind; 40 at 2 swings ~100 in all. Elbows reach 55-65 of their 70-98: gravity and the swing)
     -- (spec/mipo-gaits_spec: walk 1.1, jog 2.4, run 3.2 legs/s; both feet off the floor 12 / 30 / 47% of
@@ -922,6 +947,7 @@ local function stopWalking(inst)
     uprightTorso(inst, nil)
     inst._armSwing, inst._driveTarget, inst._stance = nil, nil, nil
     inst._armElbow, inst._armStiff, inst._armSide = nil, nil, nil
+    inst._prevU, inst._hopFire = nil, nil
     if inst._legMotorsOn then
         inst._legMotorsOn = nil
         legMotors(inst, 1, nil)
@@ -1109,7 +1135,15 @@ local function stepLegs(inst, dt, speed, face, side, legLen, weighty)
             local fwd, bend = walkPose(u, g.keys)
             swinging[i], forward[i] = u >= 0.5, fwd
             thigh = -face * fwd * swing
+            if g.deg then thigh, forward[i] = -face * fwd, fwd / 55 end -- the keys in degrees (skip)
             shin = thigh + face * bend
+            -- a skip's hop: this foot's moment in its cycle passed (updateDrive sends it up if it's down)
+            if g.hopAt then
+                inst._prevU = inst._prevU or {}
+                local before = inst._prevU[i]
+                if before and before < g.hopAt and u >= g.hopAt then inst._hopFire = i end
+                inst._prevU[i] = u
+            end
             if swinging[i] and place then -- SIMBICON's balance: the swinging foot lands further ahead
                 thigh, shin = thigh - face * place, shin - face * place
             end
@@ -1428,6 +1462,14 @@ local function updateDrive(inst, dt, now, torso, legLen)
                 accel * (1 + 2 * lib.pulse * pushOff))
         else
             push(inst, torso, target, legLen, dt, accel)
+        end
+        -- a skip's hop on one foot (its moment: stepLegs, hopAt)
+        if inst._hopFire then
+            inst._hopFire = nil
+            local _, gy = torso:getWorld():getGravity()
+            local up = math.sqrt(2 * math.max(math.abs(gy), 1) * (g.hopHeight or 0.1) * legLen)
+            local vy = centreVelocity(inst)
+            if -vy < up then torso:applyLinearImpulse(0, -mipoRegistry.totalMass(inst) * (up + vy)) end
         end
         -- a jog's and a run's bounce: at each push-off the foot sends it up (then both feet are off the floor)
         local step = math.floor((inst._gait or 0) / math.pi)
@@ -1840,7 +1882,7 @@ end
 
 -- a standing Mipo: should it step? (and starts it)
 local function maybeRecover(inst, now)
-    if not lib.recoverStep or inst._drive or inst._walking or inst._jump or inst._stop or inst._squat
+    if not lib.recoverStep or inst._drive or inst._walking or inst._jump or inst._stop or inst._squat or inst._triple
         or inst._recover or inst._noWalk or held(inst) or not mayWalk(inst) then return end
     -- standing a moment first: not straight after a walk, a squat, a jump or a step (rising from a squat
     -- shifts the weight enough to set it off)
@@ -1932,6 +1974,130 @@ local function updateRecover(inst, dt, now)
     return true
 end
 
+---------------------------------------------------------------- hop, step and jump (the triple jump)
+
+-- After a run-up (a run, lib.tripleRunUp seconds, unless it's running already): the hop (off one foot,
+-- the same foot lands: in the air that leg cycles round, knee forward, and reaches), the step (off it,
+-- a long bound landing on the other foot: the legs split, the front knee driving), the jump (off that
+-- foot, both legs swung forward to sail, landing on both, knees giving), then it stands. Heights in
+-- leg lengths (lib.tripleHop / Step / Jump). inst._triple = { phase, at, face, a (the hop's foot), dir }.
+local TRIPLE_PHASES = { hop = 'step', step = 'jump', jump = 'land' }
+
+function lib.tripleJump(inst)
+    if not (alive(inst) and mayWalk(inst)) or inst._triple or inst._jump then return false end
+    local f = facing.dir(inst)
+    local dir = f ~= 0 and f or 1
+    inst._squat, inst._recover = nil, nil
+    inst._triple = { phase = 'runup', at = love.timer.getTime(), dir = dir }
+    return true
+end
+function lib.tripling(inst) return inst._triple ~= nil end
+
+local function endTriple(inst, now)
+    inst._triple = nil
+    jumpTorso(inst, 0, nil)
+    setArms(inst, 0, nil)
+    inst._walkedAt = now
+    lib.drive(inst, nil)
+    stopWalking(inst)
+    inst._walking = false
+end
+
+-- both legs (world degrees forward of straight down, knee bends) facing face
+local function tripleLegs(inst, face, fa, ka, fb, kb, a, strength)
+    local thighs, knees = {}, {}
+    local b = 3 - a
+    thighs[a], knees[a] = -face * fa, ka
+    thighs[b], knees[b] = -face * fb, kb
+    poseLegs(inst, face, thighs, knees, strength or 1.4)
+end
+
+local function takeOff(inst, torso, legLen, height, forward)
+    local _, gy = torso:getWorld():getGravity()
+    local up = math.sqrt(2 * math.max(math.abs(gy), 1) * height * legLen)
+    local vy = centreVelocity(inst)
+    local mass = mipoRegistry.totalMass(inst)
+    torso:applyLinearImpulse(0, -mass * math.max(0, up + vy))
+    if forward then
+        local vx = torso:getLinearVelocity()
+        torso:applyLinearImpulse(mass * (forward - vx) * 0.5, 0) -- keeps the run-up's speed going
+    end
+end
+
+local function updateTriple(inst, dt, now)
+    local tj = inst._triple
+    local torso = partBody(inst, 'torso1')
+    local legLen = legLength(inst)
+    if not (torso and legLen) or held(inst) or not mayWalk(inst) or inst._jump then
+        endTriple(inst, now)
+        return false
+    end
+    local t = now - tj.at
+    if tj.phase == 'runup' then
+        -- run (turning first if it must), then off the foot that's down at a push-off
+        if inst._driveMode ~= 'run' or not inst._drive then
+            lib.drive(inst, tj.dir * 1.5 * lib.gaits.run.speed, 'run')
+        end
+        if t > lib.tripleRunUp and facing.dir(inst) == tj.dir and inst._stance and mipoActions.isGrounded(inst) then
+            tj.face, tj.a = tj.dir, inst._stance
+            inst._drive, inst._driveMode = nil, nil -- the legs are the triple's now
+            tj.phase, tj.at, tj.speed = 'hop', now, torso:getLinearVelocity()
+            takeOff(inst, torso, legLen, lib.tripleHop, tj.speed)
+            mipoActions.tellMusic('jump')
+        end
+        return false -- the run's frame (updateWalk) goes on
+    end
+    inst._walking, inst._walkedAt = true, now
+    local face, a = tj.face, tj.a
+    local b = 3 - a
+    hipsBack(inst, face)
+    holdFeet(inst, face, {}, { -face * 90, -face * 90 })
+    for _, n in ipairs(FEET) do setGrip(inst, n, lib.stopGrip) end
+    local grounded = mipoActions.isGrounded(inst)
+    local x = math.min(1, t / 0.45)
+    if tj.phase == 'hop' then
+        -- the takeoff leg cycles round under the body and reaches to land again; the other trails, bent
+        local cyc = math.sin(math.pi * x)
+        tripleLegs(inst, face, -20 + 60 * x, 20 + 70 * cyc, -25, 70, a)
+        jumpTorso(inst, face, 10)
+        setArms(inst, face, { l = (a == 1) and -40 or 40, r = (a == 1) and 40 or -40 }, 40, 30, 1.5)
+    elseif tj.phase == 'step' then
+        -- a bound: the legs split, the other knee driving forward to land on it
+        tripleLegs(inst, face, -35, 40, 45 * math.min(1, x * 2), 30 * (1 - x) + 10, a)
+        jumpTorso(inst, face, 8)
+        setArms(inst, face, { l = (a == 1) and 50 or -40, r = (a == 1) and -40 or 50 }, 45, 30, 1.5)
+    elseif tj.phase == 'jump' then
+        -- both legs swung forward to sail, the arms up then forward
+        local sail = math.min(1, x * 1.6)
+        tripleLegs(inst, face, 50 * sail, 30, 50 * sail, 30, b)
+        jumpTorso(inst, face, 15 * sail)
+        setArms(inst, face, 140 - 90 * sail, 20, 120, 2)
+    else -- 'land': the knees give, then up
+        local lx = math.min(1, t / lib.jumpLand)
+        local give = lx < 0.3 and easeOut(lx / 0.3) or 1 - easeIn((lx - 0.3) / 0.7)
+        tripleLegs(inst, face, 35 * give, 65 * give, 35 * give, 65 * give, a)
+        jumpTorso(inst, face, 12 * give)
+        setArms(inst, face, 35 * give, 30 * give, 35 * give, 1.4)
+        push(inst, torso, 0, legLen, dt, 3)
+        if lx >= 1 then endTriple(inst, now) return true end
+        return true
+    end
+    -- landing: on the right foot (or any, after a while), then the next takeoff at once
+    if t > 0.15 and grounded then
+        local nextPhase = TRIPLE_PHASES[tj.phase]
+        tj.phase, tj.at = nextPhase, now
+        if nextPhase == 'step' then
+            takeOff(inst, torso, legLen, lib.tripleStep, tj.speed)
+        elseif nextPhase == 'jump' then
+            takeOff(inst, torso, legLen, lib.tripleJumpHeight, tj.speed)
+        end
+    elseif t > 3 then
+        endTriple(inst, now)
+        return false
+    end
+    return true
+end
+
 local function updateWalk(inst, dt, now)
     if not mayWalk(inst) then
         stopWalking(inst)
@@ -1998,7 +2164,8 @@ function lib.update(dt)
     ranAt = now
     for _, inst in utils.sortedPairs(mipoRegistry.getAll()) do
         if alive(inst) then
-            if not (inst._jump and updateJump(inst, dt, now))
+            if not (inst._triple and updateTriple(inst, dt, now))
+                and not (inst._jump and updateJump(inst, dt, now))
                 and not (inst._stop and updateStop(inst, dt, now))
                 and not (inst._recover and updateRecover(inst, dt, now))
                 and not (inst._squat and updateSquat(inst, dt, now)) then

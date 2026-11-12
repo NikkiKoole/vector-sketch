@@ -3,6 +3,7 @@
 -- hop) and its feet push it, only while one touches the floor. mipoActions.jump(inst, forward).
 -- keys: left/right (hold): walk, jog, run or hop that way   up: jump (the way it faces)   g: the next gait
 --       down (hold): squat (up from a squat: jump)   b: bump them (a shove each, to see them catch themselves)
+--       t: hop, step and jump (a run-up, then the triple jump the way it faces)
 --       w: wander by themselves (on/off)   r: new Mipos   n: one more   p: pause   h: panel
 
 local s = {}
@@ -10,7 +11,7 @@ local s = {}
 local walk = mipoWalk     -- src/mipo-walk.lua
 
 -- the gaits in turn (g), and each one's speed against the walk's (a jog, a run: MIPO-LOCOMOTION LO10)
-local GAITS = { 'walk', 'jog', 'run', 'hop' }
+local GAITS = { 'walk', 'jog', 'run', 'skip', 'hop' }
 local function nextGait(g)
     for i, name in ipairs(GAITS) do
         if name == g then return GAITS[i % #GAITS + 1] end
@@ -33,7 +34,7 @@ local COUNT = 3
 local function check() -- on state: a script hot reload keeps the Mipos
     state.motorSpike = state.motorSpike or {
         mipos = {}, bodies = {}, showPanel = true,
-        gait = 'walk',  -- the keys' gait: 'walk', 'jog', 'run' or 'hop' (g goes round them)
+        gait = 'walk',  -- the keys' gait: 'walk', 'jog', 'run', 'skip' or 'hop' (g goes round them)
         speed = 1.5,    -- leg lengths a second
         jumpForward = 400,
         wander = false,
@@ -107,7 +108,7 @@ local function wander(inst, now)
             if x > HALF * 0.7 then dir = -1 elseif x < -HALF * 0.7 then dir = 1 end
             w.speed = dir * c.speed * (0.6 + love.math.random() * 0.6)
             local g = love.math.random()
-            w.gait = g < 0.2 and 'hop' or g < 0.35 and 'run' or g < 0.55 and 'jog' or 'walk'
+            w.gait = g < 0.15 and 'hop' or g < 0.25 and 'skip' or g < 0.38 and 'run' or g < 0.55 and 'jog' or 'walk'
             w.jumpAt = love.math.random() < 0.25 and now + love.math.random() * 1.5 or nil
         end
         inst._wander = w
@@ -187,6 +188,7 @@ end
 function s.onKeyPress(key)
     local c = check()
     if key == 'up' then jumpAll() end
+    if key == 't' then each(function(inst) walk.tripleJump(inst) end) end -- hop, step and jump (LO12)
     if key == 'b' then -- a shove each, either way, to see them catch themselves (MIPO-LOCOMOTION LO4b)
         each(function(inst)
             local torso = inst.parts.torso1.body
