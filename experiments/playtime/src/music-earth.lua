@@ -86,6 +86,20 @@ local function gauss(sd)
     return sd * math.sqrt(-2 * math.log(1 - love.math.random())) * math.cos(2 * math.pi * love.math.random())
 end
 
+-- One take, played every pass: the record is one sampled loop, the same every time, so the humanizing nudges
+-- (timing, loudness, pitch) are drawn once a song, on the loop's first pass, and every later pass reuses them
+-- (Nikki 2026-11-12: "might as well just play the exact thing you play first phrase and repeat"). take(song,
+-- key, sd) is the note's nudge for that key: drawn the first time, the same after.
+local function take(song, key, sd)
+    song.earthTake = song.earthTake or {}
+    local v = song.earthTake[key]
+    if v == nil then
+        v = gauss(sd)
+        song.earthTake[key] = v
+    end
+    return v
+end
+
 function lib.plan(song, _style, addSections)
     local list = {}
     for _, entry in ipairs(lib.FORM) do
@@ -148,10 +162,13 @@ local function bookBass(play, synth, t0, song, b, roles, h)
                 if not odds or odds >= 0.5 then
                     play(synth, 'bass', 'earthBass', at, midi, 6, lenMs, s, nil, nil, { release = rel })
                 end
-            elseif not odds or love.math.random() < odds then
-                local opts = { gain = math.min(1, 0.8 * 10 ^ (gauss(1.2) / 20)), cents = gauss(4), release = rel }
+            else
+                local key = 'b' .. beat .. ':' .. midi
+                local opts = { gain = math.min(1, 0.8 * 10 ^ (take(song, key .. 'g', 1.2) / 20)),
+                               cents = take(song, key .. 'c', 4), release = rel }
                 if short then opts.damp = 0.8 end
-                play(synth, 'bass', 'earthBass', at + gauss(0.006), midi, 6, lenMs, s, nil, nil, opts)
+                play(synth, 'bass', 'earthBass', at + take(song, key .. 't', 0.006), midi, 6, lenMs, s, nil, nil,
+                     opts)
             end
         end
     end
@@ -165,12 +182,14 @@ local function bookKeys(play, synth, t0, song, b, h)
         local at = t0 + (e[1] - lo) * song.beat
         local s = math.floor((e[1] - lo) * 4 + 0.5)
         local odds = e[3]
-        if (h and love.math.random() < odds) or (not h and odds >= 0.5) then
+        if odds >= 0.5 then
             for k = 4, #e do
                 local len, rel = fit(lib.KEYS, e[1], e[k], e[2] * song.beat * 1000, KEYS_RING, song)
                 if h then
-                    play(synth, 'keys', 'earthKeys', at + 0.012 + gauss(0.006) + (k - 4) * 0.004, e[k], 4, len, s, nil,
-                         nil, { gain = math.min(1, 0.85 * 10 ^ (gauss(1.0) / 20)), cents = gauss(3), release = rel })
+                    local key = 'k' .. e[1] .. ':' .. e[k]
+                    play(synth, 'keys', 'earthKeys', at + 0.012 + take(song, key .. 't', 0.006) + (k - 4) * 0.004, e[k],
+                         4, len, s, nil, nil, { gain = math.min(1, 0.85 * 10 ^ (take(song, key .. 'g', 1.0) / 20)),
+                         cents = take(song, key .. 'c', 3), release = rel })
                 else
                     play(synth, 'keys', 'earthKeys', at, e[k], 4, len, s, nil, nil, { release = rel })
                 end

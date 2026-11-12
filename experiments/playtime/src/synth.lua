@@ -322,7 +322,7 @@ lib.patches = {
     -- 0.224, morph 0.634, lowpass 989)
     earthKeys = { pool = true, wave = 'MALLET', adsr = { 1, 0, 7, 1100 }, harmonics = 0.25, timbre = 0.45,
                   morph = 0.9, filter = { mode = 1, cutoff = 2600, resonance = 0 }, reverb = 0.35, level = 1.0,
-                  lfo = { { 0, 0.6, 0.06 } } },
+                  lfo = { { 0, 0.5688, 0.06 } } }, -- the wow: 6 a loop at 91 BPM (10.549 s), the same every pass
     earthBass = { pool = true, wave = 'FM', adsr = { 0, 86, 7, 264 }, harmonics = 0.355, timbre = 0.026,
                   morph = 0.636, filter = { mode = 1, cutoff = 700, resonance = 1 }, reverb = 0.05, level = 0.9 },
     brewGuitar = { pool = true, wave = 'GUITAR', adsr = { 2, 0, 7, 900 }, harmonics = 0.4, timbre = 0.22, morph = 0.1,
