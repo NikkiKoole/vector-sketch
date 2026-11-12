@@ -36,6 +36,10 @@ The same sea, sky, smoke, fish and buoy; the boat built from planks with the dra
 - **The chimney** is its own light body on a springy weld (frequency 4) at the roof: it wobbles when
   the boat rocks, the smoke comes from its top.
 - It needs a **back layer**: the far side of the boat behind the Mipos (`DEPTH-LAYERS.md`).
+- **The sea splashes** (2026-11-12, Nikki: "pretty nice actually"): a Mipo dragged into or out of the
+  water dips or lifts the surface there, which springs back fast and spreads as ripples (springy
+  columns every 20 units, in the water's own x so they drift back with the travel). Only the Mipos'
+  layer (3) and the front layer just in front of them (4, at 0.7); the *splash* slider, 0 off.
 
 ## Left, if picked up
 

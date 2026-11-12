@@ -24,6 +24,7 @@ local function boat()
         settings = { bob = 1, tip = 1, sway = 1, float = 1, width = 9, wobble = 1.2, boil = false },
     }
     state.boat2.settings.wonk = state.boat2.settings.wonk or 1 -- added later: live states lack it
+    state.boat2.settings.splash = state.boat2.settings.splash or 1
     return state.boat2
 end
 
@@ -70,6 +71,28 @@ end
 
 ---------------------------------------------------------------- the water
 
+-- The surface answers a Mipo (Nikki 2026-11-12: "a fast response to a mipo being pulled in", only
+-- the layer it's in): a ring of springy columns along the surface, in the water's own x
+-- (x + travel, so a ripple drifts back with the boat's travel), pushed by Mipo parts crossing it;
+-- the front layer just in front of the Mipos (layer 4) shows it too, a bit less (layer.ripple).
+local RIP_DX, RIP_N = 20, 256
+local RIP_K, RIP_C, RIP_DAMP = 60, 350, 3 -- spring back (fast), spreading speed px/s, fading per s
+local RIP_PUSH = 0.12 -- a crossing part's speed (px/s) into the surface's, per frame
+local function ripples(b)
+    b.rip = b.rip or { h = {}, v = {} }
+    if not b.rip.h[1] then for i = 1, RIP_N do b.rip.h[i], b.rip.v[i] = 0, 0 end end
+    return b.rip
+end
+local function ripIndex(u) return math.floor(u / RIP_DX) % RIP_N + 1 end
+local function rippleAt(b, x)
+    local rip = b.rip
+    if not (rip and rip.h[1]) then return 0 end
+    local u = (x + b.pos) / RIP_DX
+    local i = math.floor(u)
+    local a, c = rip.h[i % RIP_N + 1], rip.h[(i + 1) % RIP_N + 1]
+    return a + (c - a) * (u - i)
+end
+
 -- the height of a wave layer at x: a few slow sines that scroll with the boat's travel
 local function waveY(layer, x, b)
     local p = b.pos * layer.parallax
@@ -77,14 +100,17 @@ local function waveY(layer, x, b)
     local y = math.sin((x + p) * 0.004 + t * 0.9 + layer.phase) * 22
         + math.sin((x + p) * 0.0105 - t * 1.3 + layer.phase * 2) * 10
         + math.sin((x + p) * 0.021 + t * 2.1) * 4
-    return WATER_Y + layer.y + y * layer.amp
+    local wy = WATER_Y + layer.y + y * layer.amp
+    if layer.ripple then wy = wy + rippleAt(b, x) * layer.ripple end
+    return wy
 end
 
 local LAYERS = {
     { y = -90, amp = 0.6, parallax = 0.5, phase = 1.1, color = { 0.62, 0.78, 0.88 }, front = false },
     { y = -45, amp = 0.8, parallax = 0.75, phase = 2.3, color = { 0.42, 0.64, 0.82 }, front = false },
-    { y = 0, amp = 1, parallax = 1, phase = 0, color = { 0.28, 0.5, 0.75 }, front = false },
-    { y = 55, amp = 1.1, parallax = 1.25, phase = 3.7, color = { 0.2, 0.4, 0.66 }, front = true, alpha = 0.85 },
+    { y = 0, amp = 1, parallax = 1, phase = 0, color = { 0.28, 0.5, 0.75 }, front = false, ripple = 1 },
+    { y = 55, amp = 1.1, parallax = 1.25, phase = 3.7, color = { 0.2, 0.4, 0.66 }, front = true, alpha = 0.85,
+      ripple = 0.7 }, -- the splash shows in front of the Mipo too
     { y = 120, amp = 1.2, parallax = 1.5, phase = 5.1, color = { 0.14, 0.3, 0.55 }, front = true, alpha = 0.6 },
 }
 local SURFACE = LAYERS[3] -- the boat rides on this one, and things float on it
@@ -94,7 +120,7 @@ local JITTER = {}
 for i = 1, 400 do JITTER[i] = love.math.random() * 6 - 3 end
 
 local function drawWave(layer, b, x0, x1, bottom)
-    local step = 40
+    local step = layer.ripple and RIP_DX or 40 -- the rippling layers finer
     local first = math.floor(x0 / step) - 1
     local pts = {}
     for i = first, math.ceil(x1 / step) + 1 do
@@ -540,6 +566,8 @@ function s.update(dt)
     local gx, gy = state.physicsWorld:getGravity()
     local g = math.sqrt(gx * gx + gy * gy)
     b.mipos = aliveMipos(b)
+    local rip = ripples(b)
+    local rh, rv = rip.h, rip.v
     for _, inst in ipairs(b.mipos) do
         for _, body in ipairs(partBodies(inst)) do
             local m = body:getMass()
@@ -548,6 +576,15 @@ function s.update(dt)
             body:applyForce(-b.accel * m * g * 0.12 * set.sway, 0)
             -- in the water: float, slowed down, carried back by the boat's travel
             local depth = py - waveY(SURFACE, px, b)
+            -- crossing the surface: its speed up or down pushes the surface there (down: a dip)
+            if math.abs(depth) < 40 then
+                local _, pvy = body:getLinearVelocity()
+                local push = math.max(-500, math.min(500, pvy)) * RIP_PUSH * (set.splash or 1)
+                local i = ripIndex(px + b.pos)
+                rv[i] = rv[i] + push
+                rv[(i - 2) % RIP_N + 1] = rv[(i - 2) % RIP_N + 1] + push * 0.5
+                rv[i % RIP_N + 1] = rv[i % RIP_N + 1] + push * 0.5
+            end
             if depth > 0 then
                 local vx, vy = body:getLinearVelocity()
                 local up = m * g * math.min(depth / 80, 1.6) * set.float
@@ -556,6 +593,15 @@ function s.update(dt)
             end
         end
     end
+
+    -- the surface's columns: a stiff spring each (back fast), tied to their neighbours (spreading)
+    local c2 = RIP_C * RIP_C / (RIP_DX * RIP_DX)
+    local step = math.min(dt, 1 / 60)
+    for i = 1, RIP_N do
+        local l, r = rh[(i - 2) % RIP_N + 1], rh[i % RIP_N + 1]
+        rv[i] = (rv[i] + (-RIP_K * rh[i] + c2 * (l + r - 2 * rh[i])) * step) * (1 - RIP_DAMP * step)
+    end
+    for i = 1, RIP_N do rh[i] = math.max(-80, math.min(80, rh[i] + rv[i] * step)) end
 
     -- smoke: puffs from the chimney, more often when going faster, blown back by the travel
     b.smokeTimer = b.smokeTimer - dt
@@ -714,7 +760,7 @@ function s.drawUI()
     ui.startFrame()
     local BH, pad, w = 34, 6, 400
     local rows = { { 'bob', 0, 2 }, { 'tip', 0, 3 }, { 'sway', 0, 3 }, { 'float', 0, 2 }, { 'width', 2, 30 },
-        { 'wobble', 0, 4 }, { 'wonk', 0, 3 } }
+        { 'wobble', 0, 4 }, { 'wonk', 0, 3 }, { 'splash', 0, 3 } }
     local h = (BH + pad) * (#rows + 2) + pad + 24
     local _, sh = love.graphics.getDimensions()
     local x0, y0 = 20, sh - h - 20
