@@ -115,6 +115,18 @@ and what's there already. Pick a few, draw them, drop them in `textures/`, tick 
     beak (a ridge, a nail, a band, a dark tip) read best from every side.
   - Then maybe a finch, a parrot, a toucan, or new birds.
 
+- [ ] **A20. Shut eyes, one for each eye** (2026-11-12; Nikki: "i just want to see the bottom line").
+  A blink past 70 % shut, and settings → mipos → 'eyes shut', draw `eye-NN-closed.png` instead of
+  the eye (`src/physics/box2d-draw-textured.lua`, `lib.blinkShutAt`), in the outline's colour, no
+  white, no pupil.
+  - Have: cut by script from the open outlines (`textures/mipo/eye/eye-01-closed.png` … `07`): the
+    outline below the middle of the white, the cut ends faded rather than tapered. The round eyes
+    (01, 03, 06, 07) read well; 02 and 05 come out nearly flat; 04 (the arrow) becomes a "7" hook.
+  - Draw: a shut lid for each of the 7 eyes, white on transparent, no mask, **the same size as its
+    open eye** (01 146×133 … 07 166×162) with the line where the bottom of the open eye sits, ends
+    tapered. A lash or two welcome (A5). 04 wants its own idea.
+  - On dark fur the black line nearly disappears: a slightly thicker line than the open outline helps.
+
 ## For the materials (MATERIALS.md, 2026-11-06)
 
 The materials in `material-check` are lit from each picture's mask; these give them what a mask
