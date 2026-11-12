@@ -105,6 +105,15 @@ Baseline 2026-11-12 (before LO1): tilt 9-25°, seed 42 39°; seed 9 walks 1.4 le
   alone (0.9 legs, 1.8 s); sliding the feet together in the settle (both skidded, so the closing
   step); firmer grip while stopping (1 to 6: no difference). The spec's 'feet skid' counts a foot
   rocking on its heel or toe too (a standing Mipo shows it): compare it, don't read it alone.
+  The step-turn (Nikki 2026-11-12: "when turning sometimes the feet quickly turn twice"): right ->
+  left goes over front, two switches, and each flipped a foot in place (the foot picture's lean).
+  Now, turning on the spot, each foot lifts as it turns and comes down facing the new way
+  (`stepTurn`, `stepTurnTime` 0.15 s a half, `stepTurnLift`), and it sets off once the second foot
+  is down. Found on the way: a runaway walk (the steps went at the body's speed, faster legs sped
+  the body, seed 42 walked left at 3x its speed and didn't stop); the steps are capped at `gaitCap`
+  1.3 times the speed it wants. With both: stop 0.29 legs after, still in 0.8 s; every motor, stop,
+  jump, skate and feet-hop spec passes. tried: stepTurnTime 0.2 (3 of 8 swayed long after a stop),
+  gaitCap 1.6 (seed 42 still ran 6.3 legs).
   For Nikki to try.
 - [ ] **LO4b. The recovery step**: a standing Mipo pushed or bumped steps toward its capture point
   instead of tipping over.

@@ -128,6 +128,13 @@ local SWITCHES = {
                        -- Walking only: a hop turning as it goes doesn't moonwalk (and a single hop facing
                        -- front, made to turn first, didn't hop once, spec/mipo-motor_spec)
     setOff = 0.16,     -- seconds dipping before it sets off once it faces its way
+    gaitCap = 1.3,     -- the walk's steps at most this times the speed it wants (the body may go faster)
+    stepTurn = true,   -- turning on the spot (turnFirst): each foot lifts as it turns round and comes down
+                       -- facing the new way (Nikki 2026-11-12: "sometimes the feet quickly turn twice":
+                       -- right -> front -> left flipped one foot, then the other, in place)
+    stepTurnTime = 0.15, -- seconds each half of a stepping foot's turn (up and round, then down; else 0.12 / 0.16;
+                       -- 0.2 left 3 of 8 Mipos swaying long after a stop)
+    stepTurnLift = 1,  -- how high the turning foot lifts (1: the knee 60 degrees)
     stancePose = 1,    -- torsoByMotor: the standing hip also holds the thigh's pose (0: the torso only: skated)
     freeStance = true, -- torque torsoHold: the standing hip's motor and muscle off (SIMBICON: that hip is the torso's)
 }
@@ -477,7 +484,9 @@ local function updateLean(inst, dt)
     local picture = footPicture(inst, L.foot)
     if not picture then inst._lean = nil return end
     L.t = L.t + dt
-    local k = math.min(1, L.t / (L.phase == 'out' and LEAN_OUT or LEAN_IN))
+    local dur = L.phase == 'out' and LEAN_OUT or LEAN_IN
+    if L.step then dur = lib.stepTurnTime end
+    local k = math.min(1, L.t / dur)
     local e = k * k * (3 - 2 * k)
     picture.leanAngle = L.start + (L.goal - L.start) * e
     if k < 1 then return end
@@ -513,7 +522,8 @@ local function switchBody(inst, want, now)
         local foot = turningFoot(inst, want)
         if foot and footPicture(inst, foot) then
             inst._lean = { foot = foot, want = want, phase = 'out', t = 0,
-                start = 0, goal = footOffset(inst, foot) * LEAN } -- toes up
+                start = 0, goal = footOffset(inst, foot) * LEAN, -- toes up
+                step = inst._stepTurning } -- a step-turn (lib.stepTurn): slower, the leg lifts it
             return false
         end
     end
@@ -787,7 +797,7 @@ end
 
 -- standing again: legs straight, feet back on their ankles, hips as the facing set them, full grip
 local function stopWalking(inst)
-    inst._goAt = nil
+    inst._goAt, inst._stepTurning = nil, nil
     uprightTorso(inst, nil)
     inst._armSwing, inst._driveTarget, inst._stance = nil, nil, nil
     if inst._legMotorsOn then
@@ -1133,6 +1143,45 @@ local function jumpFeet(inst, face, lift)
     holdFeet(inst, face, {}, { a, a })
 end
 
+-- the step-turn (lib.stepTurn): while a foot leans round (inst._lean, a step-turn), its leg lifts it
+-- (up as it turns out, down as the new foot comes in), the other stands; false: no foot turning now
+local function stepTurnLegs(inst, now)
+    local L = inst._lean
+    if not (L and L.step) then
+        if inst._walking then stopWalking(inst) end
+        inst._stepTurning = true -- (stopWalking clears it; the turn reads it this frame)
+        return true
+    end
+    local lifting
+    for i, n in ipairs(FEET) do
+        if n == L.foot then lifting = i end
+    end
+    if not lifting then return false end
+    -- 0 .. 1 .. 0 over the two halves
+    local k = math.min(1, L.t / lib.stepTurnTime)
+    local up = L.phase == 'out' and math.sin(0.5 * math.pi * k) or math.cos(0.5 * math.pi * k)
+    up = up * lib.stepTurnLift
+    local face = facing.dir(inst)
+    inst._walking, inst._walkedAt = true, now
+    for i = 1, 2 do
+        local f = face
+        local fwd, knee = 25 * up, 60 * up
+        if f == 0 then f, fwd = (i == 1) and -1 or 1, 30 * up end -- front: lifted out to the side
+        if i ~= lifting then fwd, knee = 0, 4 end
+        local thigh = -f * fwd
+        local shin = thigh + f * knee
+        legMotors(inst, i, thigh, shin)
+        local leg = LEG_PAIRS[i]
+        local upper = mipoActions.ensureKeepAngle(inst.parts[leg[1]], 0, 40)
+        local lower = mipoActions.ensureKeepAngle(inst.parts[leg[2]], 0, 40)
+        if upper then upper.angle, upper.enabled = thigh, nil end
+        if lower then lower.angle, lower.enabled = shin, nil end
+        setGrip(inst, FEET[i], i == lifting and SWING_GRIP or lib.stopGrip)
+    end
+    inst._legMotorsOn = true
+    return true
+end
+
 -- walking (or hopping) by itself: lib.drive
 local function updateDrive(inst, dt, now, torso, legLen)
     local dir = inst._drive > 0 and 1 or -1
@@ -1144,11 +1193,15 @@ local function updateDrive(inst, dt, now, torso, legLen)
     local grounded = mipoActions.isGrounded(inst)
     -- turn first (LO4): not facing its way yet, it stands and turns on the spot; once it does, a dip
     -- (anticipation) and off
-    if lib.turnFirst and inst._driveMode == 'walk' and faceDir ~= dir and grounded then
-        if inst._walking then stopWalking(inst) end
+    local stepping = inst._lean and inst._lean.step -- a step-turn's foot still coming down
+    if lib.turnFirst and inst._driveMode == 'walk' and (faceDir ~= dir or stepping) and grounded then
         inst._goAt = nil
+        inst._stepTurning = lib.stepTurn or nil
+        if lib.stepTurn and stepTurnLegs(inst, now) then return end
+        if inst._walking then stopWalking(inst) end
         return
     end
+    inst._stepTurning = nil
     if lib.turnFirst and inst._driveMode == 'walk' then
         if not inst._goAt then inst._goAt = now end
         local t = now - inst._goAt
@@ -1181,8 +1234,10 @@ local function updateDrive(inst, dt, now, torso, legLen)
     local vx = torso:getLinearVelocity()
     if inst._stepsLeft and faceDir ~= dir then inst._gaitFrom = nil end -- steps count once it faces its way
     if inst._stepsLeft then inst._gaitFrom = inst._gaitFrom or (inst._gait or 0) end
-    local pushOff = stepLegs(inst, dt, math.max(math.abs(target) * 0.6, vx * dir), face, faceDir ~= 0, legLen,
-        lib.weighty)
+    -- the steps go at the body's speed, but at most gaitCap times the speed it wants: faster legs carried
+    -- the body faster, which sped the legs up again (seed 42 ran away to 3x its speed, 2026-11-12)
+    local gaitSpeed = math.max(math.abs(target) * 0.6, math.min(vx * dir, math.abs(target) * lib.gaitCap))
+    local pushOff = stepLegs(inst, dt, gaitSpeed, face, faceDir ~= 0, legLen, lib.weighty)
     if grounded then
         if lib.weighty and lib.pulse > 0 then
             -- surging at push-off, easing between (a foot pushes off about a quarter of the time)
