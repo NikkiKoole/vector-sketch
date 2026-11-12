@@ -488,7 +488,9 @@ local function updateLean(inst, dt)
     if L.step then dur = lib.stepTurnTime end
     local k = math.min(1, L.t / dur)
     local e = k * k * (3 - 2 * k)
-    picture.leanAngle = L.start + (L.goal - L.start) * e
+    -- a step-turn's foot turns in the air, at the top of its lift: no lean (the lean flapped the foot
+    -- up and down at each of the two switches, Nikki 2026-11-12: "the foot facing me flaps twice")
+    picture.leanAngle = (not L.step) and (L.start + (L.goal - L.start) * e) or nil
     if k < 1 then return end
     if L.phase == 'out' then
         if switchBlocked(inst) then return end
@@ -497,7 +499,7 @@ local function updateLean(inst, dt)
         if not newPicture then inst._lean = nil return end
         -- the new foot leaning as far as the old one did, the other way, then down
         local lean = footOffset(inst, L.foot) * LEAN
-        newPicture.leanAngle = lean
+        newPicture.leanAngle = (not L.step) and lean or nil
         L.phase, L.t, L.start, L.goal = 'in', 0, lean, 0
     else
         picture.leanAngle = nil
@@ -523,7 +525,10 @@ local function switchBody(inst, want, now)
         if foot and footPicture(inst, foot) then
             inst._lean = { foot = foot, want = want, phase = 'out', t = 0,
                 start = 0, goal = footOffset(inst, foot) * LEAN, -- toes up
-                step = inst._stepTurning } -- a step-turn (lib.stepTurn): slower, the leg lifts it
+                -- a step-turn (lib.stepTurn): the leg lifts it; a Mipo walking by itself (the flag alone
+                -- missed the first foot, set a frame late: that foot still flapped)
+                step = inst._stepTurning or (lib.stepTurn and lib.turnFirst and inst._drive ~= nil
+                    and inst._driveMode == 'walk') or nil }
             return false
         end
     end
@@ -1147,6 +1152,7 @@ end
 -- (up as it turns out, down as the new foot comes in), the other stands; false: no foot turning now
 local function stepTurnLegs(inst, now)
     local L = inst._lean
+    if L and not L.step then L.step = true end -- begun a frame before this turn on the spot
     if not (L and L.step) then
         if inst._walking then stopWalking(inst) end
         inst._stepTurning = true -- (stopWalking clears it; the turn reads it this frame)

@@ -114,6 +114,10 @@ Baseline 2026-11-12 (before LO1): tilt 9-25°, seed 42 39°; seed 9 walks 1.4 le
   1.3 times the speed it wants. With both: stop 0.29 legs after, still in 0.8 s; every motor, stop,
   jump, skate and feet-hop spec passes. tried: stepTurnTime 0.2 (3 of 8 swayed long after a stop),
   gaitCap 1.6 (seed 42 still ran 6.3 legs).
+  Still flapping (Nikki: "the foot facing me flaps twice very quickly"): the foot picture's lean
+  (toes up 45°, swapped, down) ran at both switches, and the first foot's turn began a frame before
+  the step-turn flag was set. Now a step-turn's foot turns in the air without the lean, and a Mipo
+  walking by itself always turns its feet as steps (checked live: both feet `step`, two turns).
   For Nikki to try.
 - [ ] **LO4b. The recovery step**: a standing Mipo pushed or bumped steps toward its capture point
   instead of tipping over.
