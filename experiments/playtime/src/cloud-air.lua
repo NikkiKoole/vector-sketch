@@ -90,7 +90,7 @@ end
 function lib.newThermal(air, x, z, rh, warm, r)
     local t = lib.envT(air, z) + (warm or 0)
     local p = { x = x, z = z, w = 0, u = 0, t = t, qv = rh * lib.qs(t, lib.pressure(z)), qc = 0,
-        r = r or 350, age = 0 }
+        qr = 0, peak = 0, rainRate = 0, r = r or 350, age = 0 }
     adjust(p, z)
     return p
 end
@@ -98,7 +98,7 @@ end
 -- how much warmer (K, virtual) than the air around it: > 0 it's pushed up
 function lib.buoyancyK(air, p)
     local te = lib.envT(air, p.z)
-    return virtualK(p.t, p.qv, p.qc) - virtualK(te, lib.envQv(air, p.z), 0)
+    return virtualK(p.t, p.qv, p.qc + (p.qr or 0)) - virtualK(te, lib.envQv(air, p.z), 0)
 end
 
 -- move a thermal by dz (lifted or dropped): it cools or warms as it goes, condenses or evaporates
@@ -114,12 +114,37 @@ end
 lib.ENTRAIN = 0.25
 lib.MIX = 0.0003
 lib.DRAG = 0.004 -- per second: the air it pushes through
+
+-- Rain (CG3): past RAIN_START g/kg of cloud water the droplets grow into drops (RAIN_RATE a
+-- second of what's over); the drops weigh it down and fall out (RAIN_FALL a second of them).
+-- Part of what falls evaporates in the drier air under the cloud (RAIN_EVAP) and cools it: that
+-- cold air is pulled in, the cloud gets heavier than the air and sinks: rain ends the updraft
+-- that made it (a shower's life).
+lib.RAIN_START = 0.8
+lib.RAIN_RATE = 0.01
+lib.RAIN_FALL = 0.01
+lib.RAIN_EVAP = 0.5
+local function rain(air, p, dt)
+    if p.qc > lib.RAIN_START then
+        local d = (p.qc - lib.RAIN_START) * math.min(1, lib.RAIN_RATE * dt)
+        p.qc, p.qr = p.qc - d, p.qr + d
+    end
+    local fall = p.qr * math.min(1, lib.RAIN_FALL * dt)
+    p.qr = p.qr - fall
+    -- how much evaporates under it: more in dry air
+    local ev = fall * lib.RAIN_EVAP * (1.2 - lib.envRH(air, math.max(0, p.z - 500)))
+    p.t = p.t - LV_CP * ev
+    p.rainRate = fall / dt -- g/kg a second reaching out of it (the scene's drops)
+end
+
 function lib.step(air, p, dt, held)
     p.age = p.age + dt
+    p.qr, p.peak = p.qr or 0, p.peak or 0 -- thermals made before rain was added
+    rain(air, p, dt)
     if not held then
         local te = lib.envT(air, p.z)
         local tv = virtualK(te, lib.envQv(air, p.z), 0)
-        local accel = G * (virtualK(p.t, p.qv, p.qc) - tv) / tv
+        local accel = G * (virtualK(p.t, p.qv, p.qc + p.qr) - tv) / tv
         p.w = p.w + accel * dt
         -- drag: the air it pushes through, and the still air it takes in as it rises
         p.w = p.w * math.max(0, 1 - dt * (lib.DRAG + lib.ENTRAIN / p.r * math.abs(p.w)))
@@ -137,6 +162,13 @@ function lib.step(air, p, dt, held)
     local out = p.qc * k
     p.qc, p.qv = p.qc - out, p.qv + out
     adjust(p, p.z)
+    p.peak = math.max(p.peak, p.qc)
+end
+
+-- how far gone (0 young and growing .. 1 nearly evaporated): a cloud that's past its most
+function lib.frayed(p)
+    if p.peak <= 0 then return 0 end
+    return math.max(0, 1 - p.qc / p.peak)
 end
 
 -- how close to cloud it is: relative humidity, 1 = saturated
@@ -147,7 +179,7 @@ end
 -- spent: no cloud left and too dry to be one soon (the scene's shimmer is gone by then)
 lib.SPENT_RH = 0.8
 function lib.spent(p)
-    return p.qc <= 0.005 and lib.rh(p) < lib.SPENT_RH and p.w < 0.5
+    return p.qc <= 0.005 and p.qr < 0.01 and lib.rh(p) < lib.SPENT_RH and p.w < 0.5
 end
 
 -- The lines for the panel: lift the ground's air (a little warm, as a sunny field makes it) and

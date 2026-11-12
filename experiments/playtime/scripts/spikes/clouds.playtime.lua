@@ -84,6 +84,7 @@ local function clouds()
     end
     if b.showPanel == nil then b.showPanel = true end
     b.thermals = b.thermals or {}
+    b.growRain = b.growRain or {}
     if b.grow == nil then b.grow = true end
     return b
 end
@@ -632,7 +633,8 @@ precision highp float;
 #endif
 #define MAXL 64
 uniform vec4 lobes[MAXL];      // screen pixels: x, y, radius, how much cloud (0..1)
-uniform float lobeBase[MAXL];  // screen y of its own base (where it turned to cloud)
+uniform vec4 lobeInfo[MAXL];   // screen y of its own base (where it turned to cloud), flattened
+                               // (an anvil, 0..1), dark (rain in it, 0..1), frayed (dying, 0..1)
 uniform int count;
 uniform vec3 toLayer;          // metres in the layer = (sc - xy) * z
 uniform float pxPerM;
@@ -664,19 +666,33 @@ float fbm(vec2 p) {
     return s / 0.9375;
 }
 
-// the cloud's field: soft balls added up (lobes melt together), each fading out below its base
-float field(vec2 p, float rag) {
+// the cloud's field: soft balls added up (lobes melt together), each fading out below its base,
+// flattened ones wider and lower (an anvil spreading under the lid); dark and fray: the lobes'
+// darkness and fraying where p is, weighted by how much each one is there
+float field(vec2 p, float rag, out float dark, out float fray) {
     float F = 0.0;
+    dark = 0.0;
+    fray = 0.0;
     for (int i = 0; i < MAXL; i++) {
         if (i >= count) break;
         vec4 L = lobes[i];
-        vec2 d = (p - L.xy) / L.z;
+        vec4 I = lobeInfo[i];
+        vec2 d = (p - L.xy) / (L.z * vec2(1.0 + 0.9 * I.y, 1.0 - 0.5 * I.y));
         float f = exp(-dot(d, d) * 1.5) * L.w;
-        float below = (p.y + rag * 18.0 * pxPerM - lobeBase[i]) / (60.0 * pxPerM);
+        float below = (p.y + rag * 18.0 * pxPerM - I.x) / (60.0 * pxPerM);
         f *= 1.0 - smoothstep(0.0, 1.0, below) * (1.0 - cotton * 0.85);
         F += f;
+        dark += f * I.z;
+        fray += f * I.w;
     }
+    dark /= max(F, 1e-4);
+    fray /= max(F, 1e-4);
     return F;
+}
+float field(vec2 p, float rag) {
+    float a;
+    float b;
+    return field(p, rag, a, b);
 }
 
 vec4 effect(vec4 color, Image tex, vec2 uv, vec2 sc) {
@@ -684,9 +700,13 @@ vec4 effect(vec4 color, Image tex, vec2 uv, vec2 sc) {
     float t = time;
     float rag = fbm(vec2(lp.x / 260.0 + t * 0.05, lp.y / 160.0 - t * 0.03)) - 0.5;
     float lumps = fbm(lp / 110.0 + t * 0.02) - 0.5;
-    float F = field(sc, rag);
-    float E = F - 0.42 + rag * 0.22 + lumps * 0.12 * (0.4 + cotton);
-    float dens = smoothstep(0.0, 0.22, E);
+    float dark;
+    float fray;
+    float F = field(sc, rag, dark, fray);
+    // young: a crisp edge; dying: ragged and soft, torn by the dry air
+    float tear = fbm(lp / 70.0 + vec2(t * 0.04, 0.0)) - 0.5;
+    float E = F - 0.42 + rag * (0.22 + 0.35 * fray) + lumps * 0.12 * (0.4 + cotton) + tear * 0.5 * fray;
+    float dens = smoothstep(0.0, 0.22 + 0.35 * fray, E);
     if (dens <= 0.001) return vec4(0.0);
     float sh = 90.0 * pxPerM;
     float Fs = field(sc + sunDir * sh, rag);
@@ -694,8 +714,10 @@ vec4 effect(vec4 color, Image tex, vec2 uv, vec2 sc) {
     // lit where it ends towards the sun and on top, grey where there's a lot of cloud above it
     float lit = 0.6 + light * ((F - Fs) * 0.55 + (F - Fu) * 0.45);
     lit -= light * clamp(Fu - 0.5, 0.0, 1.0) * 0.18;
-    vec3 top = vec3(1.0, 1.0, 0.98);
+    // rain in it: a heavy, dark belly, the top a little grey
+    vec3 top = mix(vec3(1.0, 1.0, 0.98), vec3(0.80, 0.81, 0.84), dark * 0.6);
     vec3 belly = mix(vec3(0.70, 0.79, 0.90), vec3(0.83, 0.82, 0.84), cotton);
+    belly = mix(belly, vec3(0.36, 0.39, 0.46), dark);
     vec3 col = mix(belly, top, clamp(lit, 0.0, 1.0));
     col += vec3(1.0, 0.92, 0.72) * (1.0 - smoothstep(0.0, 0.25, E)) * 0.25;
     dens *= 0.95;
@@ -860,6 +882,41 @@ local function together(b, dt)
     end
 end
 
+-- Rain (CG3): drops from each thermal that rains, as many as it lets go; they fall at a speed for
+-- the eye (not the sky's time) and, in dry air, dry up on the way down (virga) instead of reaching
+-- the ground. And an anvil: a cloud at the lid, no longer rising, flattens and spreads.
+local MAX_DROPS = 900
+local DROP_SPEED = 1300 -- m a second, on the screen's own time
+local function growRainUpdate(b, air, dt)
+    local set = b.settings
+    local reach = clamp((set.groundRH - 35) / 50, 0.05, 1)
+    for _, p in ipairs(b.thermals) do
+        local n = p.rainRate * set.speed * 260 * dt
+        while n > 0 and #b.growRain < MAX_DROPS do
+            if love.math.random() < n then
+                local base = p.baseZ or p.z
+                local endZ = love.math.random() < reach and 0 or base * love.math.random() * 0.8
+                b.growRain[#b.growRain + 1] = { x = p.x + (love.math.random() * 2 - 1) * p.r * 0.7,
+                    y = -base + love.math.random() * 80, vx = p.u * set.speed * 0.3, endY = -endZ, fade = 1 }
+            end
+            n = n - 1
+        end
+        -- flattening: near the lid and hardly moving up or down
+        local near = clamp(1 - math.abs(p.z - air.lidZ) / 700, 0, 1) * clamp(1 - math.abs(p.w) / 2, 0, 1)
+        if p.qc <= 0 then near = 0 end
+        p.flat = (p.flat or 0) + (near - (p.flat or 0)) * math.min(1, dt * 0.6)
+    end
+    local keep = {}
+    for _, d in ipairs(b.growRain) do
+        d.y = d.y + DROP_SPEED * dt
+        d.x = d.x + d.vx * dt
+        -- drying up: the last stretch fades (rain that reaches the ground doesn't)
+        d.fade = d.endY < 0 and clamp((d.endY - d.y) / 300, 0, 1) or 1
+        if d.y < d.endY then keep[#keep + 1] = d end
+    end
+    b.growRain = keep
+end
+
 local function growUpdate(b, dt)
     local set = b.settings
     local air = airOf(set)
@@ -881,6 +938,7 @@ local function growUpdate(b, dt)
         end
         together(b, h)
     end
+    growRainUpdate(b, air, dt)
     local keep = {}
     for _, p in ipairs(b.thermals) do
         if isPulled(b, p) or not cloudAir.spent(p) then
@@ -930,18 +988,29 @@ local function drawGrown(b, w, h, cx, cy, scale)
         end
     end
     love.graphics.setBlendMode('alpha')
+    -- the rain, under the cloud
+    love.graphics.setLineWidth(1.5)
+    for _, d in ipairs(b.growRain) do
+        local x, y = sx(d.x), sy(d.y)
+        love.graphics.setColor(0.62, 0.70, 0.80, 0.55 * d.fade)
+        love.graphics.line(x, y, x - d.vx * k * 0.01, y - 16)
+    end
+    love.graphics.setLineWidth(1)
     -- the cloud: the thermals with cloud water as lobes, one shape
-    local lobes, bases = {}, {}
+    local lobes, info = {}, {}
     local x0, y0, x1, y1 = math.huge, math.huge, -math.huge, -math.huge
     for _, p in ipairs(b.thermals) do
         local amount = clamp(p.qc / 0.5, 0, 1)
         if amount > 0.02 and #lobes < MAXL then
             local r = p.r * k * (0.75 + 0.35 * amount)
             local px, py = sx(p.x), sy(-p.z)
+            local flat = p.flat or 0
             lobes[#lobes + 1] = { px * dpi, py * dpi, r * dpi, amount }
-            bases[#bases + 1] = sy(-(p.baseZ or p.z)) * dpi
-            x0, y0 = math.min(x0, px - r * 1.3), math.min(y0, py - r * 1.3)
-            x1, y1 = math.max(x1, px + r * 1.3), math.max(y1, py + r * 1.3)
+            info[#info + 1] = { sy(-(p.baseZ or p.z)) * dpi, flat, clamp(p.qr / 0.2, 0, 1),
+                cloudAir.frayed(p) }
+            local rx = r * (1 + 0.9 * flat) * 1.3
+            x0, y0 = math.min(x0, px - rx), math.min(y0, py - r * 1.3)
+            x1, y1 = math.max(x1, px + rx), math.max(y1, py + r * 1.3)
         end
     end
     if #lobes == 0 then return end
@@ -950,7 +1019,7 @@ local function drawGrown(b, w, h, cx, cy, scale)
     local len = math.sqrt(dx * dx + dy * dy) + 1e-3
     love.graphics.setShader(grownShader)
     grownShader:send('lobes', unpack(lobes))
-    grownShader:send('lobeBase', unpack(bases))
+    grownShader:send('lobeInfo', unpack(info))
     grownShader:send('count', #lobes)
     grownShader:send('toLayer', { (w / 2 - lx * k) * dpi, (h / 2 - ly * k) * dpi, 1 / (k * dpi) })
     grownShader:send('pxPerM', k * dpi)
@@ -1006,7 +1075,7 @@ function s.onKeyPress(key)
     elseif key == 'm' then
         local mx, my = mouseWorldPos()
         spawnMipo(b, mx, my)
-    elseif key == 'r' and b.grow then b.thermals = {}
+    elseif key == 'r' and b.grow then b.thermals = {}; b.growRain = {}
     elseif key == 'r' then fillSky(b); b.drops = {}
     elseif key == 'e' then b.grow = not b.grow
     elseif key == 'h' then b.showPanel = not b.showPanel

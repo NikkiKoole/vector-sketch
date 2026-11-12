@@ -101,6 +101,13 @@ steeply with cold), below evaporates. Pulled up past the point where it's warmer
 - [ ] **CG3. Its life.** Young clouds crisp, older ones ragged, evaporating at the edges into dry
       air. A big one hits the lid and spreads into an anvil; the base goes heavy and dark, it rains
       (the existing drops), a cold downdraft under it, then it dies.
+  Built 2026-11-12, for Nikki to try: rain in `src/cloud-air.lua` (past 0.8 g/kg of cloud water
+  drops form, weigh the cloud down and fall out; half of what falls evaporates under it, more in dry
+  air, and cools it: a shower ends its own updraft; spec: it dies, and under a higher lid it rains
+  more and lives longer). In the scene: drops under a raining cloud that reach the ground in humid
+  air and dry up halfway (virga) in dry air, a dark belly from the rain in it, lobes flattening and
+  spreading near the lid (the anvil), and a cloud past its most going ragged and soft. Not yet: the
+  cold outflow along the ground (a gust that pushes Mipos) and the cloud's shadow.
 - [ ] **CG4. Real light.** Self-shadowing towards the sun in the shader: bright tops, bellies grey
       by depth, a silver lining with the sun behind, the sky's hour colours (SKY).
 - [ ] **CG5. Wind with height.** Faster wind higher up leans towers and stretches tops; the
