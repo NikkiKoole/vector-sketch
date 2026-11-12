@@ -39,6 +39,15 @@ lib.FRAMES = {
     ['meta'] = 'fit',
     ['sm-demo'] = 'fit',
     ['voicebox'] = 'crowd', -- its one big Mipo
+    -- the looks (2026-11-12): their own camera close up on the legs
+    ['cutpaper'] = 'fit',
+    ['felt'] = 'crowd',
+    ['fur'] = 'crowd',
+    ['leather'] = 'crowd',
+    ['metal'] = 'crowd',
+    ['neon'] = 'crowd',
+    ['riso'] = 'crowd',
+    ['stone'] = 'crowd',
 }
 
 -- ── the tab's side ──────────────────────────────────────────────────────────────────────────
