@@ -219,6 +219,10 @@ track). Built as the style **`earth`** (`src/music-earth.lua`). Working files we
   (the last bar's D2 −15 dB in pass 2) and boomed in others ("the second and maybe 5th skips a note at the end").
   `music-earth.lua` `fit` shortens length and release to the next same pitch. Worth checking in other styles with
   repeated notes and long rings.
+- **Then**: no ending bar (the loop runs on, the take kept across songs), and a solo on top: a kalimba, sparse
+  (two passes rest, then call / answer / rest), the beats on the chord's own notes, landing long on the Dm7, about
+  4 dB under the vibes. Nikki (2026-11-12): "i like it". The pianoroll cart holds the loop to edit
+  (`claudetools/earth-pianoroll.py`).
 
 ## The score pieces next to our styles (2026-11-02)
 
