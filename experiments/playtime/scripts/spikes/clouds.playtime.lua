@@ -627,7 +627,7 @@ end
 -- The thermals live in one layer (GROW_LAYER), 1 unit = 1 m, y = -height.
 
 local GROW_LAYER = 5
-local MAX_THERMALS = 140
+local MAX_THERMALS = 260
 local MAXL = 64        -- lobes the shader takes
 
 local grownShader = love.graphics.newShader([[
@@ -745,10 +745,23 @@ end
 local function thermalAt(b, x, y)
     local best, bestD
     for _, p in ipairs(b.thermals) do
-        local d = math.sqrt((p.x - x) ^ 2 + (-p.z - y) ^ 2)
-        if d < p.r * 1.1 and (not bestD or d < bestD) then best, bestD = p, d end
+        -- only what shows: a leftover that's no cloud any more doesn't catch the finger
+        if p.qc > 0.05 then
+            local d = math.sqrt((p.x - x) ^ 2 + (-p.z - y) ^ 2)
+            if d < p.r * 1.1 and (not bestD or d < bestD) then best, bestD = p, d end
+        end
     end
     return best
+end
+
+-- full: the least cloud goes, so painting always paints
+local function makeRoom(b)
+    if #b.thermals < MAX_THERMALS then return end
+    local weakest, wi
+    for i, p in ipairs(b.thermals) do
+        if not weakest or p.qc < weakest.qc then weakest, wi = p, i end
+    end
+    table.remove(b.thermals, wi)
 end
 
 -- everything touching it, and touching those: the cloud it's part of
@@ -778,7 +791,7 @@ local function paint(b, air, x, y)
         near.qc = math.min(1.5, near.qc + 0.3)
         return
     end
-    if #b.thermals >= MAX_THERMALS then return end
+    makeRoom(b)
     local p = cloudAir.newCloud(air, x, z, 0.7, 280 + love.math.random() * 120)
     p.seed = love.math.random()
     p.baseZ = math.max(0, z - p.r * 0.35)
@@ -836,7 +849,7 @@ local function growInput(b, air, dt)
         end
     elseif b.painting then
         local d = math.sqrt((mx - b.lastPaintX) ^ 2 + (my - b.lastPaintY) ^ 2)
-        if d > 160 then
+        if d > 220 then
             paint(b, air, mx, my)
             b.lastPaintX, b.lastPaintY = mx, my
         end
@@ -961,41 +974,78 @@ local function drawGrown(b, w, h, cx, cy, scale)
         end
     end
     love.graphics.setBlendMode('alpha')
-    -- the cloud: the thermals with cloud water as lobes, one shape
-    local lobes, bases = {}, {}
-    local x0, y0, x1, y1 = math.huge, math.huge, -math.huge, -math.huge
+    -- the clouds: the thermals with cloud water as lobes, only those on the screen; the ones that
+    -- touch drawn together as one shape, MAXL lobes at most a draw
+    local shown = {}
     for _, p in ipairs(b.thermals) do
         local amount = clamp(p.qc / 0.5, 0, 1)
-        if amount > 0.02 and #lobes < MAXL then
+        if amount > 0.02 then
             local r = p.r * k * (0.75 + 0.35 * amount)
             -- breathing: each lobe swells and drifts a little, slowly
             local t, sd = b.time * b.settings.morph, (p.seed or 0) * 40
             r = r * (1 + 0.07 * math.sin(t * 0.4 + sd))
             local px = sx(p.x + p.r * 0.08 * math.sin(t * 0.23 + sd * 1.3))
             local py = sy(-p.z + p.r * 0.06 * math.sin(t * 0.31 + sd * 0.7))
-            lobes[#lobes + 1] = { px * dpi, py * dpi, r * dpi, amount }
-            bases[#bases + 1] = sy(-(p.baseZ or p.z)) * dpi
-            x0, y0 = math.min(x0, px - r * 1.3), math.min(y0, py - r * 1.3)
-            x1, y1 = math.max(x1, px + r * 1.3), math.max(y1, py + r * 1.3)
+            if px + r * 1.3 > 0 and px - r * 1.3 < w and py + r * 1.3 > 0 and py - r * 1.3 < h then
+                shown[#shown + 1] = { px = px, py = py, r = r, amount = amount,
+                    base = sy(-(p.baseZ or p.z)) }
+            end
         end
     end
-    if #lobes == 0 then return end
-    local sunX, sunY = SUN[1] * w, SUN[2] * h
-    local dx, dy = sunX - (x0 + x1) / 2, sunY - (y0 + y1) / 2
-    local len = math.sqrt(dx * dx + dy * dy) + 1e-3
+    if #shown == 0 then return end
+    -- which touch: a union-find, then each group in order along x
+    local parent = {}
+    for i = 1, #shown do parent[i] = i end
+    local function root(i)
+        while parent[i] ~= i do parent[i] = parent[parent[i]]; i = parent[i] end
+        return i
+    end
+    for i = 1, #shown do
+        local a = shown[i]
+        for j = i + 1, #shown do
+            local c = shown[j]
+            local reach = (a.r + c.r) * 1.3
+            if (a.px - c.px) ^ 2 + (a.py - c.py) ^ 2 < reach * reach then parent[root(i)] = root(j) end
+        end
+    end
+    local groups, order = {}, {}
+    for i, l in ipairs(shown) do
+        local g = root(i)
+        if not groups[g] then groups[g] = {}; order[#order + 1] = g end
+        table.insert(groups[g], l)
+    end
     love.graphics.setShader(grownShader)
-    grownShader:send('lobes', unpack(lobes))
-    grownShader:send('lobeBase', unpack(bases))
-    grownShader:send('count', #lobes)
     grownShader:send('toLayer', { (w / 2 - lx * k) * dpi, (h / 2 - ly * k) * dpi, 1 / (k * dpi) })
     grownShader:send('pxPerM', k * dpi)
     grownShader:send('time', b.time * b.settings.morph)
-    grownShader:send('sunDir', { dx / len, dy / len })
     grownShader:send('light', b.settings.light)
     grownShader:send('cotton', b.settings.cotton)
     love.graphics.setBlendMode('alpha', 'premultiplied')
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.rectangle('fill', x0, y0, x1 - x0, y1 - y0)
+    local sunX, sunY = SUN[1] * w, SUN[2] * h
+    local function drawGroup(list, from, to)
+        local lobes, bases = {}, {}
+        local x0, y0, x1, y1 = math.huge, math.huge, -math.huge, -math.huge
+        for i = from, to do
+            local l = list[i]
+            lobes[#lobes + 1] = { l.px * dpi, l.py * dpi, l.r * dpi, l.amount }
+            bases[#bases + 1] = l.base * dpi
+            x0, y0 = math.min(x0, l.px - l.r * 1.3), math.min(y0, l.py - l.r * 1.3)
+            x1, y1 = math.max(x1, l.px + l.r * 1.3), math.max(y1, l.py + l.r * 1.3)
+        end
+        local dx, dy = sunX - (x0 + x1) / 2, sunY - (y0 + y1) / 2
+        local len = math.sqrt(dx * dx + dy * dy) + 1e-3
+        grownShader:send('lobes', unpack(lobes))
+        grownShader:send('lobeBase', unpack(bases))
+        grownShader:send('count', #lobes)
+        grownShader:send('sunDir', { dx / len, dy / len })
+        love.graphics.rectangle('fill', x0, y0, x1 - x0, y1 - y0)
+    end
+    for _, g in ipairs(order) do
+        local list = groups[g]
+        table.sort(list, function(p, q) return p.px < q.px end)
+        for from = 1, #list, MAXL do drawGroup(list, from, math.min(#list, from + MAXL - 1)) end
+    end
     love.graphics.setBlendMode('alpha')
     love.graphics.setShader()
 end
