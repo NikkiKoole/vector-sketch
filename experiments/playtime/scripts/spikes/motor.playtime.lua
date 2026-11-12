@@ -248,17 +248,27 @@ function s.drawUI()
         if v then walk.hopRest = v end
         v = slider(layout, bw, 'jumpF', 'jump forward', 0, 1200, c.jumpForward, 50)
         if v then c.jumpForward = v end
-        v = slider(layout, bw, 'jumpUp', 'jump up', 300, 2400, actions.jumpSpeed, 50)
-        if v then
-            c.jumpSpeedWas = c.jumpSpeedWas or actions.jumpSpeed -- back on unload: it's every scene's
-            actions.jumpSpeed = v
+        if walk.animJump then -- the animated jump (LO8): its height in leg lengths
+            v = slider(layout, bw, 'jumpHeight', 'jump height (legs)', 0.3, 4, walk.jumpHeight, 0.1)
+            if v then walk.jumpHeight = v end
+        else
+            v = slider(layout, bw, 'jumpUp', 'jump up', 300, 2400, actions.jumpSpeed, 50)
+            if v then
+                c.jumpSpeedWas = c.jumpSpeedWas or actions.jumpSpeed -- back on unload: it's every scene's
+                actions.jumpSpeed = v
+            end
         end
-        v = slider(layout, bw, 'upright', 'torso muscle', 0, 60, walk.upright, 5)
-        if v then walk.upright = v end
+        -- the torso muscle (tried at 20: rocked more; walk.upright stays 0): its row went to the squat
+        if false then
+            v = slider(layout, bw, 'upright', 'torso muscle', 0, 60, walk.upright, 5)
+            if v then walk.upright = v end
+        end
+        v = slider(layout, bw, 'jumpCrouch', 'squat (s)', 0.05, 0.6, walk.jumpCrouch, 0.01)
+        if v then walk.jumpCrouch = v end
     end)
     -- the weighty walk (MIPO-MOTOR MM8), on the right
     local sw = love.graphics.getDimensions()
-    local rows2 = 15
+    local rows2 = 17
     local h2 = BH * rows2 + pad * (rows2 + 1) + 24
     local x1, y1 = sw - w - 90, sh - h2 - 20 -- room for the labels past the sliders
     ui.panel(x1, y1, w, h2, '•• weight ••', function()
@@ -309,6 +319,11 @@ function s.drawUI()
         if v then walk.toeOff = v end
         v = slider(layout, bw, 'footFollow', 'foot with shin', 0, 1, walk.footFollow, 0.05)
         if v then walk.footFollow = v end
+        -- the jump as animation (LO8): squat, POING, tuck, land; off: the old jump
+        x, y = ui.nextLayoutPosition(layout, bw, BH)
+        if ui.button(x, y, bw, 'jump: ' .. (walk.animJump and 'animated' or 'old')) then walk.animJump = not walk.animJump end
+        v = slider(layout, bw, 'jumpDepth', 'squat depth', 0.2, 1.5, walk.jumpDepth, 0.05)
+        if v then walk.jumpDepth = v end
     end)
 end
 

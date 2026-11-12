@@ -75,6 +75,19 @@ Baseline 2026-11-12 (before LO1): tilt 9-25°, seed 42 39°; seed 9 walks 1.4 le
   foot turned 100-125°, snagging); 0.4 visible, but one Mipo didn't stop and two walked short; 0 the
   default for now. Weight panel: foot roll on / off, heel strike, toe off, foot with shin.
   For Nikki to try.
+- [ ] **LO8. The jump as animation** (Nikki 2026-11-12: "before a jump we have anticipation, you
+  squat a little and then POING, jump!, learn from animation"). Before: legs limp 0.1 s, one impulse
+  on the torso at a fixed speed (small Mipos jumped many times their height, MM2). Now
+  `mipoWalk.jump` (`mipoActions.jump` hands over while the walk runs, `animJump`):
+  anticipation (squat eased into its lowest point over `jumpCrouch` 0.24 s, torso leaning in, arms
+  back, held `jumpHold`), the push (`jumpPush` 0.08 s: hip and knee motors snap the legs straight,
+  heels up over the toes, arms up; the lift spread over it, measured on the whole Mipo's centre, to
+  `jumpHeight` 1.3 leg lengths), follow-through (stretched, then knees tucked), landing (knees give
+  quickly, come up slower, `jumpLand`). Facing front: a frog squat (thighs out, shins in; the front
+  hips only open outward). `spec/mipo-jump_spec.lua` (8 Mipos facing right and front): dips 0.06-0.27
+  legs, torso up 0.5-1.1 legs, all land and stand (end tilt ≤ 12°). Panels: jump height, squat (s),
+  jump animated / old, squat depth. tried 2026-11-12: the lift by the torso's own speed (0.3-0.6 legs
+  of 1.3: the torso runs ahead of the legs it drags). For Nikki to try.
 - [ ] **LO2. Gravity compensation**, so the motors can be soft and the bob deeper (MM8).
 - [ ] **LO3. Steps by distance, the stride by leg length** (MM3's "stride by the leg's length").
 - [ ] **LO4. Capture point**: stop in a step, turn round (MM4), a recovery step when bumped.

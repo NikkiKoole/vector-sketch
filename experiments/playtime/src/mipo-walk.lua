@@ -37,6 +37,7 @@ local mipoRegistry = require('src.mipo-registry')
 local mipoFace = require('src.mipo-face')
 local characterManager = require('src.character-manager')
 local box2dPointerJoints = require('src.physics.box2d-pointerjoints')
+local units = require('src.physics-units')
 
 local lib = {}
 
@@ -101,6 +102,15 @@ local SWITCHES = {
     footFollow = 0,    -- how much a swinging foot turns with its shin, on FOOT_KEYS' follow (1: toes down into
                        -- the floor mid swing, snagging, the foot turned 100-125 degrees; 0.4: one of 8 spec
                        -- Mipos didn't stop and two walked short; 0: every spec passes, the walk furthest)
+    -- the jump as animation (LO8, Nikki 2026-11-12: "before a jump we have anticipation, you squat a little
+    -- and then POING, jump!, learn from animation"): mipoActions.jump hands over to lib.jump
+    animJump = true,   -- false: the old jump (legs limp 0.1 s, one impulse on the torso)
+    jumpCrouch = 0.24, -- seconds sinking into the squat (eased in: slow into the lowest point)
+    jumpHold = 0.05,   -- seconds held at the bottom (the moment before)
+    jumpDepth = 1,     -- how deep the squat goes (1: thighs 50 deg forward, knees 95 bent)
+    jumpPush = 0.08,   -- seconds the legs push off (the lift spread over it, while a foot touches)
+    jumpHeight = 1.3,  -- leg lengths it lifts (0: mipoActions.jumpSpeed, the old fixed speed)
+    jumpLand = 0.22,   -- seconds the knees give on landing and come back
     stancePose = 1,    -- torsoByMotor: the standing hip also holds the thigh's pose (0: the torso only: skated)
     freeStance = true, -- torque torsoHold: the standing hip's motor and muscle off (SIMBICON: that hip is the torso's)
 }
@@ -1069,6 +1079,168 @@ local function updateDrive(inst, dt, now, torso, legLen)
     end
 end
 
+---------------------------------------------------------------- the jump (LO8)
+
+-- One jump as an animator draws it: anticipation (squat, torso in, arms back, eased into the lowest
+-- point and held a beat), the action (legs snap straight on their motors, the feet roll over the toes,
+-- arms swing up; the lift spread over the push while a foot touches), follow-through (stretched, then
+-- the knees tuck), and the landing (knees give, then up). inst._jump = { phase, at, face, forward, ... }.
+-- Facing front the legs bend sideways, each its own way (mipo-stance): a frog squat (jumpLegs).
+
+local function easeIn(x) return x * x end
+
+-- the mass-weighted vertical speed of all its parts
+local function centreVelocity(inst)
+    local m, v = 0, 0
+    for _, part in pairs(inst.parts) do
+        local b = part.body
+        if b and not b:isDestroyed() then
+            local bm = b:getMass()
+            local _, vy = b:getLinearVelocity()
+            m, v = m + bm, v + bm * vy
+        end
+    end
+    return m > 0 and v / m or 0
+end
+local function easeOut(x) return 1 - (1 - x) * (1 - x) end
+
+-- both legs (degrees: the thigh forward of straight down, the knee bent), on motors (strength: times
+-- the walk's) and on their muscles; face 0 (front): each knee its own way, the thighs straight
+local function jumpLegs(inst, face, forwardDeg, kneeDeg, strength)
+    for i = 1, 2 do
+        local f = face
+        -- facing front (hips 0..90 left, -90..0 right; knees the other way): a frog squat, thighs out,
+        -- shins back in under (the knee bends twice the hip's turn: the foot under the hip)
+        local fwd = forwardDeg
+        if f == 0 then f, fwd = (i == 1) and -1 or 1, kneeDeg * 0.5 end
+        local thigh = -f * fwd
+        local shin = thigh + f * kneeDeg
+        local hs, ks = lib.hipStrength, lib.kneeStrength
+        lib.hipStrength, lib.kneeStrength = hs * strength, ks * strength
+        legMotors(inst, i, thigh, shin)
+        lib.hipStrength, lib.kneeStrength = hs, ks
+        local leg = LEG_PAIRS[i]
+        local upper = mipoActions.ensureKeepAngle(inst.parts[leg[1]], 0, 40)
+        local lower = mipoActions.ensureKeepAngle(inst.parts[leg[2]], 0, 40)
+        if upper then upper.angle, upper.enabled = thigh, nil end
+        if lower then lower.angle, lower.enabled = shin, nil end
+    end
+    inst._legMotorsOn = true
+end
+
+-- the torso's lean (degrees the way it faces) on its muscle; nil: back as it was
+local function jumpTorso(inst, face, lean)
+    local part = inst.parts.torso1
+    if lean then
+        if not inst._torsoWas then
+            local b = mipoActions.getKeepAngle(part)
+            inst._torsoWas = b and { angle = b.angle, kp = b.kp, enabled = b.enabled } or { none = true }
+        end
+        local b = mipoActions.ensureKeepAngle(part, 0, 30)
+        if b then b.angle, b.kp, b.enabled = face * lean, 30, nil end
+    else
+        uprightTorso(inst, nil) -- puts back what _torsoWas kept
+    end
+end
+
+-- feet flat with toes up by lift degrees (side-facing only)
+local function jumpFeet(inst, face, lift)
+    if face == 0 then holdFeet(inst, nil) return end
+    local a = -face * (90 + lift)
+    holdFeet(inst, face, {}, { a, a })
+end
+
+local function endJump(inst, now)
+    inst._jump = nil
+    inst._armSwing = nil
+    jumpTorso(inst, 0, nil)
+    inst._walkedAt = now
+    stopWalking(inst) -- legs straight, feet and grip back; a drive picks up again next frame
+    inst._walking = false
+end
+
+function lib.jump(inst, forward)
+    if not (alive(inst) and mayWalk(inst)) or inst._jump then return false end
+    if not mipoActions.isGrounded(inst) then return false end
+    local f = facing.dir(inst)
+    inst._jump = { phase = 'crouch', at = love.timer.getTime(), face = f, forward = forward or 0 }
+    return true
+end
+
+function lib.jumping(inst) return inst._jump ~= nil end
+
+-- the jump's frame; false once it's over (or given up: held, ragdoll, gone)
+local function updateJump(inst, dt, now)
+    local j = inst._jump
+    local torso = partBody(inst, 'torso1')
+    local legLen = legLength(inst)
+    if not (torso and legLen) or held(inst) or not mayWalk(inst) then endJump(inst, now) return false end
+    inst._walking, inst._walkedAt = true, now
+    local face, t = j.face, now - j.at
+    local swingDir = face ~= 0 and face or 0
+    local depth = lib.jumpDepth
+    for _, n in ipairs(FEET) do setGrip(inst, n, characterManager.footFriction) end
+    hipsBack(inst, face ~= 0 and face or nil)
+    if j.phase == 'crouch' then
+        -- anticipation: slow in to the bottom, then held a beat
+        local x = easeOut(math.min(1, t / lib.jumpCrouch))
+        jumpLegs(inst, face, 50 * depth * x, 95 * depth * x, 1.6)
+        jumpTorso(inst, swingDir, 22 * depth * x)
+        jumpFeet(inst, face, 0)
+        inst._armSwing = { l = swingDir * math.rad(55) * x, r = swingDir * math.rad(55) * x } -- arms back
+        if t >= lib.jumpCrouch + lib.jumpHold then j.phase, j.at = 'push', now end
+        return true
+    end
+    local _, gy = torso:getWorld():getGravity()
+    local g = math.max(math.abs(gy), 1)
+    if j.phase == 'push' then
+        -- POING: legs snap straight, toes push, arms up; the lift over the push while a foot touches
+        jumpLegs(inst, face, 0, 0, 3)
+        jumpTorso(inst, swingDir, 4)
+        jumpFeet(inst, face, -35)
+        inst._armSwing = { l = -swingDir * math.rad(140), r = -swingDir * math.rad(140) }
+        local mass = mipoRegistry.totalMass(inst)
+        local target = lib.jumpHeight > 0 and math.sqrt(2 * g * lib.jumpHeight * legLen)
+            or units.speed(mipoActions.jumpSpeed)
+        if not j.started then
+            j.started = true
+            mipoActions.tellMusic('jump')
+            if j.forward ~= 0 then torso:applyLinearImpulse(mass * units.speed(j.forward), 0) end
+        end
+        -- the whole Mipo's upward speed (the torso alone runs ahead of the legs it drags along)
+        local share = math.min(1, (t + dt) / lib.jumpPush)
+        local vy = centreVelocity(inst)
+        local want = target * share
+        if -vy < want and (mipoActions.isGrounded(inst) or share >= 1) then
+            torso:applyLinearImpulse(0, -mass * (want + vy))
+        end
+        if t + dt >= lib.jumpPush then j.phase, j.at = 'air', now end
+        return true
+    end
+    if j.phase == 'air' then
+        -- follow-through: stretched a moment, then knees tucked, arms coming down
+        local tuck = easeIn(math.min(1, math.max(0, (t - 0.08) / 0.2)))
+        jumpLegs(inst, face, 35 * tuck, 60 * tuck, 1)
+        jumpTorso(inst, swingDir, 0)
+        jumpFeet(inst, face, -20 * (1 - tuck) + 8 * tuck)
+        local arms = -swingDir * math.rad(140 - 110 * tuck)
+        inst._armSwing = { l = arms, r = arms }
+        if t > 0.15 and mipoActions.isGrounded(inst) then j.phase, j.at = 'land', now
+        elseif t > 4 then endJump(inst, now) return false end
+        return true
+    end
+    -- the landing: knees give quickly, then come back up slower
+    local x = t / lib.jumpLand
+    local give = x < 0.3 and easeOut(x / 0.3) or 1 - easeIn((x - 0.3) / 0.7)
+    give = math.max(0, give)
+    jumpLegs(inst, face, 35 * give, 65 * give, 1.4)
+    jumpTorso(inst, swingDir, 12 * give)
+    jumpFeet(inst, face, 0)
+    inst._armSwing = { l = -swingDir * math.rad(30) * give, r = -swingDir * math.rad(30) * give }
+    if x >= 1 then endJump(inst, now) return false end
+    return true
+end
+
 local function updateWalk(inst, dt, now)
     if not mayWalk(inst) then
         stopWalking(inst)
@@ -1126,12 +1298,16 @@ end
 ---------------------------------------------------------------- each frame
 
 -- every Mipo (in a fixed order: a switch remakes bodies, utils.sortedPairs), while the world runs
+local ranAt -- when lib.update last ran (lib.isRunning: mipoActions.jump hands over only then)
+function lib.isRunning() return ranAt ~= nil and math.abs(love.timer.getTime() - ranAt) < 1 end
+
 function lib.update(dt)
     dt = math.min(dt, 0.05)
     local now = love.timer.getTime()
+    ranAt = now
     for _, inst in utils.sortedPairs(mipoRegistry.getAll()) do
         if alive(inst) then
-            updateWalk(inst, dt, now)
+            if not (inst._jump and updateJump(inst, dt, now)) then updateWalk(inst, dt, now) end
             updateTurn(inst, dt, now)
             updateRelax(inst, now)
         end

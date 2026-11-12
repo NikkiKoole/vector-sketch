@@ -23,6 +23,7 @@ local function tellMusic(name, opts)
     local music = package.loaded['src.music']
     if music and music.event then music.event(name, opts) end
 end
+lib.tellMusic = tellMusic
 
 -- Speeds, gains and the breath impulse below are as tuned at 100 px per metre;
 -- src/physics-units.lua turns them into the world's meter where they are used.
@@ -86,6 +87,13 @@ end
 -- Crouch wind-up (legs go limp for 0.1s), then the jump fires from lib.update. forward: an optional
 -- sideways speed added (world units a second at 100 px per metre, + right), a jump the way it faces.
 function lib.jump(instance, forward)
+    -- the jump as animation (anticipation, push, follow-through, landing) in src/mipo-walk.lua when
+    -- that's on (lib.animJump, docs/MIPO-LOCOMOTION.md LO8) and running (a spec that doesn't step it
+    -- gets this jump); found loaded, not required (it requires this)
+    local walk = package.loaded['src.mipo-walk']
+    if walk and walk.animJump and walk.jump and walk.isRunning and walk.isRunning() and not instance._isRagdoll then
+        return walk.jump(instance, forward)
+    end
     if not lib.isGrounded(instance) or instance._jumpAt then return false end
     if not instance._isRagdoll then
         for _, pname in ipairs(legPartNames) do
