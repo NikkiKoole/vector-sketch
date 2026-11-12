@@ -30,7 +30,7 @@ pad's only if it starts on it; a drag carries on outside it. In scene scripts as
 ## Steps
 
 - [x] **BU1. The pad**, out of the vowel chart (2026-11-12); the voicebox's chart is now the pad.
-- [ ] **BU2. Feelings on a pad** (emotions spike, built 2026-11-12, Nikki to try): pleasant to the right,
+- [x] **BU2. Feelings on a pad** (emotions spike, built 2026-11-12; kept, Nikki: "work nice"): pleasant to the right,
       excited at the top (valence and arousal, a mood map); happy, surprised, scared, angry, sad, sleepy,
       shy on it, neutral in the middle. Dragging sets the feelings by how close the dot is to each spot
       (reach 0.32): on a spot that feeling, between two both (halfway between happy and shy: 0.45 each),
