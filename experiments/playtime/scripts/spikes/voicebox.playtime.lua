@@ -43,6 +43,7 @@ function s.onStart()
     st()
     voiceBox.settings()
     voiceBox.preloadVoices() -- the people's syllables: the engine's analysis freezes ~3 s, here at the start
+    mipoEmotion.settings().play = false -- the feeling row's face only, no reactions to play (the 'feelings' system)
     ensureGround()
     ensureMipo()
 end
@@ -78,7 +79,6 @@ function s.update(dt)
         voiceBox.release()
     end
     voiceBox.update(dt, mipo())
-    mipoEmotion.update(dt, false) -- the feeling row's face (no reactions to play here)
 end
 
 -- the vowel chart: front on the left, open at the bottom; drag to move between the vowels (the

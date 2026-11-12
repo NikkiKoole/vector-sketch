@@ -17,6 +17,7 @@ local roomMusicParams = require('src.room-music-params')
 local voiceLabParams = require('src.voice-lab-params')
 local hairBounce = require('src.hair-bounce')
 local mipoWalk = require('src.mipo-walk')
+local mipoEmotion = require('src.mipo-emotion')
 local jointGuard = require('src.mipo-joint-guard')
 
 local PANEL_WIDTH = ui.theme.panelWidth
@@ -109,6 +110,7 @@ function lib.drawWorldSettingsUI()
             if clicked then f.mipos = not f.mipos end
             if f.mipos then
                 y = y + inspector.drawParams('mipos', mipoWalk.rows, mipoWalk.settings(), nil, x, y, w)
+                y = y + inspector.drawParams('mipofeel', mipoEmotion.rows, mipoEmotion.settings(), nil, x, y, w)
                 y = y + inspector.drawParams('mipolegs', jointGuard.rows, {}, nil, x, y, w) -- a switch, not saved
             end
 

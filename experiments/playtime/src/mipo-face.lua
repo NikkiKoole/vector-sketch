@@ -248,7 +248,7 @@ function lib.update(world, dt)
         end
     end
 
-    -- Click on head/torso1 (potato head) → randomize brows + mouth
+    -- Click on head/torso1 (potato head) → randomize brows + mouth (feelings on: a short surprise)
     local mouseDown = love.mouse.isDown(1)
     if mouseDown and not prevMouseDown then
         local mx, my = love.mouse.getPosition()
@@ -258,7 +258,12 @@ function lib.update(world, dt)
             if thing and isFaceOwner(thing.label) then
                 local bx, by = body:getPosition()
                 local dx, dy = wmx - bx, wmy - by
-                if dx * dx + dy * dy < 200 * 200 then
+                -- feelings on (src/mipo-emotion.lua): a short surprise instead of a random face (EMO5)
+                local feel = package.loaded['src.mipo-emotion']
+                local instance = feel and feel.isOn() and mipoRegistry.getFromBody(body)
+                if instance and dx * dx + dy * dy < 200 * 200 then
+                    feel.set(instance, 'surprised', 0.8, 0.6, true)
+                elseif dx * dx + dy * dy < 200 * 200 then
                     randomizeBrows(thing)
                     randomizeMouth(thing)
                     thing.browIsRandom = true

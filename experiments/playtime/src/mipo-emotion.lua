@@ -7,6 +7,9 @@
 -- Writes onto the face owner's thing (head, or torso1 on a potato head), which the renderer reads:
 -- l/rbrowYOffset, l/rbrowVec, mouthShapeVec (src/mipo-face.lua's fields), eyeScale, pupilScale, blush.
 -- State on the instance (instance.emotion), so a hot swap keeps it.
+-- An engine system (src/systems.lua, EMO5): every scene's Mipos feel what happens to them, unless the scene
+-- turns it off (the settings panel's 'mipos' section, saved with the scene: lib.save / lib.load).
+local state = require('src.state')
 local mipoRegistry = require('src.mipo-registry')
 local mouthShapes = require('src.mouth-shapes')
 
@@ -166,7 +169,10 @@ local function apply(instance, levers)
     thing.lbrowYOffset, thing.rbrowYOffset = raise, raise
     thing.lbrowVec = { levers.bend[1], levers.bend[2], levers.bend[3] }
     thing.rbrowVec = { levers.bend[1], levers.bend[2], levers.bend[3] }
-    thing.mouthShapeVec = mouthVec(instance, owner, levers.mouth)
+    local voice = package.loaded['src.mipo-voice']
+    if not (voice and voice.isFlapping and voice.isFlapping(instance)) then -- talking: the voice has the mouth
+        thing.mouthShapeVec = mouthVec(instance, owner, levers.mouth)
+    end
     thing.eyeScale, thing.pupilScale, thing.blush = levers.eye, levers.pupil, levers.blush
     thing.flush = levers.flush[4] > 0.005 and levers.flush or nil
     -- in twentieths: the brow's strip is rebuilt when its thickness changes, so only a few times a glide
@@ -247,6 +253,27 @@ local function react(instance, held, dt, now)
         r.sleeping = true
     end
 end
+
+-- the scene's setting: do its Mipos feel what happens to them (on unless the scene says no)
+local function settings()
+    state.mipoFeel = state.mipoFeel or { play = true }
+    return state.mipoFeel
+end
+lib.settings = settings
+function lib.isOn() return settings().play ~= false end
+-- from a scene file (nil: on)
+function lib.load(saved) state.mipoFeel = { play = not (saved and saved.play == false) } end
+-- for a scene file: nothing when it's on, so files stay as they were
+function lib.save()
+    if lib.isOn() then return nil end
+    return { play = false }
+end
+-- the settings panel's rows (src/ui/world-settings.lua, src/ui/inspector.lua)
+lib.rows = {
+    { key = 'feel what happens', kind = 'bool',
+      get = function(s) return s.play ~= false end,
+      set = function(s, v) s.play = v and true or false end },
+}
 
 -- every frame: the weights glide toward the goals, a held feeling ends, the face follows. fromPlay: the
 -- Mipos also feel what happens to them (picked up, thrown, dazed, left alone)

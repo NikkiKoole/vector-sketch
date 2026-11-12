@@ -53,6 +53,13 @@ lib.list = {
         update = function(m, dt) m.update(dt) end,
     },
     {
+        -- Mipos' faces show what they feel, and they feel what happens to them: picked up, thrown, dazed,
+        -- left alone (src/mipo-emotion.lua, docs/EMOTIONS.md EMO5); off per scene in the settings
+        name = 'feelings',
+        module = 'src.mipo-emotion',
+        update = function(m, dt) m.update(dt, m.isOn()) end,
+    },
+    {
         name = 'stance', -- soft ankles and firm knees: Mipos stand on their soles (src/mipo-stance.lua)
         module = 'src.mipo-stance',
         update = function(m) m.update() end,

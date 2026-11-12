@@ -9,7 +9,7 @@ local GROUND_Y = 600
 local MIPO_SCALE = 0.6 -- bigger than the spikes' 0.3: faces to read
 
 local function st()
-    state.emotions = state.emotions or { amount = 1, all = true, mix = false, showPanel = true, fromPlay = true }
+    state.emotions = state.emotions or { amount = 1, all = true, mix = false, showPanel = true }
     return state.emotions
 end
 
@@ -122,7 +122,7 @@ end
 
 function s.update(dt)
     pick()
-    mipoEmotion.update(dt, st().fromPlay ~= false)
+    -- the faces and the feelings from play: the engine's 'feelings' system (src/systems.lua)
 end
 
 -- the panel, bottom right: a button per feeling, neutral, how strongly, all or the picked one, mix
@@ -163,8 +163,8 @@ function s.drawUI()
         local mc, mv = ui.checkbox(x + half + PANEL.pad, y, c.mix, 'mix in')
         if mc then c.mix = mv end
         x, y = row()
-        local pc, pv = ui.checkbox(x, y, c.fromPlay ~= false, 'feel what happens: picked up, thrown, left alone')
-        if pc then c.fromPlay = pv end
+        local pc, pv = ui.checkbox(x, y, mipoEmotion.isOn(), 'feel what happens: picked up, thrown, left alone')
+        if pc then mipoEmotion.settings().play = pv end
         x, y = row()
         local picked = c.picked and mipoRegistry.getAll()[c.picked]
         local now = {}

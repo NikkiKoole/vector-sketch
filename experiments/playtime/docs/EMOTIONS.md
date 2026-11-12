@@ -1,6 +1,6 @@
 # Emotions — Mipos showing how they feel with their faces
 
-status: active — EMO3, EMO4 built 2026-11-11 (Nikki to try, EMO1); EMO2 built but for other Mipos near and the voice
+status: active — in the engine since 2026-11-12 (EMO5); EMO2 open: other Mipos near, the voice; the feelings button in the selection bar next
 
 Nikki (2026-11-11): "we have faces and face parts, mouth, and even cheeks ... also i can imagine some
 recoloring to become possible too, could we experiment a system where mipos show emotion with their faces".
@@ -31,7 +31,8 @@ mouth was let go past the frown. The brows move as meant but are thin and often 
 ## Next
 
 - Feelings on a pad (2026-11-12, BESPOKE-UI.md BU2): a mood map at the top of the panel, drag to blend.
-- [ ] **EMO1. Nikki plays with it**: which feelings read, which need more (the numbers are `lib.EMOTIONS`).
+- [x] **EMO1. Nikki plays with it**: which feelings read, which need more (the numbers are `lib.EMOTIONS`).
+  Kept 2026-11-12 (Nikki: "yeah they work as is").
 - [ ] **EMO2. Feelings from play**: picked up (surprised, then happy while held), thrown hard (scared),
   a hard landing (sad, dizzy), left alone a long while (sleepy), another Mipo near (shy or happy). The voice
   already has `mipo:squeak(emotion)` (PUPPETMAKER-SOUND V3): the same feeling for both.
@@ -56,5 +57,10 @@ mouth was let go past the frown. The brows move as meant but are thin and often 
   `lib.browThick` 1.8, `lib.browWide` 1.15, `lib.browDark` 0.6 = that far towards black), and a feeling
   makes them thicker still: `brow` in each feeling's row (angry 1.45, sad/scared/surprised 1.2, sleepy
   0.85), in twentieths so the strip is rebuilt only a few times a glide.
-- [ ] **EMO5. Into the engine**: `mipoEmotion.update` as a system (`src/systems.lua`) so every scene's Mipos
+- [x] **EMO5. Into the engine**: `mipoEmotion.update` as a system (`src/systems.lua`) so every scene's Mipos
   feel, and the pulled face on a click (mipo-face) as a short surprised instead of random.
+  Done 2026-11-12: the 'feelings' system; feeling what happens is on in every scene, off per scene in the
+  settings panel's 'mipos' section ('feel what happens', saved as `feelings` in the scene file). A click
+  near a face: surprised 0.6 s when it's on, the old random face when off. While the voice flaps the mouth
+  (`mipoVoice.isFlapping`), a feeling leaves the mouth alone. The emotions and voicebox scenes no longer
+  call `update` themselves (voicebox turns the reactions off). Scenes smoke: 88 pass.

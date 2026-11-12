@@ -305,6 +305,9 @@ function lib.restingShape(thing, lip)
     return from
 end
 
+-- is this Mipo's mouth flapping now (src/mipo-emotion.lua leaves the mouth to it meanwhile)
+function lib.isFlapping(instance) return instance ~= nil and flaps[instance.id] ~= nil end
+
 -- Stop a mouth flap where it is and give back the shape it would have restored (nil = DNA mouth).
 function lib.cancelFlap(instance)
     local flap = instance and flaps[instance.id]
