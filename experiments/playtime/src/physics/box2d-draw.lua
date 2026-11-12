@@ -215,6 +215,10 @@ local function isLobe(body)
 end
 
 function lib.showsBody(body, covered)
+    -- state.hiddenBodies = { [body] = true } (weak keys): a scene's bodies whose picture something else
+    -- draws (the reach spike's physics arm: the Mipo's own arm is posed on it); like a Mipo's, with 'mipo body'
+    local hidden = state.hiddenBodies
+    if hidden and hidden[body] then return state.world.mipoBodies == true end
     if not lib.hasTexture(body) and not (covered and covered[body]) and not isLobe(body) then return true end
     if state.world.mipoBodies ~= true then return false end
     local ud = body:getUserData()
