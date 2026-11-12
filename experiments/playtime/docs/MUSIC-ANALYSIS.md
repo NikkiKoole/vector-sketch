@@ -182,6 +182,34 @@ Source: [youtube jOOYHG2csHA](https://www.youtube.com/watch?v=jOOYHG2csHA) (Comm
 - **Done** (tried 2026-11-06: Nikki "too hard a problem, too much effects"): the record lives on its effects (tape wobble, detuned synths, space: its pitch smears into neighbouring semitones) more than its notes, and notes and timing are what these tools measure. `neige` stays as it is. For a next song, pick one whose charm is in the playing (as Electric Relaxation's bass), not the production.
 - **Tools**: `claudetools/transcribe-notes.py` (basic-pitch, installed 2026-11-06; it downgraded numpy to 1.26, the other audio tools still run).
 
+## Song 5: MF Grimm — Earth (the instrumental, 2026-11-12)
+
+Source: an mp3 Nikki dropped in (4:20). The sample's source not found (no WhoSampled page; wefunkradio lists the
+track). Built as the style **`earth`** (`src/music-earth.lua`). Working files were in the session scratchpad.
+
+- **One 4-bar loop for the whole song** (Nikki: "a short loop repeated over and over"): 10.55 s a cycle, ~91 BPM
+  (the chord tool said 92.3; the bars are 2.638 s), straight 8ths, the 16th 'a' of a beat dragged ~+45..65 ms
+  (bass, keys and drums alike). Everything ~30 cents sharp (`estimate_tuning` +0.3 on every stem): a record
+  sampled and sped up. The drums repeat within ~5 ms: a looped bar.
+- **The chords**: | C sus2 . E♭7 . | ×3 | A7♯9 A7♭9(13) Dm7 . |. Over C only C G D (no third: the minor is the
+  E♭ and the D♭); over the E♭ E♭ G D♭; bar 4 A C♯ E G with C on top, then B♭ and F♯ (♭9, 13), then D F A C.
+- **The bass** (C3, not C2: 132.6 Hz and nothing under it): C3 16ths on 1 1e 1& 1a 2 (2e about half the time),
+  E♭3 held from 3 (bar 1 half a beat, bars 2-3 nearly a beat, sometimes again on 4); bar 4 A2 (a short one, then
+  held), D2 on the 'e' of 3, again on 4.
+- **The keys** (13-16 of 16 passes): G4 on 1, G4 + D5 on 1&, G4 on 2, **D♭5 on 3&** held 1.4 beats, G4 on 4: the
+  top sighs D → D♭ every bar. Bar 4: C5 (over C♯4 G4), B♭4, F4, C5, leading back up to the D.
+- **The kit** (`drum-grid.py`, 64 bars): kick 1 and 3 (2& soft), snare 2 and 4, 8th hats, a ghost kick, snare and
+  hat on the dragged 'a' of 1, soft snares on 3& and 4&.
+- **Gotchas**: demucs scattered the keys (D5 in 'other', D♭5 and C5 partly in 'bass'; the 'piano' stem was
+  −60 dB): for the keys use the stems but the drums, high-passed. patch-match took the high-passed cut's
+  leftover bass as its pitch (f0 80 Hz): give it `--note`. Its fits on filtered cuts ask for band filters and
+  heavy fx (the cut's filtering, not the sound): take a plain candidate's voice.
+- **Sounds**: FM first in the engine race for both (keys D♭5: FM 0.25, then PIPE, SAW; bass E♭3: ORGAN 0.29, FM
+  0.31). `earthKeys` and `earthBass` in synth.lua are plain FM voices from those fits.
+- **Checked**: the render read back by `chords-from-audio.py` gives the same C → E♭ ×3, A7 → Dm in C minor; per
+  beat its notes match the record's at 0.94 on average (0.90-0.98 in bars 1-3, 0.84-0.96 in bar 4). The
+  music-trace: every other scenario identical. Not yet heard by Nikki.
+
 ## The score pieces next to our styles (2026-11-02)
 
 Why does Gershwin's Prelude II (`gershwin2`) sound so much richer than our own styles? To answer that, the notes themselves get analysed, not a recording.

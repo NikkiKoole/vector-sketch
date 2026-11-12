@@ -314,6 +314,13 @@ lib.patches = {
     -- synth sits level with the bass)
     neigeSynth = { pool = true, wave = 'SAW', adsr = { 4, 100, 3, 140 }, reverb = 0.35, level = 0.95, analog = 1,
                    filter = { mode = 1, cutoff = 700, resonance = 1 } },
+    -- the earth style (src/music-earth.lua), MF Grimm's 'Earth': patch-match on a Db5 of the keys (the parts but
+    -- the drums, high-passed) and an Eb3 of the bass (low-passed) put FM first for both; the voices of its best
+    -- plain fits (keys: candidate 2; bass: candidate 4, without the band filter the cut's filtering asked for)
+    earthKeys = { pool = true, wave = 'FM', adsr = { 0, 2839, 6, 900 }, harmonics = 0.05, timbre = 0.224,
+                  morph = 0.634, filter = { mode = 1, cutoff = 989, resonance = 2 }, reverb = 0.3, level = 0.45 },
+    earthBass = { pool = true, wave = 'FM', adsr = { 0, 86, 7, 264 }, harmonics = 0.355, timbre = 0.026,
+                  morph = 0.636, filter = { mode = 1, cutoff = 700, resonance = 1 }, reverb = 0.05, level = 0.9 },
     brewGuitar = { pool = true, wave = 'GUITAR', adsr = { 2, 0, 7, 900 }, harmonics = 0.4, timbre = 0.22, morph = 0.1,
                    modes = { [0] = 0.7, [1] = 0.12 }, filter = { mode = 1, cutoff = 1900, resonance = 0 },
                    reverb = 0.3, level = 0.66 },

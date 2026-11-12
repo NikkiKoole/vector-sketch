@@ -255,7 +255,8 @@ local LOOP_PLANS = { satie = planSatie, ambient = planAmbient, score = planScore
     upright = function(song, style) return require('src.music-upright').plan(song, style, addSections) end,
     brew = function(song, style) return require('src.music-brew').plan(song, style, addSections) end,
     brewjam = function(song, style) return require('src.music-brewjam').plan(song, style, addSections) end,
-    neige = function(song, style) return require('src.music-neige').plan(song, style, addSections) end }
+    neige = function(song, style) return require('src.music-neige').plan(song, style, addSections) end,
+    earth = function(song, style) return require('src.music-earth').plan(song, style, addSections) end }
 
 -- the key (lofi: the relative minor half the time), the A progression and the B: another loop from
 -- the bank (lofi), A with a ii-V turnaround, or a move of its own

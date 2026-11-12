@@ -650,6 +650,9 @@ D.styles = {
     -- neige: Domenique Dumont's 'La bataille de neige' as measured: the dubby groove, the muted bass, the skank
     -- synth and its melody over an old rhythm box (src/music-neige.lua)
     neige = { loop = 'neige', bpm = 133, swing = 0.5 },
+    -- earth: MF Grimm's 'Earth' (the instrumental) as measured: one 4-bar loop, the C bass pulse and the keys'
+    -- sigh (C sus2 -> Eb7, three times, then A7#9 -> Dm7) over boom-bap (src/music-earth.lua)
+    earth = { loop = 'earth', bpm = 91, swing = 0.5 },
     jam = { loop = 'jam', bpm = 120, swing = 0.5,
         groups = { 'Electro', 'Hip Hop', 'Breaks', 'Disco', 'Funk', 'Brushes' },
         bpms = { Electro = { 118, 128 }, ['Hip Hop'] = { 86, 94 }, Breaks = { 96, 108 }, Disco = { 116, 124 },
