@@ -82,6 +82,18 @@ local SWITCHES = {
     kneeStrength = 0.5,
     motorGain = 12,    -- motor speed (rad/s) per radian off the pose
     hopRest = 0.12,    -- seconds on the ground between hops
+    -- SIMBICON (docs/MIPO-LOCOMOTION.md LO1), weighty keyed walking by itself: the torso held at a world
+    -- angle (walkLean) by the standing hip, its torque taken off the standing thigh (nothing from
+    -- outside); the swinging thigh aims further forward the faster it goes than it wants (placeV) and
+    -- the further its centre is ahead of the standing ankle (placeD)
+    torsoHold = 0,     -- the torso's stiffness: shares of its weight times a leg's length per radian (0: off)
+    torsoDamp = 0,     -- its damping, in the same per (radian per sqrt(leg/g)) (0.5 tried: no better)
+    placeV = 0,        -- radians the swing thigh aims forward per (speed too fast in sqrt(g*leg))
+    placeD = 0,        -- radians per leg length its centre is ahead of the standing ankle
+    torsoByMotor = true, -- torsoHold through the standing hip's motor (its aim: the torso at its angle);
+                         -- false: as torques on torso and standing thigh (tried: the light thigh whips
+                         -- forward to -98 degrees instead of the torso turning, tilt up to 108)
+    freeStance = true, -- torque torsoHold: the standing hip's motor and muscle off (SIMBICON: that hip is the torso's)
 }
 for k, v in pairs(SWITCHES) do lib[k] = v end
 
@@ -728,7 +740,7 @@ end
 -- standing again: legs straight, feet back on their ankles, hips as the facing set them, full grip
 local function stopWalking(inst)
     uprightTorso(inst, nil)
-    inst._armSwing = nil
+    inst._armSwing, inst._driveTarget, inst._stance = nil, nil, nil
     if inst._legMotorsOn then
         inst._legMotorsOn = nil
         legMotors(inst, 1, nil)
@@ -749,6 +761,54 @@ local function mayWalk(inst)
         and not mipoActions.isFlipped(inst) and not mipoActions.isDazed(inst)
 end
 
+-- where a Mipo's weight is: the mass-weighted centre of its parts (x, y)
+local function centreOf(inst)
+    local m, x, y = 0, 0, 0
+    for _, part in pairs(inst.parts) do
+        local b = part.body
+        if b and not b:isDestroyed() then
+            local bm = b:getMass()
+            local cx, cy = b:getWorldCenter()
+            m, x, y = m + bm, x + bm * cx, y + bm * cy
+        end
+    end
+    if m == 0 then return nil end
+    return x / m, y / m
+end
+
+-- SIMBICON's torso (LO1): a damped hold toward a world angle, its torque put on the torso and the
+-- opposite on the standing thigh (at the hip between them: inside the Mipo, nothing from outside).
+-- Impulses over the frame's dt, so it holds the same however many physics steps a frame takes.
+local function holdTorso(inst, dt, face, stance, legLen)
+    local torso, thigh = partBody(inst, 'torso1'), partBody(inst, LEG_PAIRS[stance][1])
+    if not (torso and thigh) then return end
+    local _, gy = torso:getWorld():getGravity()
+    local g = math.max(math.abs(gy), 1)
+    local mgl = mipoRegistry.totalMass(inst) * g * legLen
+    local a = torso:getAngle()
+    local err = (math.rad(face * lib.walkLean) - a + math.pi) % TWO_PI - math.pi
+    local tau = lib.torsoHold * mgl * err - lib.torsoDamp * mgl * math.sqrt(legLen / g) * torso:getAngularVelocity()
+    tau = math.max(-2 * mgl, math.min(2 * mgl, tau))
+    torso:applyAngularImpulse(tau * dt)
+    thigh:applyAngularImpulse(-tau * dt)
+end
+
+-- SIMBICON's torso through the standing hip's motor (LO1, lib.torsoByMotor): the hip turns the torso
+-- toward its world angle (walkLean), the thigh standing still. The joint's angle is thigh - torso, so
+-- it opens at the torso's error; the motor is solved with the joint (stable), and what it pushes back
+-- goes into a leg the weight presses down. Its muscle off: the thigh goes where the body puts it.
+local function torsoByHip(inst, i, face, legLen)
+    local leg = LEG_PAIRS[i]
+    local hip, torso = hangJoint(inst, leg[1]), partBody(inst, 'torso1')
+    if not (hip and torso) then return end
+    local _, gy = torso:getWorld():getGravity()
+    local err = (torso:getAngle() - math.rad(face * lib.walkLean) + math.pi) % TWO_PI - math.pi
+    local damp = lib.torsoDamp * torso:getAngularVelocity() * math.sqrt(legLen / math.max(math.abs(gy), 1))
+    hip:setMotorSpeed(lib.motorGain * (lib.torsoHold * err + damp))
+    local upper = mipoActions.getKeepAngle(inst.parts[leg[1]])
+    if upper then upper.enabled = false end
+end
+
 -- the legs' step: thighs swing in turn, the knee bends on the swing forward. speed: world units a
 -- second; face: 1 right, -1 left; side: it faces a side (feet held flat)
 -- weighty (lib.weighty, walking by itself): returns how much a foot is pushing off now (0..1)
@@ -759,6 +819,23 @@ local function stepLegs(inst, dt, speed, face, side, legLen, weighty)
     inst._gait = (inst._gait or 0) + speed * dt / stride * math.pi
     local swinging, forward, pushOff = {}, {}, 0
     local keyed = weighty and lib.keyed
+    local holding = keyed and lib.torsoHold > 0
+    -- SIMBICON's foot placement (LO1): degrees the swinging thigh aims further forward
+    local place
+    if keyed and (lib.placeV ~= 0 or lib.placeD ~= 0) and inst._driveTarget then
+        local torso = partBody(inst, 'torso1')
+        local cx = centreOf(inst)
+        if torso and cx then
+            local _, gy = torso:getWorld():getGravity()
+            local vScale = math.sqrt(math.max(math.abs(gy), 1) * legLen)
+            local vx = torso:getLinearVelocity()
+            local ahead = 0
+            local ax = inst._stance and jointPoint(inst, LEG_PAIRS[inst._stance][2], FEET[inst._stance])
+            if ax then ahead = face * (cx - ax) / legLen end
+            local rad = lib.placeV * (face * vx - math.abs(inst._driveTarget)) / vScale + lib.placeD * ahead
+            place = math.deg(math.max(-0.6, math.min(0.6, rad)))
+        end
+    end
     for i, leg in ipairs(LEG_PAIRS) do
         local phase = inst._gait + (i - 1) * math.pi
         swinging[i] = math.cos(phase) > 0
@@ -772,11 +849,21 @@ local function stepLegs(inst, dt, speed, face, side, legLen, weighty)
             swinging[i], forward[i] = u >= 0.5, fwd
             thigh = -face * fwd * swing
             shin = thigh + face * bend
+            if swinging[i] and place then -- SIMBICON's balance: the swinging foot lands further ahead
+                thigh, shin = thigh - face * place, shin - face * place
+            end
             if u > 0.3 and u < 0.52 then pushOff = math.max(pushOff, math.sin(math.pi * (u - 0.3) / 0.22)) end
         end
         setGrip(inst, FEET[i], swinging[i] and SWING_GRIP or (weighty and lib.stanceGrip or STANCE_GRIP))
+        local stanceFree = holding and lib.freeStance and not lib.torsoByMotor and not swinging[i] -- (holdTorso)
         if keyed and lib.legMotors then
             legMotors(inst, i, thigh, shin)
+            if holding and lib.torsoByMotor and not swinging[i] then
+                torsoByHip(inst, i, face, legLen)
+            elseif stanceFree then
+                local hip = hangJoint(inst, leg[1])
+                if hip then hip:setMaxMotorTorque(0) end
+            end
             inst._legMotorsOn = true
         elseif inst._legMotorsOn then
             legMotors(inst, i, nil)
@@ -790,9 +877,14 @@ local function stepLegs(inst, dt, speed, face, side, legLen, weighty)
         end
         local upper = mipoActions.ensureKeepAngle(inst.parts[leg[1]], 0, 40)
         local lower = mipoActions.ensureKeepAngle(inst.parts[leg[2]], 0, 40)
-        if upper then upper.angle, upper.enabled = thigh, nil end
+        if upper then
+            upper.angle, upper.enabled = thigh, nil
+            if stanceFree or (holding and lib.torsoByMotor and not swinging[i]) then upper.enabled = false end
+        end
         if lower then lower.angle, lower.enabled = shin, nil end
     end
+    inst._stance = (not swinging[1]) and 1 or ((not swinging[2]) and 2 or inst._stance)
+    if holding and not lib.torsoByMotor and inst._stance then holdTorso(inst, dt, face, inst._stance, legLen) end
     if side then holdFeet(inst, face, swinging) else holdFeet(inst, nil) end
     hipsBack(inst, side and face or nil)
     -- the arms against the legs: the left arm forward with the right leg (mipoActions' arm hang, world
@@ -873,6 +965,7 @@ local function updateDrive(inst, dt, now, torso, legLen)
     local target = inst._drive * legLen * (faceDir == dir and 1 or lib.turningPace)
     local grounded = mipoActions.isGrounded(inst)
     inst._walking, inst._walkedAt = true, now
+    inst._driveTarget = target
     uprightTorso(inst, face)
     inst._armSwing = nil
     if inst._jumpAt then return end -- crouching for a jump: the legs are the jump's

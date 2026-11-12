@@ -258,7 +258,7 @@ function s.drawUI()
     end)
     -- the weighty walk (MIPO-MOTOR MM8), on the right
     local sw = love.graphics.getDimensions()
-    local rows2 = 7
+    local rows2 = 11
     local h2 = BH * rows2 + pad * (rows2 + 1) + 24
     local x1, y1 = sw - w - 90, sh - h2 - 20 -- room for the labels past the sliders
     ui.panel(x1, y1, w, h2, '•• weight ••', function()
@@ -283,6 +283,23 @@ function s.drawUI()
         if v then walk.armSwing = v end
         v = slider(layout, bw, 'stanceGrip', 'foot grip', 0, 3, walk.stanceGrip, 0.1)
         if v then walk.stanceGrip = v end
+        -- SIMBICON (docs/MIPO-LOCOMOTION.md LO1): the torso held by the standing hip, the foot placed
+        -- for balance. The button sets the best of the spec's sweep (worst tilt 39 -> 28 deg) or off.
+        x, y = ui.nextLayoutPosition(layout, bw, BH)
+        local lo1 = walk.torsoHold > 0 or walk.placeV > 0
+        if ui.button(x, y, bw, 'simbicon: ' .. (lo1 and 'on' or 'off')) then
+            if lo1 then
+                walk.torsoHold, walk.placeV, walk.driveAccel = 0, 0, 1.5
+            else
+                walk.torsoHold, walk.placeV, walk.driveAccel = 0.5, 0.5, 2.5
+            end
+        end
+        v = slider(layout, bw, 'torsoHold', 'torso by hip', 0, 2, walk.torsoHold, 0.05)
+        if v then walk.torsoHold = v end
+        v = slider(layout, bw, 'placeV', 'foot placement', 0, 2, walk.placeV, 0.05)
+        if v then walk.placeV = v end
+        v = slider(layout, bw, 'walkLean', 'lean (deg)', 0, 20, walk.walkLean, 1)
+        if v then walk.walkLean = v end
     end)
 end
 

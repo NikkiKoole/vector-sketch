@@ -40,6 +40,9 @@ spread over every part by mass (`pushAll`: no different from all on the torso).
 
 ## Open
 
+Methods from games and robotics for these (SIMBICON, capture point, Raibert, foot IK):
+`docs/MIPO-LOCOMOTION.md`.
+
 - [x] **MM1. Drive, walk, hop, jump** — the spike (2026-11-11).
 - [x] **MM2. Nikki plays with it.** Kept (2026-11-11: "i like it"); jumps went high easily (the jump is
   a fixed speed, so small Mipos jump many times their height: a jump in leg lengths, as the hop, next);
