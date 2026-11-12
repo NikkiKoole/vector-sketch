@@ -65,6 +65,34 @@ describe('lettering', function()
         assert.is_true(math.abs(h2 - 2 * h1) < 1e-6)
     end)
 
+    it('draws every look, plain and tweaked', function()
+        local looks = love.filesystem.load('scripts/spikes/lettering-looks.lua')()(lettering)
+        local canvas = love.graphics.newCanvas(64, 64)
+        love.graphics.setCanvas(canvas)
+        for _, name in ipairs(looks.NAMES) do
+            local t = looks.defaults(name)
+            t.hue, t.angle = 120, -30
+            looks.draw('Mipo', 0, 0, { size = 40 }, looks.tweaked(name, t))
+        end
+        love.graphics.setCanvas()
+        local path = os.getenv('LETTERING_PNG')
+        if not path then return end
+        local sheet = love.graphics.newCanvas(1200, 900)
+        love.graphics.push('all')
+        love.graphics.setCanvas(sheet)
+        love.graphics.clear(0.96, 0.93, 0.87, 1)
+        for i, name in ipairs(looks.NAMES) do
+            local fonts = { 'comic', 'comicbold', 'windsor', 'cooper', 'comicbold', 'cooper' }
+            looks.draw(name, 40 + ((i - 1) % 2) * 580, 30 + math.floor((i - 1) / 2) * 280,
+                { size = 96, font = fonts[i] }, name)
+        end
+        love.graphics.setCanvas()
+        love.graphics.pop()
+        local file = io.open(path:gsub('%.png$', '-looks.png'), 'wb')
+        file:write(sheet:newImageData():encode('png'):getString())
+        file:close()
+    end)
+
     it('writes a picture when asked', function()
         local path = os.getenv('LETTERING_PNG')
         if not path then return end

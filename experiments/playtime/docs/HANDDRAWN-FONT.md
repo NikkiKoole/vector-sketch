@@ -24,6 +24,11 @@ draw) each glyph (three times)". Before printing a sheet and drawing 120 letters
 
 - [x] LF1. Nikki looks at it in the spike: the wobble right? boil speed? Keep, change or park? Kept as it is
   (2026-11-12: "its fine like this for now").
+- [x] LF4. Looks, as an option and tweakable (Nikki: "some pixel joy with them, like a pseudo 3d graffiti
+  outline ... as an option, tweakable"): `scripts/spikes/lettering-looks.lua`, graffiti, candy, chrome, magnet,
+  gold, toxic; each a gradient face with a bevel, a band, a thin line, an extruded block, a drop shadow,
+  sparkles. Canvases (mask, band, rim) stamped in rings, the block swept a pixel at a time. Sliders: band,
+  line, depth, angle, bevel, shadow, sparkles, hue (turns all its colours). l in the spike.
 - [ ] LF2. If kept: where it's used first (a sign in a room, the scene titles), and whether it ships with
   every build (it's named in src/, so ship-list packs it: ~360 KB a font, three now)
 - [x] LF3. Other fonts through the forge: Windsor (WindsorBT-Roman.otf) and Cooper Bold
