@@ -58,6 +58,13 @@ Baseline 2026-11-12 (before LO1): tilt 9-25°, seed 42 39°; seed 9 walks 1.4 le
     as written): the light thigh whips forward to -98° instead of the torso turning, tilt up to 108°.
     With the hip motor left on the torques do nothing (the motor takes them). torsoDamp 0.5: no better.
     placeD 0.3-0.5 with placeV: worse than placeV alone. walkLean 12: no better.
+- [x] **LO1b. The skate.** Nikki 2026-11-12: "it looks skating, it looks like the legs rotate the wrong
+  way around". Measured (`spec/mipo-skate_spec.lua`, 5 seeds): with the hip holding only the torso,
+  the standing thigh turned *forward* most frames and the foot slid 141% of the body's speed. Now the
+  standing hip holds the thigh's pose too, the torso's correction on top (`stancePose` 1): it sweeps
+  back. The push dragged the feet along: slide 66% at driveAccel 2.5, 43% at 1.5, 13% at 1 with
+  hipStrength 1 (the defaults now; tilt mean 18°, worst 28°, seed 42 21°; a bit slower, 2.9 / 2.1
+  legs). tried 2026-11-12: stanceGrip 3 (more slide, not less).
 - [ ] **LO2. Gravity compensation**, so the motors can be soft and the bob deeper (MM8).
 - [ ] **LO3. Steps by distance, the stride by leg length** (MM3's "stride by the leg's length").
 - [ ] **LO4. Capture point**: stop in a step, turn round (MM4), a recovery step when bumped.

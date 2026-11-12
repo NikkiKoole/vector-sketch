@@ -291,7 +291,7 @@ function s.drawUI()
             if lo1 then
                 walk.torsoHold, walk.placeV, walk.driveAccel = 0, 0, 1.5
             else
-                walk.torsoHold, walk.placeV, walk.driveAccel = 0.5, 0.5, 2.5
+                walk.torsoHold, walk.placeV, walk.driveAccel = 0.5, 0.5, 1
             end
         end
         v = slider(layout, bw, 'torsoHold', 'torso by hip', 0, 2, walk.torsoHold, 0.05)

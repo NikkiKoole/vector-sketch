@@ -59,9 +59,9 @@ local SWITCHES = {
     turnBlink = 0.5, -- the chance a keyed head turn blinks as it sets off (0: never, 1: always)
     relaxAfter = 3,  -- seconds standing before a turned Mipo turns back home (0: it stays turned)
     -- walking by itself (lib.drive, docs/MIPO-MOTOR.md)
-    driveAccel = 2.5,  -- leg lengths a second^2: the most its feet speed it up or slow it down (keyed legs
-                       -- with gripping feet carry it: 1.5 walked furthest and in step, 2026-11-12; was 4;
-                       -- 2.5 with the torso held by the standing hip, LO1, which doesn't drive it forward)
+    driveAccel = 1,    -- leg lengths a second^2: the most its feet speed it up or slow it down (was 4, then
+                       -- 1.5, 2026-11-12; a firmer push drags the body and the standing foot skates along:
+                       -- 2.5 slid it 66% of the body's speed, 1 with hipStrength 1 13%, spec/mipo-skate_spec)
     turningPace = 0.3, -- of its speed while it still faces the other way
     hopHeight = 0.35,  -- leg lengths a hop lifts it
     brakeFor = 1.2,    -- seconds its feet brake after it's told to stop
@@ -79,7 +79,7 @@ local SWITCHES = {
     stanceGrip = 2,    -- the standing foot's grip walking by itself (gripping, the legs move it, not the push)
     keyed = true,      -- weighty: the legs go through keyed poses (WALK_KEYS) instead of a sine
     legMotors = true,  -- weighty: hip and knee motors hold the poses against the body's weight
-    hipStrength = 0.6, -- shares of the Mipo's weight held at a thigh's length (as mipo-stance's knees)
+    hipStrength = 1,   -- shares of the Mipo's weight held at a thigh's length (as mipo-stance's knees; was 0.6)
     kneeStrength = 0.5,
     motorGain = 12,    -- motor speed (rad/s) per radian off the pose
     hopRest = 0.12,    -- seconds on the ground between hops
@@ -94,6 +94,7 @@ local SWITCHES = {
     torsoByMotor = true, -- torsoHold through the standing hip's motor (its aim: the torso at its angle);
                          -- false: as torques on torso and standing thigh (tried: the light thigh whips
                          -- forward to -98 degrees instead of the torso turning, tilt up to 108)
+    stancePose = 1,    -- torsoByMotor: the standing hip also holds the thigh's pose (0: the torso only: skated)
     freeStance = true, -- torque torsoHold: the standing hip's motor and muscle off (SIMBICON: that hip is the torso's)
 }
 for k, v in pairs(SWITCHES) do lib[k] = v end
@@ -798,16 +799,22 @@ end
 -- toward its world angle (walkLean), the thigh standing still. The joint's angle is thigh - torso, so
 -- it opens at the torso's error; the motor is solved with the joint (stable), and what it pushes back
 -- goes into a leg the weight presses down. Its muscle off: the thigh goes where the body puts it.
-local function torsoByHip(inst, i, face, legLen)
+-- lib.stancePose (LO1b): the hip also keeps sweeping the thigh back through its pose, the torso's
+-- correction on top. Without it (0) the standing thigh turned forward most frames and the foot slid
+-- faster than the body went (Nikki 2026-11-12: "it looks skating, like the legs rotate the wrong way").
+local function torsoByHip(inst, i, face, legLen, thighAim)
     local leg = LEG_PAIRS[i]
-    local hip, torso = hangJoint(inst, leg[1]), partBody(inst, 'torso1')
-    if not (hip and torso) then return end
+    local hip, torso, thigh = hangJoint(inst, leg[1]), partBody(inst, 'torso1'), partBody(inst, leg[1])
+    if not (hip and torso and thigh) then return end
     local _, gy = torso:getWorld():getGravity()
     local err = (torso:getAngle() - math.rad(face * lib.walkLean) + math.pi) % TWO_PI - math.pi
     local damp = lib.torsoDamp * torso:getAngularVelocity() * math.sqrt(legLen / math.max(math.abs(gy), 1))
-    hip:setMotorSpeed(lib.motorGain * (lib.torsoHold * err + damp))
-    local upper = mipoActions.getKeepAngle(inst.parts[leg[1]])
-    if upper then upper.enabled = false end
+    local poseErr = (math.rad(thighAim) - thigh:getAngle() + math.pi) % TWO_PI - math.pi
+    hip:setMotorSpeed(lib.motorGain * (lib.stancePose * poseErr + lib.torsoHold * err + damp))
+    if lib.stancePose == 0 then
+        local upper = mipoActions.getKeepAngle(inst.parts[leg[1]])
+        if upper then upper.enabled = false end
+    end
 end
 
 -- the legs' step: thighs swing in turn, the knee bends on the swing forward. speed: world units a
@@ -860,7 +867,7 @@ local function stepLegs(inst, dt, speed, face, side, legLen, weighty)
         if keyed and lib.legMotors then
             legMotors(inst, i, thigh, shin)
             if holding and lib.torsoByMotor and not swinging[i] then
-                torsoByHip(inst, i, face, legLen)
+                torsoByHip(inst, i, face, legLen, thigh)
             elseif stanceFree then
                 local hip = hangJoint(inst, leg[1])
                 if hip then hip:setMaxMotorTorque(0) end
@@ -880,7 +887,9 @@ local function stepLegs(inst, dt, speed, face, side, legLen, weighty)
         local lower = mipoActions.ensureKeepAngle(inst.parts[leg[2]], 0, 40)
         if upper then
             upper.angle, upper.enabled = thigh, nil
-            if stanceFree or (holding and lib.torsoByMotor and not swinging[i]) then upper.enabled = false end
+            if stanceFree or (holding and lib.torsoByMotor and lib.stancePose == 0 and not swinging[i]) then
+                upper.enabled = false
+            end
         end
         if lower then lower.angle, lower.enabled = shin, nil end
     end
