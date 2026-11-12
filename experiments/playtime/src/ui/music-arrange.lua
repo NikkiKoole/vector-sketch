@@ -17,6 +17,12 @@
 --           nil until the first click, then filled from the style's own (FORM's roles, SOLO_ROUNDS)
 --   kinds:  { kinds = { [sectionKind] = { [part] = false } } }   only false is stored (off)
 -- Saved by setups (music-setups.lua CHOICES).
+--
+-- The grid also shows the other two ways a part goes quiet (Nikki 2026-11-12: "make the grid the one place
+-- that shows all three"): a part unticked in the band fold ('off') or switched off by the layers (a room's
+-- 'cellar', say) is a dimmed row with the reason across it. The layers sit as a strip on top (full, quiet,
+-- cellar, rhythm, lit as they play, a room's too); a click is music.layers, as a room does it (from the next
+-- bar line, the band fold's ticks left alone). A dimmed row's name clicked: an 'off' part ticked back on.
 local ui = require('src.ui.all')
 local state = require('src.state')
 
@@ -51,6 +57,7 @@ local FILL_LIT = { 1, 0.85, 0.6, 0.6 }
 local OFF = { 1, 1, 1, 0.08 }
 local WORD = { 1, 1, 1, 0.55 }
 local WORD_LIT = { 1, 0.9, 0.7, 1 }
+local OFF_WORD = { 1, 1, 1, 0.25 }
 
 local function music() return require('src.music') end
 
@@ -223,7 +230,7 @@ end
 local function drawCell(cx, cy, cw, value, colour)
     local hover = inside(cx, cy, cw, ROW_H)
     if value then
-        love.graphics.setColor(colour[1], colour[2], colour[3], 0.85)
+        love.graphics.setColor(colour[1], colour[2], colour[3], colour[4] or 0.85)
     else
         love.graphics.setColor(OFF)
     end
@@ -240,7 +247,40 @@ local function drawCell(cx, cy, cw, value, colour)
     return hover and ui.mousePressed
 end
 
+-- why a part is quiet whatever the grid says: 'off' (unticked in the band fold) or the layer's name
+local function quietBecause(part)
+    local settings = state.musicSettings
+    if settings.partsOff and settings.partsOff[part] then return 'off' end
+    local M = state.music
+    local layer = M.nextLayers or M.layers
+    if layer and layer.off and layer.off[part] then return layer.name or 'layers' end
+end
+
+-- the layers as a strip: the playing one (or the one waiting for the bar line) lit; returns the height
+local STRIP_H = 20
+local function drawLayerStrip(x, y, w)
+    local M = state.music
+    local layer = M.nextLayers or M.layers
+    local current = layer and layer.name or 'full'
+    local presets = music().layerPresets or {}
+    local bw = w / math.max(1, #presets)
+    local font = love.graphics.getFont()
+    for i, preset in ipairs(presets) do
+        local bx = x + (i - 1) * bw
+        local on, hover = preset == current, inside(bx, y, bw, STRIP_H)
+        if on then love.graphics.setColor(ui.theme.header.active)
+        else love.graphics.setColor(1, 1, 1, hover and 0.18 or 0.08) end
+        love.graphics.rectangle('fill', bx + 1, y, bw - 2, STRIP_H, 6, 6)
+        love.graphics.setColor(on and { 0.1, 0.1, 0.1, 1 } or WORD)
+        love.graphics.print(preset, bx + bw / 2 - font:getWidth(preset) / 2, y + STRIP_H / 2 - font:getHeight() / 2)
+        if hover and ui.mousePressed then music().layers(preset) end
+    end
+    return STRIP_H + 4
+end
+
 local function drawGrid(name, grid, x, y, w)
+    y = y + drawLayerStrip(x, y, w)
+    local top = y - STRIP_H - 4
     local font = love.graphics.getFont()
     local fh = font:getHeight()
     local n = #grid.columns
@@ -264,17 +304,31 @@ local function drawGrid(name, grid, x, y, w)
     local clicked, clickedRow
     for i, row in ipairs(grid.rows) do
         local ry = y + HEAD_H + (i - 1) * (ROW_H + GAP)
-        local lit = grid.lit and sounding(row.heard)
-        love.graphics.setColor(lit and WORD_LIT or WORD)
+        local because = quietBecause(row.heard)
+        local lit = grid.lit and not because and sounding(row.heard)
+        love.graphics.setColor(lit and WORD_LIT or because and OFF_WORD or WORD)
         love.graphics.print(row.label .. (lit and ' •' or ''), x + 6, ry + ROW_H / 2 - fh / 2)
         if inside(x, ry, LABEL_W, ROW_H) and ui.mousePressed then clickedRow = row end
+        local colour = because and { row.colour[1], row.colour[2], row.colour[3], 0.25 } or row.colour
         for c = 1, n do
-            if drawCell(gx + (c - 1) * cw, ry, cw, grid.value(row, c), row.colour) then clicked = { row, c } end
+            if drawCell(gx + (c - 1) * cw, ry, cw, grid.value(row, c), colour) then clicked = { row, c } end
+        end
+        if because then -- the reason across the row, on a dark band so it reads over the cells
+            local tw = font:getWidth(because)
+            local tx = gx + (w - LABEL_W) / 2 - tw / 2
+            love.graphics.setColor(0.1, 0.1, 0.1, 0.8)
+            love.graphics.rectangle('fill', tx - 6, ry + 3, tw + 12, ROW_H - 6, 4, 4)
+            love.graphics.setColor(WORD_LIT)
+            love.graphics.print(because, tx, ry + ROW_H / 2 - fh / 2)
         end
     end
     love.graphics.setColor(1, 1, 1, 1)
     if clicked then grid.click(clicked[1], clicked[2]) end
-    if clickedRow then grid.clickRow(clickedRow) end
+    if clickedRow and quietBecause(clickedRow.heard) == 'off' then
+        state.musicSettings.partsOff[clickedRow.heard] = nil
+    elseif clickedRow then
+        grid.clickRow(clickedRow)
+    end
 
     local cy = y + gridH + 4 + ui.theme.spacing
     if grid.extra then cy = cy + grid.extra(x, cy, w) end
@@ -284,7 +338,7 @@ local function drawGrid(name, grid, x, y, w)
         end
         cy = cy + ui.theme.button.height + ui.theme.spacing
     end
-    return cy - y
+    return cy - top
 end
 
 local function gridOf(name)

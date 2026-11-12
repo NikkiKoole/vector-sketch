@@ -309,9 +309,7 @@ lib.rows = {
             end
             return 'this song: ' .. (#used > 0 and table.concat(used, ', ') or 'as before the ideas')
         end },
-    -- the arrangements rooms use (music.layerPresets): a click sets the part checkboxes to one
-    { key = 'layers', kind = 'buttons', wide = true, options = { 'full', 'quiet', 'cellar', 'rhythm' },
-        run = function(_, m, preset) m.partsOff = music().layerParts(preset) end },
+    -- (the layers rooms use, music.layerPresets, are a strip on the arrangement grid: src/ui/music-arrange.lua)
     -- setups (src/music-setups.lua): save what plays now; forget: the next setup clicked goes; reset:
     -- back to the style's own instruments and parts; undo: the last reset or setup put back
     { key = 'setups', kind = 'buttons', wide = true, options = { 'save', 'forget', 'reset', 'undo' },

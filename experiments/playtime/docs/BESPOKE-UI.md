@@ -73,9 +73,16 @@ pad's only if it starts on it; a drag carries on outside it. In scene scripts as
       come in yet (band 'auto', calm play) have no row yet. Kept in `arrange[style].kinds[kind][part] = false`,
       read in music-parts.lua's voiceOf (the music session's hook, a9927282; drums are one part, not per sound).
       Drawn off-screen for bossa (intro A B outro, A lit); clicks not tried by Claude.
+      **The one place for all three, 2026-11-12** (Nikki: "i feel there is a connection between the arrange
+      grid and the full quiet cellar rhythm etc thing"): a part unticked in the band fold ('off') or switched
+      off by the layers ('cellar' ...) is a dimmed row with the reason across it. The layers are a strip on
+      top of the grid (lit as they play, a room's too); a click is music.layers, as a room does it (from the
+      next bar, the band fold's ticks untouched; the old layer buttons ticked those, gone). A dimmed 'off'
+      row's name clicked ticks it back on. Later, if wanted: layers as saved grids (a room picks an
+      arrangement, not only parts off) — the music session's side too.
 - [ ] **BU13. The music panel in folds** (Nikki 2026-11-12: "it has too much all at once in the panel, could
       use some accordion?"; groups from the music session's read). Built, Nikki to try: on top, unfolded, the
-      status line, music on/off, music volume, style; then folds arrange (open: the grid, layers, setups),
+      status line, music on/off, music volume, style; then folds arrange (open: the grid with the layers on top, setups),
       band (the part and sound rows, band auto/on/off), feel (humanize, spice, the ideas, tune), sound (all
       sound and fx volume, effects, the pedal lines), world (the jam's rows, impacts, stingers, events' rows),
       info (song ideas, events, the play level). The stinger rows past 'stingers' only while they're on; no
