@@ -95,6 +95,16 @@ end
 -- this bar, or resting under a stinger (src/music-stingers.lua: notes booked into its window are skipped)
 local function voiceOf(settings, part, patch, t)
     if settings.partsOff and settings.partsOff[part] then return false end
+    -- the arrangement grid (src/ui/music-arrange.lua): arrange[style].kinds[sectionKind][part] == false sits
+    -- the part out in every section of that kind (only false: nil is as the song writes it); the bar being
+    -- booked is song.bar (music.lua bookNext counts it up before booking)
+    local song, arrange = M.song, settings.arrange
+    local byKind = song and arrange and arrange[song.style] and arrange[song.style].kinds
+    if byKind then
+        local section = song.barSection and song.barSection[song.bar]
+        local byPart = section and byKind[section.kind]
+        if byPart and byPart[part] == false then return false end
+    end
     if M.mute and M.mute[part] then return false end
     local rest = M.rest and M.rest[part]
     if rest and t >= rest.from and t < rest.to then return false end
