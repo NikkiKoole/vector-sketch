@@ -65,7 +65,7 @@ Baseline 2026-11-12 (before LO1): tilt 9-25°, seed 42 39°; seed 9 walks 1.4 le
   back. The push dragged the feet along: slide 66% at driveAccel 2.5, 43% at 1.5, 13% at 1 with
   hipStrength 1 (the defaults now; tilt mean 18°, worst 28°, seed 42 21°; a bit slower, 2.9 / 2.1
   legs). tried 2026-11-12: stanceGrip 3 (more slide, not less).
-- [ ] **LO7. The feet roll through the step** (Nikki 2026-11-12: "the feet aren't rotated while
+- [x] **LO7. The feet roll through the step** (Nikki 2026-11-12: "the feet aren't rotated while
   walking … keep the same angle between shin and foot, maybe some anticipation and plant"). Before,
   a muscle held them flat (toes 12° up on the swing). Now `FOOT_KEYS`: heel strike (toes up
   `heelStrike` 18), plant flat, flat while the body passes, heel off over the toes (`toeOff` 30),
@@ -74,8 +74,8 @@ Baseline 2026-11-12 (before LO1): tilt 9-25°, seed 42 39°; seed 9 walks 1.4 le
   `footFollow` turns the swinging foot with its shin: 1 put the toes into the floor mid swing (the
   foot turned 100-125°, snagging); 0.4 visible, but one Mipo didn't stop and two walked short; 0 the
   default for now. Weight panel: foot roll on / off, heel strike, toe off, foot with shin.
-  For Nikki to try.
-- [ ] **LO8. The jump as animation** (Nikki 2026-11-12: "before a jump we have anticipation, you
+  Kept (Nikki 2026-11-12: "very nice").
+- [x] **LO8. The jump as animation** (Nikki 2026-11-12: "before a jump we have anticipation, you
   squat a little and then POING, jump!, learn from animation"). Before: legs limp 0.1 s, one impulse
   on the torso at a fixed speed (small Mipos jumped many times their height, MM2). Now
   `mipoWalk.jump` (`mipoActions.jump` hands over while the walk runs, `animJump`):
@@ -87,7 +87,7 @@ Baseline 2026-11-12 (before LO1): tilt 9-25°, seed 42 39°; seed 9 walks 1.4 le
   hips only open outward). `spec/mipo-jump_spec.lua` (8 Mipos facing right and front): dips 0.06-0.27
   legs, torso up 0.5-1.1 legs, all land and stand (end tilt ≤ 12°). Panels: jump height, squat (s),
   jump animated / old, squat depth. tried 2026-11-12: the lift by the torso's own speed (0.3-0.6 legs
-  of 1.3: the torso runs ahead of the legs it drags). For Nikki to try.
+  of 1.3: the torso runs ahead of the legs it drags). Kept (Nikki 2026-11-12: "ok pretty good").
 - [ ] **LO2. Gravity compensation**, so the motors can be soft and the bob deeper (MM8).
 - [ ] **LO3. Steps by distance, the stride by leg length** (MM3's "stride by the leg's length").
 - [ ] **LO4. Capture point**: stop in a step, turn round (MM4), a recovery step when bumped.
