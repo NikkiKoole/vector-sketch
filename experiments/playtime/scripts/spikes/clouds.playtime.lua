@@ -88,6 +88,10 @@ local function clouds()
     end
     if b.showPanel == nil then b.showPanel = true end
     b.thermals = b.thermals or {}
+    b.smoke = b.smoke or {}
+    b.fires = b.fires or {}
+    b.flashes = b.flashes or {}
+    b.tool = b.tool or 'cloud'
     if b.grow == nil then b.grow = true end
     return b
 end
@@ -644,6 +648,7 @@ uniform float time;
 uniform vec2 sunPos;           // screen pixels
 uniform float light;
 uniform float cotton;
+uniform float smoke;           // 1: smoke (lobeBase is then each lobe's glow, no flat bottoms)
 
 float h21(vec2 p) {
     p = fract(p * vec2(123.34, 456.21));
@@ -668,24 +673,60 @@ float fbm(vec2 p) {
     return s / 0.9375;
 }
 
-// the cloud's field: soft balls added up (lobes melt together), each fading out below its base
-float field(vec2 p, float rag) {
+// the cloud's field: soft balls added up (lobes melt together), each fading out below its base;
+// smoke: no bottoms, and heat = the lobes' glow where p is, weighted by how much each one is there
+float field(vec2 p, float rag, out float heat) {
     float F = 0.0;
+    heat = 0.0;
     for (int i = 0; i < MAXL; i++) {
         if (i >= count) break;
         vec4 L = lobes[i];
         vec2 d = (p - L.xy) / L.z;
         float f = exp(-dot(d, d) * 1.5) * L.w;
-        float below = (p.y + rag * 18.0 * pxPerM - lobeBase[i]) / (60.0 * pxPerM);
-        f *= 1.0 - smoothstep(0.0, 1.0, below) * (1.0 - cotton * 0.85);
+        if (smoke < 0.5) {
+            float below = (p.y + rag * 18.0 * pxPerM - lobeBase[i]) / (60.0 * pxPerM);
+            f *= 1.0 - smoothstep(0.0, 1.0, below) * (1.0 - cotton * 0.85);
+        } else {
+            heat += f * lobeBase[i];
+        }
         F += f;
     }
+    heat /= max(F, 1e-4);
     return F;
+}
+float field(vec2 p, float rag) {
+    float h;
+    return field(p, rag, h);
+}
+
+// smoke: billowing, soft-edged, see-through where thin, dark in its thick middle, glowing hot
+vec4 smokeColour(vec2 sc, vec2 lp, float t) {
+    float rag = fbm(vec2(lp.x / 320.0 + t * 0.06, lp.y / 260.0 - t * 0.08)) - 0.5;
+    float lumps = fbm(lp / 170.0 + vec2(t * 0.03, -t * 0.05)) - 0.5;
+    float heat;
+    float F = field(sc, rag, heat);
+    float E = F - 0.25 + rag * 0.35 + lumps * 0.18;
+    float dens = smoothstep(0.0, 0.7, E);
+    if (dens <= 0.001) return vec4(0.0);
+    float sh = 60.0 * pxPerM;
+    vec2 sunDir = normalize(sunPos - sc + vec2(0.001, 0.0));
+    float Fs = field(sc + sunDir * sh, rag);
+    float Fu = field(sc + vec2(0.0, -sh), rag);
+    float lit = 0.5 + light * ((F - Fs) * 0.18 + (F - Fu) * 0.12) + lumps * 0.2;
+    vec3 col = mix(vec3(0.20, 0.19, 0.19), vec3(0.60, 0.59, 0.60), clamp(lit, 0.0, 1.0));
+    col = mix(col, vec3(0.74, 0.74, 0.76), clamp(1.0 - F, 0.0, 1.0) * 0.5); // thin smoke is pale
+    float a = dens * (0.3 + 0.45 * clamp(F, 0.0, 1.0));
+    // hot: orange, and brighter than it is thick (a fireball lights itself)
+    float hh = heat * smoothstep(0.0, 0.3, E);
+    col = mix(col, vec3(1.0, 0.52, 0.12), hh) + vec3(1.0, 0.85, 0.5) * hh * hh * 0.8;
+    a = max(a, hh * 0.95);
+    return vec4(col * a, a);
 }
 
 vec4 effect(vec4 color, Image tex, vec2 uv, vec2 sc) {
     vec2 lp = (sc - toLayer.xy) * toLayer.z;
     float t = time;
+    if (smoke > 0.5) return smokeColour(sc, lp, t) * color.a;
     float rag = fbm(vec2(lp.x / 260.0 + t * 0.05, lp.y / 160.0 - t * 0.03)) - 0.5;
     float lumps = fbm(lp / 110.0 + t * 0.02) - 0.5;
     float F = field(sc, rag);
@@ -799,13 +840,119 @@ local function paint(b, air, x, y)
     b.thermals[#b.thermals + 1] = p
 end
 
+-- Smoke (2026-11-12, CAMPFIRE CF2): a fire smokes where it's lit for a while; a boom throws out
+-- hot puffs that glow, then rise as dark smoke (the physics: cloudAir.newSmoke). Puffs live in
+-- b.smoke, apart from the clouds; one that reaches the cloud base wet enough grows a cloud cap.
+local MAX_SMOKE = 160
+local FIRE_LIFE = 8     -- seconds a fire burns
+local function addSmoke(b, p)
+    if #b.smoke >= MAX_SMOKE then table.remove(b.smoke, 1) end
+    p.seed = love.math.random()
+    b.smoke[#b.smoke + 1] = p
+end
+
+local function lightFire(b, x, y)
+    b.fires[#b.fires + 1] = { x = x, z = math.max(0, -y), life = FIRE_LIFE, puff = 0 }
+end
+
+local function boom(b, air, x, y)
+    local z = math.max(0, -y)
+    local rnd = love.math.random
+    for i = 1, 18 do
+        local a = (i / 18) * math.pi * 2 + rnd() * 0.3
+        local hot = rnd()
+        local p = cloudAir.newSmoke(air, x + math.cos(a) * 60, z + math.max(0, math.sin(a)) * 60,
+            50 + 110 * hot, 90 + 50 * rnd(), 1.5)
+        local speed = 10 + 25 * rnd()
+        p.u, p.w = math.cos(a) * speed * 0.5, math.sin(a) * speed * 0.5 + 15 + 15 * hot
+        addSmoke(b, p)
+    end
+    -- the dust kicked up along the ground
+    for side = -1, 1, 2 do
+        for _ = 1, 4 do
+            local p = cloudAir.newSmoke(air, x, z, 6, 110 + 40 * rnd(), 0)
+            p.soot = 0.4
+            p.u, p.w = side * (25 + 25 * rnd()), 2 * rnd()
+            addSmoke(b, p)
+        end
+    end
+    b.flashes[#b.flashes + 1] = { x = x, z = z, t = 0 }
+end
+
+-- puffs that lie mostly over each other become one (as smoke mixes): bigger, the soot, heat,
+-- vapour and speed shared by how much of each there was; keeps the count (and the shader's lobes)
+-- low where a plume crowds
+local function mergeSmoke(b)
+    local list = b.smoke
+    local gone = {}
+    for i = 1, #list do
+        local p = list[i]
+        if not gone[p] then
+            for j = i + 1, #list do
+                local q = list[j]
+                if not gone[q] and (p.x - q.x) ^ 2 + (p.z - q.z) ^ 2 < ((p.r + q.r) * 0.35) ^ 2 then
+                    local a, c = p.r * p.r, q.r * q.r
+                    local wa, wc = a / (a + c), c / (a + c)
+                    p.t = p.t * wa + q.t * wc
+                    p.qv = p.qv * wa + q.qv * wc
+                    p.qc = p.qc * wa + q.qc * wc
+                    p.w, p.u = p.w * wa + q.w * wc, p.u * wa + q.u * wc
+                    p.x, p.z = p.x * wa + q.x * wc, p.z * wa + q.z * wc
+                    p.soot = math.min(1, p.soot * wa + q.soot * wc + 0.15 * math.min(p.soot, q.soot))
+                    p.r = math.min(cloudAir.SMOKE_MAX_R, math.sqrt(a + c))
+                    gone[q] = true
+                end
+            end
+        end
+    end
+    local keep = {}
+    for _, p in ipairs(list) do if not gone[p] then keep[#keep + 1] = p end end
+    -- and never more than MAX_SMOKE: the oldest go
+    while #keep > MAX_SMOKE do table.remove(keep, 1) end
+    b.smoke = keep
+end
+
+local function smokeUpdate(b, air, dt)
+    mergeSmoke(b)
+    local rnd = love.math.random
+    local alive = {}
+    for _, f in ipairs(b.fires) do
+        f.life = f.life - dt
+        f.puff = f.puff - dt
+        if f.puff <= 0 and f.life > 0 then
+            f.puff = 0.25
+            -- a fire dies down: less heat at the end
+            local strength = math.min(1, f.life / 2)
+            local p = cloudAir.newSmoke(air, f.x + (rnd() - 0.5) * 80, f.z, (8 + 6 * rnd()) * strength + 2,
+                150 + 70 * rnd(), 2.5 * strength)
+            p.w = 4 + 3 * rnd()
+            addSmoke(b, p)
+        end
+        if f.life > 0 then alive[#alive + 1] = f end
+    end
+    b.fires = alive
+    local flashes = {}
+    for _, f in ipairs(b.flashes) do
+        f.t = f.t + dt
+        if f.t < 0.35 then flashes[#flashes + 1] = f end
+    end
+    b.flashes = flashes
+end
+
 local function growInput(b, air, dt)
     local set = b.settings
     local down = state.playMode and love.mouse.isDown(1)
     local mx, my = growMouse()
+    local tool = b.tool or 'cloud'
     if down and not b.wasDown and not overPanel(b) and #getInteractedWithPointer() == 0 then
-        local p = thermalAt(b, mx, my)
-        if p then
+        local p = tool == 'cloud' and thermalAt(b, mx, my)
+        if tool == 'boom' then
+            boom(b, air, mx, my)
+        elseif tool == 'smoke' then
+            lightFire(b, mx, my)
+            b.smoking = true
+            b.lastPaintX, b.lastPaintY = mx, my
+        elseif p then
             -- pull: the whole cloud comes along
             b.pulled = {}
             for _, q in ipairs(clusterOf(b, p)) do
@@ -836,7 +983,16 @@ local function growInput(b, air, dt)
                 end
             end
         end
-        b.pulled, b.painting = nil, nil
+        b.pulled, b.painting, b.smoking = nil, nil, nil
+        return
+    end
+    if b.smoking then
+        -- dragging lights more fires along the way
+        if math.sqrt((mx - b.lastPaintX) ^ 2 + (my - b.lastPaintY) ^ 2) > 300 then
+            lightFire(b, mx, my)
+            b.lastPaintX, b.lastPaintY = mx, my
+        end
+        b.lastGrowX, b.lastGrowY = mx, my
         return
     end
     if b.pulled and dt > 0 then
@@ -908,6 +1064,8 @@ local function growUpdate(b, dt)
             if p.x - lx > hx then p.x = p.x - 2 * hx elseif p.x - lx < -hx then p.x = p.x + 2 * hx end
         end
     end
+    for _, p in ipairs(b.smoke) do p.x = p.x + windV * dt end
+    smokeUpdate(b, air, dt)
     local simDt = dt * set.speed
     local steps = math.max(1, math.ceil(simDt / 2))
     local h = simDt / steps
@@ -923,7 +1081,21 @@ local function growUpdate(b, dt)
             end
         end
         together(b, h)
+        for _, p in ipairs(b.smoke) do
+            local wasCloud = p.qc > 0
+            cloudAir.step(air, p, h)
+            if p.qc > 0 then
+                if not wasCloud or not p.baseZ or p.z < p.baseZ then p.baseZ = p.z end
+            else
+                p.baseZ = nil
+            end
+        end
     end
+    local puffs = {}
+    for _, p in ipairs(b.smoke) do
+        if not cloudAir.spent(p) and math.abs(p.x - lx) < hx + 3000 then puffs[#puffs + 1] = p end
+    end
+    b.smoke = puffs
     local keep = {}
     for _, p in ipairs(b.thermals) do
         if isPulled(b, p) or not cloudAir.spent(p) then
@@ -979,23 +1151,48 @@ local function drawGrown(b, w, h, cx, cy, scale)
     -- tiles, each drawn with every lobe that reaches into it (a tile with more than MAXL split in
     -- four), so the shape goes on across them: no seams (cutting a cloud into batches of lobes
     -- showed the cuts, Nikki's screenshot 2026-11-12)
-    local shown = {}
-    for _, p in ipairs(b.thermals) do
-        local amount = clamp(p.qc / 0.5, 0, 1)
-        if amount > 0.02 then
-            local r = p.r * k * (0.75 + 0.35 * amount)
-            -- breathing: each lobe swells and drifts a little, slowly
-            local t, sd = b.time * b.settings.morph, (p.seed or 0) * 40
-            r = r * (1 + 0.07 * math.sin(t * 0.4 + sd))
-            local px = sx(p.x + p.r * 0.08 * math.sin(t * 0.23 + sd * 1.3))
-            local py = sy(-p.z + p.r * 0.06 * math.sin(t * 0.31 + sd * 0.7))
-            if px + r * 1.3 > 0 and px - r * 1.3 < w and py + r * 1.3 > 0 and py - r * 1.3 < h then
-                shown[#shown + 1] = { px = px, py = py, r = r, amount = amount,
-                    base = sy(-(p.baseZ or p.z)) }
-            end
+    -- info: a cloud lobe's base (screen y, in the shader's pixels), a smoke lobe's glow
+    local function lobeOf(p, amount, r, info, list)
+        -- breathing: each lobe swells and drifts a little, slowly
+        local t, sd = b.time * b.settings.morph, (p.seed or 0) * 40
+        r = r * (1 + 0.07 * math.sin(t * 0.4 + sd))
+        local px = sx(p.x + p.r * 0.08 * math.sin(t * 0.23 + sd * 1.3))
+        local py = sy(-p.z + p.r * 0.06 * math.sin(t * 0.31 + sd * 0.7))
+        -- (as far as reaching() looks, or a lobe just off the screen is missed at the edge)
+        local m = r * 1.9 + 90 * k
+        if px + m > 0 and px - m < w and py + m > 0 and py - m < h then
+            list[#list + 1] = { px = px, py = py, r = r, amount = amount, info = info }
         end
     end
-    if #shown == 0 then return end
+    local shown, smoky = {}, {}
+    local function cloudLobe(p)
+        local amount = clamp(p.qc / 0.5, 0, 1)
+        if amount > 0.02 then
+            lobeOf(p, amount, p.r * k * (0.75 + 0.35 * amount), sy(-(p.baseZ or p.z)) * dpi, shown)
+        end
+    end
+    for _, p in ipairs(b.thermals) do cloudLobe(p) end
+    for _, p in ipairs(b.smoke) do
+        cloudLobe(p)
+        local amount = clamp(p.soot * 1.3, 0, 1)
+        if amount > 0.02 then lobeOf(p, amount, p.r * k, cloudAir.glow(air, p), smoky) end
+    end
+    -- the flash of a boom
+    love.graphics.setBlendMode('add')
+    for _, f in ipairs(b.flashes) do
+        local u = f.t / 0.35
+        local r = (250 + 900 * u) * k
+        love.graphics.setColor(1, 0.85, 0.55, 0.9 * (1 - u))
+        love.graphics.draw(vapourImage, sx(f.x), sy(-f.z), 0, 2 * r / 64, 2 * r / 64, 32, 32)
+    end
+    -- a fire's glow where it burns
+    for _, f in ipairs(b.fires) do
+        local r = (120 + 30 * math.sin(b.time * 13 + f.x)) * k * math.min(1, f.life / 2)
+        love.graphics.setColor(1, 0.55, 0.15, 0.8)
+        love.graphics.draw(vapourImage, sx(f.x), sy(-f.z), 0, 2 * r / 64, 2 * r / 64, 32, 32)
+    end
+    love.graphics.setBlendMode('alpha')
+    if #shown == 0 and #smoky == 0 then return end
     love.graphics.setShader(grownShader)
     grownShader:send('toLayer', { (w / 2 - lx * k) * dpi, (h / 2 - ly * k) * dpi, 1 / (k * dpi) })
     grownShader:send('pxPerM', k * dpi)
@@ -1026,11 +1223,14 @@ local function drawGrown(b, w, h, cx, cy, scale)
             drawTile(reaching(list, mx, my, x1, y1), mx, my, x1, y1)
             return
         end
+        if #list > MAXL then
+            table.sort(list, function(p, q) return p.amount * p.r > q.amount * q.r end)
+        end
         local lobes, bases = {}, {}
         for i = 1, math.min(#list, MAXL) do
             local l = list[i]
             lobes[i] = { l.px * dpi, l.py * dpi, l.r * dpi, l.amount }
-            bases[i] = l.base * dpi
+            bases[i] = l.info
         end
         grownShader:send('lobes', unpack(lobes))
         grownShader:send('lobeBase', unpack(bases))
@@ -1038,12 +1238,19 @@ local function drawGrown(b, w, h, cx, cy, scale)
         love.graphics.rectangle('fill', x0, y0, x1 - x0, y1 - y0)
     end
     local TILE = 200
-    for ty = 0, h - 1, TILE do
-        for tx = 0, w - 1, TILE do
-            local x1, y1 = math.min(w, tx + TILE), math.min(h, ty + TILE)
-            drawTile(reaching(shown, tx, ty, x1, y1), tx, ty, x1, y1)
+    local function drawAll(list, smokeMode)
+        if #list == 0 then return end
+        grownShader:send('smoke', smokeMode)
+        for ty = 0, h - 1, TILE do
+            for tx = 0, w - 1, TILE do
+                local x1, y1 = math.min(w, tx + TILE), math.min(h, ty + TILE)
+                drawTile(reaching(list, tx, ty, x1, y1), tx, ty, x1, y1)
+            end
         end
     end
+    -- smoke first: a fire cloud's cap goes over its smoke
+    drawAll(smoky, 1)
+    drawAll(shown, 0)
     love.graphics.setBlendMode('alpha')
     love.graphics.setShader()
 end
@@ -1089,7 +1296,9 @@ function s.onKeyPress(key)
     elseif key == 'm' then
         local mx, my = mouseWorldPos()
         spawnMipo(b, mx, my)
-    elseif key == 'r' and b.grow then b.thermals = {}
+    elseif key == 'r' and b.grow then b.thermals, b.smoke, b.fires, b.flashes = {}, {}, {}, {}
+    elseif (key == '1' or key == '2' or key == '3') and b.grow then
+        b.tool = ({ 'cloud', 'smoke', 'boom' })[tonumber(key)]
     elseif key == 'r' then fillSky(b); b.drops = {}
     elseif key == 'e' then b.grow = not b.grow
     elseif key == 'h' then b.showPanel = not b.showPanel
@@ -1440,7 +1649,7 @@ function s.drawUI()
             { 'light', 0, 2 }, { 'cotton', 0, 1 },
         }
     end
-    local h = (BH + pad) * (#rows + 3) + pad + 24
+    local h = (BH + pad) * (#rows + (b.grow and 4 or 3)) + pad + 24
     local _, sh = love.graphics.getDimensions()
     local x0, y0 = 20, sh - h - 20
     panelRect[2], panelRect[4] = y0, h
@@ -1463,6 +1672,12 @@ function s.drawUI()
                 for key, v in pairs(GROW_DEFAULTS) do b.settings[key] = v end
             end
             ui.label(x + 125, y, 'paint clouds, pull one up')
+            x, y = ui.nextLayoutPosition(layout, w - 20, BH)
+            -- the tools (1 2 3): paint clouds, light a fire, a boom
+            for i, tool in ipairs({ 'cloud', 'smoke', 'boom' }) do
+                local label = (b.tool == tool and '> ' or '') .. tool
+                if ui.button(x + (i - 1) * 120, y, 110, label) then b.tool = tool end
+            end
             x, y = ui.nextLayoutPosition(layout, w - 20, BH)
             ui.label(x, y, 'r clears   m a Mipo   h the panel')
         else

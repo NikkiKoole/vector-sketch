@@ -137,12 +137,17 @@ function lib.step(air, p, dt, held)
         local accel = G * (virtualK(p.t, p.qv, p.qc) - tv) / tv
         p.w = p.w + accel * dt
         -- drag: the air it pushes through, and the still air it takes in as it rises
-        p.w = p.w * math.max(0, 1 - dt * (lib.DRAG + lib.ENTRAIN / p.r * math.abs(p.w)))
+        p.w = p.w / (1 + dt * (lib.DRAG + lib.ENTRAIN / p.r * math.abs(p.w)))
         local z = p.z + p.w * dt
         if z < 0 then z, p.w = 0, math.max(0, p.w) end
         lib.moveTo(p, z)
         p.x = p.x + p.u * dt
-        p.u = p.u * math.max(0, 1 - dt * 0.02)
+        if p.soot then
+            -- a puff thrown sideways (a blast) is slowed by the air like one going up
+            p.u = p.u / (1 + dt * (lib.DRAG + lib.ENTRAIN / p.r * math.abs(p.u)))
+        else
+            p.u = p.u * math.max(0, 1 - dt * 0.02)
+        end
     end
     -- mixing with the air around: towards its temperature and vapour, cloud water towards none
     local k = math.min(1, dt * (lib.MIX + lib.ENTRAIN / p.r * math.abs(p.w)))
@@ -153,6 +158,32 @@ function lib.step(air, p, dt, held)
     local out = p.qc * k
     p.qc, p.qv = p.qc - out, p.qv + out
     adjust(p, p.z)
+    if p.soot then
+        -- smoke: what it takes in makes it bigger and thinner, and a little fades all the time
+        local kk = math.min(1, dt * (lib.MIX + lib.ENTRAIN / p.r * (math.abs(p.w) + math.abs(p.u))))
+        p.r = math.min(lib.SMOKE_MAX_R, p.r * (1 + kk * 0.5))
+        p.soot = p.soot * (1 - kk * 0.6) * math.max(0, 1 - dt * lib.SOOT_FADE)
+    end
+end
+
+-- Smoke (2026-11-12, after the clouds; CAMPFIRE CF2): a puff of hot air with soot in it, from a
+-- fire or a blast. The same air acts on it: much warmer than the air, it shoots up, takes in the
+-- air it passes (growing, thinning, cooling), slows, and spreads where it's no warmer; burning
+-- gives off water, so a big fire's smoke that reaches the cloud base grows a cloud cap
+-- (pyrocumulus). warm: K over the air, wet: extra g/kg of vapour.
+lib.SOOT_FADE = 0.0015
+lib.SMOKE_MAX_R = 900
+function lib.newSmoke(air, x, z, warm, r, wet)
+    local p = lib.newThermal(air, x, z, 0, warm, r)
+    p.qv = lib.envQv(air, z) + (wet or 0) -- the air's own vapour (not its humidity at the heat)
+    adjust(p, z)
+    p.soot = 1
+    return p
+end
+
+-- how hot it is, to see (0 .. 1): a fireball glows
+function lib.glow(air, p)
+    return math.max(0, math.min(1, (p.t - lib.envT(air, p.z) - 25) / 120))
 end
 
 -- how close to cloud it is: relative humidity, 1 = saturated
@@ -160,9 +191,11 @@ function lib.rh(p)
     return p.qv / lib.qs(p.t, lib.pressure(p.z))
 end
 
--- spent: no cloud left and too dry to be one soon (the scene's shimmer is gone by then)
+-- spent: no cloud left and too dry to be one soon (the scene's shimmer is gone by then); smoke:
+-- no soot left to see either
 lib.SPENT_RH = 0.8
 function lib.spent(p)
+    if p.soot then return p.soot < 0.03 and p.qc <= 0.005 end
     return p.qc <= 0.005 and lib.rh(p) < lib.SPENT_RH and p.w < 0.5
 end
 

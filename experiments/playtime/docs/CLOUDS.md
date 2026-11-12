@@ -103,6 +103,15 @@ steeply with cold), below evaporates. Pulled up past the point where it's warmer
   as the air, and it **floats** where it's put, fading over minutes; painted ones don't push each
   other apart. Pulled and let go gently it floats again where it's left; flung, or lifted past
   the take-off line, the air takes over (rises to the lid, or sinks and clears).
+- **Smoke** (2026-11-12, Nikki: "imagine a fire we get smoke right? not clouds, its kinda different
+  but sort of the same"): tools 1 cloud / 2 smoke / 3 boom (panel buttons). Smoke lights a fire
+  where pressed (8 s, dragging lights more); a boom throws out 18 hot puffs (they glow orange while
+  hot, `cloudAir.glow`) and some dust, with a flash. The puffs are `cloudAir.newSmoke`: much warmer
+  than the air, they shoot up, take in air (growing, thinning, cooling), slow and spread; burning
+  gives off water, so a plume reaching the cloud base grows a white cap (pyrocumulus). Drawn by
+  the cloud shader's smoke mode (billowy, soft edges, see-through where thin, dark in the middle),
+  before the clouds. Puffs lying mostly over each other merge (260 overlapping puffs made bands
+  and blocks in the tiles, Nikki's screenshot): ~10 for two fires.
 - [ ] **CG3. Its life.** Tried 2026-11-12 and taken out again (Nikki liked the clouds better
       before it; rain not wanted yet): rain from 0.8 g/kg of cloud water weighing the cloud down,
       its evaporation cooling it until it sank (a shower ending its own updraft; under a higher lid
