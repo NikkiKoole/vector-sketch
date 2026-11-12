@@ -62,6 +62,8 @@ function love.conf(t)
     if specs then
         t.window.borderless = true
         t.window.x, t.window.y = -20000, -20000
+        -- and it never becomes the active app: the keys stay where you were typing (macOS)
+        require('src.background-app').neverActivate()
     end
     t.modules.data = true                  -- Enable the data module (boolean)
     t.modules.event = true                 -- Enable the event module (boolean)
