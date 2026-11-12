@@ -208,7 +208,11 @@ track). Built as the style **`earth`** (`src/music-earth.lua`). Working files we
   0.31). `earthKeys` and `earthBass` in synth.lua are plain FM voices from those fits.
 - **Checked**: the render read back by `chords-from-audio.py` gives the same C → E♭ ×3, A7 → Dm in C minor; per
   beat its notes match the record's at 0.94 on average (0.90-0.98 in bars 1-3, 0.84-0.96 in bar 4). The
-  music-trace: every other scenario identical. Not yet heard by Nikki.
+  music-trace: every other scenario identical.
+- **Nikki listened** (2026-11-12): "the chords seem right, can we make it more whimsical"; and the loop should
+  start straight away. Now the same notes on lighter sounds: the keys a soft mallet with a slow tape wow (6 dB
+  under the bass instead of 11), a toy kit on the record's pattern (soft kick, rim and brush, shaker, a woodblock
+  tick on the dragged ghost), the loop from bar 1.
 
 ## The score pieces next to our styles (2026-11-02)
 
