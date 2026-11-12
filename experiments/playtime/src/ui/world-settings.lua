@@ -137,9 +137,7 @@ function lib.drawWorldSettingsUI()
             clicked, y = sectionHeader(x, y, w, 'music', f.music)
             if clicked then f.music = not f.music end
             if f.music then
-                -- the loop styles' arrangement grid (src/ui/music-arrange.lua), above the rows
-                local arranged = require('src.ui.music-arrange').draw(x, y, w)
-                if arranged > 0 then y = y + arranged + ui.theme.spacing end
+                -- in folds, the arrangement grid in the first (src/music-params.lua)
                 y = y + inspector.drawParams('music', musicParams.rows, musicParams.target(), nil, x, y, w)
             end
 

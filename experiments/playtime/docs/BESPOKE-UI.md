@@ -73,6 +73,15 @@ pad's only if it starts on it; a drag carries on outside it. In scene scripts as
       come in yet (band 'auto', calm play) have no row yet. Kept in `arrange[style].kinds[kind][part] = false`,
       read in music-parts.lua's voiceOf (the music session's hook, a9927282; drums are one part, not per sound).
       Drawn off-screen for bossa (intro A B outro, A lit); clicks not tried by Claude.
+- [ ] **BU13. The music panel in folds** (Nikki 2026-11-12: "it has too much all at once in the panel, could
+      use some accordion?"; groups from the music session's read). Built, Nikki to try: on top, unfolded, the
+      status line, music on/off, music volume, style; then folds arrange (open: the grid, layers, setups),
+      band (the part and sound rows, band auto/on/off), feel (humanize, spice, the ideas, tune), sound (all
+      sound and fx volume, effects, the pedal lines), world (the jam's rows, impacts, stingers, events' rows),
+      info (song ideas, events, the play level). The stinger rows past 'stingers' only while they're on; no
+      '+ more' any more. In the inspector: `kind = 'section'` (a fold up to the next one, open state on
+      `state.inspectorFolds`, hidden with nothing under it) and `kind = 'custom'` (draws itself, its own
+      height), for light, sky and the rest later. Drawn off-screen, clicks not tried by Claude.
 - [ ] **BU10. The band on a stage**, **BU11. styles on a pad**, **BU12. ideas as a fader bank**: the other
       music panel ideas (2026-11-12), not started.
 

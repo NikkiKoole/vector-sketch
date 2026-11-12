@@ -381,6 +381,61 @@ for _, row in ipairs({
         end },
 }) do lib.rows[#lib.rows + 1] = row end
 
+-- The rows in folds, by task (Nikki 2026-11-12: "it has too much all at once in the panel, could use some
+-- accordion?"; the groups the music session's read): what plays on top, unfolded; then arrange (open), band,
+-- feel, sound, world, info. A row is placed by its key; one not named here lands in 'other' at the end.
+local GROUP_OF = {
+    now = 'now', music = 'now', ['music volume'] = 'now', style = 'now',
+    layers = 'arrange', setups = 'arrange',
+    band = 'band',
+    humanize = 'feel', spice = 'feel', tune = 'feel',
+    volume = 'sound', ['fx volume'] = 'sound', effects = 'sound',
+    ['drum jam'] = 'world', ['jam impacts'] = 'world', ['ball sounds'] = 'world', ['box sounds'] = 'world',
+    ['Mipo bump sounds'] = 'world', stingers = 'world', ['stinger voice'] = 'world', ['part rests'] = 'world',
+    ['stinger moments'] = 'world', ['try stinger'] = 'world',
+    ['song ideas'] = 'info', events = 'info', play = 'info',
+}
+for _, name in ipairs(IDEAS) do GROUP_OF[name] = 'feel' end
+local function groupOf(row)
+    if GROUP_OF[row.key] then return GROUP_OF[row.key] end
+    if row.key:match('^setup%d') then return 'arrange' end
+    if row.key:match('^pedals%d') then return 'sound' end
+    if row.key:match('^jam ') then return 'world' end
+    if row.kind == 'part' then return 'band' end
+    return 'other'
+end
+-- the stinger rows past the first only while stingers are on
+local function stingersOn() return ((state().musicSettings.world or {}).stingerSize or 'off') ~= 'off' end
+for _, row in ipairs(lib.rows) do
+    if row.key == 'stinger voice' or row.key == 'part rests' or row.key == 'stinger moments'
+        or row.key == 'try stinger' then
+        row.visible = stingersOn
+    end
+end
+do
+    local FOLDS = { 'now', 'arrange', 'band', 'feel', 'sound', 'world', 'info', 'other' }
+    local byGroup = {}
+    for _, name in ipairs(FOLDS) do byGroup[name] = {} end
+    -- the arrangement grid (src/ui/music-arrange.lua) heads its fold
+    table.insert(byGroup.arrange, { key = 'arrangement', kind = 'custom',
+        draw = function(x, y, w)
+            local h = require('src.ui.music-arrange').draw(x, y, w)
+            return h > 0 and h + 6 or 0
+        end })
+    for _, row in ipairs(lib.rows) do
+        row.advanced = nil -- the folds take the place of '+ more'
+        table.insert(byGroup[groupOf(row)], row)
+    end
+    local rows = {}
+    for _, name in ipairs(FOLDS) do
+        if name ~= 'now' then
+            rows[#rows + 1] = { key = 'fold ' .. name, label = name, kind = 'section', open = name == 'arrange' }
+        end
+        for _, row in ipairs(byGroup[name]) do rows[#rows + 1] = row end
+    end
+    lib.rows = rows
+end
+
 function lib.target() return music() end
 
 return lib

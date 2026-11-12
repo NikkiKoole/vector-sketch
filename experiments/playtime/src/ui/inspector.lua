@@ -30,7 +30,10 @@ end
 -- Kinds: text (keepSpaces = true keeps spaces), number (slider + field), numberText
 -- (field only), bool, choice, action, buttons (one per option), note (label only),
 -- color (swatch + hex), file (texture browser + name), part (a checkbox with the label, on(target) /
--- setOn(target, v), then a '<' choice '>' when the row has options, else note(target) as text).
+-- setOn(target, v), then a '<' choice '>' when the row has options, else note(target) as text),
+-- section (a fold header: the rows after it, up to the next section, show only while it's open; open =
+-- true opens it at first; kept on state.inspectorFolds; a section with nothing visible under it hides),
+-- custom (row.draw(x, y, w, target) draws it and returns the height it used; 0 hides it).
 -- A row reads/writes `target[key]`, or calls row.get(target) / row.set(target, v)
 -- (Box2D objects). A set may return a replacement target (a rebuilt joint).
 local function valueOf(row, target)
@@ -185,6 +188,14 @@ local function drawRow(id, row, target, body, x, y, w, labelWidth)
     end
 end
 
+-- whether section row `row` of panel `id` is open (state.inspectorFolds: it survives a hot swap)
+local function sectionOpen(id, row)
+    state.inspectorFolds = state.inspectorFolds or {}
+    local open = state.inspectorFolds[id .. '/' .. row.key]
+    if open == nil then return row.open == true end
+    return open
+end
+
 -- Draw `params` for `target` (a behavior table, a joint, ...) at x, y in width
 -- w. Returns the height used, plus the new target if a row rebuilt it (then it
 -- stops: the old target is gone). `id` keeps text inputs and the fold apart.
@@ -192,16 +203,41 @@ function lib.drawParams(id, params, target, body, x, y, w)
     local cy = y
     local function rows(advanced)
         local shown = {}
-        for _, row in ipairs(params) do
-            if (row.advanced or false) == advanced and (not row.visible or row.visible(target)) then
-                table.insert(shown, row)
+        local section, sectionRows -- the fold the rows belong to, and its visible rows
+        local function closeSection()
+            if section and #sectionRows > 0 then
+                table.insert(shown, section)
+                if sectionOpen(id, section) then
+                    for _, row in ipairs(sectionRows) do table.insert(shown, row) end
+                end
             end
         end
+        for _, row in ipairs(params) do
+            if row.kind == 'section' then
+                if not advanced then
+                    closeSection()
+                    section, sectionRows = row, {}
+                end
+            elseif (row.advanced or false) == advanced and (not row.visible or row.visible(target)) then
+                table.insert(sectionRows or shown, row)
+            end
+        end
+        closeSection()
         local i = 1
         while i <= #shown do
             local row, nextRow = shown[i], shown[i + 1]
             local replaced
-            if row.kind == 'action' and nextRow and nextRow.kind == 'action' then
+            if row.kind == 'section' then
+                local open = sectionOpen(id, row)
+                if ui.button(x + 8, cy + DY, w - 8, (open and '÷  ' or '•  ') .. labelOf(row, target)) then
+                    state.inspectorFolds[id .. '/' .. row.key] = not open
+                end
+                i = i + 1
+            elseif row.kind == 'custom' then
+                local h = row.draw(x, cy, w, target) or 0
+                cy = cy + h - lib.rowHeight -- the row's own height, not a row's
+                i = i + 1
+            elseif row.kind == 'action' and nextRow and nextRow.kind == 'action' then
                 -- two buttons side by side
                 local half = w / 2
                 replaced = drawRow(id, row, target, body, x, cy, half)
