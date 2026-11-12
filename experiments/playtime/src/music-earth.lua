@@ -79,7 +79,7 @@ lib.HARMONY = { { 0, 'sus2' }, { 0, 'sus2' }, { 0, 'sus2' }, { 9, 's9' } }
 -- one loop on and on, as the record: no ending bar (it stopped, then the next song started: Nikki 2026-11-12
 -- "it stopped and then started"); after 40 bars the next song carries straight on with the same take
 lib.FORM = {
-    { 'A', 40, { keys = true, bass = true, kit = true } },
+    { 'A', 40, { keys = true, bass = true, kit = true, solo = true } },
 }
 
 local function human() return state.musicSettings.humanize ~= false end
@@ -210,6 +210,111 @@ local function bookKit(play, synth, t0, song)
     end
 end
 
+---------------------------------------------------------------- the solo
+
+-- A solo on top (Nikki 2026-11-12: "can you think up some solo thingie on top of this?"): a kalimba (synth.lua
+-- earthSolo) above the
+-- loop, sparse: two passes rest, then a call (A) and an answer (B), a pass's rest, A B again. Made once a
+-- song and the same every time it comes round (steady, not wandering). Over each half bar the beats land on
+-- the chord's own notes and the notes between step to the next; a phrase's second bar takes its first bar's
+-- rhythm (the motif), the tune drifts down like the vibes' sigh, and the fourth bar lands long on the
+-- turnaround (A on the A7, then F or D on the Dm7). Pitch classes per half bar of the cycle:
+local HALF = {
+    sus = { tones = { 0, 2, 7 }, between = { 3, 5, 10 } },          -- C sus2: C D G (Eb F Bb between)
+    eb7 = { tones = { 3, 7, 10, 1 }, between = { 5, 0 } },          -- Eb7: Eb G Bb Db (F C between)
+    a7 = { tones = { 9, 1, 4, 7 }, between = { 0, 10 } },           -- A7#9: A C# E G (the #9 C, b9 Bb between)
+    dm7 = { tones = { 2, 5, 9, 0 }, between = { 4, 7 } },           -- Dm7: D F A C
+}
+local HALF_OF = { 'sus', 'eb7', 'sus', 'eb7', 'sus', 'eb7', 'a7', 'dm7' }
+lib.SOLO_ROUNDS = { false, false, 'A', 'B', false, 'A', 'B', false, 'A', 'B' } -- per pass of a 40-bar song
+lib.SOLO_LO, lib.SOLO_HI = 74, 86 -- D5..D6, over the vibes' top (D5)
+-- rhythm cells (16ths in a bar): the call's and the answer's first bars, the third bar's run, the landing
+local CALLS = { { 2, 3, 6 }, { 2, 6, 7 }, { 0, 3, 6 }, { 6, 7, 10 } }
+local RUNS = { { 2, 4, 6, 8, 10 }, { 4, 5, 6, 10, 12 }, { 2, 3, 6, 10, 11 } }
+local LANDS = { { 0, 2, 4 }, { 2, 4 }, { 0, 3 } } -- then a long note on beat 3 (the Dm7)
+
+local function pcsAt(slot) -- slot: a 16th in the cycle (0..63)
+    return HALF[HALF_OF[math.floor(slot / 8) + 1]]
+end
+-- the nearest pitch in range whose class is in `set`, going `dir` (-1/1) from p (not p itself), or any way
+local function nearest(p, set, dir)
+    local best, bestD
+    for q = lib.SOLO_LO, lib.SOLO_HI do
+        local pc = q % 12
+        for _, c in ipairs(set) do
+            if pc == c and q ~= p then
+                local d = (q - p) * dir
+                local cost = d > 0 and d or 12 - d -- the way it's going first
+                if not bestD or cost < bestD then best, bestD = q, cost end
+            end
+        end
+    end
+    return best or p
+end
+
+-- one phrase (4 bars): { { slot, midi, length in 16ths, accent }, ... }
+local function makePhrase(rng, answer)
+    local notes, p, dir = {}, answer and 79 or 81, -1
+    local function place(slot, last)
+        local h = pcsAt(slot)
+        local onBeat = slot % 4 == 0
+        local set = onBeat and h.tones or {}
+        if not onBeat then
+            for _, c in ipairs(h.tones) do set[#set + 1] = c end
+            for _, c in ipairs(h.between) do set[#set + 1] = c end
+        end
+        if last then set = h.tones end
+        if rng:random() < 0.25 then dir = -dir end
+        if p <= lib.SOLO_LO + 2 then dir = 1 elseif p >= lib.SOLO_HI - 2 then dir = -1 end
+        p = nearest(p, set, dir)
+        notes[#notes + 1] = { slot, p, 1, #notes == 0 }
+    end
+    local call = CALLS[rng:random(#CALLS)]
+    local bars = answer and { {}, call, RUNS[rng:random(#RUNS)], LANDS[rng:random(#LANDS)] }
+        or { call, call, RUNS[rng:random(#RUNS)], LANDS[rng:random(#LANDS)] }
+    if answer then bars[1] = { 10, 12, 14 } end -- the answer comes in late, a pickup into its motif
+    for b = 1, 4 do
+        for _, s in ipairs(bars[b]) do place((b - 1) * 16 + s) end
+    end
+    dir = -1
+    place(56, true) -- the landing: beat 3 of the fourth bar, on the Dm7
+    -- lengths: up to the next note, played short (a kalimba's pluck); the landing rings
+    for i, n in ipairs(notes) do
+        local nxt = notes[i + 1]
+        n[3] = nxt and math.max(1, math.min(3, nxt[1] - n[1] - 0.5)) or 7
+    end
+    return notes
+end
+
+-- the song's solo: made on first use (a song's own, kept while the song plays)
+local function solo(song)
+    if not song.earthSolo then
+        local rng = { random = function(_, n) return n and love.math.random(n) or love.math.random() end }
+        song.earthSolo = { A = makePhrase(rng, false), B = makePhrase(rng, true) }
+    end
+    return song.earthSolo
+end
+
+local function bookSolo(play, synth, t0, song, b, h)
+    local round = lib.SOLO_ROUNDS[(math.floor((b - 1) / 4) % #lib.SOLO_ROUNDS) + 1]
+    if not round then return end
+    local lo = ((b - 1) % 4) * 16
+    for _, n in ipairs(solo(song)[round]) do
+        if n[1] >= lo and n[1] < lo + 16 then
+            local s = n[1] - lo
+            local at = t0 + s / 4 * song.beat
+            local len = n[3] / 4 * song.beat * 1000
+            if h then
+                local key = 's' .. round .. n[1]
+                play(synth, 'lead', 'earthSolo', at + 0.015 + take(song, key .. 't', 0.008), n[2], n[4] and 6 or 5, len,
+                     s, nil, nil, { gain = math.min(1, 0.8 * 10 ^ (take(song, key .. 'g', 1.2) / 20)) })
+            else
+                play(synth, 'lead', 'earthSolo', at, n[2], n[4] and 6 or 5, len, s)
+            end
+        end
+    end
+end
+
 function lib.bookBar(play, remember, synth, t0, song, b)
     local chord = song.chords[b]
     local root = (song.key + chord[1]) % 12
@@ -223,6 +328,7 @@ function lib.bookBar(play, remember, synth, t0, song, b)
     if roles.bass or roles.ending then bookBass(play, synth, t0, song, b, roles, h) end
     if roles.keys then bookKeys(play, synth, t0, song, b, h) end
     if roles.kit then bookKit(play, synth, t0, song) end
+    if roles.solo then bookSolo(play, synth, t0, song, b, h) end
 end
 
 return lib

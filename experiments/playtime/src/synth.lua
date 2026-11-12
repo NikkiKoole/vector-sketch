@@ -325,6 +325,10 @@ lib.patches = {
                   lfo = { { 0, 0.5688, 0.06 } } }, -- the wow: 6 a loop at 91 BPM (10.549 s), the same every pass
     earthBass = { pool = true, wave = 'FM', adsr = { 0, 86, 7, 264 }, harmonics = 0.355, timbre = 0.026,
                   morph = 0.636, filter = { mode = 1, cutoff = 700, resonance = 1 }, reverb = 0.05, level = 0.9 },
+    -- earth's solo (music-earth.lua bookSolo): the kalimba (slot 20's sound), louder and a little roomier so it
+    -- sits about level with the vibes while it plays (the shared kalimba came out 8 dB under them)
+    earthSolo = { pool = true, wave = 'MALLET', adsr = { 0, 600, 0, 300 }, harmonics = 0.45, timbre = 0.35,
+                  morph = 0.2, reverb = 0.38, level = 1.8 },
     brewGuitar = { pool = true, wave = 'GUITAR', adsr = { 2, 0, 7, 900 }, harmonics = 0.4, timbre = 0.22, morph = 0.1,
                    modes = { [0] = 0.7, [1] = 0.12 }, filter = { mode = 1, cutoff = 1900, resonance = 0 },
                    reverb = 0.3, level = 0.66 },
