@@ -258,7 +258,7 @@ function s.drawUI()
     end)
     -- the weighty walk (MIPO-MOTOR MM8), on the right
     local sw = love.graphics.getDimensions()
-    local rows2 = 11
+    local rows2 = 15
     local h2 = BH * rows2 + pad * (rows2 + 1) + 24
     local x1, y1 = sw - w - 90, sh - h2 - 20 -- room for the labels past the sliders
     ui.panel(x1, y1, w, h2, '•• weight ••', function()
@@ -300,6 +300,15 @@ function s.drawUI()
         if v then walk.placeV = v end
         v = slider(layout, bw, 'walkLean', 'lean (deg)', 0, 20, walk.walkLean, 1)
         if v then walk.walkLean = v end
+        -- the feet roll through the step (LO7): heel strike, plant, heel off, swing, toes up before contact
+        x, y = ui.nextLayoutPosition(layout, bw, BH)
+        if ui.button(x, y, bw, 'foot roll: ' .. (walk.footRoll and 'on' or 'off')) then walk.footRoll = not walk.footRoll end
+        v = slider(layout, bw, 'heelStrike', 'heel strike (deg)', 0, 40, walk.heelStrike, 1)
+        if v then walk.heelStrike = v end
+        v = slider(layout, bw, 'toeOff', 'toe off (deg)', 0, 60, walk.toeOff, 1)
+        if v then walk.toeOff = v end
+        v = slider(layout, bw, 'footFollow', 'foot with shin', 0, 1, walk.footFollow, 0.05)
+        if v then walk.footFollow = v end
     end)
 end
 

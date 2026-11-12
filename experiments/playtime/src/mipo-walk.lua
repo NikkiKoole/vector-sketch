@@ -94,6 +94,13 @@ local SWITCHES = {
     torsoByMotor = true, -- torsoHold through the standing hip's motor (its aim: the torso at its angle);
                          -- false: as torques on torso and standing thigh (tried: the light thigh whips
                          -- forward to -98 degrees instead of the torso turning, tilt up to 108)
+    footRoll = true,   -- keyed walk: the feet roll through the step (FOOT_KEYS): heel strike, plant, heel
+                       -- off over the toes, following the shin on the swing, toes up before contact
+    heelStrike = 18,   -- degrees the toes are up at contact (and reaching for it)
+    toeOff = 30,       -- degrees the heel is up at toe-off
+    footFollow = 0,    -- how much a swinging foot turns with its shin, on FOOT_KEYS' follow (1: toes down into
+                       -- the floor mid swing, snagging, the foot turned 100-125 degrees; 0.4: one of 8 spec
+                       -- Mipos didn't stop and two walked short; 0: every spec passes, the walk furthest)
     stancePose = 1,    -- torsoByMotor: the standing hip also holds the thigh's pose (0: the torso only: skated)
     freeStance = true, -- torque torsoHold: the standing hip's motor and muscle off (SIMBICON: that hip is the torso's)
 }
@@ -579,13 +586,16 @@ local function setLegTargets(inst, thigh, shin)
 end
 
 -- feet flat (face: 1 right, -1 left, toesUp per foot) or, face nil, back to their ankles' range
-local function holdFeet(inst, face, toesUp)
+-- angles (optional, per foot): world degrees for the muscle instead (the foot's roll, footKeys)
+local function holdFeet(inst, face, toesUp, angles)
     for i, footName in ipairs(FEET) do
         local ankle = ankleOf(inst, footName)
         if ankle then ankle:setLimitsEnabled(face == nil) end
         local b = mipoActions.ensureKeepAngle(inst.parts[footName], 0, 40)
         if b then
-            if face then
+            if face and angles and angles[i] then
+                b.angle, b.enabled = angles[i], nil
+            elseif face then
                 b.angle, b.enabled = -face * (90 + (toesUp[i] and TOES_UP or 0)), nil
             else
                 b.enabled = false
@@ -763,6 +773,44 @@ local function mayWalk(inst)
         and not mipoActions.isFlipped(inst) and not mipoActions.isDazed(inst)
 end
 
+-- The foot through one leg's cycle (u as WALK_KEYS: 0 contact .. 0.5 toe-off .. 1), Nikki 2026-11-12:
+-- "keep the same angle between shin and foot, maybe some anticipation and plant". lift: degrees the
+-- toes are up from flat ('heel': lib.heelStrike, 'toe': -lib.toeOff, the heel up); follow: how much
+-- the foot turns with the shin (1: the ankle keeps its standing angle, 0: held to the floor).
+local FOOT_KEYS = {
+    { t = 0.00, lift = 'heel', follow = 0 },   -- contact: the heel strikes, toes up
+    { t = 0.10, lift = 0, follow = 0 },        -- plant: flat
+    { t = 0.36, lift = 0, follow = 0 },        -- flat while the body passes over
+    { t = 0.50, lift = 'toe', follow = 0 },    -- heel off, rolling over the toes
+    { t = 0.62, lift = 'toeHalf', follow = 1 },-- lifted: with the shin, toes trailing
+    { t = 0.80, lift = 0, follow = 1 },        -- the swing: with the shin
+    { t = 0.92, lift = 'heel', follow = 0.5 }, -- anticipation: toes up before contact
+}
+
+local function footKeyValue(key, field)
+    local v = key[field]
+    if v == 'heel' then return lib.heelStrike end
+    if v == 'toe' then return -lib.toeOff end
+    if v == 'toeHalf' then return -lib.toeOff * 0.5 end
+    return v
+end
+
+-- the foot's world angle (degrees) at u: flat is -face * 90 (the foot's picture stands on its heel)
+local function footAngle(u, face, shinAngle)
+    local n = #FOOT_KEYS
+    local i = n
+    for k = 1, n do
+        if FOOT_KEYS[k].t <= u then i = k end
+    end
+    local a, b = FOOT_KEYS[i], FOOT_KEYS[i % n + 1]
+    local t2 = i < n and b.t or 1
+    local x = (u - a.t) / math.max(t2 - a.t, 1e-6)
+    x = x * x * (3 - 2 * x) -- eased between keys
+    local lift = footKeyValue(a, 'lift') + (footKeyValue(b, 'lift') - footKeyValue(a, 'lift')) * x
+    local follow = (a.follow + (b.follow - a.follow) * x) * lib.footFollow
+    return -face * (90 + lift) + follow * shinAngle
+end
+
 -- where a Mipo's weight is: the mass-weighted centre of its parts (x, y)
 local function centreOf(inst)
     local m, x, y = 0, 0, 0
@@ -825,7 +873,7 @@ local function stepLegs(inst, dt, speed, face, side, legLen, weighty)
     local stride = math.max(2 * legLen * math.sin(math.rad(STRIDE)), speed / MAX_STEPS)
     local swing = math.min(MAX_STRIDE, math.deg(math.asin(math.min(1, stride / (2 * legLen)))))
     inst._gait = (inst._gait or 0) + speed * dt / stride * math.pi
-    local swinging, forward, pushOff = {}, {}, 0
+    local swinging, forward, pushOff, cycle = {}, {}, 0, {}
     local keyed = weighty and lib.keyed
     local holding = keyed and lib.torsoHold > 0
     -- SIMBICON's foot placement (LO1): degrees the swinging thigh aims further forward
@@ -853,6 +901,7 @@ local function stepLegs(inst, dt, speed, face, side, legLen, weighty)
         if keyed then
             -- the sine's contact (thigh furthest forward) is at phase pi/2
             local u = ((phase - math.pi / 2) % TWO_PI) / TWO_PI
+            cycle[i] = u
             local fwd, bend = walkPose(u)
             swinging[i], forward[i] = u >= 0.5, fwd
             thigh = -face * fwd * swing
@@ -895,7 +944,18 @@ local function stepLegs(inst, dt, speed, face, side, legLen, weighty)
     end
     inst._stance = (not swinging[1]) and 1 or ((not swinging[2]) and 2 or inst._stance)
     if holding and not lib.torsoByMotor and inst._stance then holdTorso(inst, dt, face, inst._stance, legLen) end
-    if side then holdFeet(inst, face, swinging) else holdFeet(inst, nil) end
+    local footAngles
+    if keyed and lib.footRoll and side then
+        footAngles = {}
+        for i, leg in ipairs(LEG_PAIRS) do
+            local shin = partBody(inst, leg[2])
+            if shin and cycle[i] then
+                local a = shin:getAngle()
+                footAngles[i] = footAngle(cycle[i], face, math.deg((a + math.pi) % TWO_PI - math.pi))
+            end
+        end
+    end
+    if side then holdFeet(inst, face, swinging, footAngles) else holdFeet(inst, nil) end
     hipsBack(inst, side and face or nil)
     -- the arms against the legs: the left arm forward with the right leg (mipoActions' arm hang, world
     -- angles, + toward the screen's left)
