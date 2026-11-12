@@ -18,6 +18,7 @@ local voiceLabParams = require('src.voice-lab-params')
 local hairBounce = require('src.hair-bounce')
 local mipoWalk = require('src.mipo-walk')
 local mipoEmotion = require('src.mipo-emotion')
+local tuning = require('src.tuning')
 local jointGuard = require('src.mipo-joint-guard')
 
 local PANEL_WIDTH = ui.theme.panelWidth
@@ -144,6 +145,27 @@ function lib.drawWorldSettingsUI()
             if clicked then f.voiceLab = not f.voiceLab end
             if f.voiceLab then
                 y = y + inspector.drawParams('voicelab', voiceLabParams.rows, voiceLabParams.target(), nil, x, y, w)
+            end
+
+            -- the numbers the engine's systems were tuned with in their spikes (src/tuning.lua): live, not saved
+            clicked, y = sectionHeader(x, y, w, 'tuning', f.tuning)
+            if clicked then f.tuning = not f.tuning end
+            if f.tuning then
+                f.tune = f.tune or {}
+                for _, entry in ipairs(tuning.entries()) do
+                    for _, group in ipairs(entry.groups) do
+                        local key = entry.name .. ' ' .. group.label
+                        if ui.button(x + 16, y, w - 16, (f.tune[key] and '÷ ' or '• ') .. key) then
+                            f.tune[key] = not f.tune[key]
+                        end
+                        y = y + ui.theme.button.height + ui.theme.spacing
+                        if f.tune[key] then
+                            y = y + inspector.drawParams('tune ' .. key, group.rows, group.target(), nil, x, y, w)
+                        end
+                    end
+                    if ui.button(x + 16, y, w - 16, 'print ' .. entry.name .. ' values') then tuning.print(entry) end
+                    y = y + ui.theme.button.height + ui.theme.spacing
+                end
             end
 
             usedHeight = y - top

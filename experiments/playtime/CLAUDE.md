@@ -30,6 +30,12 @@ and go through `src/physics-units.lua` where they're used (`units.speed(lib.jump
 measured speeds/forces come back with `units.toReferenceSpeed/Force`, so thresholds keep their
 numbers. Add new ones the same way. Spec worlds use `9.8 * love.physics.getMeter()` gravity.
 
+Spikes and their sliders: a spike's reusable part (a look, a system) goes in its own loadable file from the
+start, not inside the scene script (`scripts/spikes/print-looks.lua`, `plant-look.lua`). When it lands in the
+engine, its spike's sliders come with it: the module declares `lib.tuning` (`src/tuning.lua`), and they show in
+the settings panel's 'tuning' section, live, not saved; 'print values' writes them to the console. A tuning
+row is for numbers to tweak while it runs; what a scene keeps is a scene setting (`lib.rows` + save/load).
+
 Love executable: `/Applications/love115.app/Contents/MacOS/love`
 LÖVE version: 11.5, window 1200x768.
 

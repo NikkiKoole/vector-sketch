@@ -198,6 +198,31 @@ lib.REACT = {
 }
 local units = require('src.physics-units')
 
+-- the spike's numbers, live in the settings panel's 'tuning' section (src/tuning.lua): how they react, how
+-- quickly a feeling glides, and each feeling's levers (mouth shares as the feeling has them)
+local tuning = require('src.tuning')
+lib.tuning = {
+    { label = 'reactions', target = function() return lib.REACT end, rows = tuning.numbers({
+        { 'surprise', 0, 3, 0.05 }, { 'heldHappy', 0, 1, 0.05 }, { 'throwSpeed', 100, 3000, 10 },
+        { 'scaredFor', 0, 5, 0.1 }, { 'putDownFor', 0, 5, 0.1 }, { 'sadAfterDaze', 0, 5, 0.1 },
+        { 'stillSpeed', 0, 300, 1 }, { 'sleepAfter', 1, 60, 1 }, { 'wakeSpeed', 0, 600, 5 } }) },
+    { label = 'glide', target = function() return lib end, rows = tuning.numbers({
+        { 'IN', 0.02, 2, 0.01 }, { 'OUT', 0.02, 3, 0.01 }, { 'BLUSH_ALPHA', 0, 1, 0.05 } }) },
+}
+for _, name in ipairs(lib.NAMES) do
+    local e = lib.EMOTIONS[name]
+    local spec = { { 'raise', -2, 2, 0.05 }, { 'bend.1', -3, 3, 0.05 }, { 'bend.2', -3, 3, 0.05 },
+        { 'bend.3', -3, 3, 0.05 }, { 'eye', 0.1, 2, 0.05 }, { 'pupil', 0.3, 2, 0.05 }, { 'brow', 0.5, 2, 0.05 },
+        { 'blush', 0, 1, 0.05 } }
+    local shapes = {}
+    for shape in pairs(e.mouth) do shapes[#shapes + 1] = shape end
+    table.sort(shapes)
+    for _, shape in ipairs(shapes) do spec[#spec + 1] = { 'mouth.' .. shape, 0, 3, 0.05 } end
+    if e.flush then spec[#spec + 1] = { 'flush.4', 0, 1, 0.01 } end
+    lib.tuning[#lib.tuning + 1] = { label = name, target = function() return lib.EMOTIONS[name] end,
+        rows = tuning.numbers(spec) }
+end
+
 local function torsoSpeed(instance)
     local torso = instance.parts and instance.parts.torso1
     if not (torso and torso.body and not torso.body:isDestroyed()) then return 0 end
