@@ -33,13 +33,13 @@ for bar = 0, 2 do
     for _, n in ipairs({ pulse(bar) }) do lib.BASS[#lib.BASS + 1] = n end
 end
 local function add(list, entries) for _, e in ipairs(entries) do list[#list + 1] = e end end
+-- Eb3 on 3, half a beat, and again on 4: bar 1's in all three bars. The record's bars 2 and 3 held the first
+-- nearly a beat, and then the one on 4 ran into it without an attack (onset 0.4-0.5 against bar 1's 0.9:
+-- Nikki 2026-11-12, "the vibes still seem to lose an end note at the second bar or 3rd")
 add(lib.BASS, {
-    { 2, 51, 0.5, false },               -- Eb3, bar 1: half a beat
-    { 3, 51, 0.35, false },
-    { 6, 51, 0.95, false },              -- bar 2: held
-    { 7, 51, 0.4, false },
-    { 10, 51, 0.9, false },              -- bar 3
-    { 11, 51, 0.2, false },
+    { 2, 51, 0.5, false }, { 3, 51, 0.35, false },
+    { 6, 51, 0.5, false }, { 7, 51, 0.35, false },
+    { 10, 51, 0.5, false }, { 11, 51, 0.35, false },
     { 12, 45, 0.12, true },              -- A2, a short one, then held
     { 12.25, 45, 0.6, false },
     { 14.25, 38, 0.85, false },          -- D2 on the 'e' of 3 (a 16th late)
