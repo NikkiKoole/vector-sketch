@@ -22,7 +22,8 @@ draw) each glyph (three times)". Before printing a sheet and drawing 120 letters
 - `scripts/spikes/lettering`: a line, a title, a sign, the alphabet; panel for text, size, boil, jiggle, seed;
   v shows the atlas. `spec/lettering_spec.lua` checks the picking (`LETTERING_PNG=<path>` writes a picture).
 
-- [ ] LF1. Nikki looks at it in the spike: the wobble right? boil speed? Keep, change or park?
+- [x] LF1. Nikki looks at it in the spike: the wobble right? boil speed? Keep, change or park? Kept as it is
+  (2026-11-12: "its fine like this for now").
 - [ ] LF2. If kept: where it's used first (a sign in a room, the scene titles), and whether it ships with
   every build (it's named in src/, so ship-list packs it: ~360 KB a font, three now)
 - [x] LF3. Other fonts through the forge: Windsor (WindsorBT-Roman.otf) and Cooper Bold
