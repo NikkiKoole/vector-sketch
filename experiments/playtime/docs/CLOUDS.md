@@ -89,6 +89,15 @@ steeply with cold), below evaporates. Pulled up past the point where it's warmer
       to cloud at the base line, and past the free-convection level carries on alone, turrets
       climbing; drag it down and it warms and fades. The thermals are the lobes of the existing
       shader, so the look stays.
+  Built 2026-11-12, for Nikki to try (scene `clouds`, play mode; `e` or the panel's checkbox
+  switches between growing and the old sky): the physics in `src/cloud-air.lua` (pure, spec
+  `spec/cloud-air_spec.lua`: bases ~125 m per degree of dew point spread, taking off past free
+  convection, stopping under the lid); the thermals live in layer 5 (1 unit = 1 m). Press on clear
+  sky and drag to paint moist air (97% humid, a little warm: near the ground it rises by itself);
+  press on a cloud or shimmer to pull the whole cloud it's part of, let go with a flick and it keeps
+  the speed. Lines: cloud base, goes on by itself, lid. Time x25 by default (x80 was gone in 6 s).
+  Seen in screenshots: a pulled cloud climbs to the lid in ~5 s, spreads under it and tatters away;
+  painted air low down becomes a flat-based cloud that stays under the take-off line.
 - [ ] **CG3. Its life.** Young clouds crisp, older ones ragged, evaporating at the edges into dry
       air. A big one hits the lid and spreads into an anvil; the base goes heavy and dark, it rains
       (the existing drops), a cold downdraft under it, then it dies.

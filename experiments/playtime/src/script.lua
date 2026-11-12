@@ -98,6 +98,7 @@ local baseEnv = {
     festoon                  = require('src.festoon'), -- a wire of bulbs in swags (light-grass-check, LS26)
     grass                    = require('src.grass'), -- the grass edge sfixture; its blade atlas (ATLAS, QUADS)
     fire                     = require('src.fire'), -- a campfire: flames, glow, sparks, its light's flicker
+    cloudAir                 = require('src.cloud-air'), -- the air clouds grow in, thermals (clouds, CLOUDS.md CG1)
     waterLook                = require('src.render.water-shader'), -- the see-through water shader (seaside)
     torsoLobes               = require('src.torso-lobes'), -- applySoftness / setSprings: live softness (maker)
     facePatches              = require('src.face-patches'), -- eye hollows, cheeks, a snout (breeds, facing)

@@ -76,11 +76,15 @@ local function clouds()
     b.settings = b.settings or {}
     -- Nikki's settings (2026-11-03): no strokes, hairs or grain, strong light
     local defaults = { wind = 1, morph = 1, strokes = 0, hair = 0, grain = 0, light = 2, cotton = 1,
-        back = 0.84, front = 1.12, behind = 40, infront = 110, blades = 1 }
+        back = 0.84, front = 1.12, behind = 40, infront = 110, blades = 1,
+        -- growing clouds (CG1): the air, and how fast the sky's time runs (x real)
+        groundT = 22, groundRH = 70, aloftRH = 45, lapse = 7.5, lidKm = 3.5, lidK = 4, speed = 25 }
     for key, v in pairs(defaults) do
         if b.settings[key] == nil then b.settings[key] = v end
     end
     if b.showPanel == nil then b.showPanel = true end
+    b.thermals = b.thermals or {}
+    if b.grow == nil then b.grow = true end
     return b
 end
 
@@ -604,6 +608,363 @@ local quad = love.graphics.newMesh({
     { -1, -1, 0, 0 }, { 1, -1, 1, 0 }, { 1, 1, 1, 1 }, { -1, 1, 0, 1 },
 }, 'fan', 'static')
 
+local panelRect = { 20, 0, 400, 0 }
+local function overPanel(b)
+    if not b.showPanel or ui.isPanelFolded('•• clouds ••') then return false end
+    local mx, my = love.mouse.getPosition()
+    local r = panelRect
+    return mx >= r[1] and mx <= r[1] + r[3] and my >= r[2] and my <= r[2] + r[4]
+end
+
+---------------------------------------------------------------- growing clouds (CG1, CG2)
+-- Paint moist air with a finger, pull it up: it cools, turns to cloud at the base line, and past
+-- the line where it gets warmer than the air it goes on by itself, up to the lid. The physics is
+-- src/cloud-air.lua; each thermal is a lobe of one cloud shape (a sum of soft balls) drawn here.
+-- The thermals live in one layer (GROW_LAYER), 1 unit = 1 m, y = -height.
+
+local GROW_LAYER = 5
+local MAX_THERMALS = 140
+local MAXL = 64        -- lobes the shader takes
+
+local grownShader = love.graphics.newShader([[
+#ifdef GL_ES
+precision highp float;
+#endif
+#define MAXL 64
+uniform vec4 lobes[MAXL];      // screen pixels: x, y, radius, how much cloud (0..1)
+uniform float lobeBase[MAXL];  // screen y of its own base (where it turned to cloud)
+uniform int count;
+uniform vec3 toLayer;          // metres in the layer = (sc - xy) * z
+uniform float pxPerM;
+uniform float time;
+uniform vec2 sunDir;
+uniform float light;
+uniform float cotton;
+
+float h21(vec2 p) {
+    p = fract(p * vec2(123.34, 456.21));
+    p += dot(p, p + 45.32);
+    return fract(p.x * p.y);
+}
+float vn(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    return mix(mix(h21(i), h21(i + vec2(1.0, 0.0)), f.x),
+               mix(h21(i + vec2(0.0, 1.0)), h21(i + vec2(1.0, 1.0)), f.x), f.y);
+}
+float fbm(vec2 p) {
+    float s = 0.0;
+    float a = 0.5;
+    for (int i = 0; i < 4; i++) {
+        s += a * vn(p);
+        p = p * 2.03 + vec2(17.1, 9.2);
+        a *= 0.5;
+    }
+    return s / 0.9375;
+}
+
+// the cloud's field: soft balls added up (lobes melt together), each fading out below its base
+float field(vec2 p, float rag) {
+    float F = 0.0;
+    for (int i = 0; i < MAXL; i++) {
+        if (i >= count) break;
+        vec4 L = lobes[i];
+        vec2 d = (p - L.xy) / L.z;
+        float f = exp(-dot(d, d) * 1.5) * L.w;
+        float below = (p.y + rag * 18.0 * pxPerM - lobeBase[i]) / (60.0 * pxPerM);
+        f *= 1.0 - smoothstep(0.0, 1.0, below) * (1.0 - cotton * 0.85);
+        F += f;
+    }
+    return F;
+}
+
+vec4 effect(vec4 color, Image tex, vec2 uv, vec2 sc) {
+    vec2 lp = (sc - toLayer.xy) * toLayer.z;
+    float t = time;
+    float rag = fbm(vec2(lp.x / 260.0 + t * 0.05, lp.y / 160.0 - t * 0.03)) - 0.5;
+    float lumps = fbm(lp / 110.0 + t * 0.02) - 0.5;
+    float F = field(sc, rag);
+    float E = F - 0.42 + rag * 0.22 + lumps * 0.12 * (0.4 + cotton);
+    float dens = smoothstep(0.0, 0.22, E);
+    if (dens <= 0.001) return vec4(0.0);
+    float sh = 90.0 * pxPerM;
+    float Fs = field(sc + sunDir * sh, rag);
+    float Fu = field(sc + vec2(0.0, -sh), rag);
+    // lit where it ends towards the sun and on top, grey where there's a lot of cloud above it
+    float lit = 0.6 + light * ((F - Fs) * 0.55 + (F - Fu) * 0.45);
+    lit -= light * clamp(Fu - 0.5, 0.0, 1.0) * 0.18;
+    vec3 top = vec3(1.0, 1.0, 0.98);
+    vec3 belly = mix(vec3(0.70, 0.79, 0.90), vec3(0.83, 0.82, 0.84), cotton);
+    vec3 col = mix(belly, top, clamp(lit, 0.0, 1.0));
+    col += vec3(1.0, 0.92, 0.72) * (1.0 - smoothstep(0.0, 0.25, E)) * 0.25;
+    dens *= 0.95;
+    return vec4(col * dens, dens) * color.a;
+}
+]])
+
+-- a soft round dab for the moist air that isn't cloud yet
+local vapourImage = (function()
+    local n = 64
+    local data = love.image.newImageData(n, n)
+    data:mapPixel(function(x, y)
+        local dx, dy = (x + 0.5) / n * 2 - 1, (y + 0.5) / n * 2 - 1
+        local a = math.max(0, 1 - (dx * dx + dy * dy))
+        return 1, 1, 1, a * a
+    end)
+    return love.graphics.newImage(data)
+end)()
+
+local function airOf(set)
+    local a = { groundT = set.groundT, groundRH = set.groundRH, aloftRH = set.aloftRH,
+        lapse = set.lapse, lidZ = set.lidKm * 1000, lidK = set.lidK }
+    a.key = table.concat({ a.groundT, a.groundRH, a.aloftRH, a.lapse, a.lidZ, a.lidK }, ' ')
+    return a
+end
+
+-- the lines (condensation level, free convection, the top), worked out again when the air changes
+local function levelsOf(b, air)
+    if b.levelsKey ~= air.key then
+        b.levelsKey = air.key
+        b.lcl, b.lfc, b.top = cloudAir.levels(air)
+    end
+    return b.lcl, b.lfc, b.top
+end
+
+local function growMouse()
+    local w, h, cx, cy, scale = view()
+    local mx, my = love.mouse.getPosition()
+    local lx, ly, k = layerCam(LAYERS[GROW_LAYER].f, cx, cy, scale)
+    return lx + (mx - w / 2) / k, ly + (my - h / 2) / k, k
+end
+
+local function thermalAt(b, x, y)
+    local best, bestD
+    for _, p in ipairs(b.thermals) do
+        local d = math.sqrt((p.x - x) ^ 2 + (-p.z - y) ^ 2)
+        if d < p.r * 1.1 and (not bestD or d < bestD) then best, bestD = p, d end
+    end
+    return best
+end
+
+-- everything touching it, and touching those: the cloud it's part of
+local function clusterOf(b, first)
+    local inside, list = { [first] = true }, { first }
+    local i = 1
+    while list[i] do
+        local p = list[i]
+        for _, q in ipairs(b.thermals) do
+            if not inside[q] and (p.x - q.x) ^ 2 + (p.z - q.z) ^ 2 < ((p.r + q.r) * 0.9) ^ 2 then
+                inside[q] = true
+                list[#list + 1] = q
+            end
+        end
+        i = i + 1
+    end
+    return list
+end
+
+-- a dab of moist air at (x, y): a new thermal, or more vapour in one that's there
+local function paint(b, air, x, y)
+    local z = math.max(0, -y)
+    local near = thermalAt(b, x, y)
+    if near and math.sqrt((near.x - x) ^ 2 + (near.z - z) ^ 2) < near.r * 0.5 then
+        near.qv = near.qv + 0.35
+        cloudAir.moveTo(near, near.z) -- condenses what's too much
+        return
+    end
+    if #b.thermals >= MAX_THERMALS then return end
+    local p = cloudAir.newThermal(air, x, z, 0.97, 0.2, 280 + love.math.random() * 120)
+    p.seed = love.math.random()
+    b.thermals[#b.thermals + 1] = p
+end
+
+local function growInput(b, air, dt)
+    local set = b.settings
+    local down = state.playMode and love.mouse.isDown(1)
+    local mx, my = growMouse()
+    if down and not b.wasDown and not overPanel(b) and #getInteractedWithPointer() == 0 then
+        local p = thermalAt(b, mx, my)
+        if p then
+            -- pull: the whole cloud comes along
+            b.pulled = {}
+            for _, q in ipairs(clusterOf(b, p)) do
+                b.pulled[#b.pulled + 1] = { p = q, dx = q.x - mx, dy = -q.z - my }
+            end
+            b.pullVX, b.pullVY = 0, 0
+        else
+            b.painting = true
+            b.lastPaintX, b.lastPaintY = mx, my
+            paint(b, air, mx, my)
+        end
+        b.lastGrowX, b.lastGrowY = mx, my
+    end
+    b.wasDown = down
+    if not down then
+        if b.pulled then
+            -- let go: it keeps the speed it was pulled at (in the sky's own time)
+            local w = clamp(-b.pullVY / set.speed, -12, 12)
+            local u = clamp(b.pullVX / set.speed, -12, 12)
+            for _, e in ipairs(b.pulled) do e.p.w, e.p.u = w, u end
+        end
+        b.pulled, b.painting = nil, nil
+        return
+    end
+    if b.pulled and dt > 0 then
+        local vx, vy = (mx - b.lastGrowX) / dt, (my - b.lastGrowY) / dt
+        b.pullVX = b.pullVX + (vx - b.pullVX) * 0.3
+        b.pullVY = b.pullVY + (vy - b.pullVY) * 0.3
+        for _, e in ipairs(b.pulled) do
+            e.p.x = mx + e.dx
+            cloudAir.moveTo(e.p, math.max(0, -(my + e.dy)))
+            e.p.w, e.p.u = 0, 0
+        end
+    elseif b.painting then
+        local d = math.sqrt((mx - b.lastPaintX) ^ 2 + (my - b.lastPaintY) ^ 2)
+        if d > 160 then
+            paint(b, air, mx, my)
+            b.lastPaintX, b.lastPaintY = mx, my
+        end
+    end
+    b.lastGrowX, b.lastGrowY = mx, my
+end
+
+local function isPulled(b, p)
+    if not b.pulled then return false end
+    for _, e in ipairs(b.pulled) do if e.p == p then return true end end
+    return false
+end
+
+-- touching thermals push apart (a cloud spreads instead of stacking up in one spot) and drag
+-- each other along up and down, so a cloud goes up as one
+local function together(b, dt)
+    local list = b.thermals
+    for i = 1, #list do
+        local p = list[i]
+        for j = i + 1, #list do
+            local q = list[j]
+            local dx, dz = q.x - p.x, q.z - p.z
+            local reach = (p.r + q.r) * 0.75
+            local d2 = dx * dx + dz * dz
+            if d2 < reach * reach then
+                local d = math.sqrt(d2) + 1e-3
+                local overlap = 1 - d / reach
+                local push = overlap * 10 * dt
+                local nx = d > 1 and dx / d or (love.math.random() - 0.5)
+                p.x, q.x = p.x - nx * push, q.x + nx * push
+                local k = math.min(0.5, overlap * 0.08 * dt)
+                local dw = (q.w - p.w) * k
+                p.w, q.w = p.w + dw, q.w - dw
+            end
+        end
+    end
+end
+
+local function growUpdate(b, dt)
+    local set = b.settings
+    local air = airOf(set)
+    b.air = air
+    growInput(b, air, dt)
+    local simDt = dt * set.speed
+    local steps = math.max(1, math.ceil(simDt / 2))
+    local h = simDt / steps
+    for _ = 1, steps do
+        for _, p in ipairs(b.thermals) do
+            local wasCloud = p.qc > 0
+            cloudAir.step(air, p, h, isPulled(b, p))
+            -- its own base: where it turned to cloud; lower if it sinks while still cloud
+            if p.qc > 0 then
+                if not wasCloud or not p.baseZ or p.z < p.baseZ then p.baseZ = p.z end
+            else
+                p.baseZ = nil
+            end
+        end
+        together(b, h)
+    end
+    local keep = {}
+    for _, p in ipairs(b.thermals) do
+        if isPulled(b, p) or not cloudAir.spent(p) then
+            keep[#keep + 1] = p
+        end
+    end
+    b.thermals = keep
+end
+
+local function drawGrown(b, w, h, cx, cy, scale)
+    local lx, ly, k = layerCam(LAYERS[GROW_LAYER].f, cx, cy, scale)
+    local dpi = love.graphics.getDPIScale()
+    local function sx(x) return w / 2 + (x - lx) * k end
+    local function sy(y) return h / 2 + (y - ly) * k end
+    local air = b.air
+    -- the lines: where the ground's air turns to cloud, goes on alone, the lid
+    if air then
+        local lcl, lfc = levelsOf(b, air)
+        local font = love.graphics.getFont()
+        local function line(z, label, a, dash)
+            if not z then return end
+            local y = sy(-z)
+            if y < -10 or y > h + 10 then return end
+            love.graphics.setColor(1, 1, 1, a)
+            if dash then
+                for x = 0, w, 24 do love.graphics.line(x, y, x + 12, y) end
+            else
+                love.graphics.line(0, y, w, y)
+            end
+            love.graphics.print(label, w - font:getWidth(label) - 12, y - font:getHeight() - 2)
+        end
+        love.graphics.setLineWidth(1)
+        line(lcl, string.format('cloud base %.1f km', lcl and lcl / 1000 or 0), 0.35)
+        line(lfc, string.format('goes on by itself %.1f km', lfc and lfc / 1000 or 0), 0.25, true)
+        line(air.lidZ, string.format('lid %.1f km', air.lidZ / 1000), 0.3)
+    end
+    -- moist air not cloud yet: a faint shimmer, stronger the closer it is to turning to cloud
+    love.graphics.setBlendMode('add')
+    for _, p in ipairs(b.thermals) do
+        local near = clamp((cloudAir.rh(p) - cloudAir.SPENT_RH) / (0.97 - cloudAir.SPENT_RH), 0, 1)
+        local a = near * near * 0.1 * (1 - clamp(p.qc / 0.3, 0, 1))
+        if a > 0.005 then
+            local wob = 1 + 0.06 * math.sin(b.time * 2.3 + p.seed * 20)
+            local r = p.r * k * 1.25 * wob
+            love.graphics.setColor(0.85, 0.92, 1, a)
+            love.graphics.draw(vapourImage, sx(p.x), sy(-p.z), 0, 2 * r / 64, 2 * r / 64, 32, 32)
+        end
+    end
+    love.graphics.setBlendMode('alpha')
+    -- the cloud: the thermals with cloud water as lobes, one shape
+    local lobes, bases = {}, {}
+    local x0, y0, x1, y1 = math.huge, math.huge, -math.huge, -math.huge
+    for _, p in ipairs(b.thermals) do
+        local amount = clamp(p.qc / 0.5, 0, 1)
+        if amount > 0.02 and #lobes < MAXL then
+            local r = p.r * k * (0.75 + 0.35 * amount)
+            local px, py = sx(p.x), sy(-p.z)
+            lobes[#lobes + 1] = { px * dpi, py * dpi, r * dpi, amount }
+            bases[#bases + 1] = sy(-(p.baseZ or p.z)) * dpi
+            x0, y0 = math.min(x0, px - r * 1.3), math.min(y0, py - r * 1.3)
+            x1, y1 = math.max(x1, px + r * 1.3), math.max(y1, py + r * 1.3)
+        end
+    end
+    if #lobes == 0 then return end
+    local sunX, sunY = SUN[1] * w, SUN[2] * h
+    local dx, dy = sunX - (x0 + x1) / 2, sunY - (y0 + y1) / 2
+    local len = math.sqrt(dx * dx + dy * dy) + 1e-3
+    love.graphics.setShader(grownShader)
+    grownShader:send('lobes', unpack(lobes))
+    grownShader:send('lobeBase', unpack(bases))
+    grownShader:send('count', #lobes)
+    grownShader:send('toLayer', { (w / 2 - lx * k) * dpi, (h / 2 - ly * k) * dpi, 1 / (k * dpi) })
+    grownShader:send('pxPerM', k * dpi)
+    grownShader:send('time', b.time * b.settings.morph)
+    grownShader:send('sunDir', { dx / len, dy / len })
+    grownShader:send('light', b.settings.light)
+    grownShader:send('cotton', b.settings.cotton)
+    love.graphics.setBlendMode('alpha', 'premultiplied')
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.rectangle('fill', x0, y0, x1 - x0, y1 - y0)
+    love.graphics.setBlendMode('alpha')
+    love.graphics.setShader()
+end
+
 local shadowMesh = love.graphics.newMesh(128, 'strip', 'stream')
 local HILL_MAX = 600
 local hillMesh = love.graphics.newMesh(HILL_MAX * 2, 'strip', 'stream')
@@ -645,17 +1006,11 @@ function s.onKeyPress(key)
     elseif key == 'm' then
         local mx, my = mouseWorldPos()
         spawnMipo(b, mx, my)
+    elseif key == 'r' and b.grow then b.thermals = {}
     elseif key == 'r' then fillSky(b); b.drops = {}
+    elseif key == 'e' then b.grow = not b.grow
     elseif key == 'h' then b.showPanel = not b.showPanel
     end
-end
-
-local panelRect = { 20, 0, 400, 0 }
-local function overPanel(b)
-    if not b.showPanel or ui.isPanelFolded('•• clouds ••') then return false end
-    local mx, my = love.mouse.getPosition()
-    local r = panelRect
-    return mx >= r[1] and mx <= r[1] + r[3] and my >= r[2] and my <= r[2] + r[4]
 end
 
 local function holding(b, dt)
@@ -755,6 +1110,10 @@ function s.update(dt)
     local set = b.settings
     b.time = b.time + dt
     b.gust = b.gust * math.max(0, 1 - dt * 0.8)
+    if b.grow then
+        growUpdate(b, dt)
+        return
+    end
     holding(b, dt)
     local w, _, cx, cy, scale = view()
     for _, c in ipairs(b.list) do
@@ -877,10 +1236,16 @@ local function drawSky(b, front)
             love.graphics.setBlendMode('alpha', 'premultiplied')
             love.graphics.setShader(cloudShader)
             sendCommon(b)
-            for _, c in ipairs(byLayer[i] or {}) do drawCloud(c, w, h, cx, cy, scale, dpi) end
+            if not b.grow then
+                for _, c in ipairs(byLayer[i] or {}) do drawCloud(c, w, h, cx, cy, scale, dpi) end
+            end
             love.graphics.setShader()
             love.graphics.setBlendMode('alpha')
-            for _, d in ipairs(dropsByLayer[i] or {}) do drawDrop(d, w, h, cx, cy, scale) end
+            if not b.grow then
+                for _, d in ipairs(dropsByLayer[i] or {}) do drawDrop(d, w, h, cx, cy, scale) end
+            elseif i == GROW_LAYER then
+                drawGrown(b, w, h, cx, cy, scale)
+            end
         end
     end
     while not front and HILLS[nextHill] do
@@ -940,7 +1305,7 @@ function s.drawBelow()
     -- the ground, in the world
     planeFrom(b.settings)
     drawGround()
-    drawShadows(b)
+    if not b.grow then drawShadows(b) end
     love.graphics.setColor(DARK_GRASS[1], DARK_GRASS[2], DARK_GRASS[3], 1)
     bladeRow(backBlades, K_BACK + 0.02, -BACK, 1, 1.5, b.time)
     love.graphics.setColor(1, 1, 1, 1)
@@ -982,24 +1347,42 @@ function s.drawUI()
         { 'grain', 0, 2 }, { 'light', 0, 2 }, { 'cotton', 0, 1 },
         { 'back', 0.5, 1 }, { 'front', 1, 1.6 }, { 'behind', 0, 400, 1 }, { 'infront', 0, 400, 1 }, { 'blades', 0, 3 },
     }
-    local h = (BH + pad) * (#rows + 2) + pad + 24
+    -- growing (CG1): the air; label, low, high, whole numbers
+    if b.grow then
+        rows = {
+            { 'groundT', 0, 40, 1, 'ground °C' }, { 'groundRH', 20, 100, 1, 'ground humidity %' },
+            { 'aloftRH', 10, 100, 1, 'humidity up high %' }, { 'lapse', 4, 10, nil, 'cools °C per km' },
+            { 'lidKm', 1, 10, nil, 'lid km' }, { 'lidK', 0, 8, nil, 'lid warmer °C' },
+            { 'speed', 1, 200, 1, 'time x real' }, { 'light', 0, 2 }, { 'cotton', 0, 1 },
+        }
+    end
+    local h = (BH + pad) * (#rows + 3) + pad + 24
     local _, sh = love.graphics.getDimensions()
     local x0, y0 = 20, sh - h - 20
     panelRect[2], panelRect[4] = y0, h
     ui.panel(x0, y0, w, h, '•• clouds ••', function()
         local layout = ui.createLayout({ type = 'columns', spacing = pad, startX = x0 + pad, startY = y0 + pad + 20 })
+        local cx, cy = ui.nextLayoutPosition(layout, w - 20, BH)
+        local changed, on = ui.checkbox(cx, cy, b.grow, 'grow clouds (e)')
+        if changed then b.grow = on end
         for _, row in ipairs(rows) do
             local key = row[1]
             local x, y = ui.nextLayoutPosition(layout, w - 20, BH)
             -- row[4] = 1: whole numbers; else two decimals
             local v = ui.sliderWithInput('clouds' .. key, x, y, 180, row[2], row[3], b.settings[key], nil, row[4])
             if v then b.settings[key] = v + 0 end
-            ui.label(x + 280, y, key)
+            ui.label(x + 280, y, row[5] or key)
         end
         local x, y = ui.nextLayoutPosition(layout, w - 20, BH)
-        ui.label(x, y, 'weather: ' .. WEATHERS[b.weather].name .. '  (w)')
-        x, y = ui.nextLayoutPosition(layout, w - 20, BH)
-        ui.label(x, y, 'drag, shake, tap a cloud   c g m r h')
+        if b.grow then
+            ui.label(x, y, 'paint moist air, pull a cloud up')
+            x, y = ui.nextLayoutPosition(layout, w - 20, BH)
+            ui.label(x, y, 'r clears   m a Mipo   h the panel')
+        else
+            ui.label(x, y, 'weather: ' .. WEATHERS[b.weather].name .. '  (w)')
+            x, y = ui.nextLayoutPosition(layout, w - 20, BH)
+            ui.label(x, y, 'drag, shake, tap a cloud   c g m r h')
+        end
     end)
 end
 
