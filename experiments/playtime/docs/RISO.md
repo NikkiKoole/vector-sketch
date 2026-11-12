@@ -103,5 +103,9 @@ there we are forgetting that might be good for us too"; then "y" to the first fo
   pictures, so the hand-drawn Mipos stay as drawn), or a picture pass over a whole scene (SHADER-LOOKS
   SH3's effects stack; the water look's canvas, `src/water-look.lua`, is the same shape). Inks per scene
   or per room.
+  On burrow's ground: tried 2026-11-12, off (Nikki: "doesnt look nice", keep the option). The earth, rim
+  and back grass printed through `scripts/spikes/print-looks.lua` (where the looks live since then, riso
+  loads them too); in burrow key `i` or the panel's "ground printed" button, off by default. Only the
+  default settings, riso grain at dot 2, which came out as fine speckle over the procedural earth.
 - [ ] **RI3. Cost on the phone** if it's a whole-picture pass (one full-screen pass, three plate samples
   per pixel).
