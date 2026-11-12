@@ -642,6 +642,7 @@ precision highp float;
 #define MAXL 64
 uniform vec4 lobes[MAXL];      // screen pixels: x, y, radius, how much cloud (0..1)
 uniform float lobeBase[MAXL];  // screen y of its own base (where it turned to cloud)
+uniform vec2 lobeShift[MAXL];  // metres it has moved since it was made: the bumps and noise go along
 uniform int count;
 uniform vec3 toLayer;          // metres in the layer = (sc - xy) * z
 uniform float pxPerM;
@@ -723,6 +724,23 @@ float billow(vec2 lp, float t) {
 }
 
 // smoke: billowing, soft-edged, see-through where thin, dark in its thick middle, glowing hot
+// how far the lobes around p have moved (each weighted by how much it's there): the noise and
+// the domes are read that much back, so they travel with the cloud instead of it sliding through
+// them (Nikki: "i dont like how the billows are sort of screenbound")
+vec2 shiftAt(vec2 p) {
+    vec2 acc = vec2(0.0);
+    float wsum = 1e-4;
+    for (int i = 0; i < MAXL; i++) {
+        if (i >= count) break;
+        vec4 L = lobes[i];
+        vec2 d = (p - L.xy) / L.z;
+        float f = exp(-dot(d, d) * 1.5) * L.w;
+        acc += f * lobeShift[i];
+        wsum += f;
+    }
+    return acc / wsum;
+}
+
 vec4 smokeColour(vec2 sc, vec2 lp, float t) {
     float rag = fbm(vec2(lp.x / 320.0 + t * 0.06, lp.y / 260.0 - t * 0.08)) - 0.5;
     float lumps = fbm(lp / 170.0 + vec2(t * 0.03, -t * 0.05)) - 0.5;
@@ -748,6 +766,7 @@ vec4 smokeColour(vec2 sc, vec2 lp, float t) {
 
 vec4 effect(vec4 color, Image tex, vec2 uv, vec2 sc) {
     vec2 lp = (sc - toLayer.xy) * toLayer.z;
+    lp -= shiftAt(sc);
     float t = time;
     if (smoke > 0.5) return smokeColour(sc, lp, t) * color.a;
     float rag = fbm(vec2(lp.x / 260.0 + t * 0.05, lp.y / 160.0 - t * 0.03)) - 0.5;
@@ -957,6 +976,10 @@ local function mergeSmoke(b)
                     p.qc = p.qc * wa + q.qc * wc
                     p.w, p.u = p.w * wa + q.w * wc, p.u * wa + q.u * wc
                     p.x, p.z = p.x * wa + q.x * wc, p.z * wa + q.z * wc
+                    -- where they were made too, so the smoke's pattern doesn't jump at a merge
+                    if p.ox and q.ox then
+                        p.ox, p.oz = p.ox * wa + q.ox * wc, p.oz * wa + q.oz * wc
+                    end
                     p.soot = math.min(1, p.soot * wa + q.soot * wc + 0.15 * math.min(p.soot, q.soot))
                     p.r = math.min(cloudAir.SMOKE_MAX_R, math.sqrt(a + c))
                     gone[q] = true
@@ -1120,7 +1143,12 @@ local function growUpdate(b, dt)
     for _, p in ipairs(b.thermals) do
         if not isPulled(b, p) then
             p.x = p.x + windV * dt
-            if p.x - lx > hx then p.x = p.x - 2 * hx elseif p.x - lx < -hx then p.x = p.x + 2 * hx end
+            local jump = 0
+            if p.x - lx > hx then jump = -2 * hx elseif p.x - lx < -hx then jump = 2 * hx end
+            if jump ~= 0 then
+                p.x = p.x + jump
+                if p.ox then p.ox = p.ox + jump end
+            end
         end
     end
     for _, p in ipairs(b.smoke) do p.x = p.x + windV * dt end
@@ -1220,7 +1248,10 @@ local function drawGrown(b, w, h, cx, cy, scale)
         -- (as far as reaching() looks, or a lobe just off the screen is missed at the edge)
         local m = r * 1.9 + LIGHT_REACH * k
         if px + m > 0 and px - m < w and py + m > 0 and py - m < h then
-            list[#list + 1] = { px = px, py = py, r = r, amount = amount, info = info }
+            -- where it was made, the first time it's seen (puffs and clouds from before this)
+            p.ox, p.oz = p.ox or p.x, p.oz or p.z
+            list[#list + 1] = { px = px, py = py, r = r, amount = amount, info = info,
+                shift = { p.x - p.ox, -(p.z - p.oz) } }
         end
     end
     local shown, smoky = {}, {}
@@ -1287,14 +1318,16 @@ local function drawGrown(b, w, h, cx, cy, scale)
         if #list > MAXL then
             table.sort(list, function(p, q) return p.amount * p.r > q.amount * q.r end)
         end
-        local lobes, bases = {}, {}
+        local lobes, bases, shifts = {}, {}, {}
         for i = 1, math.min(#list, MAXL) do
             local l = list[i]
             lobes[i] = { l.px * dpi, l.py * dpi, l.r * dpi, l.amount }
             bases[i] = l.info
+            shifts[i] = l.shift
         end
         grownShader:send('lobes', unpack(lobes))
         grownShader:send('lobeBase', unpack(bases))
+        grownShader:send('lobeShift', unpack(shifts))
         grownShader:send('count', #lobes)
         love.graphics.rectangle('fill', x0, y0, x1 - x0, y1 - y0)
     end

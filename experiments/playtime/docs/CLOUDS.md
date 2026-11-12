@@ -132,7 +132,11 @@ steeply with cold), below evaporates. Pulled up past the point where it's warmer
   clouds came out as smooth potatoes (lobes melting into one blob). Domes packed in cells (a
   jittered grid, each its own size) at two sizes, 230 m and 95 m: bumps on bumps push the outline
   out and in, each dome lit on its own (bright towards the sun and on top, dark in the creases),
-  churning slowly upwards. Slider 'billows' (0 = smooth). Not yet seen by Nikki in play.
+  churning slowly upwards. Slider 'billows' (0 = smooth). Nikki: "i dont like how the billows
+  are sort of screenbound": the domes and noise were fixed in the sky while clouds drifted through
+  them. Now each lobe carries how far it has moved since it was made (lobeShift, wraps and smoke
+  merges kept steady) and the pattern is read back by the lobes' weighted move, so it travels with
+  its cloud (and smoke). Nikki's settings then: light through cloud 0, billows 0.34, cotton 0.22.
 - [ ] **CG5. Wind with height.** Faster wind higher up leans towers and stretches tops; the
       existing fling and shake become pushes on the thermals.
 - [ ] **CG6. On the iPhone SE 2** (`./playtime.sh bench device`), then: into the engine with the
