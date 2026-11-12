@@ -118,6 +118,13 @@ questions that eat weeks; they wait for a real case.
     src/physics-units.lua): a Mipo dropped on the seat gets in (two kinds side by side, joined by
     joints), tap to drive, pick up kept upright, wind up; actions in the panel (drive, turn round, throw
     out the rider).
+    **KD4c 1 + 2 done 2026-11-12** (getting in, driving): `src/vehicle-rides.lua`, an engine system: a Mipo
+    let go over a free vehicle gets in (the spike's poses; the skater's feet welded), out when dragged out,
+    knocked hard, upside down a while, or a dazed skater; in play mode a tap drives (stopped: toward the side
+    tapped; going: front stops it, back turns it round), stopping coasts as in the spike; the panel's actions
+    (drive / stop, turn round, rider out). A deleted or dissolved vehicle lets its rider go. Rides on `state`,
+    not saved. Vehicles sized to real Mipos: S 850 (random Mipos at 0.3 stand 445-923; at 600 they hung over).
+    spec/vehicle-rides_spec.lua. Left (3): carried upright, pushed, wound up; the generous grab zone.
   - **KD4d. The other three types** (built with KD4b); left: the rides spike builds its street and places
     the engine's vehicles.
 - [ ] **KD4p. Prop recipes as a kind** (was KD4): a placed prop keeps its recipe name and settings (saved),

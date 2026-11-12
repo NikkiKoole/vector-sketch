@@ -10,8 +10,10 @@ local JT = require('src.joint-types')
 local uuid = require('src.uuid')
 local mathutils = require('src.math-utils')
 
--- a Mipo's standing height at scale 0.3 (src/props.lua's sizes): the rides spike's S
-lib.S = 600
+-- the rides spike's S: a Mipo's standing height (it took its first Mipo's, ~900). Random Mipos at scale 0.3
+-- stand 445-923 (measured 2026-11-12, mipoHeight), mostly 650-920; at 600 (the props' size) they hung over
+-- their vehicles and the skater fell off the deck
+lib.S = 850
 
 local function setMaterial(body, friction, restitution, density)
     for _, fixture in ipairs(body:getFixtures()) do
@@ -51,10 +53,16 @@ lib.TYPES = {}
 -- The four from the rides spike, in S (a Mipo's standing height): length, the sides' height (none: a
 -- deck), thickness, wheel radius, how far below the floor's top the axles sit (in wheel radii), the
 -- floor's share of the length (the banana's ends curl past it), where the wheels are (share of length).
-lib.TYPES.kart = { len = 1.0, H = 0.2, T = 0.05, r = 0.1, drop = 0.2, floor = 1, wheels = 0.38 }
-lib.TYPES.car = { len = 1.05, H = 0.32, T = 0.05, r = 0.13, drop = 0.1, floor = 1, wheels = 0.33 }
-lib.TYPES.banana = { len = 1.3, H = 0.26, T = 0.05, r = 0.1, drop = 0.3, floor = 0.8, wheels = 0.27 }
-lib.TYPES.skateboard = { len = 0.75, T = 0.045, r = 0.06, drop = 1.4, floor = 0.8, wheels = 0.3 }
+-- Riding (src/vehicle-rides.lua): the seat's x (in S, for one going right), the rider's pose, top speed (S a
+-- second), acceleration (of g), and the change of speed in a frame that throws the rider off (S a second).
+lib.TYPES.kart = { len = 1.0, H = 0.2, T = 0.05, r = 0.1, drop = 0.2, floor = 1, wheels = 0.38,
+    seat = -0.32, pose = 'legsOut', topSpeed = 6.5, accel = 0.7, crash = 2.6 } -- whizzy (Nikki 2026-11-09)
+lib.TYPES.car = { len = 1.05, H = 0.32, T = 0.05, r = 0.13, drop = 0.1, floor = 1, wheels = 0.33,
+    seat = -0.126, pose = 'carSeat', topSpeed = 2.6, accel = 0.3, crash = 1.6 }
+lib.TYPES.banana = { len = 1.3, H = 0.26, T = 0.05, r = 0.1, drop = 0.3, floor = 0.8, wheels = 0.27,
+    seat = -0.104, pose = 'carSeat', topSpeed = 3, accel = 0.35, crash = 1.6 }
+lib.TYPES.skateboard = { len = 0.75, T = 0.045, r = 0.06, drop = 1.4, floor = 0.8, wheels = 0.3,
+    seat = 0, pose = 'stand', topSpeed = 3.6, accel = 0.22, crash = 1.6 } -- gentle: a standing rider tips
 lib.order = { 'kart', 'car', 'banana', 'skateboard' }
 
 -- the frame: a tray (a floor and two low sides, one body), or a deck; its floor's top at y = 0
@@ -82,6 +90,17 @@ local function build(t, label, x, y, size)
     return parts
 end
 
+-- Its shape in the frame's own coordinates (the frame's origin is its outline's centroid): S, length, the
+-- floor's top (y), the sides' height, wheel radius, the seat's x for one going right; with its type's riding
+-- numbers. For src/vehicle-rides.lua.
+function lib.geometry(instance)
+    local t = lib.TYPES[instance.settings.type] or lib.TYPES.kart
+    local S = lib.S * (instance.settings.size or 1)
+    local cx, cy = mathutils.computeCentroid(frameVertices(t, S))
+    return { type = t, S = S, len = t.len * S, floorY = -cy, H = (t.H or 0) * S, r = t.r * S,
+        seatX = t.seat * S - cx, pose = t.pose, topSpeed = t.topSpeed * S, accel = t.accel, crash = t.crash * S }
+end
+
 -- the kind (src/kinds.lua): settings { type = 'kart', size = 1 }
 function lib.make(settings, x, y)
     settings.type = lib.TYPES[settings.type] and settings.type or 'kart'
@@ -90,6 +109,21 @@ function lib.make(settings, x, y)
 end
 
 function lib.label(instance) return instance.settings.type or 'vehicle' end
+
+-- what it can do, as buttons in its panel (src/ui/kind-editor.lua): { label, run } (src/vehicle-rides.lua)
+function lib.actions(instance)
+    local rides = require('src.vehicle-rides')
+    local list = {}
+    if rides.riderOf(instance) then
+        list[#list + 1] = { rides.isGoing(instance) and 'stop' or 'drive',
+            function() rides.setGoing(instance, not rides.isGoing(instance)) end }
+        list[#list + 1] = { 'turn round', function() rides.turnAround(instance) end }
+        list[#list + 1] = { 'rider out', function() rides.riderOut(instance) end }
+    else
+        list[#list + 1] = { 'turn round', function() rides.turnAround(instance) end }
+    end
+    return list
+end
 
 -- its settings in the panel (src/ui/kind-editor.lua): a change makes it again (kinds.rebuild)
 lib.rows = {

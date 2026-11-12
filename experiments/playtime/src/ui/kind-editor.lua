@@ -93,6 +93,16 @@ function lib.draw(instance, partName, panelX, panelY, panelWidth, panelH)
             return y - startY -- its bodies are new: the rest next frame
         end
 
+        -- what it can do (the kind's actions), two to a row
+        local actions = kind.actions and kind.actions(instance) or {}
+        local hw = math.floor(W / 2) - 2
+        for i, action in ipairs(actions) do
+            local col = (i - 1) % 2
+            if ui.button(x + col * (hw + 4), y, hw, action[1]) then action[2]() end
+            if col == 1 or i == #actions then y = y + ROW end
+        end
+
+
         -- its parts on a picture of it; the picked one's own rows
         y = y + ui.theme.spacing
         love.graphics.line(x, y, x + W, y)

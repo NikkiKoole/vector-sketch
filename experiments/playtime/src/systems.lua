@@ -43,6 +43,13 @@ lib.list = {
         update = function(m) m.update() end,
     },
     {
+        -- Mipos let go over a vehicle get in, and a tap drives it (src/vehicle-rides.lua, docs/KINDS.md KD4c)
+        name = 'vehicles',
+        module = 'src.vehicle-rides',
+        update = function(m, dt) m.update(dt) end,
+        unload = function(m) m.unload() end,
+    },
+    {
         name = 'sky', -- the scene's clock: the hour goes round while the day runs (src/scene-sky.lua, SKY.md)
         module = 'src.scene-sky',
         update = function(m, dt) m.update(dt) end,
