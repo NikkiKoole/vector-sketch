@@ -1,10 +1,32 @@
 # A hand-drawn font — three drawings per letter
 
-status: idea
+status: active
 
 Nikki (2026-11-12): "fonts, that are handdrawn, say 3 glyphs per glyph, any ideas?"; for signs and titles
 first, "but its just an idea at this point". Nothing on hand-drawn fonts tried before (`./playtime.sh tried font`:
 only the editor's Comic Shanns, said no 2026-10-27).
+
+## The software route first (built 2026-11-12)
+
+Nikki: "before all this, can we try an all software route, take a font, say comicsans, you try to follow (aka
+draw) each glyph (three times)". Before printing a sheet and drawing 120 letters, a font redrawn by the computer:
+
+- `claudetools/lettering-forge.py`: Comic Sans MS's outlines, each followed with a wobbling line (a slow drift
+  and a smaller tremble, pushed in and out along the line), the letter a little turned, stretched and shifted;
+  three tries per character, printable ASCII + a few accents, 312 drawings -> `textures/lettering/comic.png`
+  (2048 x 1819, em 160 px) + `comic.lua`. A quicker tremble looked like torn paper, so it's small.
+- `src/lettering.lua`: `lettering.draw(text, x, y, { size, boil, jiggle, seed, align })`. A letter's drawing
+  is picked by its place in the text; the same letter right after itself always gets another one. Boil (fps):
+  every tick each letter goes round its three in its own order, out of step with its neighbours. Each
+  drawing has its own little tilt and bounce (jiggle).
+- `scripts/spikes/lettering`: a line, a title, a sign, the alphabet; panel for text, size, boil, jiggle, seed;
+  v shows the atlas. `spec/lettering_spec.lua` checks the picking (`LETTERING_PNG=<path>` writes a picture).
+
+- [ ] LF1. Nikki looks at it in the spike: the wobble right? boil speed? Keep, change or park?
+- [ ] LF2. If kept: where it's used first (a sign in a room, the scene titles), and whether it ships with
+  every build (it's named in src/, so ship-list packs it: 350 KB)
+- [ ] LF3. Other fonts through the forge (a rounder one, or Nikki's own drawn alphabet when the sheet route
+  happens): `--font`, `--name`
 
 ## What the three versions are for
 

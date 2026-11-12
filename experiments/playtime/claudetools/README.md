@@ -47,6 +47,7 @@ EOF
 | Tool | What | Run |
 |---|---|---|
 | `scan2tex.py` | A scan or phone photo of a sheet of drawings → Playtime textures (outline + mask per part). The engine behind `tools/scan2tex`, the LÖVE window you normally use (`love tools/scan2tex`, docs/ASSETS-AND-BUILDS.md AB1) | `python3 -I claudetools/scan2tex.py <scan.png\|photo.heic> <outdir> [name]` |
+| `lettering-forge.py` | A font's letters redrawn by hand three times each (a wobbling outline) → `textures/lettering/<name>.png` + `.lua` for `src/lettering.lua` (docs/HANDDRAWN-FONT.md). Needs fontTools, Pillow, numpy | `python3 -I claudetools/lettering-forge.py [--font <ttf> --name <n> --wobble 1]`, `--preview "text"` |
 | `scan2tex-preview.py` | The parts drawn as the game would (mask filled, outline on top), one sheet | `python3 -I claudetools/scan2tex-preview.py out.png "dir/name-*.png"` |
 | `texture-check.py` | Texture names pointing at nothing, and files in `textures/` nothing names | `python3 -I claudetools/texture-check.py [--no-save] [-v]` |
 | `texture-outline.py` | An 8-point outline for `src/shape8-dict.lua`, measured from a texture | `python3 -I claudetools/texture-outline.py mipo/body/body-18` |
