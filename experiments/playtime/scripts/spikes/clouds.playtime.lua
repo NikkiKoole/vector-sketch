@@ -63,6 +63,11 @@ local HILLS = {
     { f = 0.5,  amp = 220,  haze = 0.35, seed = 1.7 },
 }
 
+-- growing clouds (CG1): the air, how fast the sky's time runs (x real), the wind; the panel's
+-- 'defaults' puts these back
+local GROW_DEFAULTS = { groundT = 22, groundRH = 70, aloftRH = 45, lapse = 7.5, lidKm = 3.5, lidK = 4,
+    speed = 25, wind = 1, morph = 1, light = 2, cotton = 1 }
+
 local function clouds()
     local b = state.clouds or {}
     state.clouds = b
@@ -76,9 +81,8 @@ local function clouds()
     b.settings = b.settings or {}
     -- Nikki's settings (2026-11-03): no strokes, hairs or grain, strong light
     local defaults = { wind = 1, morph = 1, strokes = 0, hair = 0, grain = 0, light = 2, cotton = 1,
-        back = 0.84, front = 1.12, behind = 40, infront = 110, blades = 1,
-        -- growing clouds (CG1): the air, and how fast the sky's time runs (x real)
-        groundT = 22, groundRH = 70, aloftRH = 45, lapse = 7.5, lidKm = 3.5, lidK = 4, speed = 25 }
+        back = 0.84, front = 1.12, behind = 40, infront = 110, blades = 1 }
+    for key, v in pairs(GROW_DEFAULTS) do defaults[key] = v end
     for key, v in pairs(defaults) do
         if b.settings[key] == nil then b.settings[key] = v end
     end
@@ -877,6 +881,19 @@ local function growUpdate(b, dt)
     local air = airOf(set)
     b.air = air
     growInput(b, air, dt)
+    -- the wind carries them all along, on the screen's time (like the old sky); out of the layer's
+    -- box on one side, back in on the other
+    local w, _, cx, cy, scale = view()
+    local f = LAYERS[GROW_LAYER].f
+    local lx = layerCam(f, cx, cy, scale)
+    local hx = boxOf(f, w, scale) + 500
+    local windV = WIND * set.wind * (1 + b.gust)
+    for _, p in ipairs(b.thermals) do
+        if not isPulled(b, p) then
+            p.x = p.x + windV * dt
+            if p.x - lx > hx then p.x = p.x - 2 * hx elseif p.x - lx < -hx then p.x = p.x + 2 * hx end
+        end
+    end
     local simDt = dt * set.speed
     local steps = math.max(1, math.ceil(simDt / 2))
     local h = simDt / steps
@@ -951,7 +968,11 @@ local function drawGrown(b, w, h, cx, cy, scale)
         local amount = clamp(p.qc / 0.5, 0, 1)
         if amount > 0.02 and #lobes < MAXL then
             local r = p.r * k * (0.75 + 0.35 * amount)
-            local px, py = sx(p.x), sy(-p.z)
+            -- breathing: each lobe swells and drifts a little, slowly
+            local t, sd = b.time * b.settings.morph, (p.seed or 0) * 40
+            r = r * (1 + 0.07 * math.sin(t * 0.4 + sd))
+            local px = sx(p.x + p.r * 0.08 * math.sin(t * 0.23 + sd * 1.3))
+            local py = sy(-p.z + p.r * 0.06 * math.sin(t * 0.31 + sd * 0.7))
             lobes[#lobes + 1] = { px * dpi, py * dpi, r * dpi, amount }
             bases[#bases + 1] = sy(-(p.baseZ or p.z)) * dpi
             x0, y0 = math.min(x0, px - r * 1.3), math.min(y0, py - r * 1.3)
@@ -1367,7 +1388,8 @@ function s.drawUI()
             { 'groundT', 0, 40, 1, 'ground °C' }, { 'groundRH', 20, 100, 1, 'ground humidity %' },
             { 'aloftRH', 10, 100, 1, 'humidity up high %' }, { 'lapse', 4, 10, nil, 'cools °C per km' },
             { 'lidKm', 1, 10, nil, 'lid km' }, { 'lidK', 0, 8, nil, 'lid warmer °C' },
-            { 'speed', 1, 200, 1, 'time x real' }, { 'light', 0, 2 }, { 'cotton', 0, 1 },
+            { 'speed', 1, 200, 1, 'time x real' }, { 'wind', -3, 3 }, { 'morph', 0, 4, nil, 'breathing' },
+            { 'light', 0, 2 }, { 'cotton', 0, 1 },
         }
     end
     local h = (BH + pad) * (#rows + 3) + pad + 24
@@ -1389,7 +1411,10 @@ function s.drawUI()
         end
         local x, y = ui.nextLayoutPosition(layout, w - 20, BH)
         if b.grow then
-            ui.label(x, y, 'paint clouds, pull one up')
+            if ui.button(x, y, 110, 'defaults') then
+                for key, v in pairs(GROW_DEFAULTS) do b.settings[key] = v end
+            end
+            ui.label(x + 125, y, 'paint clouds, pull one up')
             x, y = ui.nextLayoutPosition(layout, w - 20, BH)
             ui.label(x, y, 'r clears   m a Mipo   h the panel')
         else
