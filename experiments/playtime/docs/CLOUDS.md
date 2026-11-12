@@ -120,6 +120,14 @@ steeply with cold), below evaporates. Pulled up past the point where it's warmer
       reverted; back to it when rain is wanted.
 - [ ] **CG4. Real light.** Self-shadowing towards the sun in the shader: bright tops, bellies grey
       by depth, a silver lining with the sun behind, the sky's hour colours (SKY).
+  Built 2026-11-12, for Nikki to judge: the cloud shader looks for cloud between each pixel and
+  the sun (4 samples, 180 m apart) and above it (2), each counting as at most solid cloud (where
+  many lobes overlap the field passes 1); the sunlight that gets through, exp(-that), shades the
+  first light (which keeps the bumps and lit edges) from white towards the sky's blue-grey (warm
+  grey with cotton); a bump's middle a little brighter than its thin edge (powder); the thin
+  edge near the sun lit (silver lining). Slider 'light through cloud' (0 = the first light).
+  First try was black inside a big heap (the overlapping field summed to ~25). 60 fps on the Mac
+  with ~16 lobes; the hour's colours not yet (the spike has its own sky).
 - [ ] **CG5. Wind with height.** Faster wind higher up leans towers and stretches tops; the
       existing fling and shake become pushes on the thermals.
 - [ ] **CG6. On the iPhone SE 2** (`./playtime.sh bench device`), then: into the engine with the

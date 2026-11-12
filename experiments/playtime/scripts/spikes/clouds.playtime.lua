@@ -66,7 +66,7 @@ local HILLS = {
 -- growing clouds (CG1): the air, how fast the sky's time runs (x real), the wind; the panel's
 -- 'defaults' puts these back
 local GROW_DEFAULTS = { groundT = 22, groundRH = 70, aloftRH = 45, lapse = 7.5, lidKm = 3.5, lidK = 4,
-    speed = 25, wind = 1, morph = 1, light = 2, cotton = 1 }
+    speed = 25, wind = 1, morph = 1, light = 2, cotton = 1, through = 1 }
 
 local function clouds()
     local b = state.clouds or {}
@@ -631,6 +631,7 @@ end
 -- The thermals live in one layer (GROW_LAYER), 1 unit = 1 m, y = -height.
 
 local GROW_LAYER = 5
+local LIGHT_REACH = 730 -- m: how far the shader looks for cloud between a pixel and the sun (CG4)
 local MAX_THERMALS = 260
 local MAXL = 64        -- lobes the shader takes
 
@@ -649,6 +650,7 @@ uniform vec2 sunPos;           // screen pixels
 uniform float light;
 uniform float cotton;
 uniform float smoke;           // 1: smoke (lobeBase is then each lobe's glow, no flat bottoms)
+uniform float through;         // 0 the first light (edges towards the sun) .. 1 light through the cloud
 
 float h21(vec2 p) {
     p = fract(p * vec2(123.34, 456.21));
@@ -737,13 +739,38 @@ vec4 effect(vec4 color, Image tex, vec2 uv, vec2 sc) {
     vec2 sunDir = normalize(sunPos - sc + vec2(0.001, 0.0));
     float Fs = field(sc + sunDir * sh, rag);
     float Fu = field(sc + vec2(0.0, -sh), rag);
-    // lit where it ends towards the sun and on top, grey where there's a lot of cloud above it
+    // the first light: lit where it ends towards the sun and on top, grey where there's a lot of
+    // cloud above it
     float lit = 0.6 + light * ((F - Fs) * 0.55 + (F - Fu) * 0.45);
     lit -= light * clamp(Fu - 0.5, 0.0, 1.0) * 0.18;
     vec3 top = vec3(1.0, 1.0, 0.98);
     vec3 belly = mix(vec3(0.70, 0.79, 0.90), vec3(0.83, 0.82, 0.84), cotton);
     vec3 col = mix(belly, top, clamp(lit, 0.0, 1.0));
-    col += vec3(1.0, 0.92, 0.72) * (1.0 - smoothstep(0.0, 0.25, E)) * 0.25;
+    // CG4, light through the cloud: how much cloud lies between here and the sun (four steps of
+    // 180 m towards it) and above (two of 270 m; each sample counts as at most solid cloud: where
+    // many lobes overlap the field adds up past 1, the cloud doesn't get denser for it); the sun's
+    // light comes through by exp(-that) (Beer's law). It shades the first light (which keeps the
+    // bumps and the lit edges) from white towards the sky's light, bluer (warm grey with cotton),
+    // less under a lot of cloud. Powder: light that went in a little way and came back out, so a
+    // bump's middle is brighter than its thin edge. Silver lining: the thin edge near the sun.
+    if (through > 0.001) {
+        float st = 180.0 * pxPerM;
+        float tauS = 0.0;
+        for (int i = 1; i <= 4; i++) tauS += min(field(sc + sunDir * st * float(i), rag), 1.0);
+        float tauU = min(Fu, 1.0) + min(field(sc + vec2(0.0, -st * 1.5), rag), 1.0);
+        float Tsun = exp(-tauS * 0.3 * light);
+        float Tup = exp(-tauU * 0.25 * light);
+        float powder = 1.0 - exp(-F * 3.0);
+        vec3 sunCol = vec3(1.0, 0.98, 0.94);
+        vec3 skyCol = mix(vec3(0.60, 0.68, 0.80), vec3(0.70, 0.69, 0.71), cotton);
+        vec3 shadow = skyCol * (0.8 + 0.2 * Tup);
+        vec3 lit2 = col * mix(shadow, sunCol, Tsun) * mix(0.9, 1.04, powder);
+        float near = exp(-length(sunPos - sc) / (love_ScreenSize.y * 0.28));
+        lit2 += vec3(1.0, 0.93, 0.75) * (1.0 - smoothstep(0.0, 0.3, E)) * (0.15 + 0.9 * near);
+        col = mix(col, lit2, through);
+    } else {
+        col += vec3(1.0, 0.92, 0.72) * (1.0 - smoothstep(0.0, 0.25, E)) * 0.25;
+    }
     dens *= 0.95;
     return vec4(col * dens, dens) * color.a;
 }
@@ -1159,7 +1186,7 @@ local function drawGrown(b, w, h, cx, cy, scale)
         local px = sx(p.x + p.r * 0.08 * math.sin(t * 0.23 + sd * 1.3))
         local py = sy(-p.z + p.r * 0.06 * math.sin(t * 0.31 + sd * 0.7))
         -- (as far as reaching() looks, or a lobe just off the screen is missed at the edge)
-        local m = r * 1.9 + 90 * k
+        local m = r * 1.9 + LIGHT_REACH * k
         if px + m > 0 and px - m < w and py + m > 0 and py - m < h then
             list[#list + 1] = { px = px, py = py, r = r, amount = amount, info = info }
         end
@@ -1202,7 +1229,8 @@ local function drawGrown(b, w, h, cx, cy, scale)
     love.graphics.setBlendMode('alpha', 'premultiplied')
     love.graphics.setColor(1, 1, 1, 1)
     grownShader:send('sunPos', { SUN[1] * w * dpi, SUN[2] * h * dpi })
-    local shift = 90 * k -- the shader's light samples, this far towards the sun and up
+    local shift = LIGHT_REACH * k -- the shader's light samples, this far towards the sun and up
+    grownShader:send('through', b.settings.through)
     -- the lobes that reach into a rectangle: as far as their field still shows (1.9 radii; at
     -- 1.3 the cut showed as a faint line), plus the light samples' shift
     local function reaching(list, x0, y0, x1, y1)
@@ -1646,7 +1674,7 @@ function s.drawUI()
             { 'aloftRH', 10, 100, 1, 'humidity up high %' }, { 'lapse', 4, 10, nil, 'cools °C per km' },
             { 'lidKm', 1, 10, nil, 'lid km' }, { 'lidK', 0, 8, nil, 'lid warmer °C' },
             { 'speed', 1, 200, 1, 'time x real' }, { 'wind', -3, 3 }, { 'morph', 0, 4, nil, 'breathing' },
-            { 'light', 0, 2 }, { 'cotton', 0, 1 },
+            { 'light', 0, 2 }, { 'through', 0, 1, nil, 'light through cloud' }, { 'cotton', 0, 1 },
         }
     end
     local h = (BH + pad) * (#rows + (b.grow and 4 or 3)) + pad + 24
