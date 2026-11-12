@@ -1,13 +1,26 @@
 -- motor: Mipos that move by themselves — walk, hop, jump — instead of standing like dolls (docs/MIPO-MOTOR.md).
 -- mipoWalk.drive(inst, speed, 'walk' | 'hop'): it turns to face its way, its legs step (or both feet
 -- hop) and its feet push it, only while one touches the floor. mipoActions.jump(inst, forward).
--- keys: left/right (hold): walk or hop that way   up: jump (the way it faces)   g: walk / hop
+-- keys: left/right (hold): walk, jog, run or hop that way   up: jump (the way it faces)   g: the next gait
 --       down (hold): squat (up from a squat: jump)   b: bump them (a shove each, to see them catch themselves)
 --       w: wander by themselves (on/off)   r: new Mipos   n: one more   p: pause   h: panel
 
 local s = {}
 
 local walk = mipoWalk     -- src/mipo-walk.lua
+
+-- the gaits in turn (g), and each one's speed against the walk's (a jog, a run: MIPO-LOCOMOTION LO10)
+local GAITS = { 'walk', 'jog', 'run', 'hop' }
+local function nextGait(g)
+    for i, name in ipairs(GAITS) do
+        if name == g then return GAITS[i % #GAITS + 1] end
+    end
+    return 'walk'
+end
+local function gaitSpeed(g)
+    local gait = walk.gaits and walk.gaits[g]
+    return gait and gait.speed or 1
+end
 local actions = mipoActions -- src/mipo-actions.lua
 local alive = mipoKit.isAlive
 
@@ -20,7 +33,7 @@ local COUNT = 3
 local function check() -- on state: a script hot reload keeps the Mipos
     state.motorSpike = state.motorSpike or {
         mipos = {}, bodies = {}, showPanel = true,
-        gait = 'walk',  -- the keys' gait: 'walk' or 'hop'
+        gait = 'walk',  -- the keys' gait: 'walk', 'jog', 'run' or 'hop' (g goes round them)
         speed = 1.5,    -- leg lengths a second
         jumpForward = 400,
         wander = false,
@@ -93,12 +106,13 @@ local function wander(inst, now)
             local dir = love.math.random() < 0.5 and -1 or 1
             if x > HALF * 0.7 then dir = -1 elseif x < -HALF * 0.7 then dir = 1 end
             w.speed = dir * c.speed * (0.6 + love.math.random() * 0.6)
-            w.gait = love.math.random() < 0.3 and 'hop' or 'walk'
+            local g = love.math.random()
+            w.gait = g < 0.2 and 'hop' or g < 0.35 and 'run' or g < 0.55 and 'jog' or 'walk'
             w.jumpAt = love.math.random() < 0.25 and now + love.math.random() * 1.5 or nil
         end
         inst._wander = w
     end
-    walk.drive(inst, w.speed, w.gait)
+    walk.drive(inst, w.speed * gaitSpeed(w.gait), w.gait)
     if w.jumpAt and now >= w.jumpAt then
         w.jumpAt = nil
         actions.jump(inst, mipoFacing.dir(inst) * c.jumpForward * 0.5)
@@ -147,7 +161,7 @@ function s.update()
     c.keyDown = down
     each(function(inst)
         if dir ~= 0 then
-            walk.drive(inst, dir * c.speed, c.gait)
+            walk.drive(inst, dir * c.speed * gaitSpeed(c.gait), c.gait)
         elseif c.wander then
             wander(inst, now)
         elseif released then
@@ -182,7 +196,7 @@ function s.onKeyPress(key)
             torso:applyLinearImpulse(dir * mipoRegistry.totalMass(inst) * 2.5 * math.abs(fy - ty), 0)
         end)
     end
-    if key == 'g' then c.gait = c.gait == 'walk' and 'hop' or 'walk' end
+    if key == 'g' then c.gait = nextGait(c.gait) end
     if key == 'w' then toggleWander() end
     if key == 'r' then newMipos() c.hold = true end
     if key == 'n' then addMipo((love.math.random() - 0.5) * 2000) end
@@ -213,8 +227,9 @@ function s.drawUI()
         local bw = w - 12
         local half = (bw - pad) / 2
         local x, y = ui.nextLayoutPosition(layout, bw, BH)
-        if ui.button(x, y, half, '< go') then each(function(i) walk.drive(i, -c.speed, c.gait) end) end
-        if ui.button(x + half + pad, y, half, 'go >') then each(function(i) walk.drive(i, c.speed, c.gait) end) end
+        local sp = c.speed * gaitSpeed(c.gait)
+        if ui.button(x, y, half, '< go') then each(function(i) walk.drive(i, -sp, c.gait) end) end
+        if ui.button(x + half + pad, y, half, 'go >') then each(function(i) walk.drive(i, sp, c.gait) end) end
         x, y = ui.nextLayoutPosition(layout, bw, BH)
         if ui.button(x, y, half, 'stop') then each(function(i) walk.drive(i, nil) end) end
         if ui.button(x + half + pad, y, half, 'jump (up)') then jumpAll() end
@@ -245,7 +260,7 @@ function s.drawUI()
             each(function(i) actions.setRagdoll(i, not actions.isRagdoll(i)) end)
         end
         x, y = ui.nextLayoutPosition(layout, bw, BH)
-        if ui.button(x, y, bw, 'gait: ' .. c.gait .. ' (g)') then c.gait = c.gait == 'walk' and 'hop' or 'walk' end
+        if ui.button(x, y, bw, 'gait: ' .. c.gait .. ' (g)') then c.gait = nextGait(c.gait) end
         x, y = ui.nextLayoutPosition(layout, bw, BH)
         local wanderLabel = 'wander by themselves: ' .. (c.wander and 'on' or 'off') .. ' (w)'
         if ui.button(x, y, bw, wanderLabel) then toggleWander() end

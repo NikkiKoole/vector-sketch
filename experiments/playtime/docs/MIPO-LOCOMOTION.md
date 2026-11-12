@@ -88,6 +88,20 @@ Baseline 2026-11-12 (before LO1): tilt 9-25°, seed 42 39°; seed 9 walks 1.4 le
   legs, torso up 0.5-1.1 legs, all land and stand (end tilt ≤ 12°). Panels: jump height, squat (s),
   jump animated / old, squat depth. tried 2026-11-12: the lift by the torso's own speed (0.3-0.6 legs
   of 1.3: the torso runs ahead of the legs it drags). Kept (Nikki 2026-11-12: "ok pretty good").
+- [ ] **LO10. Walk, jog, run** (Nikki 2026-11-12: "reminded about the old prince of persia game, can
+  we make a walk, jog, run"). `lib.gaits`: each gait its own keys (JOG_KEYS, RUN_KEYS: more knee at
+  the down pose, the heel kicked up behind after toe-off, the knee driving forward, reaching), keyed
+  in the walk's step time with the stance squeezed to its share of the cycle (`duty` walk 0.5, jog
+  0.42, run 0.4: under a half both feet leave the floor between steps), its stride, steps a second,
+  lean (10°, 16°), arm swing (40°, 55°), push (2x, 3x) and a bounce at push-off (0.04, 0.08 legs).
+  `mipoWalk.drive(inst, speed, 'jog' | 'run')`; stopping, turning on the spot and the step-turn work
+  for all three. Spike: `g` goes walk -> jog -> run -> hop, each at its speed (`gaits[g].speed` times
+  the walk's: 1.8, 2.8). `spec/mipo-gaits_spec.lua` (8 Mipos): walk 1.1, jog 2.4, run 3.2 legs/s;
+  both feet off the floor 12 / 30 / 47% of the time; 1.4 / 2.6 / 3.3 steps a second; all stop
+  standing. The run tops out near 3 legs/s whatever its push (tried accel 4.5, a run-only gaitCap 1.3,
+  a longer stride, more steps: the same or more tilt); Mipos differ a lot (run 2.2-5.2 legs/s; one
+  runs a little under its jog). Not yet: bent elbows for jog and run (the arms hang straight).
+  For Nikki to try.
 - [ ] **LO2. Gravity compensation**, so the motors can be soft and the bob deeper (MM8).
 - [ ] **LO3. Steps by distance, the stride by leg length** (MM3's "stride by the leg's length").
   Tried 2026-11-12. The stride was already by leg length (2·L·sin 28°). Measured with a new count in

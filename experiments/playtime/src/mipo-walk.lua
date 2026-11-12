@@ -166,6 +166,10 @@ local SWITCHES = {
 }
 for k, v in pairs(SWITCHES) do lib[k] = v end
 
+-- a gait with legs that step: walk, jog, run (lib.gaits), not a hop
+local function stepGait(mode) return mode ~= nil and mode ~= 'hop' end
+lib.stepGait = stepGait
+
 local BODY_SPEED = math.rad(120) -- a second
 local WALK_TURN_SPEED = 0.6 -- a turn the walk makes (or relaxing back to front): of BODY_SPEED
 local HEAD_SPEED = math.rad(30)  -- a second: left -> right (60 degrees) in 2 s (lib.headKeys off)
@@ -249,7 +253,7 @@ function lib.drive(inst, speed, mode)
     inst._stepsLeft, inst._hopsLeft, inst._gaitFrom = nil, nil, nil
     local was, wasMode = inst._drive, inst._driveMode
     -- a walk stopping, or turning back: the stopping step (LO4) while it walks on the floor
-    local stepping = lib.stopStep and was and wasMode == 'walk' and inst._walking and not inst._jump
+    local stepping = lib.stopStep and was and stepGait(wasMode) and inst._walking and not inst._jump
         and not inst._stop and (inst._goAt == nil or love.timer.getTime() - inst._goAt > lib.setOff)
     if speed and speed ~= 0 then
         if stepping and was * speed < 0 then inst._stop = { at = love.timer.getTime(), phase = 'step' } end
@@ -554,7 +558,7 @@ local function switchBody(inst, want, now)
                 -- a step-turn (lib.stepTurn): the leg lifts it; a Mipo walking by itself (the flag alone
                 -- missed the first foot, set a frame late: that foot still flapped)
                 step = inst._stepTurning or (lib.stepTurn and lib.turnFirst and inst._drive ~= nil
-                    and inst._driveMode == 'walk') or nil }
+                    and stepGait(inst._driveMode)) or nil }
             return false
         end
     end
@@ -733,23 +737,75 @@ local WALK_KEYS = {
     { t = 0.86, fwd = 0.95, knee = 25 },     -- reaching for the next contact
 }
 
+-- A jog and a run (Nikki 2026-11-12: "reminded about the old prince of persia game, can we make a walk,
+-- jog, run"), keyed in the same step time as the walk (0 contact, 0.5 the stance's end: lib.gaits'
+-- duty squeezes the stance into its share of the cycle): more knee at the down pose, the heel kicked
+-- up behind after toe-off, the knee driving forward, the leg reaching. Knees stop at 90 (the joints).
+local JOG_KEYS = {
+    { t = 0.00, fwd = 0.90, knee = 15 },  -- contact
+    { t = 0.14, fwd = 0.45, knee = 35 },  -- down
+    { t = 0.28, fwd = 0.00, knee = 20 },  -- passing
+    { t = 0.42, fwd = -0.80, knee = 8 },  -- push-off
+    { t = 0.52, fwd = -1.00, knee = 30 }, -- toe-off
+    { t = 0.66, fwd = -0.40, knee = 85 }, -- the heel up behind
+    { t = 0.80, fwd = 0.70, knee = 75 },  -- the knee forward
+    { t = 0.92, fwd = 1.00, knee = 30 },  -- reaching
+}
+local RUN_KEYS = {
+    { t = 0.00, fwd = 0.85, knee = 20 },  -- contact
+    { t = 0.14, fwd = 0.40, knee = 45 },  -- down: the weight lands, deep
+    { t = 0.28, fwd = 0.00, knee = 30 },  -- passing
+    { t = 0.42, fwd = -0.85, knee = 8 },  -- push-off: the leg straight behind
+    { t = 0.52, fwd = -1.00, knee = 35 }, -- toe-off
+    { t = 0.64, fwd = -0.50, knee = 90 }, -- the heel kicked up to the bottom
+    { t = 0.78, fwd = 0.85, knee = 85 },  -- the knee driving forward, high
+    { t = 0.90, fwd = 1.05, knee = 40 },  -- reaching for the ground
+}
+
+-- the gaits walking by itself (lib.drive's mode): keys, the stance's share of the cycle (duty; under a
+-- half, both feet are off the floor between steps), the stride (degrees each thigh swings), steps a
+-- second at most, lean (degrees; nil: lib.walkLean), arm swing (nil: lib.armSwing), the push
+-- (times driveAccel), the bounce at push-off (leg lengths up), the speed the spike asks (times its
+-- walk speed). 'hop' is its own (updateHop).
+lib.gaits = {
+    walk = { keys = WALK_KEYS, duty = 0.5, stride = 28, maxSteps = 2.5, maxStride = 48, accel = 1, bounce = 0,
+        speed = 1 },
+    jog = { keys = JOG_KEYS, duty = 0.42, stride = 30, maxSteps = 3.0, maxStride = 50, lean = 10, arms = 40,
+        accel = 2, bounce = 0.04, speed = 1.8 },
+    run = { keys = RUN_KEYS, duty = 0.4, stride = 34, maxSteps = 3.4, maxStride = 55, lean = 16, arms = 55,
+        accel = 3, bounce = 0.08, speed = 2.8 },
+    -- (spec/mipo-gaits_spec: walk 1.1, jog 2.4, run 3.2 legs/s; both feet off the floor 12 / 30 / 47% of
+    -- the time. The run tops out near 3 whatever its push (accel 4.5, a gaitCap, a longer stride: the
+    -- same); duty 0.34 tilted more)
+}
+local function gaitOf(inst) return lib.gaits[inst._driveMode] or lib.gaits.walk end
+local function leanOf(inst) return gaitOf(inst).lean or lib.walkLean end
+
+-- the cycle's u (0..1) in the keys' step time: the stance (u < duty) stretched to 0..0.5
+local function keyTime(u, duty)
+    if u < duty then return u / duty * 0.5 end
+    return 0.5 + (u - duty) / (1 - duty) * 0.5
+end
+
 local function keyValue(key, field)
     local v = key[field]
     if v == 'give' then return lib.give end
     return v
 end
 
--- the keyed pose at u (0..1 from contact): thigh forward share, knee bend (degrees)
-local function walkPose(u)
-    local n = #WALK_KEYS
+-- the keyed pose at u (0..1 from contact): thigh forward share, knee bend (degrees); keys: WALK_KEYS
+-- or a gait's
+local function walkPose(u, keys)
+    keys = keys or WALK_KEYS
+    local n = #keys
     local i = n
     for k = 1, n do
-        if WALK_KEYS[k].t <= u then i = k end
+        if keys[k].t <= u then i = k end
     end
-    local t1 = WALK_KEYS[i].t
-    local t2 = i < n and WALK_KEYS[i + 1].t or 1
+    local t1 = keys[i].t
+    local t2 = i < n and keys[i + 1].t or 1
     local s = (u - t1) / math.max(t2 - t1, 1e-6)
-    local function at(k) return WALK_KEYS[(k - 1) % n + 1] end
+    local function at(k) return keys[(k - 1) % n + 1] end
     local p0, p1, p2, p3 = at(i - 1), at(i), at(i + 1), at(i + 2)
     local function curve(field)
         local a, b, c, d = keyValue(p0, field), keyValue(p1, field), keyValue(p2, field), keyValue(p3, field)
@@ -815,7 +871,7 @@ local function uprightTorso(inst, face)
             inst._torsoWas = b and { angle = b.angle, kp = b.kp, enabled = b.enabled } or { none = true }
         end
         local b = mipoActions.ensureKeepAngle(part, 0, lib.upright)
-        if b then b.angle, b.kp, b.enabled = face * lib.walkLean, lib.upright, nil end
+        if b then b.angle, b.kp, b.enabled = face * leanOf(inst), lib.upright, nil end
     elseif inst._torsoWas then
         local b = mipoActions.getKeepAngle(part)
         local was = inst._torsoWas
@@ -947,7 +1003,7 @@ local function holdTorso(inst, dt, face, stance, legLen)
     local g = math.max(math.abs(gy), 1)
     local mgl = mipoRegistry.totalMass(inst) * g * legLen
     local a = torso:getAngle()
-    local err = (math.rad(face * lib.walkLean) - a + math.pi) % TWO_PI - math.pi
+    local err = (math.rad(face * leanOf(inst)) - a + math.pi) % TWO_PI - math.pi
     local tau = lib.torsoHold * mgl * err - lib.torsoDamp * mgl * math.sqrt(legLen / g) * torso:getAngularVelocity()
     tau = math.max(-2 * mgl, math.min(2 * mgl, tau))
     torso:applyAngularImpulse(tau * dt)
@@ -966,7 +1022,7 @@ local function torsoByHip(inst, i, face, legLen, thighAim)
     local hip, torso, thigh = hangJoint(inst, leg[1]), partBody(inst, 'torso1'), partBody(inst, leg[1])
     if not (hip and torso and thigh) then return end
     local _, gy = torso:getWorld():getGravity()
-    local err = (torso:getAngle() - math.rad(face * lib.walkLean) + math.pi) % TWO_PI - math.pi
+    local err = (torso:getAngle() - math.rad(face * leanOf(inst)) + math.pi) % TWO_PI - math.pi
     local damp = lib.torsoDamp * torso:getAngularVelocity() * math.sqrt(legLen / math.max(math.abs(gy), 1))
     local poseErr = (math.rad(thighAim) - thigh:getAngle() + math.pi) % TWO_PI - math.pi
     hip:setMotorSpeed(lib.motorGain * (lib.stancePose * poseErr + lib.torsoHold * err + damp))
@@ -981,8 +1037,9 @@ end
 -- weighty (lib.weighty, walking by itself): returns how much a foot is pushing off now (0..1)
 local function stepLegs(inst, dt, speed, face, side, legLen, weighty)
     -- one step (half a cycle) covers a stride; faster than MAX_STEPS, the strides grow
-    local stride = math.max(2 * legLen * math.sin(math.rad(STRIDE)), speed / MAX_STEPS)
-    local swing = math.min(MAX_STRIDE, math.deg(math.asin(math.min(1, stride / (2 * legLen)))))
+    local g = weighty and gaitOf(inst) or lib.gaits.walk
+    local stride = math.max(2 * legLen * math.sin(math.rad(g.stride or STRIDE)), speed / (g.maxSteps or MAX_STEPS))
+    local swing = math.min(g.maxStride or MAX_STRIDE, math.deg(math.asin(math.min(1, stride / (2 * legLen)))))
     inst._gait = (inst._gait or 0) + speed * dt / stride * math.pi
     local swinging, forward, pushOff, cycle = {}, {}, 0, {}
     local keyed = weighty and lib.keyed
@@ -1011,9 +1068,10 @@ local function stepLegs(inst, dt, speed, face, side, legLen, weighty)
         local shin = thigh + face * math.max(0, math.cos(phase)) * KNEE -- bent on the way forward
         if keyed then
             -- the sine's contact (thigh furthest forward) is at phase pi/2
-            local u = ((phase - math.pi / 2) % TWO_PI) / TWO_PI
+            local uc = ((phase - math.pi / 2) % TWO_PI) / TWO_PI
+            local u = keyTime(uc, g.duty or 0.5) -- in the keys' step time (the stance 0..0.5)
             cycle[i] = u
-            local fwd, bend = walkPose(u)
+            local fwd, bend = walkPose(u, g.keys)
             swinging[i], forward[i] = u >= 0.5, fwd
             thigh = -face * fwd * swing
             shin = thigh + face * bend
@@ -1087,8 +1145,9 @@ local function stepLegs(inst, dt, speed, face, side, legLen, weighty)
     hipsBack(inst, side and face or nil)
     -- the arms against the legs: the left arm forward with the right leg (mipoActions' arm hang, world
     -- angles, + toward the screen's left)
-    if weighty and lib.armSwing > 0 then
-        local a = math.rad(lib.armSwing)
+    local arms = g.arms or lib.armSwing
+    if weighty and arms > 0 then
+        local a = math.rad(arms)
         inst._armSwing = { l = -face * a * forward[2], r = -face * a * forward[1] }
     else
         inst._armSwing = nil
@@ -1276,7 +1335,7 @@ local function updateDrive(inst, dt, now, torso, legLen)
     -- turn first (LO4): not facing its way yet, it stands and turns on the spot; once it does, a dip
     -- (anticipation) and off
     local stepping = inst._lean and inst._lean.step -- a step-turn's foot still coming down
-    if lib.turnFirst and inst._driveMode == 'walk' and (faceDir ~= dir or stepping) and grounded then
+    if lib.turnFirst and stepGait(inst._driveMode) and (faceDir ~= dir or stepping) and grounded then
         inst._goAt = nil
         inst._stepTurning = lib.stepTurn or nil
         if lib.stepTurn and stepTurnLegs(inst, now) then return end
@@ -1284,7 +1343,7 @@ local function updateDrive(inst, dt, now, torso, legLen)
         return
     end
     inst._stepTurning = nil
-    if lib.turnFirst and inst._driveMode == 'walk' then
+    if lib.turnFirst and stepGait(inst._driveMode) then
         if not inst._goAt then inst._goAt = now end
         local t = now - inst._goAt
         if t < lib.setOff then
@@ -1318,14 +1377,27 @@ local function updateDrive(inst, dt, now, torso, legLen)
     if inst._stepsLeft then inst._gaitFrom = inst._gaitFrom or (inst._gait or 0) end
     -- the steps go at the body's speed, but at most gaitCap times the speed it wants: faster legs carried
     -- the body faster, which sped the legs up again (seed 42 ran away to 3x its speed, 2026-11-12)
-    local gaitSpeed = math.max(math.abs(target) * lib.gaitFloor, math.min(vx * dir, math.abs(target) * lib.gaitCap))
+    local cap = gaitOf(inst).gaitCap or lib.gaitCap
+    local gaitSpeed = math.max(math.abs(target) * lib.gaitFloor, math.min(vx * dir, math.abs(target) * cap))
     local pushOff = stepLegs(inst, dt, gaitSpeed, face, faceDir ~= 0, legLen, lib.weighty)
+    local g = gaitOf(inst)
+    local accel = g.accel or 1
     if grounded then
         if lib.weighty and lib.pulse > 0 then
             -- surging at push-off, easing between (a foot pushes off about a quarter of the time)
-            push(inst, torso, target * (1 + lib.pulse * (pushOff - 0.25)), legLen, dt, 1 + 2 * lib.pulse * pushOff)
+            push(inst, torso, target * (1 + lib.pulse * (pushOff - 0.25)), legLen, dt,
+                accel * (1 + 2 * lib.pulse * pushOff))
         else
-            push(inst, torso, target, legLen, dt)
+            push(inst, torso, target, legLen, dt, accel)
+        end
+        -- a jog's and a run's bounce: at each push-off the foot sends it up (then both feet are off the floor)
+        local step = math.floor((inst._gait or 0) / math.pi)
+        if (g.bounce or 0) > 0 and pushOff > 0.7 and inst._bounceStep ~= step then
+            inst._bounceStep = step
+            local _, gy = torso:getWorld():getGravity()
+            local up = math.sqrt(2 * math.max(math.abs(gy), 1) * g.bounce * legLen)
+            local vy = centreVelocity(inst)
+            if -vy < up then torso:applyLinearImpulse(0, -mipoRegistry.totalMass(inst) * (up + vy)) end
         end
     end
     if inst._stepsLeft and inst._gaitFrom and inst._gait - inst._gaitFrom >= inst._stepsLeft * math.pi then
