@@ -1213,6 +1213,7 @@ local function eyeLit(extra)
     return lit
 end
 lib.eyeLidShadow, lib.eyeLidDepth = 0.35, 0.5 -- darkest at the top, fading over this much of its height
+lib.blinkShutAt = 0.3 -- a blink this far shut (thing.eyesOpen) shows the shut eye's bottom line
 lib.eyeWhite = 0.5 -- the flat white laid back over the lit one: whites stay bright (lit alone, a warm
 -- lamp near them made them tan)
 local lidMesh
@@ -1288,9 +1289,11 @@ local function drawDecal(d)
         local dw = extra.w or 50
         local dh = extra.h or 50
         local mirrorX = extra.mirror and -1 or 1
-        -- eyes shut (state.eyesShut, settings -> mipos): the eye's bottom line alone, its picture
-        -- eye-NN-closed.png beside the outline (the outline below the white's middle); no pupil
-        if extra.isEye and state.eyesShut then
+        -- eyes shut (a blink past lib.blinkShutAt, or state.eyesShut, settings -> mipos): the eye's
+        -- bottom line alone, its picture eye-NN-closed.png beside the outline (the outline below the
+        -- white's middle), unsquashed; no pupil. Above it the blink squashes the eye as before.
+        local shutThing = extra.isEye and utils.thingOf(body)
+        if extra.isEye and (state.eyesShut or ((shutThing and shutThing.eyesOpen) or 1) <= lib.blinkShutAt) then
             if extra.eyeW then return end
             local url = extra.main and extra.main.bgURL
             local img, imgw, imgh
