@@ -8,6 +8,12 @@ local props = require('src.props')
 local objectManager = require('src.object-manager')
 
 -- { name, make(wx, wy) -> list of things (may contain nils) }
+local function vehicle(type, wx, wy)
+    local kinds = require('src.kinds')
+    local instance = kinds.make('vehicle', { type = type }, wx, wy)
+    return instance and kinds.things(instance) or {}
+end
+
 lib.LIST = {
     { 'ball', function(wx, wy) return { props.makeBall(wx, wy, 80, { squishy = true }) } end },
     { 'blob', function(wx, wy) return { props.makeBlob(wx, wy) } end },
@@ -37,10 +43,11 @@ lib.LIST = {
         for _, hold in ipairs(holds or {}) do things[#things + 1] = hold end
         return things
     end },
-    { 'kart', function(wx, wy) -- a kind (src/kinds.lua, src/vehicles.lua): selected, saved and copied whole
-        local instance = require('src.kinds').make('vehicle', { type = 'kart' }, wx, wy)
-        return instance and require('src.kinds').things(instance) or {}
-    end },
+    -- vehicles, a kind (src/kinds.lua, src/vehicles.lua): selected, saved and copied whole; a Mipo gets in
+    { 'kart', function(wx, wy) return vehicle('kart', wx, wy) end },
+    { 'car', function(wx, wy) return vehicle('car', wx, wy) end },
+    { 'banana car', function(wx, wy) return vehicle('banana', wx, wy) end },
+    { 'e-skateboard', function(wx, wy) return vehicle('skateboard', wx, wy) end },
     { 'gate', function(wx, wy)
         local base = objectManager.addThing('rectangle', { x = wx, y = wy, width = 300, height = 30,
             bodyType = 'static', label = 'gate-base' })
