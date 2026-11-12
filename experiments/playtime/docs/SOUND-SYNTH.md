@@ -68,9 +68,14 @@ Saved with the music settings (`steinway`), applied live (`synth.setSteinway`).
 - **Sample slots**: the engine has 16; the voice lab uses 7 and the voicebox 12-15, so 11 of the 13 recordings load
   (F#1..F#6 into slots 0-6 and 8-11). C1 and C7 stay out; those notes play from the nearest recording. A new
   `sample_load` user must pick a slot outside 0-11, or the Steinway's notes go wrong.
+- **Brightness**: each style's lowpass was voiced on the model, and the recording through it sounded duller
+  (Nikki: "it sounds duller indeed"). With the Steinway on, the piano's filter is off (`synth.STEINWAY_OPEN`,
+  false = off, or a factor on the cutoff). Spectral centroid, the patch alone on its style: classic model
+  2000-3000 Hz, Steinway through the filter ~750, filter off ~1060-1110. A real Steinway is that much warmer than
+  the model; a +10 dB treble EQ moved it only ~110 Hz, so there's no EQ.
 - **Levels**: the recordings are louder than the model, so `synth.STEINWAY_DB` turns each piano down by what it
-  measured (piano -8.5, pianoLead -4.8, feltKeys -8.6, hPiano -8.2 dB). With it on, each piano is within 0.2 dB
-  of its classic level.
+  measured with the filter off (piano -8.6, pianoLead -5.2, feltKeys -8.8, hPiano -8.3 dB). With it on, each piano
+  is at its classic level.
 - **Credit** (CC BY 4.0): `CREDITS.md` and `synth.STEINWAY_CREDIT`; the panel shows it while it's on.
 
 ## Gotchas

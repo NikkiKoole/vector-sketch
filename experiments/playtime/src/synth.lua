@@ -698,9 +698,28 @@ local function steinwayOn()
     return state.musicSettings ~= nil and state.musicSettings.steinway == true
 end
 -- The recordings come out louder than the model at our levels: each piano turned down by what it measured
--- (offline renders, the patch alone on its style, classic against Steinway: guaraldi's piano +8.5 dB, its
--- tune +4.8, dusk's felt piano +8.6, the parlour's +8.2), so the option changes the sound, not the loudness
-lib.STEINWAY_DB = { piano = -8.5, pianoLead = -4.8, feltKeys = -8.6, hPiano = -8.2 }
+-- (offline renders, the patch alone on its style, classic against the Steinway with its filter off: guaraldi's
+-- piano +8.6 dB, its tune +5.2, dusk's felt piano +8.8, the parlour's +8.3), so the option changes the sound,
+-- not the loudness
+lib.STEINWAY_DB = { piano = -8.6, pianoLead = -5.2, feltKeys = -8.8, hPiano = -8.3 }
+-- and its lowpass opened: each style's filter was voiced on the model, and the recording through it came out
+-- duller (Nikki 2026-11-12: "it sounds duller indeed"); the cutoff times this with the Steinway on
+-- (false: the filter off). Measured (spectral centroid, the patch alone on its style): the classic model
+-- 2000-3000 Hz, the Steinway through the style's filter ~750, opened 5x ~950, the filter off ~1060-1110.
+-- A real Steinway is that much warmer than the model (its energy at 100-270 Hz: dreamengine's piano-engine.md);
+-- a treble EQ (+10 dB) moved it only ~110 Hz, so no EQ: the filter off
+lib.STEINWAY_OPEN = { piano = false, pianoLead = false, feltKeys = false, hPiano = false }
+local function slotFilterOf(slot, name, patch, cutoff)
+    local filter = patch.filter or { mode = 0, cutoff = 0, resonance = 0 }
+    cutoff = cutoff or filter.cutoff
+    if S.steinwaySlots and S.steinwaySlots[slot] and filter.mode ~= 0 then
+        local open = lib.STEINWAY_OPEN[name]
+        if not open then return 0, 0, 0 end
+        cutoff = math.min(18000, cutoff * open)
+    end
+    return filter.mode, math.floor(cutoff), filter.resonance
+end
+
 local function slotLevel(slot, name, patch)
     local level = lib.volume * (patch.level or 1)
     if S.steinwaySlots and S.steinwaySlots[slot] then level = level * 10 ^ ((lib.STEINWAY_DB[name] or -8.4) / 20) end
@@ -714,12 +733,14 @@ local function steinwayFor(slot, patch, name)
             use(slot)
             S.steinwaySlots[slot] = true
             S.C.instrument_level(slot, slotLevel(slot, name, patch))
+            S.C.instrument_filter(slot, slotFilterOf(slot, name, patch))
         end
     elseif S.steinwaySlots[slot] then -- off now, or another sound took the slot
         local detach = optionalFn('de_steinway_detach')
         if detach then detach(slot) end
         S.steinwaySlots[slot] = nil
         S.C.instrument_level(slot, slotLevel(slot, name, patch))
+        S.C.instrument_filter(slot, slotFilterOf(slot, name, patch))
     end
 end
 
@@ -1426,7 +1447,7 @@ function lib.slotFilter(patchName, cutoff)
     local patch = lib.patches[patchName]
     if not (patch and patch.filter) then return end
     local slot = residentSlot(patchName, patch) -- a shared patch: only while it holds a slot
-    if slot then S.C.instrument_filter(slot, patch.filter.mode, math.floor(cutoff), patch.filter.resonance) end
+    if slot then S.C.instrument_filter(slot, slotFilterOf(slot, patchName, patch, cutoff)) end
 end
 
 -- Held notes. noteOn returns a handle (nil when the synth isn't running); vol 0..7, fractions OK.
