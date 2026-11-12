@@ -7,7 +7,11 @@
 --   driving: in play mode a tap on a vehicle with a Mipo in it drives it (stopped: toward the side tapped;
 --     going: its front stops it, its back turns it round); the panel's actions do the same in the editor.
 --     Motors in the wheel joints, torque from the whole weight (rider in) times an acceleration in g, up to
---     a top speed. An empty one doesn't drive (Nikki 2026-11-09).
+--     a top speed. An empty one doesn't drive (Nikki 2026-11-09);
+--   carrying: a press on any part takes it by the frame (in play mode also a press in a generous zone round
+--     it), the rider still in, pulled by its whole weight, turned softly toward upright once it's a carry;
+--     let go, it keeps the finger's speed; pulled back along the ground it winds up, and let go wound it
+--     shoots off on its spring (the Darda), only with a Mipo in.
 -- Speeds are in S (a Mipo's height) a second and accelerations in g, so they hold at any px per metre.
 -- Rides live on `state.vehicleRides` (a hot swap keeps them); not saved: a loaded scene's Mipos are out.
 local state = require('src.state')
@@ -17,6 +21,7 @@ local mipoActions = require('src.mipo-actions')
 local mipoFacing = require('src.mipo-facing')
 local characterManager = require('src.character-manager')
 local pointerJoints = require('src.physics.box2d-pointerjoints')
+local units = require('src.physics-units')
 
 local lib = {}
 
@@ -27,6 +32,15 @@ lib.UPSIDE_TIME = 0.6
 lib.TAP_TIME = 0.25    -- a press shorter than this, moved less than TAP_PX, is a tap (play mode)
 lib.TAP_PX = 14
 lib.COAST_DRAG = 0.03  -- rolling drag while not driven, of g
+-- carried: a soft spring turns it toward upright, per S^2 of the whole weight (rider in): held by one end it
+-- still hangs ~30 degrees; KD 1.1 let a flick spin it past upside down and the rider fell out (the spike)
+lib.UPRIGHT_KP, lib.UPRIGHT_KD, lib.UPRIGHT_MAX = 2.0, 1.8, 3.0
+-- let go: it keeps the finger's speed over the last MOMENTUM_WINDOW seconds, at most MOMENTUM_MAX S a second
+lib.MOMENTUM_WINDOW, lib.MOMENTUM_MAX = 0.1, 7
+-- the Darda: dragged backwards with its wheels on the ground it winds up (WIND_MIN..WIND_MAX S of pull-back);
+-- let go wound (with a Mipo in), its spring drives it WIND_RUN times as far, WIND_SPEED S a second per S
+-- wound, snapping off at WIND_ACCEL g (Nikki 2026-11-09: "the Darda way")
+lib.WIND_MIN, lib.WIND_MAX, lib.WIND_RUN, lib.WIND_SPEED, lib.WIND_ACCEL = 0.25, 3, 5, 3.5, 1.1
 
 -- degrees for a rider facing right (mirrored facing left); 0 = hanging straight down. Fixed angles in the
 -- world (the soapbox's lesson: aimed with the cart they made a loop: the cart tilts, the target with it).
@@ -260,7 +274,8 @@ local function totalMass(instance, ride)
     return m
 end
 
-local function setMotors(instance, ride, g, driving)
+-- speed, accel: a wound spring's instead of the motor's
+local function setMotors(instance, ride, g, driving, speed, accel)
     local _, gravity = state.physicsWorld:getGravity()
     local m = totalMass(instance, ride)
     local list = wheels(instance)
@@ -270,8 +285,8 @@ local function setMotors(instance, ride, g, driving)
             local r = w.body:getFixtures()[1]:getShape():getRadius()
             joint:setMotorEnabled(true)
             if driving then
-                joint:setMotorSpeed(ride.dir * g.topSpeed / r)
-                joint:setMaxMotorTorque(m * gravity * g.accel * r / #list)
+                joint:setMotorSpeed(ride.dir * (speed or g.topSpeed) / r)
+                joint:setMaxMotorTorque(m * gravity * (accel or g.accel) * r / #list)
             else
                 joint:setMotorSpeed(0)
                 joint:setMaxMotorTorque(m * gravity * lib.COAST_DRAG * r / #list)
@@ -320,26 +335,190 @@ local function heldMipos()
     return held
 end
 
--- presses on a vehicle in play mode: a short one that hardly moved is a tap
-local function watchPresses(instance, ride, dt)
+local function camera() return require('src.camera').getInstance() end
+
+local function pointerWorld(id)
+    local sx, sy = pointerJoints.getPointerPosition(id)
+    if not sx then return nil end
+    return camera():getWorldCoordinates(sx, sy)
+end
+
+-- every frame: how far the back wheel rolled forward (negative: backward), in world units
+local function rolled(instance, ride)
+    local w = instance.parts.backWheel
+    if not (w and alive(w.body)) then return 0 end
+    local a = w.body:getAngle()
+    local d = a - (ride.lastWheelAngle or a)
+    ride.lastWheelAngle = a
+    return d * w.body:getFixtures()[1]:getShape():getRadius() * ride.dir
+end
+
+-- a wheel touching something that doesn't move (the ground)
+local function onGround(instance)
+    for _, w in ipairs(wheels(instance)) do
+        for _, contact in ipairs(w.body:getContacts()) do
+            if contact:isTouching() then
+                local fa, fb = contact:getFixtures()
+                if fa:getBody():getType() == 'static' or fb:getBody():getType() == 'static' then return true end
+            end
+        end
+    end
+    return false
+end
+
+local function setVelocity(instance, ride, vx, vy)
+    local bodies = kinds.bodies(instance)
+    if liveMipo(ride.rider) then
+        for _, b in ipairs(bodiesOf(ride.rider)) do bodies[#bodies + 1] = b end
+    end
+    for _, b in ipairs(bodies) do
+        b:setLinearVelocity(vx, vy)
+        b:setAngularVelocity(0)
+    end
+end
+
+local function keepUpright(instance, ride, g)
     local frame = frameOf(instance)
-    local found
-    for _, pj in ipairs(pointerJoints.getPointerJoints() or {}) do
-        if pj.jointBody and alive(pj.jointBody) and kinds.ofBody(pj.jointBody) == instance then found = pj break end
+    local err = (frame:getAngle() + math.pi) % (2 * math.pi) - math.pi
+    local torque = -(lib.UPRIGHT_KP * err + lib.UPRIGHT_KD * frame:getAngularVelocity())
+    torque = math.max(-lib.UPRIGHT_MAX, math.min(lib.UPRIGHT_MAX, torque))
+    frame:applyTorque(torque * totalMass(instance, ride) * g.S * g.S)
+end
+
+-- A press on any of its parts (or in its grab zone, play mode) takes it by the frame, at that spot, pulling
+-- its whole weight, the rider still in, following the finger without springing past it (damping 1).
+local function takePress(instance, ride, pj)
+    local frame = frameOf(instance)
+    local sx, sy = pointerJoints.getPointerPosition(pj.id)
+    local wx, wy = camera():getWorldCoordinates(sx or 0, sy or 0)
+    if pj.jointBody ~= frame then pointerJoints.grab(pj.id, frame, wx, wy) end
+    local held = pointerJoints.getPointerJointAttachedTo(frame)
+    if held and held.joint and not held.joint:isDestroyed() then
+        local force = state.world.dragStrength * units.weight(totalMass(instance, ride))
+        held.joint:setMaxForce(force)
+        held.fullForce = force
+        held.joint:setDampingRatio(1)
     end
+    ride.press = { id = pj.id, sx = sx or 0, sy = sy or 0, t = 0, moved = false, lx = (frame:getLocalPoint(wx, wy)) }
+    ride.trail, ride.wind, ride.spring = {}, 0, 0
+end
+
+-- Let go: a tap drives (play mode); else, wound, its spring takes it off from rest; else it keeps the
+-- finger's last speed (capped). A short click in the editor is a selection, and changes nothing.
+local function released(instance, ride, g)
     local press = ride.press
-    if found and not press then
-        local sx, sy = pointerJoints.getPointerPosition(found.id)
-        local wx, wy = require('src.camera').getInstance():getWorldCoordinates(sx or 0, sy or 0)
-        ride.press = { id = found.id, sx = sx or 0, sy = sy or 0, t = 0, lx = (frame:getLocalPoint(wx, wy)) }
-    elseif press and found and found.id == press.id then
-        press.t = press.t + dt
-        local sx, sy = pointerJoints.getPointerPosition(press.id)
-        if sx and (sx - press.sx) ^ 2 + (sy - press.sy) ^ 2 > lib.TAP_PX ^ 2 then press.moved = true end
-    elseif press and not found then
-        if state.playMode == true and not press.moved and press.t < lib.TAP_TIME then tapped(instance, press.lx) end
-        ride.press = nil
+    ride.press = nil
+    local tap = not press.moved and press.t < lib.TAP_TIME
+    if tap then
+        if state.playMode == true then tapped(instance, press.lx) end
+        return
     end
+    if ride.wind > lib.WIND_MIN * g.S and ride.rider then
+        setVelocity(instance, ride, 0, 0)
+        local wound = math.min(ride.wind, lib.WIND_MAX * g.S)
+        ride.spring, ride.springSpeed, ride.going = wound * lib.WIND_RUN, wound * lib.WIND_SPEED, false
+    else
+        local trail, vx, vy = ride.trail, 0, 0
+        if #trail >= 2 then
+            local a, b = trail[1], trail[#trail]
+            local dt = b[1] - a[1]
+            if dt > 0.01 then vx, vy = (b[2] - a[2]) / dt, (b[3] - a[3]) / dt end
+        end
+        local speed, max = math.sqrt(vx * vx + vy * vy), lib.MOMENTUM_MAX * g.S
+        if speed > max then vx, vy = vx / speed * max, vy / speed * max end
+        setVelocity(instance, ride, vx, vy)
+    end
+    ride.wind, ride.trail, ride.settle = 0, nil, 0.6 -- set down: a bump isn't a crash
+end
+
+-- while held: the finger's path (for the release speed), winding when pulled back along the ground,
+-- upright once it's a carry, not a tap
+local function carry(instance, ride, g, dt, forward)
+    local press = ride.press
+    press.t = press.t + dt
+    local sx, sy = pointerJoints.getPointerPosition(press.id)
+    if sx and (sx - press.sx) ^ 2 + (sy - press.sy) ^ 2 > lib.TAP_PX ^ 2 then press.moved = true end
+    local wx, wy = pointerWorld(press.id)
+    if wx then
+        local now = love.timer.getTime()
+        ride.trail[#ride.trail + 1] = { now, wx, wy }
+        while #ride.trail > 2 and now - ride.trail[1][1] > lib.MOMENTUM_WINDOW do table.remove(ride.trail, 1) end
+    end
+    if forward < 0 and onGround(instance) then ride.wind = math.min(ride.wind - forward, lib.WIND_MAX * g.S) end
+    if press.moved or press.t >= lib.TAP_TIME then keepUpright(instance, ride, g) end
+end
+
+-- the pointer joint holding one of its parts, or nil
+local function heldBy(instance)
+    for _, pj in ipairs(pointerJoints.getPointerJoints() or {}) do
+        if pj.jointBody and alive(pj.jointBody) and kinds.ofBody(pj.jointBody) == instance then return pj end
+    end
+end
+
+local function watchPresses(instance, ride, g, dt, forward)
+    local pj = heldBy(instance)
+    if pj and not ride.press then
+        takePress(instance, ride, pj)
+    elseif ride.press and pj and pj.id == ride.press.id then
+        carry(instance, ride, g, dt, forward)
+    elseif ride.press then
+        released(instance, ride, g)
+    end
+end
+
+-- The grab zone (play mode): its thin boards, deck and small wheels are hard to hit (Nikki 2026-11-09), so
+-- a press that took nothing, in a generous box round it, takes it. Above the rim a press is the rider's.
+local function inGrabZone(instance, g, ride, wx, wy)
+    local lx, ly = frameOf(instance):getLocalPoint(wx, wy)
+    local top
+    if g.pose == 'stand' then
+        top = g.floorY - (ride.rider and g.S * 0.12 or g.S * 0.35)
+    else
+        top = g.floorY - g.H - (ride.rider and g.S * 0.04 or g.S * 0.35)
+    end
+    return math.abs(lx) < g.len / 2 + g.S * 0.12 and ly > top and ly < g.axleY + g.r + g.S * 0.1
+end
+
+local function newPresses()
+    local presses = {}
+    local down = love.mouse.isDown(1)
+    if down and not state.vehicleRidesMouseDown then presses[#presses + 1] = 'mouse' end
+    state.vehicleRidesMouseDown = down
+    local seen = {}
+    for _, id in ipairs(love.touch.getTouches()) do
+        seen[id] = true
+        if not (state.vehicleRidesTouches and state.vehicleRidesTouches[id]) then presses[#presses + 1] = id end
+    end
+    state.vehicleRidesTouches = seen
+    return presses
+end
+
+local function grabZones(list)
+    local presses = newPresses()
+    if state.playMode ~= true then return end
+    for _, id in ipairs(presses) do
+        local holding = false
+        for _, pj in ipairs(pointerJoints.getPointerJoints() or {}) do
+            if pj.id == id then holding = true end
+        end
+        local wx, wy = pointerWorld(id)
+        if wx and not holding then
+            for _, instance in ipairs(list) do
+                if inGrabZone(instance, require('src.vehicles').geometry(instance), rideOf(instance), wx, wy) then
+                    pointerJoints.grab(id, frameOf(instance), wx, wy)
+                    break
+                end
+            end
+        end
+    end
+end
+
+-- the wound spring unwinds as it rolls forward, slowing over its last stretch; only with a Mipo in
+local function springDrive(instance, ride, g, forward)
+    ride.spring = ride.spring - math.max(0, forward)
+    if not ride.rider then ride.spring = 0 end
+    local fade = math.min(1, math.max(0, ride.spring) / (g.S * 1.5))
+    setMotors(instance, ride, g, ride.spring > 0, ride.springSpeed * (0.3 + 0.7 * fade), lib.WIND_ACCEL)
 end
 
 -- a ride whose vehicle is gone (deleted, dissolved, a new scene's): its rider gets its own legs back
@@ -365,6 +544,7 @@ function lib.update(dt)
     dt = math.min(dt or 0, 0.05)
     dropOrphans()
     local list = vehicleInstances()
+    grabZones(list)
     local held = heldMipos()
     -- let go over a free vehicle: in
     for inst in pairs(state.vehicleRidesHeld or {}) do
@@ -385,7 +565,8 @@ function lib.update(dt)
         local ride = rideOf(instance)
         local g = require('src.vehicles').geometry(instance)
         local frame = frameOf(instance)
-        watchPresses(instance, ride, dt)
+        local forward = rolled(instance, ride)
+        watchPresses(instance, ride, g, dt, forward)
         local inst = ride.rider
         if inst and (not liveMipo(inst) or ride.frame ~= frame or not ride.joints or not ride.joints[1]
                 or ride.joints[1]:isDestroyed()) then
@@ -399,9 +580,9 @@ function lib.update(dt)
             local tx, ty = inst.parts.torso1.body:getPosition()
             if held[inst] and not inReach(instance, g, tx, ty) then
                 unseat(instance) -- dragged out
-            elseif dv > g.crash and (ride.settle or 0) <= 0 then
+            elseif dv > g.crash and (ride.settle or 0) <= 0 and not ride.press then
                 unseat(instance, pv) -- thrown off, at the speed it had
-            elseif ride.upsideFor > lib.UPSIDE_TIME then
+            elseif ride.upsideFor > lib.UPSIDE_TIME and not ride.press then -- carried, it stays in
                 unseat(instance)
             elseif g.pose == 'stand' and mipoActions.isDazed(inst) then
                 unseat(instance)
@@ -412,9 +593,16 @@ function lib.update(dt)
         end
         ride.settle = math.max(0, (ride.settle or 0) - dt)
         if not ride.rider then ride.going = false end
-        setMotors(instance, ride, g, ride.going)
+        if ride.press then ride.spring = 0 end
+        if (ride.spring or 0) > 0 then
+            springDrive(instance, ride, g, forward)
+        else
+            setMotors(instance, ride, g, ride.going and not ride.press)
+        end
     end
 end
+
+lib._test = { released = released, keepUpright = keepUpright, inGrabZone = inGrabZone } -- for specs
 
 -- a new scene: no rides (the bodies go with it)
 function lib.unload()

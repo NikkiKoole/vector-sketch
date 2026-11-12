@@ -132,6 +132,69 @@ describe('vehicle rides', function()
         assert.is_false(rides.isGoing(kart))
     end)
 
+    it('carried, it turns back toward upright', function()
+        local kart = kinds.make('vehicle', { type = 'kart' }, 0, -2000) -- in the air: held up
+        local frame = kart.parts.frame.body
+        for _, b in ipairs(kinds.bodies(kart)) do b:setGravityScale(0) end
+        rides.update(1 / 60)
+        local ride = state.vehicleRides[kart.id]
+        frame:setAngle(1.2)
+        local g = require('src.vehicles').geometry(kart)
+        for _ = 1, 120 do
+            rides._test.keepUpright(kart, ride, g)
+            world:update(1 / 60)
+        end
+        assert.is_true(math.abs(frame:getAngle()) < 0.4, 'still at ' .. frame:getAngle())
+    end)
+
+    it("let go, it keeps the finger's speed", function()
+        local kart = kinds.make('vehicle', { type = 'kart' }, 0, 300)
+        step(0.5)
+        rides.update(1 / 60)
+        local ride = state.vehicleRides[kart.id]
+        ride.press, ride.wind = { moved = true, t = 1, lx = 0 }, 0
+        ride.trail = { { 0, 0, 0 }, { 0.1, 120, 0 } } -- 1200 px a second to the right
+        rides._test.released(kart, ride, require('src.vehicles').geometry(kart))
+        local vx = kart.parts.frame.body:getLinearVelocity()
+        assert.is_near(1200, vx, 1)
+        step(1)
+        assert.is_true(kart.parts.frame.body:getX() > 500)
+    end)
+
+    it('wound up with a Mipo in, it shoots off; empty, it just sits', function()
+        local kart = kinds.make('vehicle', { type = 'kart' }, 0, 300)
+        local inst = mipoAt(0, 0)
+        rides.seat(kart, inst)
+        step(0.5)
+        local g = require('src.vehicles').geometry(kart)
+        local ride = state.vehicleRides[kart.id]
+        local x0 = kart.parts.frame.body:getX()
+        ride.press, ride.trail, ride.wind = { moved = true, t = 1, lx = 0 }, {}, g.S * 1.5 -- pulled back 1.5 S
+        rides._test.released(kart, ride, g)
+        assert.is_true(ride.spring > 0)
+        step(2)
+        assert.is_true(kart.parts.frame.body:getX() - x0 > g.S * 2, 'ran ' .. (kart.parts.frame.body:getX() - x0))
+        assert.are.equal(inst, rides.riderOf(kart))
+
+        rides.riderOut(kart)
+        step(2)
+        ride.press, ride.trail, ride.wind = { moved = true, t = 1, lx = 0 }, {}, g.S * 1.5
+        rides._test.released(kart, ride, g)
+        assert.are.equal(0, ride.spring or 0) -- not wound: no driver
+    end)
+
+    it('takes a press near its thin parts (the grab zone), not one far above', function()
+        local sk = kinds.make('vehicle', { type = 'skateboard' }, 0, 300)
+        rides.update(1 / 60)
+        local g = require('src.vehicles').geometry(sk)
+        local ride = state.vehicleRides[sk.id]
+        local frame = sk.parts.frame.body
+        local nx, ny = frame:getWorldPoint(0, g.floorY - g.S * 0.2) -- just above the deck
+        assert.is_true(rides._test.inGrabZone(sk, g, ride, nx, ny))
+        local fx, fy = frame:getWorldPoint(0, g.floorY - g.S * 1.0) -- a Mipo's height above
+        assert.is_false(rides._test.inGrabZone(sk, g, ride, fx, fy))
+    end)
+
     it('lets its rider go when the vehicle is deleted', function()
         local kart = kinds.make('vehicle', { type = 'kart' }, 0, 300)
         local inst = mipoAt(0, 0)

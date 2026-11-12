@@ -98,6 +98,7 @@ function lib.geometry(instance)
     local S = lib.S * (instance.settings.size or 1)
     local cx, cy = mathutils.computeCentroid(frameVertices(t, S))
     return { type = t, S = S, len = t.len * S, floorY = -cy, H = (t.H or 0) * S, r = t.r * S,
+        axleY = t.drop * t.r * S - cy,
         seatX = t.seat * S - cx, pose = t.pose, topSpeed = t.topSpeed * S, accel = t.accel, crash = t.crash * S }
 end
 

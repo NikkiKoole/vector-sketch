@@ -124,7 +124,13 @@ questions that eat weeks; they wait for a real case.
     tapped; going: front stops it, back turns it round), stopping coasts as in the spike; the panel's actions
     (drive / stop, turn round, rider out). A deleted or dissolved vehicle lets its rider go. Rides on `state`,
     not saved. Vehicles sized to real Mipos: S 850 (random Mipos at 0.3 stand 445-923; at 600 they hung over).
-    spec/vehicle-rides_spec.lua. Left (3): carried upright, pushed, wound up; the generous grab zone.
+    spec/vehicle-rides_spec.lua.
+    **KD4c 3 done 2026-11-12** (carrying): a press on any part takes it by the frame, pulling its whole weight
+    with the rider in, damping 1 (no springing past the finger), turned softly upright once it's a carry; let
+    go it keeps the finger's speed (capped 7 S/s); pulled back along the ground it winds up and, with a Mipo
+    in, shoots off on its spring (the Darda); in play mode a press in a generous zone round its thin parts
+    takes it. Carried, the rider isn't knocked or tipped out. A short click in the editor changes nothing (a
+    selection). KD4c done; not felt by hand yet.
   - **KD4d. The other three types** (built with KD4b); left: the rides spike builds its street and places
     the engine's vehicles.
 - [ ] **KD4p. Prop recipes as a kind** (was KD4): a placed prop keeps its recipe name and settings (saved),
