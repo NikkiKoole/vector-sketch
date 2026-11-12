@@ -11,7 +11,8 @@
 # along its length by a smooth wobble (a slow one: the hand drifting; a quick one: the pen's tremble), the
 # letter a little turned, stretched and shifted, so the three differ like three tries of one hand. Filled white
 # on clear (tinted when drawn), 4x supersampled. Out: <name>.png (the atlas) and <name>.lua (metrics: per
-# character the advance and its drawings' quads and offsets from the pen on the baseline, in atlas pixels).
+# character the advance and its drawings' quads and offsets from the pen on the baseline, in atlas pixels;
+# `clean`: the letter as the font has it, no wobble, for straight text).
 # Needs: fontTools, Pillow, numpy.
 import argparse
 import math
@@ -169,6 +170,10 @@ def forge(font_path, em, amount, seed):
                 img, left, top = rasterize(draw_version(contours, np.random.default_rng(rng.getrandbits(32)),
                                                         em, amount))
                 entry['versions'].append({'img': img, 'ox': left, 'oy': top})
+            # and the font itself, no wobble (lettering.draw's straight = true); its own rng, so the three
+            # drawings stay what they were before this one was added
+            img, left, top = rasterize(draw_version(contours, np.random.default_rng(0), em, 0))
+            entry['clean'] = {'img': img, 'ox': left, 'oy': top}
         letters[ch] = entry
     metrics = {'em': em, 'ascent': hhea.ascent * scale, 'descent': -hhea.descent * scale,
                'lineHeight': (hhea.ascent - hhea.descent + hhea.lineGap) * scale}
@@ -177,7 +182,7 @@ def forge(font_path, em, amount, seed):
 
 def pack(letters, width=2048):
     """Shelf packing, tallest first. Sets x, y on each version; returns the atlas."""
-    items = [v for e in letters.values() for v in e['versions']]
+    items = [v for e in letters.values() for v in e['versions'] + ([e['clean']] if 'clean' in e else [])]
     items.sort(key=lambda v: -v['img'].height)
     x = y = shelf = 0
     for v in items:
@@ -209,6 +214,9 @@ def write_lua(path, letters, metrics, image_name, atlas):
     for ch, e in letters.items():
         vs = ', '.join(f'{{ {v["x"]}, {v["y"]}, {v["img"].width}, {v["img"].height}, {v["ox"]}, {v["oy"]} }}'
                        for v in e['versions'])
+        if 'clean' in e:
+            c = e['clean']
+            vs += f', clean = {{ {c["x"]}, {c["y"]}, {c["img"].width}, {c["img"].height}, {c["ox"]}, {c["oy"]} }}'
         lines.append(f'        [{lua_string(ch)}] = {{ advance = {e["advance"]:.2f}, {vs} }},')
     lines.append('    },')
     lines.append('}')

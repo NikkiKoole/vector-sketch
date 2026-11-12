@@ -3,7 +3,8 @@
 -- scripts/spikes/lettering-looks.lua, its numbers and hue on sliders) (docs/HANDDRAWN-FONT.md; Nikki
 -- 2026-11-12: "3 slightly varying textures per glyph", "a pseudo 3d graffiti outline ... as an option,
 -- tweakable"). Views: 'text' (titles, a sign, a long line) and 'sheet' (all the drawings).
--- Keys: f font, l look, v view, h panel, r new seed.
+-- 'straight': the font's own letters, no wobble (each font's atlas has them too). Keys: f font, l look, v view,
+-- h panel, r new seed.
 local s = {}
 -- lettering: src/lettering.lua, handed to scripts by src/script.lua
 local looks = love.filesystem.load('scripts/spikes/lettering-looks.lua')()(lettering)
@@ -56,7 +57,7 @@ local function drawText(c, sw)
         if look then return looks.draw(text, x, y, o, look) end
         return lettering.draw(text, x, y, o)
     end
-    local o = { font = c.font, size = c.size, boil = c.boil, jiggle = c.jiggle, seed = c.seed }
+    local o = { font = c.font, size = c.size, boil = c.boil, jiggle = c.jiggle, straight = c.straight, seed = c.seed }
     love.graphics.setColor(INK)
     write(c.text, 40, 40, o)
     -- a title, centred, bigger
@@ -65,7 +66,8 @@ local function drawText(c, sw)
     love.graphics.setColor(INK)
     write('The Bathhouse', (sw - w) / 2, 60 + c.size * 1.4, o)
     -- a sign: a board with two lines on it, painted plain
-    local sign = { font = c.font, size = c.size * 0.7, boil = c.boil, jiggle = c.jiggle, seed = c.seed + 7,
+    local sign = { font = c.font, size = c.size * 0.7, boil = c.boil, jiggle = c.jiggle, straight = c.straight,
+        seed = c.seed + 7,
         align = 'center' }
     local text = 'MIPO SHOP\nopen 9 - 5'
     local tw, th = lettering.measure(text, sign)
@@ -76,7 +78,8 @@ local function drawText(c, sw)
     lettering.draw(text, sx + 30, sy + 20, sign)
     -- the alphabet, small, plain
     love.graphics.setColor(INK)
-    local small = { font = c.font, size = c.size * 0.45, boil = c.boil, jiggle = c.jiggle, seed = c.seed }
+    local small = { font = c.font, size = c.size * 0.45, boil = c.boil, jiggle = c.jiggle, straight = c.straight,
+        seed = c.seed }
     lettering.draw('ABCDEFGHIJKLMNOPQRSTUVWXYZ\nabcdefghijklmnopqrstuvwxyz\n0123456789 !?.,:;\'"()+-=&@#%',
         sx + tw + 140, sy, small)
 end
@@ -127,7 +130,7 @@ function s.drawUI()
     if not c.showPanel then return end
     ui.startFrame()
     local lookRows = math.ceil(#LOOK_NAMES / 4)
-    local rows = 1 + 1 + lookRows + 3 + 1 + 1 + (c.look ~= 'plain' and #looks.TWEAKS + 1 or 0)
+    local rows = 1 + 1 + lookRows + 3 + 1 + 1 + 1 + (c.look ~= 'plain' and #looks.TWEAKS + 1 or 0)
     local w = 380
     local h = ROW * rows + 50
     local x0, y0 = sw - w - 16, math.max(12, sh - h - 16)
@@ -140,6 +143,9 @@ function s.drawUI()
         y = buttonRows(x, y, inner, LOOK_NAMES, 4, c.look, function(name) c.look = name end)
         y = sliders(x, y, inner, { { 'size', 'size', 16, 160, 1 }, { 'boil', 'boil (fps)', 0, 15, 1 },
             { 'jiggle', 'jiggle', 0, 2, 0.05 } }, c, 'lettering-')
+        local changed, straight = ui.checkbox(x, y + 2, c.straight == true, 'straight: the font itself, no wobble')
+        if changed then c.straight = straight end
+        y = y + ROW
         if c.look ~= 'plain' then
             y = sliders(x, y, inner, looks.TWEAKS, tweaks(c, c.look), 'lettering-' .. c.look .. '-')
             if ui.button(x, y, 160, 'reset ' .. c.look, ROW - 6) then c.tweaks[c.look] = looks.defaults(c.look) end

@@ -6,7 +6,8 @@
 --   lettering.measure(text, opts) -> width, height
 -- opts (all optional): size (px of the em, 48), font ('comic'), seed (which drawings a text gets, 1),
 --   boil (drawings per second, 0 = still), jiggle (0..1, each drawing's own tilt and bounce, 0.5),
---   align ('left' | 'center' | 'right', per line), spacing (extra px between letters), time (for boil)
+--   align ('left' | 'center' | 'right', per line), spacing (extra px between letters), time (for boil),
+--   straight (true: the font's own letters, no wobble, no jiggle, no boil)
 --
 -- Which drawing: each letter gets one of its three by its place in the text, so it stays the same frame to
 -- frame, and a letter never has the same drawing as the same letter right before it ("ll", "aaa"). Boil:
@@ -45,7 +46,10 @@ local function font(name)
             versions[i] = { quad = love.graphics.newQuad(v[1], v[2], v[3], v[4], m.width, m.height),
                 w = v[3], h = v[4], ox = v[5], oy = v[6] }
         end
-        letters[ch] = { advance = e.advance, versions = versions }
+        local c = e.clean
+        local clean = c and { quad = love.graphics.newQuad(c[1], c[2], c[3], c[4], m.width, m.height),
+            w = c[3], h = c[4], ox = c[5], oy = c[6] }
+        letters[ch] = { advance = e.advance, versions = versions, clean = clean }
     end
     f = { image = image, letters = letters, em = m.em, ascent = m.ascent, lineHeight = m.lineHeight }
     loaded[name] = f
@@ -109,8 +113,9 @@ function lib.draw(text, x, y, opts)
     local size = opts.size or 48
     local s = size / f.em
     local seed = opts.seed or 1
-    local boil = opts.boil or 0
-    local jiggle = opts.jiggle or 0.5
+    local straight = opts.straight
+    local boil = straight and 0 or opts.boil or 0
+    local jiggle = straight and 0 or opts.jiggle or 0.5
     local spacing = (opts.spacing or 0) / s
     local align = opts.align or 'left'
     local tick = 0
@@ -136,7 +141,7 @@ function lib.draw(text, x, y, opts)
                 local count = #e.versions
                 if count > 0 then
                     local vi = pick(ch, n, count, seed, tick, run)
-                    local v = e.versions[vi]
+                    local v = straight and e.clean or e.versions[vi]
                     local tilt = (hash(seed + vi, n, 3) - 0.5) * 0.12 * jiggle
                     local bounce = (hash(seed + vi, n, 4) - 0.5) * 0.06 * f.em * jiggle
                     local cx, cy = pen + v.ox + v.w / 2, base + v.oy + v.h / 2 + bounce

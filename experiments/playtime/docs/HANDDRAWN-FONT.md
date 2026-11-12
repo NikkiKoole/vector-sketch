@@ -29,6 +29,9 @@ draw) each glyph (three times)". Before printing a sheet and drawing 120 letters
   gold, toxic; each a gradient face with a bevel, a band, a thin line, an extruded block, a drop shadow,
   sparkles. Canvases (mask, band, rim) stamped in rings, the block swept a pixel at a time. Sliders: band,
   line, depth, angle, bevel, shadow, sparkles, hue (turns all its colours). l in the spike.
+- [x] LF5. Straight (Nikki: "also possible without any wobble, just straight"): each atlas also holds the
+  font's own letter (`clean` in the metrics, forged with no wobble); `lettering.draw(..., { straight = true })`
+  draws those, no jiggle, no boil; the looks take it too. A checkbox in the spike.
 - Later, when it's wanted (Nikki 2026-11-12: "cool spike done!"): where it's used first (a sign in a room, the
   scene titles), and whether it ships with every build (named in src/, so ship-list packs it: ~360 KB a font,
   four now). The looks would land in the engine with their sliders as lib.tuning.
