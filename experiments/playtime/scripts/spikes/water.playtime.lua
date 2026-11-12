@@ -1,3 +1,4 @@
+-- water: things floating in a water area (label water): buoyancy from the part of each body under the surface, with drag; a panel for drag, spin damping and density.
 local s = {}
 
 local dragCoefficient = .1

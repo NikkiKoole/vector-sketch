@@ -1,3 +1,4 @@
+-- platforms: a one-way platform (label platform): sensor chains along its top and bottom decide when things may pass through from below.
 local s = {}
 
 

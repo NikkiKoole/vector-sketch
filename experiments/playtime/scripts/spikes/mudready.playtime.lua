@@ -1,3 +1,4 @@
+-- mudready: wash the mud off a Mipo in a tub (the bathhouse app's idea): clumps of mud jointed to its parts, a sponge that lathers them loose, foam, a shower and soap.
 local s = {}
 
 -- Per-anchor cluster definitions

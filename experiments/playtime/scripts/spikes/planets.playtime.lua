@@ -1,3 +1,4 @@
+-- planets: little planets that pull things towards them (bodies labelled planet), each with its own gravity and reach, drawn as a circle.
 local s = {}
 
 local function applyGravity(planet, body)

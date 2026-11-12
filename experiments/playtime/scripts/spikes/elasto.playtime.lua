@@ -1,3 +1,4 @@
+-- elasto: an elastic rope between two bodies (labels elasto-start, elasto-end): a chain of small boxes on springy distance joints.
 local s = {}
 
 local freq = 5.0
