@@ -128,7 +128,21 @@ local SWITCHES = {
                        -- Walking only: a hop turning as it goes doesn't moonwalk (and a single hop facing
                        -- front, made to turn first, didn't hop once, spec/mipo-motor_spec)
     setOff = 0.16,     -- seconds dipping before it sets off once it faces its way
-    gaitCap = 1.3,     -- the walk's steps at most this times the speed it wants (the body may go faster)
+    -- LO3, steps by distance: the walk's steps go at the body's own speed, between gaitFloor and gaitCap
+    -- times the speed it wants. Was 0.6 and 1.3 (a runaway's cap); 0.2 and 1: the same drift, less
+    -- tilt (mean 18 -> 14, worst 27 -> 22 degrees), every spec passing
+    gaitCap = 1,       -- at most this times the speed it wants (the body may go faster: faster legs ran away)
+    gaitFloor = 0.2,   -- at least this times it (so it starts stepping before the body moves)
+    -- LO3: the standing leg aims where its foot landed (two-bone IK on the thigh and shin's lengths)
+    -- instead of the keyed pose, so the motors don't push a planted foot along. 0: keyed, 1: all IK.
+    -- tried 2026-11-12 (off): 1 drifts less (27% -> 17% of the body's way) but walks a third slower and
+    -- tilts more; the legs don't drive the body (a gentler push with leadByWant: half as far); a firmer
+    -- push drags the foot again (40%); lockUntil (the keyed push-off back at the stance's end): 25-31%
+    footLock = 0,
+    footLead = 0.06,   -- footLock: seconds ahead the hip is aimed from (the body's speed times it)
+    lockUntil = 1,     -- footLock: until where in the stance it holds (u, 0 contact .. 0.5 toe-off);
+                       -- after it the keyed push-off takes over again (1: the whole stance)
+    leadByWant = false, -- footLock: the hip led by the speed it wants, not the one it has (the leg drives it)
     stepTurn = true,   -- turning on the spot (turnFirst): each foot lifts as it turns round and comes down
                        -- facing the new way (Nikki 2026-11-12: "sometimes the feet quickly turn twice":
                        -- right -> front -> left flipped one foot, then the other, in place)
@@ -863,6 +877,39 @@ local function footAngle(u, face, shinAngle)
     return -face * (90 + lift) + follow * shinAngle
 end
 
+-- the standing leg's pose that reaches its foot where it is (LO3): world degrees for thigh and shin
+-- (the walk's convention: 0 straight down, + the foot toward the screen's left), face 1 / -1
+-- plant (x, y): where the foot landed (kept through the stance); lead: seconds ahead the hip is taken
+-- (its speed times that): aimed at where the body is now, the motors held the leg still and the
+-- body pushed the stiff leg's foot along (drift 99%)
+local function legToFoot(inst, i, face, plant, lead)
+    local leg = LEG_PAIRS[i]
+    local hx, hy = jointPoint(inst, 'torso1', leg[1])
+    local kx, ky = jointPoint(inst, leg[1], leg[2])
+    local ax, ay = jointPoint(inst, leg[2], FEET[i])
+    if not (hx and kx and ax) then return nil end
+    local torso = partBody(inst, 'torso1')
+    if torso and lead then
+        local vx, vy = torso:getLinearVelocityFromWorldPoint(hx, hy)
+        if lib.leadByWant and inst._driveTarget then vx, vy = inst._driveTarget, 0 end
+        hx, hy = hx + vx * lead, hy + vy * lead
+    end
+    -- the segments' lengths from where the joints sit on them now (each a rigid body: fixed)
+    local a = math.sqrt((kx - hx) ^ 2 + (ky - hy) ^ 2)
+    local b = math.sqrt((ax - kx) ^ 2 + (ay - ky) ^ 2)
+    local legA, legB = a, b
+    local dx, dy = ax - hx, ay - hy
+    if plant then dx, dy = plant[1] - hx, plant[2] - hy end
+    a, b = legA, legB
+    local d = math.min(math.sqrt(dx * dx + dy * dy), (a + b) * 0.999)
+    local cosK = (d * d - a * a - b * b) / (2 * a * b)
+    local k = math.acos(math.max(-1, math.min(1, cosK))) -- the knee's bend (0 straight)
+    local line = math.atan2(-dx, dy)
+    local alpha = math.atan2(b * math.sin(k), a + b * math.cos(k))
+    local thigh = line - face * alpha
+    return math.deg(thigh), math.deg(thigh + face * k)
+end
+
 -- where a Mipo's weight is: the mass-weighted centre of its parts (x, y)
 local function centreOf(inst)
     local m, x, y = 0, 0, 0
@@ -960,6 +1007,23 @@ local function stepLegs(inst, dt, speed, face, side, legLen, weighty)
             shin = thigh + face * bend
             if swinging[i] and place then -- SIMBICON's balance: the swinging foot lands further ahead
                 thigh, shin = thigh - face * place, shin - face * place
+            end
+            -- where each foot landed: kept through its stance (LO3)
+            inst._plant = inst._plant or {}
+            if swinging[i] then
+                inst._plant[i] = nil
+            elseif not inst._plant[i] then
+                local ax, ay = jointPoint(inst, leg[2], FEET[i])
+                if ax then inst._plant[i] = { ax, ay } end
+            end
+            if not swinging[i] and lib.footLock > 0 and side then -- LO3: the standing leg to its foot
+                local ikThigh, ikShin = legToFoot(inst, i, face, inst._plant[i], lib.footLead)
+                if ikThigh then
+                    local w = lib.footLock
+                    if u > lib.lockUntil then w = w * math.max(0, 1 - (u - lib.lockUntil) / 0.08) end
+                    thigh = thigh + (ikThigh - thigh) * w
+                    shin = shin + (ikShin - shin) * w
+                end
             end
             if u > 0.3 and u < 0.52 then pushOff = math.max(pushOff, math.sin(math.pi * (u - 0.3) / 0.22)) end
         end
@@ -1242,7 +1306,7 @@ local function updateDrive(inst, dt, now, torso, legLen)
     if inst._stepsLeft then inst._gaitFrom = inst._gaitFrom or (inst._gait or 0) end
     -- the steps go at the body's speed, but at most gaitCap times the speed it wants: faster legs carried
     -- the body faster, which sped the legs up again (seed 42 ran away to 3x its speed, 2026-11-12)
-    local gaitSpeed = math.max(math.abs(target) * 0.6, math.min(vx * dir, math.abs(target) * lib.gaitCap))
+    local gaitSpeed = math.max(math.abs(target) * lib.gaitFloor, math.min(vx * dir, math.abs(target) * lib.gaitCap))
     local pushOff = stepLegs(inst, dt, gaitSpeed, face, faceDir ~= 0, legLen, lib.weighty)
     if grounded then
         if lib.weighty and lib.pulse > 0 then

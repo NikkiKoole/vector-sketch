@@ -312,7 +312,12 @@ function s.drawUI()
         if v then walk.walkLean = v end
         -- the feet roll through the step (LO7): heel strike, plant, heel off, swing, toes up before contact
         x, y = ui.nextLayoutPosition(layout, bw, BH)
-        if ui.button(x, y, bw, 'foot roll: ' .. (walk.footRoll and 'on' or 'off')) then walk.footRoll = not walk.footRoll end
+        local halfW = (bw - pad) / 2
+        if ui.button(x, y, halfW, 'foot roll: ' .. (walk.footRoll and 'on' or 'off')) then walk.footRoll = not walk.footRoll end
+        -- LO3: the standing leg by IK to where its foot landed (off: tried, slower; to look at)
+        if ui.button(x + halfW + pad, y, halfW, 'foot lock: ' .. (walk.footLock > 0 and 'on' or 'off')) then
+            walk.footLock = walk.footLock > 0 and 0 or 1
+        end
         v = slider(layout, bw, 'heelStrike', 'heel strike (deg)', 0, 40, walk.heelStrike, 1)
         if v then walk.heelStrike = v end
         v = slider(layout, bw, 'toeOff', 'toe off (deg)', 0, 60, walk.toeOff, 1)

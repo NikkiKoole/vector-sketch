@@ -90,6 +90,22 @@ Baseline 2026-11-12 (before LO1): tilt 9-25°, seed 42 39°; seed 9 walks 1.4 le
   of 1.3: the torso runs ahead of the legs it drags). Kept (Nikki 2026-11-12: "ok pretty good").
 - [ ] **LO2. Gravity compensation**, so the motors can be soft and the bob deeper (MM8).
 - [ ] **LO3. Steps by distance, the stride by leg length** (MM3's "stride by the leg's length").
+  Tried 2026-11-12. The stride was already by leg length (2·L·sin 28°). Measured with a new count in
+  `spec/mipo-skate_spec.lua` (PLANT: how far the standing foot moves between landing and lifting,
+  against how far the body goes; a planted foot is 0%): 27% on average, 9-53% by Mipo. Its likely
+  cause: the keyed stance's spacing (contact, down, passing, push-off) isn't even in distance, so
+  the thigh's sweep and the body's way don't match through the stance.
+  - Kept: the steps follow the body's own speed more closely (`gaitFloor` 0.2, `gaitCap` 1; were 0.6
+    and 1.3). Drift the same (26%), tilt less (mean 18° -> 14°, worst 27° -> 22°), stops shorter
+    (0.19 legs, still in 0.9 s), every spec passing.
+  - tried 2026-11-12, off (`footLock`, a button on the weight panel): the standing leg aimed by IK at
+    where its foot landed, the hip taken a moment ahead (`footLead`; aimed at the body as it is, the
+    motors held the leg stiff and the body pushed the foot along: 99%). Drift 17%, but a third
+    slower and more tilt: the legs don't drive the body. With a firmer push the foot drags again
+    (40%); handing back to the keyed push-off late in the stance (`lockUntil`): 25-31%; the hip led
+    by the speed it wants (`leadByWant`) with a gentler push: half as far.
+  - Next, if the skate still shows: the legs driving the body (stronger hip motors, or the push
+    only through the standing foot), or the keyed stance respaced evenly in distance.
 - [x] **LO4. Capture point**: stop in a step, turn round (MM4), a recovery step when bumped.
   Built 2026-11-12 (stopping and turning; the recovery step not yet, LO4b). Told to stop, a walking
   Mipo facing a side takes the stopping step (`stopStep`): the leg that isn't standing steps to the
