@@ -45,22 +45,24 @@ add(lib.BASS, {
     { 15, 38, 0.35, false, 0.8 },
     { 15.5, 38, 0.3, false, 0.5 },
 })
--- the keys: { beat, length beats, odds, midi... }; top line as heard over the passes (13-16 of 16)
+-- the keys: { beat, length beats, odds, midi... }; top line as heard over the passes (13-16 of 16). Odds all 1:
+-- the record is one fixed loop, so a note heard in only some passes was the transcriber missing it, not the
+-- player (Nikki 2026-11-12: "the vibes still seem to lose an end note at the second bar or 3rd")
 lib.KEYS = {}
 for bar = 0, 2 do
     local o = bar * 4
     add(lib.KEYS, {
         { o, 0.5, 1, 67 },               -- G4
         { o + 0.5, 1.05, 1, 67, 74 },    -- G4 + D5: the 9th on top
-        { o + 1, 1.4, 0.45, 67 },
+        { o + 1, 1.4, 1, 67 },
         { o + 2.5, 1.4, 1, 73 },         -- Db5 over the Eb: its 7th, the top sighing down a half step
-        { o + 3, 0.95, 0.85, 67 },
+        { o + 3, 0.95, 1, 67 },
     })
 end
 add(lib.KEYS, {
     { 12, 0.7, 1, 61, 67, 72 },          -- A7#9: C#4 G4, C5 on top
-    { 13, 0.85, 0.85, 66, 70 },          -- A7b9 13: F#4 Bb4
-    { 14, 1.15, 0.6, 65, 69 },           -- Dm7: F4 A4
+    { 13, 0.85, 1, 66, 70 },          -- A7b9 13: F#4 Bb4
+    { 14, 1.15, 1, 65, 69 },           -- Dm7: F4 A4
     { 15, 0.7, 1, 72 },                  -- C5, back up to the D
 })
 -- the kit, one bar (the record's drums repeat within ~5 ms: a looped bar), on toy sounds. { beat, patch, midi,
