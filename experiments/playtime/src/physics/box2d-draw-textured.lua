@@ -1288,6 +1288,23 @@ local function drawDecal(d)
         local dw = extra.w or 50
         local dh = extra.h or 50
         local mirrorX = extra.mirror and -1 or 1
+        -- eyes shut (state.eyesShut, settings -> mipos): the eye's bottom line alone, its picture
+        -- eye-NN-closed.png beside the outline (the outline below the white's middle); no pupil
+        if extra.isEye and state.eyesShut then
+            if extra.eyeW then return end
+            local url = extra.main and extra.main.bgURL
+            local img, imgw, imgh
+            local closedURL = url and url ~= '' and url:gsub('%.png$', '-closed.png')
+            if closedURL then img, imgw, imgh = getLoveImage('textures/' .. closedURL) end
+            if img then
+                local bodyThing = utils.thingOf(body)
+                local h = dh * ((bodyThing and bodyThing.eyeScale) or 1)
+                love.graphics.setColor(color.hexToColor(extra.main.bgHex or '000000ff'))
+                love.graphics.draw(img, wx, wy, angle, dw / imgw * mirrorX, h / imgh, imgw / 2, imgh / 2)
+                love.graphics.setColor(1, 1, 1, 1)
+                return
+            end
+        end
         if extra.isEye then
             local bodyThing = utils.thingOf(body)
             local eyesOpen = (bodyThing and bodyThing.eyesOpen) or 1

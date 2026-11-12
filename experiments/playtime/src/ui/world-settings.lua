@@ -20,6 +20,12 @@ local mipoWalk = require('src.mipo-walk')
 local mipoEmotion = require('src.mipo-emotion')
 local tuning = require('src.tuning')
 local jointGuard = require('src.mipo-joint-guard')
+-- every Mipo's eyes shut (box2d-draw-textured: the eye's bottom line, eye-NN-closed.png), to look at
+local EYES_ROWS = {
+    { key = 'eyes shut', kind = 'bool',
+      get = function() return state.eyesShut == true end,
+      set = function(_, v) state.eyesShut = v and true or nil end },
+}
 
 local PANEL_WIDTH = ui.theme.panelWidth
 local START_X, START_Y = 102, 60 -- right of the tool rail
@@ -113,6 +119,7 @@ function lib.drawWorldSettingsUI()
                 y = y + inspector.drawParams('mipos', mipoWalk.rows, mipoWalk.settings(), nil, x, y, w)
                 y = y + inspector.drawParams('mipofeel', mipoEmotion.rows, mipoEmotion.settings(), nil, x, y, w)
                 y = y + inspector.drawParams('mipolegs', jointGuard.rows, {}, nil, x, y, w) -- a switch, not saved
+                y = y + inspector.drawParams('mipoeyes', EYES_ROWS, {}, nil, x, y, w) -- a switch, not saved
             end
 
             local pv = state.panelVisibility
