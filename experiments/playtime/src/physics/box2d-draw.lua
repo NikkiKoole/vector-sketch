@@ -26,7 +26,12 @@ local pal = {
     ['red']     = { 217 / 255, 73 / 255, 56 / 255 },   --#D94A38 Adobe Red:
 }
 
+-- in play mode a body without a picture is a plain grey shape: no type colours, outlines or sfixtures
+-- (Nikki 2026-11-12: "when playing ... grey boxes without outlines")
+local PLAY_GREY = { 0.62, 0.62, 0.6 }
+
 local function getBodyColor(body)
+    if state.playMode == true then return PLAY_GREY end
     if body:getType() == BT.KINEMATIC then
         return pal.red
     end
@@ -223,8 +228,9 @@ local function drawDebugId(debugIds, id, x, y)
     love.graphics.print(id, x, y)
 end
 
--- A polygon fixture: its fill (a connector red, a typed sfixture orange; an sfixture's only with
--- drawFixtures) and its outline. A CUSTOM body's fill already drew the plain ones (drawCustomBodyFill).
+-- A polygon fixture: its fill (a connector red, a typed sfixture orange; an sfixture's only with the
+-- 'sfixtures' setting, state.world.showSfixtures, off unless turned on; never in play mode) and its
+-- outline. A CUSTOM body's fill already drew the plain ones (drawCustomBodyFill).
 local function drawPolygonFixture(body, shape, ud, alpha, drawOutline, customHandled)
     local fillColor = getBodyColor(body)
     love.graphics.setColor(fillColor[1], fillColor[2], fillColor[3], alpha)
@@ -233,13 +239,14 @@ local function drawPolygonFixture(body, shape, ud, alpha, drawOutline, customHan
     -- Special fixtures (connector / typed) keep their per-fixture pass so their distinct color overlays
     -- the body fill as before.
     if customHandled and not hasSpecialFixtureData then return end
+    if ud and state.playMode == true then return end -- no sfixture or connector overlays in play
     if ud then
         if ud.bodyType == "connector" then love.graphics.setColor(1, 0, 0, alpha) end
         if ud.type then
             local typeColor = pal.orange
             love.graphics.setColor(typeColor[1], typeColor[2], typeColor[3], alpha)
         end
-        if state.world.drawFixtures then
+        if state.world.showSfixtures then
             love.graphics.polygon("fill", body:getWorldPoints(shape:getPoints()))
         end
     else
@@ -248,6 +255,8 @@ local function drawPolygonFixture(body, shape, ud, alpha, drawOutline, customHan
     local outlineColor = state.world.darkMode and pal.creamy or pal.dark
     love.graphics.setColor(outlineColor[1], outlineColor[2], outlineColor[3], alpha)
     if ud and ud.bodyType == "connector" then love.graphics.setColor(1, 0, 0, alpha) end
+    -- an sfixture's outline only with the 'sfixture lines' setting (state.world.showSfixtureLines)
+    if ud and ud.type and not state.world.showSfixtureLines then return end
     if drawOutline then love.graphics.polygon('line', body:getWorldPoints(shape:getPoints())) end
 end
 
@@ -395,6 +404,7 @@ function lib.drawWorld(world, drawOutline)
     if drawOutline == true and state.world.drawOutline == false then drawOutline = false end
     local r, g, b, a = love.graphics.getColor()
     local alpha = .8 * state.world.debugAlpha
+    if state.playMode == true then drawOutline, alpha = false, 1 end -- plain grey shapes (getBodyColor)
     love.graphics.setLineJoin("none")
     love.graphics.setColor(0, 0, 0, alpha)
     -- 'tex/body' view: a body with a texture shows only the texture (see showsBody)

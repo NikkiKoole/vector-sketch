@@ -55,12 +55,13 @@ lib.rows = {
     flag('textureOrBody', 'tex/body'), -- textured bodies show only their texture (src/physics/box2d-draw.lua)
     flag('mipoBodies', 'mipo body'),   -- ...except Mipo parts, which keep their body shapes
     flag('darkMode', 'dark'),
+    flag('showSfixtures', 'sfixtures'), -- the sfixtures' orange shapes (textures, anchors…) over the bodies
+    flag('showSfixtureLines', 'sfixture lines'), -- and their outlines
     -- advanced
     flag('debugDrawMode', 'debug', true),
     number('debugAlpha', 'alpha', 0, 1, true),
     flag('debugDrawBodies', 'bodies', true),
     flag('debugDrawJoints', 'joints', true),
-    flag('drawFixtures', 'sfixtures', true),
     flag('drawOutline', 'outline', true),
     flag('showDebugIds', 'ids', true),
     number('dragStrength', 'drag', 0, 200, true),
