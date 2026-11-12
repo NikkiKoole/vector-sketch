@@ -641,7 +641,7 @@ uniform int count;
 uniform vec3 toLayer;          // metres in the layer = (sc - xy) * z
 uniform float pxPerM;
 uniform float time;
-uniform vec2 sunDir;
+uniform vec2 sunPos;           // screen pixels
 uniform float light;
 uniform float cotton;
 
@@ -693,6 +693,7 @@ vec4 effect(vec4 color, Image tex, vec2 uv, vec2 sc) {
     float dens = smoothstep(0.0, 0.22, E);
     if (dens <= 0.001) return vec4(0.0);
     float sh = 90.0 * pxPerM;
+    vec2 sunDir = normalize(sunPos - sc + vec2(0.001, 0.0));
     float Fs = field(sc + sunDir * sh, rag);
     float Fu = field(sc + vec2(0.0, -sh), rag);
     // lit where it ends towards the sun and on top, grey where there's a lot of cloud above it
@@ -974,8 +975,10 @@ local function drawGrown(b, w, h, cx, cy, scale)
         end
     end
     love.graphics.setBlendMode('alpha')
-    -- the clouds: the thermals with cloud water as lobes, only those on the screen; the ones that
-    -- touch drawn together as one shape, MAXL lobes at most a draw
+    -- the clouds: the thermals with cloud water as lobes, only those on the screen. The screen in
+    -- tiles, each drawn with every lobe that reaches into it (a tile with more than MAXL split in
+    -- four), so the shape goes on across them: no seams (cutting a cloud into batches of lobes
+    -- showed the cuts, Nikki's screenshot 2026-11-12)
     local shown = {}
     for _, p in ipairs(b.thermals) do
         local amount = clamp(p.qc / 0.5, 0, 1)
@@ -993,27 +996,6 @@ local function drawGrown(b, w, h, cx, cy, scale)
         end
     end
     if #shown == 0 then return end
-    -- which touch: a union-find, then each group in order along x
-    local parent = {}
-    for i = 1, #shown do parent[i] = i end
-    local function root(i)
-        while parent[i] ~= i do parent[i] = parent[parent[i]]; i = parent[i] end
-        return i
-    end
-    for i = 1, #shown do
-        local a = shown[i]
-        for j = i + 1, #shown do
-            local c = shown[j]
-            local reach = (a.r + c.r) * 1.3
-            if (a.px - c.px) ^ 2 + (a.py - c.py) ^ 2 < reach * reach then parent[root(i)] = root(j) end
-        end
-    end
-    local groups, order = {}, {}
-    for i, l in ipairs(shown) do
-        local g = root(i)
-        if not groups[g] then groups[g] = {}; order[#order + 1] = g end
-        table.insert(groups[g], l)
-    end
     love.graphics.setShader(grownShader)
     grownShader:send('toLayer', { (w / 2 - lx * k) * dpi, (h / 2 - ly * k) * dpi, 1 / (k * dpi) })
     grownShader:send('pxPerM', k * dpi)
@@ -1022,29 +1004,45 @@ local function drawGrown(b, w, h, cx, cy, scale)
     grownShader:send('cotton', b.settings.cotton)
     love.graphics.setBlendMode('alpha', 'premultiplied')
     love.graphics.setColor(1, 1, 1, 1)
-    local sunX, sunY = SUN[1] * w, SUN[2] * h
-    local function drawGroup(list, from, to)
-        local lobes, bases = {}, {}
-        local x0, y0, x1, y1 = math.huge, math.huge, -math.huge, -math.huge
-        for i = from, to do
-            local l = list[i]
-            lobes[#lobes + 1] = { l.px * dpi, l.py * dpi, l.r * dpi, l.amount }
-            bases[#bases + 1] = l.base * dpi
-            x0, y0 = math.min(x0, l.px - l.r * 1.3), math.min(y0, l.py - l.r * 1.3)
-            x1, y1 = math.max(x1, l.px + l.r * 1.3), math.max(y1, l.py + l.r * 1.3)
+    grownShader:send('sunPos', { SUN[1] * w * dpi, SUN[2] * h * dpi })
+    local shift = 90 * k -- the shader's light samples, this far towards the sun and up
+    -- the lobes that reach into a rectangle: as far as their field still shows (1.9 radii; at
+    -- 1.3 the cut showed as a faint line), plus the light samples' shift
+    local function reaching(list, x0, y0, x1, y1)
+        local out = {}
+        for _, l in ipairs(list) do
+            local m = l.r * 1.9 + shift
+            if l.px + m > x0 and l.px - m < x1 and l.py + m > y0 and l.py - m < y1 then out[#out + 1] = l end
         end
-        local dx, dy = sunX - (x0 + x1) / 2, sunY - (y0 + y1) / 2
-        local len = math.sqrt(dx * dx + dy * dy) + 1e-3
+        return out
+    end
+    local function drawTile(list, x0, y0, x1, y1)
+        if #list == 0 then return end
+        if #list > MAXL and x1 - x0 > 24 then
+            local mx, my = (x0 + x1) / 2, (y0 + y1) / 2
+            drawTile(reaching(list, x0, y0, mx, my), x0, y0, mx, my)
+            drawTile(reaching(list, mx, y0, x1, my), mx, y0, x1, my)
+            drawTile(reaching(list, x0, my, mx, y1), x0, my, mx, y1)
+            drawTile(reaching(list, mx, my, x1, y1), mx, my, x1, y1)
+            return
+        end
+        local lobes, bases = {}, {}
+        for i = 1, math.min(#list, MAXL) do
+            local l = list[i]
+            lobes[i] = { l.px * dpi, l.py * dpi, l.r * dpi, l.amount }
+            bases[i] = l.base * dpi
+        end
         grownShader:send('lobes', unpack(lobes))
         grownShader:send('lobeBase', unpack(bases))
         grownShader:send('count', #lobes)
-        grownShader:send('sunDir', { dx / len, dy / len })
         love.graphics.rectangle('fill', x0, y0, x1 - x0, y1 - y0)
     end
-    for _, g in ipairs(order) do
-        local list = groups[g]
-        table.sort(list, function(p, q) return p.px < q.px end)
-        for from = 1, #list, MAXL do drawGroup(list, from, math.min(#list, from + MAXL - 1)) end
+    local TILE = 200
+    for ty = 0, h - 1, TILE do
+        for tx = 0, w - 1, TILE do
+            local x1, y1 = math.min(w, tx + TILE), math.min(h, ty + TILE)
+            drawTile(reaching(shown, tx, ty, x1, y1), tx, ty, x1, y1)
+        end
     end
     love.graphics.setBlendMode('alpha')
     love.graphics.setShader()
