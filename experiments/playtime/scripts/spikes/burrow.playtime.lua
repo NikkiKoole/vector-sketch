@@ -8,7 +8,7 @@
 -- play mode (tab): drag on earth to dig (or put earth back: the panel, or hold shift).
 -- The panel (bottom left) has the brush size, the cell size and a new landscape.
 -- keys: [ ] brush size   m: a new Mipo at the mouse   r: new landscape   t: plain / textured earth
---       o: drawn rim / plain line   b: line boil
+--       o: drawn rim / plain line   b: line boil   i: the ground printed (riso, photocopy, … off)
 
 local s = {}
 
@@ -88,6 +88,23 @@ local function burrow()
     state.burrow = b
     b.brush, b.cell, b.seed = b.brush or 300, b.cell or 40, b.seed or 0
     return b
+end
+
+-- the ground printed: the earth, rim and grass drawn into a canvas and laid down through one of the riso
+-- spike's print looks (scripts/spikes/print-looks.lua); b.print.process nil is off. The Mipos stay as they are.
+local looks
+local function printSettings()
+    local b = burrow()
+    b.print = b.print or { view = 'scene' }
+    if not b.print.inks then looks.defaults(b.print) end
+    return b.print
+end
+looks = love.filesystem.load('scripts/spikes/print-looks.lua')()(printSettings, cam)
+local function cyclePrint()
+    local p = looks.defaults(printSettings())
+    local i = 0
+    for k, name in ipairs(looks.PROCESSES) do if name == p.process then i = k end end
+    p.process = looks.PROCESSES[i + 1] -- past the last: nil, off
 end
 
 -- the drawn rim's settings (the rim itself is further down, at drawRim)
@@ -630,6 +647,8 @@ function s.onKeyPress(key)
         rim(b).drawn = not rim(b).drawn
     elseif key == 't' then
         b.plain = not b.plain
+    elseif key == 'i' then
+        cyclePrint()
     end
 end
 
@@ -1173,7 +1192,7 @@ function s.drawUI()
     if not (b and state.playMode) then return end
     ui.startFrame() -- play mode draws no editor UI, so nothing else starts the frame
     local BH, pad, w = 34, 6, 380
-    local h = BH * 14 + pad * 15 + 20
+    local h = BH * 15 + pad * 16 + 20
     local _, sh = love.graphics.getDimensions()
     local x0, y0 = 20, sh - h - 20
     panelRect[2], panelRect[4] = y0, h
@@ -1218,7 +1237,9 @@ function s.drawUI()
             ui.label(x + 260, y, 'rim ' .. row[1])
         end
         x, y = ui.nextLayoutPosition(layout, w - 20, BH)
-        ui.label(x, y, 'shift: other  m Mipo  t plain  o rim  b boil')
+        if ui.button(x, y, w - 20, 'ground printed: ' .. (printSettings().process or 'off')) then cyclePrint() end
+        x, y = ui.nextLayoutPosition(layout, w - 20, BH)
+        ui.label(x, y, 'shift: other  m Mipo  t plain  o rim  b boil  i print')
     end)
 end
 
@@ -1232,9 +1253,21 @@ function s.dig(x1, y1, x2, y2, fill)
     end
 end
 
+local printCanvas
 function s.drawBelow()
     local b = state.burrow
     if not (b and b.chunks) then return end
+    local printing = b.print and b.print.process
+    local previous
+    if printing then
+        local w, h = love.graphics.getDimensions()
+        if not printCanvas or printCanvas:getWidth() ~= w or printCanvas:getHeight() ~= h then
+            printCanvas = love.graphics.newCanvas(w, h)
+        end
+        previous = love.graphics.getCanvas()
+        love.graphics.setCanvas({ printCanvas, stencil = true })
+        love.graphics.clear(0, 0, 0, 0)
+    end
     if not b.plain then love.graphics.setShader(earthShader) end
     earthShader:send('wall', 1)
     love.graphics.setColor(b.plain and wallColor or { 1, 1, 1, 1 })
@@ -1270,6 +1303,15 @@ function s.drawBelow()
         bladeRow(b, backBlades, false, 1, 1.5)
     end
     love.graphics.setColor(1, 1, 1, 1)
+    if printing then
+        if previous then love.graphics.setCanvas({ previous, stencil = true }) else love.graphics.setCanvas() end
+        love.graphics.push()
+        love.graphics.origin()
+        looks.apply(1 / printCanvas:getWidth(), 1 / printCanvas:getHeight())
+        love.graphics.draw(printCanvas, 0, 0)
+        love.graphics.setShader()
+        love.graphics.pop()
+    end
     -- the plain debug lines of the earth's chains would show over the grass (the Mipos and rocks
     -- draw themselves); back on in draw
     if state.playMode then
