@@ -813,6 +813,16 @@ local function drawOne(instance, wantFront)
     love.graphics.setColor(1, 1, 1, 1)
 end
 
+-- state.hairWrap = function(instance, wantFront, draw): a scene drawing each holder's hair its own way,
+-- calling draw(instance, wantFront) as it likes (the dirty spike: through its dirt shader), as
+-- state.drawableWrap does for the textured parts
+local drawPlain = drawOne
+drawOne = function(instance, wantFront)
+    local wrap = state.hairWrap
+    if wrap then return wrap(instance, wantFront, drawPlain) end
+    return drawPlain(instance, wantFront)
+end
+
 local function drawBackOf(instance) drawOne(instance, false) end
 local function drawFrontOf(instance) drawOne(instance, true) end
 
