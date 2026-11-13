@@ -1,6 +1,6 @@
 # Dirt — Mipos getting dirty and clean again, by shader
 
-status: active
+status: parked — kept as a spike (Nikki 2026-11-13: "ok keep as spike"); the next steps when it comes back are below
 
 Nikki (2026-11-13): Mipos getting dirty, not like the Bathhouse's mud balls (APP-1-BATHHOUSE-PLAN.md,
 `mudready`) but with shaders: each limb dirty on its own, and parts of a limb too. Put a Mipo in dirty water
@@ -43,7 +43,7 @@ the plasticine shader. It doesn't stick to a limb. This one does, per part.
 
 ## Next
 
-- [ ] D1. Nikki plays with it: dip, rinse, scrub. Keep, change or park?
+- [x] D1. Nikki plays with it: kept as a spike, parked (2026-11-13)
 - [x] D2. The face and head hair dirty too, the eyes clean (Nikki 2026-11-13)
 - [ ] D3. Drips: wet mud running down a part, and drops falling off it
 - [ ] D4. The water getting dirty as Mipos rinse in it (the tub's colour from the dirt washed off)
