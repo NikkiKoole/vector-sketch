@@ -505,7 +505,9 @@ end
 local function standUpMipo(id, instance, now)
     local torso = instance.parts.torso1
     local held = lastHeld[id] and now - lastHeld[id] <= lib.healAfterRelease
-    if not torso or held or not isSplayed(instance) or not onGround(instance) then
+    -- instance._noStandUp: a scene posing it on purpose (a rig zone's slide or bench, scripts/spikes/rig-zones.lua:
+    -- a limb held off its target by the seat or a limit read as a split, and it hopped about)
+    if not torso or held or instance._noStandUp or not isSplayed(instance) or not onGround(instance) then
         splayedSince[id] = nil
     elseif not splayedSince[id] then
         splayedSince[id] = now
