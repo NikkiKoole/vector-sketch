@@ -1,6 +1,6 @@
 # Dirt — Mipos getting dirty and clean again, by shader
 
-status: parked — kept as a spike (Nikki 2026-11-13: "ok keep as spike"); the next steps when it comes back are below
+status: active — a spike: paint baths, drips and prints on the floor added 2026-11-14 (Nikki: "a drip, footprints/markings, another color paint bath ... can it mix, can you use mipo as paintbrush"); kept as a spike before that (2026-11-13)
 
 Nikki (2026-11-13): Mipos getting dirty, not like the Bathhouse's mud balls (APP-1-BATHHOUSE-PLAN.md,
 `mudready`) but with shaders: each limb dirty on its own, and parts of a limb too. Put a Mipo in dirty water
@@ -29,7 +29,25 @@ three Mipos.
   lines still show through ('drawn lines'). Four muds: mud, clay, peat, paint.
 - The engine draws every bath as see-through water (`src/water-look.lua`, which ignores the liquid's colour),
   so the scene takes the mud bath out of that list and draws it opaque itself.
-- Keys: x sponge, m all muddy, c all clean, space the original, n a new Mipo, h panel.
+- Keys: x sponge, m all muddy, c all clean, g wipe the floor, space the original, n a new Mipo, h panel.
+
+### Paint, drips, prints (2026-11-14)
+
+- **Paint pots**: red, yellow, blue, between the mud and the tub. A mask is now two canvases: the pigment as
+  *absorbance* (premultiplied, /4 to fit 8 bits) and its amount; and wet + how much of it is paint. Dipping
+  blends the bath's absorbance over what's there by how long, so paints mix the way paint does (yellow then a
+  short blue: green; red and yellow: orange; all three: brown), not to grey as plain colours would. Mud is
+  a pigment too (the panel's pick), so paint over mud goes dirty. Paint looks smoother than mud: less grain,
+  no cracks, a broad gloss while wet.
+- **Drips** (`scripts/spikes/paint-marks.lua`): a part just out of a bath drips for 2.5 s, fewer and fewer,
+  from its lowest point, in its colour (clear water drops too); drops splat on the floor or vanish in a bath.
+- **Prints**: the floor is a strip canvas along the ground's top. A wet, dirty part touching it leaves a mark
+  as wide as the part (feet: footprints); dragged along it, a mark every 'smear step' px, so a Mipo is a
+  brush. Each print wipes paint off the sole (a wash pass below the floor line, on the mask and the CPU copy),
+  so footprints fade out over the steps and a stroke runs dry. Dry mud doesn't print.
+- The CPU keeps a rough copy per mask (load, absorbance, paint share) for the drips' and prints' colour.
+- Side view: the floor is seen edge-on, so prints are a band along the ground's front, not a painting you
+  look down on.
 - The face gets dirty too (nose, lips, brows, cheek decals), all but the eyes and pupils. Left clean: the inside
   of the mouth (its backdrop sets a shader of its own, which would smear the paint; teeth, tongue) and face patches
   (their own shader too).
@@ -37,6 +55,9 @@ three Mipos.
   Hair locks (`src/hair-locks.lua`) are one strip for all of a Mipo's locks sharing one picture's UVs, so they
   get one mask per haircut instead: a square around the head in the head's own space, painted by a quad, read by
   where each strand is drawn. Through a hook there, `state.hairWrap` (as `state.drawableWrap` for parts).
+- A Mipo part's mask is keyed by name (Mipo id, part, subtype, label, rank by zOffset), not by its `extra`
+  table: turning round (`switchFacing`, all the time while dragged) makes every part's `extra` anew, and the
+  Mipo came out completely clean (Nikki 2026-11-13). zOffset alone isn't stable either: it changes with the facing.
 
 `src/wet.lua` (MATERIALS MT6) is the older wet: up to 12 wet spots and a waterline, in screen space, for
 the plasticine shader. It doesn't stick to a limb. This one does, per part.
@@ -45,7 +66,10 @@ the plasticine shader. It doesn't stick to a limb. This one does, per part.
 
 - [x] D1. Nikki plays with it: kept as a spike, parked (2026-11-13)
 - [x] D2. The face and head hair dirty too, the eyes clean (Nikki 2026-11-13)
-- [ ] D3. Drips: wet mud running down a part, and drops falling off it
+- [x] D3. Drops falling off a part fresh out of a bath (2026-11-14); still open: wet mud running *down* a part
 - [ ] D4. The water getting dirty as Mipos rinse in it (the tub's colour from the dirt washed off)
+- [x] D6. Paint pots that mix, footprints, a Mipo as a brush on the floor (2026-11-14)
+- [ ] D7. Nikki plays with the paint: mixing too quick (a dip covers what's there in ~1 s: 'soak')? prints
+  readable edge-on, or a sheet to paint on (a wall, an easel) instead?
 - [ ] D5. Cost on the phone (`./playtime.sh bench device`): masks are 128² each, a paint pass per part in a
   liquid per frame
