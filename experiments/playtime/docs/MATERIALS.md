@@ -132,7 +132,7 @@ Kinds of material, by what the shader does differently:
   gold, copper, tin, iron. Most are one 'surface' model with settings (PALETTE in the script: wrap,
   shine, clear coat, sheen, edges darkened, light through, grain: sand / fibre / pebble / wood /
   crackle, rainbow), so a new material is a row of numbers.
-- [x] **MT2. Judge and tune** with Nikki (2026-11-15: keeper, parked): which read as made by hand, which as "computer". Claude's
+- [x] **MT2. Judge and tune** with Nikki (2026-11-15: all 36 kept, "they are good"; tuned one at a time when a specific one gets used): which read as made by hand, which as "computer". Claude's
   read from screenshots: strongest metal, glaze, plastic, candy, wood, leather, felt, plush fur,
   the backlit leaves; weakest stone / wet stone (cell pattern), shaggy fur (more hair than fur),
   smoke (pale clumps more than smoke), paper and plaster washed out in full sun.
