@@ -47,7 +47,13 @@ local function mouthTriangles(extra, slot, poly)
         end
         if same then return cached.tris end
     end
-    local tris = shapes.makeTrianglesFromPolygon(poly)
+    -- LÖVE's own triangulation first (C, ~57x quicker): a talking mouth changes every frame, and the careful path
+    -- (makeTrianglesFromPolygon: every edge against every other for crossings, then decompose) was ~a third of a
+    -- frame with 20 Mipos chattering on the phone (2026-11-16). It refuses a polygon whose lips cross; that one
+    -- takes the careful path. Checked on 900 mouth shapes: where it works, the same area
+    -- (spec/mouth-triangles_spec.lua).
+    local ok, tris = pcall(love.math.triangulate, poly)
+    if not ok then tris = shapes.makeTrianglesFromPolygon(poly) end
     perExtra[slot] = { poly = poly, tris = tris }
     return tris
 end
@@ -698,5 +704,8 @@ lib.drawers = {
     ['mouth-teeth'] = drawTeeth,
     ['mouth-tongue'] = drawTongue,
 }
+
+-- a mouth's polygon from its 16 curve numbers, uncached (specs: spec/mouth-triangles_spec.lua)
+function lib.polygonOf(curvePoints) return buildMouthPolygonUncached(curvePoints) end
 
 return lib
