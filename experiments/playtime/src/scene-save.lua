@@ -175,6 +175,7 @@ local function bodyForFile(body, thing)
         fixtures = {},
         sharedFixtureData = sharedFixtureData(body, thing),
         behaviors = thing.behaviors,
+        layer = thing.layer, layerTop = thing.layerTop, -- back / front, its top to stand on (src/depth-layers.lua)
         track = thing.track, -- a coaster track's { closed, flips } (src/track.lua)
     }
     for _, fixture in ipairs(body:getFixtures()) do

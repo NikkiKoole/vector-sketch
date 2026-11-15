@@ -56,6 +56,7 @@ local function createThing(shapeType, conf)
         vertices = vertices, -- Store vertices if needed
         -- textures = { bgURL = '', bgEnabled = false, bgHex = 'ffffffff' },
         behaviors = conf.behaviors,
+        layer = conf.layer, layerTop = conf.layerTop, -- back / front (src/depth-layers.lua)
         track = conf.track, -- a coaster track's { closed, flips } (src/track.lua)
         -- NOTE: z-order lives on sfixture extra.zOffset, not on the thing
         id = uuid.generateID(),

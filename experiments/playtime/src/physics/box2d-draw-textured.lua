@@ -46,6 +46,7 @@ local setSurfaceShader = shaders.setSurfaceShader
 local ownStrip, growLine = ribbon.ownStrip, ribbon.growLine
 local hairBounce = require('src.hair-bounce')
 local systems = require('src.systems')
+local depthLayers = require('src.depth-layers')
 local drawSquishableHairOver, traceVerticesMesh = ribbon.drawSquishableHairOver, ribbon.traceVerticesMesh
 local lookupUV, buildPolyVertexIndex = skinning.lookupUV, skinning.buildPolyVertexIndex
 
@@ -159,7 +160,8 @@ local function sfixtureLooks(e, fixture, ud)
     local extra = ud.extra
     e.fixture, e.ud, e.extra, e.subtype = fixture, ud, extra, ud.subtype
     if extra then
-        e.z = (extra.zGroupOffset or 0) * 1000 + (extra.zOffset or 0)
+        -- a back or front body's pictures far below / above the Mipos (src/depth-layers.lua)
+        e.z = (extra.zGroupOffset or 0) * 1000 + (extra.zOffset or 0) + depthLayers.zOffset(fixture:getBody())
         e.brow, e.mouth, e.points = extra.browCurve, extra.mouthCurve, fullMouth(extra)
         e.front, e.nodes = extra.front, extra.nodes ~= nil
     end
@@ -173,7 +175,7 @@ local function looksTheSame(e)
     if ud ~= e.ud or ud.extra ~= e.extra or ud.subtype ~= e.subtype then return false end
     local extra = e.extra
     if not extra then return true end
-    return e.z == (extra.zGroupOffset or 0) * 1000 + (extra.zOffset or 0)
+    return e.z == (extra.zGroupOffset or 0) * 1000 + (extra.zOffset or 0) + depthLayers.zOffset(fixture:getBody())
         and e.brow == extra.browCurve and e.mouth == extra.mouthCurve and e.points == fullMouth(extra)
         and e.front == extra.front and e.nodes == (extra.nodes ~= nil)
 end

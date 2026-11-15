@@ -185,6 +185,8 @@ The landing order, what bites what, and Nikki's keep / spike choices of 2026-11-
   categories or a contact filter). The pieces already in `src/`: `state.drawSplits`,
   `state.passableBodies`, `instance.lane`. Added 2026-11-11 (Nikki: "i want to hear what we have thought
   about multilayer depth stuff").
+  2026-11-15: open questions decided and DL1 built (layers for bodies: DEPTH-LAYERS.md); lanes (DL4) and
+  Fabuland's defaults (DL3) next.
 - [x] **EM6. The 7 trial breeds** in spikes/breeds into `src/mipo-breeds.lua` with palettes
   (MIPO-BREEDS B2-B4; that plan owns it, listed here so the spike's copy goes). Done 2026-11-09:
   the spike's table and `randomizeAs` are gone, it reads `mipoBreeds` (in the script env).

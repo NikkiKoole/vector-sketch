@@ -188,7 +188,8 @@ local function isWall(fixture)
     -- a coaster track's rail: crossed by whatever rides its other lane (src/track.lua)
     if fixture:getType() == 'chain' and require('src.track').trackOf(fixture) then return false end
     local passable = state.passableBodies
-    return not (passable and passable[body])
+    if passable and passable[body] then return false end
+    return not require('src.depth-layers').isLayered(body) -- a back or front body: passed in front of
 end
 
 -- Joints are made parent (body A) -> child (body B), see character-manager.

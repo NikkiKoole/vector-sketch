@@ -203,6 +203,7 @@ local function buildBody(bodyData, world, builtSFixtures)
         mirrorY = bodyData.mirrorY or 1,
         vertices = bodyData.vertices,
         behaviors = bodyData.behaviors,
+        layer = bodyData.layer, layerTop = bodyData.layerTop, -- back / front (src/depth-layers.lua)
         track = bodyData.track, -- a coaster track's { closed, flips } (src/track.lua)
         extraSteiner = bodyData.extraSteiner, -- body-local Steiner points (Path B)
         mipoId = bodyData.mipoId,

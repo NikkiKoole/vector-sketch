@@ -98,6 +98,14 @@ lib.rows = {
     { key = 'type', kind = 'choice', options = { 'static', 'dynamic', 'kinematic' },
       get = function(thing) return thing.body:getType() end,
       set = function(thing, v) thing.body:setType(v); thing.body:setAwake(true) end },
+    -- depth (src/depth-layers.lua, DEPTH-LAYERS DL1): back is passed in front of (its top stood on), front is
+    -- over everything and touches nothing that moves; play is solid as always
+    { key = 'layer', kind = 'choice', options = { 'play', 'back', 'front' },
+      get = function(thing) return thing.layer or 'play' end,
+      set = function(thing, v) thing.layer = v ~= 'play' and v or nil; thing.body:setAwake(true) end },
+    { key = 'top to stand on', kind = 'bool', visible = function(thing) return thing.layer == 'back' end,
+      get = function(thing) return thing.layerTop ~= false end,
+      set = function(thing, v) thing.layerTop = (not v) and false or nil end },
     size('radius', 200, isRound),
     size('width', 800, isBox),
     size('width2', 800, hasWidth2, width),

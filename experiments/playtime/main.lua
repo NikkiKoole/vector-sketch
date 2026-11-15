@@ -392,6 +392,8 @@ function love.draw()
         projectedShadows.drawOnThings(state.physicsWorld) -- on things further back (src/projected-shadows.lua)
     end
     prof.pop('drawtexturedworld')
+    -- the front layer's plain bodies, over the Mipos (src/depth-layers.lua)
+    box2dDraw.drawFrontBodies(state.physicsWorld, state.world.debugDrawMode)
     systems.draw() -- over the bodies: bangs and coats over the faces
     script.call('draw')
     doors.draw()

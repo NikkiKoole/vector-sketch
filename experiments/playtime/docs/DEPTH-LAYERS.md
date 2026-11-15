@@ -1,6 +1,6 @@
 # Depth layers — back, play, front
 
-status: idea
+status: active
 
 **Started:** 2026-10-31, from the Fabuland parts: a door block is a solid body, so a Mipo can
 never reach its door; it's walled in. In Box2D everything solid blocks everything, but a toy
@@ -83,15 +83,30 @@ crates, and Mipos in two lanes.
   for a wall a limb is stuck through (it ghosted limbs, which then fell through floors);
   `instance.lane` so two Mipos in different lanes don't count as knotted (untangle fired).
 
-## Open questions
+## Decided (Nikki 2026-11-15)
 
-- In **play mode**, can back parts still be dragged and snapped (building while playing, as in
-  Fabuland), or only in the editor? Building *is* playing in Fabuland, but a toddler could drag
-  a whole house wall away by accident.
-- Do loose toys (a ball) pass in front of back parts, like Mipos? Probably: everything that
-  moves around is in play.
-- Box2D categories (16 of them) vs a contact filter function: the filter is simpler and has room
-  for rules (same building, static ground), but runs for every new pair of fixtures.
+- **Back parts drag only in the editor.** In play mode they stay put (a child can't pull a house wall
+  away); Mipos and toys still drag.
+- **Loose toys pass in front of back parts like Mipos**: everything that moves around is in play, and
+  stands on back parts' one-way tops.
+- **A contact filter**, not Box2D's 16 categories: simpler, and room for rules (Claude's pick).
+- **First slice: layers for bodies**, tried on a small house in a test scene; lanes later.
+
+## Steps
+
+- [x] **DL1. Layers for bodies** (2026-11-15). `src/depth-layers.lua`: `thing.layer` ('back' / 'front'; none
+  is play) and `thing.layerTop` (a back body's top to stand on, on unless false), saved with the body, the body
+  panel's 'layer' and 'top to stand on'. Collisions in preSolve (physics-callbacks): layered bodies touch their
+  own layer and static ground; what moves around (Mipos, loose toys) never a front body, a back body only on its
+  top (decided on first touch: lowest point above the top there, not going up; kept until they part). Drawing:
+  a back body's pictures far below the Mipos, a front one's far above (box2d-draw-textured z); plain front
+  bodies after the textured world (box2d-draw drawFrontBodies), in play mode back darker grey, front lighter.
+  The joint guard counts layered bodies as passable. Scene `layerhouse` (a house wall and roof in back, a
+  porch railing, pillar and roof in front, a crate); spec/depth-layers_spec.lua with real Box2D.
+- [ ] **DL2. Back parts stay put in play mode** (the drag decision above).
+- [ ] **DL3. Fabuland's defaults**: window and door blocks back, planks / stairs / roofs play.
+- [ ] **DL4. Mipo lanes**: a back lane behind the house (drawn behind, hazed, its own ground), from the spike.
+- [ ] **DL5. Parallax per layer** (WORLD-BUILDING G4), and the 3D light's depths per layer (LS16 lanes).
 
 ## Where it touches
 

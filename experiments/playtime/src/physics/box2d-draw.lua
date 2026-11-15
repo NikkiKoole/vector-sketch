@@ -11,6 +11,7 @@ local subtypes = require('src.subtypes')
 local NT = require('src.node-types')
 local registry = require('src.registry')
 local walls = require('src.walls')
+local depthLayers = require('src.depth-layers')
 local view = require('src.render.view')
 local pal = {
     ['orange']  = { 242 / 255, 133 / 255, 0 },         --#F28500  tangerine orange
@@ -29,9 +30,16 @@ local pal = {
 -- in play mode a body without a picture is a plain grey shape: no type colours, outlines or sfixtures
 -- (Nikki 2026-11-12: "when playing ... grey boxes without outlines")
 local PLAY_GREY = { 0.62, 0.62, 0.6 }
+local PLAY_GREY_BACK, PLAY_GREY_FRONT = { 0.45, 0.45, 0.47 }, { 0.8, 0.79, 0.74 } -- back / front layer
 
 local function getBodyColor(body)
-    if state.playMode == true then return PLAY_GREY end
+    if state.playMode == true then
+        -- the layers told apart (src/depth-layers.lua): back darker, as if further away; front lighter
+        local layer = depthLayers.of(body)
+        if layer == 'back' then return PLAY_GREY_BACK end
+        if layer == 'front' then return PLAY_GREY_FRONT end
+        return PLAY_GREY
+    end
     if body:getType() == BT.KINEMATIC then
         return pal.red
     end
@@ -402,7 +410,9 @@ end
 -- The editor's view of the world: the bodies (their fixtures filled and outlined) and the joints, as the
 -- world settings say (debugDrawBodies / debugDrawJoints, drawOutline, debugAlpha, showDebugIds; in the
 -- 'tex/body' view and in play mode a body under its picture is left out: see showsBody).
-function lib.drawWorld(world, drawOutline)
+-- frontPass: only the front layer's bodies (drawn after the textured world, over the Mipos: lib.drawFrontBodies);
+-- else everything but them (src/depth-layers.lua)
+function lib.drawWorld(world, drawOutline, frontPass)
     local debugIds = {} -- ids drawn this frame (showDebugIds): bodies and joints both use it
     if drawOutline == nil then drawOutline = true end
     if drawOutline == true and state.world.drawOutline == false then drawOutline = false end
@@ -428,6 +438,7 @@ function lib.drawWorld(world, drawOutline)
             -- lookup (hasTexture remembers) where the cull asks the body twice
             if skipTextured and not lib.showsBody(body, covered) then break end
             if walls.isWallBody(body) then break end -- drawn by src/walls.lua, behind everything
+            if (depthLayers.of(body) == 'front') ~= (frontPass == true) then break end
             if cull then
                 local x, y = body:getPosition()
                 local reach = view.bodyReach(body) + OUTLINE_PAD
@@ -439,12 +450,15 @@ function lib.drawWorld(world, drawOutline)
     love.graphics.setColor(1, 1, 1, alpha)
     -- only when drawn: getJoints makes a table and a userdata per joint (305 with 20 Mipos), every frame,
     -- for nothing in play mode
-    if state.world.debugDrawJoints then
+    if state.world.debugDrawJoints and not frontPass then
         for _, joint in ipairs(world:getJoints()) do drawJoint(joint, alpha, debugIds) end
     end
     love.graphics.setLineJoin("miter")
     love.graphics.setColor(r, g, b, a)
 end
+
+-- the front layer's plain bodies, over the Mipos (main.lua, after the textured world)
+function lib.drawFrontBodies(world, drawOutline) lib.drawWorld(world, drawOutline, true) end
 
 function lib.drawJointAnchors(joint)
     local color = pal.creamy
