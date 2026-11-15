@@ -168,8 +168,12 @@ end
 local SIGNATURE_KEYS = { 'density', 'height', 'heightVariation', 'width', 'frontShare', 'maxSlope',
     'colorBack', 'colorFront', 'seed', 'bands', 'bandSpread', 'bandShrink', 'bumps', 'bumpSize', 'swayRows' }
 
+-- The angle in the key in steps: a turning body rebuilt both batches every frame with it to 0.001
+-- (~118 a second in light-grass-check, LIGHT-AND-SHADOW LS15). Between steps the blades placed for the
+-- last one are drawn, at most half a step off upright.
+lib.ANGLE_STEP = math.rad(3)
 local function signature(extra, vertices, angle)
-    local parts = { tostring(vertices), #vertices, string.format('%.3f', angle) }
+    local parts = { tostring(vertices), #vertices, math.floor(angle / lib.ANGLE_STEP + 0.5) }
     for _, key in ipairs(SIGNATURE_KEYS) do parts[#parts + 1] = tostring(setting(extra, key)) end
     return table.concat(parts, '|')
 end

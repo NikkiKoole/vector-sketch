@@ -438,6 +438,9 @@ fade, a sun: the panel's `fades` switch, LS4).
 - [ ] **LS15. Small ones:** should a new directional light be a sun (not fade) by default; the back
   light on a drawn stone lands on its black outline (reach past it, as the contact shadow does);
   grass on a moving body rebuilds its blades every frame (LITTLE-USED, the grass round).
+  Grass done 2026-11-15: the angle in grass.lua's cache key in 3 degree steps (`lib.ANGLE_STEP`; was to
+  0.001), so a tumbling turf rebuilds its batches when it has turned another 3 degrees: light-grass-check,
+  same run, 122 batches a second -> 32.
 - [x] **LS26. Festoon lights.** A wire hung in swags with bulbs in a few colours, each bulb a small light.
   Built 2026-11-09 in light-grass-check: `src/festoon.lua` (a verlet rope per swag between hooks, soft
   wind, bulbs swinging under it; the wire, the bulbs' glow, their pools of light on the wall), three swags,
