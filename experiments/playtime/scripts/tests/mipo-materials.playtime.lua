@@ -178,7 +178,7 @@ end
 function s.update(dt)
     dressMipos()
     wet.setWaterline(waterY())
-    wet.update(dt or 0)
+    -- (wet.update: an engine system now, src/systems.lua)
 end
 
 function s.onKeyPress(key)

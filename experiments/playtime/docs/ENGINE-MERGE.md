@@ -178,6 +178,11 @@ The landing order, what bites what, and Nikki's keep / spike choices of 2026-11-
   cup or a bath join its water, still ones soak away; drawn as one stream bending what's behind (the stream
   shader into src/render/water-shader.lua; seaside keeps its own copy and its own hook). A tipped cup emptied
   into a bath in layerhouse (0.58 -> 0.63). spec/pouring_spec.lua.
+  Wet Mipos (Nikki: "maybe also the wetness shader for mipos?"): src/wet.lua is an engine system now (it ran only
+  where a scene called it); a part in a cup's or bath's water is soaked (wet.soak, from liquid.floatIn: its own
+  list, not the 12 spots, sent as a spot covering it, ribbons by their middle) and dries over 25 s; poured water
+  leaves a spot on the first moving body it lands on. Shown by the light shader, so at the light level 'lit' or
+  up (or a part in a material). Seen in layerhouse: a Mipo out of a bath dark and shiny up to where the water was.
   Left for EM3: the sea.
 - [ ] **EM4. Garden critters**, once the shelf and 🎲 exist (EDITOR-ARRANGE EA2-EA4).
 - [ ] **EM5. The cheap shared bits**, any time, each checked by a scene snapshot before/after:

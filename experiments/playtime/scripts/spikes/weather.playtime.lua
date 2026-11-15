@@ -464,7 +464,7 @@ function s.update(dt)
     updateLightning(sc, dt, x1, x2)
     updateGround(sc, dt)
     wetBodies(sc, dt)
-    wet.update(dt)
+    -- (wet.update: an engine system now, src/systems.lua)
 end
 
 ---------------------------------------------------------------- drawing

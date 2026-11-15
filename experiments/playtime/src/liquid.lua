@@ -660,6 +660,8 @@ function lib.floatIn(extra, container, dt)
             end
         end
         local share = totalArea > 0 and wetArea / totalArea or 0
+        -- a part in the water gets soaked, and dries once it's out (src/wet.lua; Nikki 2026-11-15)
+        if share > 0.05 then require('src.wet').soak(body, math.min(1, share * 2)) end
         if share > 0 then
             local spin = body:getAngularVelocity() - container:getAngularVelocity()
             body:applyTorque(-body:getInertia() * spin * drag * 0.8 * share)

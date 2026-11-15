@@ -17,6 +17,13 @@ local lib = {}
 
 lib.list = {
     {
+        -- wet things drying, wet spots following their bodies, soaked parts (src/wet.lua; the shader darkens what's
+        -- wet): every scene, so a Mipo out of a bath dries (was only in the scenes that called wet.update)
+        name = 'wet',
+        module = 'src.wet',
+        update = function(m, dt) m.update(dt) end,
+    },
+    {
         -- water poured out of cups: the spills as particle water, into other cups or soaking away
         -- (src/pouring.lua; drawn by src/water-look.lua)
         name = 'pouring',

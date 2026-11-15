@@ -748,7 +748,7 @@ local function setSurfaceShader(extra, body, at) -- at: { x, y } world, for a pa
             send(sh, 'matSurf', m.surf)
             send(sh, 'matTint', m.tint)
         end
-        local wetCount, wetSpots = wet.shaderSpots(body)
+        local wetCount, wetSpots = wet.shaderSpots(body, at)
         send(sh, 'wetCount', wetCount)
         if wetCount > 0 then sh:send('wetSpot', unpack(wetSpots)) end
         -- formMapImage: a roundness map handed in (the material picker's swatch ball)

@@ -6,8 +6,10 @@
 --   wet.setWaterline(y)            everything below world y gets wet while it's there (nil: none)
 --   wet.update(dt)                 drying, the waterline, and the spots' screen places for the shader
 --   wet.shaderSpots(body)          count, the spots near that body as { x, y, r, amount } in screen pixels
+--   wet.soak(body, amount)         a whole part soaked (in a cup's or bath's water: src/liquid.lua), drying after
 --   wet.clear()
--- The spots live on `state` (a hot swap keeps them).
+-- The spots live on `state` (a hot swap keeps them). Soaked parts are their own list, not spots (two Mipos in a
+-- bath soak ~20 parts; the spots are 12 at most): each one is sent as a spot covering it, to what's near it.
 local state = require('src.state')
 local camera = require('src.camera')
 
@@ -18,6 +20,7 @@ lib.DRY_SECONDS = 25 -- from soaked to dry
 
 local function data()
     state.wet = state.wet or { spots = {}, waterline = nil }
+    state.wet.soaked = state.wet.soaked or setmetatable({}, { __mode = 'k' }) -- [body] = how wet
     return state.wet
 end
 
@@ -59,6 +62,12 @@ function lib.splash(wx, wy, r, amount)
         spot.x, spot.y = wx, wy
     end
     addSpot(spot)
+end
+
+-- a whole part soaked (at least `amount`, 1 by default), drying from then on (Nikki 2026-11-15: Mipos in a bath)
+function lib.soak(body, amount)
+    local soaked = data().soaked
+    soaked[body] = math.max(soaked[body] or 0, amount or 1)
 end
 
 function lib.setWaterline(y)
@@ -120,10 +129,26 @@ function lib.update(dt)
         end
     end
     d.spots = keep
+    -- the soaked parts dry too; each one's screen spot covers it (its middle, its reach)
+    d.soakScreen = d.soakScreen or {}
+    local screens = {}
+    for body, amount in pairs(d.soaked) do
+        amount = amount - (dt or 0) / lib.DRY_SECONDS
+        if amount <= 0 or body:isDestroyed() then
+            d.soaked[body] = nil
+        else
+            d.soaked[body] = amount
+            local sx, sy = c:getScreenCoordinates(body:getPosition())
+            local r = bodyRadius(body)
+            if r then screens[#screens + 1] = { sx * dpi, sy * dpi, r * 1.2 * scale * dpi, amount } end
+        end
+    end
+    d.soakScreen = screens
 end
 
 local empty = {}
 for i = 1, lib.MAX do empty[i] = { 0, 0, 0, 0 } end
+local NONE = {} -- no soaked parts yet
 local buffer = {}
 
 -- a body's reach from its middle (its fixtures' bounding box, measured once; the shape doesn't change)
@@ -146,20 +171,26 @@ end
 -- The spots for the shader, as { x, y, r, amount } in screen pixels: with a body, only those that
 -- reach it (a dry part pays nothing per pixel: the shader loops over what it's sent); without one
 -- (a limb ribbon, drawn in the world), all of them.
-function lib.shaderSpots(body)
+-- at: a world point for a part without a body (a limb ribbon's middle): the spots near it.
+function lib.shaderSpots(body, at)
     local d = state.wet
-    if not d or #d.spots == 0 then return 0, empty end
+    local soakScreen = d and d.soakScreen or NONE
+    if not d or (#d.spots == 0 and #soakScreen == 0) then return 0, empty end
     local bsx, bsy, br
     if body and not body:isDestroyed() then
         local c = cam()
         local dpi = love.graphics.getDPIScale()
         local x, y = c:getScreenCoordinates(body:getPosition())
         bsx, bsy, br = x * dpi, y * dpi, reachOf(body) * c:getScale() * dpi
+    elseif at then
+        local c = cam()
+        local dpi = love.graphics.getDPIScale()
+        local x, y = c:getScreenCoordinates(at[1] or at.x, at[2] or at.y)
+        bsx, bsy, br = x * dpi, y * dpi, 200 * c:getScale() * dpi
     end
     local n = 0
-    for _, s in ipairs(d.spots) do
-        local sc = s.screen
-        if sc then
+    local function consider(sc)
+        if sc and n < lib.MAX then
             local near = true
             if bsx then
                 local dx, dy = sc[1] - bsx, sc[2] - bsy
@@ -172,6 +203,8 @@ function lib.shaderSpots(body)
             end
         end
     end
+    for _, s in ipairs(d.spots) do consider(s.screen) end
+    for _, sc in ipairs(soakScreen) do consider(sc) end
     for i = n + 1, lib.MAX do buffer[i] = empty[i] end
     return n, buffer
 end

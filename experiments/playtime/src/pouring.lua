@@ -30,7 +30,7 @@ end
 
 local function points(d)
     if not d.f then
-        d.f = fluid.new({ h = POUR_H, dataNames = { 'from', 'age', 'still' } })
+        d.f = fluid.new({ h = POUR_H, dataNames = { 'from', 'age', 'still', 'wetted' } })
         fluid.calibrate(d.f)
     end
     return d.f
@@ -66,7 +66,7 @@ function lib.onSpill(extra, body, spilled)
             d.carry[extra] = 0
             break
         end
-        f.data.from[i], f.data.age[i], f.data.still[i] = body, 0, 0
+        f.data.from[i], f.data.age[i], f.data.still[i], f.data.wetted[i] = body, 0, 0, false
     end
 end
 
@@ -125,6 +125,19 @@ function lib.update(dt)
                     break
                 end
             end
+        end
+        -- the first moving body it lands on (a Mipo under the stream) gets a wet spot there (src/wet.lua)
+        if not gone and not f.data.wetted[i] and age[i] > 0.1 then
+            local world = state.physicsWorld
+            world:queryBoundingBox(x - POINT_R, y - POINT_R, x + POINT_R, y + POINT_R, function(fixture)
+                local body = fixture:getBody()
+                if body ~= from[i] and body:getType() == 'dynamic' and not fixture:isSensor() then
+                    require('src.wet').splash(x, y + POINT_R * 0.5, 45, 0.8)
+                    f.data.wetted[i] = true
+                    return false
+                end
+                return true
+            end)
         end
         if not gone and vx * vx + vy * vy < 1 then -- lying still: soaks away
             still[i] = (still[i] or 0) + dt
