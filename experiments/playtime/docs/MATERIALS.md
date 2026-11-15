@@ -173,7 +173,7 @@ Kinds of material, by what the shader does differently:
   mipo-materials: eyes, pupils, brows, nose rows (glazed eyes, plastic pupils, a gold nose). The
   brows are a bent strip in the head's frame: lit directly, the mirrored one telling the lights it's
   flipped (main.fx), so both are lit from the same side.
-- [ ] **MT6. Into the engine**: a material as a texfixture setting, next to plasticine (SHADER-LOOKS'
+- [x] **MT6. Into the engine** (done 2026-11-15): a material as a texfixture setting, next to plasticine (SHADER-LOOKS'
   "looks on shapes"), if any of it earns a place.
   Already drawn by the engine since MT6a-c (`extra.material` on a texfixture, limb, torso, decal);
   what's left is setting it in the editor, for the materials MT2 keeps. After MT2 (ENGINE-MERGE.md).
@@ -191,6 +191,13 @@ Kinds of material, by what the shader does differently:
   Its 'edit' toggle is MT2's tuning place: the picked material's numbers as sliders, live on every part
   in it, 'save' writes the PRESETS block of materials.lua. Found: the shader never reads `surf[1]` (light
   wrap), wax's only number, so wax is felt with a small shine.
+  2026-11-15 (Nikki: "lets do this yes"; it costs only what's picked: 'none' is the plain picture as before,
+  a part in a material ~0.03 ms on the phone, a whole face ~10 parts): the face in the DNA too, `material` on
+  the face's eye, pupil, brow, nose, mouth (the lips) and teeth blocks and `innerMaterial` on the mouth (the
+  inside), copied onto the decals by mipo-textures with the face's light settings (mipo-materials' MOUTH_LIT);
+  a row each in the Mipo editor's face panel (eyes: eye and pupil; brows; nose; mouth: lips, inside, teeth).
+  Connected hair's row in its accordion (it was drawn with a material already). A re-roll keeps them.
+  Breeds choosing materials: MIPO-BREEDS.
 - [ ] **MT20. A drawn thing in one go** (idea, 2026-11-08; Nikki: "don't know", written down for later).
   Today a plain body gets a picture and a material by hand: attach tool -> looks -> texture dropped on
   it (body-sized), the texture section set to OMP with outline, mask and colours, then the material row.

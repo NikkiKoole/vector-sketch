@@ -155,6 +155,12 @@ local function drawFaceEyesUI(instance, faceOwner, partName, face, x, y, panelX,
     end
     y = y + ROW
 
+    -- a material instead of as drawn (MATERIALS MT6): glazed eyes, plastic pupils
+    widgets.drawMaterialRow(instance, x, y, eye.material, function() return { eye } end, nil, 'eye material')
+    y = y + ROW
+    widgets.drawMaterialRow(instance, x, y, pupil.material, function() return { pupil } end, nil, 'pupil material')
+    y = y + ROW
+
     return y
 end
 
@@ -224,6 +230,9 @@ local function drawFaceBrowsUI(instance, faceOwner, partName, face, x, y, panelX
     ui.alignedLabel(x + 180, y, 'brow color')
     y = y + ROW
 
+    widgets.drawMaterialRow(instance, x, y, brow.material, function() return { brow } end, nil, 'brow material')
+    y = y + ROW
+
     return y
 end
 
@@ -291,6 +300,9 @@ local function drawFaceNoseUI(instance, faceOwner, partName, face, x, y, panelX,
             CharacterManager.rebuildTextures(instance)
         end)
     ui.alignedLabel(x + 180, y, 'nose fill')
+    y = y + ROW
+
+    widgets.drawMaterialRow(instance, x, y, nose.material, function() return { nose } end, nil, 'nose material')
     y = y + ROW
 
     return y
@@ -492,6 +504,20 @@ local function drawFaceMouthUI(instance, faceOwner, partName, face, x, y, panelX
             end
             y = y + ROW
         end
+    end
+
+    -- materials (MATERIALS MT6): the lips, the inside (drawn with the lower lip), the teeth
+    local mouthBlock, teethBlock = face.mouth, face.teeth
+    widgets.drawMaterialRow(instance, x, y, mouthBlock.material, function() return { mouthBlock } end, nil,
+        'lips material')
+    y = y + ROW
+    widgets.drawMaterialRow(instance, x, y, mouthBlock.innerMaterial, function() return { mouthBlock } end,
+        'innerMaterial', 'inside material')
+    y = y + ROW
+    if teethBlock and teethBlock.shape > 0 then
+        widgets.drawMaterialRow(instance, x, y, teethBlock.material, function() return { teethBlock } end, nil,
+            'teeth material')
+        y = y + ROW
     end
 
     return y

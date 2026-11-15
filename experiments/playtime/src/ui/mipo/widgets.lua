@@ -246,13 +246,15 @@ end
 -- that opens the swatches (src/ui/material-picker.lua). blocks(): the DNA appearance blocks to set (the
 -- part, its mirror); the textures are rebuilt after, the fixtures copying `material` from the block
 -- (mipo-textures).
-local function drawMaterialRow(instance, x, y, current, blocks)
+-- field: the block's key ('material'; the mouth's inside: 'innerMaterial'), label: the row's name.
+local function drawMaterialRow(instance, x, y, current, blocks, field, label)
     local set = blocks()
-    local picked, name = materialPicker.button('mipo-material:' .. tostring(set[1]), x + 30, y, 148, BUTTON_HEIGHT,
-        current)
-    ui.alignedLabel(x + 182, y, 'material')
+    field = field or 'material'
+    local picked, name = materialPicker.button('mipo-material:' .. tostring(set[1]) .. field, x + 30, y, 148,
+        BUTTON_HEIGHT, current)
+    ui.alignedLabel(x + 182, y, label or 'material')
     if picked then
-        for _, block in ipairs(set) do block.material = name end
+        for _, block in ipairs(set) do block[field] = name end
         CharacterManager.rebuildTextures(instance)
         if editing then mipoVoice.edited(editing) end
     end

@@ -351,6 +351,18 @@ end
 lib.EYE_UNIT = 0.25
 lib.BROW_UNIT_W, lib.BROW_UNIT_H = 0.2, 0.1
 
+-- A face part in a material (MATERIALS MT6, a material in the face's DNA blocks): drawn lit, through the
+-- light shader, with the light settings mipo-materials found right for the face (the lips are strips: no
+-- baked form). Without one: as drawn, a plain picture, nothing changes and it costs nothing.
+local FACE_LIT = { plasticineLightAdd = true, plasticineLightGain = 0.5, plasticineLightZ = 0.35 }
+local function inMaterial(extra, material, innerMaterial)
+    extra.material, extra.innerMaterial = material, innerMaterial
+    if material or innerMaterial then
+        for k, v in pairs(FACE_LIT) do extra[k] = v end
+    end
+    return extra
+end
+
 local function placeEyes(body, face, box)
     local eye, pupil, eyeR = face.eye, face.pupil, face.positioners.eye.r
     local eyeW, eyeH = box.headW * lib.EYE_UNIT * box.fm * eye.wMul, box.headH * lib.EYE_UNIT * box.fm * eye.hMul
@@ -359,19 +371,19 @@ local function placeEyes(body, face, box)
     for _, side in ipairs({ { x = box.leftEyeX, label = 'l', mirror = true, rot = -eyeR },
                             { x = box.rightEyeX, label = 'r', mirror = false, rot = eyeR } }) do
         if eyeName then
-            addDecal(body, side.label .. 'eye', {
+            addDecal(body, side.label .. 'eye', inMaterial({
                 ox = side.x, oy = box.eyeY, w = eyeW, h = eyeH, mirror = side.mirror, rot = side.rot,
                 zOffset = FACE_Z.eye, isEye = true, OMP = true,
                 main = omp(eyeName .. '.png', eyeName .. '-mask.png', eye.bgHex, eye.fgHex),
-            })
+            }, eye.material))
         end
         -- a pupil with a mask is two colours, without one a tinted outline
-        addDecal(body, side.label .. 'pupil', maskedOrPlain({
+        addDecal(body, side.label .. 'pupil', inMaterial(maskedOrPlain({
             ox = side.x, oy = box.eyeY, w = eyeW * pupil.wMul, h = eyeH * pupil.hMul, mirror = side.mirror,
             zOffset = FACE_Z.pupil, isEye = true, eyeW = eyeW, eyeH = eyeH,
             eyeMaskURL = eyeName and (eyeName .. '-mask.png'),
             eyeMirror = side.mirror, eyeRot = side.rot, eyeLineHex = eye.bgHex, lookAtMouse = eye.lookAtMouse,
-        }, textureNames.part('pupil', pupil.shape), pupil.bgHex, pupil.fgHex))
+        }, textureNames.part('pupil', pupil.shape), pupil.bgHex, pupil.fgHex), pupil.material))
     end
 end
 
@@ -379,23 +391,23 @@ local function placeBrows(body, face, box)
     local brow = face.brow
     for _, side in ipairs({ { x = box.leftEyeX, label = 'lbrow', mirror = false },
                             { x = box.rightEyeX, label = 'rbrow', mirror = true } }) do
-        addDecal(body, side.label, {
+        addDecal(body, side.label, inMaterial({
             ox = side.x, oy = lerp(box.topY, box.botY, face.positioners.brow.y),
             w = box.headW * lib.BROW_UNIT_W * brow.wMul * box.fm, h = box.headH * lib.BROW_UNIT_H * brow.hMul * box.fm,
             zOffset = FACE_Z.brow, browCurve = true, browBend = brow.bend, browMirror = side.mirror,
             bgURL = textureNames.part('brow', brow.shape) .. '.png', bgHex = brow.bgHex,
-        })
+        }, brow.material))
     end
 end
 
 local function placeNose(body, face, box)
     local nose = face.nose
     if nose.shape <= 0 then return end
-    addDecal(body, 'nose', maskedOrPlain({
+    addDecal(body, 'nose', inMaterial(maskedOrPlain({
         ox = (box.leftX + box.rightX) / 2, oy = lerp(box.topY, box.botY, face.positioners.nose.y),
         w = box.headW * 0.15 * nose.wMul * box.fm, h = box.headH * 0.15 * nose.hMul * box.fm,
         zOffset = FACE_Z.nose,
-    }, textureNames.part('nose', nose.shape), nose.bgHex, nose.fgHex))
+    }, textureNames.part('nose', nose.shape), nose.bgHex, nose.fgHex), nose.material))
 end
 
 -- Lower lip (draws first, stencils the inside), upper lip, and teeth clipped to the mouth.
@@ -426,12 +438,14 @@ local function placeMouth(body, face, box)
     local lowerName = textureNames.part('lowerlip', mouth.lowerLipShape)
     lower.main = omp(lowerName .. '.png', lowerName .. '-mask.png',
         '000000ff', mouth.lipHex)
+    inMaterial(lower, mouth.material, mouth.innerMaterial) -- the lips', and the inside's (drawn with the lower)
     addDecal(body, 'lowerlip', lower)
     local upper = mouthPart('upper', FACE_Z.upperLip)
     upper.lipScale = mouth.upperLipScale or mouth.lipScale or 0.15
     local upperName = textureNames.part('upperlip', mouth.upperLipShape)
     upper.main = omp(upperName .. '.png', upperName .. '-mask.png',
         '000000ff', mouth.lipHex)
+    inMaterial(upper, mouth.material)
     addDecal(body, 'upperlip', upper)
 
     local teeth = face.teeth
@@ -445,6 +459,7 @@ local function placeMouth(body, face, box)
     part.teethStickOut = teeth.stickOut
     part.gum, part.gumHex, part.gumDepth = teeth.gum, teeth.gumHex, teeth.gumDepth
     part.main = omp(teethName .. '.png', teethName .. '-mask.png', teeth.bgHex, teeth.fgHex)
+    inMaterial(part, teeth.material)
     addDecal(body, 'teeth', part)
 end
 

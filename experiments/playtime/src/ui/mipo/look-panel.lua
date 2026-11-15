@@ -483,6 +483,18 @@ function lib.drawConnectedHair(p, y)
                 ui.alignedLabel(x + 180, y, 'outline')
                 y = y + ROW
 
+                -- a material instead of as drawn (MATERIALS MT6), on the part and its mirror's hair
+                widgets.drawMaterialRow(instance, x, y, connHairData.appearance['connected-hair'].material,
+                    function()
+                        local blocks = {}
+                        for _, name in ipairs(widgets.partAndMirror(instance, connHairOwner)) do
+                            local a = instance.dna.parts[name].appearance
+                            if a and a['connected-hair'] then blocks[#blocks + 1] = a['connected-hair'] end
+                        end
+                        return blocks
+                    end)
+                y = y + ROW
+
                 -- OMP controls (fill + pattern) only for masked hair textures
                 if ch.fgURL and ch.fgURL ~= '' then
                     handlePaletteButton('mipo_ch_fg_' .. partName,
