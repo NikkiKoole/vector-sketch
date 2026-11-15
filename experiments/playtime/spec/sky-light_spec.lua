@@ -23,11 +23,11 @@ describe('the light at the hour', function()
     end)
 
     it('casts away from a low evening sun, and fades the shadows through the handover', function()
-        local evening = skyLight.at(17.5)
+        local evening = skyLight.at(19.25) -- the sun sets at 20:00 (a long summer evening)
         assert.is_true(evening.cast[1] > 0.5, 'the sun low on the right')
         local x, y = evening.cast[1], evening.cast[2]
         assert.is_true(math.abs(x) > math.abs(y), 'low: more across than down')
-        assert.is_true(skyLight.at(12).fade > skyLight.at(18.6).fade, 'darker shadows by day')
+        assert.is_true(skyLight.at(12).fade > skyLight.at(20.25).fade, 'darker shadows by day')
     end)
 
     it('changes smoothly: no jump between two minutes anywhere in the day', function()

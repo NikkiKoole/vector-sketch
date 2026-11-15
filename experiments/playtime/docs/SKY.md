@@ -37,6 +37,12 @@ time of day with the cycle").
   no jumps). The walls take the hour's light too (`skyLight.ambient`; Nikki "y walls"). Was: At the light levels (src/scene-light.lua), the default sun and
   sky light follow the hour: the light scene's five looks, the sun and moon on their arcs, the back light.
   A scene without sky keeps today's fixed noon.
+- [x] **SK2b. A later sunset** (Nikki 2026-11-15: "a", of a later sunset or earlier looks). The golden hour and
+  dusk were timed after the sun had set (18:00): 18:00-19:30 had almost no light, no back light (0.05) and
+  no shadows. Now the sun 6:00-20:00, the moon 19:00-7:00, golden at 19:00, dusk 20:00, night from 21:30,
+  the sky gradient the same (day to 18:00, dusk 20:00, night 21:30), the dusk moon 0.3 (0.1 left a second
+  dip). Sampled every 5 minutes: the back light's biggest step 0.14, the shadows' 0.09; 19:00-21:00 an
+  orange back light 1.8-2.2 with shadows all the way.
 - [ ] **SK3. The light scene on the engine clock.** light-grass-check drops its own clock and day looks
   for SK1/SK2's; its lamps, festoon and panel extras stay.
 - [ ] **SK4. Space, as a scene option.** 'space above' in the sky section: the camera may climb (edge

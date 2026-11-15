@@ -29,7 +29,7 @@ local PALETTES = {
 -- the day as keyframes { hour, palette }: between two the palettes blend
 local TIMELINE = {
     { 0, 'night' }, { 5, 'night' }, { 6.5, 'dawn' }, { 8.5, 'day' },
-    { 17, 'day' }, { 19, 'dusk' }, { 20.5, 'night' }, { 24, 'night' },
+    { 18, 'day' }, { 20, 'dusk' }, { 21.5, 'night' }, { 24, 'night' }, -- the light's later sunset (src/sky-light.lua)
 }
 -- how much of the night shows: 0 by day, 1 at night (for the light, SK2)
 local NIGHTNESS = { { 0, 1 }, { 5, 1 }, { 7, 0 }, { 18.5, 0 }, { 20.5, 1 }, { 24, 1 } }

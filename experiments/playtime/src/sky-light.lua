@@ -1,8 +1,8 @@
 -- sky-light.lua — the light at the sky's hour (docs/SKY.md SK2): a scene with a sky (src/scene-sky.lua) and
 -- a light level (src/scene-light.lua) gets its sun, moon, sky light and back light from the clock, and its
 -- shadows (contact, wall, 3D) turn and stretch with them. From light-grass-check (LIGHT-AND-SHADOW): five
--- looks blended by the hour (night, dawn, day, golden hour, dusk), the sun on an arc from 6:00 to 18:00
--- and the moon from 17:00 to 7:00 (they overlap an hour at each handover, so the light swings across
+-- looks blended by the hour (night, dawn, day, golden hour, dusk), the sun on an arc from 6:00 to 20:00
+-- and the moon from 19:00 to 7:00 (they overlap an hour at each handover, so the light swings across
 -- instead of going through a moment with almost none: Nikki 2026-11-06 "some transitions aren't
 -- smooth"), the sun's and the moon's shadows blended by how strong each is, never "pick the stronger".
 -- lib.fill writes the hour's values into the light level's own tables (made for a sky scene, not the
@@ -21,11 +21,14 @@ local LOOKS = {
         back = { 'ffffff', 0.6 }, shadows = 0.5, wallShadows = 0.35 },
     golden = { sun = { 'ffd890', 1.1 }, moon = { 'a8c0ff', 0 }, skyLight = { 'ffe0b0', '7a6040', 0.715 },
         back = { 'ffd080', 1.8 }, shadows = 0.45, wallShadows = 0.33 },
-    dusk = { sun = { 'ff8a3c', 0.9 }, moon = { 'a8c0ff', 0.1 }, skyLight = { 'ffa080', '5a3848', 0.65 },
+    dusk = { sun = { 'ff8a3c', 0.9 }, moon = { 'a8c0ff', 0.3 }, -- (0.1 left a dip after sunset: the moon up, but faint)
+        skyLight = { 'ffa080', '5a3848', 0.65 },
         back = { 'ffa050', 2.4 }, shadows = 0.4, wallShadows = 0.3 },
 }
-local TIMELINE = { { 0, 'night' }, { 5, 'night' }, { 6.5, 'dawn' }, { 8.5, 'day' }, { 17, 'day' },
-    { 18, 'golden' }, { 19, 'dusk' }, { 20.5, 'night' }, { 24, 'night' } }
+-- a long summer evening (Nikki 2026-11-15, 'a later sunset'): the golden hour and dusk with the low sun still
+-- up, not painted on a light already gone (the sun set at 18:00 under them: 18:00-19:30 almost no light)
+local TIMELINE = { { 0, 'night' }, { 5, 'night' }, { 6.5, 'dawn' }, { 8.5, 'day' }, { 17.5, 'day' },
+    { 19, 'golden' }, { 20, 'dusk' }, { 21.5, 'night' }, { 24, 'night' } }
 local SQUASH = 0.8   -- the arc lower than it is wide
 local BACK_FULL = 0.5 -- the sun and moon together this share of the hour's strongest: the back light full
 -- the light level's numbers at day (src/scene-light.lua), which the hour scales
@@ -67,8 +70,9 @@ function lib.lookAt(hour)
 end
 
 -- where the sun and the moon are on their arcs (0 rising on the left, pi setting on the right)
-function lib.sunTheta(hour) return ((hour % 24) - 6) / 12 * math.pi end
-function lib.moonTheta(hour) return (((hour % 24) - 17) % 24) / 14 * math.pi end
+-- the sun 6:00-20:00, the moon 19:00-7:00
+function lib.sunTheta(hour) return ((hour % 24) - 6) / 14 * math.pi end
+function lib.moonTheta(hour) return (((hour % 24) - 19) % 24) / 12 * math.pi end
 
 -- on its arc at theta: the way to it (world, y down: up is -y), and how much it's up (0 at or below
 -- the horizon, 1 well up; it fades over about an hour and a half near the horizon)
