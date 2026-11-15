@@ -71,5 +71,13 @@ the plasticine shader. It doesn't stick to a limb. This one does, per part.
 - [x] D6. Paint pots that mix, footprints, a Mipo as a brush on the floor (2026-11-14)
 - [ ] D7. Nikki plays with the paint: mixing too quick (a dip covers what's there in ~1 s: 'soak')? prints
   readable edge-on, or a sheet to paint on (a wall, an easel) instead?
-- [ ] D5. Cost on the phone (`./playtime.sh bench device`): masks are 128² each, a paint pass per part in a
+- [x] D5. Cost on the phone (`./playtime.sh bench device`): masks are 128² each, a paint pass per part in a
   liquid per frame
+  Measured 2026-11-15 (Nikki: "y measure d5 on the phone"; iPhone SE 2, dirty, 20 Mipos, play mode, A-B-A): drawing
+  through the masks is about free (20 clean or muddy, masks on or off: the same draw, ~14 ms as the phone warmed;
+  520 masks, two 128² canvases each, ~65 MB). Painting is the cost: every part of every Mipo is painted into its
+  mask every frame (~470 paintPart a frame), ~44 ms of the scene's update: 15 fps with five in the mud bath. (A
+  first run said 4 fps: 'm' fills every mask for two frames counted in update, and with the world paused that
+  never ran out.) Found on the way: the builds didn't pack a scene's helper modules (fixed, 1ba83735).
+- [ ] D8. Paint only what changes, before it can land: parts in a bath or under the sponge, and the drying ones;
+  the rest keep their masks (D5: painting every part every frame is ~2 ms a Mipo on the phone).
