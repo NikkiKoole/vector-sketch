@@ -383,8 +383,10 @@ local makers = {
             extra = ud.extra, thing = thing, body = body }
     end,
     [subtypes.LIQUID] = function(out, ud, _, body, z)
-        -- water in a container (src/liquid.lua); 'front' puts it in front of the Mipos (a bath)
-        if ud.extra.front then z = liquid.FRONT_Z + (ud.extra.zOffset or 0) end
+        -- water in a container (src/liquid.lua); 'front' puts it in front of the Mipos (a bath they sit in), but
+        -- only a bath in the play layer: one in the back is walked past in front of, its water stays behind
+        -- with it (z keeps its layer's offset; src/depth-layers.lua)
+        if ud.extra.front and depthLayers.of(body) == 'play' then z = liquid.FRONT_Z + (ud.extra.zOffset or 0) end
         out[#out + 1] = { type = subtypes.LIQUID, z = z, extra = ud.extra, body = body }
     end,
     [subtypes.SOFTBODY] = function(out, _, fixture, _, z)

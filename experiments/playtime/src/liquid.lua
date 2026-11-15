@@ -593,9 +593,15 @@ function lib.floatIn(extra, container, dt)
             minY, maxY = math.min(minY, water[i + 1]), math.max(maxY, water[i + 1])
         end
         local world = container:getWorld()
+        -- a container in the back or front layer is passed in front of / behind: what moves around isn't in its
+        -- water (src/depth-layers.lua), only things in its own layer
+        local layer = require('src.depth-layers').of(container)
         world:queryBoundingBox(minX, minY, maxX, maxY, function(fixture)
             local body = fixture:getBody()
-            if body ~= container and body:getType() == 'dynamic' then seen[body] = true end
+            if body ~= container and body:getType() == 'dynamic'
+                and (layer == 'play' or require('src.depth-layers').of(body) == layer) then
+                seen[body] = true
+            end
             return true
         end)
     end

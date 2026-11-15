@@ -3,11 +3,14 @@
 -- thin water settings seaside gave its cups (SEASIDE SS1b: little tint and bending, no mirror, shafts or specks).
 -- The shader bends what's behind the water, so while a scene has any LIQUID the frame is drawn into a canvas:
 --   drawStart  before anything is drawn (the sky, backdrops, walls, bodies all land in the canvas);
---              liquid.draw hands each water over (state.liquidDrawHook) instead of drawing it
---   drawEnd    after the scene script's draw: the canvas onto the real target, then the waters over it
+--              liquid.draw hands each water over (state.liquidDrawHook) at its own place in the draw order,
+--              and it's drawn there: at the frame's first water what's drawn so far is copied (one copy a
+--              frame), and the water bends that copy; what's drawn after it (a Mipo in front of the bath)
+--              comes over the water (Nikki 2026-11-15, EM3: it was drawn over everything at the end, so a
+--              Mipo in front of a bath was seen through its water)
+--   drawEnd    after the scene script's draw: the canvas onto the real target
 -- A scene without water costs nothing. A scene that draws its own water (seaside sets its own hook) is left
--- alone. Known (as in seaside): the water is drawn over everything, so a Mipo in front of a bath is seen
--- through its water.
+-- alone.
 local lib = {}
 
 local state = require('src.state')
@@ -25,7 +28,16 @@ local function frame()
     return state.waterLook
 end
 
-local canvas
+local canvas, behind
+-- what's behind the first water this frame: the canvas so far, copied (the shader reads it while the water
+-- is drawn into the canvas)
+local function behindFor(w, h)
+    if not behind or behind:getWidth() ~= w or behind:getHeight() ~= h then
+        if behind then behind:release() end
+        behind = love.graphics.newCanvas(w, h)
+    end
+    return behind
+end
 local function canvasFor(w, h)
     if not canvas or canvas:getWidth() ~= w or canvas:getHeight() ~= h then
         if canvas then canvas:release() end
@@ -39,7 +51,7 @@ function lib.drawStart()
     local f = frame()
     f.on = false
     -- the hook as it is on state: a hot swap of this file makes a new function, so it's kept there too
-    f.hook = f.hook or function(water) table.insert(state.waterLook.waters, water) end
+    f.hook = f.hook or function(water) require('src.water-look').drawWater(water) end
     local hook = state.liquidDrawHook
     if hook and hook ~= f.hook then return end -- a scene draws its own water
     if #registry.sfixturesOf(subtypes.LIQUID) == 0 then
@@ -47,32 +59,17 @@ function lib.drawStart()
         return
     end
     state.liquidDrawHook = f.hook
-    f.waters = {}
+    f.snapped = false
     f.previous = love.graphics.getCanvas()
     love.graphics.setCanvas({ canvasFor(love.graphics.getDimensions()), stencil = true })
     love.graphics.clear(0, 0, 0, 0)
     f.on = true
 end
 
-function lib.drawEnd()
-    local f = frame()
-    if not f.on then return end
-    f.on = false
-    if f.previous then love.graphics.setCanvas({ f.previous, stencil = true }) else love.graphics.setCanvas() end
-    f.previous = nil
-    -- the frame as drawn, then the waters over it, bending it
-    love.graphics.push()
-    love.graphics.origin()
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.setBlendMode('alpha', 'premultiplied')
-    love.graphics.draw(canvas, 0, 0)
-    love.graphics.setBlendMode('alpha')
-    love.graphics.pop()
-    if #f.waters == 0 then return end
-    local shader = waterShader.shader()
+-- one water, now, at its place in the draw order (liquid.draw, through the hook)
+local function sendThin(shader, scene)
     local thin = lib.THIN
-    love.graphics.setShader(shader)
-    shader:send('scene', canvas)
+    shader:send('scene', scene)
     shader:send('time', love.timer.getTime() % 1000)
     shader:send('pxPerWorld', cam:getScale() * love.graphics.getDPIScale())
     shader:send('clarity', thin.clarity)
@@ -85,10 +82,50 @@ function lib.drawEnd()
     shader:send('mirror', 0)
     shader:send('rays', 0)
     shader:send('specks', 0)
-    waterShader.drawThin(f.waters)
+end
+function lib.drawWater(water)
+    local f = frame()
+    if not f.on then return end
+    local target = love.graphics.getCanvas()
+    if target ~= canvas then return end -- another pass (the shadows' outlines): no water there
+    if not f.snapped then
+        f.snapped = true
+        local copy = behindFor(canvas:getDimensions())
+        love.graphics.push('all')
+        love.graphics.origin()
+        love.graphics.setCanvas(copy)
+        love.graphics.clear(0, 0, 0, 0)
+        love.graphics.setShader()
+        love.graphics.setStencilTest()
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.setBlendMode('replace', 'premultiplied')
+        love.graphics.draw(canvas, 0, 0)
+        love.graphics.pop()
+    end
+    local compare, value = love.graphics.getStencilTest()
+    local shader = waterShader.shader()
+    love.graphics.setShader(shader)
+    sendThin(shader, behind)
+    waterShader.drawThin({ water })
     love.graphics.setShader()
     love.graphics.setColor(1, 1, 1, 1)
-    f.waters = {}
+    if compare then love.graphics.setStencilTest(compare, value) else love.graphics.setStencilTest() end
+end
+
+function lib.drawEnd()
+    local f = frame()
+    if not f.on then return end
+    f.on = false
+    if f.previous then love.graphics.setCanvas({ f.previous, stencil = true }) else love.graphics.setCanvas() end
+    f.previous = nil
+    -- the frame as drawn, the waters in it
+    love.graphics.push()
+    love.graphics.origin()
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.setBlendMode('alpha', 'premultiplied')
+    love.graphics.draw(canvas, 0, 0)
+    love.graphics.setBlendMode('alpha')
+    love.graphics.pop()
 end
 
 return lib

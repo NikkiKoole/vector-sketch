@@ -161,6 +161,12 @@ The landing order, what bites what, and Nikki's keep / spike choices of 2026-11-
   surface's splash in cups and baths done the same day (`liquid.floatIn`, WATER W4 / W3b). A bake during the
   frame (`omp-bake.makeTexturedCanvas`) put the screen back as the target: with the frame in the water's
   canvas that flickered while dragging Mipos; it puts back what it found now.
+  2026-11-15 (Nikki: "you want 2 we do 2"): each water drawn at its own place in the draw order, bending a copy
+  of what's drawn before it (one copy a frame), so what comes after is over it; a bath's water in front of the
+  Mipos only in the play layer (one you sit in), a back-layer bath's behind them and nothing floats in it but
+  its own layer (DEPTH-LAYERS). Seen in layerhouse with two baths. Known: a plain body (no picture) in front of
+  a back bath still shows through the water: plain bodies are all drawn before any picture. Left for EM3: the
+  water's own colour, pouring outside seaside, the sea, the phone.
 - [ ] **EM4. Garden critters**, once the shelf and 🎲 exist (EDITOR-ARRANGE EA2-EA4).
 - [ ] **EM5. The cheap shared bits**, any time, each checked by a scene snapshot before/after:
   a `mipoKit` (spawn / alive / isAlive) for the scene scripts, `mathutils.clamp` instead of the copies,
