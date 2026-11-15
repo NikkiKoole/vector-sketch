@@ -405,6 +405,10 @@ fade, a sun: the panel's `fades` switch, LS4).
   7.6 / 7.6, lit 9.3 / 9.5 (60 fps), lit with the frame cache forced off 12.4; lit + 3D every other
   frame 17.3, 53 fps. Lighting 20 Mipos: ~9.8 ms in the morning, ~1.8 now. What's left for 60 fps with
   shadows is the outline pass (LS24, LS25).
+  The built levels (scene-light, the light button), 2026-11-15, on the Mac, scene `crowd` (20 Mipos, all on
+  screen, paused, editor), draw p50: off 8.4, lit 11.5, shadows 13.7, full 13.7 (with a floor set from where
+  they stand; `crowd` has none saved, so full without one is shadows + clay), full with shadows every other
+  frame 13.3; 60 fps at every level. Still to do: the same per level on the phone (the floor), then tick.
 - [ ] **LS24. Draw once for the screen and the shadows.** The outlines for the shadows are the world
   drawn a second time (~6 ms with 20 lit Mipos on the phone; every other frame halves it, LS23). The GPU
   can write two pictures in one pass (several canvases at once, `love.graphics.setCanvas` with a list;
