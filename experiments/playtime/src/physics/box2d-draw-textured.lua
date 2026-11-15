@@ -1656,6 +1656,7 @@ function lib.drawTexturedWorld(_world, only)
             end
             local draw = drawers[drawables[i].type]
             if draw then
+                if not only then dirtLook.beforeDraw(drawables[i]) end -- (its wet mask found this frame)
                 if wrap then wrap(drawables[i], draw) else draw(drawables[i]) end
                 -- mud and paint over a Mipo part (src/dirt-look.lua), in the frame's own pass only
                 if not only then dirtLook.afterDraw(drawables[i], draw) end

@@ -756,6 +756,15 @@ function lib.afterDraw(d, draw)
     if m then lib.drawOverlay(d, draw, m) end
 end
 
+-- Before the engine draws a drawable: a Mipo part's mask name worked out, so the light shader finds its wet mask in
+-- the same frame (lib.wetMapFor). A Mipo turning while it's dragged remakes its parts' tables, and a new one used to
+-- get its name only after it was drawn (afterDraw): drawn dry for a frame, every turn (Nikki 2026-11-16: "it does
+-- flicker a bit ... usually when dragging a body in"). Once per table: the name is kept.
+function lib.beforeDraw(d)
+    local extra = d.extra
+    if extra and not stableKeys[extra] and not state.dirtOff and lib.getsDirty(d) then stableKey(d) end
+end
+
 -- a part's wet mask for the light shader (src/render/shaders.lua: wet where the mask says, its waterline), or nil
 function lib.wetMapFor(extra)
     if state.dirtOff then return nil end

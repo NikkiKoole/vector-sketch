@@ -104,4 +104,8 @@ the plasticine shader. It doesn't stick to a limb. This one does, per part.
   material, a highlight from the scene's lights) is where the mask says: the waterline stays where the water was.
   A part the light shader doesn't draw (the light off) gets the overlay's flatter wet (darker, a soft sheen).
   wet.soak (whole parts, from liquid.floatIn) is gone; wet.lua keeps rain spots and the pour's splashes.
+  Flicker while dragging a Mipo in the water (Nikki: "it does flicker a bit ... usually when dragging a body in"):
+  turning remakes a Mipo's part tables, and a new one got its mask name only after it was drawn, so the light
+  shader drew it dry for a frame at every turn. Now named before it's drawn (dirt-look beforeDraw). Probed while
+  dragging: 0 of 22312 wet part draws without their mask (252 part tables remade).
 - [ ] D10. Prints and drips in the engine (paint-marks.lua still the dirty scene's), and the sponge as a tool.
