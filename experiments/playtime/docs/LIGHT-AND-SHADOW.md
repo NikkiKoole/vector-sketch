@@ -179,7 +179,10 @@ fade, a sun: the panel's `fades` switch, LS4).
   Not measured yet: lanes (each drawn on its own, and the soft wall shadow then draws the world once
   more), the lamps' glow, the circling lamps. The materials session measured a lit Mipo at ~0.47 ms a
   frame on the phone (MATERIALS.md 'What the Mipo shaders cost'): LS23.
-- [ ] **LS13. Light as a scene setting.** So any room gets it without a script: a light section in the
+- [x] **LS13. Light as a scene setting.** Done 2026-11-15 (Nikki: "1"): any scene gets its light from its own
+  settings, no script (the level, the sky and its clock, the floor, walls as things; `sunyard`, `facing`). The
+  rooms (kitchen, dollhouse, bakery, treehouse, overworld) are still greybox, flat shapes on the background, so
+  each gets its light set up when it's dressed with walls, floor and pictures. So any room gets it without a script: a light section in the
   world settings, saved with the scene: the sky (a colour, or a time of day with the cycle; G5's open
   question in WORLD-BUILDING, a sky per scene), sun and moon, sky light, back light, contact and wall
   shadows on/off, which body is the back wall (and its surface: flat, smooth clay, plaster), and
