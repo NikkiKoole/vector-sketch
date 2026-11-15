@@ -86,7 +86,7 @@ crates, and Mipos in two lanes.
 ## Decided (Nikki 2026-11-15)
 
 - **Back parts drag only in the editor.** In play mode they stay put (a child can't pull a house wall
-  away); Mipos and toys still drag.
+  away); Mipos and toys still drag. Then (same day): it's the body's type, static or dynamic (DL2).
 - **Loose toys pass in front of back parts like Mipos**: everything that moves around is in play, and
   stands on back parts' one-way tops.
 - **A contact filter**, not Box2D's 16 categories: simpler, and room for rules (Claude's pick).
@@ -103,7 +103,10 @@ crates, and Mipos in two lanes.
   bodies after the textured world (box2d-draw drawFrontBodies), in play mode back darker grey, front lighter.
   The joint guard counts layered bodies as passable. Scene `layerhouse` (a house wall and roof in back, a
   porch railing, pillar and roof in front, a crate); spec/depth-layers_spec.lua with real Box2D.
-- [ ] **DL2. Back parts stay put in play mode** (the drag decision above).
+- [x] **DL2. Back parts stay put in play mode** — by body type, no new setting (Nikki 2026-11-15: "is this just
+  static vs dynamic body?", "y that works"): in play mode only dynamic bodies are grabbed, so a part that
+  mustn't be dragged is made static (stays put, doesn't fall); dynamic ones drag and can be knocked over.
+  Tried / left: a 'drag in play' setting, for "knocked over but not picked up", added only if that's wanted.
 - [x] **DL3. Fabuland's defaults** (2026-11-15, Nikki: "lets do the door / window"): a PARTS entry's `layer`
   is what a new part gets: all the blocks back (window, wheel, arch, door, block, half block: house walls; a
   plain block left solid would still wall a Mipo in), the railing front, roofs / stairs / posts / planks play
