@@ -424,7 +424,11 @@ fade, a sun: the panel's `fades` switch, LS4).
   screen: lit 10.4 / 10.3 ms draw, shadows 12.2 / 12.3 / 12.3 / 12.5, full with a floor (3D) 12.6 / 12.6:
   every level 60 fps. The outline pass itself (every frame 17.1 / 18.1 vs every other 16.1 / 16.4, editor):
   ~2.6 ms drawn, ~1.3 a frame with every other frame.
-- [ ] **LS24. Draw once for the screen and the shadows.** The outlines for the shadows are the world
+- [~] **LS24. Draw once for the screen and the shadows.** Parked (tried 2026-11-15: measured first, Nikki "ok
+  park for now"): in play mode on the phone every light level already holds 60 fps with 20 Mipos on screen
+  (LS23), and the outline pass it would save is ~1.3 ms a frame (every other frame) against ~1 ms for the
+  full-screen copy it adds: ~0.25 ms net for the riskiest change in the drawing path. Back if rooms get much
+  heavier (40 Mipos, several lamps throwing 3D shadows). The outlines for the shadows are the world
   drawn a second time (~6 ms with 20 lit Mipos on the phone; every other frame halves it, LS23). The GPU
   can write two pictures in one pass (several canvases at once, `love.graphics.setCanvas` with a list;
   a shader writes `love_Canvases[1]`): the scene to the screen and its alpha to the silhouettes, so the
