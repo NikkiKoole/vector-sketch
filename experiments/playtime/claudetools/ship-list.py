@@ -140,6 +140,17 @@ def main():
     for p in room_files:
         if p.endswith('.json'): json_strings(json.load(open(p, encoding='utf-8')), strings)
         else: strings |= lua_strings(open(p, encoding='utf-8', errors='ignore').read())
+    # a scene script's helper modules (a spike's look in its own file, love.filesystem.load('scripts/spikes/x.lua')),
+    # and theirs in turn: shipped with it (the dirty scene stopped on the phone without dirt-look.lua)
+    helpers, todo = [], [s for s in strings if s.startswith('scripts/') and s.endswith('.lua')]
+    while todo:
+        s = todo.pop()
+        if s in helpers or s in room_files or not os.path.isfile(s): continue
+        helpers.append(s)
+        found = lua_strings(open(s, encoding='utf-8', errors='ignore').read())
+        strings |= found
+        todo += [f for f in found if f.startswith('scripts/') and f.endswith('.lua')]
+    room_files += sorted(helpers)
 
     data = files_under('textures') + files_under('assets')
     ships, left = [], []
