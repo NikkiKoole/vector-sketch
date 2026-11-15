@@ -79,5 +79,10 @@ the plasticine shader. It doesn't stick to a limb. This one does, per part.
   mask every frame (~470 paintPart a frame), ~44 ms of the scene's update: 15 fps with five in the mud bath. (A
   first run said 4 fps: 'm' fills every mask for two frames counted in update, and with the world paused that
   never ran out.) Found on the way: the builds didn't pack a scene's helper modules (fixed, 1ba83735).
-- [ ] D8. Paint only what changes, before it can land: parts in a bath or under the sponge, and the drying ones;
-  the rest keep their masks (D5: painting every part every frame is ~2 ms a Mipo on the phone).
+- [x] D8. Paint only what changes (2026-11-16, Nikki: "back to dirt water wetness etc"). It already painted only
+  parts in a bath or under the sponge, but its bath test took 2.5 times a body's reach (neighbours and parts far
+  above the water too: ~520 passes a frame with five Mipos in the mud) and repainted each one every frame. Now the
+  test is the body's reach with a margin for a ribbon limb (1.3), and a part in a bath is painted 20 times a
+  second (lib.BATH_HZ), catching up the time between (each mask its own clock); the sponge every frame. Phone, the
+  same 20 Mipos with five in the mud: the scene's update 47 -> 13 ms, 15 -> 35 fps (the mouths' triangles,
+  b7fed53f, too). Left: the scene script 5.9 ms (painting and prints), floating 3.6, drawing ~14.

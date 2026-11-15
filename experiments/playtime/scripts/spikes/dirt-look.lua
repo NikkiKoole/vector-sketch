@@ -465,14 +465,31 @@ function lib.note(d, draw) noted[d] = draw end
 
 -- one thing's mask (a part or a haircut) in the baths and under the sponge this frame. run(m, pass,
 -- uniforms) does a pass, make(yes) gets (or makes) its mask. Returns the mask
+-- Painting in a bath is done BATH_HZ times a second, not every frame, catching up the time in between (each mask
+-- its own clock, so parts take turns), and only for parts whose body (with a margin for a ribbon limb drawn past
+-- it) reaches the water: every part near a bath every frame was ~44 ms a frame with 20 Mipos on the phone (DIRT D5,
+-- D8). The sponge stays every frame: it follows the finger.
+lib.BATH_HZ = 20
+local NEAR = 1.3 / 2.5 -- of reachOf's reach (which is 2.5 times the body's, for a ribbon limb): the bath test's
 local function soakAndWash(m, bx, by, r, frame, run, make)
     local t = lib.tuning
-    local dt = frame.dt or 1 / 60
+    local frameDt = frame.dt or 1 / 60
+    local dt = frameDt
     local inBath
+    local near = r * NEAR
     for _, w in ipairs(frame.liquids) do
-        if bx + r > w.x1 and bx - r < w.x2 and by + r > w.level and by - r < w.y2 then
+        if bx + near > w.x1 and bx - near < w.x2 and by + near > w.level and by - near < w.y2 then
             m = m or make(w.kind ~= 'clean')
+            -- its turn? (a new mask paints at once)
+            local due = true
             if m then
+                m.bathAcc = (m.bathAcc or 1) + frameDt
+                if m.bathAcc < 1 / lib.BATH_HZ then due = false else dt, m.bathAcc = m.bathAcc, 0 end
+            end
+            if m and not due then
+                inBath = w
+                m.wetT = t.dry
+            elseif m then
                 inBath = w
                 local uniforms = { mode = 0, level = w.level, xRange = { w.x1, w.x2 }, wobble = t.wobble }
                 local passes
@@ -493,7 +510,7 @@ local function soakAndWash(m, bx, by, r, frame, run, make)
     local brush = frame.brush
     if m and brush and brush.moved > 0 and math.sqrt((bx - brush.x) ^ 2 + (by - brush.y) ^ 2) < r + t.sponge then
         local uniforms = { mode = 1, brush = { brush.x, brush.y }, brushR = t.sponge }
-        local k = math.min(1, t.scrub * dt * math.min(1, brush.moved / 8))
+        local k = math.min(1, t.scrub * frameDt * math.min(1, brush.moved / 8))
         for _, pass in ipairs(washPasses(k)) do run(m, pass, uniforms) end
         cpuOff(m, k * 0.5)
         m.wetT = t.dry
