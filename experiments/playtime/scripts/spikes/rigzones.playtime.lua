@@ -1,4 +1,4 @@
--- rigzones: places that take over a Mipo's skeleton (slide, bench, bar, cushion; a table to crawl under, a beam, a ladder, wind, a swing; a slide park with sky slides) and ways to drag one (scruff, by a hand, pose like a doll) (docs/RIG-ZONES.md)
+-- rigzones: places that take over a Mipo's skeleton (slide, bench, bar, cushion; a table to crawl under, a beam, a ladder, wind, a swing; a slide park with sky slides; a trampoline for saltos, skipping ropes) and ways to drag one (scruff, by a hand, pose like a doll) (docs/RIG-ZONES.md)
 -- The zones and the drag styles are scripts/spikes/rig-zones.lua. Keys: 1-4 drag style (normal, scruff, hand,
 -- pose), left / right the two playgrounds, z show the zones, n a new Mipo, h panel.
 local s = {}
@@ -292,13 +292,30 @@ local function slidePark()
         'drop-slide')
 end
 
+-- ── sports (Nikki 2026-11-15: "maybe some jumping sports to make saltos, skipping rope?") ──
+
+-- a trampoline: a bed on legs (the legs touch nothing), its zone the air above it
+local function trampoline(x, w, height)
+    local top = GROUND_Y - height
+    local bed = box(x, top + 10, w, 20, 'trampoline', 0.9)
+    sensors(box(x - w / 2 + 40, GROUND_Y - height / 2, 30, height, 'trampoline-leg'))
+    sensors(box(x + w / 2 - 40, GROUND_Y - height / 2, 30, height, 'trampoline-leg'))
+    if bed then rectZone('trampoline', bed.body, x - w / 2 + 20, top - 2600, x + w / 2 - 20, top + 10, { top = top }) end
+end
+
+-- a skipping mat
+local function ropeMat(x, w)
+    local mat = box(x, GROUND_Y - 6, w, 12, 'skipping-mat', 0.9)
+    if mat then rectZone('rope', mat.body, x - w / 2, GROUND_Y - 1100, x + w / 2, GROUND_Y + 10, { floor = GROUND_Y - 12 }) end
+end
+
 -- the playgrounds' middles (left / right arrow): x, y
-local PAGES = { { 0, 250 }, { 7750, 250 }, { 15250, -900 } }
+local PAGES = { { 0, 250 }, { 7750, 250 }, { 15250, -900 }, { 21500, -350 } }
 
 local function ensureScene()
     local c = st()
     if not getObjectsByLabel('ground')[1] then
-        local thing = objectManager.addThing('rectangle', { x = 6500, y = GROUND_Y + 300, width = 25000, height = 600,
+        local thing = objectManager.addThing('rectangle', { x = 9500, y = GROUND_Y + 300, width = 32000, height = 600,
             bodyType = 'static', label = 'ground' })
         if thing then
             local extra = fixtures.createSFixture(thing.body, 0, 0, 'tile-repeat', { radius = 20 }):getUserData().extra
@@ -319,10 +336,13 @@ local function ensureScene()
         wind(8600, 9500, -900)
         swing(10250, 1400, 400)
         slidePark()
+        trampoline(20000, 1100, 160)
+        ropeMat(22300, 500)
+        ropeMat(23300, 500)
     end -- (else a script reload: the bodies and their zones (on state) are still there)
     c.mipos = mipoKit.alive(c.mipos)
     local spots = { { -2650 }, { 250 }, { 1300 }, { 5800 }, { 9000 }, { 12800, -2800 }, { 15560, -1100 },
-        { 16250, -3000 } }
+        { 16250, -3000 }, { 20000, -400 }, { 22300 }, { 23300 } }
     for i = #c.mipos + 1, #spots do
         mipoKit.spawn(c.mipos, spots[i][1], spots[i][2] or GROUND_Y - 900)
     end
@@ -379,6 +399,7 @@ function s.draw()
         love.graphics.setColor(1, 1, 1, 1)
     end
     rig.drawWind()
+    rig.drawRopes()
     if st().showZones then rig.drawZones() end
 end
 
@@ -390,6 +411,8 @@ local SLIDERS = {
     { 'pullAway', 'bar: pull away', 100, 1000, 10 }, { 'poseStiff', 'pose: stiffness', 0.02, 2, 0.01 },
     { 'crawlAt', 'crawl below (x height)', 0.2, 1.2, 0.02 }, { 'sway', 'beam: sway', 0, 20, 0.5 },
     { 'wind', 'wind (x weight)', 0, 1.5, 0.02 }, { 'pump', 'swing: push', 0, 0.6, 0.01 },
+    { 'bounce', 'trampoline (x height)', 0.3, 3, 0.05 }, { 'saltoEvery', 'salto every n bounces', 0, 4, 1 },
+    { 'ropeSpeed', 'rope turns / s', 0.3, 2.5, 0.05 },
 }
 function s.drawUI()
     local c = st()
@@ -422,8 +445,8 @@ function s.drawUI()
             if value then t[sl[1]] = value + 0 end
             y = y + P.row
         end
-        local bw3 = (inner - 12) / 3
-        for i, name in ipairs({ 'playground', 'more', 'slides' }) do
+        local bw3 = (inner - 18) / 4
+        for i, name in ipairs({ 'play', 'more', 'slides', 'sports' }) do
             if ui.button(x + (i - 1) * (bw3 + 6), y, bw3, name, nil, c.page == i and { 0.5, 0.4, 0.3 } or nil) then
                 goPage(i)
             end

@@ -14,6 +14,11 @@
 --            streaming downwind.
 --   swing:   sits on the seat (welded, like the bench), arms up along the ropes, and pumps: legs out going
 --            forward, tucked going back. Stays on when dragged, unless pulled far off.
+--   trampoline: bounces, and every so often a salto: launched with a spin from the push (about its
+--            middle), it tucks (joint motors: they keep the spin; a KEEP_ANGLE would stop it), which spins
+--            it faster, and opens out to land on its feet.
+--   rope:    on a mat it skips: a rope turned from hand to hand over its head and under its feet, a hop just
+--            as it comes round; not off the floor in time, the rope catches on its feet a moment.
 -- And how a Mipo is dragged (lib.setDrag):
 --   normal:  as the engine does it, by the part you press.
 --   scruff:  always by the head, whatever you press: lifted upright, legs dangling.
@@ -47,7 +52,10 @@ lib.tuning = {
     crawlSpeed = 0.35, -- crawl: let go under something low, it goes through at this many heights a second
     sway = 6,         -- beam: degrees of sway
     wind = 0.3,       -- wind: the force on each part, of its weight
-    pump = 0.25,      -- swing: a push along the swing while it pumps, of the weight (0: the legs alone)
+    pump = 0.25,
+    bounce = 1.3,     -- trampoline: how high it goes, in its heights
+    saltoEvery = 2,   -- trampoline: a salto every so many bounces (0: none)
+    ropeSpeed = 1.1,  -- skipping: the rope's turns a second      -- swing: a push along the swing while it pumps, of the weight (0: the legs alone)
 }
 
 lib.DRAGS = { 'normal', 'scruff', 'hand', 'pose' }
@@ -101,8 +109,10 @@ local function restoreKeeps(inst, rec)
     for name, was in pairs(rec.saved) do
         local b = mipoActions.getKeepAngle(inst.parts[name])
         if b then
+            -- (the targets back; on or off is mipoActions.wake's, at release: put back as they were when the
+            -- zone took it, a Mipo that came in limp, dazed by a landing or out of a salto, kept its legs off)
             if was.none then b.enabled = false
-            else b.angle, b.kp, b.maxOmega, b.enabled = was.angle, was.kp, was.maxOmega, was.enabled end
+            else b.angle, b.kp, b.maxOmega = was.angle, was.kp, was.maxOmega end
         end
     end
     rec.saved = {}
@@ -124,9 +134,8 @@ local function arms(inst, rec, angle, elbow)
     end
 end
 
-local function clearArms(inst, rec)
-    if rec.wasRagdoll ~= nil and not rec.ragdoll then inst._isRagdoll = rec.wasRagdoll end
-    rec.wasRagdoll = nil
+local function clearArms(_, rec)
+    rec.wasRagdoll = nil -- (the flag itself: mipoActions.wake at release)
 end
 
 local function faceOf(inst)
@@ -231,7 +240,10 @@ local function release(inst, rec)
     restoreMasks(rec)
     clearArms(inst, rec)
     dropGrips(rec)
-    if rec.ragdoll then mipoActions.wake(inst) end
+    -- always up again on its own muscles: every KEEP_ANGLE as standing wants it, no ragdoll flag (Nikki
+    -- 2026-11-15: "sometimes i can get mipos sort of disabled from being in a ride and still have their legs
+    -- turned off when on the ground")
+    mipoActions.wake(inst)
     mipoWalk.hold(inst, false)
     inst._noStandUp = nil
     data().mipos[inst.id] = nil
@@ -811,6 +823,165 @@ local function poseOff(inst, rec)
     release(inst, rec)
 end
 
+-- ── jumping ──
+
+local function wrapAngle(a) return (a + math.pi) % (2 * math.pi) - math.pi end
+
+local function centreOfMass(inst)
+    local m, x, y = 0, 0, 0
+    for _, b in ipairs(bodiesOf(inst)) do
+        local bx, by = b:getWorldCenter()
+        local bm = b:getMass()
+        m, x, y = m + bm, x + bx * bm, y + by * bm
+    end
+    return x / math.max(m, 1e-6), y / math.max(m, 1e-6)
+end
+
+local function legJoint(inst, name)
+    local part, parent = inst.parts[name], inst.parts[parentOf(inst, name) or '']
+    return part and parent and alive(part.body) and alive(parent.body)
+        and mipoRegistry.jointBetween(parent.body, part.body, 'revolute') or nil
+end
+
+-- a joint's motor toward an angle (radians, the joint's own), with torque
+local function motorTo(rec, j, target, torque)
+    if not j then return end
+    rec.motors = rec.motors or {}
+    rec.motors[j] = true
+    j:setMotorEnabled(true)
+    j:setMotorSpeed((target - j:getJointAngle()) * 12)
+    j:setMaxMotorTorque(torque)
+end
+
+local function motorsOff(rec)
+    for j in pairs(rec.motors or {}) do
+        if not j:isDestroyed() then j:setMotorEnabled(false) end
+    end
+    rec.motors = nil
+end
+
+local ALL_PARTS_CACHE = setmetatable({}, { __mode = 'k' })
+local function partNames(inst)
+    local names = ALL_PARTS_CACHE[inst]
+    if not names then
+        names = {}
+        for name in pairs(inst.parts) do names[#names + 1] = name end
+        ALL_PARTS_CACHE[inst] = names
+    end
+    return names
+end
+
+-- The trampoline: touching the bed (any part: a Mipo landing on its back bounces too), it's sent up again,
+-- bounce heights high. Every saltoEvery-th bounce, if upright: a salto, launched with a spin about its middle
+-- (a rigid turn: each part's speed from it), ragdolled (its KEEP_ANGLEs would stop the spin: they set a part's
+-- turn speed outright), hips and knees tucked by their motors to the limits (thighs up, shins folded): the
+-- tuck spins it faster; with the turn nearly done it opens out and lands on its feet.
+local function trampolinePose(inst, rec, zone)
+    local t = lib.tuning
+    local now = love.timer.getTime()
+    local torso = inst.parts.torso1.body
+    local H = standingHeight(inst)
+    local g = 9.8 * love.physics.getMeter()
+    local low = lowestOf(inst, partNames(inst))
+    local _, vy = torso:getLinearVelocity()
+    local d = faceOf(inst)
+    if low > zone.top - 25 and vy > -80 and now - (rec.launchAt or 0) > 0.35 then
+        if rec.salto then -- landed from one: back to its own muscles
+            motorsOff(rec)
+            mipoActions.wake(inst)
+            rec.salto = false
+        end
+        rec.count = (rec.count or 0) + 1
+        local upright = math.abs(wrapAngle(torso:getAngle())) < 0.6
+        local salto = t.saltoEvery > 0 and rec.count % math.floor(t.saltoEvery) == 0 and upright
+        if salto and d == 0 then face(inst, 1) d = 1 end
+        local V = math.sqrt(2 * g * t.bounce * H)
+        local w = salto and d * 2 * math.pi / (2 * V / g) / 1.05 or 0 -- (the tuck spins it a little faster: 1.6 under-turned, 250 degrees)
+        local cx, cy = centreOfMass(inst)
+        for _, b in ipairs(bodiesOf(inst)) do
+            local x, y = b:getWorldCenter()
+            local vx0 = b:getLinearVelocity()
+            b:setLinearVelocity(vx0 * 0.5 - w * (y - cy), -V + w * (x - cx))
+            b:setAngularVelocity(w)
+        end
+        rec.launchAt, rec.salto, rec.startAngle = now, salto, torso:getAngle()
+        if salto then mipoActions.setRagdoll(inst, true) end
+    end
+    if rec.salto then
+        local turned = math.abs(torso:getAngle() - rec.startAngle)
+        local torque = totalWeight(inst) * H * 0.5
+        for _, side in ipairs({ 'l', 'r' }) do
+            local hip, knee = legJoint(inst, side .. 'uleg'), legJoint(inst, side .. 'lleg')
+            if turned < 2 * math.pi - 1.2 then -- tucked: thighs up (the hip's forward limit), shins folded
+                if hip then motorTo(rec, hip, d > 0 and hip:getLowerLimit() or hip:getUpperLimit(), torque) end
+                if knee then motorTo(rec, knee, d > 0 and knee:getUpperLimit() or knee:getLowerLimit(), torque) end
+            else -- opened out for the landing
+                motorTo(rec, hip, 0, torque)
+                motorTo(rec, knee, 0, torque)
+            end
+        end
+    end
+end
+
+-- Skipping: the rope's angle phi goes round (pi over its head, 0 under its feet); it hops just before the rope
+-- comes under (so it's at the top of the hop then); on the floor when the rope gets there, the rope catches on
+-- its feet and waits a moment. The arms turn the rope. (lib.drawRopes draws it.)
+local function ropePose(inst, rec, zone, dt)
+    local t = lib.tuning
+    local now = love.timer.getTime()
+    local H = standingHeight(inst)
+    local g = 9.8 * love.physics.getMeter()
+    local v = math.sqrt(2 * g * 0.12 * H)
+    local rate = t.ropeSpeed * 2 * math.pi
+    rec.phi = rec.phi or math.pi
+    if (rec.tripUntil or 0) < now then rec.phi = rec.phi + rate * dt end
+    local phase = rec.phi % (2 * math.pi)
+    local low = lowestOf(inst, { 'lfoot', 'rfoot', 'llleg', 'rlleg' })
+    local grounded = low > zone.floor - 14
+    local lead = rate * (2 * v / g) * 0.5
+    if not rec.hopped and phase > 2 * math.pi - lead and grounded then
+        for _, b in ipairs(bodiesOf(inst)) do
+            local vx = b:getLinearVelocity()
+            b:setLinearVelocity(vx * 0.3, -v)
+        end
+        rec.hopped = true
+    end
+    if phase > 1 and phase < math.pi then rec.hopped = false end
+    if rec.lastPhase and rec.lastPhase > phase and (rec.tripUntil or 0) < now then -- the rope came under
+        if grounded then rec.tripUntil = now + 0.8 rec.phi = rec.phi - phase end
+    end
+    rec.lastPhase = phase
+    local c = math.cos(rec.phi)
+    arms(inst, rec, { l = 40 + 15 * c, r = -(40 + 15 * c) }, { l = 25, r = -25 })
+    rec.ropeH = H
+end
+
+-- the skipping ropes: from hand to hand round the Mipo, dimmer while behind it
+function lib.drawRopes()
+    love.graphics.push('all')
+    for id, rec in pairs(data().mipos) do
+        local inst = rec.kind == 'rope' and mipoRegistry.getById(id)
+        local lh, rh = inst and inst.parts.lhand, inst and inst.parts.rhand
+        if lh and rh and alive(lh.body) and alive(rh.body) and rec.phi then
+            local ax, ay = lh.body:getPosition()
+            local bx, by = rh.body:getPosition()
+            local low = lowestOf(inst, { 'lfoot', 'rfoot' })
+            local H = rec.ropeH or 600
+            local top = low - H * 1.05
+            local cy, R = (top + low) / 2, (low - top) / 2 + 30
+            local mx = (ax + bx) / 2
+            local py = cy + R * math.cos(rec.phi)
+            local px = mx + 30 * math.sin(rec.phi)
+            local behind = math.sin(rec.phi) < 0
+            local curve = love.math.newBezierCurve(ax, ay, 2 * px - mx, 2 * py - (ay + by) / 2, bx, by)
+            love.graphics.setColor(0.85, 0.25, 0.3, behind and 0.35 or 1)
+            love.graphics.setLineWidth(behind and 5 or 8)
+            love.graphics.line(curve:render(4))
+        end
+    end
+    love.graphics.pop()
+end
+
 function lib.setDrag(style)
     local dat = data()
     if dat.drag == 'pose' and style ~= 'pose' then
@@ -823,7 +994,7 @@ function lib.setDrag(style)
 end
 
 -- ── every frame ──
-local LET_GO = { slide = true, bench = true, cushion = true, beam = true, swing = true }
+local LET_GO = { slide = true, bench = true, cushion = true, beam = true, swing = true, trampoline = true, rope = true }
 
 function lib.update(dt)
     local dat = data()
@@ -869,6 +1040,8 @@ function lib.update(dt)
                     elseif zone.kind == 'beam' then beamPose(inst, rec, zone)
                     elseif zone.kind == 'wind' then windPose(inst, rec, zone)
                     elseif zone.kind == 'swing' then swingPose(inst, rec, zone)
+                    elseif zone.kind == 'trampoline' then trampolinePose(inst, rec, zone)
+                    elseif zone.kind == 'rope' then ropePose(inst, rec, zone, dt)
                     end
                 end
             end

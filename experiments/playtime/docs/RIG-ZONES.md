@@ -64,6 +64,21 @@ the scene: a slide, a bench, a bar on two posts, a cushion, three Mipos.
   and sat still 0.7 s on a slide it scoots forward. `mipoJointGuard` leaves a posed Mipo alone
   (`inst._noStandUp`, a new flag there): a limb held off its target by a chute read as a split and it
   hopped about.
+  Playground 4, sports (2026-11-15, Nikki: "maybe some jumping sports to make saltos, skipping rope?"):
+  - **trampoline**: any part on the bed and it's sent up 'trampoline (x height)' of its height. Every 'salto
+    every n bounces' (0: never), if upright: a salto, honest physics, launched with a spin about its middle (each
+    part's speed from a rigid turn), ragdolled (a KEEP_ANGLE sets a part's turn speed outright: it would stop the
+    spin), hips and knees driven by their motors (relative: they keep it) to a tuck, opened out with the turn
+    nearly done, lands on its feet; landed, its own muscles back. The launch spin is a full turn over the flight
+    / 1.05 (1.6 counting on the tuck under-turned it, 250 degrees); the legs don't look much tucked yet.
+  - **rope** (two mats): the rope's angle goes round (over the head, under the feet), drawn hand to hand, dim
+    behind; it hops (0.12 of its height) just before the rope comes under; on the floor then, the rope catches
+    on its feet for 0.8 s. The arms turn it. 'rope turns / s'.
+- Leaving a zone always ends with `mipoActions.wake`: its KEEP_ANGLEs' targets are put back, but on or off is
+  wake's (Nikki 2026-11-15: "sometimes i can get mipos sort of disabled from being in a ride and still have
+  their legs turned off when on the ground"). Put back as they were when the zone took it, a Mipo that came in
+  limp (dazed by a landing, out of a salto, off the cushion) kept its legs off, and the arm hang's ragdoll flag
+  (put back the same way) kept it from walking.
 - A zone that turns a Mipo (slide, bench, crawl) sets the head's and body's turn from the facing and draws the
   face again (`mipoFacing.applyFace`): `mipoFacing.angle` returns the turn under way, so copying it kept the
   old one, and without the redraw the face looked the way it last turned (Nikki 2026-11-15: "mipos are still
@@ -87,4 +102,6 @@ the scene: a slide, a bench, a bar on two posts, a cushion, three Mipos.
 - [x] RZ4. More places: crawl under things, ladder, beam, wind, swing (2026-11-14)
 - [ ] RZ5. Nikki plays with playground 2; the swing only keeps a small swing going (±10 degrees) by itself
 - [x] RZ7. A slide park: sky tower, bumpy, steep drop (2026-11-15)
+- [x] RZ8. Sports: trampoline saltos, skipping ropes (2026-11-15)
+- [ ] RZ9. The salto's tuck shows little (knees fairly straight): the motors' targets or torque
 - [ ] RZ6. A bed (lie down), a chair facing front, a seesaw, a trampoline
