@@ -1,6 +1,6 @@
 # Metal — Mipo parts made of metal
 
-status: active
+status: parked — kept as a spike (Nikki 2026-11-15: "all are keepers, parked for now")
 
 Nikki (2026-11-12): "do the metal one", the second from the shortlist of earlier materials to look at on their
 own (after felt). The palette's metals (MATERIALS MT1/MT1b: brass, gold, copper, tin, iron) were the strongest
@@ -29,6 +29,6 @@ rims, the face as drawn; the rivets faint at this zoom. One draw a part, ~65 sam
 ## Steps
 
 - [x] **ME1. The spike**: the studio reflection, finishes, rivets, seams, patina, tin-toy paint, five metals.
-- [ ] **ME2. Nikki plays with it**: keep, change or park.
+- [x] **ME2. Nikki plays with it** (2026-11-15: keeper, parked): keep, change or park.
 - [ ] **ME3. If kept**: metal as a material on a part (a brass leg, a tin hat: MT6's editor row, the palette's
   presets), the studio from the scene's own light and sky (SKY.md), baked like the fur if it costs.

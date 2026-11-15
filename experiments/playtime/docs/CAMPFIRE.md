@@ -1,6 +1,6 @@
 # Campfire — flames, glow, sparks and a warm flickering light
 
-status: active
+status: parked — kept as a spike (Nikki 2026-11-15: "all are keepers, parked for now")
 
 Nikki (2026-11-11): "can we do a fire, like campfire, but with good light and flame", then "weird shapes
 and blending", "drawn textures we already have", "more organic drawn tree trunk, firewood". Scene
@@ -38,7 +38,7 @@ keeps on `state`), so it can go on the toys shelf later (ENGINE-MERGE EM2).
 
 ## Next
 
-- [ ] **CF1. Nikki plays with it**: the flames' colours and size, the logs, `bands` / `fps` on keys to try.
+- [x] **CF1. Nikki plays with it** (2026-11-15: keeper, parked): the flames' colours and size, the logs, `bands` / `fps` on keys to try.
 - [ ] **CF2. Smoke**: soft grey drawn blobs (or hair strokes) eroding as they rise and drift.
   A physical smoke at sky scale is in the clouds spike (2026-11-12, CLOUDS.md "Smoke":
   `cloudAir.newSmoke` puffs, the cloud shader's smoke mode); at a campfire's size it's still open.

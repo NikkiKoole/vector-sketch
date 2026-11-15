@@ -1,6 +1,6 @@
 # Coaster — draw a track in the editor, ride it
 
-status: active
+status: parked — kept as a spike (Nikki 2026-11-15: "all are keepers, parked for now"); supports, the hand-drawn look and sounds when it comes back
 
 A roller coaster (an achtbaan) built into playtime: you draw the track like a freepath, it's a
 real thing in the scene (saved, edited, copied), and real Box2D things ride it. First the track,
@@ -149,7 +149,7 @@ the course before writing the file (the bridge's eval stopped at its instruction
   halfway: a corkscrew from the side); (2) a 'turn' stretch: the cart drawn turning end-on (short) and the
   rider side -> front -> other side, reading as the track turning toward and away from you, a U-turn on
   the ground, the physics still flat (as Mipos turn, MIPO-FACING); (3) both.
-- [ ] **CO6. Nikki plays with it**; then supports to the ground, the hand-drawn look, sounds
+- [x] **CO6. Nikki plays with it** (2026-11-15: keeper, parked); then supports to the ground, the hand-drawn look, sounds
   (achtbaan's clacks and the crowd, dreamengine's `coaster` cart).
 
 ## Where it touches

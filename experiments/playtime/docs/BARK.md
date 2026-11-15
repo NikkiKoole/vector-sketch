@@ -1,6 +1,6 @@
 # Bark — tree trunks in real bark, lit
 
-status: active
+status: parked — kept as a spike (Nikki 2026-11-15: "all are keepers, parked for now")
 
 Nikki (2026-11-08): "can we try to nail down some tree barks, fetch some assets, do the setup and
 show a variety of trees or just their main stem". Scene `bark` (`scripts/spikes/bark.playtime.lua`),
@@ -80,7 +80,7 @@ and place; the birch's mirror-repeat shows as mirrored pairs of marks (a longer 
   The panel's **organic** slider (0..2) scales it all: 0 straight, even branches (no collars, no bumps), 1 as
   tuned, 2 fairy-tale gnarled (olive and cork curl into knots). Each tree keeps its seed, so it stays
   itself; a regrow takes ~0.1 s, so it waits until the slider rests.
-- [ ] **BK2. Nikki judges**: which look (photo / tinted / relief) sits with the drawn Mipos, which
+- [x] **BK2. Nikki judges** (2026-11-15: keeper, parked): which look (photo / tinted / relief) sits with the drawn Mipos, which
   barks to keep. A Mipo next to a trunk for the scale (WORLD-METRICS.md).
   Scale, 2026-11-08 (Nikki: "the trees should grow taller ... how tall are we aiming for"): measured, they
   were 1-2.7 Mipos tall (a median Mipo 658; the olive no taller than one), real trees are 15-20 people.

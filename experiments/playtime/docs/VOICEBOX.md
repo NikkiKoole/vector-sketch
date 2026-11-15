@@ -1,6 +1,6 @@
 # Voice box — a Mipo voice made from scratch: vowels, consonants, who's talking
 
-status: active — VB0 and VB3's first part built 2026-11-11, Nikki to listen (VB1)
+status: parked — kept as a spike (Nikki 2026-11-15: "all are keepers, parked for now")
 
 Nikki (2026-11-11): "i kinda feel like another voice spike ... i also want to figure out more with: all sorts
 of vowels crossing visually and audible, the other settings how we can adjust these sounds to make them more
@@ -37,7 +37,7 @@ the eight vowel mouths. **Not heard by me**: how it sounds is VB1.
 
 ## Steps
 
-- [ ] **VB1. Nikki listens** (2026-11-11: "sounds ok lets continue"): does a made voice sound like a Mipo, or like a robot? Which preset, which
+- [x] **VB1. Nikki listens** (2026-11-11: "sounds ok lets continue"; 2026-11-15: keeper, parked): does a made voice sound like a Mipo, or like a robot? Which preset, which
   levers matter (the "more Mipo, less recorded people" question from this side).
 - [ ] **VB2. The mouths**: do the vowel mouths read, does the crossing look right; the shapes per vowel in
   `lib.VOWELS`.

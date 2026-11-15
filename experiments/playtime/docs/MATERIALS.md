@@ -1,6 +1,6 @@
 # Materials — felt, moss, cardboard, cellophane: the craft-table look at runtime
 
-status: active
+status: parked — kept as a spike (Nikki 2026-11-15: "all are keepers, parked for now")
 
 **Where it stands (2026-11-06, end of the day).** Materials are now *how Nikki's drawn pictures take
 the light*: the picture's mask, its roundness baked from the mask, one shader with a mode or a row of
@@ -132,7 +132,7 @@ Kinds of material, by what the shader does differently:
   gold, copper, tin, iron. Most are one 'surface' model with settings (PALETTE in the script: wrap,
   shine, clear coat, sheen, edges darkened, light through, grain: sand / fibre / pebble / wood /
   crackle, rainbow), so a new material is a row of numbers.
-- [ ] **MT2. Judge and tune** with Nikki: which read as made by hand, which as "computer". Claude's
+- [x] **MT2. Judge and tune** with Nikki (2026-11-15: keeper, parked): which read as made by hand, which as "computer". Claude's
   read from screenshots: strongest metal, glaze, plastic, candy, wood, leather, felt, plush fur,
   the backlit leaves; weakest stone / wet stone (cell pattern), shaggy fur (more hair than fur),
   smoke (pale clumps more than smoke), paper and plaster washed out in full sun.

@@ -1,6 +1,6 @@
 # Neon — Mipos that give off light
 
-status: active
+status: parked — kept as a spike (Nikki 2026-11-15: "all are keepers, parked for now")
 
 Nikki (2026-11-11): "seeing how we are doing these materials, i was outside and thinking, a neon, or light
 emitting material?". Not tried before (`tried` neon / glow / emissive: nothing; the campfire has a real
@@ -34,7 +34,7 @@ drawn 7 times (6 halo copies + the part), not baked, phone not measured.
 ## Steps
 
 - [x] **NE1. The spike**: neon and glow, halo, flicker, night, the light pool.
-- [ ] **NE2. Nikki plays with it**: keep, change or park.
+- [x] **NE2. Nikki plays with it** (2026-11-15: keeper, parked): keep, change or park.
 - [ ] **NE3. If kept**: a real light from a glowing part (a LIGHT sfixture that lights the lit Mipos and
   walls, with the scene's own day and night instead of the drawn-over night), glow as a material on one
   part (a glowing belly, a lantern nose), the halo baked like the fur.

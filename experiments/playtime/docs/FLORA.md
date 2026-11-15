@@ -1,6 +1,6 @@
 # Flora — flowers and plants from L-systems, made organic like the trees
 
-status: active
+status: parked — kept as a spike (Nikki 2026-11-15: "all are keepers, parked for now")
 
 Nikki (2026-11-10): "we have a pretty good trees setup, can we do something similar to plants flowers etc,
 like good L-systems with a bunch of organicizing?" Scene `flora` (`scripts/spikes/flora.playtime.lua`), a
@@ -62,7 +62,7 @@ frame for all 42.
 
 - [x] **FL1. The spike** (2026-11-10): the three modules, eleven kinds, the scene with the panel (organic,
   age, wind, sun, sway, grow, new seeds).
-- [ ] **FL2. Nikki judges**: which kinds read right, what looks off, organic and age at their ends.
+- [x] **FL2. Nikki judges** (2026-11-15: keeper, parked): which kinds read right, what looks off, organic and age at their ends.
 - [x] **FL3. Cheaper drawing** (2026-11-10): each plant drawn once into three meshes (leaves behind, stems,
   leaves in front and heads) and kept; the sway and each leaf's flutter in a vertex shader (by height above
   the foot). plant-look records the drawing (its few love.graphics calls into triangles); the drawn parts

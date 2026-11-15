@@ -1,6 +1,6 @@
 # Beaks — an upper and a lower half that open, in 3D, from a finch to a stork
 
-status: active — built 2026-11-11, Nikki to try (BE1)
+status: parked — kept as a spike (Nikki 2026-11-15: "all are keepers, parked for now"; "a tiny bit too 3D for my liking", to look at again when drawn beaks come in, BE2)
 
 Nikki (2026-11-11): "i used to have 1 texture, sort of upper beak of donald duck, but can we approach this
 spike more honestly, use some beak like images you need, we can handdraw them later, i want an upper lower
@@ -43,7 +43,7 @@ save the scene script too, or reload the scene.
 
 ## Next
 
-- [ ] **BE1. Nikki plays with it**: do the halves, the hole and the turn read? Which sizes? Keep or park.
+- [x] **BE1. Nikki plays with it** (2026-11-15: keeper, parked): do the halves, the hole and the turn read? Which sizes? Keep or park.
 - [ ] **BE2. Hand-drawn pictures**: draw a duck and a stork on the canvas above (fill, a little texture);
   the shape follows the drawing.
 - [ ] **BE3. Its place in the draw order**: drawn after the world now, so it lies over hands and arms in

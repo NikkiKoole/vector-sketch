@@ -1,6 +1,6 @@
 # Stone — Mipo parts carved in stone
 
-status: active
+status: parked — kept as a spike (Nikki 2026-11-15: "all are keepers, parked for now")
 
 Nikki (2026-11-11): "sounds like we need some stone", then "Mipo as stone" (a per-part look like leather,
 not stones as things). Tried before and weak: the material palette's stone (MATERIALS, a cell-pattern
@@ -31,6 +31,6 @@ phone not measured.
 ## Steps
 
 - [x] **SN1. The spike**: the four scans, carving, chips, grooves, cracks, moss, tint.
-- [ ] **SN2. Nikki plays with it**: keep, change or park.
+- [x] **SN2. Nikki plays with it** (2026-11-15: keeper, parked): keep, change or park.
 - [ ] **SN3. If kept**: stone as a material on a part (the palette, MT6's editor row), the same carving for
   stone things (rocks, a statue on the shelf), baked like the fur if it costs.

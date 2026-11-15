@@ -1,6 +1,6 @@
 # Rig zones — places that take over a Mipo's skeleton, and ways to drag one
 
-status: active
+status: parked — kept as a spike (Nikki 2026-11-15: "all are keepers, parked for now"); RZ2 (pose on the bench topples it) and RZ9 open for when it comes back
 
 Nikki (2026-11-14): "what if (a bit like the connectors on vehicles) we have some places on the map or objects
 that make the mipos skeleton behave? for example a slide where the legs go different to improve sliding down?
@@ -81,7 +81,7 @@ the scene: a slide, a bench, a bar on two posts, a cushion, three Mipos.
 
 ## Next
 
-- [ ] RZ1. Nikki plays with it: which zones and drag styles to keep
+- [x] RZ1. Nikki plays with it (2026-11-15: keeper, parked): which zones and drag styles to keep
 - [ ] RZ2. Switching to pose while a Mipo sits on the bench lets go of its seat, and it topples
 - [ ] RZ3. Zones as a thing to place in the editor (an sfixture kind, saved), not built by a scene script
 - [x] RZ4. More places: crawl under things, ladder, beam, wind, swing (2026-11-14)

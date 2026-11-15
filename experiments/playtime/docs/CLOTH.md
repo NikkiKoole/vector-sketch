@@ -1,6 +1,6 @@
 # Cloth — curtains, flags, sheets
 
-status: active
+status: parked — kept as a spike (Nikki 2026-11-15: "all are keepers, parked for now")
 
 A spike (2026-11-06): cloth as a grid of points on a verlet step of its own (not Box2D), held by
 distance constraints and drawn as one textured `love.graphics.newMesh`. `src/cloth.lua`, scene
@@ -68,7 +68,7 @@ How it works:
   only, so tears get an outline too.
 
 Steps:
-- [ ] C1. Nikki plays with it: curtain, flag, sheet. Keep, change or park?
+- [x] C1. Nikki plays with it (2026-11-15: keeper, parked): curtain, flag, sheet. Keep, change or park?
 - [ ] C2. Cost on the phone (`./playtime.sh bench device`): curtain 784 points, sheet 315, flag 104;
       the C path should be in the iPhone build (build-ios.sh has cloth.c, device.sh `-u`-links the CDEF)
 - [ ] C3. A Mipo inside a face-on curtain pushes its points sideways into each other, so the mesh
