@@ -416,9 +416,12 @@ fade, a sun: the panel's `fades` switch, LS4).
   The phone, 2026-11-15 (iPhone SE 2, crowd, 20 Mipos on screen, paused, editor; charging, it warmed up between
   runs: lit 11.7 -> 14.1 ms): off 60 fps (draw 8.7-9.3), lit 60 (11.7-14.1), shadows 41-47 fps (draw 17-21),
   full without a floor 42-55, full with a floor (3D) 55-56 (draw ~16). So: 20 lit Mipos fit at 60; with
-  shadows they don't, and the flat soft wall shadow over the whole background ('falls on' everything, no floor)
-  costs more than the 3D ones with a floor (those only above the floor). Next: LS24 (the world drawn once for
-  the screen and the shadows), before shadows go into busy rooms; a busy room at 'lit' until then.
+  shadows they don't, quite. Checked again A-B-A in one go (Nikki: "anything we can learn from that surprise"):
+  shadows with the soft wall shadow on everything 55 / 56 fps (draw ~16), on nothing 60 (13.7, as lit): the soft
+  one costs ~2 ms, the same as the 3D ones with a floor. The 41-47 before was the phone warming while it
+  charged (runs minutes apart differ by 20%+): compare settings back to back, A-B-A, never across a session.
+  Next: LS24 (the world drawn once for the screen and the shadows) wins back the shared outline pass, which
+  both kinds pay; a busy room at 'lit' until then.
 - [ ] **LS24. Draw once for the screen and the shadows.** The outlines for the shadows are the world
   drawn a second time (~6 ms with 20 lit Mipos on the phone; every other frame halves it, LS23). The GPU
   can write two pictures in one pass (several canvases at once, `love.graphics.setCanvas` with a list;
