@@ -32,6 +32,7 @@ local TIMELINE = { { 0, 'night' }, { 5, 'night' }, { 6.5, 'dawn' }, { 8.5, 'day'
 local SQUASH = 0.8   -- the arc lower than it is wide
 local MOON_SHADOW = { 0.6, 0.42 } -- the sky light's strength: moon shadows from / full at
 local RIM_TURN = 0.15 -- how far one of sun and moon leads (as shadows) before the back light is full again
+local MOON_GLOW = 0.35 -- the moon's light on the ground in front, at its strongest (added on)
 local BACK_FULL = 0.5 -- the sun and moon together this share of the hour's strongest: the back light full
 -- the light level's numbers at day (src/scene-light.lua), which the hour scales
 local DAY_SHADOWS, DAY_WALL = LOOKS.day.shadows, LOOKS.day.wallShadows
@@ -235,8 +236,19 @@ function lib.fill(shared, hour)
                     local z = front * (2 * now.sunShare - 1)
                     if math.abs(z) < 0.02 then z = z < 0 and -0.02 or 0.02 end -- never in the things' plane
                     light.z = z
+                    -- the moon's light on the ground in front, its shadows the holes in it (dark soil showed
+                    -- them hardly at all: Nikki 2026-11-15 "lets do the second"); as strong as its shadows
+                    local amount = z < 0 and MOON_GLOW * now.fade * (1 - now.sunShare) or 0
+                    if amount > 0.001 then
+                        local r, g, b = rgb(now.moon[3])
+                        one.glow = one.glow or {}
+                        one.glow[1], one.glow[2], one.glow[3] = r * amount, g * amount, b * amount
+                    else
+                        one.glow = nil
+                    end
                 else
                     light.z = front
+                    one.glow = nil
                 end
                 one.strength = (one.baseStrength or 0.5) * now.fade * now.shadows
             end

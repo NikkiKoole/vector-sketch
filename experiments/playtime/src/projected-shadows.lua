@@ -93,7 +93,7 @@ local COMMON = [[
     // a lamp's light where it reaches (added on), or the shadow's darkness (laid over)
     vec4 result(vec3 S, float dark) {
         if (glowing > 0.5) {
-            float d = length(light - S) / glowRange;
+            float d = isSun > 0.5 ? 0.0 : length(light - S) / glowRange; // a sun's (the moon's) the same everywhere
             return vec4(glow * (1.0 - dark) / (1.0 + d * d), 1.0);
         }
         return vec4(colour, dark * strength);
@@ -200,7 +200,7 @@ local function sendCommon(shader, settings, w, h)
 end
 
 -- each light's shadow from one layer's silhouettes (and a lamp's glow around them, unless noGlow)
-local function castFrom(shader, settings, layer, silhouettes, noGlow)
+local function castFrom(shader, settings, layer, silhouettes, noGlow, sunGlow)
     shader:send('casterDepth', layer.z)
     for _, one in ipairs(settings.lights or { { light = settings.light } }) do
         local light = one.light
@@ -208,7 +208,8 @@ local function castFrom(shader, settings, layer, silhouettes, noGlow)
         shader:send('isSun', light.kind == 'sun' and 1 or 0)
         shader:send('softness', one.softness or settings.softness or 0)
         local strength = one.strength or settings.strength or 0.5
-        if one.glow and not noGlow and light.kind ~= 'sun' then
+        -- a sun's glow only where asked (sunGlow: the ground in front, lit by the moon from behind)
+        if one.glow and not noGlow and (light.kind ~= 'sun' or sunGlow) then
             shader:send('glowing', 1)
             shader:send('glow', one.glow)
             shader:send('glowRange', one.glowRange or 800)
@@ -226,7 +227,7 @@ local function castFrom(shader, settings, layer, silhouettes, noGlow)
 end
 
 -- onto the wall, the floor and the boards (`area`, or another shape): before the things are drawn
-local function castOnto(world, settings, area, boards)
+local function castOnto(world, settings, area, boards, sunGlow)
     local layers = layersOf(settings)
     local canvases = {}
     for i = 1, #layers do canvases[i] = silhouettesFor(world, settings, i) end
@@ -248,7 +249,7 @@ local function castOnto(world, settings, area, boards)
     shader:send('boards', unpack(packed))
     shader:send('boardCount', math.min(4, #boards))
     love.graphics.setColor(1, 1, 1, 1)
-    for i, layer in ipairs(layers) do castFrom(shader, settings, layer, canvases[i]) end
+    for i, layer in ipairs(layers) do castFrom(shader, settings, layer, canvases[i], nil, sunGlow) end
     love.graphics.setShader()
     love.graphics.pop()
     if compare then love.graphics.setStencilTest(compare, value) else love.graphics.setStencilTest() end
@@ -266,7 +267,7 @@ end
 function lib.drawFront(world, area)
     local settings = state.projectedShadows
     if not settings or not area or not (settings.light or settings.lights) or not world then return end
-    castOnto(world, settings, area, {})
+    castOnto(world, settings, area, {}, true)
 end
 
 -- The ground in front, as an engine system (src/systems.lua splits): with settings.front (its shape) and a
