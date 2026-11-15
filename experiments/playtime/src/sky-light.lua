@@ -76,11 +76,10 @@ function lib.lookAt(hour)
 end
 
 -- where the sun and the moon are on their arcs (0 rising on the left, pi setting on the right)
--- the sun 6:00-20:00, left to right; the moon 19:00-7:00 the other way, right to left (Nikki 2026-11-15): it
--- rises where the sun sets and sets where the sun rises, so at each handover both are on the same side and
--- the shadows swing back and forth like a pendulum, day one way, night the other, never across the sky
+-- the sun 6:00-20:00, the moon 19:00-7:00, both left to right (the moon the other way was tried 2026-11-15:
+-- rolled back, Nikki wanted it realistic)
 function lib.sunTheta(hour) return ((hour % 24) - 6) / 14 * math.pi end
-function lib.moonTheta(hour) return math.pi - (((hour % 24) - 19) % 24) / 12 * math.pi end
+function lib.moonTheta(hour) return (((hour % 24) - 19) % 24) / 12 * math.pi end
 
 -- on its arc at theta: the way to it (world, y down: up is -y), and how much it's up (0 at or below
 -- the horizon, 1 well up; it fades over about an hour and a half near the horizon)
