@@ -420,8 +420,10 @@ fade, a sun: the panel's `fades` switch, LS4).
   shadows with the soft wall shadow on everything 55 / 56 fps (draw ~16), on nothing 60 (13.7, as lit): the soft
   one costs ~2 ms, the same as the 3D ones with a floor. The 41-47 before was the phone warming while it
   charged (runs minutes apart differ by 20%+): compare settings back to back, A-B-A, never across a session.
-  Next: LS24 (the world drawn once for the screen and the shadows) wins back the shared outline pass, which
-  both kinds pay; a busy room at 'lit' until then.
+  In play mode (what players see; the editor's debug shapes cost ~2 ms), paused, A-B-A, the same 20 Mipos all on
+  screen: lit 10.4 / 10.3 ms draw, shadows 12.2 / 12.3 / 12.3 / 12.5, full with a floor (3D) 12.6 / 12.6:
+  every level 60 fps. The outline pass itself (every frame 17.1 / 18.1 vs every other 16.1 / 16.4, editor):
+  ~2.6 ms drawn, ~1.3 a frame with every other frame.
 - [ ] **LS24. Draw once for the screen and the shadows.** The outlines for the shadows are the world
   drawn a second time (~6 ms with 20 lit Mipos on the phone; every other frame halves it, LS23). The GPU
   can write two pictures in one pass (several canvases at once, `love.graphics.setCanvas` with a list;
