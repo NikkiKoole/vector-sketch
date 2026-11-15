@@ -82,3 +82,9 @@ time of day with the cycle").
   one (a static body at 120000) that pulls near it.
 
 Later, if wanted: clouds that take the sky's colour around them (CLOUDS.md), far hills.
+  Started 2026-11-15 (Nikki: "before you mentioned seeing a moon and sun?", "y"): the sun and the moon in the sky
+  (scene-sky lib.drawSunAndMoon), on the light's own arcs, so the sun is where the shadows point away from;
+  fixed to the screen across, from the horizon up to near the top at their highest; walls and backdrops cover
+  them. The sun in the light's colour, warmer and bigger low, a soft glow; the moon pale, brighter by night.
+  Placeholder circles (after ../sky-atmosphere) until drawn (THINGS-TO-DRAW A24). Left: the real moon when
+  climbing (with SK4).

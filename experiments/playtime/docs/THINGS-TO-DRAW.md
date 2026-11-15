@@ -185,6 +185,12 @@ and what's there already. Pick a few, draw them, drop them in `textures/`, tick 
 The materials in `material-check` are lit from each picture's mask; these give them what a mask
 can't. Try each on two or three pictures first: the scene shows straight away if it helps.
 
+- [ ] **A24. A sun and a moon for the sky** (`SKY.md` SK5; 2026-11-15). The engine sky draws placeholder circles
+  (a glow and a disc with craters, src/scene-sky.lua `drawSunAndMoon`) on the light's arcs.
+  - Draw, round and centred, about 512×512, on transparent: a **sun** (the game tints it with the hour's light:
+    draw it light, warm white to pale yellow; its glow can be a second, soft picture) and a **moon** (pale, its
+    marks drawn in; a few phases later if wanted: full, half, crescent).
+
 - [ ] **A14. Hatching sheets.** So the shading can be her own lines (MATERIALS MT8): where a thing is
   darker after the light, it shows denser hatching of hers.
   - Draw: one pencil (or crayon), the same on every sheet, **five densities**: very light, light,

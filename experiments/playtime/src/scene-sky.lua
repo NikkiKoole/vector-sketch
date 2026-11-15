@@ -32,7 +32,7 @@ local TIMELINE = {
     { 18, 'day' }, { 20, 'dusk' }, { 21.5, 'night' }, { 24, 'night' }, -- the light's later sunset (src/sky-light.lua)
 }
 -- how much of the night shows: 0 by day, 1 at night (for the light, SK2)
-local NIGHTNESS = { { 0, 1 }, { 5, 1 }, { 7, 0 }, { 18.5, 0 }, { 20.5, 1 }, { 24, 1 } }
+local NIGHTNESS = { { 0, 1 }, { 5, 1 }, { 7, 0 }, { 19.5, 0 }, { 21.5, 1 }, { 24, 1 } } -- the later sunset
 
 local DEFAULTS = { on = false, hour = 12, runs = false, dayLength = 120, horizon = 0 }
 
@@ -190,7 +190,68 @@ function lib.draw()
     love.graphics.setShader(shader)
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.draw(mesh)
+    love.graphics.setShader()
+    lib.drawSunAndMoon(s.hour, w, h)
     love.graphics.pop()
+end
+
+---------------------------------------------------------------- the sun and the moon (SKY.md SK5)
+-- Where the light comes from, in the sky: on the light's own arcs (src/sky-light.lua sunTheta / moonTheta: low
+-- on the left rising, high at noon, setting on the right), so the sun is where the shadows point away from.
+-- Far away: fixed to the screen across, their height over the horizon (kept on screen). Drawn right after the
+-- gradient, under everything else: walls and backdrops cover them. Placeholders (after ../sky-atmosphere's)
+-- until there are drawings (THINGS-TO-DRAW).
+lib.SUN_SIZE, lib.MOON_SIZE = 0.05, 0.035 -- radius, of the screen's height
+
+-- across the screen from the left (rising) to the right (setting); up from the horizon to near the top at its
+-- highest, whatever the horizon (a low one lifted it off the screen at noon)
+local function onArc(theta, w, h, horizonY)
+    local up = math.sin(theta)
+    local top = h * 0.12
+    return w * (0.5 - 0.42 * math.cos(theta)), horizonY - up * (horizonY - top), up
+end
+
+local function rgbOf(hex)
+    return tonumber(hex:sub(1, 2), 16) / 255, tonumber(hex:sub(3, 4), 16) / 255, tonumber(hex:sub(5, 6), 16) / 255
+end
+
+function lib.drawSunAndMoon(hour, w, h)
+    local skyLight = require('src.sky-light')
+    local now = skyLight.at(hour)
+    local _, hy = cam:getScreenCoordinates(0, lib.settings().horizon)
+    local horizonY = math.max(h * 0.35, math.min(h * 0.95, hy))
+    local night = curve(NIGHTNESS, hour % 24)
+
+    -- the moon: pale, brighter as the night darkens, faint by day
+    local mx, my, mup = onArc(skyLight.moonTheta(hour), w, h, horizonY)
+    if mup > -0.1 then
+        local r = h * lib.MOON_SIZE
+        local a = smoothstep((mup + 0.1) / 0.2) * (0.3 + 0.7 * night)
+        love.graphics.setColor(0.88, 0.89, 0.86, a)
+        love.graphics.circle('fill', mx, my, r, 64)
+        love.graphics.setColor(0.72, 0.73, 0.7, a)
+        for _, c in ipairs({ { -0.3, -0.2, 0.22 }, { 0.35, 0.1, 0.15 }, { -0.05, 0.4, 0.12 }, { 0.2, -0.45, 0.09 } }) do
+            love.graphics.circle('fill', mx + c[1] * r, my + c[2] * r, c[3] * r, 32)
+        end
+    end
+
+    -- the sun: the light's own colour, warmer and a little bigger near the horizon, a soft glow round it
+    local sx, sy, sup = onArc(skyLight.sunTheta(hour), w, h, horizonY)
+    if sup > -0.1 then
+        local r1, g1, b1 = rgbOf(now.sun[3])
+        local low = 1 - smoothstep(sup / 0.4)
+        local r = h * lib.SUN_SIZE * (1 + 0.25 * low)
+        local a = smoothstep((sup + 0.1) / 0.2)
+        love.graphics.setBlendMode('add')
+        for i = 6, 1, -1 do
+            love.graphics.setColor(r1, g1 * (1 - 0.2 * low), b1 * (1 - 0.4 * low), 0.05 * a)
+            love.graphics.circle('fill', sx, sy, r + i * r * 0.55, 48)
+        end
+        love.graphics.setBlendMode('alpha')
+        local g, b = math.min(1, g1 * 1.05) * (1 - 0.15 * low), math.min(1, b1 * 1.1) * (1 - 0.35 * low)
+        love.graphics.setColor(1, g, b, a)
+        love.graphics.circle('fill', sx, sy, r, 64)
+    end
 end
 
 return lib
