@@ -164,7 +164,7 @@ function lib.onPart(d, draw, body, m, frame)
     local touch = dat.touch[m.key] or {}
     dat.touch[m.key] = touch
     local touching = ly >= f.y - 10 and lx > f.x0 and lx < f.x1 and not overBath(lx, frame.liquids)
-    local wet = math.max(0, math.min(1, m.wetT / math.max(0.5, dirtLook.tuning.dry)))
+    local wet = math.max(0, math.min(1, m.wetT / math.max(0.5, dirtLook.look.dry)))
     if touching and load > 0.03 and wet > 0.03 then
         local fresh = not touch.on or not touch.x
         if fresh or math.abs(lx - touch.x) >= t.every then

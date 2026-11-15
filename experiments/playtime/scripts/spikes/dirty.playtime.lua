@@ -9,9 +9,11 @@
 -- n a new Mipo, h panel.
 local s = {}
 
--- (a change to dirt-look.lua or paint-marks.lua alone doesn't reload this scene: save this file too, or
--- the bridge's /reload)
-local dirtLook = love.filesystem.load('scripts/spikes/dirt-look.lua')()
+-- The dirt itself is the engine's since 2026-11-16 (src/dirt-look.lua, DIRT D9): painting, the mud drawn over the
+-- parts, drying, the hair, mud and paint baths drawn thick. This scene keeps its baths, panel, sponge, keys, and the
+-- drips and prints (paint-marks.lua, through state.dirtOnPart). (A change to paint-marks.lua alone doesn't reload
+-- this scene: save this file too, or the bridge's /reload.)
+local dirtLook = dirtLook -- (the script environment's: src/dirt-look.lua)
 local marks = love.filesystem.load('scripts/spikes/paint-marks.lua')()
 marks.init(dirtLook)
 
@@ -24,18 +26,6 @@ local BATHS = {
     { x = 750, scale = 0.5, kind = 'paint', color = 'blue' },
     { x = 2200, scale = 1.1, kind = 'clean' },
 }
--- what gets dirty: every part and the face on it but the eyes. Left clean: the eyes and pupils, the inside of the
--- mouth (its backdrop sets a shader of its own, which would smear the paint; teeth, tongue) and the face patches
--- (eye hollows, cheeks, a snout: their own shader too)
-local DIRTY = { texfixture = true, ['foot-back'] = true, ['foot-front'] = true, ['connected-texture'] = true,
-    decal = true, brow = true, ['mouth-upper'] = true, ['mouth-lower'] = true, ['trace-vertices'] = true }
-local function getsDirty(d)
-    if not DIRTY[d.type] then return false end
-    local extra = d.extra
-    if d.type == 'decal' and extra and (extra.isEye or extra.facePatches or d.firstEye) then return false end
-    return true
-end
-
 local function st()
     if not state.dirtySpike then
         state.dirtySpike = { showPanel = true, on = true, sponge = false, mipos = {}, fillFrames = 0 }
@@ -43,33 +33,10 @@ local function st()
     return state.dirtySpike
 end
 
--- this frame's liquids, sponge and dt (s.update), used by the wrap; onPart: the drips and prints
+-- this frame's liquids, sponge and dt (s.update), for the drips and prints (paint-marks.lua, called by the engine's
+-- painting through state.dirtOnPart)
 local frame = { liquids = {}, dt = 1 / 60, n = 0 }
-frame.onPart = function(d, draw, body, m) marks.onPart(d, draw, body, m, frame) end
 local lastMouse
-
-local function wrap(d, draw)
-    local c = st()
-    if not c.on or love.keyboard.isDown('space') or (state.scene and state.scene.id ~= 'dirty')
-        or not getsDirty(d) or not d.mipoThing or not dirtLook.bodyOf(d) or dirtLook.bodyOf(d):isDestroyed() then
-        return draw(d)
-    end
-    if c.fillFrames > 0 and c.fill then dirtLook.fillMask(dirtLook.ensureMask(d), c.fill[1], c.fill[2]) end
-    dirtLook.drawPart(d, draw)
-end
-
--- the head hair: its own mask around the head (dirt-look.lua), through src/hair-locks.lua's state.hairWrap
-local function hairWrap(instance, wantFront, draw)
-    local c = st()
-    if not c.on or love.keyboard.isDown('space') or (state.scene and state.scene.id ~= 'dirty') then
-        return draw(instance, wantFront)
-    end
-    if c.fillFrames > 0 and c.fill then
-        local m = dirtLook.ensureHairMask(instance)
-        if m then dirtLook.fillMask(m, c.fill[1], c.fill[2]) end
-    end
-    dirtLook.drawHair(instance, wantFront, draw)
-end
 
 local function liquidExtra(body)
     for _, f in ipairs(body:getFixtures()) do
@@ -119,22 +86,20 @@ function s.onStart()
     worldState.paused = false
     st()
     ensureScene()
-    state.drawableWrap = wrap
-    state.hairWrap = hairWrap
+    state.dirtOnPart = function(d, draw, body, m) marks.onPart(d, draw, body, m, frame) end
     cam:setScale(0.2)
     cam:setTranslation(0, 250)
 end
 
 function s.onUnload()
-    if state.drawableWrap == wrap then state.drawableWrap = nil end
-    if state.hairWrap == hairWrap then state.hairWrap = nil end
+    state.dirtOnPart, state.dirtBrush, state.dirtOff = nil, nil, nil
 end
 
 function s.onKeyPress(key)
     local c = st()
     if key == 'h' then c.showPanel = not c.showPanel
-    elseif key == 'm' then c.fill, c.fillFrames = { 1, 1 }, 2; dirtLook.fillAll(1, 1) -- (and those off screen)
-    elseif key == 'c' then c.fill, c.fillFrames = { 0, 0 }, 2; dirtLook.fillAll(0, 0)
+    elseif key == 'm' then dirtLook.fillDrawn(1, 1) -- (and those off screen)
+    elseif key == 'c' then dirtLook.fillDrawn(0, 0)
     elseif key == 'g' then marks.clearFloor()
     elseif key == 'n' then
         local mx = mouseWorldPos()
@@ -144,9 +109,9 @@ end
 
 function s.update(dt)
     local c = st()
-    state.drawableWrap = wrap -- (again: a reload of this script makes a new function)
-    state.hairWrap = hairWrap
-    if c.fillFrames > 0 then c.fillFrames = c.fillFrames - 1 end
+    -- (again: a reload of this script makes a new function)
+    state.dirtOnPart = function(d, draw, body, m) marks.onPart(d, draw, body, m, frame) end
+    state.dirtOff = not c.on or love.keyboard.isDown('space') or nil
     frame.dt = dt or 1 / 60
     frame.n = frame.n + 1
     frame.liquids = dirtLook.liquids()
@@ -159,70 +124,16 @@ function s.update(dt)
     else
         frame.brush = nil
     end
-    dirtLook.paint(frame) -- (what was drawn last frame, into its masks; drips and prints through frame.onPart)
-    dirtLook.paintHair(frame)
-    dirtLook.update(frame.dt)
+    state.dirtBrush = frame.brush -- the sponge, for the engine's painting
     marks.update(frame.dt, frame.liquids)
 end
 
-function s.drawBelow()
-    state.drawableWrap = wrap
-    state.hairWrap = hairWrap
-end
-
--- a bath's colour: the mud picked in the panel, or the pot's paint
-local function bathColor(extra)
-    if extra.dirtKind == 'paint' then return dirtLook.PAINTS[extra.paintColor] or dirtLook.PAINTS.red end
-    return dirtLook.mudColor()
-end
-
--- mud and paint: the engine draws every bath as see-through water (src/water-look.lua), so these are
--- taken out of its list and drawn here, thick and opaque in their colour
-local function drawThick(w, color, glossy)
-    local line = w.line
-    love.graphics.stencil(function() love.graphics.polygon('fill', w.hull) end, 'replace', 1)
-    love.graphics.stencil(function()
-        for _, hole in ipairs(w.holes) do
-            if #hole >= 6 then love.graphics.polygon('fill', hole) end
-        end
-    end, 'replace', 0, true)
-    love.graphics.setStencilTest('equal', 1)
-    local r, g, b = color[1], color[2], color[3]
-    for i = 1, #line / 2 - 1 do
-        local ax, ay, bx, by = line[i * 2 - 1], line[i * 2], line[i * 2 + 1], line[i * 2 + 2]
-        love.graphics.setColor(r * 0.8, g * 0.8, b * 0.8, 1)
-        love.graphics.polygon('fill', ax, ay, bx, by, bx, w.bottom, ax, w.bottom)
-        love.graphics.setColor(math.min(1, r * 1.1), math.min(1, g * 1.1), math.min(1, b * 1.1), 1) -- the wet top
-        love.graphics.polygon('fill', ax, ay, bx, by, bx, by + 40, ax, ay + 40)
-    end
-    if glossy then
-        love.graphics.setColor(1, 1, 1, 0.55)
-    else
-        love.graphics.setColor(math.min(1, r * 1.6), math.min(1, g * 1.6), math.min(1, b * 1.6), 1)
-    end
-    love.graphics.setLineWidth(glossy and 6 or 10)
-    love.graphics.line(line)
-    love.graphics.setLineWidth(1)
-    love.graphics.setStencilTest()
-    love.graphics.setColor(1, 1, 1, 1)
-end
-
--- the mud and paint baths, the floor's marks and the drops, then the sponge at the mouse
+-- the floor's marks and the drops, then the sponge at the mouse
 function s.draw()
-    local looks = state.waterLook and state.waterLook.waters
-    if looks then
-        for i = #looks, 1, -1 do
-            local extra = looks[i].extra
-            if extra and (extra.dirtKind == 'mud' or extra.dirtKind == 'paint') then
-                drawThick(looks[i], bathColor(extra), extra.dirtKind == 'paint')
-                table.remove(looks, i)
-            end
-        end
-    end
     marks.draw()
     local b = frame.brush
     if not b then return end
-    local r = dirtLook.tuning.sponge
+    local r = dirtLook.look.sponge
     love.graphics.setColor(0.98, 0.86, 0.35, 0.35)
     love.graphics.circle('fill', b.x, b.y, r)
     love.graphics.setColor(0.75, 0.6, 0.2, 0.9)
@@ -272,7 +183,7 @@ function s.drawUI()
         if ui.button(x + (n - 1) * (bw + 6), y, bw, 'wipe floor') then marks.clearFloor() end
         y = y + P.row + 6
         for _, sl in ipairs(SLIDERS) do
-            local t = sl[1].tuning
+            local t = sl[1].look or sl[1].tuning
             ui.label(x, y + 5, sl[3])
             local value = ui.sliderWithInput('dirt-' .. sl[2], x + 140, y - 4, inner - 230, sl[4], sl[5], t[sl[2]], nil, sl[6])
             if value then t[sl[2]] = value + 0 end

@@ -17,6 +17,13 @@ local lib = {}
 
 lib.list = {
     {
+        -- Mipo parts getting dirty in mud and paint and clean in water, by masks in their own picture space
+        -- (src/dirt-look.lua; drawn over the parts by box2d-draw-textured)
+        name = 'dirt',
+        module = 'src.dirt-look',
+        update = function(m, dt) m.engineUpdate(dt) end,
+    },
+    {
         -- wet things drying, wet spots following their bodies, soaked parts (src/wet.lua; the shader darkens what's
         -- wet): every scene, so a Mipo out of a bath dries (was only in the scenes that called wet.update)
         name = 'wet',

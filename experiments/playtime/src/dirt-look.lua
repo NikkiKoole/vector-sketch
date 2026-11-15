@@ -1,4 +1,10 @@
--- dirt-look.lua: Mipo parts getting dirty (mud, paint) and clean again, by shader (scene `dirty`, docs/DIRT.md).
+-- dirt-look.lua: Mipo parts getting dirty (mud, paint) and clean again, by shader (docs/DIRT.md; from the `dirty`
+-- spike, in the engine since 2026-11-16). An engine system (src/systems.lua): every scene. A cup's or bath's water
+-- has a dirt kind (extra.dirtKind: 'mud', 'paint' with extra.paintColor, or none: clean water, which washes dirt
+-- off); a Mipo part in it gets dirty where it's under the surface. Drawn as an overlay over the part as the
+-- engine draws it (lit, clay, a material), so the light stays under the mud (box2d-draw-textured: lib.afterDraw).
+-- A scene can add a sponge (state.dirtBrush = { x, y, moved }) and act on each painted part (state.dirtOnPart:
+-- the dirty scene's drips and prints, scripts/spikes/paint-marks.lua); state.dirtOff: drawn as before.
 --
 -- Every part has its own dirt mask: small canvases in the part's own picture space (its UVs), so the dirt
 -- sticks to the part: a leg dipped in mud keeps its mud line where it was, tilted with the leg when it
@@ -29,7 +35,7 @@ local lib = {}
 lib.MASK = 128 -- mask size (px, square)
 lib.ABSORB = 4 -- absorbance stored / 4 (8 bits: 0..4 covers colours down to ~0.02)
 
-lib.tuning = {
+lib.look = {
     soak = 1.5,       -- per second in a bath: how fast it gets dirty
     rinse = 0.8,      -- per second under clean water
     scrub = 3,        -- sponge: per second while rubbing
@@ -84,7 +90,8 @@ float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
 float vnoise(vec2 p) {
     vec2 i = floor(p), f = fract(p);
     f = f * f * (3.0 - 2.0 * f);
-    return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0)), f.x), f.y);
+    return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x),
+               mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0)), f.x), f.y);
 }
 ]]
 
@@ -193,11 +200,18 @@ uniform float cracks;
 uniform float lines;
 uniform float grainSize;
 uniform float seed;
+#ifdef OVERLAY
+uniform vec3 light;
+#endif
 vec4 effect(vec4 color, Image tex, vec2 uv, vec2 sc) {
     vec4 t = Texel(tex, uv) * color;
     vec4 m = Texel(dirtMask, mUV);
     float d = m.a;
+#ifdef OVERLAY
+    if (d < 0.004 || t.a < 0.004) discard;
+#else
     if (d < 0.004 || t.a < 0.004) return t;
+#endif
     vec4 wm = Texel(wetMask, mUV);
     float w = wm.r;
     float pt = clamp(wm.g / d, 0.0, 1.0);             // how much of it is paint
@@ -231,16 +245,23 @@ vec4 effect(vec4 color, Image tex, vec2 uv, vec2 sc) {
     float glint = pow(vnoise(p * 1.6 + 31.0), 5.0) * 2.0 + pow(clump, 3.0) * 0.4;
     float gloss = smoothstep(0.55, 0.9, vnoise(p * 0.25 + 41.0)) * 0.9;
     col += shine * w * cover * mix(glint, gloss, pt) * 0.35;
+#ifdef OVERLAY
+    // only the mud, its coverage as alpha, over the part as the engine drew it; in the hour's light
+    vec3 over = mud + shine * w * mix(glint, gloss, pt) * 0.35;
+    return vec4(clamp(over * light, 0.0, 1.0), clamp(cover * strength, 0.0, 1.0) * t.a);
+#else
     return vec4(clamp(col, 0.0, 1.0), t.a);
+#endif
 }
 #endif
 ]]
 
-local paintShader, lookShader, paintHeadShader, hairShader
+local paintShader, lookShader, paintHeadShader, hairShader, overlayShader
 
 local function shaders()
     paintShader = paintShader or love.graphics.newShader(PAINT)
     lookShader = lookShader or love.graphics.newShader(LOOK)
+    overlayShader = overlayShader or love.graphics.newShader('#define OVERLAY\n' .. LOOK)
     paintHeadShader = paintHeadShader or love.graphics.newShader(PAINT_HEAD)
     hairShader = hairShader or love.graphics.newShader('#define HEADSPACE\n' .. LOOK)
 end
@@ -280,7 +301,8 @@ local function stableKey(d)
                     if fz < z or (fz == z and i < at) then rank = rank + 1 end
                 end
             end
-            key = table.concat({ thing.mipoId, thing.mipoPartName, tostring(mine.subtype), mine.label or '', rank }, '|')
+            key = table.concat({ thing.mipoId, thing.mipoPartName, tostring(mine.subtype), mine.label or '', rank },
+                '|')
         end
     end
     stableKeys[extra] = key
@@ -416,14 +438,14 @@ function lib.liquids()
         if not fixture:isDestroyed() then
             local ud = fixture:getUserData()
             local extra = type(ud) == 'table' and ud.extra
-            if extra and extra.dirtKind then
+            if extra then -- (no dirt kind: clean water, which washes dirt off)
                 local level, poly = liquid.water(extra, fixture:getBody())
                 if level and #poly >= 6 then
                     local x1, x2, y2 = math.huge, -math.huge, -math.huge
                     for i = 1, #poly, 2 do
                         x1, x2, y2 = math.min(x1, poly[i]), math.max(x2, poly[i]), math.max(y2, poly[i + 1])
                     end
-                    local kind = extra.dirtKind
+                    local kind = extra.dirtKind or 'clean'
                     local color = kind == 'paint' and (lib.PAINTS[extra.paintColor] or lib.PAINTS.red)
                         or kind == 'mud' and lib.mudColor() or nil
                     out[#out + 1] = { level = level, x1 = x1, x2 = x2, y2 = y2, kind = kind, color = color,
@@ -472,7 +494,7 @@ function lib.note(d, draw) noted[d] = draw end
 lib.BATH_HZ = 20
 local NEAR = 1.3 / 2.5 -- of reachOf's reach (which is 2.5 times the body's, for a ribbon limb): the bath test's
 local function soakAndWash(m, bx, by, r, frame, run, make)
-    local t = lib.tuning
+    local t = lib.look
     local frameDt = frame.dt or 1 / 60
     local dt = frameDt
     local inBath
@@ -545,7 +567,7 @@ end
 
 local LOOK_KEYS = { 'strength', 'splotch', 'grain', 'tide', 'shine', 'cracks', 'lines', 'grainSize' }
 local function sendLook(shader, m)
-    local t = lib.tuning
+    local t = lib.look
     shader:send('dirtMask', m.canvas)
     shader:send('wetMask', m.wet)
     shader:send('maskTexel', { 1 / lib.MASK, 1 / lib.MASK })
@@ -637,7 +659,7 @@ end
 
 -- drying: every wet mask loses some wet (in steps the 8-bit mask can hold)
 function lib.update(dt)
-    local t = lib.tuning
+    local t = lib.look
     for _, m in pairs(data().masks) do
         if m.dripT > 0 then m.dripT = math.max(0, m.dripT - dt) end
         if m.wetT > 0 then
@@ -669,7 +691,7 @@ function lib.fillMask(m, amount, wet)
     love.graphics.pop()
     m.load, m.paint, m.dripT, m.inBath = amount, 0, 0, nil
     m.absorb = { a[1] * amount, a[2] * amount, a[3] * amount }
-    m.wetT = wet > 0 and lib.tuning.dry or 0
+    m.wetT = wet > 0 and lib.look.dry or 0
 end
 
 -- every mask filled at once: muddy all over, or clean
@@ -679,5 +701,95 @@ end
 
 -- a drawable's mask made (so fillAll reaches parts that never touched mud)
 function lib.ensureMask(d) return maskOf(d, true) end
+
+---------------------------------------------------------------- in the engine (DIRT D9)
+
+-- what gets dirty: every part and the face on it but the eyes. Left clean: the eyes and pupils, the inside of the
+-- mouth (its backdrop sets a shader of its own; teeth, tongue) and the face patches (their own shader too)
+local DIRTY = { texfixture = true, ['foot-back'] = true, ['foot-front'] = true, ['connected-texture'] = true,
+    decal = true, brow = true, ['mouth-upper'] = true, ['mouth-lower'] = true, ['trace-vertices'] = true }
+function lib.getsDirty(d)
+    if not DIRTY[d.type] or not d.mipoThing then return false end
+    local extra = d.extra
+    if d.type == 'decal' and extra and (extra.isEye or extra.facePatches or d.firstEye) then return false end
+    local body = bodyOf(d)
+    return body ~= nil and not body:isDestroyed()
+end
+
+-- the mud over a part as the engine drew it (its own light, clay, material under it)
+function lib.drawOverlay(d, draw, m)
+    shaders()
+    local outlines = state.drawingOutlines
+    state.drawingOutlines = true -- (draw(d) with no shader of the engine's own: the overlay's)
+    love.graphics.setShader(overlayShader)
+    sendLook(overlayShader, m)
+    local h = state.hourLight
+    overlayShader:send('light', { h and h[1] or 1, h and h[2] or 1, h and h[3] or 1 })
+    local ok, err = pcall(draw, d)
+    if not ok then data().lastError = tostring(err) end
+    love.graphics.setShader()
+    state.drawingOutlines = outlines
+end
+
+-- After the engine drew a drawable (box2d-draw-textured, the frame's own pass, not the outlines'): a Mipo part is
+-- noted for painting in update, and its mud drawn over it if it has any.
+function lib.afterDraw(d, draw)
+    if state.dirtOff or state.drawingOutlines or not lib.getsDirty(d) then return end
+    lib.note(d, draw)
+    local fill = data().fill
+    if fill and fill.frames > 0 then lib.fillMask(maskOf(d, true), fill[1], fill[2]) end
+    local m = maskOf(d, false)
+    if m then lib.drawOverlay(d, draw, m) end
+end
+
+-- the head hair (src/hair-locks.lua's state.hairWrap, unless a scene sets its own)
+local function hairWrap(instance, wantFront, draw)
+    if state.dirtOff then return draw(instance, wantFront) end
+    local fill = data().fill
+    if fill and fill.frames > 0 then
+        local m = lib.ensureHairMask(instance)
+        if m then lib.fillMask(m, fill[1], fill[2]) end
+    end
+    lib.drawHair(instance, wantFront, draw)
+end
+lib.hairWrap = hairWrap
+
+-- An engine system's update (src/systems.lua): the parts drawn last frame, painted where they're in water or
+-- under the sponge (state.dirtBrush), drying.
+local frame = { liquids = {}, dt = 1 / 60 }
+function lib.engineUpdate(dt)
+    if state.hairWrap == nil or state.hairWrap == state.dirtHairWrap then
+        state.dirtHairWrap = function(...) return require('src.dirt-look').hairWrap(...) end
+        state.hairWrap = state.dirtHairWrap
+    end
+    local fill = data().fill
+    if fill and fill.frames > 0 then fill.frames = fill.frames - 1 end
+    if state.dirtOff then return end
+    frame.dt = dt or 1 / 60
+    frame.liquids = lib.liquids()
+    frame.brush = state.dirtBrush
+    frame.onPart = state.dirtOnPart
+    lib.paint(frame)
+    lib.paintHair(frame)
+    lib.update(frame.dt) -- drying
+end
+
+-- every Mipo part drawn in the next couple of frames filled to `amount` dirt, `wet` wet (its mask made if it has
+-- none), and every mask there is (also off screen): the dirty scene's 'all muddy' / 'all clean'
+function lib.fillDrawn(amount, wet)
+    data().fill = { amount, wet, frames = 2 }
+    lib.fillAll(amount, wet)
+end
+
+-- the look's numbers in the settings panel's tuning section (src/tuning.lua)
+local tuning = require('src.tuning')
+lib.tuning = {
+    { label = 'dirt', target = function() return require('src.dirt-look').look end, rows = tuning.numbers({
+        { 'soak', 0, 5, 0.1 }, { 'rinse', 0, 5, 0.1 }, { 'scrub', 0, 10, 0.1 }, { 'sponge', 20, 200, 5 },
+        { 'dry', 2, 120, 1 }, { 'wobble', 0, 60, 1 }, { 'strength', 0, 1, 0.05 }, { 'splotch', 0, 1, 0.05 },
+        { 'grain', 0, 1.5, 0.05 }, { 'grainSize', 5, 80, 1 }, { 'tide', 0, 1.5, 0.05 }, { 'shine', 0, 1.5, 0.05 },
+        { 'cracks', 0, 1, 0.05 }, { 'lines', 0, 1, 0.05 },
+    }) },
+}
 
 return lib

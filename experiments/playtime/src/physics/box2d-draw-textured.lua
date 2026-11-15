@@ -47,6 +47,7 @@ local ownStrip, growLine = ribbon.ownStrip, ribbon.growLine
 local hairBounce = require('src.hair-bounce')
 local systems = require('src.systems')
 local depthLayers = require('src.depth-layers')
+local dirtLook = require('src.dirt-look')
 local drawSquishableHairOver, traceVerticesMesh = ribbon.drawSquishableHairOver, ribbon.traceVerticesMesh
 local lookupUV, buildPolyVertexIndex = skinning.lookupUV, skinning.buildPolyVertexIndex
 
@@ -1656,6 +1657,8 @@ function lib.drawTexturedWorld(_world, only)
             local draw = drawers[drawables[i].type]
             if draw then
                 if wrap then wrap(drawables[i], draw) else draw(drawables[i]) end
+                -- mud and paint over a Mipo part (src/dirt-look.lua), in the frame's own pass only
+                if not only then dirtLook.afterDraw(drawables[i], draw) end
             end
             if faceBend then love.graphics.pop() end
             if times then

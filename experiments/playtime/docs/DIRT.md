@@ -86,3 +86,16 @@ the plasticine shader. It doesn't stick to a limb. This one does, per part.
   second (lib.BATH_HZ), catching up the time between (each mask its own clock); the sponge every frame. Phone, the
   same 20 Mipos with five in the mud: the scene's update 47 -> 13 ms, 15 -> 35 fps (the mouths' triangles,
   b7fed53f, too). Left: the scene script 5.9 ms (painting and prints), floating 3.6, drawing ~14.
+
+- [x] D9. Into the engine (2026-11-16, Nikki: "1"). `src/dirt-look.lua` (moved from scripts/spikes; its numbers are
+  `lib.look`, with a tuning group for the settings panel) runs as an engine system: the parts the engine drew are
+  painted where they're in water (any cup or bath: its 'dirt' choice in the panel, water / mud / paint with a paint
+  colour; water washes dirt off), drying, the hair through state.hairWrap. Drawn as an overlay: the part as the
+  engine draws it (lit, clay, a material) and then only the mud over it, its coverage as alpha, in the hour's light
+  (the spike drew the part through its own shader instead, so a muddy part lost its light). Mud and paint baths
+  are drawn thick by src/water-look.lua (the dirty scene's way broke when the water was drawn in its place in
+  the draw order, 2026-11-15). The dirty scene keeps its baths, panel, sponge (state.dirtBrush), keys
+  (dirtLook.fillDrawn) and the drips and prints (state.dirtOnPart); scene scripts get `dirtLook` in their
+  environment. Wetness without dirt stays wet.lua's (the dirt shader shows wet only where there's dirt). Seen in
+  dirty, and in layerhouse at the full light level: a muddy Mipo with its clay light kept above the mud line.
+- [ ] D10. Prints and drips in the engine (paint-marks.lua still the dirty scene's), and the sponge as a tool.

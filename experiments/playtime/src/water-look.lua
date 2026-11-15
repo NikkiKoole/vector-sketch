@@ -66,6 +66,37 @@ function lib.drawStart()
     f.on = true
 end
 
+-- Mud and paint (a container whose dirt kind is 'mud' or 'paint', src/dirt-look.lua): not see-through water but
+-- thick and opaque in its colour, a wetter top and a line along the surface (glossy for paint). From the dirty spike.
+local function drawThick(w, color, glossy)
+    local line = w.line
+    love.graphics.stencil(function() love.graphics.polygon('fill', w.hull) end, 'replace', 1)
+    love.graphics.stencil(function()
+        for _, hole in ipairs(w.holes) do
+            if #hole >= 6 then love.graphics.polygon('fill', hole) end
+        end
+    end, 'replace', 0, true)
+    love.graphics.setStencilTest('equal', 1)
+    local r, g, b = color[1], color[2], color[3]
+    for i = 1, #line / 2 - 1 do
+        local ax, ay, bx, by = line[i * 2 - 1], line[i * 2], line[i * 2 + 1], line[i * 2 + 2]
+        love.graphics.setColor(r * 0.8, g * 0.8, b * 0.8, 1)
+        love.graphics.polygon('fill', ax, ay, bx, by, bx, w.bottom, ax, w.bottom)
+        love.graphics.setColor(math.min(1, r * 1.1), math.min(1, g * 1.1), math.min(1, b * 1.1), 1) -- the wet top
+        love.graphics.polygon('fill', ax, ay, bx, by, bx, by + 40, ax, ay + 40)
+    end
+    if glossy then
+        love.graphics.setColor(1, 1, 1, 0.55)
+    else
+        love.graphics.setColor(math.min(1, r * 1.6), math.min(1, g * 1.6), math.min(1, b * 1.6), 1)
+    end
+    love.graphics.setLineWidth(glossy and 6 or 10)
+    love.graphics.line(line)
+    love.graphics.setLineWidth(1)
+    love.graphics.setStencilTest()
+    love.graphics.setColor(1, 1, 1, 1)
+end
+
 -- one water, now, at its place in the draw order (liquid.draw, through the hook)
 local function sendThin(shader, scene)
     local thin = lib.THIN
@@ -88,6 +119,15 @@ function lib.drawWater(water)
     if not f.on then return end
     local target = love.graphics.getCanvas()
     if target ~= canvas then return end -- another pass (the shadows' outlines): no water there
+    local kind = water.extra.dirtKind
+    if kind == 'mud' or kind == 'paint' then
+        local dirt = require('src.dirt-look')
+        local color = kind == 'paint' and (dirt.PAINTS[water.extra.paintColor] or dirt.PAINTS.red) or dirt.mudColor()
+        local compare, value = love.graphics.getStencilTest()
+        drawThick(water, color, kind == 'paint')
+        if compare then love.graphics.setStencilTest(compare, value) else love.graphics.setStencilTest() end
+        return
+    end
     do
         local copy = behindFor(canvas:getDimensions())
         love.graphics.push('all')

@@ -183,6 +183,8 @@ The landing order, what bites what, and Nikki's keep / spike choices of 2026-11-
   list, not the 12 spots, sent as a spot covering it, ribbons by their middle) and dries over 25 s; poured water
   leaves a spot on the first moving body it lands on. Shown by the light shader, so at the light level 'lit' or
   up (or a part in a material). Seen in layerhouse: a Mipo out of a bath dark and shiny up to where the water was.
+  Dirt in the engine (DIRT D9, 2026-11-16): a bath's 'dirt' (water / mud / paint), Mipos muddy where they were
+  in it, drawn over their light.
   Left for EM3: the sea.
 - [ ] **EM4. Garden critters**, once the shelf and 🎲 exist (EDITOR-ARRANGE EA2-EA4).
 - [ ] **EM5. The cheap shared bits**, any time, each checked by a scene snapshot before/after:

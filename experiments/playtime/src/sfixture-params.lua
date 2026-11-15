@@ -305,6 +305,14 @@ lib.bySubtype = {
         { key = 'surface', kind = 'color',
           get = function(fixture) return extraOf(fixture).surfaceColor or 'cdeeffff' end,
           set = function(fixture, v) extraOf(fixture).surfaceColor = v end },
+        -- what it does to a Mipo in it (src/dirt-look.lua): clean water washes dirt off, mud and paint soak in
+        { key = 'dirt', kind = 'choice', options = { 'water', 'mud', 'paint' },
+          get = function(fixture) return extraOf(fixture).dirtKind or 'water' end,
+          set = function(fixture, v) extraOf(fixture).dirtKind = v ~= 'water' and v or nil end },
+        { key = 'paint colour', kind = 'choice', options = { 'red', 'yellow', 'blue' },
+          visible = function(f) return extraOf(f).dirtKind == 'paint' end,
+          get = function(fixture) return extraOf(fixture).paintColor or 'red' end,
+          set = function(fixture, v) extraOf(fixture).paintColor = v end },
         -- the see-through water's own colour (src/water-look.lua; ENGINE-MERGE EM3): what's seen through it takes
         -- the tint, 'murky' hides it, more with depth. None: clear water. (color / surface: the flat drawing's)
         { key = 'water tint', kind = 'color',
