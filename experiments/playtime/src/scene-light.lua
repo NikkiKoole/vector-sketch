@@ -232,6 +232,7 @@ local function fullShared(settings)
                 { light = { kind = 'sun', x = SUN[1], h = high, z = 0.5 }, strength = 0.5, baseStrength = 0.5,
                   softness = 0.03, frontZ = 0.5, moonBehind = not settings.moonInFront },
             },
+                backFloor = floorBand, -- the floor behind the things, lit by the moon from behind too
                 -- the ground in front of the things, where a light from behind them (the moon) throws its
                 -- shadows (src/projected-shadows.lua lib.splits, over the ground's pictures)
                 front = function()

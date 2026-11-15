@@ -200,7 +200,7 @@ local function sendCommon(shader, settings, w, h)
 end
 
 -- each light's shadow from one layer's silhouettes (and a lamp's glow around them, unless noGlow)
-local function castFrom(shader, settings, layer, silhouettes, noGlow, sunGlow)
+local function castFrom(shader, settings, layer, silhouettes, noGlow, sunGlow, glowOnly)
     shader:send('casterDepth', layer.z)
     for _, one in ipairs(settings.lights or { { light = settings.light } }) do
         local light = one.light
@@ -217,7 +217,7 @@ local function castFrom(shader, settings, layer, silhouettes, noGlow, sunGlow)
             love.graphics.draw(silhouettes, -silhouettesOf.pad(), -silhouettesOf.pad())
             love.graphics.setBlendMode('alpha')
         end
-        if strength > 0 then
+        if strength > 0 and not glowOnly then
             shader:send('glowing', 0)
             shader:send('strength', strength)
             shader:send('colour', one.colour or settings.colour or { 0, 0, 0 })
@@ -227,7 +227,7 @@ local function castFrom(shader, settings, layer, silhouettes, noGlow, sunGlow)
 end
 
 -- onto the wall, the floor and the boards (`area`, or another shape): before the things are drawn
-local function castOnto(world, settings, area, boards, sunGlow)
+local function castOnto(world, settings, area, boards, sunGlow, glowOnly)
     local layers = layersOf(settings)
     local canvases = {}
     for i = 1, #layers do canvases[i] = silhouettesFor(world, settings, i) end
@@ -249,7 +249,7 @@ local function castOnto(world, settings, area, boards, sunGlow)
     shader:send('boards', unpack(packed))
     shader:send('boardCount', math.min(4, #boards))
     love.graphics.setColor(1, 1, 1, 1)
-    for i, layer in ipairs(layers) do castFrom(shader, settings, layer, canvases[i], nil, sunGlow) end
+    for i, layer in ipairs(layers) do castFrom(shader, settings, layer, canvases[i], nil, sunGlow, glowOnly) end
     love.graphics.setShader()
     love.graphics.pop()
     if compare then love.graphics.setStencilTest(compare, value) else love.graphics.setStencilTest() end
@@ -259,6 +259,15 @@ function lib.draw(world)
     local settings = state.projectedShadows
     if not settings or not settings.area or not (settings.light or settings.lights) or not world then return end
     castOnto(world, settings, settings.area, settings.boards or {})
+    -- the moon from behind lights the floor behind the things too (not the wall): its light only, the
+    -- shadows there were just drawn (src/sky-light.lua sets a sun light's glow)
+    if settings.backFloor then
+        local glowing = false
+        for _, one in ipairs(settings.lights or {}) do
+            if one.glow and one.light and one.light.kind == 'sun' then glowing = true end
+        end
+        if glowing then castOnto(world, settings, settings.backFloor, settings.boards or {}, true, true) end
+    end
 end
 
 -- onto a ground the scene draws later than the shadows (in a draw split, over the ground's plain shape):

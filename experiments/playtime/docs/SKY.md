@@ -70,7 +70,8 @@ time of day with the cycle").
   an engine system). The light section's 'moon from behind' (on unless moonInFront is saved). Scene
   `sunyard` to see it. Faint at night (moonlight on dark soil), so (Nikki: "lets do the second") the moon
   lights the ground in front, in its colour, as strong as its shadows (MOON_GLOW), and the shadows are holes in
-  that light: a sun's glow, the same everywhere, only on the ground in front.
+  that light: a sun's glow, the same everywhere, only on the ground in front, and ("y do the backfloor too")
+  on the floor behind the things, not the wall (a glow-only pass over the floor band).
 - [ ] **SK3. The light scene on the engine clock.** light-grass-check drops its own clock and day looks
   for SK1/SK2's; its lamps, festoon and panel extras stay.
 - [ ] **SK4. Space, as a scene option.** 'space above' in the sky section: the camera may climb (edge
