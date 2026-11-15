@@ -354,7 +354,7 @@ fade, a sun: the panel's `fades` switch, LS4).
   Not yet: within a lane one depth (a Mipo's own parts, LS20) (per-thing depth,
   LS16/LS18), nothing on the floor in front of the things, the same cost as the wall shadows (LS12).
   Nikki: "I like where we are with the light" (2026-11-06).
-- [ ] **LS23. Lit Mipos in a full room.** A lit Mipo costs ~0.47 ms a frame on the phone (the materials
+- [x] **LS23. Lit Mipos in a full room.** (2026-11-15: measured on the phone, below) A lit Mipo costs ~0.47 ms a frame on the phone (the materials
   session's measure), so 20 of them ~9-10 ms on top of the shadows' ~5: tight at 60 fps. Measure a room
   of 20 lit Mipos with the 3D shadows; if it's too much, fewer lights per part, no clay by default, or
   lighting only the near ones. Decide before LS13 makes it a scene setting.
@@ -412,7 +412,13 @@ fade, a sun: the panel's `fades` switch, LS4).
   The built levels (scene-light, the light button), 2026-11-15, on the Mac, scene `crowd` (20 Mipos, all on
   screen, paused, editor), draw p50: off 8.4, lit 11.5, shadows 13.7, full 13.7 (with a floor set from where
   they stand; `crowd` has none saved, so full without one is shadows + clay), full with shadows every other
-  frame 13.3; 60 fps at every level. Still to do: the same per level on the phone (the floor), then tick.
+  frame 13.3; 60 fps at every level.
+  The phone, 2026-11-15 (iPhone SE 2, crowd, 20 Mipos on screen, paused, editor; charging, it warmed up between
+  runs: lit 11.7 -> 14.1 ms): off 60 fps (draw 8.7-9.3), lit 60 (11.7-14.1), shadows 41-47 fps (draw 17-21),
+  full without a floor 42-55, full with a floor (3D) 55-56 (draw ~16). So: 20 lit Mipos fit at 60; with
+  shadows they don't, and the flat soft wall shadow over the whole background ('falls on' everything, no floor)
+  costs more than the 3D ones with a floor (those only above the floor). Next: LS24 (the world drawn once for
+  the screen and the shadows), before shadows go into busy rooms; a busy room at 'lit' until then.
 - [ ] **LS24. Draw once for the screen and the shadows.** The outlines for the shadows are the world
   drawn a second time (~6 ms with 20 lit Mipos on the phone; every other frame halves it, LS23). The GPU
   can write two pictures in one pass (several canvases at once, `love.graphics.setCanvas` with a list;
