@@ -127,6 +127,59 @@ and what's there already. Pick a few, draw them, drop them in `textures/`, tick 
     tapered. A lash or two welcome (A5). 04 wants its own idea.
   - On dark fur the black line nearly disappears: a slightly thicker line than the open outline helps.
 
+- [ ] **A21. Wearables: hats and masks first** (`WEARABLES.md` WR2; 2026-11-15). The `wearables`
+  spike's things are all greybox shapes drawn in code. Hats ("feel nice") and masks ("works good")
+  are the ones going into the engine (WR12), so they come first.
+  - Have: nothing drawn. In code: 6 hats, 5 masks, 5 glasses, and the cut-from-the-torso clothes.
+  - Draw, outline + mask, seen from the front, about as wide as a middle Mipo's head shows (~300 px;
+    draw at about twice that):
+    - **Hats**: beanie with a pompom, top hat, cap, party hat, sun hat, crown. The **brim at the
+      bottom edge** of the picture, centred (that's where it sits on the head, and where the next
+      hat stacks on). The cap's bill pointing right (it's flipped for the other way).
+    - **Masks**: eye bands (hero, bandit, with their ties) and animal faces (cat, bear, frog). The
+      game cuts the eye holes where the Mipo's own eyes are, so **no eyes drawn**, only what's round
+      them: ears, muzzle, whiskers, cheeks.
+  - Then, when glasses come back (WR1): **frames** from the front (granny round, nerd square, sun,
+    heart, round), outline + mask, and **the lens hole as its own mask** (`name-lens.png`): the game
+    fills it with the bending glass.
+  - Clothes (pants, shirts, headscarves) are cut from the Mipo's own torso and head pictures, so
+    nothing to draw for their shape. What they'd take: **fabric prints** as repeating tiles (dots,
+    stripes, gingham, a flower print), about 256×256, edge to edge like A14, and maybe a **waistband**
+    and a **hem** stroke (A1's kind).
+  - Not asked for: scarves (parked, the ribbon tails disliked).
+
+- [ ] **A22. Vehicles** (`RIDES.md` RD3, `KINDS.md` KD4; 2026-11-15). The four rides (kart, car,
+  banana car, skateboard; `src/vehicles.lua`) are flat shapes with an ink line; only the wheel is drawn.
+  - Have: `textures/world/vehicles/wheel-01.png` + `-mask` (620×620), the crayon tyre on every wheel.
+  - Draw, outline + mask, **from the side, driving to the right** (flipped for the other way),
+    **without wheels** (they turn, so they're their own pictures), at about the size they show next
+    to a middle Mipo (658 tall):
+    - **Kart**, ~660 long: a low tray, a steering wheel, a number.
+    - **Car**, ~660 long: open, no roof; the rider sits upright in it.
+    - **Banana car**, ~860 long: ends curving up, the brown tip at the back, the stem at the front.
+    - **Skateboard**, ~500 long: a deck with kicktails, a battery under it.
+  - A rider sits *in* the kart, car and banana: for each, the body as **two pictures**, the far
+    side (drawn behind the rider) and the near side (in front, hiding the legs). The skateboard is one.
+  - **More wheels**, a few kinds, about 300×300, round and centred: a small hard skateboard wheel,
+    a spoked one, a fat kart tyre.
+  - Extras, small, their own pieces: the **wind-up key** on the back (it turns), a steering wheel,
+    a headlight (the skateboard's glows).
+  - Later, if it's built: a **moped** (RD2), seen from the side, astride, a footboard.
+
+- [ ] **A23. Nikki's own alphabet, three drawings per letter** (`HANDDRAWN-FONT.md`, "How it could be
+  made"; 2026-11-15). The lettering spike draws text from fonts redrawn by a script (Comic Sans,
+  Comic Sans Bold, Windsor, Cooper: `textures/lettering/`); Nikki's own hand was the route left open.
+  - Have: the text drawer (`src/lettering.lua`: picks one of three drawings per letter, boil, jiggle)
+    and the scene `lettering` to see it in. **Not there yet:** the template sheet to print and the
+    slicer that cuts a scan into an atlas + metrics; both to be made before the drawing session.
+  - Draw, on the printed template (a grid, a baseline and x-height line in every cell): each
+    character **three times**, a cell each, one pen or crayon for the whole alphabet, sitting on the
+    baseline. Dark on white paper is fine here (the slicer makes it white on transparent); no mask.
+  - Start small, for signs and titles: **capitals, digits and a few marks** (. , ! ? - ' &), about
+    40 × 3 = 120 drawings. Lowercase and accents (é ë ï, for Dutch) after, if it reads well.
+  - The three of a letter should differ a little (they swap to boil, and "ll" takes two different
+    ones), not be three styles.
+
 ## For the materials (MATERIALS.md, 2026-11-06)
 
 The materials in `material-check` are lit from each picture's mask; these give them what a mask

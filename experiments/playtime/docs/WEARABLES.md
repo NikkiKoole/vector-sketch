@@ -132,7 +132,7 @@ a face; `maskGrip` (default 1800).
 Steps:
 - [ ] WR1. Nikki plays with the glasses: the fit, the jolt, the lens look. Keep, change or park?
 - [ ] WR2. Drawn frames: scan glasses (front view, outline + mask like the Mipo parts, the lens
-      hole as its own mask) to replace the greybox lines
+      hole as its own mask) to replace the greybox lines; hats and masks first (THINGS-TO-DRAW A21)
 - [ ] WR3. Cost on the phone: the screen canvas per frame (`./playtime.sh bench device wearables`);
       without it, lenses could tint and glint only
 - [x] WR4. Hats, stacking (Nikki 2026-11-08: "hats feel nice")
