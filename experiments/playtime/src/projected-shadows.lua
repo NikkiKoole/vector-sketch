@@ -313,6 +313,7 @@ function lib.splits(add)
     local behind = false
     for _, one in ipairs(settings.lights or { { light = settings.light } }) do
         if one.light and (one.light.z or 0) < 0 and (one.strength or 0) > 0.001 then behind = true end
+        if one.glow and one.light and one.light.kind ~= 'sun' then behind = true end -- a lamp's glow at night
     end
     if not behind then return end
     local standY = settings.floorY + settings.depth

@@ -462,6 +462,13 @@ fade, a sun: the panel's `fades` switch, LS4).
   behind them. A room with storeys (the dollhouse) or a scene with ground at several heights can't say that,
   so it's left without and gets only the flat wall shadows. Later: a floor per storey or area (a band of the
   scene, each its own standY and depth), the 3D pass per floor, the moon's light on each.
+- [x] **LS33. Lamps throwing 3D shadows, in the engine** (2026-11-15, Nikki: "1"; from light-grass-check's warm,
+  cool and circling lamps). A point light's '3D shadows' (and 'in front', how far before the things it stands,
+  300) in the editor: src/scene-light.lua fillLamps makes it one of the 3D lights beside the sun's each frame,
+  from its body (z = depth + inFront, h = floorY + z - y), so a Mipo walking up to it throws a bigger shadow
+  up the wall. At night (the sky's own curve, scene-sky nightAt) it lights the wall, floor and ground round it
+  and its shadows are the holes in that light; by day only the darkening (0.55, less with more lamps). Only
+  with a floor (full). Seen in sunyard with a test lamp. spec/scene-light-lamps_spec.lua.
 - [ ] **LS15. Small ones:** should a new directional light be a sun (not fade) by default; the back
   light on a drawn stone lands on its black outline (reach past it, as the contact shadow does);
   grass on a moving body rebuilds its blades every frame (LITTLE-USED, the grass round).

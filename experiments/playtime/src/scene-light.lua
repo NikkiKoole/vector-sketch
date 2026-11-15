@@ -344,6 +344,64 @@ function lib.load(saved)
     return state.sceneLight
 end
 
+-- Lamps throwing 3D shadows (Nikki 2026-11-15, from the light lab): a point light whose 'shadows3D' is on
+-- becomes one of the 3D lights (src/projected-shadows.lua) beside the sun's, where its body is: on screen a
+-- lamp at y stands `inFront` before the things (z = depth + inFront) at h = floorY + z - y above the floor,
+-- so a Mipo walking up to it throws a bigger shadow on the wall. In the dark (the sky's night) it lights the
+-- wall, floor and ground around it and its shadows are the holes in that light; by day only the darkening.
+-- Only with a floor (the full level), like the sun's 3D shadows.
+lib.LAMP_IN_FRONT, lib.LAMP_GLOW, lib.LAMP_GLOW_RANGE, lib.LAMP_SOFTNESS = 300, 0.55, 700, 30
+local lampCache = { version = -1, list = {} }
+local function shadowLamps()
+    if lampCache.version ~= registry.sfixtureVersion then
+        local list = {}
+        for _, fixture in ipairs(registry.sfixturesOf(require('src.subtypes').LIGHT)) do
+            local ud = fixture:getUserData()
+            if ud and ud.extra and ud.extra.lightType == 'point' and ud.extra.shadows3D then
+                list[#list + 1] = fixture
+            end
+        end
+        lampCache.version, lampCache.list = registry.sfixtureVersion, list
+    end
+    return lampCache.list
+end
+local function hexRGB(hex)
+    hex = hex or 'ffffff'
+    return tonumber(hex:sub(1, 2), 16) / 255, tonumber(hex:sub(3, 4), 16) / 255, tonumber(hex:sub(5, 6), 16) / 255
+end
+function lib.fillLamps(shared)
+    local projected = shared.projectedShadows
+    if not (projected and projected.lights) then return end
+    local lights = projected.lights
+    local count = 1 -- the sun's stays first
+    local night = skyOn() and require('src.scene-sky').nightAt(require('src.scene-sky').settings().hour) or 0
+    for _, fixture in ipairs(shadowLamps()) do
+        if not fixture:isDestroyed() then
+            local extra = fixture:getUserData().extra
+            local x, y = fixture:getBody():getPosition()
+            local z = projected.depth + (extra.inFront or lib.LAMP_IN_FRONT)
+            count = count + 1
+            local one = lights[count] or { light = { kind = 'point' } }
+            lights[count] = one
+            one.light.kind, one.light.x, one.light.z = 'point', x, z
+            one.light.h = math.max(4, projected.floorY + z - y)
+            local power = math.min(1, extra.intensity or 1)
+            one.strength = 0.55 * (1 - 0.8 * night) * power * (count > 2 and 0.75 or 1)
+            one.softness = lib.LAMP_SOFTNESS
+            one.glowRange = lib.LAMP_GLOW_RANGE
+            if night > 0.01 then
+                local r, g, b = hexRGB(extra.colorHex or 'fff2d9ff')
+                local k = lib.LAMP_GLOW * night * power
+                one.glow = one.glow or {}
+                one.glow[1], one.glow[2], one.glow[3] = r * k, g * k, b * k
+            else
+                one.glow = nil
+            end
+        end
+    end
+    for i = count + 1, #lights do lights[i] = nil end
+end
+
 -- for a scene file (off and nothing else set: nothing, the file stays as it was)
 function lib.save()
     local s = lib.settings()
@@ -477,6 +535,8 @@ function lib.apply()
     end
     -- a sky: the hour into the level's own tables (src/sky-light.lua)
     if shared and skyOn() then require('src.sky-light').fill(shared, require('src.scene-sky').settings().hour) end
+    -- lamps throwing 3D shadows (a point light with 'shadows3D'), beside the sun's
+    if shared then lib.fillLamps(shared) end
     -- parts shadowing each other (src/part-shadows.lua, LS20): the light section's 'part shadows', not off
     if (settings.partShadow or 0) > 0 and level.name ~= 'off' then
         state.partShadows = state.partShadows or {}

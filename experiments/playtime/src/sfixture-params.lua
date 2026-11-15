@@ -257,6 +257,15 @@ lib.bySubtype = {
             if lightType == 'directional' then return (e.range or 500) ~= 0 end
             return lightType == 'point'
         end }),
+        -- a lamp throwing 3D shadows (src/scene-light.lua fillLamps): along the floor and up the wall, bigger
+        -- as a thing comes close; at night it lights round it, its shadows the holes. Only at the light level
+        -- 'full' with a floor
+        { key = '3D shadows', kind = 'bool',
+          visible = function(f) return extraOf(f).lightType == 'point' end,
+          get = function(f) return extraOf(f).shadows3D == true end,
+          set = function(f, v) extraOf(f).shadows3D = v or nil end },
+        extraNumber('inFront', 'in front', 0, 1500, 300, nil,
+            { visible = function(f) return extraOf(f).lightType == 'point' and extraOf(f).shadows3D end }),
         -- a back light: how far in from the outline its rim reaches
         extraNumber('rimWidth', 'width', 0.01, 0.15, 0.045, nil,
             { visible = function(f) return extraOf(f).lightType == 'back' end }),

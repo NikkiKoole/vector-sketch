@@ -119,6 +119,9 @@ local function curve(points, x)
     return points[#points][2]
 end
 
+-- how much night at an hour: 0 by day, 1 at night (the sky's own curve; lamps glow by it, src/scene-light.lua)
+function lib.nightAt(hour) return curve(NIGHTNESS, hour % 24) end
+
 -- the stops at an hour: colours (linear RGB) and positions, and how much night
 function lib.stopsAt(hour)
     hour = hour % 24
