@@ -155,7 +155,8 @@ local function apply(instance, levers)
         if not st.clean then -- all let go: the face is its own again
             thing.lbrowYOffset, thing.rbrowYOffset = 0, 0
             thing.lbrowVec, thing.rbrowVec = { 0, 0, 0 }, { 0, 0, 0 }
-            thing.mouthShapeVec, thing.eyeScale, thing.pupilScale, thing.blush = nil, nil, nil, nil
+            thing.eyeScale, thing.pupilScale, thing.blush = nil, nil, nil
+            if not instance.mouthTakenBy then thing.mouthShapeVec = nil end
             thing.flush, thing.browScale = nil, nil
             st.clean = true
         end
@@ -170,7 +171,8 @@ local function apply(instance, levers)
     thing.lbrowVec = { levers.bend[1], levers.bend[2], levers.bend[3] }
     thing.rbrowVec = { levers.bend[1], levers.bend[2], levers.bend[3] }
     local voice = package.loaded['src.mipo-voice']
-    if not (voice and voice.isFlapping and voice.isFlapping(instance)) then -- talking: the voice has the mouth
+    -- talking: the voice has the mouth; eating (the food spike): instance.mouthTakenBy has it
+    if not (instance.mouthTakenBy or (voice and voice.isFlapping and voice.isFlapping(instance))) then
         thing.mouthShapeVec = mouthVec(instance, owner, levers.mouth)
     end
     thing.eyeScale, thing.pupilScale, thing.blush = levers.eye, levers.pupil, levers.blush

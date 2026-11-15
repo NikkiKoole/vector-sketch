@@ -322,7 +322,7 @@ local openShapes = { 'O_U_agh', 'open_tween', 'A_I' }
 -- Open the mouth for `duration` seconds, then close it again:
 -- rise over the first third, hold, fall over the last third (puppet-maker2 mouthSay).
 function lib.flapMouth(instance, duration)
-    if not lib.mouthFlap or not instance then return end
+    if not lib.mouthFlap or not instance or instance.mouthTakenBy then return end -- eating: the mouth is busy
     local thing, lip = findMouth(instance)
     if not thing then return end
     local existing = flaps[instance.id]

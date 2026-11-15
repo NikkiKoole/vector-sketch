@@ -1,6 +1,6 @@
 # Food in, food out — eating, drinking, peeing, pooping
 
-status: idea
+status: active
 
 Nikki (2026-11-11): "i have a feeling on 'eating/drinking' and well pissing pooping". Not tried before
 (`./playtime.sh tried` eat / drink / poop / pee / potty: nothing). Small kids love it, and the Sago / Toca
@@ -24,8 +24,28 @@ kind of app leans on it. Most of the pieces already exist in the engine or a spi
 
 ## Steps
 
-- [ ] **FO1. The spike**: one scene, one Mipo, a few foods, a cup, a potty. Eat, drink, belly, go.
-  Read first: the mouth (MOUTH-* docs), SOFT-TORSO, `src/blob.lua`, `src/liquid.lua`, seaside's pour.
+- [x] **FO1. The spike** (2026-11-16): `scripts/spikes/food.playtime.lua` (`./playtime.sh start food`). One
+  Mipo (0.6, soft torso on), a table with an apple, a cookie, two berries and a sprout, a cup, a potty.
+  - Eating: a food near the mouth opens it (A_I, a little wider, by nearness; 'opens at' slider), and food
+    near a face passes in front of it (the Mipo's collision group) so it can reach the mouth. At the mouth:
+    snap shut, a crunch, crumbs, a piece off the food (the same body, smaller, so a drag carries on; gone
+    on its last bite), chew with full cheeks (mmm, stretched across, three munches a second), gulp, happy
+    and a hum. The sprout: one chew, "blah", angry, the bite spat out (gone after 6 s).
+  - Drinking: a cup with water near the mouth makes an O; tipped, what spills over the rim near the mouth
+    is drunk instead of poured (new `state.liquidDrinkHook` in `src/liquid.lua`), so the cup empties as fast
+    as it's tipped, with gulps.
+  - The belly: what's in pushes the lower torso lobes out and down (a force on each lobe against its
+    springs, the torso pushed back as hard, so it can't tip the Mipo), gliding in. Lengthening the springs
+    instead hardly showed, and a sudden full belly that way tipped a Mipo over.
+  - Out: what's in turns into poop and pee (digest slider; a full belly ~30 s). Needing to go: a wiggle,
+    a worried face, a hum every few seconds. Put on the potty: a stream of drops, then a brown blob
+    (`props.makeBlob`) into the potty, a plop, happy, "ahh". `c` clears it away, `f` fills it up to try.
+  - The mouth is the scene's while eating: `instance.mouthTakenBy`, which `src/mipo-emotion.lua` and the
+    voice's mouth flap now leave alone (the hook FO3 needs anyway). Sounds made in the scene (crunch,
+    munch, gulp, plop), nothing loaded.
+  - Not done: it stands on the potty, doesn't sit; the food is drawn by the scene over a greybox circle,
+    bites shrink it rather than take a notch; drinking stops when the cup's water has gone below the rim.
+  Tried by bridge only (a second game on port 8002), not by hand.
 - [ ] **FO2. Nikki plays with it**: keep, change or park.
 - [ ] **FO3. Into the engine** (ENGINE-MERGE EM8 / a behavior): food as shelf things that can be eaten,
   a Mipo's belly and need in the Mipo itself, not in a scene script.
