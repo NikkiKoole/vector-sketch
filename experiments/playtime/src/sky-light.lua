@@ -100,12 +100,20 @@ function lib.at(hour)
     local mx, my, moonUp = arc(lib.moonTheta(hour))
     local sunI, moonI = L.sun[2] * sunUp, L.moon[2] * moonUp
     local total = sunI + moonI
-    local share = total > 0 and sunI / total or 0.5
+    -- the way the shadows fall turns by the squared strengths: most of the turn right where the two are even,
+    -- while the shadows are softest (Nikki 2026-11-15 twilight, below)
+    local sq = sunI * sunI + moonI * moonI
+    local turn = sq > 0 and sunI * sunI / sq or 0.5
     -- the way they shine blended through 'from above', never round the bottom
-    local cx, cy = mx + (sx - mx) * share, my + (sy - my) * share
+    local cx, cy = mx + (sx - mx) * turn, my + (sy - my) * turn
     local clen = math.sqrt(cx * cx + cy * cy)
     if clen < 0.2 then cx, cy, clen = 0, -1, 1 end -- straight across each other: from above
     cx, cy = cx / clen, cy / clen
+    -- Twilight (Nikki 2026-11-15, "a relaxed realistic way"): the moon rises opposite the setting sun, so the
+    -- shadows change sides at each handover. The directional shadows are as strong as one light outshines the
+    -- other: they soften away as the sun sinks, are gone while the two are even (where they turn), and the
+    -- moon's grow as it takes over; the sky light and the back light stay. By weight, no switch.
+    local outshine = math.abs(sunI - moonI)
     local peak = math.max(L.sun[2], L.moon[2], 0.01)
     local there = math.min(1, total / (BACK_FULL * peak))
     there = there * there * (3 - 2 * there)
@@ -115,7 +123,7 @@ function lib.at(hour)
         sky = { L.skyLight[1], L.skyLight[2], L.skyLight[3] },
         back = { cx, cy, L.back[1], L.back[2] * there },
         cast = { cx, cy },
-        fade = math.min(1, total / 0.6),
+        fade = math.min(1, outshine / 0.6),
         shadows = L.shadows / DAY_SHADOWS,
         wall = L.wallShadows / DAY_WALL,
     }

@@ -30,6 +30,20 @@ describe('the light at the hour', function()
         assert.is_true(skyLight.at(12).fade > skyLight.at(20.25).fade, 'darker shadows by day')
     end)
 
+    -- twilight (Nikki 2026-11-15, "a relaxed realistic way"): the moon rises opposite the setting sun, so the
+    -- shadows change sides at each handover, but only while they're too faint to see
+    it('turns the shadows to the other side only while they are faint', function()
+        local prev = skyLight.at(0)
+        for minute = 1, 24 * 60 do
+            local now = skyLight.at(minute / 60)
+            local seen = math.abs(now.cast[1] - prev.cast[1]) * math.max(now.fade, prev.fade)
+            assert.is_true(seen < 0.1, string.format('the shadows turned visibly at minute %d (%.3f)', minute, seen))
+            prev = now
+        end
+        assert.is_true(skyLight.at(19.8).fade < 0.1, 'soft at the evening handover')
+        assert.is_true(skyLight.at(21).fade > 0.4, 'the moon casts again')
+    end)
+
     it('changes smoothly: no jump between two minutes anywhere in the day', function()
         local prev = skyLight.at(0)
         for minute = 1, 24 * 60 do

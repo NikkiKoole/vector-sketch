@@ -46,6 +46,13 @@ time of day with the cycle").
 - [~] **SK2c. The moon the other way** (tried 2026-11-15: Nikki "it would be cool if the arc went opposite, so the
   moon starts right side and goes left"; the shadows then swing back and forth like a pendulum, never across.
   Rolled back the same hour: "what is a relaxed realistic way"; a real full moon rises opposite the setting sun.)
+- [x] **SK2d. Twilight** (Nikki 2026-11-15: "a relaxed realistic way", after SK2c). The moon rises opposite
+  the setting sun (a full moon's way), so the shadows change sides at each handover; they did it visibly,
+  swept over the top at ~60% between 19:30 and 20:00. Now the directional shadows (wall, 3D; not the
+  contact ones) are as strong as one light outshines the other: they soften away as the sun sinks (19:15-19:50),
+  turn while they're 1-9% (the direction by the squared strengths, so the turn sits at the even moment), and
+  the moon's come in (to ~0.5 by 20:30); the sky light and the back light stay. Morning the same (5:30-7:00).
+  spec: no visible turn in any minute.
 - [ ] **SK3. The light scene on the engine clock.** light-grass-check drops its own clock and day looks
   for SK1/SK2's; its lamps, festoon and panel extras stay.
 - [ ] **SK4. Space, as a scene option.** 'space above' in the sky section: the camera may climb (edge
