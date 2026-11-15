@@ -31,6 +31,7 @@ local TIMELINE = { { 0, 'night' }, { 5, 'night' }, { 6.5, 'dawn' }, { 8.5, 'day'
     { 19, 'golden' }, { 20, 'dusk' }, { 21.5, 'night' }, { 24, 'night' } }
 local SQUASH = 0.8   -- the arc lower than it is wide
 local MOON_SHADOW = { 0.6, 0.42 } -- the sky light's strength: moon shadows from / full at
+local RIM_TURN = 0.15 -- how far one of sun and moon leads (as shadows) before the back light is full again
 local BACK_FULL = 0.5 -- the sun and moon together this share of the hour's strongest: the back light full
 -- the light level's numbers at day (src/scene-light.lua), which the hour scales
 local DAY_SHADOWS, DAY_WALL = LOOKS.day.shadows, LOOKS.day.wallShadows
@@ -116,14 +117,18 @@ function lib.at(hour)
         if len < 0.2 then return 0, -1 end -- straight across each other: from above
         return x / len, y / len
     end
-    -- the back light from the lights; the shadows from the shadows' own strengths, so they turn when faintest
-    local bx, by = between(sunI, moonI)
+    -- the shadows' way from their own strengths, so they turn when faintest; the back light the same way, dimmed
+    -- where they turn (Nikki 2026-11-15: "something flips ... when the day starts": it swapped sides at full
+    -- strength at 6:08 and 19:47)
     local cx, cy = between(sunI, moonShadow)
     -- Twilight (Nikki 2026-11-15, "a relaxed realistic way"): the moon rises opposite the setting sun, so the
     -- shadows change sides at each handover. The directional shadows are as strong as one outshines the
     -- other: they soften away as the sun sinks, are gone while the two are even (where they turn), and the
     -- moon's grow as it takes over; the sky light and the back light stay. By weight, no switch.
     local outshine = math.abs(sunI - moonShadow)
+    -- the back light out and in again over the turn (full once one leads by RIM_TURN)
+    local rimDip = math.min(1, outshine / RIM_TURN)
+    rimDip = rimDip * rimDip * (3 - 2 * rimDip)
     local peak = math.max(L.sun[2], L.moon[2], 0.01)
     local there = math.min(1, total / (BACK_FULL * peak))
     there = there * there * (3 - 2 * there)
@@ -131,7 +136,7 @@ function lib.at(hour)
         sun = { sx, sy, L.sun[1], sunI },
         moon = { mx, my, L.moon[1], moonI },
         sky = { L.skyLight[1], L.skyLight[2], L.skyLight[3] },
-        back = { bx, by, L.back[1], L.back[2] * there },
+        back = { cx, cy, L.back[1], L.back[2] * there * rimDip },
         cast = { cx, cy },
         fade = math.min(1, outshine / 0.6),
         shadows = L.shadows / DAY_SHADOWS,

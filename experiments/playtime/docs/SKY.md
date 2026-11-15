@@ -58,6 +58,10 @@ time of day with the cycle").
   light falling from 0.6 to 0.42), and the shadows' way follows the shadows' own strengths (the back light
   the lights'): the sun's soften 19:15-20:15, none 20:15-20:35 under the glow, the moon's 20:40-21:10;
   morning the moon's go as the dawn sky brightens (5:20-6:00), the sun's from 6:00.
+  Then (Nikki: "something flips in the face shader or something when the day starts"): the back light swapped
+  sides at full strength (6:08, 19:47; the rim on hair and head edges jumped). It follows the shadows' way now
+  and dims through their turn (out 5:50-6:00 and 20:00-20:20, back by 6:15 and 20:45); spec: no visible
+  back-light jump in any minute.
 - [ ] **SK3. The light scene on the engine clock.** light-grass-check drops its own clock and day looks
   for SK1/SK2's; its lamps, festoon and panel extras stay.
 - [ ] **SK4. Space, as a scene option.** 'space above' in the sky section: the camera may climb (edge

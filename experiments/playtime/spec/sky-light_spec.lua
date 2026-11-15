@@ -46,6 +46,18 @@ describe('the light at the hour', function()
         assert.is_true(skyLight.at(21).fade > 0.4, 'the moon casts again')
     end)
 
+    -- the back light swapped sides at full strength at 6:08 and 19:47 (Nikki 2026-11-15: "something flips ...
+    -- when the day starts"); it dims through the turn now
+    it('never moves the back light visibly from one minute to the next', function()
+        local prev = skyLight.at(0)
+        for minute = 1, 24 * 60 do
+            local now = skyLight.at(minute / 60)
+            local seen = math.abs(now.back[1] - prev.back[1]) * math.max(now.back[4], prev.back[4])
+            assert.is_true(seen < 0.1, string.format('the back light jumped at minute %d (%.3f)', minute, seen))
+            prev = now
+        end
+    end)
+
     it('changes smoothly: no jump between two minutes anywhere in the day', function()
         local prev = skyLight.at(0)
         for minute = 1, 24 * 60 do
