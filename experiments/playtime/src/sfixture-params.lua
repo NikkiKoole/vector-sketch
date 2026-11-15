@@ -305,6 +305,15 @@ lib.bySubtype = {
         { key = 'surface', kind = 'color',
           get = function(fixture) return extraOf(fixture).surfaceColor or 'cdeeffff' end,
           set = function(fixture, v) extraOf(fixture).surfaceColor = v end },
+        -- the see-through water's own colour (src/water-look.lua; ENGINE-MERGE EM3): what's seen through it takes
+        -- the tint, 'murky' hides it, more with depth. None: clear water. (color / surface: the flat drawing's)
+        { key = 'water tint', kind = 'color',
+          get = function(fixture) return extraOf(fixture).tint or 'ffffffff' end,
+          set = function(fixture, v) extraOf(fixture).tint = v end },
+        extraNumber('murk', 'murky', 0, 1, 0, nil, { visible = function(f) return extraOf(f).tint ~= nil end }),
+        { kind = 'action', label = 'clear water',
+          visible = function(f) return extraOf(f).tint ~= nil end,
+          run = function(_, fixture) extraOf(fixture).tint, extraOf(fixture).murk = nil, nil end },
         { key = 'in front', kind = 'bool', -- in front of the Mipos, for a bath
           get = function(fixture) return extraOf(fixture).front == true end,
           set = function(fixture, v) extraOf(fixture).front = v end },

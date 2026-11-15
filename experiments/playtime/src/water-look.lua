@@ -105,6 +105,13 @@ function lib.drawWater(water)
     local shader = waterShader.shader()
     love.graphics.setShader(shader)
     sendThin(shader, behind)
+    -- its own colour and murk (the cup's or bath's 'water tint' and 'murky'; none: clear)
+    local extra = water.extra
+    local r, g, b = 1, 1, 1
+    if extra.tint then r, g, b = require('src.color').hexToColor(extra.tint) end
+    shader:send('tint', { r, g, b })
+    shader:send('tintAmount', extra.tint and 1 or 0)
+    shader:send('murk', extra.tint and (extra.murk or 0) or 0)
     waterShader.drawThin({ water })
     love.graphics.setShader()
     love.graphics.setColor(1, 1, 1, 1)

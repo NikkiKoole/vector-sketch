@@ -169,7 +169,11 @@ The landing order, what bites what, and Nikki's keep / spike choices of 2026-11-
   (one a frame painted an old copy over the feet of a Mipo in a front bath). The phone (iPhone SE 2,
   layerhouse, play mode, paused, A-B-A, the water look on / off): 3 baths 4.6 / 4.7 ms draw, 10 baths on
   screen 5.1-5.3 / 4.9-5.1, 60 fps steady throughout: the canvas, the copies and the shader cost ~0.1-0.2 ms.
-  Left for EM3: the water's own colour, pouring outside seaside, the sea.
+  The water's own colour (Nikki: "do the water colour"): a cup's or bath's 'water tint' and 'murky' (src/water-look
+  sends them, src/render/water-shader.lua uses them): what's seen through takes the tint, murky water hides it
+  under its colour, more with depth; 'clear water' takes both off (none: clear as before, and seaside, which
+  doesn't send them, is as before). A muddy bath (brown, 0.85) and a blue pool (0.15) in layerhouse.
+  Left for EM3: pouring outside seaside, the sea.
 - [ ] **EM4. Garden critters**, once the shelf and 🎲 exist (EDITOR-ARRANGE EA2-EA4).
 - [ ] **EM5. The cheap shared bits**, any time, each checked by a scene snapshot before/after:
   a `mipoKit` (spawn / alive / isAlive) for the scene scripts, `mathutils.clamp` instead of the copies,

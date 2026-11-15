@@ -30,6 +30,9 @@ extern float specks;
 extern float causticSize; // 1 in the sea, smaller in a cup
 extern float viewDepth;   // how much water we look through: the sea is deep, a cup thin
 extern float bend;        // how much it bends what's behind: less in a thin cup
+extern vec3 tint;         // the water's own colour (a muddy bath, a blue pool), by tintAmount (0: clear, as it was)
+extern float tintAmount;
+extern float murk;        // how much it hides what's in it, more with depth (0: clear)
 #ifdef VERTEX
 attribute float SurfY;
 attribute float Foam;
@@ -137,6 +140,10 @@ vec4 effect(vec4 color, Image tex, vec2 tc, vec2 sc) {
             }
         }
     }
+    // coloured water (ENGINE-MERGE EM3, Nikki 2026-11-15): what's seen through it takes its colour, and murky
+    // water hides it under its own colour, more the deeper; the surface line stays bright over it
+    col = col * mix(vec3(1.0), tint * 1.15, 0.85 * tintAmount);
+    col = mix(col, tint * 0.8 + 0.04, murk * (1.0 - exp(-depth / 90.0)));
     // just under the surface: a sheen, then the bright line itself, with glints on the crests
     col += vec3(0.10, 0.16, 0.16) * exp(-depth / 70.0);
     float lineW = 3.5 / pxPerWorld;
