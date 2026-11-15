@@ -17,6 +17,13 @@ local lib = {}
 
 lib.list = {
     {
+        -- the 3D shadows of a light behind the things (the moon from behind) on the ground in front of them
+        -- (src/projected-shadows.lua)
+        name = 'front shadows',
+        module = 'src.projected-shadows',
+        splits = function(m, add) m.splits(add) end,
+    },
+    {
         name = 'walls', -- bodies as walls: drawn behind everything, touching nothing (src/walls.lua)
         module = 'src.walls',
         update = function(m) m.update() end,

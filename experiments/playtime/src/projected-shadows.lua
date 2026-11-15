@@ -269,6 +269,50 @@ function lib.drawFront(world, area)
     castOnto(world, settings, area, {})
 end
 
+-- The ground in front, as an engine system (src/systems.lua splits): with settings.front (its shape) and a
+-- light behind the things (the moon from behind, src/sky-light.lua), their shadows on the ground they stand
+-- on, drawn just above that ground's own pictures, under the things. The ground: the body under the floor's
+-- line at the middle of the screen that isn't a Mipo and has pictures (its depth, as the contact shadows').
+local groundHit
+local function onGroundHit(fixture, _, _, _, _, fraction)
+    local body = fixture:getBody()
+    if fixture:isSensor() or body:getType() ~= 'static' then return -1 end
+    if require('src.mipo-registry').getFromBody(body) then return -1 end
+    groundHit = body
+    return fraction
+end
+local function pictureDepth(body)
+    local z
+    for _, fixture in ipairs(body:getFixtures()) do
+        local ud = fixture:getUserData()
+        if type(ud) == 'table' and ud.extra then
+            local fz = (ud.extra.zGroupOffset or 0) * 1000 + (ud.extra.zOffset or 0)
+            if not z or fz > z then z = fz end
+        end
+    end
+    return z
+end
+local function drawFrontSplit()
+    local settings = state.projectedShadows
+    if settings and settings.front then lib.drawFront(state.physicsWorld, settings.front) end
+end
+function lib.splits(add)
+    local settings = state.projectedShadows
+    local world = state.physicsWorld
+    if not settings or not settings.front or not world or not settings.floorY then return end
+    local behind = false
+    for _, one in ipairs(settings.lights or { { light = settings.light } }) do
+        if one.light and (one.light.z or 0) < 0 and (one.strength or 0) > 0.001 then behind = true end
+    end
+    if not behind then return end
+    local standY = settings.floorY + settings.depth
+    local x = love.graphics.inverseTransformPoint(love.graphics.getWidth() / 2, 0)
+    groundHit = nil
+    world:rayCast(x, standY - 40, x, standY + 400, onGroundHit)
+    local z = groundHit and pictureDepth(groundHit)
+    if z then add(z + 0.0004, drawFrontSplit) end
+end
+
 -- onto the things further back: after the textured world (only with more than one layer)
 function lib.drawOnThings(world)
     local settings = state.projectedShadows

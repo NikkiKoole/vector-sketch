@@ -86,6 +86,11 @@ lib.rows = {
       run = function(_, s) s.floor = nil end },
     -- the floor's lines on the stage (src/floor-guide.lua), to see and drag them; off by default and not
     -- saved: a deep setting, not something to look at all the time (Nikki 2026-11-06)
+    -- by night the moon behind the things: its 3D shadows fall forward over the ground in front (Nikki
+    -- 2026-11-15); off, from in front like the sun's
+    { key = 'moon from behind', kind = 'bool', visible = hasFloor,
+      get = function(s) return not s.moonInFront end,
+      set = function(s, v) s.moonInFront = (not v) or nil end },
     { key = 'floor on stage', kind = 'bool', visible = hasFloor,
       get = function() return state.floorGuideOn == true end,
       set = function(_, v) state.floorGuideOn = v or nil end },

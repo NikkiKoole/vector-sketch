@@ -114,13 +114,13 @@ function lib.at(hour)
         local turn = sq > 0 and sunW * sunW / sq or 0.5
         local x, y = mx + (sx - mx) * turn, my + (sy - my) * turn
         local len = math.sqrt(x * x + y * y)
-        if len < 0.2 then return 0, -1 end -- straight across each other: from above
-        return x / len, y / len
+        if len < 0.2 then return 0, -1, turn end -- straight across each other: from above
+        return x / len, y / len, turn
     end
     -- the shadows' way from their own strengths, so they turn when faintest; the back light the same way, dimmed
     -- where they turn (Nikki 2026-11-15: "something flips ... when the day starts": it swapped sides at full
     -- strength at 6:08 and 19:47)
-    local cx, cy = between(sunI, moonShadow)
+    local cx, cy, sunShare = between(sunI, moonShadow)
     -- Twilight (Nikki 2026-11-15, "a relaxed realistic way"): the moon rises opposite the setting sun, so the
     -- shadows change sides at each handover. The directional shadows are as strong as one outshines the
     -- other: they soften away as the sun sinks, are gone while the two are even (where they turn), and the
@@ -138,6 +138,7 @@ function lib.at(hour)
         sky = { L.skyLight[1], L.skyLight[2], L.skyLight[3] },
         back = { cx, cy, L.back[1], L.back[2] * there * rimDip },
         cast = { cx, cy },
+        sunShare = sunShare, -- how much the shadows are the sun's (1) or the moon's (0)
         fade = math.min(1, outshine / 0.6),
         shadows = L.shadows / DAY_SHADOWS,
         wall = L.wallShadows / DAY_WALL,
@@ -225,6 +226,18 @@ function lib.fill(shared, hour)
             local light = one.light
             if light and light.kind == 'sun' then
                 light.x, light.h = now.cast[1], math.max(0, -now.cast[2])
+                -- the moon from behind (Nikki 2026-11-06 in the light lab, 2026-11-15 here): by day the light
+                -- in front of the things, shadows back along the floor and up the wall; as the moon's shadows
+                -- take over (in the twilight, while there are none) it goes round behind them, and the
+                -- moon's fall forward over the ground in front (src/projected-shadows.lua lib.splits)
+                local front = one.frontZ or 0.5
+                if one.moonBehind then
+                    local z = front * (2 * now.sunShare - 1)
+                    if math.abs(z) < 0.02 then z = z < 0 and -0.02 or 0.02 end -- never in the things' plane
+                    light.z = z
+                else
+                    light.z = front
+                end
                 one.strength = (one.baseStrength or 0.5) * now.fade * now.shadows
             end
         end

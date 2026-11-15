@@ -211,7 +211,8 @@ local function fullShared(settings)
     local wall = lib.wallOf(settings)
     local layers, wallsKey = {}, ''
     if wall == 'walls' then layers, wallsKey = require('src.walls').layers() end
-    return cached('full', floor.standY .. '|' .. floor.depth .. '|' .. wallKey(settings) .. '|' .. wallsKey,
+    return cached('full', floor.standY .. '|' .. floor.depth .. '|' .. wallKey(settings) .. '|' .. wallsKey
+        .. (settings.moonInFront and '|moonFront' or ''),
         function()
         local floorY = floor.standY - floor.depth
         local wallAbove = wall == 'backdrops' and backdrops(floorY) or everything(floorY)
@@ -229,8 +230,16 @@ local function fullShared(settings)
             shadowEveryOther = true,
             projectedShadows = { area = area, floorY = floorY, depth = floor.depth, lights = {
                 { light = { kind = 'sun', x = SUN[1], h = high, z = 0.5 }, strength = 0.5, baseStrength = 0.5,
-                  softness = 0.03 },
-            } },
+                  softness = 0.03, frontZ = 0.5, moonBehind = not settings.moonInFront },
+            },
+                -- the ground in front of the things, where a light from behind them (the moon) throws its
+                -- shadows (src/projected-shadows.lua lib.splits, over the ground's pictures)
+                front = function()
+                    local x1, _, x2, y2 = view()
+                    if y2 > floor.standY then
+                        love.graphics.rectangle('fill', x1, floor.standY, x2 - x1, y2 - floor.standY)
+                    end
+                end },
         }
         if wall == 'walls' then
             local function belowFloor() -- the soft ones only above the floor
@@ -324,6 +333,7 @@ function lib.load(saved)
     if saved then
         local s = state.sceneLight
         s.wall, s.wallShadow, s.wallBehind = saved.wall, saved.wallShadow, saved.wallBehind
+        s.moonInFront = saved.moonInFront
         s.partShadow = tonumber(saved.partShadow)
         if type(saved.mipo) == 'table' then
             s.mipo = { clay = saved.mipo.clay, front = saved.mipo.front, swing = saved.mipo.swing,
@@ -341,11 +351,13 @@ function lib.save()
     local wall = s.wall ~= 'auto' and s.wall or nil
     local partShadow = (s.partShadow or 0) > 0 and s.partShadow or nil
     if s.level == 'off' and not s.floor and not mipo and not wall and not s.wallShadow and not s.wallBehind
+        and not s.moonInFront
         and not partShadow then
         return nil
     end
     return { level = s.level, floor = s.floor and { standY = s.floor.standY, depth = s.floor.depth } or nil,
-        wall = wall, wallShadow = s.wallShadow, wallBehind = s.wallBehind, mipo = mipo, partShadow = partShadow }
+        wall = wall, wallShadow = s.wallShadow, wallBehind = s.wallBehind, mipo = mipo, partShadow = partShadow,
+        moonInFront = s.moonInFront }
 end
 
 -- the floor where the Mipos stand: the lowest point of their feet (a scene without Mipos: none)

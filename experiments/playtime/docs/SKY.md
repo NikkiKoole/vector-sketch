@@ -62,6 +62,13 @@ time of day with the cycle").
   sides at full strength (6:08, 19:47; the rim on hair and head edges jumped). It follows the shadows' way now
   and dims through their turn (out 5:50-6:00 and 20:00-20:20, back by 6:15 and 20:45); spec: no visible
   back-light jump in any minute.
+- [x] **SK2e. The moon from behind** (Nikki 2026-11-15, "y looks interesting this"; from the light lab,
+  2026-11-06). With a floor (light 'full'): by day the 3D light in front of the things, shadows back along the
+  floor and up the wall; as the moon's shadows take over (the twilight, while there are none) the light goes
+  round behind them (sky-light: z by the shadows' sunShare), and the moon's shadows fall forward over the
+  ground in front, drawn just above that ground's pictures under the things (projected-shadows lib.splits,
+  an engine system). The light section's 'moon from behind' (on unless moonInFront is saved). Scene
+  `sunyard` to see it. Faint at night: moonlight on dark soil.
 - [ ] **SK3. The light scene on the engine clock.** light-grass-check drops its own clock and day looks
   for SK1/SK2's; its lamps, festoon and panel extras stay.
 - [ ] **SK4. Space, as a scene option.** 'space above' in the sky section: the camera may climb (edge
