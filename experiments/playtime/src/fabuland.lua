@@ -40,20 +40,23 @@ local B, H = 750, 1000 -- a block: 3 grid cells wide, 4 high; a Mipo (median 658
 
 -- shape: 'rect' or vertices around the box's centre (flat, x, y, ...). snaps: edges of the
 -- box that snap ('top', 'bottom', 'left', 'right'); a shape that doesn't fill its box only
--- lists the edges it does have. details: drawers from DETAILS, in order.
+-- lists the edges it does have. details: drawers from DETAILS, in order. layer: the depth layer a
+-- new part gets (src/depth-layers.lua, DEPTH-LAYERS DL3; changed per part in the body panel): the
+-- blocks are house walls, 'back', so Mipos walk in front of them, in a door's doorway, and stand on
+-- their tops; the railing 'front', over the Mipos; roofs, stairs, posts and planks play (solid).
 lib.PARTS = {
     { name = 'window block', w = B, h = H, shape = 'rect', snaps = { 'top', 'bottom', 'left', 'right' },
-      sets = { 'yellow', 'red', 'blue' }, details = { 'roundWindow', 'studs' } },
+      sets = { 'yellow', 'red', 'blue' }, details = { 'roundWindow', 'studs' }, layer = 'back' },
     { name = 'wheel window block', w = B, h = H, shape = 'rect', snaps = { 'top', 'bottom', 'left', 'right' },
-      sets = { 'yellow', 'red', 'blue' }, details = { 'wheelWindow', 'studs' } },
+      sets = { 'yellow', 'red', 'blue' }, details = { 'wheelWindow', 'studs' }, layer = 'back' },
     { name = 'arch window block', w = B, h = H, shape = 'rect', snaps = { 'top', 'bottom', 'left', 'right' },
-      sets = { 'yellow', 'red', 'blue' }, details = { 'archWindow', 'studs' } },
+      sets = { 'yellow', 'red', 'blue' }, details = { 'archWindow', 'studs' }, layer = 'back' },
     { name = 'door block', w = B, h = H, shape = 'rect', snaps = { 'top', 'bottom', 'left', 'right' },
-      sets = { 'yellow', 'red', 'blue' }, details = { 'door', 'studs' } },
+      sets = { 'yellow', 'red', 'blue' }, details = { 'door', 'studs' }, layer = 'back' },
     { name = 'block', w = B, h = H, shape = 'rect', snaps = { 'top', 'bottom', 'left', 'right' },
-      sets = { 'yellow', 'red', 'blue', 'white' }, details = { 'studs' } },
+      sets = { 'yellow', 'red', 'blue', 'white' }, details = { 'studs' }, layer = 'back' },
     { name = 'half block', w = B, h = H / 2, shape = 'rect', snaps = { 'top', 'bottom', 'left', 'right' },
-      sets = { 'yellow', 'red', 'blue', 'white' }, details = { 'studs' } },
+      sets = { 'yellow', 'red', 'blue', 'white' }, details = { 'studs' }, layer = 'back' },
     { name = 'roof left', w = B, h = 500, shape = { -B / 2, 250, B / 2, 250, B / 2, -250 },
       snaps = { 'bottom', 'right' }, sets = { 'green', 'red' }, details = { 'shingles' } },
     { name = 'roof right', w = B, h = 500, shape = { -B / 2, 250, B / 2, 250, -B / 2, -250 },
@@ -66,7 +69,7 @@ lib.PARTS = {
     { name = 'plank', w = 1000, h = 125, shape = 'rect', snaps = { 'top', 'bottom', 'left', 'right' },
       sets = { 'brown', 'yellow', 'red' }, details = {} },
     { name = 'railing', w = B, h = 250, shape = 'rect', snaps = { 'bottom' },
-      sets = { 'red', 'white', 'yellow' }, details = { 'railing' } },
+      sets = { 'red', 'white', 'yellow' }, details = { 'railing' }, layer = 'front' },
 }
 local byName = {}
 for _, part in ipairs(lib.PARTS) do byName[part.name] = part end
@@ -112,13 +115,15 @@ function lib.make(name, x, y, set)
     local label = 'fab:' .. name .. ':' .. set
     local thing
     if part.shape == 'rect' then
-        thing = objectManager.addThing('rectangle', { x = x, y = y, width = part.w, height = part.h, label = label })
+        thing = objectManager.addThing('rectangle', { x = x, y = y, width = part.w, height = part.h, label = label,
+            layer = part.layer })
     else
         local vertices = {}
         for i = 1, #part.shape, 2 do
             vertices[i], vertices[i + 1] = x + part.shape[i], y + part.shape[i + 1]
         end
-        thing = objectManager.addThing('custom', { x = x, y = y, vertices = vertices, label = label })
+        thing = objectManager.addThing('custom', { x = x, y = y, vertices = vertices, label = label,
+            layer = part.layer })
     end
     if not thing then return nil end
     -- a custom shape's body sits on its centroid: the box's centre is (x, y), wherever that is
@@ -251,16 +256,17 @@ function DETAILS.railing(w, h, _, trim)
 end
 lib.DETAILS = DETAILS
 
--- Draw every part: fill, details, outline. Called between the bodies and the textured world
--- (main.lua), so Mipos are in front.
-function lib.draw()
+-- Draw the parts: fill, details, outline. lib.draw between the bodies and the textured world (main.lua),
+-- so Mipos are in front; the front layer's parts (a railing) with lib.drawFront after the textured world,
+-- over them (src/depth-layers.lua).
+local function drawParts(frontPass)
     local world = state.physicsWorld
     if not (world and state.fabuland and state.fabuland.on) then return end
     love.graphics.setLineWidth(LINE)
     love.graphics.setLineJoin('bevel')
     for _, body in ipairs(world:getBodies()) do
         local part, setName, thing = lib.partOf(body)
-        if part then
+        if part and ((thing.layer == 'front') == (frontPass == true)) then
             local set = lib.SETS[setName] or lib.SETS.yellow
             local bodyColor, trim = lib.COLORS[set[1]], lib.COLORS[set[2]]
             local outline = localOutline(thing, part)
@@ -289,5 +295,8 @@ function lib.draw()
     love.graphics.setLineWidth(1)
     love.graphics.setColor(1, 1, 1, 1)
 end
+
+function lib.draw() drawParts(false) end
+function lib.drawFront() drawParts(true) end
 
 return lib

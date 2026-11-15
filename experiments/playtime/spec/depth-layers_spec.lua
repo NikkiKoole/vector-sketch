@@ -71,4 +71,22 @@ describe('depth layers', function()
         assert.is_true(depthLayers.zOffset(front) > 100000)
         assert.are.equal(0, depthLayers.zOffset(play))
     end)
+
+    -- DL3: Fabuland's parts get their layer when made (src/fabuland.lua PARTS)
+    it('makes Fabuland\'s blocks back, its railing front, its planks play', function()
+        local state = require('src.state')
+        local registry = require('src.registry')
+        local fabuland = require('src.fabuland')
+        registry.reset()
+        local was = state.physicsWorld
+        state.physicsWorld = world
+        local door = fabuland.make('door block', 0, 0, 'red')
+        local railing = fabuland.make('railing', 2000, 0, 'white')
+        local plank = fabuland.make('plank', 4000, 0, 'brown')
+        state.physicsWorld = was
+        assert.are.equal('back', depthLayers.of(door.body))
+        assert.are.equal('front', depthLayers.of(railing.body))
+        assert.are.equal('play', depthLayers.of(plank.body))
+        registry.reset()
+    end)
 end)

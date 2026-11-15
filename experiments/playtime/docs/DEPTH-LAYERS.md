@@ -104,7 +104,12 @@ crates, and Mipos in two lanes.
   The joint guard counts layered bodies as passable. Scene `layerhouse` (a house wall and roof in back, a
   porch railing, pillar and roof in front, a crate); spec/depth-layers_spec.lua with real Box2D.
 - [ ] **DL2. Back parts stay put in play mode** (the drag decision above).
-- [ ] **DL3. Fabuland's defaults**: window and door blocks back, planks / stairs / roofs play.
+- [x] **DL3. Fabuland's defaults** (2026-11-15, Nikki: "lets do the door / window"): a PARTS entry's `layer`
+  is what a new part gets: all the blocks back (window, wheel, arch, door, block, half block: house walls; a
+  plain block left solid would still wall a Mipo in), the railing front, roofs / stairs / posts / planks play
+  (a roof rests on the back walls' one-way tops, and is welded anyway). Front parts drawn after the textured
+  world (fabuland.drawFront). A Mipo stands in a door block's doorway now. The `door`'s DOOR behaviour (into
+  a room) is WORLDS-AND-DOORS.
 - [ ] **DL4. Mipo lanes**: a back lane behind the house (drawn behind, hazed, its own ground), from the spike.
 - [ ] **DL5. Parallax per layer** (WORLD-BUILDING G4), and the 3D light's depths per layer (LS16 lanes).
 

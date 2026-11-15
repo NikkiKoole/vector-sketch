@@ -394,6 +394,7 @@ function love.draw()
     prof.pop('drawtexturedworld')
     -- the front layer's plain bodies, over the Mipos (src/depth-layers.lua)
     box2dDraw.drawFrontBodies(state.physicsWorld, state.world.debugDrawMode)
+    fabuland.drawFront() -- building parts in the front layer (a railing), over the Mipos
     systems.draw() -- over the bodies: bangs and coats over the faces
     script.call('draw')
     doors.draw()
