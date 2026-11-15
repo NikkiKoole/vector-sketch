@@ -439,6 +439,11 @@ fade, a sun: the panel's `fades` switch, LS4).
   water (drawTexturedWorld's `only` now gets the drawable too; state.shadowAllParts puts them back, to
   compare). iPhone SE 2, one install, 20 lit Mipos, paused, 3D every frame, each twice: all parts 24.1 /
   24.3 ms draw (38 fps), without them 20.7 / 20.9 (41-42 fps); every other frame 18.8.
+- [ ] **LS32. More than one floor in a scene** (Nikki 2026-11-15: "note it down for later"). The 3D shadows
+  (and the moon from behind) need a floor, and a scene has one: where things stand and how far the wall is
+  behind them. A room with storeys (the dollhouse) or a scene with ground at several heights can't say that,
+  so it's left without and gets only the flat wall shadows. Later: a floor per storey or area (a band of the
+  scene, each its own standY and depth), the 3D pass per floor, the moon's light on each.
 - [ ] **LS15. Small ones:** should a new directional light be a sun (not fade) by default; the back
   light on a drawn stone lands on its black outline (reach past it, as the contact shadow does);
   grass on a moving body rebuilds its blades every frame (LITTLE-USED, the grass round).
