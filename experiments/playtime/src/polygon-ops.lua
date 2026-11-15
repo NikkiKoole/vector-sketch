@@ -27,50 +27,96 @@ local function getLineIntersection(p0_x, p0_y, p1_x, p1_y, p2_x, p2_y, p3_x, p3_
     return nil
 end
 
--- Function to find all collision points (intersections) within a polygon.
-local function getCollisions(poly)
-    local collisions = {}
+-- The first crossing in a polygon (flat { x1, y1, ... }) as { i1, i2, x, y } (i1, i2: the two
+-- edges' first x indices), or nil. "First" in the order decompose always used: outer edge i1 from
+-- the start, inner edge i2 from the start, adjacent edges and edges meeting at an equal vertex
+-- skipped. Was getCollisions, which tried every pair and found every crossing, where decompose took
+-- only the first (2 ms for a 100-point mouth on the Mac, 10 on the phone). Now only edge pairs whose
+-- boxes overlap are tried (a sweep over the edges sorted by x), in that same order, with the same
+-- intersection maths: the same answer (spec/polygon-decompose_spec.lua). When native/desound/
+-- polydecomp.c is there the same runs in C (lib.firstCollisionNative).
+local boxX0, boxX1, boxY0, boxY1 = {}, {}, {}, {} -- per edge, reused (decompose is done with them before it recurses)
+local byX, pairs_ = {}, {}
+local BOX_PAD = 1e-6 -- px: a box rejects only a pair clearly apart, never one rounding could call touching
+local function byX0(a, b) return boxX0[a] < boxX0[b] end
+
+-- the crossing of outer edge i and inner edge j (first x indices), or nil
+local function crossing(poly, n, i, j)
+    local ni = i + 2
+    if ni > n then ni = 1 end
+    local nj = j + 2
+    if nj > n then nj = 1 end
+    local ax, ay, bx, by = poly[i], poly[i + 1], poly[ni], poly[ni + 1]
+    local cx, cy, dx, dy = poly[j], poly[j + 1], poly[nj], poly[nj + 1]
+    local ix, iy = getLineIntersection(ax, ay, bx, by, cx, cy, dx, dy)
+    -- Avoid adding shared vertices as intersections
+    if ix and iy and not ((ax == cx and ay == cy) or (ax == dx and ay == dy) or
+            (bx == cx and by == cy) or (bx == dx and by == dy)) then
+        return { i1 = i, i2 = j, x = ix, y = iy }
+    end
+end
+
+-- every pair in order, no boxes: for a polygon with a NaN in it (it can't be sorted)
+local function firstCollisionAllPairs(poly, n)
+    for i = 1, n, 2 do
+        local nextEdge = ((i + 2 - 1) % n) + 1
+        for j = 1, n, 2 do
+            if j ~= i and j ~= nextEdge then
+                local hit = crossing(poly, n, i, j)
+                if hit then return hit end
+            end
+        end
+    end
+end
+
+local function firstCollisionLua(poly)
     local n = #poly
+    if n % 2 == 1 and n > 1 then error('polygon with an odd number of coordinates') end
+    local m = n / 2
+    for i = 1, n, 2 do
+        local j = i + 2
+        if j > n then j = 1 end
+        local x0, x1, y0, y1 = poly[i], poly[j], poly[i + 1], poly[j + 1]
+        if x0 ~= x0 or y0 ~= y0 then return firstCollisionAllPairs(poly, n) end
+        if x0 > x1 then x0, x1 = x1, x0 end
+        if y0 > y1 then y0, y1 = y1, y0 end
+        boxX0[i], boxX1[i], boxY0[i], boxY1[i] = x0 - BOX_PAD, x1 + BOX_PAD, y0 - BOX_PAD, y1 + BOX_PAD
+        byX[(i + 1) / 2] = i
+    end
+    for k = m + 1, #byX do byX[k] = nil end
+    table.sort(byX, byX0)
 
-    for outeri = 1, n, 2 do
-        local ax, ay = poly[outeri], poly[outeri + 1]
-        local ni = outeri + 2
-        if ni > n then ni = 1 end
-        local bx, by = poly[ni], poly[ni + 1]
-
-        for inneri = 1, n, 2 do
-            -- Skip adjacent edges
-            if inneri ~= outeri and inneri ~= ((outeri + 2 - 1) % n) + 1 then
-                local cx, cy = poly[inneri], poly[inneri + 1]
-                local ni_inner = inneri + 2
-                if ni_inner > n then ni_inner = 1 end
-                local dx, dy = poly[ni_inner], poly[ni_inner + 1]
-
-                local ix, iy = getLineIntersection(ax, ay, bx, by, cx, cy, dx, dy)
-                if ix and iy then
-                    -- Avoid adding shared vertices as intersections
-                    if not ((ax == cx and ay == cy) or (ax == dx and ay == dy) or
-                            (bx == cx and by == cy) or (bx == dx and by == dy)) then
-                        local collision = { i1 = outeri, i2 = inneri, x = ix, y = iy }
-                        -- Check for duplicate collisions
-                        local duplicate = false
-                        for _, existing in ipairs(collisions) do
-                            if (existing.i1 == collision.i2 and existing.i2 == collision.i1) then
-                                duplicate = true
-                                break
-                            end
-                        end
-                        if not duplicate then
-                            table.insert(collisions, collision)
-                        end
-                    end
+    -- the edge pairs whose boxes overlap, both ways round, as one number each (outer, then inner)
+    local np, key = 0, n + 1
+    for p = 1, m do
+        local a = byX[p]
+        local ax1, ay0, ay1 = boxX1[a], boxY0[a], boxY1[a]
+        local aNext = a + 2
+        if aNext > n then aNext = 1 end
+        for q = p + 1, m do
+            local b = byX[q]
+            if boxX0[b] > ax1 then break end
+            -- adjacent edges never count: the next one is skipped, the one before meets at an equal vertex
+            if b ~= aNext and boxY0[b] <= ay1 and ay0 <= boxY1[b] then
+                local bNext = b + 2
+                if bNext > n then bNext = 1 end
+                if a ~= bNext then
+                    pairs_[np + 1], pairs_[np + 2] = a * key + b, b * key + a
+                    np = np + 2
                 end
             end
         end
     end
-
-    return collisions
+    for k = np + 1, #pairs_ do pairs_[k] = nil end
+    table.sort(pairs_)
+    for k = 1, np do
+        local i = math.floor(pairs_[k] / key)
+        local hit = crossing(poly, n, i, pairs_[k] - i * key)
+        if hit then return hit end
+    end
+    return nil
 end
+lib.firstCollisionLua = firstCollisionLua
 
 local function tableConcat(t1, t2)
     for i = 1, #t2 do
@@ -123,17 +169,16 @@ function lib.triangulateToIndices(polyVerts, tol)
     return indices
 end
 
+lib.firstCollision = firstCollisionLua
+
 function lib.decompose(poly, result)
     result = result or {}
-    local intersections = getCollisions(poly)
+    local intersection = lib.firstCollision(poly)
 
-    if #intersections == 0 then
+    if not intersection then
         tableConcat(result, { poly })
         return result
     end
-
-    -- Process only the first intersection to avoid redundant splits
-    local intersection = intersections[1]
 
     local p1, p2 = lib.splitPoly(poly, intersection)
 
