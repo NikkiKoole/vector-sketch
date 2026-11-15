@@ -4,9 +4,11 @@
 -- The shader bends what's behind the water, so while a scene has any LIQUID the frame is drawn into a canvas:
 --   drawStart  before anything is drawn (the sky, backdrops, walls, bodies all land in the canvas);
 --              liquid.draw hands each water over (state.liquidDrawHook) at its own place in the draw order,
---              and it's drawn there: at the frame's first water what's drawn so far is copied (one copy a
---              frame), and the water bends that copy; what's drawn after it (a Mipo in front of the bath)
---              comes over the water (Nikki 2026-11-15, EM3: it was drawn over everything at the end, so a
+--              and it's drawn there: what's drawn so far is copied (a copy per water: one a frame showed a
+--              bath in front of the Mipos a copy from before them, taken at a back-layer bath, and painted
+--              over the feet of a Mipo sitting in it), and the water bends that copy; what's drawn after
+--              it (a Mipo in front of the bath) comes over the water (Nikki 2026-11-15, EM3: it was drawn
+--              over everything at the end, so a
 --              Mipo in front of a bath was seen through its water)
 --   drawEnd    after the scene script's draw: the canvas onto the real target
 -- A scene without water costs nothing. A scene that draws its own water (seaside sets its own hook) is left
@@ -29,8 +31,7 @@ local function frame()
 end
 
 local canvas, behind
--- what's behind the first water this frame: the canvas so far, copied (the shader reads it while the water
--- is drawn into the canvas)
+-- what's behind a water: the canvas so far, copied (the shader reads it while the water is drawn into the canvas)
 local function behindFor(w, h)
     if not behind or behind:getWidth() ~= w or behind:getHeight() ~= h then
         if behind then behind:release() end
@@ -59,7 +60,6 @@ function lib.drawStart()
         return
     end
     state.liquidDrawHook = f.hook
-    f.snapped = false
     f.previous = love.graphics.getCanvas()
     love.graphics.setCanvas({ canvasFor(love.graphics.getDimensions()), stencil = true })
     love.graphics.clear(0, 0, 0, 0)
@@ -88,8 +88,7 @@ function lib.drawWater(water)
     if not f.on then return end
     local target = love.graphics.getCanvas()
     if target ~= canvas then return end -- another pass (the shadows' outlines): no water there
-    if not f.snapped then
-        f.snapped = true
+    do
         local copy = behindFor(canvas:getDimensions())
         love.graphics.push('all')
         love.graphics.origin()
