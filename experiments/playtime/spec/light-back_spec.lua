@@ -88,4 +88,29 @@ describe('a back light', function()
         assert.is_true(leftGain > rightGain * 2 + 0.02, string.format('left %.3f, right %.3f', leftGain, rightGain))
         assert.is_true(math.abs(middleGain) < 0.02, string.format('middle changed by %.3f', middleGain))
     end)
+
+    -- LS15: on a drawn picture the edge it measures is the black outline; the ink stays black, the
+    -- colour just inside it glows
+    it('leaves the black outline black', function()
+        local before = draw(state.physicsWorld)
+        local holder = objectManager.addThing('rectangle', { x = 400, y = 400, width = 10, height = 10, bodyType = 'static' })
+        local light = fixtures.createSFixture(holder.body, 0, 0, subtypes.LIGHT, { radius = 10 })
+        local le = light:getUserData().extra
+        le.lightType, le.colorHex, le.intensity, le.rimWidth = 'back', 'ffffffff', 3, 0.1
+        holder.body:setAngle(0)
+        local after = draw(state.physicsWorld)
+        local left = edges(after)
+        local ink, inkN = 0, 0
+        for y = 100, 200 do
+            for x = left, left + 30 do
+                local r, g, b, a = before:getPixel(x, y)
+                if a > 0.9 and math.max(r, g, b) < 0.03 then
+                    local r2, g2, b2 = after:getPixel(x, y)
+                    ink, inkN = ink + math.max(r2, g2, b2), inkN + 1
+                end
+            end
+        end
+        assert.is_true(inkN > 20, 'found the outline: ' .. inkN .. ' pixels')
+        assert.is_true(ink / inkN < 0.05, string.format('the outline went to %.3f', ink / inkN))
+    end)
 end)

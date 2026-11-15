@@ -183,9 +183,15 @@ local plasticineShader = love.graphics.newShader([[
                         // its own narrow edge: the picture's alpha just around (the form's measure
                         // reaches far in), small see-through gaps (fur) not counted
                         float rr = lightRange[i]; // a back light's width (extra.rimWidth)
-                        float near = (Texel(tex, uv + vec2(rr, 0.0)).a + Texel(tex, uv - vec2(rr, 0.0)).a
-                            + Texel(tex, uv + vec2(0.0, rr)).a + Texel(tex, uv - vec2(0.0, rr)).a) * 0.25;
+                        // A drawn outline counts as outside (LIGHT-AND-SHADOW LS15): the edge is where the
+                        // colour starts, so the glow lands just inside the ink, and the ink stays black
+                        vec4 sR = Texel(tex, uv + vec2(rr, 0.0)), sL = Texel(tex, uv - vec2(rr, 0.0));
+                        vec4 sU = Texel(tex, uv + vec2(0.0, rr)), sD = Texel(tex, uv - vec2(0.0, rr));
+                        vec4 colour = smoothstep(0.06, 0.2, vec4(max(sR.r, max(sR.g, sR.b)),
+                            max(sL.r, max(sL.g, sL.b)), max(sU.r, max(sU.g, sU.b)), max(sD.r, max(sD.g, sD.b))));
+                        float near = dot(vec4(sR.a, sL.a, sU.a, sD.a) * colour, vec4(0.25));
                         float edge = smoothstep(0.15, 0.6, 1.0 - near);
+                        edge *= smoothstep(0.06, 0.2, max(base.r, max(base.g, base.b)));
                         totalSpec += lightColor[i] * edge * facing * lightIntensity[i] * 0.3;
                         continue;
                     }
@@ -483,9 +489,15 @@ local hairsShader = love.graphics.newShader([[
                         // its own narrow edge: the picture's alpha just around (the form's measure
                         // reaches far in), small see-through gaps (fur) not counted
                         float rr = lightRange[i]; // a back light's width (extra.rimWidth)
-                        float near = (Texel(tex, uv + vec2(rr, 0.0)).a + Texel(tex, uv - vec2(rr, 0.0)).a
-                            + Texel(tex, uv + vec2(0.0, rr)).a + Texel(tex, uv - vec2(0.0, rr)).a) * 0.25;
+                        // A drawn outline counts as outside (LIGHT-AND-SHADOW LS15): the edge is where the
+                        // colour starts, so the glow lands just inside the ink, and the ink stays black
+                        vec4 sR = Texel(tex, uv + vec2(rr, 0.0)), sL = Texel(tex, uv - vec2(rr, 0.0));
+                        vec4 sU = Texel(tex, uv + vec2(0.0, rr)), sD = Texel(tex, uv - vec2(0.0, rr));
+                        vec4 colour = smoothstep(0.06, 0.2, vec4(max(sR.r, max(sR.g, sR.b)),
+                            max(sL.r, max(sL.g, sL.b)), max(sU.r, max(sU.g, sU.b)), max(sD.r, max(sD.g, sD.b))));
+                        float near = dot(vec4(sR.a, sL.a, sU.a, sD.a) * colour, vec4(0.25));
                         float edge = smoothstep(0.15, 0.6, 1.0 - near);
+                        edge *= smoothstep(0.06, 0.2, max(base.r, max(base.g, base.b)));
                         totalSpec += lightColor[i] * edge * facing * lightIntensity[i] * 0.3;
                         continue;
                     }
