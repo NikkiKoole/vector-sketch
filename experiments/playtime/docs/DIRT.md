@@ -98,4 +98,10 @@ the plasticine shader. It doesn't stick to a limb. This one does, per part.
   (dirtLook.fillDrawn) and the drips and prints (state.dirtOnPart); scene scripts get `dirtLook` in their
   environment. Wetness without dirt stays wet.lua's (the dirt shader shows wet only where there's dirt). Seen in
   dirty, and in layerhouse at the full light level: a muddy Mipo with its clay light kept above the mud line.
+- [x] D11. Wet in clean water with a waterline (2026-11-16, Nikki: "we want that waterline yes", then "the simpler
+  system had a more 'wet shader feel'"). Clean water makes masks too and writes their wet channel; the light shader
+  reads a part's wet mask (src/render/shaders.lua wetMap, from dirt-look wetMapFor), so wet.lua's look (darker by
+  material, a highlight from the scene's lights) is where the mask says: the waterline stays where the water was.
+  A part the light shader doesn't draw (the light off) gets the overlay's flatter wet (darker, a soft sheen).
+  wet.soak (whole parts, from liquid.floatIn) is gone; wet.lua keeps rain spots and the pour's splashes.
 - [ ] D10. Prints and drips in the engine (paint-marks.lua still the dirty scene's), and the sponge as a tool.

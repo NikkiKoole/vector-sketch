@@ -202,18 +202,21 @@ uniform float grainSize;
 uniform float seed;
 #ifdef OVERLAY
 uniform vec3 light;
+uniform float wetOnlyLook; // 1: show wet without mud here; 0: the light shader does (a lit part: src/render/shaders)
 #endif
 vec4 effect(vec4 color, Image tex, vec2 uv, vec2 sc) {
     vec4 t = Texel(tex, uv) * color;
     vec4 m = Texel(dirtMask, mUV);
     float d = m.a;
+    vec4 wm = Texel(wetMask, mUV);
+    float w = wm.r;
 #ifdef OVERLAY
-    if (d < 0.004 || t.a < 0.004) discard;
+    // the overlay also shows a part that's only wet (clean water: its waterline stays where the water was)
+    if (t.a < 0.004 || (d < 0.004 && w < 0.004)) discard;
+    d = max(d, 0.0001); // (only wet: no mud, the divisions below kept finite)
 #else
     if (d < 0.004 || t.a < 0.004) return t;
 #endif
-    vec4 wm = Texel(wetMask, mUV);
-    float w = wm.r;
     float pt = clamp(wm.g / d, 0.0, 1.0);             // how much of it is paint
     vec3 pigment = exp(-m.rgb / d * absorbScale);
     vec2 p = uv * grainSize + seed;
@@ -246,9 +249,14 @@ vec4 effect(vec4 color, Image tex, vec2 uv, vec2 sc) {
     float gloss = smoothstep(0.55, 0.9, vnoise(p * 0.25 + 41.0)) * 0.9;
     col += shine * w * cover * mix(glint, gloss, pt) * 0.35;
 #ifdef OVERLAY
-    // only the mud, its coverage as alpha, over the part as the engine drew it; in the hour's light
+    // Over the part as the engine drew it, premultiplied (src/dirt-look.lua drawOverlay): the mud with its
+    // coverage, and where there's no mud but it's wet, darker and a soft sheen (wet.lua's look, but stuck to the
+    // part: the waterline where the water was). In the hour's light.
+    float k = clamp(cover * strength, 0.0, 1.0) * t.a;
     vec3 over = mud + shine * w * mix(glint, gloss, pt) * 0.35;
-    return vec4(clamp(over * light, 0.0, 1.0), clamp(cover * strength, 0.0, 1.0) * t.a);
+    float wetOnly = w * (1.0 - k) * t.a * wetOnlyLook;
+    vec3 sheen = vec3(1.0, 0.98, 0.94) * shine * wetOnly * (0.15 + 0.45 * mix(glint, gloss, 0.6)) * 0.3;
+    return vec4(clamp(over * light, 0.0, 1.0) * k + sheen * light, k + 0.38 * wetOnly);
 #else
     return vec4(clamp(col, 0.0, 1.0), t.a);
 #endif
@@ -501,7 +509,7 @@ local function soakAndWash(m, bx, by, r, frame, run, make)
     local near = r * NEAR
     for _, w in ipairs(frame.liquids) do
         if bx + near > w.x1 and bx - near < w.x2 and by + near > w.level and by - near < w.y2 then
-            m = m or make(w.kind ~= 'clean')
+            m = m or make(true) -- (clean water too: it wets, and the waterline stays on the part)
             -- its turn? (a new mask paints at once)
             local due = true
             if m then
@@ -722,12 +730,18 @@ function lib.drawOverlay(d, draw, m)
     local outlines = state.drawingOutlines
     state.drawingOutlines = true -- (draw(d) with no shader of the engine's own: the overlay's)
     love.graphics.setShader(overlayShader)
+    love.graphics.setBlendMode('alpha', 'premultiplied') -- (darker where wet, and light added: one pass)
     sendLook(overlayShader, m)
     local h = state.hourLight
     overlayShader:send('light', { h and h[1] or 1, h and h[2] or 1, h and h[3] or 1 })
+    -- a lit part shows its wet itself, nicer (darker by material, a highlight from the scene's lights: the light
+    -- shader reads the mask, lib.wetMapFor); the overlay's flat wet only where the part isn't lit
+    local extra = d.extra
+    overlayShader:send('wetOnlyLook', (extra and (extra.plasticine or extra.material)) and 0 or 1)
     local ok, err = pcall(draw, d)
     if not ok then data().lastError = tostring(err) end
     love.graphics.setShader()
+    love.graphics.setBlendMode('alpha')
     state.drawingOutlines = outlines
 end
 
@@ -740,6 +754,14 @@ function lib.afterDraw(d, draw)
     if fill and fill.frames > 0 then lib.fillMask(maskOf(d, true), fill[1], fill[2]) end
     local m = maskOf(d, false)
     if m then lib.drawOverlay(d, draw, m) end
+end
+
+-- a part's wet mask for the light shader (src/render/shaders.lua: wet where the mask says, its waterline), or nil
+function lib.wetMapFor(extra)
+    if state.dirtOff then return nil end
+    local key = extra and stableKeys[extra]
+    local m = key and data().masks[key]
+    return m and m.wetT > 0 and m.wet or nil
 end
 
 -- the head hair (src/hair-locks.lua's state.hairWrap, unless a scene sets its own)

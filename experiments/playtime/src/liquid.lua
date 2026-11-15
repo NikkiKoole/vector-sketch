@@ -660,8 +660,7 @@ function lib.floatIn(extra, container, dt)
             end
         end
         local share = totalArea > 0 and wetArea / totalArea or 0
-        -- a part in the water gets soaked, and dries once it's out (src/wet.lua; Nikki 2026-11-15)
-        if share > 0.05 then require('src.wet').soak(body, math.min(1, share * 2)) end
+        -- (wet in the water: src/dirt-look.lua's masks, a waterline on each part; was wet.soak, whole parts)
         if share > 0 then
             local spin = body:getAngularVelocity() - container:getAngularVelocity()
             body:applyTorque(-body:getInertia() * spin * drag * 0.8 * share)
@@ -691,6 +690,10 @@ function lib.update(paused)
             local ud = fixture:getUserData()
             if type(ud) == 'table' and subtypes.is(ud, subtypes.LIQUID) then
                 local spilled = lib.spill(ud.extra, fixture:getBody())
+                -- a drinker at the rim takes what spills first, and hands back what it doesn't drink
+                -- (the food spike's Mipos, FOOD-IN-FOOD-OUT FO1)
+                local drink = state.liquidDrinkHook
+                if spilled > 0 and drink then spilled = drink(ud.extra, fixture:getBody(), spilled) or spilled end
                 -- a scene can catch what spills (the seaside spike pours it out as drops)
                 local hook = state.liquidSpillHook
                 if spilled > 0 and hook then hook(ud.extra, fixture:getBody(), spilled) end

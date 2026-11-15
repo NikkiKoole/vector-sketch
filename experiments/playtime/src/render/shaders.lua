@@ -62,6 +62,8 @@ local plasticineShader = love.graphics.newShader([[
     #define MAX_WET 12
     uniform int   wetCount;
     uniform vec4  wetSpot[MAX_WET];
+    uniform Image wetMap;         // the part's wet mask in its picture's space (src/dirt-look.lua): r = how wet,
+    uniform float useWetMap;      //   so the waterline stays on the part where the water reached
 
     // Passed from vertex shader: vertex position BEFORE the love.graphics transform.
     // For bodies drawn with draw(mesh, bx, by, ba) this is body-local space.
@@ -266,6 +268,7 @@ local plasticineShader = love.graphics.newShader([[
             float r = sp.z * sqrt(max(sp.w, 0.0));
             wet = max(wet, (1.0 - smoothstep(r * 0.7, r, length(fc - sp.xy))) * min(1.0, sp.w * 3.0));
         }
+        if (useWetMap > 0.5) wet = max(wet, Texel(wetMap, uv).r);
         vec3 Ld = length(Lmain) > 0.001 ? normalize(Lmain) : normalize(vec3(-0.7, -0.7, lightZ));
         vec3 Lc = (useLighting > 0.5 && lightCount > 0) ? tint : vec3(1.0);
 
@@ -751,6 +754,10 @@ local function setSurfaceShader(extra, body, at) -- at: { x, y } world, for a pa
         local wetCount, wetSpots = wet.shaderSpots(body, at)
         send(sh, 'wetCount', wetCount)
         if wetCount > 0 then sh:send('wetSpot', unpack(wetSpots)) end
+        -- and its wet mask (a Mipo part dipped in water: src/dirt-look.lua), the waterline where the water was
+        local wetMap = require('src.dirt-look').wetMapFor(extra)
+        if wetMap then send(sh, 'wetMap', wetMap) end
+        send(sh, 'useWetMap', wetMap and 1 or 0)
         -- formMapImage: a roundness map handed in (the material picker's swatch ball)
         local formMap = extra.formMapImage
             or (extra.plasticineFormBaked and formBake.map(extra, extra.plasticineFormRise))
