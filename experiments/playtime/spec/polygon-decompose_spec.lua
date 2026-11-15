@@ -1,8 +1,9 @@
 -- spec/polygon-decompose_spec.lua
 -- The careful triangulation (shapes.makeTrianglesFromPolygon: decompose a self-crossing polygon, then
 -- love.math.triangulate each piece) got quicker: polygon-ops' first crossing stops at the first one and
--- skips edge pairs whose boxes are apart, and runs in C when native/desound/polydecomp.c is built in.
--- Each must give the same pieces as the old getCollisions + decompose, kept here as the reference, over
+-- tries only edge pairs whose boxes overlap (a sweep over x). A native version, if one is added as
+-- polygonOps.firstCollisionNative, is checked here too. Each must give the same pieces as the old
+-- getCollisions + decompose, kept here as the reference, over
 -- mouths (src/render/mouth.lua polygonOf, crossing lips included), simple, concave and self-crossing
 -- polygons, near-duplicate points and collinear edges. Prints the timings.
 -- Run with: love . --specs spec/polygon-decompose_spec.lua

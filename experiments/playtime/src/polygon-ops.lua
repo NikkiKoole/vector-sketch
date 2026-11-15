@@ -33,8 +33,8 @@ end
 -- skipped. Was getCollisions, which tried every pair and found every crossing, where decompose took
 -- only the first (2 ms for a 100-point mouth on the Mac, 10 on the phone). Now only edge pairs whose
 -- boxes overlap are tried (a sweep over the edges sorted by x), in that same order, with the same
--- intersection maths: the same answer (spec/polygon-decompose_spec.lua). When native/desound/
--- polydecomp.c is there the same runs in C (lib.firstCollisionNative).
+-- intersection maths: the same answer (spec/polygon-decompose_spec.lua). Not in C: with this, a
+-- crossed mouth's decompose is ~0.2 ms on the phone, near love.math.triangulate's own cost.
 local boxX0, boxX1, boxY0, boxY1 = {}, {}, {}, {} -- per edge, reused (decompose is done with them before it recurses)
 local byX, pairs_ = {}, {}
 local BOX_PAD = 1e-6 -- px: a box rejects only a pair clearly apart, never one rounding could call touching
