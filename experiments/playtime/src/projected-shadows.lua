@@ -302,9 +302,22 @@ local function pictureDepth(body)
     end
     return z
 end
+-- the ground found this frame: the light and shadows only on it (a lamp's glow went on below it, onto the sky)
+local frontGround
+local function groundShape()
+    if not frontGround or frontGround:isDestroyed() then return end
+    for _, fixture in ipairs(frontGround:getFixtures()) do
+        local shape = fixture:getShape()
+        if not fixture:isSensor() and shape:getType() == 'polygon' then
+            love.graphics.polygon('fill', frontGround:getWorldPoints(shape:getPoints()))
+        end
+    end
+end
 local function drawFrontSplit()
     local settings = state.projectedShadows
-    if settings and settings.front then lib.drawFront(state.physicsWorld, settings.front) end
+    if settings and settings.front then
+        lib.drawFront(state.physicsWorld, frontGround and groundShape or settings.front)
+    end
 end
 function lib.splits(add)
     local settings = state.projectedShadows
@@ -321,6 +334,7 @@ function lib.splits(add)
     groundHit = nil
     world:rayCast(x, standY - 40, x, standY + 400, onGroundHit)
     local z = groundHit and pictureDepth(groundHit)
+    frontGround = groundHit
     if z then add(z + 0.0004, drawFrontSplit) end
 end
 
