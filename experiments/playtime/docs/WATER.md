@@ -74,7 +74,7 @@ pools. Static bodies would be stamped into the grid as rock.
     table with two cups, a bath on the floor, and one Mipo (copied from dollhouse).
   - Specs: `spec/liquid_spec.lua`. The pure part covers area, clip, level upright and tilted, and
     the cavity. The scene part loads the kitchen, lets the cups settle, tilts one, and draws.
-- [ ] **W2. Pouring.** Mark the cavity's opening (its top edge). When the level rises above the
+- [x] **W2. Pouring.** (2026-11-15 in the engine: src/pouring.lua, particle water into cups and baths, the rest soaks away) Mark the cavity's opening (its top edge). When the level rises above the
   opening's lowest point, the extra amount leaves from there as a stream of simple drops (no
   Box2D bodies). A drop landing in another cavity adds to its amount; one landing on the floor
   splashes and fades. Open: lost, or puddles you can mop up?

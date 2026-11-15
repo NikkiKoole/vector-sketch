@@ -17,6 +17,14 @@ local lib = {}
 
 lib.list = {
     {
+        -- water poured out of cups: the spills as particle water, into other cups or soaking away
+        -- (src/pouring.lua; drawn by src/water-look.lua)
+        name = 'pouring',
+        module = 'src.pouring',
+        update = function(m, dt) m.update(dt) end,
+        unload = function(m) m.unload() end,
+    },
+    {
         -- the 3D shadows of a light behind the things (the moon from behind) on the ground in front of them
         -- (src/projected-shadows.lua)
         name = 'front shadows',

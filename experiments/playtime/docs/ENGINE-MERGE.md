@@ -173,7 +173,12 @@ The landing order, what bites what, and Nikki's keep / spike choices of 2026-11-
   sends them, src/render/water-shader.lua uses them): what's seen through takes the tint, murky water hides it
   under its colour, more with depth; 'clear water' takes both off (none: clear as before, and seaside, which
   doesn't send them, is as before). A muddy bath (brown, 0.85) and a blue pool (0.15) in layerhouse.
-  Left for EM3: pouring outside seaside, the sea.
+  Pouring in any scene (src/pouring.lua, an engine system; WATER W2): what spills over a rim leaves as particle
+  water (src/fluid.lua, colliding with the bodies) at most FLOW a second, the rest stays in; points landing in a
+  cup or a bath join its water, still ones soak away; drawn as one stream bending what's behind (the stream
+  shader into src/render/water-shader.lua; seaside keeps its own copy and its own hook). A tipped cup emptied
+  into a bath in layerhouse (0.58 -> 0.63). spec/pouring_spec.lua.
+  Left for EM3: the sea.
 - [ ] **EM4. Garden critters**, once the shelf and 🎲 exist (EDITOR-ARRANGE EA2-EA4).
 - [ ] **EM5. The cheap shared bits**, any time, each checked by a scene snapshot before/after:
   a `mipoKit` (spawn / alive / isAlive) for the scene scripts, `mathutils.clamp` instead of the copies,

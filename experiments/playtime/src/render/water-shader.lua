@@ -215,4 +215,48 @@ function lib.drawThin(list)
     end
 end
 
+-- Poured water (src/pouring.lua; after seaside's, which keeps its own copy): soft blobs added up in a field canvas,
+-- shown as water where the field is over the line; its slope bends what's behind it, a bright edge, a highlight.
+local streamShader, blobImage
+lib.BLOB = 2.4 -- a drop's blob reaches this many radii, so neighbours run together
+function lib.streamShader()
+    streamShader = streamShader or love.graphics.newShader([[
+extern Image scene;
+extern Image field;
+vec4 effect(vec4 color, Image tex, vec2 tc, vec2 sc) {
+    vec2 ss = love_ScreenSize.xy;
+    vec2 uv = sc / ss;
+    float f = Texel(field, uv).r;
+    if (f < 0.3) discard;
+    vec2 d = 2.0 / ss;
+    vec2 n = vec2(Texel(field, uv + vec2(d.x, 0.0)).r - Texel(field, uv - vec2(d.x, 0.0)).r,
+                  Texel(field, uv + vec2(0.0, d.y)).r - Texel(field, uv - vec2(0.0, d.y)).r);
+    float thick = smoothstep(0.3, 1.0, f);
+    vec3 c = Texel(scene, uv - n * 6.0 * (1.0 - thick * 0.5)).rgb;
+    c = c * vec3(0.86, 0.95, 0.98) + vec3(0.03, 0.08, 0.10) * thick;
+    float edge = 1.0 - smoothstep(0.3, 0.5, f);
+    c = mix(c, vec3(0.88, 0.97, 1.0), edge * 0.75);
+    vec3 N = normalize(vec3(-n * 3.0, 0.35));
+    float hi = pow(max(dot(N, normalize(vec3(-0.5, -0.6, 0.6))), 0.0), 18.0);
+    c += vec3(1.0, 0.98, 0.92) * hi * 0.8;
+    return vec4(c, smoothstep(0.3, 0.36, f));
+}
+]])
+    return streamShader
+end
+function lib.blobImage()
+    if not blobImage then
+        local size = 64
+        local data = love.image.newImageData(size, size)
+        data:mapPixel(function(x, y)
+            local dx, dy = (x + 0.5) / size * 2 - 1, (y + 0.5) / size * 2 - 1
+            local v = math.max(0, 1 - (dx * dx + dy * dy))
+            v = v * v
+            return v, v, v, v
+        end)
+        blobImage = love.graphics.newImage(data)
+    end
+    return blobImage
+end
+
 return lib

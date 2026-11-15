@@ -132,6 +132,7 @@ function lib.drawEnd()
     love.graphics.draw(canvas, 0, 0)
     love.graphics.setBlendMode('alpha')
     love.graphics.pop()
+    require('src.pouring').draw(canvas) -- water poured out of cups, over the frame (src/pouring.lua)
 end
 
 return lib
