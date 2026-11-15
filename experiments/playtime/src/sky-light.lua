@@ -55,24 +55,32 @@ local function mix(a, b, t)
     return out
 end
 
--- the look at an hour (0..24), blended between its two keyframes
-function lib.lookAt(hour)
+-- the two looks around an hour (0..24) and how far from the first to the second (eased): a scene with
+-- looks of its own (light-grass-check's lamps) blends them on the same timeline
+function lib.timelineAt(hour)
     hour = hour % 24
     for i = 1, #TIMELINE - 1 do
         local h0, h1 = TIMELINE[i][1], TIMELINE[i + 1][1]
         if hour >= h0 and hour <= h1 then
             local t = h1 > h0 and (hour - h0) / (h1 - h0) or 0
-            t = t * t * (3 - 2 * t)
-            return mix(LOOKS[TIMELINE[i][2]], LOOKS[TIMELINE[i + 1][2]], t)
+            return TIMELINE[i][2], TIMELINE[i + 1][2], t * t * (3 - 2 * t)
         end
     end
-    return LOOKS.night
+    return 'night', 'night', 0
+end
+
+-- the look at an hour (0..24), blended between its two keyframes (a new table)
+function lib.lookAt(hour)
+    local a, b, t = lib.timelineAt(hour)
+    return mix(LOOKS[a], LOOKS[b], t)
 end
 
 -- where the sun and the moon are on their arcs (0 rising on the left, pi setting on the right)
--- the sun 6:00-20:00, the moon 19:00-7:00
+-- the sun 6:00-20:00, left to right; the moon 19:00-7:00 the other way, right to left (Nikki 2026-11-15): it
+-- rises where the sun sets and sets where the sun rises, so at each handover both are on the same side and
+-- the shadows swing back and forth like a pendulum, day one way, night the other, never across the sky
 function lib.sunTheta(hour) return ((hour % 24) - 6) / 14 * math.pi end
-function lib.moonTheta(hour) return (((hour % 24) - 19) % 24) / 12 * math.pi end
+function lib.moonTheta(hour) return math.pi - (((hour % 24) - 19) % 24) / 12 * math.pi end
 
 -- on its arc at theta: the way to it (world, y down: up is -y), and how much it's up (0 at or below
 -- the horizon, 1 well up; it fades over about an hour and a half near the horizon)

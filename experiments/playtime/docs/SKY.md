@@ -43,6 +43,10 @@ time of day with the cycle").
   the sky gradient the same (day to 18:00, dusk 20:00, night 21:30), the dusk moon 0.3 (0.1 left a second
   dip). Sampled every 5 minutes: the back light's biggest step 0.14, the shadows' 0.09; 19:00-21:00 an
   orange back light 1.8-2.2 with shadows all the way.
+- [x] **SK2c. The moon the other way** (Nikki 2026-11-15: "it would be cool if the arc went opposite, so the moon
+  starts right side and goes left"). The moon rises where the sun sets and sets where it rises: at each
+  handover both are on the same side, so the shadows swing back and forth like a pendulum (by day right to
+  left, by night left to right) and never across the sky. Not the real moon's way; reads calm side-on.
 - [ ] **SK3. The light scene on the engine clock.** light-grass-check drops its own clock and day looks
   for SK1/SK2's; its lamps, festoon and panel extras stay.
 - [ ] **SK4. Space, as a scene option.** 'space above' in the sky section: the camera may climb (edge

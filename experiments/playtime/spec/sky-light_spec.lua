@@ -30,6 +30,19 @@ describe('the light at the hour', function()
         assert.is_true(skyLight.at(12).fade > skyLight.at(20.25).fade, 'darker shadows by day')
     end)
 
+    -- the moon goes the other way, right to left (Nikki 2026-11-15): at each handover both are on the same
+    -- side, so the shadows swing back and forth like a pendulum and never across the sky
+    it('turns the shadows smoothly through the handovers: sun and moon on the same side', function()
+        local prev = skyLight.at(0).cast
+        for minute = 1, 24 * 60 do
+            local cast = skyLight.at(minute / 60).cast
+            assert.is_true(math.abs(cast[1] - prev[1]) < 0.02, 'the shadows turned a lot at minute ' .. minute)
+            prev = cast
+        end
+        assert.is_true(skyLight.at(19.75).cast[1] > 0.9 and skyLight.at(20.5).cast[1] > 0.9, 'evening: both right')
+        assert.is_true(skyLight.at(6.25).cast[1] < -0.9 and skyLight.at(5.5).cast[1] < -0.9, 'morning: both left')
+    end)
+
     it('changes smoothly: no jump between two minutes anywhere in the day', function()
         local prev = skyLight.at(0)
         for minute = 1, 24 * 60 do
