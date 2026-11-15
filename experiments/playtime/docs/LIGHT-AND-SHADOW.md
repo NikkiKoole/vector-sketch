@@ -272,6 +272,10 @@ fade, a sun: the panel's `fades` switch, LS4).
   section's Mipos group: 'part shadows' 0..1 (0 off, saved with the scene); the facing scene at 0.6.
   `spec/part-shadows_spec.lua`. Costs a textured pass + a screen pass: bench the phone before it's on
   by default.
+  Fixed 2026-11-15 (Nikki: "bodyparts seem to render a sort of dropshadow per piece, that shadow part is
+  overlapping the grass where the feet and hands is in"): the grass isn't in the depth picture (it throws no
+  shadow), so a foot behind the front grass was still "there" and its shadow was drawn over the blades. The
+  front grass now writes itself as a cover (blue): nothing darkened where it is, and it throws nothing.
 - [ ] **LS21. Cloud shadows.** Clouds drifting over the ground and the wall (CLOUDS.md's spike: "near
   clouds cast shadows on the grass"), with the day-night light.
 - [x] **LS22. 3D shadows: along the floor and up the wall, hard.** Nikki (2026-11-06): "the next level of

@@ -23,9 +23,10 @@ local writer
 local function writerShader()
     writer = writer or love.graphics.newShader([[
         uniform vec2 order;
+        uniform float cover; // 1: covers what's behind, throws nothing (blue)
         vec4 effect(vec4 color, Image tex, vec2 uv, vec2 sc) {
             if (Texel(tex, uv).a * color.a < 0.5) discard;
-            return vec4(order.x, order.y, 0.0, 1.0);
+            return vec4(order.x, order.y, cover, 1.0);
         }
     ]])
     return writer
@@ -41,7 +42,7 @@ local function darkenerShader()
         float orderAt(vec4 p) { return p.r * 255.0 * 256.0 + p.g * 255.0; }
         vec4 effect(vec4 color, Image tex, vec2 uv, vec2 sc) {
             vec4 here = Texel(tex, uv);
-            if (here.a < 0.5) discard;
+            if (here.a < 0.5 || here.b > 0.5) discard; // nothing, or a cover (the grass in front)
             float mine = orderAt(here);
             vec2 side = vec2(-toLight.y, toLight.x) * 0.25;
             // each pixel's taps shifted by a little noise: the steps between taps blend into a soft, grainy edge
@@ -52,7 +53,7 @@ local function darkenerShader()
                 // a little to either side as well, every other tap: a softer edge
                 vec2 at = uv + toLight * t + side * (mod(float(i), 2.0) - 0.5) * t;
                 vec4 there = Texel(tex, at);
-                if (there.a > 0.5 && orderAt(there) > mine + 0.5) hit += 1.0 - 0.5 * t;
+                if (there.a > 0.5 && there.b < 0.5 && orderAt(there) > mine + 0.5) hit += 1.0 - 0.5 * t;
             }
             float amount = clamp(hit / (float(TAPS) * 0.6), 0.0, 1.0);
             if (amount <= 0.0) discard;
@@ -102,9 +103,14 @@ end
 local function drawOrder(world)
     local textured = require('src.physics.box2d-draw-textured')
     local shader = writerShader()
-    local rank, lastZ = 0, nil
+    local rank, lastZ, covering = 0, nil, nil
     local function only(_, drawable)
-        if not castsShadow(drawable) then return false end
+        -- the grass in front covers the feet and hands in it: written as a cover, or their shadows were drawn
+        -- over its blades (Nikki 2026-11-15: "that shadow part is overlapping the grass where the feet and
+        -- hands is in")
+        local cover = drawable and drawable.type == 'grass' and drawable.layer == 'front' and 1 or 0
+        if cover == 0 and not castsShadow(drawable) then return false end
+        if cover ~= covering then covering = cover shader:send('cover', cover) end
         local z = drawable and drawable.z or 0
         if z ~= lastZ then
             rank, lastZ = math.min(rank + 1, 65535), z
