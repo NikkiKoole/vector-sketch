@@ -40,7 +40,9 @@ describe('the light at the hour', function()
             assert.is_true(seen < 0.1, string.format('the shadows turned visibly at minute %d (%.3f)', minute, seen))
             prev = now
         end
-        assert.is_true(skyLight.at(19.8).fade < 0.1, 'soft at the evening handover')
+        assert.is_true(skyLight.at(20.4).fade < 0.1, 'soft at the evening handover')
+        -- the moon's shadows wait for the sky to go dark, not under a sunset still glowing
+        assert.is_true(skyLight.at(20.25).fade < 0.1 and skyLight.at(20.25).moon[4] > 0.2, 'the moon up, no shadows yet')
         assert.is_true(skyLight.at(21).fade > 0.4, 'the moon casts again')
     end)
 
