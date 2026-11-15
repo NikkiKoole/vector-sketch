@@ -165,8 +165,11 @@ The landing order, what bites what, and Nikki's keep / spike choices of 2026-11-
   of what's drawn before it (one copy a frame), so what comes after is over it; a bath's water in front of the
   Mipos only in the play layer (one you sit in), a back-layer bath's behind them and nothing floats in it but
   its own layer (DEPTH-LAYERS). Seen in layerhouse with two baths. Known: a plain body (no picture) in front of
-  a back bath still shows through the water: plain bodies are all drawn before any picture. Left for EM3: the
-  water's own colour, pouring outside seaside, the sea, the phone.
+  a back bath still shows through the water: plain bodies are all drawn before any picture. A copy per water
+  (one a frame painted an old copy over the feet of a Mipo in a front bath). The phone (iPhone SE 2,
+  layerhouse, play mode, paused, A-B-A, the water look on / off): 3 baths 4.6 / 4.7 ms draw, 10 baths on
+  screen 5.1-5.3 / 4.9-5.1, 60 fps steady throughout: the canvas, the copies and the shader cost ~0.1-0.2 ms.
+  Left for EM3: the water's own colour, pouring outside seaside, the sea.
 - [ ] **EM4. Garden critters**, once the shelf and 🎲 exist (EDITOR-ARRANGE EA2-EA4).
 - [ ] **EM5. The cheap shared bits**, any time, each checked by a scene snapshot before/after:
   a `mipoKit` (spawn / alive / isAlive) for the scene scripts, `mathutils.clamp` instead of the copies,
