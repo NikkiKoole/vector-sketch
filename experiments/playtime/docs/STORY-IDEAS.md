@@ -241,6 +241,15 @@ The four quickest, each its own scene in `scripts/spikes/`, not yet played by Ni
   sway a little. Other vintage toys listed then, not built: jumping jack, roly-poly, ladder tumbler, pecking
   chickens, woodpecker pole, Newton's cradle, pound-a-peg, corn popper, magnetic fishing.
 
+- **peckers** — parked (tried 2026-11-16; Nikki: "commit and park this game"). The pecking chickens paddle:
+  a wooden paddle with four painted hens facing out, a ball hanging under it; drag anywhere and the paddle
+  follows (kinematic), `a` swings it in circles by itself. The ball hangs on a rope joint from the middle of
+  the board; each hen's string runs head -> hole -> ball, and the string pulled through on the ball's side
+  (past a little give) drives that head's neck motor down: the hens away from the ball peck, with a wooden
+  tock; a run of pecks makes the two watching Mipos squeak. Tried first: each string a stiff spring between
+  head and ball by applyForce; it blew up (the heads too light for a spring that holds the ball). Open: the
+  heads don't pull back on the ball; side on it reads left/right more than round and round; not tried by hand.
+
 ## Quickest as a spike (2026-11-16)
 
 Closest to a one-verb toy: **the Enormous Turnip** (pull), **Humpty Dumpty** (fall, put back together),
