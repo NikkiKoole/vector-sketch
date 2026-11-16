@@ -61,6 +61,27 @@ candidate for app one (`APP-ONE.md` AO1).
 - **The kitchen** — Mipos baking cookies. food, an oven.
 - **Houses of the world** — stilt houses, igloos, windmills. fabuland parts per style.
 
+## Built as spikes (2026-11-16)
+
+The four quickest, each its own scene in `scripts/spikes/`, not yet played by Nikki by hand:
+
+- **turnip** — a chain of Mipos pulls; a Mipo dropped behind the last one grabs on with both hands. One or two
+  can't, three can (the count decides: Mipos in the chain + 0.7 for the kid's drag must reach `need` 2.8;
+  measured through the chain the pull depended on how well the random Mipos' feet gripped). Pop: a kick, a
+  camera shake, everyone tumbles, the turnip lies on the ground (Nikki: "when pulled should be on top of the
+  ground"). Open: the chain never lets go after the pop; the turnip and leaves are plain shapes.
+- **humpty** — a pear-bodied Mipo (rubberleg-pearbod) on a brick wall. A hard landing breaks the shoulder and
+  hip joints (recorded first); drag a piece within 170 of its pulsing socket and it clicks back on (the
+  engine's createJoint, same id). Open: a grey bar on loose limbs; `humpty-joints.lua` exists only because the
+  script env has no `joints`.
+- **mitten** — ~100 wool beads on springs, each pulled to its place in the mitten's shape, open at the cuff.
+  Five inside: "ah… ah… tchoo!", the mitten puffs, everyone flies out, it springs back. Open: the cuff (~600)
+  is lower than a Mipo (~660); the bulge barely shows; the camera starts too far left.
+- **floats** — a glass tub (`props.makeBath`, the engine's level water) and 11 things on a table: ball, cork,
+  duck, block, apple and ice float; egg sinks slowly, the sponge soaks and sinks, stone, key and coin drop.
+  Lift by displaced water per fixture (the engine's floatIn lifts by mass, so everything floated alike), a
+  splash and bubbles, a bloop. Open: the table and tub frame are plain grey; a Mipo can pin the cork.
+
 ## Quickest as a spike (2026-11-16)
 
 Closest to a one-verb toy: **the Enormous Turnip** (pull), **Humpty Dumpty** (fall, put back together),
