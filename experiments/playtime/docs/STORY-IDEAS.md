@@ -82,6 +82,14 @@ The four quickest, each its own scene in `scripts/spikes/`, not yet played by Ni
   Lift by displaced water per fixture (the engine's floatIn lifts by mass, so everything floated alike), a
   splash and bubbles, a bloop. Open: the table and tub frame are plain grey; a Mipo can pin the cork.
 
+- **belly** — the enormous animal (Nikki: "the mitten inspired me ... an enormous animal laying on the ground and
+  mipos can walk inside the animal (a bit like the whale)"). A sleeping whale on a beach as a picture-book
+  cutaway: Mipos walk in by themselves up the tongue (4.7°), a mouth cave with baleen, a stomach with ribs
+  behind a narrow throat. Its back is the mitten's springy beads; a 6 s breath swells it and rocks the floor.
+  Six inside: a shiver, then a hiccup (the jaw and eye open, a spout, "hup") throws them all onto the beach. The
+  animal is a data table (outline, floor, jaw, blowhole), so a bear or a cow is another table. Open: big Mipos
+  stop at the throat; the rocking is subtle; plain shapes, wants a drawing.
+
 ## Quickest as a spike (2026-11-16)
 
 Closest to a one-verb toy: **the Enormous Turnip** (pull), **Humpty Dumpty** (fall, put back together),
