@@ -33,7 +33,9 @@ local function st()
         shake = 0.6, crumbs = {}, clumps = {}, pending = {} }
     local c = state.digliveSpike
     -- the scoop (added after the first version: a hot reload keeps the old table)
-    if c.scoopBites == nil then c.scoopBites, c.resist, c.settle = 3, 1, 1.0 end
+    if c.scoopBites == nil then c.scoopBites, c.resist, c.settle = 12, 1, 1.0 end
+    if (c.scoopV or 1) < 2 then c.scoopBites, c.scoopV = 12, 2 end -- 3 was too little per stroke ("weak")
+    c.puffs = c.puffs or {}
     c.scoop = c.scoop or { carried = 0 }
     return c
 end
@@ -76,6 +78,82 @@ local function grid()
     return b.dens, cell, cols, rows, cols + 1
 end
 
+---------------------------------------------------------------- boards held against the earth
+
+-- A loose beam or block let go of against the earth sticks there (Nikki 2026-11-16: "things that help making
+-- straight walls, like a thing you can hold against it"): held still (kinematic) until a press pulls it off. While
+-- it's stuck the scoop doesn't dig past it (the earth behind it, seen from the scoop, is put back after a bite;
+-- the ring stops at its face) and dirt settling against it doesn't fill under it: dig along it or pour against it,
+-- take it away, and the wall is straight.
+local function stuckBoards()
+    local list = {}
+    for _, find in ipairs(st().finds or {}) do
+        if find.stuck and find.body and not find.body:isDestroyed() then list[#list + 1] = find end
+    end
+    return list
+end
+
+-- where a point is in a board's frame: along its length, across it
+local function boardFrame(find, x, y)
+    local body = find.body
+    local bx, by, a = body:getX(), body:getY(), body:getAngle()
+    local ux, uy = math.cos(a), math.sin(a)
+    local dx, dy = x - bx, y - by
+    return dx * ux + dy * uy, dx * -uy + dy * ux
+end
+
+-- the samples within r of (x, y) a stuck board keeps: under it, and (with fromX, fromY: where the scoop is) the
+-- ones on its far side; returned with their values, to be put back after a dig or a fill
+local function guardedSamples(x, y, r, fromX, fromY)
+    local boards = stuckBoards()
+    if #boards == 0 then return nil end
+    local dens, cell, cols, rows, sw = grid()
+    local i0, i1 = math.max(0, math.floor((x - r - X0) / cell)), math.min(cols, math.ceil((x + r - X0) / cell))
+    local j0, j1 = math.max(0, math.floor((y - r - Y0) / cell)), math.min(rows, math.ceil((y + r - Y0) / cell))
+    local kept = {}
+    for _, find in ipairs(boards) do
+        local hl, ht = find.w / 2 + 10, find.h / 2 + 10
+        local fromSide
+        if fromX then
+            local _, across = boardFrame(find, fromX, fromY)
+            fromSide = across >= 0 and 1 or -1
+        end
+        for j = j0, j1 do
+            for i = i0, i1 do
+                local px, py = X0 + i * cell, Y0 + j * cell
+                local along, across = boardFrame(find, px, py)
+                if math.abs(along) <= hl then
+                    local under = math.abs(across) <= ht
+                    local beyond = fromSide and (across >= 0 and 1 or -1) ~= fromSide
+                    if under or beyond then
+                        local k = j * sw + i + 1
+                        if kept[k] == nil then kept[k] = dens[k] end
+                    end
+                end
+            end
+        end
+    end
+    return kept
+end
+
+local function putBack(kept)
+    if not kept then return end
+    local dens = grid()
+    for k, v in pairs(kept) do dens[k] = v end
+end
+
+-- would the ring, going from (x0, y0) to (x1, y1), cross a stuck board (or end up inside one)?
+local function boardInTheWay(x0, y0, x1, y1, r)
+    for _, find in ipairs(stuckBoards()) do
+        local _, a0 = boardFrame(find, x0, y0)
+        local along1, a1 = boardFrame(find, x1, y1)
+        if math.abs(along1) <= find.w / 2 + r * 0.5 then
+            if (a0 >= 0) ~= (a1 >= 0) or math.abs(a1) < find.h / 2 then return true end
+        end
+    end
+    return false
+end
+
 ---------------------------------------------------------------- sounds (made here; copied from the mole spike)
 
 local sounds = {}
@@ -102,6 +180,11 @@ local function ensureSounds()
     makeSound('scrape', 0.09, function(_, u, prev)
         local v = prev * 0.92 + (love.math.random() * 2 - 1) * 0.12
         return v * math.sin(u * math.pi) * 1.6, v
+    end)
+    -- under each bite: a low thud, the earth giving way
+    makeSound('thud', 0.16, function(t, u)
+        local f = 95 - 45 * u
+        return math.sin(2 * math.pi * f * t) * (1 - u) ^ 2.5 * 0.9, 0
     end)
     -- a crust letting go: a low rumble
     makeSound('rumble', 0.5, function(_, u, prev)
@@ -190,7 +273,9 @@ local function settleClump(list, i)
     if body and not body:isDestroyed() then x, y = body:getPosition() end
     removeClump(list, i)
     if x then
+        local kept = guardedSamples(x, y, p.size * 1.05 + 60)
         earth.dig(x, y, x, y, true, p.size * 1.05)
+        putBack(kept)
         markLoose(x, y, p.size * 1.05)
         noteSettle(x, y, p.size * 2)
     end
@@ -244,7 +329,9 @@ local function fillPockets(c)
                 if #pocket <= POCKET_MAX then
                     for _, q in ipairs(pocket) do
                         local x, y = X0 + q[1] * cell, Y0 + q[2] * cell
+                        local kept = guardedSamples(x, y, cell * 2)
                         earth.dig(x, y, x, y, true, cell * 0.75)
+                        putBack(kept)
                         markLoose(x, y, cell * 0.5)
                     end
                 end
@@ -322,9 +409,9 @@ end
 
 -- how hard the earth is here: the ring's speed through it, seconds between bites, the crunch's pitch
 local MATERIALS = {
-    { below = 350, speed = 1800, bite = 0.07, pitch = 1.25 },       -- topsoil
-    { below = 1800, speed = 900, bite = 0.12, pitch = 0.95 },       -- clay
-    { below = math.huge, speed = 500, bite = 0.18, pitch = 0.7 },   -- deep ground
+    { below = 350, speed = 1800, bite = 0.06, pitch = 1.25 },       -- topsoil
+    { below = 1800, speed = 900, bite = 0.09, pitch = 0.95 },       -- clay
+    { below = math.huge, speed = 500, bite = 0.13, pitch = 0.7 },   -- deep ground
 }
 local LOOSE = { bite = 0.04, pitch = 1.5 } -- settled dirt: soft
 local function materialAt(x, y)
@@ -348,14 +435,36 @@ end
 
 local function capacity(r) return st().scoopBites * math.pi * r * r end
 
-local function bite(c, sc, m, r)
-    local frac = earthIn(sc.x, sc.y, r)
+-- Each bite lands (Nikki 2026-11-16: digging "really feels weak still"; too little per stroke, and no punch):
+-- a bite a bit bigger than the ring, chunks flung back toward the finger, a puff of dust, the ring kicking out,
+-- a small camera knock, and a thud under the crunch.
+local BITE_SIZE = 1.15  -- a bite's radius, times the ring's
+local function bite(c, sc, m, r, ux, uy)
+    local frac = earthIn(sc.x, sc.y, r * BITE_SIZE)
     if frac <= 0 then return false end
-    earth.dig(sc.x, sc.y, sc.x, sc.y, false, r)
-    sc.carried = math.min(capacity(r), sc.carried + frac * math.pi * r * r)
+    local rb = r * BITE_SIZE
+    local kept = guardedSamples(sc.x, sc.y, rb + 60, sc.backX or sc.x, sc.backY or sc.y)
+    earth.dig(sc.x, sc.y, sc.x, sc.y, false, rb)
+    putBack(kept)
+    sc.carried = math.min(capacity(r), sc.carried + frac * math.pi * rb * rb)
     sc.bites = (sc.bites or 0) + 1
-    crumbs(sc.x, sc.y, 3, 0.6)
-    play('crunch', m.pitch * (0.9 + love.math.random() * 0.2), 0.35 + frac * 0.4)
+    sc.kick = 1
+    crumbs(sc.x, sc.y, 4, 0.8)
+    -- chunks: thrown back the way the finger came, and up
+    local bx, by = -(ux or 0), -(uy or 1)
+    local list = c.crumbs
+    for _ = 1, 2 + math.floor(frac * 3) do
+        local a = math.atan2(by - 0.8, bx) + (love.math.random() - 0.5) * 1.2
+        local v = 450 + love.math.random() * 450
+        list[#list + 1] = { x = sc.x + (love.math.random() - 0.5) * rb, y = sc.y + (love.math.random() - 0.5) * rb,
+            vx = math.cos(a) * v, vy = math.sin(a) * v, r = 14 + love.math.random() * 16 * frac,
+            life = 0.45 + love.math.random() * 0.3, chunk = true,
+            color = CLUMP_COLORS[love.math.random(1, #CLUMP_COLORS)] }
+    end
+    c.puffs[#c.puffs + 1] = { x = sc.x, y = sc.y, r = rb, t = 0 }
+    camera.shake(math.min(40, 5 / math.max(0.05, cam:getScale())), 0.09)
+    play('crunch', m.pitch * (0.9 + love.math.random() * 0.2), 0.55 + frac * 0.45)
+    play('thud', m.pitch * (0.85 + love.math.random() * 0.2), 0.5 + frac * 0.5)
     -- where it dug is looked over for earth that can't hold
     local reg = c.region
     if reg then
@@ -391,6 +500,8 @@ local function pourTick(c)
     end
 end
 
+-- (Straight strokes that locked onto flat / upright / 45 degrees, with square bites: tried 2026-11-17, taken out:
+-- Nikki "i like the sticks i dont like the locking angles". The boards make straight walls.)
 local function scoopTick(c, dt, now)
     local sc = c.scoop
     local down = state.playMode and love.mouse.isDown(1)
@@ -404,11 +515,15 @@ local function scoopTick(c, dt, now)
         sc.active = nil
         startPour(c, sc)
     end
-    if not sc.active then return end
+    if not sc.active then
+        sc.press = nil
+        return
+    end
     local r = scoopRadius()
     local full = sc.carried >= capacity(r) * 0.999
     sc.biteIn = sc.biteIn - dt
-    -- the ring follows the finger: freely through air; into earth only a bite at a time (a step of 0.4 r every
+    sc.kick = math.max(0, (sc.kick or 0) - dt * 9)
+    -- the ring follows the finger: freely through air; into earth only a bite at a time (a step of 0.65 r every
     -- m.bite seconds: the harder the earth, the slower), and not at all once the scoop is full
     local mx, my = mouseWorldPos()
     local dx, dy = mx - sc.x, my - sc.y
@@ -416,20 +531,38 @@ local function scoopTick(c, dt, now)
     local canBite = not full and sc.biteIn <= 0
     if dist > 1 then
         local ux, uy = dx / dist, dy / dist
-        local step = math.min(dist, r * 0.4)
-        if earthIn(sc.x + ux * step, sc.y + uy * step, r) > 0.05 then
+        local step = math.min(dist, r * 0.65)
+        sc.backX, sc.backY = sc.x - ux * r, sc.y - uy * r -- the side it digs from (a board guards the other)
+        if boardInTheWay(sc.x, sc.y, sc.x + ux * step, sc.y + uy * step, r) then
+            sc.press = { ux = ux, uy = uy, amount = 1 } -- up against a board: it stops at its face
+        elseif earthIn(sc.x + ux * step, sc.y + uy * step, r) > 0.05 then
             if canBite then
                 sc.x, sc.y = sc.x + ux * step, sc.y + uy * step
                 local m = materialAt(sc.x, sc.y)
-                if bite(c, sc, m, r) then sc.biteIn = m.bite * c.resist end
+                if bite(c, sc, m, r, ux, uy) then
+                    sc.biteIn = m.bite * c.resist
+                    sc.biteTotal = sc.biteIn
+                end
+                sc.press = nil
+            else
+                -- pushing into the earth: the ring squashes against it until the next bite gives (full: it stays)
+                local amount = full and 1 or 1 - math.max(0, sc.biteIn) / math.max(0.001, sc.biteTotal or 0.1)
+                sc.press = { ux = ux, uy = uy, amount = amount }
             end
         else
             step = math.min(dist, 8000 * dt)
             sc.x, sc.y = sc.x + ux * step, sc.y + uy * step
+            sc.press = nil
         end
     elseif canBite and earthIn(sc.x, sc.y, r) > 0.05 then -- held still at an edge: it rubs a bit more off
         local m = materialAt(sc.x, sc.y)
-        if bite(c, sc, m, r) then sc.biteIn = m.bite * c.resist end
+        if bite(c, sc, m, r) then
+            sc.biteIn = m.bite * c.resist
+            sc.biteTotal = sc.biteIn
+        end
+        sc.press = nil
+    else
+        sc.press = nil
     end
     c.finger = { x = sc.x, y = sc.y, at = now }
 end
@@ -683,7 +816,7 @@ local function makePieceBody(find)
         fixture:setRestitution(0.05)
     end
     body:resetMassData()
-    if find.free then
+    if find.free and not find.stuck then
         body:setType('dynamic')
     else
         body:setType('kinematic')
@@ -784,7 +917,7 @@ local function piecesUpdate(c, now)
         local body = find.body
         if body and not body:isDestroyed() and find.free and now >= (find.checkAt or 0) then
             find.checkAt = now + 0.5
-            if sunk(find) then carveFootprint(find) end
+            if not find.stuck and sunk(find) then carveFootprint(find) end
         elseif body and not body:isDestroyed() and not find.free and now >= (find.checkAt or 0) then
             find.checkAt = now + 0.25
             if pieceHeld(find) < 0.35 then
@@ -840,6 +973,14 @@ local function drawPieces(c)
             love.graphics.setColor(0.2 * dim, 0.12 * dim, 0.06 * dim, 1)
             love.graphics.setLineWidth(5)
             love.graphics.rectangle('line', -hw, -hh, find.w, find.h, 8, 8)
+            if find.stuck then -- held against the earth: a pale edge and a peg at each end
+                love.graphics.setColor(1, 0.95, 0.8, 0.8)
+                love.graphics.setLineWidth(3)
+                love.graphics.rectangle('line', -hw + 6, -hh + 6, find.w - 12, find.h - 12, 5, 5)
+                local peg = math.min(hw, hh) * 0.35
+                love.graphics.circle('fill', -hw + math.max(peg, 20), 0, math.min(12, peg))
+                love.graphics.circle('fill', hw - math.max(peg, 20), 0, math.min(12, peg))
+            end
             love.graphics.pop()
         end
     end
@@ -920,6 +1061,56 @@ function s.onUnload()
     destroyPieces(st(), true) -- remade where they are at the next start
 end
 
+-- touching earth: a point just outside its outline, all round, in earth
+local function againstEarth(find)
+    local body = find.body
+    local hw, hh = find.w / 2 + 25, find.h / 2 + 25
+    for k = 0, 5 do
+        local t = (k + 0.5) / 6
+        for _, q in ipairs({ { -hw + 2 * hw * t, -hh }, { -hw + 2 * hw * t, hh }, { -hw, -hh + 2 * hh * t },
+            { hw, -hh + 2 * hh * t } }) do
+            if earth.earthAt(body:getWorldPoint(q[1], q[2])) > 0.5 then return true end
+        end
+    end
+    return false
+end
+
+local function findOfBody(body)
+    for _, find in ipairs(st().finds or {}) do
+        if find.body == body then return find end
+    end
+end
+
+function s.onReleased(things)
+    for _, thing in ipairs(things or {}) do
+        local find = thing and thing.body and findOfBody(thing.body)
+        if find and find.free and not find.stuck and againstEarth(find) then
+            find.stuck = true
+            local body = find.body
+            body:setType('kinematic')
+            body:setLinearVelocity(0, 0)
+            body:setAngularVelocity(0)
+            play('thud', 1.4, 0.7)
+            crumbs(body:getX(), body:getY(), 4, 0.3)
+        end
+    end
+end
+
+function s.onPressed(things)
+    for _, thing in ipairs(things or {}) do
+        local find = thing and thing.body and findOfBody(thing.body)
+        if find and find.stuck then
+            find.stuck = nil
+            local body = find.body
+            body:setType('dynamic')
+            body:setAwake(true)
+            local wx, wy = mouseWorldPos()
+            pointerGrab('mouse', body, wx, wy)
+            return
+        end
+    end
+end
+
 function s.onKeyPress(key)
     if not state.playMode then return end
     local c = st()
@@ -940,6 +1131,14 @@ function s.onKeyPress(key)
     end
 end
 
+local function puffsUpdate(c, dt)
+    for i = #c.puffs, 1, -1 do
+        local p = c.puffs[i]
+        p.t = p.t + dt
+        if p.t > 0.3 then table.remove(c.puffs, i) end
+    end
+end
+
 function s.update(dt)
     if not earth then return end
     local c = st()
@@ -952,9 +1151,10 @@ function s.update(dt)
     clumpsUpdate(dt)
     piecesUpdate(c, now)
     for _, inst in ipairs(mipos()) do answerTick(inst, now) end
+    puffsUpdate(c, dt)
     for i = #c.crumbs, 1, -1 do
         local p = c.crumbs[i]
-        p.vy = p.vy + 1800 * dt
+        p.vy = p.vy + (p.chunk and 2600 or 1800) * dt
         p.x, p.y = p.x + p.vx * dt, p.y + p.vy * dt
         p.life = p.life - dt
         if p.life <= 0 then table.remove(c.crumbs, i) end
@@ -1002,11 +1202,24 @@ local function drawScoop(c)
         love.graphics.setLineWidth(4)
         love.graphics.line(sc.x, sc.y, mx, my)
     end
-    love.graphics.setColor(1, full and 0.75 or 1, full and 0.6 or 1, 0.55)
-    love.graphics.setLineWidth(5)
-    love.graphics.circle('line', sc.x, sc.y, r)
+    local kick = sc.kick or 0
+    love.graphics.setColor(1, full and 0.75 or 1, full and 0.6 or 1, 0.55 + kick * 0.4)
+    love.graphics.setLineWidth(5 + kick * 6)
+    local press = sc.press
+    if press and press.amount > 0 then
+        -- squashed against the earth ahead, nudged into it
+        local amount = press.amount
+        love.graphics.push()
+        love.graphics.translate(sc.x + press.ux * r * 0.12 * amount, sc.y + press.uy * r * 0.12 * amount)
+        love.graphics.rotate(math.atan2(press.uy, press.ux))
+        love.graphics.scale(1 - 0.2 * amount, 1 + 0.12 * amount)
+        love.graphics.circle('line', 0, 0, r)
+        love.graphics.pop()
+    else
+        love.graphics.circle('line', sc.x, sc.y, r * (1 + kick * 0.14))
+    end
     if fill <= 0 then return end
-    local size = r * (0.25 + 0.75 * math.sqrt(fill))
+    local size = r * (0.25 + 0.75 * math.sqrt(fill)) * (1 + kick * 0.1)
     local t = love.timer.getTime()
     local n = math.max(3, math.floor(#LUMP * math.sqrt(fill)))
     for k = 1, n do
@@ -1029,8 +1242,18 @@ function s.draw()
         if p.body and not p.body:isDestroyed() then drawClumpBody(p.body, p.color) end
     end
     love.graphics.setLineWidth(1)
+    for _, p in ipairs(c.puffs) do -- dust
+        local u = p.t / 0.3
+        love.graphics.setColor(0.55, 0.42, 0.3, 0.35 * (1 - u))
+        love.graphics.circle('fill', p.x, p.y, p.r * (0.7 + u * 0.9))
+    end
     for _, p in ipairs(c.crumbs) do
-        love.graphics.setColor(p.color[1], p.color[2], p.color[3], math.min(1, p.life * 3))
+        local a = math.min(1, p.life * 3)
+        if p.chunk then
+            love.graphics.setColor(0.16, 0.1, 0.07, a)
+            love.graphics.circle('fill', p.x, p.y, p.r + 4)
+        end
+        love.graphics.setColor(p.color[1], p.color[2], p.color[3], a)
         love.graphics.circle('fill', p.x, p.y, p.r)
     end
     drawPieces(c)
@@ -1073,7 +1296,7 @@ function s.drawUI()
         local size = ui.sliderWithInput('diglivesize', x, y, 150, 60, 400, field() and field().brush or 160, nil, 1)
         if size and field() then field().brush = size end
         ui.label(x + 248, y + 4, 'size')
-        for _, r in ipairs({ { 'scoopBites', 1, 10, 1, 'holds' }, { 'resist', 0.3, 3, nil, 'hard' },
+        for _, r in ipairs({ { 'scoopBites', 1, 30, 1, 'holds' }, { 'resist', 0.3, 3, nil, 'hard' },
             { 'settle', 0.2, 5, nil, 'settle' }, { 'thin', 1, 5, 1, 'thin' }, { 'shake', 0.1, 2, nil, 'shake' } }) do
             x, y = row()
             local val = ui.sliderWithInput('diglive' .. r[1], x, y, 150, r[2], r[3], c[r[1]], nil, r[4])

@@ -71,6 +71,13 @@ About Digging a Hole): "i like the feel".
   out first: lying inside solid earth they fell through its edges). Tried and dropped the same day: plain planks
   ("a bit useless"), Fabuland's parts ("a bit much the big fabuland pieces"). More sky above the grass for towers.
 - No rocks (the borrowed Mipo body outlines: not these).
+- 2026-11-17, digging "really feels weak still": bigger bites, a scoop that holds 12, and each bite lands (chunks
+  flung back, a dust puff, the ring kicking, a small camera knock, a thud under the crunch); while it waits for the
+  next bite the ring squashes against the earth (harder ground, longer push).
+- **Boards for straight walls** ("a thing you can hold against it"): a loose beam or block let go of against the
+  earth sticks there (a press pulls it off); the scoop doesn't dig past it, poured dirt settles flat against it.
+  Liked ("i like the sticks"). Tried and taken out the same day: strokes locking onto flat / upright / 45 degrees
+  with square bites ("i dont like the locking angles").
 
 ## Parked: dig jobs (Mipos dig what you mark)
 
