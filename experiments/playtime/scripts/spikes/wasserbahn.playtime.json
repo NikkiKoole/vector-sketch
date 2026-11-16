@@ -1,0 +1,11 @@
+{
+  "camera":{
+    "scale":0.32,
+    "rotation":0,
+    "x":120,
+    "y":-620
+  },
+  "bodies":[],
+  "joints":[],
+  "version":"1.0"
+}

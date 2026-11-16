@@ -278,6 +278,16 @@ The four quickest, each its own scene in `scripts/spikes/`, not yet played by Ni
   spots, `state.dirtSpots`) and a surprised squeak; the Mipos cheer a bloom. Open: a jug empties in ~8 s; the
   crenellations read as steps; the panel covers the left bed.
 
+- **wasserbahn** — parked (tried 2026-11-16; Nikki: "a few more toys ideas, catapult, wasserbahn"; "ok good
+  enough"). A water play track: a tower lets water onto three blue gutters zigzagging down to a pool; drops slide
+  along a gutter (gravity along its slope, drag), fall off its low end through a water wheel's paddles (it spins,
+  ticks) onto the next. A closed lock holds a pond: level on top, its length from how much is held (n drops x area
+  = L^2 sin / 2), spilling over a full board; a boat in it floats up; open it and it all rushes on (first try: the
+  held drops queued in a line all the way back up). Three boats ride the water, stall where it's dry, splash into
+  the pool (the Mipos cheer); tap one there to put it back at the top. A hand pump at the pool lifts water back to
+  the tower a stroke at a time. Open: drops read as beads more than a stream; the pump takes many strokes; the
+  catapult (asked with it) is already rooms/catapult, not redone.
+
 ## Quickest as a spike (2026-11-16)
 
 Closest to a one-verb toy: **the Enormous Turnip** (pull), **Humpty Dumpty** (fall, put back together),
