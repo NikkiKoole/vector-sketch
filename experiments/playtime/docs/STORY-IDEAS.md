@@ -269,6 +269,15 @@ The four quickest, each its own scene in `scripts/spikes/`, not yet played by Ni
   goes by the lighter body (the little ring) and the bird hung 60°. With the beak resting on the pole the bird
   was propped and stuck. Open: the bird is small next to the Mipos; nothing happens at the bottom.
 
+- **watergarden** — parked (tried 2026-11-16; Nikki: "a sort of toy i dont know the name, with it involved water
+  and a little plastic castle, flowers grew", picked "pour water, things grow"; "lets make the mipo wet with it
+  too"). A pastel plastic castle in a garden: hold the jug to pour (drops as points, not Box2D), the funnel on the
+  middle tower takes water in and two fish spouts let it out onto the beds, roofs shed it; soil cells get wetter
+  (darker) and dry; seeds in wet soil grow stem, leaves, bud, then open with a chime (tulip, daisy, sunflower,
+  bell, rose); dip the jug in the pond to fill it. A drop on a Mipo leaves a wet spot (dirt-look's new water
+  spots, `state.dirtSpots`) and a surprised squeak; the Mipos cheer a bloom. Open: a jug empties in ~8 s; the
+  crenellations read as steps; the panel covers the left bed.
+
 ## Quickest as a spike (2026-11-16)
 
 Closest to a one-verb toy: **the Enormous Turnip** (pull), **Humpty Dumpty** (fall, put back together),

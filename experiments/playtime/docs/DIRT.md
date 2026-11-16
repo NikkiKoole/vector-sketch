@@ -98,6 +98,9 @@ the plasticine shader. It doesn't stick to a limb. This one does, per part.
   (dirtLook.fillDrawn) and the drips and prints (state.dirtOnPart); scene scripts get `dirtLook` in their
   environment. Wetness without dirt stays wet.lua's (the dirt shader shows wet only where there's dirt). Seen in
   dirty, and in layerhouse at the full light level: a muddy Mipo with its clay light kept above the mud line.
+  Water spots (2026-11-16, the watergarden spike: "lets make the mipo wet with it too"): a scene puts drops of
+  clean water on `state.dirtSpots` ({ x, y, r, amount }, taken each frame); each part under one gets the
+  sponge's clean-water pass there, wetter and a little rinsed, drying as usual.
 - [x] D11. Wet in clean water with a waterline (2026-11-16, Nikki: "we want that waterline yes", then "the simpler
   system had a more 'wet shader feel'"). Clean water makes masks too and writes their wet channel; the light shader
   reads a part's wet mask (src/render/shaders.lua wetMap, from dirt-look wetMapFor), so wet.lua's look (darker by

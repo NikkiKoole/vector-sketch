@@ -545,6 +545,16 @@ local function soakAndWash(m, bx, by, r, frame, run, make)
         cpuOff(m, k * 0.5)
         m.wetT = t.dry
     end
+    -- water spots (state.dirtSpots: drops of clean water landing, the watergarden's jug): each part under one gets
+    -- a clean-water pass there, as the sponge's: wetter, and a little rinsed
+    for _, spot in ipairs(frame.spots or {}) do
+        if math.sqrt((bx - spot.x) ^ 2 + (by - spot.y) ^ 2) < r * NEAR + spot.r then
+            m = m or make(true)
+            local uniforms = { mode = 1, brush = { spot.x, spot.y }, brushR = spot.r }
+            for _, pass in ipairs(washPasses(math.min(1, spot.amount))) do run(m, pass, uniforms) end
+            m.wetT = t.dry
+        end
+    end
     if m then -- just out of a bath: it drips a while (paint-marks.lua)
         if m.inBath and not inBath then m.dripT, m.dripKind = 2.5, m.inBath.kind end
         m.inBath = inBath
@@ -786,7 +796,7 @@ end
 lib.hairWrap = hairWrap
 
 -- An engine system's update (src/systems.lua): the parts drawn last frame, painted where they're in water or
--- under the sponge (state.dirtBrush), drying.
+-- under the sponge (state.dirtBrush) or a water spot (state.dirtSpots: { x, y, r, amount }, a scene's drops), drying.
 local frame = { liquids = {}, dt = 1 / 60 }
 function lib.engineUpdate(dt)
     if state.hairWrap == nil or state.hairWrap == state.dirtHairWrap then
@@ -799,6 +809,8 @@ function lib.engineUpdate(dt)
     frame.dt = dt or 1 / 60
     frame.liquids = lib.liquids()
     frame.brush = state.dirtBrush
+    frame.spots = state.dirtSpots -- taken: a scene adds this frame's
+    state.dirtSpots = nil
     frame.onPart = state.dirtOnPart
     lib.paint(frame)
     lib.paintHair(frame)
