@@ -51,6 +51,26 @@ They go down, stand on four limbs and walk and trot along at the speed asked. Ro
 arms creeps low with its elbows folded deep, one with short arms walks nose down; a big difference between
 arms and legs reads oddest. Tested over the bridge, not yet by hand.
 
+## The optimizer (2026-11-16)
+
+Nikki: "is this also something we can solve with some better ai? so mipos really learn to move through the
+world?". Not a learned controller (MIPO-LOCOMOTION: "not for us"), but the computer tuning the numbers:
+`claudetools/fours-optimize_spec.lua` (claudetools/README.md), an evolution strategy over the nine physics
+numbers (not the look: body tip, head), each try walking a batch of random Mipos headless, in main.lua's
+tick order (~0.1 s a walk), scored on speed against the speed asked, how level and falls; the best checked
+on 8 Mipos it never saw.
+
+- First run: the search's centre drifted out of range, every try came out the same from generation 8 (now
+  reflected and kept in range); and with 6 Mipos a try the best overfitted (worse on new Mipos than today's).
+- Second run (15 generations, 8 Mipos a try), on 8 new Mipos: today's 2.13, 1 fell, 40% of the speed asked;
+  the best 1.68, none fell, 44%. But a **stiff shuffle**: stride 10, knee lift ~0, bending off. It found the
+  score's loophole: nothing in it asks for the walk to look like an animal's. In the spike: `o` switches
+  today's and the optimizer's numbers.
+- Even the best gets under half the speed asked: the gait itself (how the feet push) holds it back, not
+  the numbers.
+- Next, if it comes back: search only the physics (muscles, step length, push) with the look fixed, or
+  score the look too (feet clearing the floor, knees bending), or fix the push first.
+
 ## Open
 
 - [ ] **AF1. Nikki plays it** and says what reads as an animal and what doesn't.

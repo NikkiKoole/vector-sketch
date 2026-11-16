@@ -310,6 +310,30 @@ local function updateOne(inst, rec, dt)
     end
 end
 
+local LIMB_PARTS = { 'luleg', 'ruleg', 'llleg', 'rlleg', 'luarm', 'ruarm', 'llarm', 'rlarm' }
+
+-- A Mipo made for going on all fours (the spike's, and claudetools/fours-optimize_spec's): two torso segments
+-- before the roll, so it gives both a shape (a long back), and arms and legs each the average of the two
+-- (Nikki: "lets give the mipos here 2 segmented torso, might help, and lets arrange the arm and legs to be
+-- roughly same length"). opts: twoTorsos, evenLimbs (both on unless false).
+function lib.prepare(inst, opts)
+    opts = opts or {}
+    if opts.twoTorsos ~= false then characterManager.rebuildFromCreation(inst, { torsoSegments = 2 }) end
+    characterManager.randomizeMipo(inst)
+    if opts.evenLimbs ~= false then
+        local parts = inst.dna.parts
+        local leg, arm = parts.luleg and parts.luleg.dims.h, parts.luarm and parts.luarm.dims.h
+        if leg and arm then
+            local h = (leg + arm) / 2
+            for _, name in ipairs(LIMB_PARTS) do
+                if parts[name] and parts[name].dims then parts[name].dims.h = h end
+            end
+            characterManager.rebuildFromCreation(inst, {})
+            characterManager.rebuildTextures(inst)
+        end
+    end
+end
+
 -- every Mipo that's down, each frame (the scene calls it)
 function lib.update(dt)
     for _, inst in pairs(mipoRegistry.getAll()) do

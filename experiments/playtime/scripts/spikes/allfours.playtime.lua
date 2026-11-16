@@ -1,6 +1,7 @@
 -- allfours: any Mipo down on all fours, walking or trotting like an animal (docs/ALL-FOURS.md; Nikki 2026-11-16)
 -- The pose and the gait are scripts/spikes/all-fours.lua. Facing a side only (as sitting).
--- keys: f all down / up   left/right (hold): go that way   g walk / trot   r new Mipos   n one more
+-- keys: f all down / up   left/right (hold): go that way   g walk / trot   o today's / the optimizer's numbers
+--       r new Mipos   n one more
 --       p pause   h panel
 
 local s = {}
@@ -9,6 +10,25 @@ local s = {}
 local fours = love.filesystem.load('scripts/spikes/all-fours.lua')()
 
 local alive = mipoKit.isAlive
+
+-- number sets to compare (o, the panel's button): today's, and what claudetools/fours-optimize_spec found
+-- (2026-11-16, 15 generations, 8 Mipos a try: on 8 new Mipos no falls, 44% of the speed asked against 40%,
+-- but a stiff shuffle: it turned off the knee lift and the bending)
+local PRESETS = {
+    { name = 'today', numbers = {} },
+    { name = 'optimizer', numbers = { kp = 70.4, maxOmega = 12.1, bodyKp = 27.5, stride = 10.4, lift = 0.626,
+        legBend = 0.107, minBend = 4.08, cycle = 0.256, push = 0.498 } },
+}
+local TODAY = {}
+for k, v in pairs(fours.tuning) do TODAY[k] = v end
+PRESETS[1].numbers = TODAY
+
+local function usePreset(i)
+    local c = state.foursSpike
+    c.preset = i
+    for k, v in pairs(TODAY) do fours.tuning[k] = v end
+    for k, v in pairs(PRESETS[i].numbers) do fours.tuning[k] = v end
+end
 
 local GROUND_Y = 900
 local HALF = 6000
@@ -37,28 +57,11 @@ local function removeMipos()
     c.mipos = {}
 end
 
-local LIMB_PARTS = { 'luleg', 'ruleg', 'llleg', 'rlleg', 'luarm', 'ruarm', 'llarm', 'rlarm' }
-
 local function addMipo(x)
     local c = check()
     local inst = characterManager.createCharacter('humanoid', x, GROUND_Y - 600, SCALE)
     if not inst then return end
-    -- two torso segments before the roll, so it gives both a shape (a bendy back)
-    if c.twoTorsos then characterManager.rebuildFromCreation(inst, { torsoSegments = 2 }) end
-    characterManager.randomizeMipo(inst)
-    -- arms and legs the same length: each the average of the two
-    if c.evenLimbs then
-        local parts = inst.dna.parts
-        local leg, arm = parts.luleg and parts.luleg.dims.h, parts.luarm and parts.luarm.dims.h
-        if leg and arm then
-            local h = (leg + arm) / 2
-            for _, name in ipairs(LIMB_PARTS) do
-                if parts[name] and parts[name].dims then parts[name].dims.h = h end
-            end
-            characterManager.rebuildFromCreation(inst, {})
-            characterManager.rebuildTextures(inst)
-        end
-    end
+    fours.prepare(inst, { twoTorsos = c.twoTorsos, evenLimbs = c.evenLimbs })
     table.insert(c.mipos, inst)
 end
 
@@ -100,6 +103,7 @@ end
 
 function s.onStart()
     worldState.paused = false
+    usePreset(check().preset or 1) -- (a reload of this file makes the module anew: its numbers back to the set picked)
     makeGround()
     local any = false
     for _, inst in pairs(check().mipos) do any = any or alive(inst) end
@@ -138,6 +142,7 @@ end
 function s.onKeyPress(key)
     local c = check()
     if key == 'f' then allDown() end
+    if key == 'o' then usePreset((c.preset or 1) % #PRESETS + 1) end
     if key == 'g' then c.gait = c.gait == 'walk' and 'trot' or 'walk' end
     if key == 'r' then newMipos() c.hold = true end
     if key == 'n' then addMipo((love.math.random() - 0.5) * 2000) end
@@ -160,7 +165,7 @@ function s.drawUI()
     if not (state.playMode and c.showPanel) then return end
     ui.startFrame() -- play mode draws no editor UI, so nothing else starts the frame
     local BH, pad, w = 34, 6, 400
-    local rows = #SLIDERS + 5
+    local rows = #SLIDERS + 6
     local h = BH * rows + pad * (rows + 1) + 24
     local _, sh = love.graphics.getDimensions()
     local x0, y0 = 20, sh - h - 20
@@ -179,6 +184,10 @@ function s.drawUI()
         if ui.button(x + 2 * (third + pad), y, third, 'go >') then c.go = 1 end
         x, y = ui.nextLayoutPosition(layout, bw, BH)
         if ui.button(x, y, bw, 'gait: ' .. c.gait .. ' (g)') then c.gait = c.gait == 'walk' and 'trot' or 'walk' end
+        x, y = ui.nextLayoutPosition(layout, bw, BH)
+        if ui.button(x, y, bw, 'numbers: ' .. PRESETS[c.preset or 1].name .. ' (o)') then
+            usePreset((c.preset or 1) % #PRESETS + 1)
+        end
         -- how the next Mipos are made (r)
         x, y = ui.nextLayoutPosition(layout, bw, BH)
         local half = (bw - pad) / 2
