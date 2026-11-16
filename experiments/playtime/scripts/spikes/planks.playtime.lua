@@ -16,7 +16,6 @@
 
 local s = {}
 
-local OUTLINE = { 0.2, 0.13, 0.1 }
 local WOODS = {
     { 0.74, 0.56, 0.38 }, { 0.66, 0.48, 0.33 }, { 0.8, 0.64, 0.45 }, { 0.6, 0.45, 0.34 },
     { 0.7, 0.6, 0.48 }, { 0.56, 0.4, 0.28 },
@@ -43,65 +42,15 @@ local function pick(list) return list[love.math.random(#list)] end
 ---------------------------------------------------------------- the drawn stroke
 
 -- Nikki's crayon strokes (src/drawn-stroke.lua; this file had the same code, the module was copied from it)
-local STROKE = drawnStroke()
-local STROKES, strokeMeshes = STROKE.strokes, STROKE.meshes
+local plankLook = love.filesystem.load('scripts/spikes/plank-look.lua')() -- a plank's look, shared with the plank boat
 
 ---------------------------------------------------------------- a plank's look
 
 -- the look in the plank's own frame, shifted by its seed so its strokes are its own
+-- a plank's look (scripts/spikes/plank-look.lua, shared with the plank boat): its outline in the body's coordinates
 local function makeLook(p)
-    local ox, oy = p.seed * 997 % 20000, p.seed * 613 % 20000
-    p.sox, p.soy = ox, oy
-    local pts = {}
-    for i = 1, #p.verts, 2 do pts[#pts + 1] = { p.verts[i] + ox, p.verts[i + 1] + oy } end
-    p.outlinePts = pts
-    -- grain: a few long thin lines along the plank, a knot now and then
-    local grain = {}
-    if p.kind == 'plank' then
-        local L, H = p.len, p.thick
-        local along = p.alongY
-        local function at(u, v) -- u along the length (-0.5..0.5), v across
-            if along then return { v * H + ox, u * L + oy } end
-            return { u * L + ox, v * H + oy }
-        end
-        local n = math.max(1, math.floor(H / 30))
-        for i = 1, n do
-            local v = rnd(-0.32, 0.32)
-            local u0, u1 = rnd(-0.45, -0.1), rnd(0.1, 0.45)
-            local line = {}
-            for k = 0, 6 do
-                local u = u0 + (u1 - u0) * k / 6
-                line[#line + 1] = at(u, v + math.sin(u * 7 + i) * 0.04)
-            end
-            grain[#grain + 1] = { pts = line, loop = false, width = 5, wobble = 0.6 }
-        end
-        if love.math.random() < 0.35 and L > 200 then
-            local u, v = rnd(-0.35, 0.35), rnd(-0.15, 0.15)
-            local c = at(u, v)
-            local rx, ry = 12 + love.math.random() * 10, 6 + love.math.random() * 4
-            if along then rx, ry = ry, rx end
-            local knot = {}
-            for k = 0, 9 do
-                local a = k / 10 * math.pi * 2
-                knot[#knot + 1] = { c[1] + math.cos(a) * rx, c[2] + math.sin(a) * ry }
-            end
-            grain[#grain + 1] = { pts = knot, loop = true, width = 5, wobble = 0.3 }
-        end
-    end
-    p.grainLines = grain
-    p.meshKey = nil
-end
-
-local function plankMeshes(b, p, step)
-    local set = b.settings
-    local key = table.concat({ set.width, set.wobble, step, tostring(set.seamless) }, ',')
-    if p.meshKey ~= key then
-        local width = set.width * (p.lineScale or 1)
-        p.outlineMeshes = strokeMeshes({ { pts = p.outlinePts, loop = true, width = width } }, set.wobble, step, set.seamless)
-        p.grainMeshes = strokeMeshes(p.grainLines, set.wobble, step, set.seamless)
-        p.meshKey = key
-    end
-    return p.outlineMeshes, p.grainMeshes
+    p.pts = p.verts
+    plankLook.make(p)
 end
 
 ---------------------------------------------------------------- building
@@ -454,29 +403,12 @@ end
 ---------------------------------------------------------------- drawing
 
 local function drawPlank(b, p, step)
+    if not p.pts then makeLook(p) end -- a plank made before the shared look (a running scene, hot-reloaded)
     local x, y = p.body:getPosition()
-    local a = p.body:getAngle()
     love.graphics.push()
     love.graphics.translate(x, y)
-    love.graphics.rotate(a)
-    local c, k = p.color, p.shade
-    love.graphics.setColor(c[1] * k, c[2] * k, c[3] * k)
-    love.graphics.polygon('fill', p.verts)
-    love.graphics.translate(-p.sox, -p.soy)
-    if b.settings.drawn and #STROKES > 0 then
-        local outline, grain = plankMeshes(b, p, step)
-        if b.settings.grain > 0 then
-            love.graphics.setColor(c[1] * k * 0.6, c[2] * k * 0.55, c[3] * k * 0.5, 0.55 * b.settings.grain)
-            for _, mesh in ipairs(grain) do love.graphics.draw(mesh) end
-        end
-        love.graphics.setColor(OUTLINE[1], OUTLINE[2], OUTLINE[3], 1)
-        for _, mesh in ipairs(outline) do love.graphics.draw(mesh) end
-    else
-        love.graphics.translate(p.sox, p.soy)
-        love.graphics.setColor(OUTLINE)
-        love.graphics.setLineWidth(3)
-        love.graphics.polygon('line', p.verts)
-    end
+    love.graphics.rotate(p.body:getAngle())
+    plankLook.draw(p, b.settings, step)
     love.graphics.pop()
 end
 

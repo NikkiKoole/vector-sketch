@@ -10,8 +10,8 @@
 local lib = {}
 
 
-local STROKE = require('src.drawn-stroke')
-local OUTLINE = { 0.2, 0.13, 0.1 }
+local plankLook = love.filesystem.load('scripts/spikes/plank-look.lua')() -- a plank's look
+local STROKE = plankLook.STROKE
 local NAVY = { 0.17, 0.24, 0.44 }
 local CREAM = { 0.9, 0.86, 0.76 }
 local RED = { 0.72, 0.27, 0.22 }
@@ -92,47 +92,7 @@ end
 
 -- the look: the outline points and the grain (long thin lines along it, now and then a knot),
 -- shifted by the plank's seed so its strokes are its own
-local function makeLook(p)
-    local ox, oy = p.seed * 997 % 20000, p.seed * 613 % 20000
-    p.sox, p.soy = ox, oy
-    local q = p.pts
-    local outline = {}
-    for i = 1, #q, 2 do outline[#outline + 1] = { q[i] + ox, q[i + 1] + oy } end
-    p.outlinePts = outline
-    p.grainLines = {}
-    if p.kind ~= 'plank' then return end
-    -- a point at u along (0..1) and v across (0..1)
-    local function at(u, v)
-        local x1, y1 = q[1] + (q[3] - q[1]) * u, q[2] + (q[4] - q[2]) * u
-        local x2, y2 = q[7] + (q[5] - q[7]) * u, q[8] + (q[6] - q[8]) * u
-        return { x1 + (x2 - x1) * v + ox, y1 + (y2 - y1) * v + oy }
-    end
-    local lenX, lenY = (q[3] + q[5] - q[1] - q[7]) / 2, (q[4] + q[6] - q[2] - q[8]) / 2
-    local len = math.sqrt(lenX * lenX + lenY * lenY)
-    local thX, thY = (q[7] + q[5] - q[1] - q[3]) / 2, (q[8] + q[6] - q[2] - q[4]) / 2
-    local thick = math.sqrt(thX * thX + thY * thY)
-    for i = 1, math.max(1, math.floor(thick / 30)) do
-        local v = 0.2 + love.math.random() * 0.6
-        local u0, u1 = 0.05 + love.math.random() * 0.35, 0.6 + love.math.random() * 0.35
-        local line = {}
-        for k = 0, 6 do
-            local u = u0 + (u1 - u0) * k / 6
-            line[#line + 1] = at(u, v + math.sin(u * 7 + i) * 0.04)
-        end
-        p.grainLines[#p.grainLines + 1] = { pts = line, loop = false, width = 5, wobble = 0.6 }
-    end
-    if love.math.random() < 0.3 and len > 200 then
-        local c = at(0.15 + love.math.random() * 0.7, 0.35 + love.math.random() * 0.3)
-        local ang = math.atan2(lenY, lenX)
-        local knot = {}
-        for k = 0, 9 do
-            local a = k / 10 * math.pi * 2
-            local x, y = math.cos(a) * 16, math.sin(a) * 7
-            knot[#knot + 1] = { c[1] + x * math.cos(ang) - y * math.sin(ang), c[2] + x * math.sin(ang) + y * math.cos(ang) }
-        end
-        p.grainLines[#p.grainLines + 1] = { pts = knot, loop = true, width = 5, wobble = 0.3 }
-    end
-end
+local function makeLook(p) plankLook.make(p) end -- (scripts/spikes/plank-look.lua)
 
 -- opts.ballast: the hull's bottom rows heavy, the rest light (drawn-sea's floating boat); else no weights
 local function buildPlanks(b, opts)
@@ -253,32 +213,9 @@ local function placeNails(b)
     end
 end
 
-local function plankMeshes(b, p, step)
-    local set = b.settings
-    local key = table.concat({ set.width, set.wobble, step }, ',')
-    if p.meshKey ~= key then
-        local width = set.width * (p.lineScale or 1)
-        p.outlineMeshes = STROKE.meshes({ { pts = p.outlinePts, loop = true, width = width } }, set.wobble, step, true)
-        p.grainMeshes = STROKE.meshes(p.grainLines, set.wobble, step, true)
-        p.meshKey = key
-    end
-    return p.outlineMeshes, p.grainMeshes
-end
-
 local function drawPlank(b, p, step)
     if p.hidden then return end
-    local c = p.color
-    love.graphics.setColor(c[1], c[2], c[3])
-    love.graphics.polygon('fill', p.pts)
-    if #STROKE.strokes == 0 then return end
-    local outline, grain = plankMeshes(b, p, step)
-    love.graphics.push()
-    love.graphics.translate(-p.sox, -p.soy)
-    love.graphics.setColor(c[1] * 0.6, c[2] * 0.55, c[3] * 0.5, 0.55)
-    for _, mesh in ipairs(grain) do love.graphics.draw(mesh) end
-    love.graphics.setColor(OUTLINE[1], OUTLINE[2], OUTLINE[3], 1)
-    for _, mesh in ipairs(outline) do love.graphics.draw(mesh) end
-    love.graphics.pop()
+    plankLook.draw(p, b.settings, step)
 end
 
 local function drawNails(b, layer)

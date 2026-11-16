@@ -49,7 +49,7 @@ side copies: read them for one idea, don't start from them. From a read of every
 | Reflection, ripple rings | mirrors | — |
 | Boat of planks | boat2 (drawn-sea has the newer `makeBoat` with ballast) | — ; boat = the kinematic drawn boat |
 | Crayon stroke / outline | `src/drawn-stroke.lua` (loaded by 9 spikes) | planks (byte-identical copy, delete); burrow (the ancestor: has `canonical()` and per-cell tile pick, merge those in) |
-| Drawn plank | planks (bodies, nails, pop) + boat2's quad grain | wild (seeded wear and chaos, an option on it) |
+| Drawn plank | the look: `scripts/spikes/plank-look.lua` (2026-11-16, planks and the plank boat); how it's held stays the scene's: planks (bodies, nails, pop), the boat (one body), oaktree (drawing only, batched) | wild (seeded wear and chaos, an option on it) |
 | Course from a height | soapbox | bike (parked) |
 | Course from waypoints, pipes, rails, depth as collision | tracks | — |
 | Lift / cable car | soapbox | bike (identical) |
