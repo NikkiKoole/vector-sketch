@@ -12,6 +12,7 @@ local mipoRegistry = require('src.mipo-registry')
 local mouthShapes = require('src.mouth-shapes')
 local D = require('src.dna-defaults')
 local C = require('src.shape-catalogs')
+local mipoStyle = require('src.mipo-style')
 local torsoLobes = require('src.torso-lobes')
 
 -- Every random colour comes from here: state.randomColor while a breed rolls (its palette,
@@ -410,12 +411,15 @@ end
 local function randomizeAll(instance, textureOpts, faceOpts)
     if not instance then return end
     local hairColor = randomHexColor() -- haircut, bodyhair, limb hair and brows share it
-    randomizeShapes(instance)
-    randomizeLimbLengths(instance)
-    randomizeEars(instance)
-    randomizeFeetAndHands(instance)
-    randomizeTextures(instance, hairColor, textureOpts)
-    randomizeFace(instance, hairColor, faceOpts)
+    -- in the roll style (drawn / clean / mix, src/mipo-style.lua): its lists in the catalogs for the draws
+    mipoStyle.with(faceOpts, function(styledFaceOpts)
+        randomizeShapes(instance)
+        randomizeLimbLengths(instance)
+        randomizeEars(instance)
+        randomizeFeetAndHands(instance)
+        randomizeTextures(instance, hairColor, textureOpts)
+        randomizeFace(instance, hairColor, styledFaceOpts)
+    end)
     -- no physics nose: the randomized nose is drawn on the face
     local patch = { isPotatoHead = not instance.dna.creation.isPotatoHead, noseSegments = 0 }
     randomizeSoftness(patch)
@@ -438,11 +442,8 @@ function lib.randomizeMipoConstrained(instance)
         { uniformEyeScale = true, allowedPupilShapes = { 1, 2, 3, 6, 7, 8 } })
 end
 
--- Randomize a single part (or its symmetric group) by name.
--- ears/feet/hands always randomize both sides together.
--- arms/legs randomize all connected-skin/hair for that limb group.
-function lib.randomizePart(instance, partName)
-    if not instance or not partName then return end
+-- lib.randomizePart's work, with the roll style in
+local function randomizePartInStyle(instance, partName, faceOpts)
     local hairColor = randomHexColor()
 
     if partName == 'head' then
@@ -459,7 +460,7 @@ function lib.randomizePart(instance, partName)
         appearance.updateHaircutOfPart(instance, 'head',
             { bgURL = hcBgURL, fgURL = hcFgURL,
               bgHex = hairColor, width = D.randomInRangeWeighted('haircutWidth') })
-        randomizeFace(instance, hairColor)
+        randomizeFace(instance, hairColor, faceOpts)
 
     elseif partName:match('^torso') then
         local url = pick(C.torsoHeadShapes)
@@ -510,6 +511,14 @@ function lib.randomizePart(instance, partName)
 
     build.fitLegWidth(instance, true) -- a new head or torso can make it stubby (or not)
     textures.rebuildTextures(instance)
+end
+
+-- Randomize a single part (or its symmetric group) by name, in the roll style (src/mipo-style.lua).
+-- ears/feet/hands always randomize both sides together.
+-- arms/legs randomize all connected-skin/hair for that limb group.
+function lib.randomizePart(instance, partName)
+    if not instance or not partName then return end
+    mipoStyle.with(nil, function(faceOpts) randomizePartInStyle(instance, partName, faceOpts) end)
 end
 
 -- Jitter all size/proportion values of a mipo while keeping shapes and colors identical.

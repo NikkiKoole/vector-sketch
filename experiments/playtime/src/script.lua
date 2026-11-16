@@ -107,6 +107,7 @@ local baseEnv = {
     torsoLobes               = require('src.torso-lobes'), -- applySoftness / setSprings: live softness (maker)
     facePatches              = require('src.face-patches'), -- eye hollows, cheeks, a snout (breeds, facing)
     mipoBreeds               = require('src.mipo-breeds'), -- randomize(instance, name): a Mipo of a breed (breeds)
+    mipoStyle                = require('src.mipo-style'), -- the parts a roll uses: drawn, clean or mix
     props                    = props,
     signals                  = signals,
     snap                     = snap,

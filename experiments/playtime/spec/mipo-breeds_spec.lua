@@ -118,8 +118,50 @@ describe("a Mipo of each breed", function()
         end)
     end
 
+    -- the roll style (src/mipo-style.lua, 2026-11-16): drawn, clean or mix parts, and the lists put back
+    local function inList(list, url)
+        for _, u in ipairs(list) do if u .. '.png' == url then return true end end
+        return false
+    end
+    local function inNumbers(list, n)
+        for _, v in ipairs(list) do if v == n then return true end end
+        return false
+    end
+    it("rolls in the style: drawn, clean and mix parts, the lists put back", function()
+        local mipoStyle = require('src.mipo-style')
+        local listsBefore = {}
+        for k, v in pairs(C) do listsBefore[k] = v end
+        local drawn, clean = 0, 0
+        for _, style in ipairs({ 'drawn', 'clean', 'mix' }) do
+            mipoStyle.set(style)
+            for seed = 1, 6 do
+                math.randomseed(seed); love.math.setRandomSeed(seed)
+                local mipo = CharacterManager.createCharacter('humanoid', 0, 0, 1)
+                CharacterManager.randomizeMipo(mipo)
+                local url = mipo.dna.parts.torso1.shape8URL
+                local owner = mipo.dna.creation.isPotatoHead and 'torso1' or 'head'
+                local face = mipo.dna.parts[owner].appearance.face
+                local isClean = inList(C.cleanBodyShapes, url)
+                if style == 'drawn' then
+                    assert.is_true(inList(C.torsoHeadShapes, url), 'drawn: torso ' .. url)
+                    assert.is_true(face.eye.shape <= C.randomEyeCount, 'drawn: eye ' .. face.eye.shape)
+                elseif style == 'clean' then
+                    assert.is_true(isClean, 'clean: torso ' .. url)
+                    assert.is_true(inNumbers(C.cleanEyeNumbers, face.eye.shape), 'clean: eye ' .. face.eye.shape)
+                    assert.are.equal('', mipo.dna.parts[owner].appearance.haircut.main.bgURL, 'clean: no hair')
+                else
+                    assert.is_true(isClean or inList(C.torsoHeadShapes, url), 'mix: torso ' .. url)
+                    if isClean then clean = clean + 1 else drawn = drawn + 1 end
+                end
+                for k, v in pairs(listsBefore) do assert.are.equal(v, C[k], style .. ' left list ' .. k) end
+            end
+        end
+        mipoStyle.set(nil)
+        assert.is_true(drawn > 0 or clean > 0)
+    end)
+
     -- lips 2 and 2, and the widest resting mouth inside the head (2026-11-09)
-    it("every roll: lips 2 and 2, the mouth no wider than the head", function()
+    it("every roll: lips 2 and 2 (or the breed's own), the mouth no wider than the head", function()
         local mouthShapes = require('src.mouth-shapes')
         local textures = require('src.mipo-textures')
         local widest = 0
@@ -138,8 +180,15 @@ describe("a Mipo of each breed", function()
                 if name == 'any' then CharacterManager.randomizeMipo(mipo) else breeds.randomize(mipo, name) end
                 local owner = mipo.dna.creation.isPotatoHead and 'torso1' or 'head'
                 local mouth = mipo.dna.parts[owner].appearance.face.mouth
-                assert.are.equal(2, mouth.upperLipShape, name)
-                assert.are.equal(2, mouth.lowerLipShape, name)
+                -- a breed may name its own lips (clean's, 2026-11-16); the rest get 2 and 2
+                local face = breeds.breeds[name] and breeds.breeds[name].face or {}
+                local function lipOK(n, allowed)
+                    if not allowed then return n == 2 end
+                    for _, a in ipairs(allowed) do if a == n then return true end end
+                    return false
+                end
+                assert.is_true(lipOK(mouth.upperLipShape, face.allowedUpperLipShapes), name .. ' upper lip')
+                assert.is_true(lipOK(mouth.lowerLipShape, face.allowedLowerLipShapes), name .. ' lower lip')
                 local share = widest * textures.MOUTH_UNIT * mouth.wMul * (mipo.dna.faceMagnitude or 1)
                 assert.is_true(share <= randomize.mouthMaxHeadShare + 1e-9,
                     string.format('%s seed %d: mouth %.2f of the head wide', name, seed, share))

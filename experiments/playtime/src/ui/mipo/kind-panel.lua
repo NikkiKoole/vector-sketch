@@ -9,6 +9,7 @@ local state = require('src.state')
 local utils = require('src.utils')
 local CharacterManager = require('src.character-manager')
 local mipoBreeds = require('src.mipo-breeds')
+local mipoStyle = require('src.mipo-style')
 local mipoRegistry = require('src.mipo-registry')
 local mipoActions = require('src.mipo-actions')
 local mipoVoice = require('src.mipo-voice')
@@ -85,6 +86,11 @@ function lib.drawHead(p, y)
     if ui.button(x + SMALL + 4, y, W - 2 * SMALL - 8, breed) then breed = stepChoice(choices, breed, 1) end
     if ui.button(x + W - SMALL, y, SMALL, '>') then breed = stepChoice(choices, breed, 1) end
     accordionStates.breed = breed
+    y = y + ROW
+    -- what the rolls are made of: the hand-drawn parts, the clean ones, or both (src/mipo-style.lua)
+    if ui.button(x, y, SMALL, '<') then mipoStyle.step(-1) end
+    if ui.button(x + SMALL + 4, y, W - 2 * SMALL - 8, 'parts: ' .. mipoStyle.get()) then mipoStyle.step(1) end
+    if ui.button(x + W - SMALL, y, SMALL, '>') then mipoStyle.step(1) end
     y = y + ROW
     local third = math.floor((W - 8) / 3)
     if ui.button(x, y, third, 'roll') then roll(instance, breed) end

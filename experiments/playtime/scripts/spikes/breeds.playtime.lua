@@ -3,7 +3,7 @@
 -- shape lists, a colour palette and the body's build. Everything else stays random, so a
 -- litter shares a look and still varies.
 -- Face patches (right panel): skin colouring under the hair, eyes on top: eye hollows, cheeks, a snout.
--- keys: r: a new litter   1-9, 0: a breed   p: pause   h: hide/show the panels
+-- keys: r: a new litter   1-9, 0: a breed   s: parts drawn/clean/mix   p: pause   h: hide/show the panels
 
 local s = {}
 
@@ -123,6 +123,7 @@ function s.onKeyPress(key)
     if key == 'r' then litter() lookAtAll() end
     if key == 'p' then worldState.paused = not worldState.paused end
     if key == 'h' then c.showPanel = not c.showPanel end
+    if key == 's' then mipoStyle.step(1) litter() lookAtAll() end -- the parts: drawn, clean, mix
     local n = tonumber(key)
     if n == 0 then n = 10 end -- 0: the tenth (clean)
     if n and BREEDS[n] then pickBreed(n) end
@@ -175,7 +176,7 @@ function s.drawUI()
     if not (state.playMode and c.showPanel) then return end
     ui.startFrame() -- play mode draws no editor UI, so nothing else starts the frame
     local BH, pad, w = 34, 6, 300
-    local h = BH * (#BREEDS + 2) + pad * (#BREEDS + 3) + 24
+    local h = BH * (#BREEDS + 3) + pad * (#BREEDS + 4) + 24
     local _, sh = love.graphics.getDimensions()
     local x0, y0 = 20, sh - h - 20
     ui.panel(x0, y0, w, h, '•• breeds ••', function()
@@ -187,6 +188,10 @@ function s.drawUI()
         end
         local x, y = ui.nextLayoutPosition(layout, w - 12, BH)
         if ui.button(x, y, w - 12, 'a new litter (r)') then litter() lookAtAll() end
+        x, y = ui.nextLayoutPosition(layout, w - 12, BH)
+        if ui.button(x, y, w - 12, 'parts: ' .. mipoStyle.get() .. ' (s)') then
+            mipoStyle.step(1) litter() lookAtAll()
+        end
     end)
     local breed = BREEDS[c.breed]
     love.graphics.setColor(0.95, 0.92, 0.8)

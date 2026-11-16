@@ -175,7 +175,32 @@ roll, which flips potato head every time). It lives in `src/mipo-breeds.lua` (`l
 same swap-for-the-draw as the spike) and has a button in the Mipo editor, **random
 rubberleg-pearbod**, above **undo**: every random button there remembers the Mipo from before,
 and undo rebuilds it from that DNA, up to 20 steps back. In a breed's list `''` is "none" (limb
-hair, for now).
+hair; head hair and chest fur too since 2026-11-16).
+
+## clean, the parts drawn by code (2026-11-16) — liked
+
+Nikki: "can we create some mipos parts drawn by you (so perfect circles, squares) to try them out
+as an texture too?", and after: "ok lets add this, i like it". Every part has a clean version
+drawn by `claudetools/clean-parts.py` in the scans' format (white line on transparent, white-on-black
+mask), numbered from 50: bodies (circle, rounded square, egg, capsule, triangle, wide oval, dome, soft
+rectangle), ears, feet (worn as hands too), limbs (straight, tapered, striped, thin), patterns
+(`pat/clean-*`: dots, stripes, checks, diagonal, rings, zigzag), eyes, solid pupils, noses, brows,
+lips (a plain band with a line round it), teeth. The breed: no hair anywhere, the clean parts only,
+any colours. Breeds spike: `0`.
+
+The catalogs keep them in their own lists (face parts at the end of theirs, `random*Count` before
+them); the editor grids show them after the drawn ones. What Nikki steered while making it: lips much
+simpler but with an outline, pupils solid. Not yet: dots on limbs stretch into dashes (stripes hold
+up); the breeds spike's face patches (snout smudge, eye hollows) are still soft, switch them off for
+the clean look.
+
+**The roll style** (Nikki: "when rolling a mipo you can say if you want just the clean geometric
+shapes you draw, or just the handdrawn or mix"): `src/mipo-style.lua`, one setting on
+`state.mipoStyle`: **drawn** (the default, as before), **clean**, or **mix** (either kind for every
+part, so one Mipo can have both; hair half the time). Every roll goes through it: randomizeMipo,
+the constrained one, randomizePart (the per-part dice), and a breed (whose own lists win). Set it in
+the Mipo editor (the **parts:** row under the breed) or the breeds spike (`s`, or the panel's
+button). `spec/mipo-breeds_spec.lua` checks each style rolls its parts and puts the lists back.
 
 ## Where it stands (2026-11-09)
 

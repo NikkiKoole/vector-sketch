@@ -15,6 +15,7 @@ local D = require('src.dna-defaults')
 local utils = require('src.utils')
 local state = require('src.state')
 local CharacterManager = require('src.character-manager')
+local mipoStyle = require('src.mipo-style')
 local mouthShapes = require('src.mouth-shapes')
 
 -- Shapes grouped by eye (scratch sheets of the masks, 2026-11-01), until the catalogs have tags (B1).
@@ -181,7 +182,8 @@ function lib.randomize(instance, name)
     end
     -- face: randomizeFace's options (allowedEyeShapes, allowedPupilShapes, allowedNoseShapes, …)
     local roll = breed.constrained and CharacterManager.randomizeMipoConstrained or CharacterManager.randomizeMipo
-    local ok, err = pcall(roll, instance, nil, breed.face)
+    -- in the roll style (src/mipo-style.lua) where the breed doesn't name its own lists
+    local ok, err = pcall(mipoStyle.with, breed.face, function(face) return roll(instance, nil, face) end, breed.lists)
     CharacterManager.setRandomColor(nil)
     for key, r in pairs(savedRanges) do D.randomRanges[key] = r end
     for key, list in pairs(savedLists) do C[key] = list end
