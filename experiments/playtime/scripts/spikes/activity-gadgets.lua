@@ -39,7 +39,7 @@ end
 -- make them all now (at a scene's start, not in the middle of play), and the notes the boards play
 function lib.makeSounds(midis)
     windupKey.preload(midis)
-    if sounds.bell then return end
+    if sounds.bell or not love.audio then return end -- (no sound device: ./playtime.sh thumbs)
     sounds.bell = makeSound(1.6, function(t, ph) -- a bright bell: inharmonic partials, the high ones die first
         local f = 1180
         local e = math.min(1, t / 0.002)
@@ -74,6 +74,7 @@ end
 
 -- 'bell', 'squeakIn', 'squeakOut', 'clack', 'rattle', 'zip'; and windupKey's 'click', 'tick'
 function lib.play(name, volume, pitch)
+    if not love.audio then return end
     if not sounds[name] then
         windupKey.play(name, volume, pitch)
         return

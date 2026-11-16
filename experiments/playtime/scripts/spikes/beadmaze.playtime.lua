@@ -58,6 +58,7 @@ end
 
 local clackSrc
 local function clack(volume, pitch)
+    if not love.audio then return end -- (no sound device: ./playtime.sh thumbs)
     if not clackSrc then
         local rate = 22050
         local data = love.sound.newSoundData(math.floor(rate * 0.09), rate, 16, 1)

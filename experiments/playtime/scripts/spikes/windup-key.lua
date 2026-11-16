@@ -61,7 +61,9 @@ do
     end) end
 end
 
+-- (no sound device, as in ./playtime.sh thumbs: love.audio is nil, nothing plays)
 function lib.play(name, volume, pitch)
+    if not love.audio then return end
     ensureSounds()
     local src = sounds[name]:clone()
     src:setVolume(volume or 1)
@@ -72,6 +74,7 @@ end
 -- a music-box tine: a sine with a quick bright attack and a long ring (made once per note)
 local notes = {}
 function lib.note(midi, volume)
+    if not love.audio then return end
     if not notes[midi] then
         local f = 440 * 2 ^ ((midi - 69) / 12)
         notes[midi] = makeSound(1.0, function(t, ph)
@@ -88,6 +91,7 @@ end
 
 -- make the sounds and these notes now (at a scene's load, not in the middle of play or a bridge eval)
 function lib.preload(midis)
+    if not love.audio then return end
     ensureSounds()
     for _, m in ipairs(midis or {}) do
         if not notes[m] then
