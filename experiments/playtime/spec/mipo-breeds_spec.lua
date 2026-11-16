@@ -160,6 +160,29 @@ describe("a Mipo of each breed", function()
         assert.is_true(drawn > 0 or clean > 0)
     end)
 
+    it("a breed rolls drawn parts whatever the style; only the clean breed is clean", function()
+        local mipoStyle = require('src.mipo-style')
+        mipoStyle.set('clean')
+        for _, name in ipairs(breeds.order) do
+            for seed = 1, 3 do
+                math.randomseed(seed); love.math.setRandomSeed(seed)
+                local mipo = CharacterManager.createCharacter('humanoid', 0, 0, 1)
+                breeds.randomize(mipo, name)
+                local url = mipo.dna.parts.torso1.shape8URL
+                local pURL = mipo.dna.parts.torso1.appearance.skin.main.pURL or ''
+                local cleanPattern = pURL:match('^clean%-') ~= nil
+                if name == 'clean' then
+                    assert.is_true(inList(C.cleanBodyShapes, url), name .. ': torso ' .. url)
+                    assert.is_true(cleanPattern, name .. ': pattern ' .. pURL)
+                else
+                    assert.is_true(inList(C.torsoHeadShapes, url), name .. ': torso ' .. url)
+                    assert.is_false(cleanPattern, name .. ': pattern ' .. pURL)
+                end
+            end
+        end
+        mipoStyle.set(nil)
+    end)
+
     -- lips 2 and 2, and the widest resting mouth inside the head (2026-11-09)
     it("every roll: lips 2 and 2 (or the breed's own), the mouth no wider than the head", function()
         local mouthShapes = require('src.mouth-shapes')

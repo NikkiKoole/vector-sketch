@@ -2,7 +2,8 @@
 -- (claudetools/clean-parts.py), or a mix of both (Nikki 2026-11-16: "when rolling a mipo you can say if you
 -- want just the clean geometric shapes, or just the handdrawn or mix"). One setting on state, used by every
 -- roll (src/mipo-randomize.lua randomizeAll and randomizePart). It swaps the catalog lists in for the roll
--- and puts them back after, like a breed does; a breed's own lists win over it (src/mipo-breeds.lua).
+-- and puts them back after, like a breed does. A breed rolls drawn whatever the setting (the clean breed
+-- names its own clean lists), src/mipo-breeds.lua.
 local lib = {}
 
 local state = require('src.state')
@@ -85,12 +86,13 @@ end
 local busy = false
 
 -- Run fn(faceOpts) with the style's lists swapped into the catalogs, except the keys in `keep` (a breed's
--- own lists). faceOpts: the given ones over the style's. Returns what fn returns; the lists go back even
--- when it fails.
-function lib.with(faceOpts, fn, keep)
+-- own lists). faceOpts: the given ones over the style's. `style`: this one instead of the setting (a breed
+-- rolls 'drawn': Nikki 2026-11-16, the clean parts only for the clean ones). Returns what fn returns; the
+-- lists go back even when it fails.
+function lib.with(faceOpts, fn, keep, style)
     if busy then return fn(faceOpts) end
-    local lists, face = overrides(lib.get())
-    if not lists then return fn(faceOpts) end
+    local lists, face = overrides(style or lib.get())
+    lists = lists or {}
     local saved = {}
     for key, list in pairs(lists) do
         if not (keep and keep[key]) then

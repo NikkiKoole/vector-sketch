@@ -197,8 +197,10 @@ the clean look.
 **The roll style** (Nikki: "when rolling a mipo you can say if you want just the clean geometric
 shapes you draw, or just the handdrawn or mix"): `src/mipo-style.lua`, one setting on
 `state.mipoStyle`: **drawn** (the default, as before), **clean**, or **mix** (either kind for every
-part, so one Mipo can have both; hair half the time). Every roll goes through it: randomizeMipo,
-the constrained one, randomizePart (the per-part dice), and a breed (whose own lists win). Set it in
+part, so one Mipo can have both; hair half the time). Every plain roll goes through it:
+randomizeMipo, the constrained one, randomizePart (the per-part dice). A breed rolls drawn whatever
+the setting (Nikki: "i dont want that for fat teddy tall etc, just for the clean ones"); the clean
+breed is clean through its own lists. Set it in
 the Mipo editor (the **parts:** row under the breed) or the breeds spike (`s`, or the panel's
 button). `spec/mipo-breeds_spec.lua` checks each style rolls its parts and puts the lists back.
 

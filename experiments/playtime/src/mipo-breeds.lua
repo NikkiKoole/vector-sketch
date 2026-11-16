@@ -182,8 +182,10 @@ function lib.randomize(instance, name)
     end
     -- face: randomizeFace's options (allowedEyeShapes, allowedPupilShapes, allowedNoseShapes, …)
     local roll = breed.constrained and CharacterManager.randomizeMipoConstrained or CharacterManager.randomizeMipo
-    -- in the roll style (src/mipo-style.lua) where the breed doesn't name its own lists
-    local ok, err = pcall(mipoStyle.with, breed.face, function(face) return roll(instance, nil, face) end, breed.lists)
+    -- drawn parts whatever the roll style (src/mipo-style.lua): the clean ones only for the clean breed, which
+    -- names them in its lists (Nikki 2026-11-16)
+    local ok, err = pcall(mipoStyle.with, breed.face, function(face) return roll(instance, nil, face) end,
+        breed.lists, 'drawn')
     CharacterManager.setRandomColor(nil)
     for key, r in pairs(savedRanges) do D.randomRanges[key] = r end
     for key, list in pairs(savedLists) do C[key] = list end
