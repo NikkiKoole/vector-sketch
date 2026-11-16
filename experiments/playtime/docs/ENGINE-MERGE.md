@@ -60,7 +60,7 @@ side copies: read them for one idea, don't start from them. From a read of every
 | Haze by depth | none yet: tracks `hazed()` is the most complete | clouds, depth, weather (`airColours`) |
 | 2.5D ground with grass rows | clouds | weather (line blades) |
 | Weather | weather (not played with yet) | clouds `rainFrom` |
-| Depth layers, lanes | depth | boat2, planks by hand |
+| Depth layers, lanes | depth (`src/depth-layers.lua` since DL1) | boat2, drawn-sea by hand (planks on the engine's since 2026-11-16) |
 | Materials | material-check (src has the kept ones) | materials spike (superseded, don't build on it) |
 | Light, day and night | light-grass-check (source of scene-light and the shadows) | scene-light's wall shadow is a sun-only copy |
 | Trees and bark | bark (already modules: tree-grow / tree-kinds / tree-mesh / bark-look) | — |

@@ -7,8 +7,8 @@
 -- nails pop, and it falls off.
 --
 -- Layers: the leaves and the trunk at the back, then the back wall (planks the Mipos stand in
--- front of, not on), the floor, posts and roof (solid), the Mipos, then the porch railing and a
--- few leaves in front.
+-- front of, and on their tops: the engine's back layer), the floor, posts and roof (solid), the
+-- Mipos, then the porch railing (the front layer) and a few leaves in front.
 --
 -- play mode (tab): drag planks and Mipos about.
 -- keys: r build it again   m a Mipo   o drawn outline / plain line   b boil   h the panel
@@ -138,11 +138,16 @@ local function plank(b, x1, y1, x2, y2, thick, opts)
         bodyType = opts.static and 'static' or 'dynamic', label = 'plank', density = 0.6 })
     if not thing then return end
     thing.body:setAngle(angle)
+    -- back and front are the engine's depth layers (src/depth-layers.lua): Mipos pass in front of a back
+    -- plank but stand on its top (a ladder rung, the window sill), never touch a front one; both still land
+    -- on the ground when their nails pop. Only the beam under the floor ('mid', not solid) is a sensor.
+    local layered = opts.layer == 'back' or opts.layer == 'front'
+    if layered then thing.layer = opts.layer end
     for _, fixture in ipairs(thing.body:getFixtures()) do
         fixture:setFriction(0.7)
         fixture:setRestitution(0.05)
         if not opts.static then fixture:setGroupIndex(GROUP) end
-        if not opts.solid then fixture:setSensor(true) end
+        if not opts.solid and not layered then fixture:setSensor(true) end
     end
     local color = opts.color or (love.math.random() < 0.12 and pick(PAINTED) or pick(WOODS))
     local j = rnd(0.94, 1.04)
@@ -301,10 +306,10 @@ local function build(b)
         local top = -2015 + math.abs(mid) * (495 / 830) + 50 + rnd(-15, 15) -- just under the roof
         i = i + 1
         if i == 3 or i == 4 then
-            plank(b, mid, floorY - 20, mid, -1250, w, { layer = 'back' })
+            plank(b, mid, floorY + 10, mid, -1250, w, { layer = 'back' })
             plank(b, mid, -1500, mid, top, w, { layer = 'back' })
         else
-            plank(b, mid, floorY - 20, mid, top, w, { layer = 'back' })
+            plank(b, mid, floorY + 10, mid, top, w, { layer = 'back' })
         end
         x = x + w + rnd(-4, 10)
     end
@@ -355,7 +360,7 @@ function s.onStart()
     if #b.planks == 0 then build(b) end
     b.mipos = aliveMipos(b)
     if #b.mipos == 0 then
-        spawnMipo(b, -200, -1500)
+        spawnMipo(b, 200, -1300) -- clear of the window: its sill and header are tops to stand on
         spawnMipo(b, -1500, -500)
     end
 end

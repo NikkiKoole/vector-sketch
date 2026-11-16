@@ -43,18 +43,22 @@ function lib.isLayered(body)
     return thing ~= nil and thing.layer ~= nil
 end
 
--- the highest point of a fixture's shape at body-local x (y down: the smallest y)
-local function topAt(fixture, lx)
+-- the highest point of a fixture's shape at world x (y down: the smallest y), in world space: a body's
+-- top is what's up on screen, whichever way it's turned (a standing plank is a quad turned 90 degrees;
+-- measured in the body's own frame its long side was the top, and a Mipo got caught halfway up the wall)
+local function topAt(fixture, wx)
     local shape = fixture:getShape()
+    local body = fixture:getBody()
     local kind = shape:getType()
     if kind == 'circle' then
-        local cx, cy = shape:getPoint()
+        local cx, cy = body:getWorldPoint(shape:getPoint())
         local r = shape:getRadius()
-        local dx = lx - cx
+        local dx = wx - cx
         if math.abs(dx) >= r then return cy end
         return cy - math.sqrt(r * r - dx * dx)
     end
-    local v = { shape:getPoints() }
+    local v = { body:getWorldPoints(shape:getPoints()) }
+    local lx = wx
     local n = #v / 2
     local best, lowestY
     for i = 1, n do
@@ -77,11 +81,9 @@ local passing = setmetatable({}, { __mode = 'k' }) -- [back fixture] = { [mover 
 local function oneWaySolid(fBack, fMover)
     local rec = passing[fBack]
     if rec and rec[fMover] ~= nil then return rec[fMover] end
-    local body = fBack:getBody()
     local x1, _, x2, y2 = fMover:getBoundingBox()
-    local lx, ly = body:getLocalPoint((x1 + x2) / 2, y2)
     local _, vy = fMover:getBody():getLinearVelocity()
-    local solid = ly <= topAt(fBack, lx) + 24 and vy > -units.speed(60)
+    local solid = y2 <= topAt(fBack, (x1 + x2) / 2) + 24 and vy > -units.speed(60)
     if not rec then
         rec = setmetatable({}, { __mode = 'k' })
         passing[fBack] = rec

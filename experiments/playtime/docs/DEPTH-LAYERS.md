@@ -113,6 +113,12 @@ crates, and Mipos in two lanes.
   (a roof rests on the back walls' one-way tops, and is welded anyway). Front parts drawn after the textured
   world (fabuland.drawFront). A Mipo stands in a door block's doorway now. The `door`'s DOOR behaviour (into
   a room) is WORLDS-AND-DOORS.
+- Spikes on it (2026-11-16, Nikki: "focus on cleaning up existing spikes with the engine features we have now"):
+  `planks` — its back and front planks are `thing.layer` instead of sensors, so the ladder's rungs and the window
+  sill are tops to stand on, and a plank whose nails pop lands on the ground (a sensor fell out of the world; a
+  wall plank that had missed its nails did so unseen, now they overlap the floor enough to be nailed). It found a
+  bug: the one-way top was measured in the body's own frame, so a turned body (a standing plank) had its side
+  as its top and caught Mipos halfway up the wall; now measured in world space. Next: boat2, drawn-sea.
 - [ ] **DL4. Mipo lanes**: a back lane behind the house (drawn behind, hazed, its own ground), from the spike.
 - [ ] **DL5. Parallax per layer** (WORLD-BUILDING G4), and the 3D light's depths per layer (LS16 lanes).
 
