@@ -57,7 +57,7 @@ end
 
 local sounds
 local function makeSounds()
-    if sounds then return end
+    if sounds or not love.audio then return end -- (no audio: the scenes tab's thumbnails)
     sounds = {}
     local rate = 22050
     local function make(len, fn)

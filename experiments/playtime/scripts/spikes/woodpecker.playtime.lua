@@ -48,7 +48,7 @@ local function alive(b) return b and not b:isDestroyed() end
 
 local tocks
 local function makeTocks()
-    if tocks then return end
+    if tocks or not love.audio then return end -- (no audio: the scenes tab's thumbnails)
     tocks = {}
     local rate = 22050
     for i, f in ipairs({ 1250, 1400, 1550 }) do
