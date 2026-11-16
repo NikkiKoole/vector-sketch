@@ -34,6 +34,8 @@ A date that slips moves the scope, not the date (the Sago Rule).
   (dirt, the bathhouse), pour (sand), sail and float (drawn-sea, boat2), carry and throw (dollhouse), and any
   others Nikki names. The test for each: a 3-year-old gets it in 5 seconds without words, it ends in a
   surprise, the Mipo answers what the kid does, and it runs at 60 fps on the phone.
+  2026-11-16: Nikki leans to dig: three digging apps (mole, treasure hunters, ant farm), the mole first,
+  thought through in `DIGGING-SERIES.md`.
 - [ ] **AO2. Played by the kids.** The two or three best on the iPad/iPhone (`./playtime.sh device`), each
   played by Nikki's kids without explaining. Write down how long each one held them, and what they tried to
   do that the game didn't do.

@@ -23,6 +23,7 @@ local s = {}
 --   noMipos      no Mipos of its own at the start
 --   canDig(x, y) where a press digs (default everywhere)
 --   bounds       { x1, y1, x2, y2 } for the camera
+--   layerScale   the earth's layers (topsoil, clay, deeper ground) this many times deeper (default 1)
 --   sharedFrame  the scene starts the ui frame itself (its own panel too), before calling drawUI
 --   env          the names it uses (state, world, cam, ui, ...): loaded with love.filesystem.load it runs in
 --                the plain globals, where a scene's names aren't
@@ -58,6 +59,7 @@ local rimColor = { 0.25, 0.17, 0.11, 1 }
 local earthShader = love.graphics.newShader([[
 varying vec2 wpos;
 extern float wall;
+extern float depthScale; // the layers' depths times this (a deeper world: opts.layerScale)
 #ifdef VERTEX
 vec4 position(mat4 tp, vec4 vp) { wpos = vp.xy; return tp * vp; }
 #endif
@@ -73,7 +75,7 @@ vec4 effect(vec4 color, Image tex, vec2 tc, vec2 sc) {
     // its own grain and roots (the noise read from far away)
     vec2 wpos = wpos + vec2(5371.0, 2113.0) * step(0.25, wall);
     // the layers, their edges wobbling
-    float y = depth + (vnoise(vec2(wpos.x * 0.002, 3.0)) - 0.5) * 260.0;
+    float y = depth / depthScale + (vnoise(vec2(wpos.x * 0.002, 3.0)) - 0.5) * 260.0;
     vec3 topsoil = vec3(0.36, 0.25, 0.16);
     vec3 clay = vec3(0.62, 0.44, 0.28);
     vec3 deep = vec3(0.52, 0.40, 0.33);
@@ -334,6 +336,14 @@ local function rebuildChunk(b, cx, cy)
     destroyChunk(chunk)
 
     local tris, outlines = marchChunk(b, cx, cy)
+    if #outlines == 0 and #tris >= 3 then
+        -- all earth (an air corner anywhere would make an outline): one rectangle, not two triangles a cell
+        -- (a big world is mostly solid chunks: 1,500 verts each added up to a lot of meshes)
+        local xa, ya = X0 + cx * CHUNK * CELL, Y0 + cy * CHUNK * CELL
+        local xb = X0 + math.min((cx + 1) * CHUNK, COLS) * CELL
+        local yb = Y0 + math.min((cy + 1) * CHUNK, ROWS) * CELL
+        tris = { { xa, ya }, { xb, ya }, { xb, yb }, { xa, ya }, { xb, yb }, { xa, yb } }
+    end
     chunk.mesh = #tris >= 3 and love.graphics.newMesh(tris, 'triangles', 'static') or nil
     chunk.outlines = outlines
 
@@ -654,9 +664,9 @@ function s.onKeyPress(key)
     if not state.playMode then return end
     local b = burrow()
     if key == '[' then
-        b.brush = math.max(100, b.brush - 40)
+        b.brush = math.max(15, math.floor(b.brush / 1.2))
     elseif key == ']' then
-        b.brush = math.min(800, b.brush + 40)
+        b.brush = math.min(800, math.ceil(b.brush * 1.2))
     elseif key == 'm' then
         local mx, my = mouseWorldPos()
         spawnMipo(b, mx, my)
@@ -1003,12 +1013,25 @@ local function chunkRim(chunk, set, step)
     return meshes
 end
 
+-- What's drawn this frame: the chunks near the view (the world can be many screens big). Set in drawBelow;
+-- reaches out further than the screen by as much as the tunnel's back wall pulls things in.
+local view
+local NONE = {}
+local function inView(key)
+    if not view then return true end
+    local k = key - 1
+    local cx, cy = k % CHUNKS_X, math.floor(k / CHUNKS_X)
+    local size = CHUNK * CELL
+    local x1, y1 = X0 + cx * size, Y0 + cy * size
+    return x1 < view[3] and x1 + size > view[1] and y1 < view[4] and y1 + size > view[2]
+end
+
 local function drawRim(b)
     local set = rim(b)
     local step = set.boil and math.floor(love.timer.getTime() * 10) % 3 or 0
     love.graphics.setColor(rimColor)
-    for _, chunk in pairs(b.chunks) do
-        if chunk.outlines and #chunk.outlines > 0 then
+    for key, chunk in pairs(b.chunks) do
+        if chunk.outlines and #chunk.outlines > 0 and inView(key) then
             for _, mesh in ipairs(chunkRim(chunk, set, step)) do love.graphics.draw(mesh) end
         end
     end
@@ -1053,6 +1076,16 @@ local function viewCentre()
     local w, h = love.graphics.getDimensions()
     local cx, cy = cam:getWorldCoordinates(w / 2, h / 2)
     return cx, cy, w, cam:getScale()
+end
+
+local function setView(b)
+    local w, h = love.graphics.getDimensions()
+    local cx, cy = cam:getWorldCoordinates(w / 2, h / 2)
+    local scale = cam:getScale()
+    local pl = plane(b)
+    local k = math.max(0.3, math.min(1, pl.tunnel, pl.back)) -- the strongest pull towards the middle
+    local hw, hh = w / 2 / scale / k + CELL * 2, h / 2 / scale / k + CELL * 2
+    view = { cx - hw, cy - hh, cx + hw, cy + hh }
 end
 
 -- a point at depth k (1 = the line the Mipos stand on), as it shows through the real camera
@@ -1128,8 +1161,8 @@ local function drawTunnelSides(b)
     local k = plane(b).tunnel
     local cx, cy = viewCentre()
     local verts = {}
-    for _, chunk in pairs(b.chunks) do
-        for _, o in ipairs(chunk.outlines) do
+    for key, chunk in pairs(b.chunks) do
+        for _, o in ipairs(inView(key) and chunk.outlines or NONE) do
             local f, n = o.flat, #o.flat
             local last = o.loop and n or n - 2
             for a = 1, last, 2 do
@@ -1267,20 +1300,29 @@ function s.drawUI()
     end)
 end
 
--- A stroke from the bridge: s.dig(x1, y1, x2, y2[, fill])
-function s.dig(x1, y1, x2, y2, fill)
+-- A stroke from the bridge or another scene: s.dig(x1, y1, x2, y2[, fill[, r]]) (r: the brush, default the panel's)
+function s.dig(x1, y1, x2, y2, fill, r)
     local b = burrow()
+    r = r or b.brush
     local dx, dy = x2 - x1, y2 - y1
-    local steps = math.max(1, math.ceil(math.sqrt(dx * dx + dy * dy) / (b.brush * 0.25)))
+    local steps = math.max(1, math.ceil(math.sqrt(dx * dx + dy * dy) / (r * 0.25)))
     for k = 0, steps do
-        stamp(b, x1 + dx * k / steps, y1 + dy * k / steps, b.brush, fill)
+        stamp(b, x1 + dx * k / steps, y1 + dy * k / steps, r, fill)
     end
+end
+
+-- the earth's density at a point (0 air .. 1 earth), for a scene using this earth (the mole)
+function s.earthAt(x, y)
+    local b = state[KEY]
+    if not (b and b.dens) then return 0 end
+    return earthAt(b, x, y)
 end
 
 local printCanvas
 function s.drawBelow()
     local b = state[KEY]
     if not (b and b.chunks) then return end
+    setView(b)
     local printing = b.print and b.print.process
     local previous
     if printing then
@@ -1293,6 +1335,7 @@ function s.drawBelow()
         love.graphics.clear(0, 0, 0, 0)
     end
     if not b.plain then love.graphics.setShader(earthShader) end
+    earthShader:send('depthScale', opts.layerScale or 1)
     earthShader:send('wall', 1)
     love.graphics.setColor(b.plain and wallColor or { 1, 1, 1, 1 })
     if b.wall then
@@ -1304,8 +1347,8 @@ function s.drawBelow()
     end
     earthShader:send('wall', 0)
     love.graphics.setColor(b.plain and earthColor or { 1, 1, 1, 1 })
-    for _, chunk in pairs(b.chunks) do
-        if chunk.mesh then love.graphics.draw(chunk.mesh) end
+    for key, chunk in pairs(b.chunks) do
+        if chunk.mesh and inView(key) then love.graphics.draw(chunk.mesh) end
     end
     love.graphics.setShader()
     if rim(b).drawn and #STROKES > 0 then
@@ -1314,8 +1357,8 @@ function s.drawBelow()
         love.graphics.setColor(rimColor)
         love.graphics.setLineWidth(8)
         love.graphics.setLineJoin('bevel')
-        for _, chunk in pairs(b.chunks) do
-            for _, o in ipairs(chunk.outlines) do
+        for key, chunk in pairs(b.chunks) do
+            for _, o in ipairs(inView(key) and chunk.outlines or NONE) do
                 if o.loop then love.graphics.polygon('line', o.flat) else love.graphics.line(o.flat) end
             end
         end
