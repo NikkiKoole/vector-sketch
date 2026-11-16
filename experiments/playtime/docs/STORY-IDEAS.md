@@ -217,6 +217,18 @@ The four quickest, each its own scene in `scripts/spikes/`, not yet played by Ni
   ends; a bead never does). Open: dragging not tried by hand; a hit on a resting stack barely bounces; no
   Mipo riding a bead, no drawing your own wire.
 
+- **activity, activity-vintage** — two activity boards (Nikki: "like the Fisher-Price vintage activity center?
+  lets spike that"; "can we have both the boards?"). Original Mipo boards, no brand or copied artwork. The
+  first: a red-rimmed board with a dial, a picture wheel, a bell, a bead drum, a peekaboo door with a Mipo, a
+  squeaker, beads on a rod, a clicker knob and a pull string (a rope) that zips back while the Mipos sing. The
+  vintage one, laid out from Nikki's photo of a 1970s activity center (described by the other session): ivory
+  plastic in relief (a vine, the egg Mipo on a wall), a button that pushes a plunger up to the bell, a
+  picture window with a knob (cow over the moon, egg Mipo, whale, mitten), a spinning ball, a roller, a lever
+  that sails three Mipos in a tub, a MIPO name plate, the dial, a rainbow spinner, a squeaker door, a mirror,
+  a turtle and bunny race along the bottom. The shared gadgets and sounds are in
+  `scripts/spikes/activity-gadgets.lua`. The Mipos look at what made a sound, jump at the bell, sing with the
+  string. Open: nothing tried by hand; Mipos can be grabbed through the closed door; panels overlap a gadget.
+
 ## Quickest as a spike (2026-11-16)
 
 Closest to a one-verb toy: **the Enormous Turnip** (pull), **Humpty Dumpty** (fall, put back together),
