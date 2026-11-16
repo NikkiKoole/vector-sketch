@@ -88,8 +88,8 @@ Copied between scenes (identical bodies, checked by md5 with whitespace and comm
   Overlaps `src/liquid.lua`'s `area` / `clipBelow` (flat level).
 - `pointInPoly`: planks, boat2, drawn-sea; `src/cdt.lua` already has one.
 - `viewRect` (4 identical), `ensureCanvas` (3), `overPanel` (pairs, differ only in the label).
-- The boat kit (`plank`, `quad`, `makeLook`, `placeNails`, `drawPlank`, `drawBoat`, …): identical
-  in boat2 and drawn-sea; `meshesOf`, `waveY`, `drawShape` in boat, boat2, drawn-sea.
+- The boat kit (`plank`, `quad`, `makeLook`, `placeNails`, `drawPlank`, `drawBoat`, …): one file since 2026-11-16,
+  `scripts/spikes/plank-boat.lua` (buildPlanks with or without ballast), loaded by boat2 and drawn-sea; `meshesOf`, `waveY`, `drawShape` in boat, boat2, drawn-sea.
 - Bike and soapbox share ~400 identical lines (lift, course, wheels, tire pictures, pose helpers).
 - The grass blade atlas: clouds and wild copy `src/grass.lua`'s `QUADS` + `ATLAS`.
 - Contact shadows: depth's were the only real ones (materials' is its own shader's table shadow, glass's a cast
