@@ -209,6 +209,14 @@ The four quickest, each its own scene in `scripts/spikes/`, not yet played by Ni
   the last), a music box slowing down. Open when picked up again: the toys are small next to the Mipos; Mipos
   off the table leave the view; nothing tried by hand.
 
+- **beadmaze** — a bead maze (Nikki: "could we do a bead maze next, like beads on rails?"). A wooden base, five
+  painted wires (a hump, a loop, a zigzag, a figure-8, a low arc crossing the rest, in front of or behind the
+  Mipos), 23 beads (round, cube, cylinder, flower). A bead is a distance along its wire and a speed: gravity
+  along the slope, a drag and a rub so it settles in dips, a knock at the ends; beads on a wire clack and pass
+  speed on by weight. Drag a bead along its wire, space shakes the toy. Not rail-cart (that lets go at the
+  ends; a bead never does). Open: dragging not tried by hand; a hit on a resting stack barely bounces; no
+  Mipo riding a bead, no drawing your own wire.
+
 ## Quickest as a spike (2026-11-16)
 
 Closest to a one-verb toy: **the Enormous Turnip** (pull), **Humpty Dumpty** (fall, put back together),
