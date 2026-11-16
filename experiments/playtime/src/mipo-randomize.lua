@@ -171,7 +171,7 @@ local function randomizeTextures(instance, hairColor, opts)
 
     -- Random haircut (update both head and torso1 since isPotatoHead flip changes owner)
     local hcUrl = pick(C.haircutTextures)
-    local hcBgURL = hcUrl .. '.png'
+    local hcBgURL = hcUrl ~= '' and hcUrl .. '.png' or '' -- '' in the list: no hair (src/mipo-breeds.lua)
     local hcFgURL = C.hairsWithMask[hcBgURL] and hcBgURL:gsub('%.png', '-mask.png') or ''
     local hcValues = {
         bgURL = hcBgURL, fgURL = hcFgURL,
@@ -184,7 +184,8 @@ local function randomizeTextures(instance, hairColor, opts)
     -- Head gets the same bodyhair as torsos so outline/colors are consistent across the body.
     local bhUrl = pick(C.bodyhairTextures)
     local bhFgHex, bhPHex, bhPURL = randomLook()
-    local bhValues = { bgURL = bhUrl .. '.png', fgURL = bhUrl .. '-mask.png',
+    local bhBgURL, bhFgURL = bhUrl ~= '' and bhUrl .. '.png' or '', bhUrl ~= '' and bhUrl .. '-mask.png' or ''
+    local bhValues = { bgURL = bhBgURL, fgURL = bhFgURL,
                        bgHex = hairColor, fgHex = bhFgHex, pHex = bhPHex, pURL = bhPURL }
     appearance.updateBodyhairOfPart(instance, 'head', bhValues)
     for i = 1, count do
@@ -270,10 +271,10 @@ local function randomizeFace(instance, hairColor, opts)
     local allowedPupils = opts and opts.allowedPupilShapes
     local pupilShapeIdx = allowedPupils
         and pick(allowedPupils)
-        or math.ceil(math.random() * #C.pupilShapes)
+        or math.ceil(math.random() * (C.randomPupilCount or #C.pupilShapes))
     local allowedEyes = opts and opts.allowedEyeShapes
     local faceValues = {
-        eyeShape = allowedEyes and pick(allowedEyes) or math.ceil(math.random() * #C.eyeShapes),
+        eyeShape = allowedEyes and pick(allowedEyes) or math.ceil(math.random() * (C.randomEyeCount or #C.eyeShapes)),
         pupilShape = pupilShapeIdx,
         eyeX = D.randomInRangeWeighted('eyeX'),
         eyeY = randomEyeY,
@@ -297,20 +298,23 @@ local function randomizeFace(instance, hairColor, opts)
         mouthWMul = math.min(D.randomInRangeWeighted('mouthWMul'), mouthWMulCap(instance)),
         mouthHMul = D.randomInRangeWeighted('mouthHMul'),
         mouthY = randomMouthY,
-        browShape = math.ceil(math.random() * #C.browShapes),
+        browShape = (opts and opts.allowedBrowShapes) and pick(opts.allowedBrowShapes)
+            or math.ceil(math.random() * (C.randomBrowCount or #C.browShapes)),
         browBgHex = color.darkerHex(hairColor), -- the hair colour a tint darker (2026-11-09)
         browWMul = D.randomInRangeWeighted('browWMul'),
         browHMul = D.randomInRangeWeighted('browHMul'),
         browBend = D.randomIntInRangeWeighted('browBend'),
         browY = D.randomInRangeWeighted('browY'),
         noseShape = (opts and opts.allowedNoseShapes) and pick(opts.allowedNoseShapes)
-            or math.ceil(math.random() * #C.noseShapes),
+            or math.ceil(math.random() * (C.randomNoseCount or #C.noseShapes)),
         noseBgHex = '000000ff',
         noseFgHex = randomHexColor(),
         noseWMul = D.randomInRangeWeighted('noseWMul'),
         noseHMul = D.randomInRangeWeighted('noseHMul'),
         noseY = D.randomInRangeWeighted('noseY'),
-        teethShape = math.random() < D.randomRanges.teethChance and math.ceil(math.random() * #C.teethShapes) or 0,
+        teethShape = math.random() < D.randomRanges.teethChance and ((opts and opts.allowedTeethShapes)
+            and pick(opts.allowedTeethShapes)
+            or math.ceil(math.random() * (C.randomTeethCount or #C.teethShapes))) or 0,
         teethWMul = D.randomInRangeWeighted('teethWMul'),
         teethHMul = D.randomInRangeWeighted('teethHMul'),
         teethStickOut = math.random() < D.randomRanges.teethStickOut,
@@ -450,7 +454,7 @@ function lib.randomizePart(instance, partName)
         local fgHex, pHex, pURL = randomLook()
         appearance.updateSkinOfPart(instance, 'head', { bgHex = '000000ff', fgHex = fgHex, pHex = pHex, pURL = pURL })
         local hcUrl = pick(C.haircutTextures)
-        local hcBgURL = hcUrl .. '.png'
+        local hcBgURL = hcUrl ~= '' and hcUrl .. '.png' or ''
         local hcFgURL = C.hairsWithMask[hcBgURL] and hcBgURL:gsub('%.png', '-mask.png') or ''
         appearance.updateHaircutOfPart(instance, 'head',
             { bgURL = hcBgURL, fgURL = hcFgURL,
@@ -467,7 +471,8 @@ function lib.randomizePart(instance, partName)
         appearance.updateSkinOfPart(instance, partName, { bgHex = '000000ff', fgHex = fgHex, pHex = pHex, pURL = pURL })
         local bhUrl = pick(C.bodyhairTextures)
         local bhFgHex, bhPHex, bhPURL = randomLook()
-        appearance.updateBodyhairOfPart(instance, partName, { bgURL = bhUrl .. '.png', fgURL = bhUrl .. '-mask.png',
+        local bhBgURL, bhFgURL = bhUrl ~= '' and bhUrl .. '.png' or '', bhUrl ~= '' and bhUrl .. '-mask.png' or ''
+        appearance.updateBodyhairOfPart(instance, partName, { bgURL = bhBgURL, fgURL = bhFgURL,
             bgHex = hairColor, fgHex = bhFgHex, pHex = bhPHex, pURL = bhPURL })
 
     elseif partName == 'lear' or partName == 'rear' then

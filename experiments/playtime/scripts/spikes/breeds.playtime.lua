@@ -3,7 +3,7 @@
 -- shape lists, a colour palette and the body's build. Everything else stays random, so a
 -- litter shares a look and still varies.
 -- Face patches (right panel): skin colouring under the hair, eyes on top: eye hollows, cheeks, a snout.
--- keys: r: a new litter   1-9: a breed   p: pause   h: hide/show the panels
+-- keys: r: a new litter   1-9, 0: a breed   p: pause   h: hide/show the panels
 
 local s = {}
 
@@ -124,6 +124,7 @@ function s.onKeyPress(key)
     if key == 'p' then worldState.paused = not worldState.paused end
     if key == 'h' then c.showPanel = not c.showPanel end
     local n = tonumber(key)
+    if n == 0 then n = 10 end -- 0: the tenth (clean)
     if n and BREEDS[n] then pickBreed(n) end
 end
 

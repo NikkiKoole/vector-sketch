@@ -47,12 +47,19 @@ if not accordionStates then
 end
 
 -- Shape categories for thumbnail grids (shared with character-manager via shape-catalogs)
-local torsoHeadShapes = C.torsoHeadShapes
-local earShapes = C.earShapes
-local feetShapes = C.feetShapes
-local handShapes = C.handShapes
+-- the hand-drawn pictures, then the clean ones (shape-catalogs: kept out of the plain randomizer)
+local function withClean(list, clean)
+    local out = {}
+    for _, name in ipairs(list) do out[#out + 1] = name end
+    for _, name in ipairs(clean or {}) do out[#out + 1] = name end
+    return out
+end
+local torsoHeadShapes = withClean(C.torsoHeadShapes, C.cleanBodyShapes)
+local earShapes = withClean(C.earShapes, C.cleanEarShapes)
+local feetShapes = withClean(C.feetShapes, C.cleanFootShapes)
+local handShapes = withClean(C.handShapes, C.cleanFootShapes)
 
-local patternTextures = C.patternTextures
+local patternTextures = withClean(C.patternTextures, C.cleanPatternTextures)
 
 local patchShapes = {
     'mipo/patch/patch-01', 'mipo/patch/patch-02', 'mipo/patch/patch-03', 'mipo/patch/patch-04'

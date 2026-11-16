@@ -109,4 +109,45 @@ function lib.isHandPicture(url)
     return false
 end
 
+-- Clean parts: circles, squares and eggs drawn by code (claudetools/clean-parts.py, 2026-11-16), to try a
+-- flat look next to the hand-drawn one. Numbered from 50. Bodies, ears, feet, limbs and patterns are
+-- separate lists, so the everyday randomizer keeps drawing from the hand-drawn ones; the 'clean' breed
+-- (src/mipo-breeds.lua) and the editor's grids use them. Face parts (eyes, pupils, noses, brows, lips,
+-- teeth) are kept by number, so they go at the end of their lists, and random*Count keeps the plain
+-- randomizer to the hand-drawn ones before them.
+lib.cleanBodyShapes = {
+    'mipo/body/body-50', 'mipo/body/body-51', 'mipo/body/body-52', 'mipo/body/body-53',
+    'mipo/body/body-54', 'mipo/body/body-55', 'mipo/body/body-56', 'mipo/body/body-57',
+}
+lib.cleanEarShapes = { 'mipo/ear/ear-50', 'mipo/ear/ear-51', 'mipo/ear/ear-52', 'mipo/ear/ear-53' }
+lib.cleanFootShapes = { 'mipo/foot/foot-50', 'mipo/foot/foot-51', 'mipo/foot/foot-52' }
+lib.cleanLimbSkinTextures = { 'mipo/leg/leg-50', 'mipo/leg/leg-51', 'mipo/leg/leg-52', 'mipo/leg/leg-53' }
+lib.cleanPatternTextures = {
+    'pat/clean-dots', 'pat/clean-stripes', 'pat/clean-checks', 'pat/clean-diagonal', 'pat/clean-rings',
+    'pat/clean-zigzag',
+}
+
+lib.randomEyeCount, lib.randomPupilCount, lib.randomNoseCount = #lib.eyeShapes, #lib.pupilShapes, #lib.noseShapes
+lib.randomBrowCount, lib.randomTeethCount = #lib.browShapes, #lib.teethShapes
+-- A face part's number is its file's (eye 50 is mipo/eye/eye-50), not its place in the list.
+local function appendNumbered(list, names)
+    local numbers = {}
+    for _, name in ipairs(names) do
+        list[#list + 1] = name
+        numbers[#numbers + 1] = tonumber(name:match('%-(%d+)$'))
+    end
+    return numbers
+end
+-- the clean ones' numbers, for a breed's allowedEyeShapes etc.
+lib.cleanEyeNumbers = appendNumbered(lib.eyeShapes, { 'mipo/eye/eye-50', 'mipo/eye/eye-51' })
+lib.cleanPupilNumbers = appendNumbered(lib.pupilShapes, { 'mipo/pupil/pupil-50', 'mipo/pupil/pupil-51' })
+lib.cleanNoseNumbers = appendNumbered(lib.noseShapes,
+    { 'mipo/nose/nose-50', 'mipo/nose/nose-51', 'mipo/nose/nose-52' })
+lib.cleanBrowNumbers = appendNumbered(lib.browShapes, { 'mipo/brow/brow-50', 'mipo/brow/brow-51' })
+lib.cleanUpperLipNumbers = appendNumbered(lib.upperLipShapes,
+    { 'mipo/upperlip/upperlip-50', 'mipo/upperlip/upperlip-51' })
+lib.cleanLowerLipNumbers = appendNumbered(lib.lowerLipShapes,
+    { 'mipo/lowerlip/lowerlip-50', 'mipo/lowerlip/lowerlip-51' })
+lib.cleanTeethNumbers = appendNumbered(lib.teethShapes, { 'mipo/teeth/teeth-50', 'mipo/teeth/teeth-51' })
+
 return lib

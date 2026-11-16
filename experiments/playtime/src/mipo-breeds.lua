@@ -43,7 +43,7 @@ local POINTY_EARS = {
 }
 
 -- The order for pickers (the breeds spike's keys, later the editor's, B5).
-lib.order = { 'teddy', 'fat', 'tall', 'hairy', 'bad', 'geometric', 'bathhouse', 'rubberleg-pearbod' }
+lib.order = { 'teddy', 'fat', 'tall', 'hairy', 'bad', 'geometric', 'bathhouse', 'rubberleg-pearbod', 'clean' }
 
 -- A breed's fields, all optional:
 --   ranges     entries of D.randomRanges for the draw: { min, max }, or a number for a chance
@@ -95,6 +95,18 @@ lib.breeds = {
         note = 'square bodies, no pattern, bright flat colours',
         lists = { torsoHeadShapes = SQUARE_BODY, patternTextures = { 'pat/type0' } },
         palette = { hues = { { 0, 10 }, { 45, 55 }, { 200, 220 } }, sat = { 0.75, 0.9 }, light = { 0.45, 0.55 } },
+    },
+    -- the clean parts drawn by code (claudetools/clean-parts.py, 2026-11-16): circles, squares, eggs
+    clean = {
+        note = 'parts drawn by code: perfect circles, squares and eggs',
+        lists = { torsoHeadShapes = C.cleanBodyShapes, earShapes = C.cleanEarShapes,
+                  randomHandShapes = C.cleanFootShapes, randomFootShapes = C.cleanFootShapes,
+                  limbSkinTextures = C.cleanLimbSkinTextures, patternTextures = C.cleanPatternTextures,
+                  limbHairTextures = { '' }, haircutTextures = { '' }, bodyhairTextures = { '' } }, -- no hair
+        face = { allowedEyeShapes = C.cleanEyeNumbers, allowedPupilShapes = C.cleanPupilNumbers,
+                 allowedNoseShapes = C.cleanNoseNumbers, allowedBrowShapes = C.cleanBrowNumbers,
+                 allowedUpperLipShapes = C.cleanUpperLipNumbers, allowedLowerLipShapes = C.cleanLowerLipNumbers,
+                 allowedTeethShapes = C.cleanTeethNumbers },
     },
     bathhouse = {
         note = "randomizeMipoConstrained, today's Bathhouse Mipos",

@@ -12,7 +12,10 @@ local drawThumbnailGrid = widgets.drawThumbnailGrid
 local getShapesForPart = widgets.getShapesForPart
 local editPartAndMirror = widgets.editPartAndMirror
 local BUTTON_SPACING = ui.theme.spacing
-local limbSkinTextures = C.limbSkinTextures
+-- the hand-drawn limbs, then the clean ones (shape-catalogs)
+local limbSkinTextures = {}
+for _, name in ipairs(C.limbSkinTextures) do limbSkinTextures[#limbSkinTextures + 1] = name end
+for _, name in ipairs(C.cleanLimbSkinTextures or {}) do limbSkinTextures[#limbSkinTextures + 1] = name end
 
 -- a part's scale (sx / sy) kept at least MIN_SCALE from zero, its sign (the mirror) kept; nil stays nil
 local MIN_SCALE = 0.1
@@ -49,7 +52,8 @@ local function restoreOverlayNose(instance, creation)
     local part = instance.dna.parts[owner]
     local nose = part and part.appearance and part.appearance.face and part.appearance.face.nose
     if not (nose and (nose.shape or 0) > 0) then
-        CharacterManager.updateFaceOfPart(instance, owner, { noseShape = math.random(#C.noseShapes) })
+        local noseCount = C.randomNoseCount or #C.noseShapes -- the hand-drawn ones (shape-catalogs)
+        CharacterManager.updateFaceOfPart(instance, owner, { noseShape = math.random(noseCount) })
     end
 end
 

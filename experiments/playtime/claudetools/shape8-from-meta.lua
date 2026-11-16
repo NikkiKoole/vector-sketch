@@ -95,7 +95,8 @@ end
 
 function M.catalogUrls(catalogs)
     local set = {}
-    for _, group in ipairs({ 'torsoHeadShapes', 'earShapes', 'feetShapes', 'handShapes' }) do
+    for _, group in ipairs({ 'torsoHeadShapes', 'earShapes', 'feetShapes', 'handShapes',
+                                  'cleanBodyShapes', 'cleanEarShapes', 'cleanFootShapes' }) do
         for _, name in ipairs(catalogs[group] or {}) do
             set[name .. '.png'] = true
         end
