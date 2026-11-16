@@ -12,9 +12,27 @@
 
 local s = {}
 
-local WORLD_W, WORLD_H = 9600, 4800
+-- Another scene can use this earth (scripts/spikes/oaktree.playtime.lua): loaded with
+-- love.filesystem.load and called with options:
+--   w, h, y0     the grid's size and top (default 9600 x 4800 from y -1200)
+--   stateKey     where it keeps its earth on state (default 'burrow')
+--   hollow(x, y, cell, roomDepth)  how deep (in cells) a point is inside the dug-out rooms at the start
+--                (default the one cave); roomDepth(x, y, cx, cy, w, h, r) is a rounded room
+--   surfaceAt(x, height)  the grass line (height: the default's wobble there)
+--   rocks        how many rocks (default 70)
+--   noMipos      no Mipos of its own at the start
+--   canDig(x, y) where a press digs (default everywhere)
+--   bounds       { x1, y1, x2, y2 } for the camera
+--   sharedFrame  the scene starts the ui frame itself (its own panel too), before calling drawUI
+--   env          the names it uses (state, world, cam, ui, ...): loaded with love.filesystem.load it runs in
+--                the plain globals, where a scene's names aren't
+local opts = ... or {}
+if opts.env then setfenv(1, opts.env) end -- luacheck: ignore 113
+local KEY = opts.stateKey or 'burrow'
+
+local WORLD_W, WORLD_H = opts.w or 9600, opts.h or 4800
 local X0 = -WORLD_W / 2
-local Y0 = -1200         -- top of the grid; the surface is around y = 0
+local Y0 = opts.y0 or -1200 -- top of the grid; the surface is around y = 0
 local CHUNK = 16         -- cells per chunk side
 local CELL_MIN, CELL_MAX = 15, 120
 
@@ -84,8 +102,8 @@ end
 
 -- Kept on state so a hot reload of this script keeps what was dug (and the Mipos).
 local function burrow()
-    local b = state.burrow or {}
-    state.burrow = b
+    local b = state[KEY] or {}
+    state[KEY] = b
     b.brush, b.cell, b.seed = b.brush or 300, b.cell or 40, b.seed or 0
     return b
 end
@@ -119,7 +137,9 @@ end
 
 local function surfaceAt(b, x)
     local u = (x - X0) / WORLD_W
-    return 120 * (love.math.noise(u * 3, 7.3 + b.seed) - 0.5) + 60 * (love.math.noise(u * 9, 1.1 + b.seed) - 0.5)
+    local height = 120 * (love.math.noise(u * 3, 7.3 + b.seed) - 0.5) + 60 * (love.math.noise(u * 9, 1.1 + b.seed) - 0.5)
+    if opts.surfaceAt then return opts.surfaceAt(x, height) end
+    return height
 end
 
 local function surfaces(b)
@@ -142,7 +162,7 @@ local function newLandscape(b)
             local x, y = X0 + i * CELL, Y0 + j * CELL
             local v = clamp01(0.5 + (y - b.surface[i]) / CELL)
             -- a cave with a flat floor to start in (floors must be flat: docs/WORLD-METRICS.md)
-            local cave = roomDepth(x, y, 1500, 1700, 2200, 1100, 350)
+            local cave = opts.hollow and opts.hollow(x, y, CELL, roomDepth) or roomDepth(x, y, 1500, 1700, 2200, 1100, 350)
             v = math.min(v, clamp01(0.5 - cave))
             if i == 0 or i == COLS or j == ROWS then v = 1 end
             b.dens[idx(i, j)] = v
@@ -417,7 +437,7 @@ for n = 1, 18 do
 end
 local ROCK_STONES = { 'A39C8EFF', '8E8579FF', 'B4A893FF', '7D776EFF', '9A8F80FF' }
 local ROCK_PATTERNS = { 'pattern3.png', 'pattern5.png', 'type4.png' }
-local ROCK_COUNT = 70
+local ROCK_COUNT = opts.rocks or 70
 local SHAKE_TIME = 0.7
 
 local function earthAt(b, x, y)
@@ -614,15 +634,16 @@ function s.onStart()
     end
     rebuildEverything(b)
     b.mipos = aliveMipos(b)
-    if #b.mipos == 0 then
+    if #b.mipos == 0 and not opts.noMipos then
         spawnMipo(b, -1500, -900) -- one on the grass
         spawnMipo(b, 1500, 1500)  -- one in the cave
     end
-    camera.setBounds(X0, Y0 - 2000, X0 + WORLD_W, Y0 + WORLD_H)
+    local bounds = opts.bounds or { X0, Y0 - 2000, X0 + WORLD_W, Y0 + WORLD_H }
+    camera.setBounds(bounds[1], bounds[2], bounds[3], bounds[4])
 end
 
 function s.onUnload()
-    local b = state.burrow
+    local b = state[KEY]
     if not b then return end
     for _, chunk in pairs(b.chunks or {}) do destroyChunk(chunk) end
     destroyRocks(b)
@@ -670,7 +691,8 @@ function s.update(dt)
     end
     -- dig with a press that didn't grab anything (a grab makes a pointer joint first)
     local down = state.playMode and love.mouse.isDown(1)
-    if down and not b.stroke and #getInteractedWithPointer() == 0 and not overPanel() then
+    local canDig = not opts.canDig or opts.canDig(mouseWorldPos())
+    if down and not b.stroke and canDig and #getInteractedWithPointer() == 0 and not overPanel() then
         b.stroke = true
         b.lastX, b.lastY = mouseWorldPos()
     elseif not down then
@@ -1188,9 +1210,11 @@ local function bladeRow(b, batch, front, seedP, size)
 end
 
 function s.drawUI()
-    local b = state.burrow
+    local b = state[KEY]
     if not (b and state.playMode) then return end
-    ui.startFrame() -- play mode draws no editor UI, so nothing else starts the frame
+    -- play mode draws no editor UI, so nothing else starts the frame (unless the scene using this earth does:
+    -- started twice, the second start wipes the click the first one saw)
+    if not opts.sharedFrame then ui.startFrame() end
     local BH, pad, w = 34, 6, 380
     local h = BH * 15 + pad * 16 + 20
     local _, sh = love.graphics.getDimensions()
@@ -1255,7 +1279,7 @@ end
 
 local printCanvas
 function s.drawBelow()
-    local b = state.burrow
+    local b = state[KEY]
     if not (b and b.chunks) then return end
     local printing = b.print and b.print.process
     local previous
@@ -1321,7 +1345,7 @@ function s.drawBelow()
 end
 
 function s.draw()
-    local b = state.burrow
+    local b = state[KEY]
     if not b then return end
     if b.savedDrawBodies ~= nil then
         state.world.debugDrawBodies = b.savedDrawBodies
@@ -1334,6 +1358,7 @@ function s.draw()
     end
     if not state.playMode then return end
     local mx, my = mouseWorldPos()
+    if opts.canDig and not opts.canDig(mx, my) then return end
     love.graphics.setColor(1, 1, 1, 0.5)
     love.graphics.setLineWidth(4)
     love.graphics.circle('line', mx, my, b.brush)
