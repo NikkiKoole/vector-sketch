@@ -686,6 +686,37 @@ function s.onKeyPress(key)
     end
 end
 
+-- Rebuild what was dug, a few milliseconds' worth a frame, nearest the stroke first; the rest next frame. All at
+-- once, a wide stroke rebuilt several chunks in one frame (13-17 ms with the garbage it left: a hitch on the
+-- iPhone SE 2, 2026-11-16, the mole's field at cell 40); the old outline holds a frame or two longer.
+local REBUILD_MS = 3
+local function rebuildDirty(b)
+    local keys = {}
+    for key in pairs(b.dirty) do keys[#keys + 1] = key end
+    if #keys == 0 then return end
+    local sx, sy = b.lastX or 0, b.lastY or 0
+    local size = CHUNK * CELL
+    local function dist(key)
+        local cx, cy = key % CHUNKS_X, math.floor(key / CHUNKS_X)
+        return (X0 + (cx + 0.5) * size - sx) ^ 2 + (Y0 + (cy + 0.5) * size - sy) ^ 2
+    end
+    table.sort(keys, function(a, c) return dist(a) < dist(c) end)
+    local start = love.timer.getTime()
+    local done = 0
+    for n, key in ipairs(keys) do
+        if n > 1 and (love.timer.getTime() - start) * 1000 > REBUILD_MS then break end
+        rebuildChunk(b, key % CHUNKS_X, math.floor(key / CHUNKS_X))
+        b.dirty[key] = nil
+        done = n
+    end
+    -- for measuring (the bridge): chunks rebuilt and their ms, all frames and the worst one
+    local ms = (love.timer.getTime() - start) * 1000
+    local st = b.rebuildStats or { chunks = 0, ms = 0, worst = 0, frames = 0 }
+    st.chunks, st.ms, st.frames = st.chunks + done, st.ms + ms, st.frames + 1
+    st.worst = math.max(st.worst, ms)
+    b.rebuildStats = st
+end
+
 -- the panel's rectangle on screen, so a press on it doesn't dig
 local panelRect = { 20, 0, 380, 0 }
 local function overPanel()
@@ -721,10 +752,7 @@ function s.update(dt)
         end
         b.lastX, b.lastY = mx, my
     end
-    for key in pairs(b.dirty) do
-        rebuildChunk(b, key % CHUNKS_X, math.floor(key / CHUNKS_X))
-    end
-    b.dirty = {}
+    rebuildDirty(b)
     rocksUpdate(b, dt)
 end
 
@@ -1122,30 +1150,41 @@ local function edges(pl, x, y, cx, cy)
     return bx, math.min(by, y - pl.behind), fx, math.max(fy, y + pl.infront)
 end
 
+-- (the vertex tables kept, as for the tunnel sides)
+local topVerts, topPool = {}, {}
+local function topVertex(n, x, y, u, v)
+    local t = topPool[n]
+    if not t then
+        t = { 0, 0, 0, 0, 1, 1, 1, 1 }
+        topPool[n] = t
+    end
+    t[1], t[2], t[3], t[4] = x, y, u, v
+    topVerts[n] = t
+end
+
 local function drawGrassTop(b)
     local pl = plane(b)
     local cx, cy = viewCentre()
     local tops, i0, i1 = grassTops(b, pl.back)
     b.tops = tops
     local tw, th = topPattern:getWidth() * 1.6, topPattern:getHeight() * 1.6
-    local verts = {}
+    local n = 0
     for i = i0, i1 - 1 do
         local ya, yb = tops[i], tops[i + 1]
-        if ya and yb and #verts + 6 <= TOP_MAX then
+        if ya and yb and n + 6 <= TOP_MAX then
             local xa, xb = X0 + i * CELL, X0 + (i + 1) * CELL
             local bax, bay, fax, fay = edges(pl, xa, ya, cx, cy)
             local bbx, bby, fbx, fby = edges(pl, xb, yb, cx, cy)
-            local A = { bax, bay, xa / tw, 0, 1, 1, 1, 1 }
-            local B = { bbx, bby, xb / tw, 0, 1, 1, 1, 1 }
-            local C = { fbx, fby, xb / tw, BAND_DEPTH / th, 1, 1, 1, 1 }
-            local D = { fax, fay, xa / tw, BAND_DEPTH / th, 1, 1, 1, 1 }
-            verts[#verts + 1] = A; verts[#verts + 1] = B; verts[#verts + 1] = C
-            verts[#verts + 1] = A; verts[#verts + 1] = C; verts[#verts + 1] = D
+            local ua, ub, vf = xa / tw, xb / tw, BAND_DEPTH / th
+            topVertex(n + 1, bax, bay, ua, 0); topVertex(n + 2, bbx, bby, ub, 0); topVertex(n + 3, fbx, fby, ub, vf)
+            topVertex(n + 4, bax, bay, ua, 0); topVertex(n + 5, fbx, fby, ub, vf); topVertex(n + 6, fax, fay, ua, vf)
+            n = n + 6
         end
     end
-    if #verts == 0 then return end
-    topMesh:setVertices(verts)
-    topMesh:setDrawRange(1, #verts)
+    for i = n + 1, #topVerts do topVerts[i] = nil end
+    if n == 0 then return end
+    topMesh:setVertices(topVerts)
+    topMesh:setDrawRange(1, n)
     topMesh:setTexture()
     love.graphics.setColor(LIGHT_GRASS[1], LIGHT_GRASS[2], LIGHT_GRASS[3], 1)
     love.graphics.draw(topMesh)
@@ -1160,10 +1199,23 @@ end
 -- away from the eye lands inside the earth and the earth's front face covers it.
 local LIGHT_DIR = { -0.4, -0.92 }
 local sideMesh, sideMax = nil, 0
+-- The vertex tables are kept from frame to frame: a fresh table a vertex every frame (here and for the grass
+-- top) was ~350 KB of garbage a frame, and the collector's steps were the hitches while digging on the phone
+-- (iPhone SE 2, 2026-11-16).
+local sideVerts, sidePool = {}, {}
+local function sideVertex(n, x, y, lit)
+    local t = sidePool[n]
+    if not t then
+        t = { 0, 0, 0, 0, 0, 0, 0, 1 }
+        sidePool[n] = t
+    end
+    t[1], t[2], t[5], t[6], t[7] = x, y, lit, lit, lit
+    sideVerts[n] = t
+end
 local function drawTunnelSides(b)
     local k = plane(b).tunnel
     local cx, cy = viewCentre()
-    local verts = {}
+    local nv = 0 -- vertices so far (not n: that's an outline's length below)
     for key, chunk in pairs(b.chunks) do
         for _, o in ipairs(inView(key) and chunk.outlines or NONE) do
             local f, n = o.flat, #o.flat
@@ -1183,23 +1235,21 @@ local function drawTunnelSides(b)
                     if ny > 0.3 then lit = lit * 0.75 end                    -- a ceiling
                     local pax, pay = project(ax, ay, k, cx, cy)
                     local pbx, pby = project(bx, by, k, cx, cy)
-                    local A = { ax, ay, 0, 0, lit, lit, lit, 1 }
-                    local B = { bx, by, 0, 0, lit, lit, lit, 1 }
-                    local Bp = { pbx, pby, 0, 0, lit, lit, lit, 1 }
-                    local Ap = { pax, pay, 0, 0, lit, lit, lit, 1 }
-                    verts[#verts + 1] = A; verts[#verts + 1] = B; verts[#verts + 1] = Bp
-                    verts[#verts + 1] = A; verts[#verts + 1] = Bp; verts[#verts + 1] = Ap
+                    sideVertex(nv + 1, ax, ay, lit); sideVertex(nv + 2, bx, by, lit); sideVertex(nv + 3, pbx, pby, lit)
+                    sideVertex(nv + 4, ax, ay, lit); sideVertex(nv + 5, pbx, pby, lit); sideVertex(nv + 6, pax, pay, lit)
+                    nv = nv + 6
                 end
             end
         end
     end
-    if #verts == 0 then return end
-    if #verts > sideMax then
-        sideMax = math.max(#verts * 2, 6000)
+    for i = nv + 1, #sideVerts do sideVerts[i] = nil end
+    if nv == 0 then return end
+    if nv > sideMax then
+        sideMax = math.max(nv * 2, 6000)
         sideMesh = love.graphics.newMesh(sideMax, 'triangles', 'stream')
     end
-    sideMesh:setVertices(verts)
-    sideMesh:setDrawRange(1, #verts)
+    sideMesh:setVertices(sideVerts)
+    sideMesh:setDrawRange(1, nv)
     love.graphics.draw(sideMesh)
 end
 

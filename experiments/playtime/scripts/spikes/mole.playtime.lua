@@ -659,6 +659,9 @@ local function reset()
     c.eat = nil
 end
 
+-- the earth, for the bridge (measuring: state.scene.sceneScript.earthApi().dig(...))
+function s.earthApi() return earth end
+
 function s.onStart()
     worldState.paused = false
     local c = st()
@@ -667,6 +670,11 @@ function s.onStart()
         state.scriptPanels = state.scriptPanels or {}
         state.scriptPanels['•• burrow ••'] = true
         c.panelFolded = true
+    end
+    if not c.molePanelSet then -- on a small screen (the phone: 667 points) the mole's panel too: it covered him
+        state.scriptPanels = state.scriptPanels or {}
+        if love.graphics.getWidth() < 900 then state.scriptPanels['•• mole ••'] = true end
+        c.molePanelSet = true
     end
     local old = state.moleEarth
     if old then
@@ -703,7 +711,9 @@ function s.onStart()
     if not mole() then spawnMole() else camera.follow(mole().parts.torso1.body) end
     c.eat = nil
     ensureSounds()
-    cam:setScale(0.35)
+    -- about 2,200 world units from top to bottom whatever the screen (the phone's is in points: 0.35 there was
+    -- twice as close as on the Mac)
+    cam:setScale(love.graphics.getHeight() / 2200)
     cam:setTranslation(DEN.x, DEN.y + 300)
 end
 
@@ -868,7 +878,7 @@ function s.drawUI()
     local sw = love.graphics.getDimensions()
     local w, h = PANEL.w, PANEL.row * rows + 34
     local x0, y0 = sw - w - 12, 12
-    molePanelRect = { x0, y0, w, h }
+    molePanelRect = ui.isPanelFolded('•• mole ••') and { x0, y0, 220, 40 } or { x0, y0, w, h } -- folded: its tab
     ui.panel(x0, y0, w, h, '•• mole ••', function()
         local layout = ui.createLayout({ type = 'columns', spacing = 0, startX = x0 + PANEL.pad, startY = y0 + 28 })
         local function row() return ui.nextLayoutPosition(layout, w - PANEL.pad * 2, PANEL.row) end

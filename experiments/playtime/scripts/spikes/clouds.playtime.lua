@@ -497,7 +497,7 @@ float heap(vec2 q, vec2 sp, float t) {
     return E + rag * 0.6;
 }
 
-vec4 effect(vec4 color, Image tex, vec2 uv, vec2 sc) {
+vec4 effect(mediump vec4 color, Image tex, mediump vec2 uv, mediump vec2 sc) { // as LOVE declares it (phone)
     vec2 q = vec2(q0.x * aspect, q0.y);
     vec2 sp = q + vec2(seed * 3.1, seed * 1.7);
     float t = time;
@@ -764,7 +764,7 @@ vec4 smokeColour(vec2 sc, vec2 lp, float t) {
     return vec4(col * a, a);
 }
 
-vec4 effect(vec4 color, Image tex, vec2 uv, vec2 sc) {
+vec4 effect(mediump vec4 color, Image tex, mediump vec2 uv, mediump vec2 sc) { // as LOVE declares it (phone)
     vec2 lp = (sc - toLayer.xy) * toLayer.z;
     lp -= shiftAt(sc);
     float t = time;
