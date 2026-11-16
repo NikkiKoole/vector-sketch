@@ -250,6 +250,16 @@ The four quickest, each its own scene in `scripts/spikes/`, not yet played by Ni
   head and ball by applyForce; it blew up (the heads too light for a spring that holds the ball). Open: the
   heads don't pull back on the ball; side on it reads left/right more than round and round; not tried by hand.
 
+- **fishing** — parked (tried 2026-11-16; Nikki: "magnetic fsihing !", played it, then "commit and park this
+  game"). The magnetic fishing game: a yellow drum pond seen a little from above, eight numbered fish standing on
+  a ring (an ellipse, back ones drawn first), turning; a cam opens and shuts each mouth twice a turn. The rod tip
+  follows the finger (kinematic), the magnet is a real body on a rope joint, so it swings and lags; near an open
+  mouth it clicks on: the fish turns dynamic, welded by its mouth, and dangles (one swung out onto a Mipo's
+  head). Lowered into the bucket it drops in, plop, the count goes up and the two watching Mipos cheer; `x`
+  lets go anywhere, `r` puts all the fish back. Sounds made in the script (click, plop). Open: the magnet can
+  catch on the bucket's rim; the fish on the ring are drawn, not in the water (no bob); one rod, no Mipo
+  fishing.
+
 ## Quickest as a spike (2026-11-16)
 
 Closest to a one-verb toy: **the Enormous Turnip** (pull), **Humpty Dumpty** (fall, put back together),
