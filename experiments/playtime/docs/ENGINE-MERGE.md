@@ -93,7 +93,8 @@ Copied between scenes (identical bodies, checked by md5 with whitespace and comm
 - Bike and soapbox share ~400 identical lines (lift, course, wheels, tire pictures, pose helpers).
 - The grass blade atlas: clouds and wild copy `src/grass.lua`'s `QUADS` + `ATLAS`.
 - Contact shadows drawn by hand in materials, glass, clouds, depth; `src/contact-shadows.lua` does it.
-- Sky, far and sand shaders identical in sea and seaside; the water shader near-identical in three.
+- Sky, far and sand shaders identical in sea and seaside: one file since 2026-11-16 (`scripts/spikes/sea-looks.lua`);
+  the water shader: sea, drawn-sea and seaside all use the engine's (`src/render/water-shader.lua`), seaside's stream too.
 
 Worth a home in `src/` (take arguments, no scene state):
 - Mipo pose helpers `jointPoint`, `turnParts`, `moveAll`, `mipoHeight` (soapbox, facing, tracks):
