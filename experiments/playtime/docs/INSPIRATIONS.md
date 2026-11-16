@@ -8,6 +8,7 @@ The pictures, toys and apps behind Mipo, and what to take from each. Add one whe
 
 - **Childcraft** (the 1970s children's encyclopedias). Nikki owns the whole series. The
   hand-illustrated 70s look and tone are the reference for the Mipo universe as a whole.
+  Its tales, rhymes and nature topics as spike ideas: `STORY-IDEAS.md`.
 - **James Gulliver Hancock, *Underworld***: https://jamesgulliverhancock.com/projects/underworld/
   A side view under the grass: naked mole-rats in the tunnels, worms in a pale top soil, a potato
   hanging its roots into darker earth with bones and stones. The picture behind the burrow
