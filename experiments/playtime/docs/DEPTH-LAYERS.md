@@ -119,6 +119,9 @@ crates, and Mipos in two lanes.
   wall plank that had missed its nails did so unseen, now they overlap the floor enough to be nailed). It found a
   bug: the one-way top was measured in the body's own frame, so a turned body (a standing plank) had its side
   as its top and caught Mipos halfway up the wall; now measured in world space.
+  Then (Nikki: "in the tree house the mipo is sort of locked in", "the drag through bottom of roof too"; "y feels
+  good"): the floor and the roof are one-way too (`oneWay`: drawn where they are, the back layer's top in the
+  physics), so a Mipo is dragged up into the house through the floor and out through the roof, and stands on both.
   `boat2`, `drawn-sea` — each boat is one body with every plank a fixture, so the engine got a layer per fixture
   (`depthLayers.setFixtureLayer(fixture, layer, top)`, in the script env; only the collisions, the drawing goes
   by the body; not saved, for bodies a script builds). The cabin's back wall and the railing use it instead of

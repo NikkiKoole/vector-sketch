@@ -141,8 +141,10 @@ local function plank(b, x1, y1, x2, y2, thick, opts)
     -- back and front are the engine's depth layers (src/depth-layers.lua): Mipos pass in front of a back
     -- plank but stand on its top (a ladder rung, the window sill), never touch a front one; both still land
     -- on the ground when their nails pop. Only the beam under the floor ('mid', not solid) is a sensor.
-    local layered = opts.layer == 'back' or opts.layer == 'front'
-    if layered then thing.layer = opts.layer end
+    -- oneWay: drawn where it is, but a one-way floor (the back layer's top): the floor, so a Mipo comes up
+    -- through it from below (the ladder) and stands on it from above.
+    local layered = opts.layer == 'back' or opts.layer == 'front' or opts.oneWay
+    if layered then thing.layer = opts.oneWay and 'back' or opts.layer end
     for _, fixture in ipairs(thing.body:getFixtures()) do
         fixture:setFriction(0.7)
         fixture:setRestitution(0.05)
@@ -291,9 +293,9 @@ local function build(b)
 
     local floorY = -1000
     -- the floor: three planks end to end, a beam under them, braces down to the trunk
-    plank(b, -720, floorY, -60, floorY + 4, 64, { solid = true })
-    plank(b, -180, floorY - 2, 460, floorY, 64, { solid = true })
-    plank(b, 360, floorY + 3, 980, floorY - 3, 64, { solid = true })
+    plank(b, -720, floorY, -60, floorY + 4, 64, { solid = true, oneWay = true })
+    plank(b, -180, floorY - 2, 460, floorY, 64, { solid = true, oneWay = true })
+    plank(b, 360, floorY + 3, 980, floorY - 3, 64, { solid = true, oneWay = true })
     plank(b, -640, floorY + 50, 640, floorY + 54, 56, { solid = false })
     plank(b, -110, -560, -560, floorY + 40, 52, { layer = 'back' })
     plank(b, 110, -540, 560, floorY + 44, 52, { layer = 'back' })
@@ -323,12 +325,12 @@ local function build(b)
     -- corner posts: solid, so a Mipo stays in
     plank(b, -640, floorY + 30, -650, -1500, 60, { solid = true })
     plank(b, 600, floorY + 30, 606, -1530, 60, { solid = true })
-    -- the roof: two planks a side, end to end down the slope, and a ridge cap
+    -- the roof: two planks a side, end to end down the slope, and a ridge cap (one-way: dragged up through from inside, stood on from above)
     for side = -1, 1, 2 do
-        plank(b, side * 830, -1520, side * 360, -1800 + rnd(-6, 6), 70, { solid = true })
-        plank(b, side * 410, -1775, side * -15, -2015, 66, { solid = true })
+        plank(b, side * 830, -1520, side * 360, -1800 + rnd(-6, 6), 70, { solid = true, oneWay = true })
+        plank(b, side * 410, -1775, side * -15, -2015, 66, { solid = true, oneWay = true })
     end
-    plank(b, -90, -2025, 90, -2028, 40, { solid = true })
+    plank(b, -90, -2025, 90, -2028, 40, { solid = true, oneWay = true })
     -- the porch railing, in front of the Mipos
     plank(b, 760, floorY - 20, 762, -1290, 40, { layer = 'front' })
     plank(b, 950, floorY - 20, 948, -1280, 40, { layer = 'front' })
