@@ -148,6 +148,15 @@ The four quickest, each its own scene in `scripts/spikes/`, not yet played by Ni
   colours, curl; state on `state`), so a new flap is one def. Open: drag and tap not yet tried by hand; Mipos
   can be grabbed through the closed skin; no muffled voices (no volume hook for scripts).
 
+- **book** — the book mechanics as a Mipo picture book (Nikki: "shall we do a spike with all sorts of flaps,
+  pulls, wheels and the children book stuff?"; "looks pretty promising"). An open book on a table, real
+  Mipos on the pages, pages turned by dragging a corner (the turn is a big flap). Spread 1 lift the flap (door,
+  windows, bush, mailbox; a Mipo, a cat, a cake, a sock under them), 2 a pull tab (a Mipo rides up the
+  chimney) and a wheel behind a window (day to night), 3 a pop-up tree and house with Mipos on them, 4 press
+  here dots and tilt (arrow keys tip gravity). The flap is now `scripts/spikes/book-flaps.lua`, shared with
+  belly. Open: the next spread is blank under a turning page; Mipos are rebuilt every turn; Mipos on the
+  pop-up drop when it folds fast; tilt moves gravity, not the picture; nothing tried by hand or on the phone.
+
 ## Quickest as a spike (2026-11-16)
 
 Closest to a one-verb toy: **the Enormous Turnip** (pull), **Humpty Dumpty** (fall, put back together),

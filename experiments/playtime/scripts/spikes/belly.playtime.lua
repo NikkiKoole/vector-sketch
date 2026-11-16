@@ -57,7 +57,9 @@ local tune = { capacity = 6, breath = 6, swell = 0.04, stiffness = 60, wander = 
 local PEEL_ANGLE = math.pi * 0.66 -- how far the skin folds down when open (past flat: foreshortened on the sand)
 local PEEL_SPREAD = 0.6           -- the curl: how much later the tail end opens than the head
 local PEEL_DRAG = 1300            -- world units of drag for a full peel
-local flap, flapStates, drawPouch -- defined further down (the flap piece, the whale's flaps)
+-- the flap piece, shared with the book spike: scripts/spikes/book-flaps.lua
+local flap = love.filesystem.load('scripts/spikes/book-flaps.lua')()
+local flapStates, drawPouch -- defined further down (the whale's flaps)
 
 ------------------------------------------------------------------------------------------------- the shape
 
@@ -478,107 +480,6 @@ function s.status()
     return out
 end
 
-
-------------------------------------------------------------------------------------------------- a flap
-
--- A flap, as in a lift-the-flap book (Spot, Usborne Peep Inside): a polygon hinged along a horizontal line that
--- folds toward you, showing its darker back, and what was under it. Self-contained, so another flap (a cupboard,
--- a door, the stomach wall) is just another def:
---   def = { hingeY, from, to (the x range: the curl runs from `from` to `to`), angle (open: past pi/2 it lies
---           foreshortened), spread (the curl: how much later the far end opens), drag (world units for a full
---           open), height (how far the polygon reaches above the hinge), outside, inside, edge (colours),
---           decorate = function(def, st) (drawn on it while its outside faces us) }
---   st  = flap.state(store, key): { open, v, target, drag } on state, so a reload keeps it
--- flap.press / flap.release / flap.update follow a finger (let go past halfway and it finishes, a tap toggles),
--- else a spring with a little overshoot; flap.draw(def, st, polygon); flap.contains(def, st, polygon, x, y).
-flap = {}
-
-function flap.state(store, key)
-    store[key] = store[key] or { open = 0, v = 0, target = 0 }
-    return store[key]
-end
-
-function flap.angleAt(def, st, x)
-    local u = (x - def.from) / (def.to - def.from)
-    local k = math.max(0, math.min(1.08, st.open * (1 + def.spread) - u * def.spread))
-    local e = k <= 1 and k * k * (3 - 2 * k) or k -- eased, the overshoot kept
-    return def.angle * e
-end
-
--- a point of the flap folded about the hinge: squashed across it by the cosine of its angle
-function flap.fold(def, st, x, y)
-    local c = math.cos(flap.angleAt(def, st, x))
-    return x, def.hingeY + (y - def.hingeY) * c, c
-end
-
-function flap.foldLine(def, st, pts)
-    local out = {}
-    for i = 1, #pts, 2 do
-        local x, y = flap.fold(def, st, pts[i], pts[i + 1])
-        out[#out + 1], out[#out + 2] = x, y
-    end
-    return out
-end
-
--- on the flap: inside its polygon (closed), or on it folded down in front of the hinge (open)
-function flap.contains(def, st, poly, x, y)
-    if st.open < 0.5 and insidePoly(poly, x, y) then return true end
-    local down = math.max(0, -math.cos(def.angle * math.min(1, st.open))) * def.height
-    return st.open > 0.3 and x > def.from and x < def.to and y > def.hingeY - 100 and y < def.hingeY + down + 150
-end
-
-function flap.press(st, x, y, now) st.drag = { x = x, y = y, open = st.open, t = now, moved = 0 } end
-
-function flap.release(st, now)
-    local d = st.drag
-    if not d then return end
-    if d.moved < 80 and now - d.t < 0.4 then
-        st.target = d.open > 0.5 and 0 or 1 -- a tap: open or close
-    else
-        st.target = st.open > 0.5 and 1 or 0 -- let go: past halfway it finishes
-    end
-    st.drag = nil
-end
-
-function flap.toggle(st) st.target = st.target > 0.5 and 0 or 1 end
-
--- returns true the frame it starts to open
-function flap.update(def, st, dt, mx, my)
-    local was = st.open
-    local d = st.drag
-    if d then
-        d.moved = math.max(d.moved, math.abs(my - d.y) + math.abs(mx - d.x))
-        st.open = math.max(0, math.min(1, d.open + (my - d.y) / def.drag))
-        st.v = 0
-    else
-        local a = 90 * (st.target - st.open) - 11 * st.v
-        st.v = st.v + a * dt
-        st.open = math.max(-0.05, math.min(1.08, st.open + st.v * dt))
-    end
-    return was < 0.05 and st.open >= 0.05
-end
-
-function flap.draw(def, st, poly)
-    local ok, tris = pcall(love.math.triangulate, poly)
-    if not ok then return end
-    for _, t in ipairs(tris) do
-        local x1, y1, c1 = flap.fold(def, st, t[1], t[2])
-        local x2, y2, c2 = flap.fold(def, st, t[3], t[4])
-        local x3, y3, c3 = flap.fold(def, st, t[5], t[6])
-        local c = (c1 + c2 + c3) / 3
-        local col, sh = def.outside, 0.72 + 0.28 * c
-        if c < 0 then col, sh = def.inside, 0.65 + 0.35 * -c end
-        love.graphics.setColor(col[1] * sh, col[2] * sh, col[3] * sh)
-        love.graphics.polygon('fill', x1, y1, x2, y2, x3, y3)
-    end
-    if def.decorate then def.decorate(def, st) end
-    local edge = flap.foldLine(def, st, poly)
-    edge[#edge + 1], edge[#edge + 2] = edge[1], edge[2]
-    love.graphics.setColor(def.edge)
-    love.graphics.setLineWidth(def.edgeWidth or 12)
-    love.graphics.line(edge)
-    love.graphics.setLineWidth(1)
-end
 
 ------------------------------------------------------------------------------------------------- the whale's flaps
 
