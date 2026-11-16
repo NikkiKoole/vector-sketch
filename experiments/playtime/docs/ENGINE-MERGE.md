@@ -92,7 +92,10 @@ Copied between scenes (identical bodies, checked by md5 with whitespace and comm
   in boat2 and drawn-sea; `meshesOf`, `waveY`, `drawShape` in boat, boat2, drawn-sea.
 - Bike and soapbox share ~400 identical lines (lift, course, wheels, tire pictures, pose helpers).
 - The grass blade atlas: clouds and wild copy `src/grass.lua`'s `QUADS` + `ATLAS`.
-- Contact shadows drawn by hand in materials, glass, clouds, depth; `src/contact-shadows.lua` does it.
+- Contact shadows: depth's were the only real ones (materials' is its own shader's table shadow, glass's a cast
+  shadow on the wall, clouds' the clouds' on the ground); depth uses `src/contact-shadows.lua` since 2026-11-16
+  (`compute(world, settings)`, `mipoOnly`), drawn at its own two depths. On a peak (Nikki asked) each foot's
+  oval lies along its own slope, cut to the ground; a foot right over the tip shades only one side.
 - Sky, far and sand shaders identical in sea and seaside: one file since 2026-11-16 (`scripts/spikes/sea-looks.lua`);
   the water shader: sea, drawn-sea and seaside all use the engine's (`src/render/water-shader.lua`), seaside's stream too.
 

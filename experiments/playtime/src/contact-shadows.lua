@@ -10,7 +10,7 @@
 -- one with pictures, just above its highest one (a split in the textured list, state.drawSplits, merged
 -- with a scene's own), so it lies on the shelf's picture and under what stands on it.
 -- Off unless state.contactShadows is set: { strength = 0..1 (0.45), reach = how far a caster's shadow
--- reaches, in its widths (1.5) }.
+-- reaches, in its widths (1.5), mipoOnly = only Mipos cast (the depth spike: its house blocks don't) }.
 local lib = {}
 
 local state = require('src.state')
@@ -58,11 +58,11 @@ local function extent(body)
     return x0, x1, y0, y1
 end
 
-local function casts(body)
+local function casts(body, mipoOnly)
     local thing = utils.thingOf(body)
     if not thing then return false end
     if thing.mipoId then return MIPO_CASTERS[thing.mipoPartName] == true end
-    return true
+    return not mipoOnly
 end
 
 -- the nearest up-facing surface straight under (x, y) within reach: its fixture, the y, and the
@@ -105,10 +105,10 @@ end
 -- one is destroyed, or every 30 frames): the bodies, and each one's own Mipo's collision group (a Mipo's
 -- parts share a negative group of their own; 0: not a Mipo), so the rays skip its own Mipo.
 local casterCache = { bodies = {}, groups = {}, count = -1, frames = 0 }
-local function casterList(world)
+local function casterList(world, mipoOnly)
     local c = casterCache
     c.frames = c.frames + 1
-    local stale = c.world ~= world or world:getBodyCount() ~= c.count or c.frames >= 30
+    local stale = c.world ~= world or world:getBodyCount() ~= c.count or c.frames >= 30 or c.mipoOnly ~= mipoOnly
     if not stale then
         for _, body in ipairs(c.bodies) do
             if body:isDestroyed() then stale = true; break end
@@ -117,7 +117,7 @@ local function casterList(world)
     if stale then
         local bodies, groups = {}, {}
         for _, body in ipairs(world:getBodies()) do
-            if casts(body) then
+            if casts(body, mipoOnly) then
                 local group = 0
                 if (utils.thingOf(body) or {}).mipoId then
                     for _, fixture in ipairs(body:getFixtures()) do
@@ -132,6 +132,7 @@ local function casterList(world)
             end
         end
         c.bodies, c.groups, c.world, c.count, c.frames = bodies, groups, world, world:getBodyCount(), 0
+        c.mipoOnly = mipoOnly
     end
     return c.bodies, c.groups
 end
@@ -141,14 +142,16 @@ end
 -- the same rays and ovals; docs/MEASURING.md M12); state.contactShadowsLua = true: the Lua path anyway.
 local RAY_OFFSETS = { 0, -0.35, 0.35 }
 local nativeOut = {}
-function lib.compute(world)
-    local settings = state.contactShadows
+-- settings: { strength, reach } to compute with (a scene script drawing them at its own depths, the
+-- depth spike), else state.contactShadows (off when it's not set)
+function lib.compute(world, settings)
+    settings = settings or state.contactShadows
     local list = {}
     if not settings or not world then return list end
     local strength, reachWidths = settings.strength or 0.45, settings.reach or 1.5
     local depths = {} -- a receiver's picture depth, once a frame (false: none)
     if world.playtimeContactShadows and not state.contactShadowsLua then
-        local bodies, groups = casterList(world)
+        local bodies, groups = casterList(world, settings.mipoOnly == true)
         local n = world:playtimeContactShadows(bodies, groups, nativeOut, strength, reachWidths,
             MAX_CASTER_WIDTH, MIN_DEPTH, 60)
         for i = 0, n - 1 do
@@ -163,7 +166,7 @@ function lib.compute(world)
         return list
     end
     for _, body in ipairs(world:getBodies()) do
-        if casts(body) then
+        if casts(body, settings.mipoOnly) then
             local x0, x1, top, bottom = extent(body)
             local width = x0 and (x1 - x0)
             if width and width > 0 and width < MAX_CASTER_WIDTH then

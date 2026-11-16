@@ -45,17 +45,6 @@ end
 
 local function rnd(a, b) return a + love.math.random() * (b - a) end
 
-local SHADOW
-do
-    local d = love.image.newImageData(64, 64)
-    d:mapPixel(function(x, y)
-        local dx, dy = (x - 31.5) / 32, (y - 31.5) / 32
-        local a = math.max(0, 1 - math.sqrt(dx * dx + dy * dy))
-        return 1, 1, 1, a * a * (3 - 2 * a)
-    end)
-    SHADOW = love.graphics.newImage(d)
-end
-
 ---------------------------------------------------------------- the view
 
 -- where a point depth units behind (x, y) is drawn: toward the vanishing point, or slanted
@@ -697,43 +686,17 @@ local function drawGround(b)
 end
 
 -- a soft shadow on whatever the Mipo stands over
+-- The Mipos' contact shadows: the engine's (src/contact-shadows.lua: each foot, hand and the torso its own
+-- soft oval along what it stands on, cut to it), computed once a frame and drawn here at the scene's own two
+-- depths: the back lane's (on the path) before the house, the rest after it, on the house's floors and the
+-- ground in front. Asked with its own settings, so the engine doesn't draw them itself under the house.
+local SHADOW_SETTINGS = { strength = 0.45, reach = 1.5, mipoOnly = true } -- (the blocks don't cast)
 local function drawShadows(b, lane)
     if not b.settings.shadows then return end
-    for _, inst in ipairs(b.mipos) do
-        if (b.lanes[inst] or 'play') == lane then
-            local tx, ty = inst.parts.torso1.body:getPosition()
-            local minX, maxX, footY = math.huge, -math.huge, -math.huge
-            for _, part in pairs(inst.parts) do
-                if part.body and not part.body:isDestroyed() then
-                    local px, py = part.body:getPosition()
-                    minX, maxX, footY = math.min(minX, px), math.max(maxX, px), math.max(footY, py)
-                end
-            end
-            local hitY
-            if lane == 'back' then
-                hitY = PATH_TOP
-            else
-                state.physicsWorld:rayCast(tx, ty, tx, ty + 4000, function(fixture, _, hy, _, _, fraction)
-                    if fixture:isSensor() then return -1 end
-                    local role = b.roles[fixture:getBody()]
-                    if not role then return -1 end
-                    if role.kind == 'ground' or (role.kind == 'block' and role.block.layer ~= 'front') then
-                        hitY = hy
-                        return fraction
-                    end
-                    return -1
-                end)
-            end
-            if hitY then
-                local gap = math.max(0, hitY - footY - 70)
-                local fade = math.max(0, 1 - gap / 900)
-                if fade > 0 then
-                    local width = (maxX - minX + 260) * (1 + gap / 1200)
-                    love.graphics.setColor(0.12, 0.1, 0.14, 0.42 * fade)
-                    love.graphics.draw(SHADOW, (minX + maxX) / 2, hitY - 6, 0, width / 64, 70 * (1 + gap / 1500) / 64, 32, 32)
-                end
-            end
-        end
+    if lane == 'back' then b.shadowList = contactShadows.compute(state.physicsWorld, SHADOW_SETTINGS) end
+    for _, sh in ipairs(b.shadowList or {}) do
+        local onPath = b.groundRoles and b.groundRoles[sh.receiver] == 'path'
+        if onPath == (lane == 'back') then contactShadows.drawShadow(sh) end
     end
 end
 
