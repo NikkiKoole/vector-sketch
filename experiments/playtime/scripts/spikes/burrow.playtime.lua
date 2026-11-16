@@ -57,35 +57,38 @@ local rimColor = { 0.25, 0.17, 0.11, 1 }
 -- scripts/spikes/sea.playtime.lua): topsoil, clay, deeper ground, grain, fine roots near
 -- the top. `wall` draws the dug-out back wall with the same earth, darker and flatter. 't' toggles.
 local earthShader = love.graphics.newShader([[
-varying vec2 wpos;
+// highp where world positions go in: on the phone the pixel part runs at medium precision, where the grain's
+// sin(dot(...)) of a world position past ~65,000 overflows to NaN and draws black (a straight diagonal through the
+// earth on the iPhone, 2026-11-16, the mole's big field). A 'precision highp float;' line instead broke the
+// shader there (effect's arguments no longer matched LOVE's own). On the Mac highp means nothing.
+varying highp vec2 wpos;
 extern float wall;
 extern float depthScale; // the layers' depths times this (a deeper world: opts.layerScale)
 #ifdef VERTEX
 vec4 position(mat4 tp, vec4 vp) { wpos = vp.xy; return tp * vp; }
 #endif
 #ifdef PIXEL
-float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
-float vnoise(vec2 p) {
-    vec2 i = floor(p); vec2 f = fract(p); f = f * f * (3.0 - 2.0 * f);
+highp float hash(highp vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+highp float vnoise(highp vec2 p) {
+    highp vec2 i = floor(p); highp vec2 f = fract(p); f = f * f * (3.0 - 2.0 * f);
     return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
 }
 vec4 effect(vec4 color, Image tex, vec2 tc, vec2 sc) {
-    float depth = wpos.y;
+    highp float depth = wpos.y;
     // the wall is the earth a metre further back: the same layers at the same depths,
     // its own grain and roots (the noise read from far away)
-    vec2 wpos = wpos + vec2(5371.0, 2113.0) * step(0.25, wall);
-    // the layers, their edges wobbling
-    float y = depth / depthScale + (vnoise(vec2(wpos.x * 0.002, 3.0)) - 0.5) * 260.0;
+    highp vec2 wp = wpos + vec2(5371.0, 2113.0) * step(0.25, wall);
+    highp float y = depth / depthScale + (vnoise(vec2(wp.x * 0.002, 3.0)) - 0.5) * 260.0;
     vec3 topsoil = vec3(0.36, 0.25, 0.16);
     vec3 clay = vec3(0.62, 0.44, 0.28);
     vec3 deep = vec3(0.52, 0.40, 0.33);
     vec3 col = mix(topsoil, clay, smoothstep(150.0, 450.0, y));
     col = mix(col, deep, smoothstep(1500.0, 2300.0, y));
     // thin bands of sediment, and grain at three sizes
-    col *= 0.94 + 0.10 * smoothstep(0.45, 0.6, vnoise(vec2(wpos.x * 0.0015, wpos.y * 0.015)));
-    col *= 0.86 + hash(floor(wpos / 7.0)) * 0.12 + vnoise(wpos * 0.012) * 0.12 + vnoise(wpos * 0.003) * 0.08;
+    col *= 0.94 + 0.10 * smoothstep(0.45, 0.6, vnoise(vec2(wp.x * 0.0015, wp.y * 0.015)));
+    col *= 0.86 + hash(floor(wp / 7.0)) * 0.12 + vnoise(wp * 0.012) * 0.12 + vnoise(wp * 0.003) * 0.08;
     // fine roots in the topsoil: where a stretched noise crosses one value
-    float rn = vnoise(vec2(wpos.x * 0.008, wpos.y * 0.004)) + vnoise(wpos * 0.03) * 0.15;
+    highp float rn = vnoise(vec2(wp.x * 0.008, wp.y * 0.004)) + vnoise(wp * 0.03) * 0.15;
     float root = (1.0 - smoothstep(0.0, 0.025, abs(rn - 0.5))) * (1.0 - smoothstep(200.0, 700.0, depth));
     col = mix(col, vec3(0.22, 0.15, 0.10), root * 0.7);
     // the back wall (1) darker and flatter; the sides of a tunnel (0.5) between it and the front
