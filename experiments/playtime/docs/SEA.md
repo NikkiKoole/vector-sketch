@@ -60,3 +60,16 @@ Not done / open:
   see-through, stretched along their flight; the black-rimmed drawn drops didn't work.
 - Left: no seabed (the depths go dark), fish swim deep and come out small; not on the phone yet.
 
+
+### Lit far layers and a colour ramp (2026-11-16)
+
+Nikki: "can we try something like rendering each of the layers seen in drawn sea? so the waves in the distance
+also get the shinyness", then "the color per layer feels funky ... front is cyan, then darker going to cyan";
+"ok good". With the optics on, the two far bands and the water behind the boat go through the water shader too
+(the engine's now, `src/render/water-shader.lua`; drawn-sea's copy is gone): a bright line, glints and specks on
+each, smaller caustics and bending with distance, each bending what's behind it (`f` on / off; `g` a canvas copy
+per layer or one for all: one looks the same but at the edges). The colours are one ramp, as painters do it:
+the horizon close to the sky (it mirrors the sky at that angle), deeper and more saturated toward us, the near
+water the deepest with its bright line and the see-through just under it (sliders horizonPale, rampCurve,
+near/far tint and murk; Nikki's values the defaults). Cost on the Mac: none measurable (CPU-bound, ~85 fps
+either way); the phone not measured yet. sea's own copy of the shader is still there.

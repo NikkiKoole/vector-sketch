@@ -30,7 +30,9 @@ local function boat()
             width = 9, wobble = 1.2, wonk = 1, boil = false },
     }
     local set = state.drawnSea.settings -- the optics came later: live states lack them
-    local optics = { optics = true, clarity = 1, refraction = 1, caustics = 1, rays = 1, mirror = 1, blur = 1, specks = 1 }
+    local optics = { optics = true, clarity = 1, refraction = 1, caustics = 1, rays = 1, mirror = 1, blur = 1, specks = 1,
+        farLit = true, copyEach = false, farMurk = 0.72, farTint = 1.04, -- Nikki's, 2026-11-16
+        horizonPale = 0.6, rampCurve = 1.14, nearTint = 0.7, nearMurk = 0.75 }
     for k, v in pairs(optics) do if set[k] == nil then set[k] = v end end
     return state.drawnSea
 end
@@ -210,150 +212,33 @@ end
 ---------------------------------------------------------------- the optics (the sea spike's water shader)
 
 -- Under the surface the world is seen through water: everything is drawn into a canvas first,
--- then this shader draws the near water over it: what's under it bent, red then green taken out
+-- then the water shader draws the near water over it: what's under it bent, red then green taken out
 -- with depth, caustics on things, slanted light shafts, specks, the silvery underside of the
--- surface. Copied from scripts/spikes/sea.playtime.lua (its sky, far sea and sand aren't used).
-local PHONE = love.system.getOS() == 'iOS' or love.system.getOS() == 'Android'
-local waterShader = love.graphics.newShader((PHONE and '#define PHONE\n' or '') .. [[
-varying vec2 wpos;
-varying float vSurf;
-varying float vFoam;
-varying float vSlope;
-extern Image scene;
-extern float time;
-extern float pxPerWorld;
-extern float clarity;
-extern float refraction;
-extern float caustics;
-extern float rays;
-extern float mirror;
-extern float blur;
-extern float specks;
-#ifdef VERTEX
-attribute float SurfY;
-attribute float Foam;
-attribute float Slope;
-vec4 position(mat4 tp, vec4 vp) { wpos = vp.xy; vSurf = SurfY; vFoam = Foam; vSlope = Slope; return tp * vp; }
-#endif
-#ifdef PIXEL
-float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
-float vnoise(vec2 p) {
-    vec2 i = floor(p); vec2 f = fract(p); f = f * f * (3.0 - 2.0 * f);
-    return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
-}
-// the well-known tileable water caustic (after Dave Hoskins / joltz0r)
-float caustic(vec2 uv, float t) {
-    vec2 p = mod(uv * 6.28318, 6.28318) - 250.0;
-    vec2 i = p;
-    float c = 1.0;
-    float inten = 0.005;
-    for (int n = 0; n < 4; n++) {
-        float tt = t * (1.0 - (3.5 / float(n + 1)));
-        i = p + vec2(cos(tt - i.x) + sin(tt + i.y), sin(tt - i.y) + cos(tt + i.x));
-        c += 1.0 / length(vec2(p.x / (sin(i.x + tt) / inten), p.y / (cos(i.y + tt) / inten)));
-    }
-    c /= 4.0;
-    c = 1.17 - pow(c, 1.4);
-    return pow(abs(c), 8.0);
-}
-const vec3 ABSORB = vec3(0.00105, 0.00030, 0.00017);
-vec3 waterColAt(float depth) {
-    return mix(vec3(0.10, 0.52, 0.58), vec3(0.005, 0.05, 0.13), 1.0 - exp(-depth / (1300.0 * clarity)));
-}
-// a scene sample (premultiplied) as seen at this depth: light lost on the way down and back
-vec3 shade(vec4 c, float depth, vec3 caus) {
-    vec3 T = exp(-ABSORB / clarity * depth);
-    vec3 Tv = exp(-ABSORB / clarity * 450.0);
-    vec3 lit = c.rgb * T * (1.0 + caus * 1.4) + caus * 0.25 * c.a * T;
-    return waterColAt(depth) * (1.0 - c.a * Tv) + lit * Tv;
-}
-// the scene, softer the deeper it is (light scatters on the way)
-vec4 sceneAt(vec2 uv, float r) {
-    vec2 ss = love_ScreenSize.xy;
-    vec4 c = Texel(scene, uv) * 0.4;
-    c += Texel(scene, uv + vec2(r, r * 0.6) / ss) * 0.15;
-    c += Texel(scene, uv + vec2(-r, -r * 0.6) / ss) * 0.15;
-    c += Texel(scene, uv + vec2(r * 0.6, -r) / ss) * 0.15;
-    c += Texel(scene, uv + vec2(-r * 0.6, r) / ss) * 0.15;
-    return c;
-}
-vec4 effect(vec4 color, Image tex, vec2 tc, vec2 sc) {
-    float depth = max(wpos.y - vSurf, 0.0);
-    float near = exp(-depth / 500.0);
-    vec2 ss = love_ScreenSize.xy;
-    // refraction: bend the scene by a moving wobble, more near the surface
-    vec2 wob = vec2(sin(wpos.y * 0.011 + time * 1.9 + wpos.x * 0.004) + 0.5 * sin(wpos.x * 0.027 - time * 2.6),
-                    cos(wpos.x * 0.009 + time * 1.5) + 0.5 * cos(wpos.y * 0.023 + time * 2.2));
-    vec2 off = wob * (7.0 + 16.0 * near) * pxPerWorld * refraction;
-    off.y = max(off.y, -depth * pxPerWorld); // never pull the picture from above the surface
-    vec2 uv = (sc + off) / ss;
-    float br = blur * clamp(depth / 2200.0, 0.0, 1.0) * 30.0 * pxPerWorld;
-    vec4 sceneC = sceneAt(uv, br);
-#ifndef PHONE
-    // red and blue bend a little apart
-    sceneC.r = mix(sceneC.r, Texel(scene, (sc + off * 1.35) / ss).r, 0.6);
-    sceneC.b = mix(sceneC.b, Texel(scene, (sc + off * 0.65) / ss).b, 0.6);
-#endif
-    vec3 T = exp(-ABSORB / clarity * depth);
-    // caustics on the things in the water
-    vec2 cuv = vec2(wpos.x + sin(wpos.y * 0.002) * 120.0, wpos.y) / 1100.0;
-    float ct = time * 0.55 + 23.0;
-#ifdef PHONE
-    vec3 caus = vec3(caustic(cuv, ct)) * vec3(0.9, 1.0, 1.0);
-#else
-    vec3 caus = vec3(caustic(cuv + vec2(0.004, 0.0), ct), caustic(cuv, ct), caustic(cuv - vec2(0.004, 0.0), ct));
-#endif
-    caus = min(caus, vec3(1.0)) * caustics * 1.1 * smoothstep(0.0, 120.0, depth);
-    vec3 col = shade(sceneC, depth, caus);
-    // the underside of the surface: a silvery mirror of what's below it
-    float M = 150.0;
-    if (depth < M && mirror > 0.0) {
-        float rd = 2.0 * M - depth;
-        vec2 ruv = (sc + vec2(off.x * 1.8, (rd - depth) * pxPerWorld + off.y * 2.5)) / ss;
-        vec3 refl = shade(Texel(scene, ruv), rd, vec3(0.0));
-        refl = refl * 1.25 + vec3(0.03, 0.06, 0.07);
-        float w = pow(1.0 - depth / M, 1.6) * 0.6 * mirror;
-        col = mix(col, refl, w);
-    }
-    // light shafts: slanted, slow, fading with depth
-    float q = wpos.x + wpos.y * 0.32;
-    float r = sin(q * 0.0021 + time * 0.13) * sin(q * 0.0057 - time * 0.21) * sin(q * 0.00093 + time * 0.05 + 1.0);
-    float shaft = pow(max(r, 0.0), 1.2) * exp(-depth / 1700.0) * smoothstep(0.0, 200.0, depth);
-    col += vec3(0.55, 0.85, 0.85) * shaft * 0.32 * rays;
-    // specks drifting in the water, brighter in the shafts and near the top
-    if (specks > 0.0) {
-        for (int l = 0; l < 2; l++) {
-            float cell = l == 0 ? 70.0 : 130.0;
-            vec2 sp = wpos / cell + vec2(time * 0.04 * (1.0 + float(l)), time * 0.06);
-            vec2 id = floor(sp);
-            float h = hash(id + float(l) * 17.0);
-            if (h > 0.9) {
-                vec2 at = id + vec2(hash(id + 3.1), hash(id + 7.7)) * 0.8 + 0.1;
-                float d = length(sp - at) * cell * pxPerWorld; // in pixels
-                float dot = smoothstep(1.8 + float(l), 0.4, d);
-                col += vec3(0.75, 0.9, 0.85) * dot * (0.12 + shaft * 1.2) * exp(-depth / 1800.0) * specks;
-            }
-        }
-    }
-    // just under the surface: a sheen, then the bright line itself, with glints on the crests
-    col += vec3(0.10, 0.16, 0.16) * exp(-depth / 70.0);
-    float lineW = 3.5 / pxPerWorld;
-    float lip = 1.0 - smoothstep(lineW * 0.6, lineW * 1.6, depth);
-    float crest = clamp(0.6 - vSlope * 6.0, 0.0, 1.0); // facing up to the sun
-    col = mix(col, vec3(0.88, 0.97, 1.0), lip * (0.7 + 0.3 * crest));
-    float gl = smoothstep(0.78, 0.92, vnoise(vec2(wpos.x * 0.018 - time * 1.3, time * 0.9)));
-    float glBand = 1.0 - smoothstep(lineW, lineW * 3.0, depth);
-    col += vec3(1.0, 0.97, 0.85) * gl * glBand * (0.4 + crest);
-    // foam where the water was stirred
-    vec2 fp = vec2(wpos.x * 0.06, depth * 0.12) + vec2(time * 0.5, 0.0);
-    float fn = vnoise(fp) * 0.5 + vnoise(fp * 2.3 + vec2(-time, 0.0)) * 0.3 + hash(floor(wpos / 4.0)) * 0.2;
-    float foamBand = exp(-depth / (10.0 + 40.0 * vFoam));
-    float foam = smoothstep(0.72 - vFoam * 0.25, 0.80 - vFoam * 0.25, fn) * foamBand * clamp(vFoam * 1.5, 0.0, 1.0);
-    col = mix(col, vec3(0.93, 0.97, 1.0), foam * 0.6);
-    return vec4(col, 1.0);
-}
-#endif
-]])
+-- surface. The engine's shader (src/render/water-shader.lua, `waterLook`; this was a copy of the sea
+-- spike's, the same as the engine's at the sea's values: viewDepth 450, bend 1, causticSize 1, no tint).
+-- The far layers too (f, Nikki 2026-11-16: "so the waves in the distance also get the shinyness"): each
+-- far band through the shader, smaller with distance (caustics, bending), its own drawn colour as murk,
+-- so it keeps the drawn look and gets the bright line, glints and specks; each one bends what was drawn
+-- before it, which takes a copy of the canvas per layer (g: one copy for all, to see what that costs).
+local function sendWater(sh, set, scene, o)
+    sh:send('scene', scene)
+    sh:send('time', state.drawnSea.time)
+    sh:send('pxPerWorld', cam:getScale() * love.graphics.getDPIScale())
+    sh:send('clarity', set.clarity)
+    sh:send('refraction', set.refraction)
+    sh:send('caustics', set.caustics)
+    sh:send('rays', set.rays)
+    sh:send('mirror', set.mirror)
+    sh:send('blur', set.blur)
+    sh:send('specks', set.specks)
+    sh:send('viewDepth', o and o.viewDepth or 450)
+    sh:send('bend', o and o.bend or 1)
+    sh:send('causticSize', o and o.causticSize or 1)
+    sh:send('tint', o and o.tint or { 1, 1, 1 })
+    sh:send('tintAmount', o and o.tintAmount or 0)
+    sh:send('murk', o and o.murk or 0)
+end
+
 
 
 local waterMesh = love.graphics.newMesh({
@@ -377,13 +262,26 @@ local function updateWaterMesh(b, bottom)
     waterMesh:setVertices(waterVerts)
 end
 
-local sceneCanvas, prevCanvas
+local sceneCanvas, prevCanvas, farCopy
 local function ensureCanvas()
     local w, h = love.graphics.getDimensions()
     if not sceneCanvas or sceneCanvas:getWidth() ~= w or sceneCanvas:getHeight() ~= h then
         local _, _, flags = love.window.getMode()
         sceneCanvas = love.graphics.newCanvas(w, h, { msaa = flags.msaa or 0 })
+        farCopy = love.graphics.newCanvas(w, h)
     end
+end
+
+-- what's in the scene canvas so far, into farCopy (a shader can't read the canvas it draws on)
+local function copyScene()
+    love.graphics.push('all')
+    love.graphics.setCanvas(farCopy)
+    love.graphics.origin()
+    love.graphics.clear(0, 0, 0, 0)
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.setBlendMode('replace', 'premultiplied')
+    love.graphics.draw(sceneCanvas, 0, 0)
+    love.graphics.pop()
 end
 
 ---------------------------------------------------------------- floating (from the sea spike)
@@ -965,6 +863,8 @@ function s.onKeyPress(key)
         b.settings.optics = not b.settings.optics
         b.settings.crestLine = not b.settings.optics
     elseif key == 'c' then b.settings.crestLine = not b.settings.crestLine
+    elseif key == 'f' then b.settings.farLit = not b.settings.farLit
+    elseif key == 'g' then b.settings.copyEach = not b.settings.copyEach
     elseif key == 'r' then -- build the boat again (another wonk)
         if b.chimneyBody and not b.chimneyBody:isDestroyed() then objectManager.destroyBody(b.chimneyBody) end
         if b.body and not b.body:isDestroyed() then objectManager.destroyBody(b.body) end
@@ -1082,6 +982,42 @@ local function drawBand(yAt, color, alpha, x0, x1, bottom, step)
     bandMesh:setDrawRange(1, #verts)
     love.graphics.setColor(color[1], color[2], color[3], alpha or 1)
     love.graphics.draw(bandMesh)
+end
+
+-- A far band through the water shader: from its line y(x) down to bottom(x), the shader reading `scene`
+-- (what was drawn before it). far: 0 near .. 1 far, smaller caustics and bending; its colour as murk.
+local litMesh
+local litVerts = {}
+local function drawLitBand(b, yAt, color, far, x0, x1, bottom, scene)
+    local step = 40
+    local first, last = math.floor(x0 / step) - 1, math.ceil(x1 / step) + 1
+    local n = last - first + 1
+    if not litMesh or litMesh:getVertexCount() < n * 2 then
+        litMesh = love.graphics.newMesh(waterLook.CUP_FORMAT, n * 2 + 40, 'strip', 'stream')
+    end
+    local ys = {}
+    for i = first - 1, last + 1 do ys[i] = yAt(i * step) + JITTER[(i % #JITTER) + 1] end
+    for i = first, last do
+        local x, y = i * step, ys[i]
+        local slope = math.abs((ys[i + 1] - ys[i - 1]) / (2 * step))
+        local k = (i - first) * 2
+        litVerts[k + 1] = litVerts[k + 1] or {}
+        litVerts[k + 2] = litVerts[k + 2] or {}
+        local top, bot = litVerts[k + 1], litVerts[k + 2]
+        top[1], top[2], top[3], top[4], top[5], top[6], top[7] = x, y, 0, 0, y, 0, slope
+        bot[1], bot[2], bot[3], bot[4], bot[5], bot[6], bot[7] = x, math.max(bottom(x), y + 4), 0, 1, y, 0, slope
+    end
+    for k = n * 2 + 1, #litVerts do litVerts[k] = nil end
+    litMesh:setVertices(litVerts)
+    litMesh:setDrawRange(1, n * 2)
+    local sh = waterLook.shader()
+    love.graphics.setShader(sh)
+    local scale = 1 - 0.6 * far
+    sendWater(sh, b.settings, scene, { viewDepth = 450, bend = scale, causticSize = scale, tint = color,
+        tintAmount = b.settings.farTint, murk = b.settings.farMurk })
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.draw(litMesh)
+    love.graphics.setShader()
 end
 
 -- the crest: one of Nikki's crayon lines along the near surface. Made once as a straight line,
@@ -1206,6 +1142,20 @@ local function drawFish(b, d)
 end
 
 local INK = { 0.17, 0.12, 0.1 }
+local FAR_FIRST = { 0.62, 0.78, 0.88 } -- the far band's drawn colour (FAR[1])
+-- The lit water's colours, one ramp from the horizon to the near water (Nikki 2026-11-16: "front is cyan, then
+-- darker going to cyan" felt funky). As painters do it: at the horizon the sea takes the sky's colour (pale,
+-- muted: it mostly mirrors the sky at that grazing angle), toward us deeper and more saturated, the near water
+-- the deepest (its bright line and the see-through just under it stay). t: 0 horizon .. 1 near.
+-- horizonPale: how close the horizon end goes to the sky; rampCurve: how soon it deepens.
+local SKY = { 0.67, 0.83, 0.92 }
+local DEEP_SEA = { 0.06, 0.2, 0.45 }
+local function rampColor(set, t)
+    local a = {}
+    for k = 1, 3 do a[k] = FAR_FIRST[k] + (SKY[k] - FAR_FIRST[k]) * set.horizonPale end
+    local u = t ^ set.rampCurve
+    return { a[1] + (DEEP_SEA[1] - a[1]) * u, a[2] + (DEEP_SEA[2] - a[2]) * u, a[3] + (DEEP_SEA[3] - a[3]) * u }
+end
 local FAR = { { 0.62, 0.78, 0.88 }, { 0.46, 0.66, 0.84 } }
 local BEHIND = { 0.33, 0.55, 0.79 }
 local NEAR = { 0.18, 0.4, 0.7 }
@@ -1217,6 +1167,14 @@ function s.drawBelow()
     columns(b)
     local d = drawings()
     local x0, _, x1, y1 = view()
+    -- with the optics, the world goes into a canvas the water can bend (the sky too: the lit far
+    -- layers bend it)
+    if b.settings.optics then
+        ensureCanvas()
+        prevCanvas = love.graphics.getCanvas()
+        love.graphics.setCanvas({ sceneCanvas, stencil = true })
+        love.graphics.clear(0, 0, 0, 0)
+    end
     love.graphics.push()
     love.graphics.origin()
     local w, h = love.graphics.getDimensions()
@@ -1230,20 +1188,25 @@ function s.drawBelow()
         drawShape(d.clouds[c.kind], 0.6)
         love.graphics.pop()
     end
-    -- with the optics, the rest of the world goes into a canvas the water can bend
-    if b.settings.optics then
-        ensureCanvas()
-        prevCanvas = love.graphics.getCanvas()
-        love.graphics.setCanvas({ sceneCanvas, stencil = true })
-        love.graphics.clear(0, 0, 0, 0)
-    end
     -- far bands: only the swell, slower and smaller (parallax). With the optics they stop at the
     -- near surface: under it is the water's own (the shader lit them up like a wall)
     local bottom = b.settings.optics and function(x) return surfaceAt(b, x) + 4 end or y1 + 50
-    drawBand(function(x) return waveY(LAYERS[1], x, b) end, FAR[1], 1, x0, x1, bottom)
-    drawBand(function(x) return waveY(LAYERS[2], x, b) end, FAR[2], 1, x0, x1, bottom)
-    -- the water just behind the boat: the near surface, a little higher and calmer
-    drawBand(function(x) return (surfaceAt(b, x) - WATER_Y) * 0.7 + WATER_Y - 38 end, BEHIND, 1, x0, x1, bottom)
+    local bands = {
+        { function(x) return waveY(LAYERS[1], x, b) end, FAR[1], 1, 0 },
+        { function(x) return waveY(LAYERS[2], x, b) end, FAR[2], 0.7, 0.25 },
+        -- the water just behind the boat: the near surface, a little higher and calmer
+        { function(x) return (surfaceAt(b, x) - WATER_Y) * 0.7 + WATER_Y - 38 end, BEHIND, 0.4, 0.5 },
+    }
+    local set = b.settings
+    b.copies = 0
+    for i, band in ipairs(bands) do
+        if set.optics and set.farLit then
+            if i == 1 or set.copyEach then copyScene(); b.copies = b.copies + 1 end
+            drawLitBand(b, band[1], rampColor(set, band[4]), band[3], x0, x1, bottom, farCopy)
+        else
+            drawBand(band[1], band[2], 1, x0, x1, bottom)
+        end
+    end
     -- the buoy rides the near surface
     love.graphics.push()
     local by = surfaceAt(b, b.buoyX)
@@ -1293,17 +1256,10 @@ function s.draw()
         love.graphics.setBlendMode('alpha')
         love.graphics.pop()
         updateWaterMesh(b, y1 + 50)
-        love.graphics.setShader(waterShader)
-        waterShader:send('scene', sceneCanvas)
-        waterShader:send('time', b.time)
-        waterShader:send('pxPerWorld', cam:getScale() * love.graphics.getDPIScale())
-        waterShader:send('clarity', set.clarity)
-        waterShader:send('refraction', set.refraction)
-        waterShader:send('caustics', set.caustics)
-        waterShader:send('rays', set.rays)
-        waterShader:send('mirror', set.mirror)
-        waterShader:send('blur', set.blur)
-        waterShader:send('specks', set.specks)
+        local sh = waterLook.shader()
+        love.graphics.setShader(sh)
+        sendWater(sh, set, sceneCanvas, set.farLit and { tint = rampColor(set, 1), tintAmount = set.nearTint,
+            murk = set.nearMurk } or nil)
         love.graphics.setColor(1, 1, 1, 1)
         love.graphics.draw(waterMesh)
         love.graphics.setShader()
@@ -1347,11 +1303,13 @@ function s.drawUI()
     local b = state.drawnSea and boat()
     if not (b and state.playMode and b.showPanel) then return end
     ui.startFrame()
-    local BH, pad, w = 34, 6, 400
+    local BH, pad, w = 28, 4, 400
     local rows = { { 'swell', 0, 3 }, { 'boatFloat', 0.5, 2 }, { 'sway', 0, 3 }, { 'crest', 0, 30 },
         { 'clarity', 0.2, 3 }, { 'refraction', 0, 3 }, { 'caustics', 0, 3 }, { 'rays', 0, 3 }, { 'mirror', 0, 1.5 },
-        { 'specks', 0, 3 }, { 'wonk', 0, 3 } }
-    local h = (BH + pad) * (#rows + 2) + pad + 24
+        { 'specks', 0, 3 }, { 'farMurk', 0, 1 }, { 'farTint', 0, 1.2 },
+        { 'horizonPale', 0, 1 }, { 'rampCurve', 0.3, 3 }, { 'nearTint', 0, 1.2 }, { 'nearMurk', 0, 1 },
+        { 'wonk', 0, 3 } }
+    local h = (BH + pad) * (#rows + 3) + pad + 24
     local _, sh = love.graphics.getDimensions()
     local x0, y0 = 20, sh - h - 20
     ui.panel(x0, y0, w, h, '•• drawn sea ••', function()
@@ -1367,6 +1325,9 @@ function s.drawUI()
         ui.label(x, y, string.format('speed %d  (left / right)', b.target))
         x, y = ui.nextLayoutPosition(layout, w - 20, BH)
         ui.label(x, y, 'm Mipo  w wave  o optics  c crayon line  r build')
+        x, y = ui.nextLayoutPosition(layout, w - 20, BH)
+        ui.label(x, y, string.format('f far lit: %s  g copies: %s (%d)', b.settings.farLit and 'on' or 'off',
+            b.settings.copyEach and 'each' or 'one', b.copies or 0))
     end)
 end
 
