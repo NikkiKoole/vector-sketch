@@ -118,7 +118,11 @@ crates, and Mipos in two lanes.
   sill are tops to stand on, and a plank whose nails pop lands on the ground (a sensor fell out of the world; a
   wall plank that had missed its nails did so unseen, now they overlap the floor enough to be nailed). It found a
   bug: the one-way top was measured in the body's own frame, so a turned body (a standing plank) had its side
-  as its top and caught Mipos halfway up the wall; now measured in world space. Next: boat2, drawn-sea.
+  as its top and caught Mipos halfway up the wall; now measured in world space.
+  `boat2`, `drawn-sea` — each boat is one body with every plank a fixture, so the engine got a layer per fixture
+  (`depthLayers.setFixtureLayer(fixture, layer, top)`, in the script env; only the collisions, the drawing goes
+  by the body; not saved, for bodies a script builds). The cabin's back wall and the railing use it instead of
+  sensors; drawn-sea's float counts the planks with weight (the layered ones weigh nothing), and floats as before.
 - [ ] **DL4. Mipo lanes**: a back lane behind the house (drawn behind, hazed, its own ground), from the spike.
 - [ ] **DL5. Parallax per layer** (WORLD-BUILDING G4), and the 3D light's depths per layer (LS16 lanes).
 

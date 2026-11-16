@@ -819,14 +819,20 @@ local function makeBoat(b)
             -- light planks above the ballast, so the Mipos' weight tips it; the sensors weigh nothing
             local fixture = love.physics.newFixture(body, shape, p.solid and (p.ballast or 0.1) or 0)
             fixture:setFriction(0.9)
-            if not p.solid then fixture:setSensor(true) end
+            -- the cabin's back wall and the railing: the engine's depth layers, per fixture (one body): Mipos
+            -- pass in front of the back wall and can stand on its tops, never touch the railing
+            if p.layer == 'back' or p.layer == 'front' then
+                depthLayers.setFixtureLayer(fixture, p.layer)
+            elseif not p.solid then
+                fixture:setSensor(true)
+            end
         end
     end
     body:setAngularDamping(0.5)
     -- how much push per unit of wet area: enough that it floats about 40% of its solid area deep
     local solidArea = 0
     for _, fixture in ipairs(body:getFixtures()) do
-        if not fixture:isSensor() then
+        if fixture:getDensity() > 0 then -- the solid planks (the layered ones weigh nothing)
             local poly, n = fixturePolygon(body, fixture:getShape())
             if n >= 3 then solidArea = solidArea + areaCentroid(poly, n) end
         end

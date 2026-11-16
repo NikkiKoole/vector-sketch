@@ -4,8 +4,9 @@
 -- a cabin of upright planks with a window, a roof, a tin chimney, a railing in front of the Mipos.
 -- Each plank is a fixture of one kinematic body, drawn with its own crayon outline and grain
 -- (src/drawn-stroke.lua), nails where planks overlap. The chimney is its own body on a
--- springy weld. Layers (back / mid / front) are by hand per plank; the boat still wants a real back
--- layer, its far side behind the Mipos: docs/DEPTH-LAYERS.md.
+-- springy weld. Layers (back / mid / front) per plank: drawn in that order, and back / front are the
+-- engine's depth layers per fixture (src/depth-layers.lua setFixtureLayer): Mipos pass in front of the
+-- cabin's back wall and can stand on its tops, never touch the railing. docs/DEPTH-LAYERS.md.
 --
 -- play mode (tab): drag the Mipos about (throw one overboard).
 -- keys: left / right slower / faster   m a Mipo   b boil   r build again (the wonk slider)   h the panel
@@ -404,7 +405,13 @@ local function makeBoat(b)
         if ok and not p.chimney then
             local fixture = love.physics.newFixture(body, shape, 1)
             fixture:setFriction(0.9)
-            if not p.solid then fixture:setSensor(true) end
+            -- the cabin's back wall and the railing: the engine's depth layers, per fixture (one body): Mipos
+            -- pass in front of the back wall and can stand on its tops, never touch the railing
+            if p.layer == 'back' or p.layer == 'front' then
+                depthLayers.setFixtureLayer(fixture, p.layer)
+            elseif not p.solid then
+                fixture:setSensor(true)
+            end
         end
     end
     b.body = body

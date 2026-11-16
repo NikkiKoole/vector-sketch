@@ -13,7 +13,11 @@
 -- Drawing: pictures get lib.zOffset (src/physics/box2d-draw-textured.lua), plain front bodies are drawn after
 -- the textured world (src/physics/box2d-draw.lua lib.drawFrontBodies). The joint guard counts a layered body
 -- as passable (a limb in front of a wall isn't stuck in it: src/mipo-joint-guard.lua).
+-- One body in several layers: lib.setFixtureLayer gives a fixture its own layer (a plank boat, one body, its
+-- cabin's back wall behind the Mipos and the railing in front). Only the collisions: the drawing goes by the
+-- body. Not saved: for bodies a script builds (boat2, drawn-sea).
 local units = require('src.physics-units')
+local state = require('src.state')
 
 local lib = {}
 
@@ -36,6 +40,37 @@ function lib.zOffset(body)
     local thing = thingOf(body)
     local layer = thing and thing.layer
     return layer and lib.Z[layer] or 0
+end
+
+-- [fixture] = { layer, top }, on state so a hot swap keeps it. Strong keys: LÖVE may hand back a new proxy for
+-- a fixture whose old one was collected, and a weak key would lose the layer with it. Destroyed fixtures are
+-- pruned as new ones come in.
+local function fixtureLayers()
+    state.fixtureLayers = state.fixtureLayers or { map = {}, n = 0, prunedAt = 0 }
+    return state.fixtureLayers
+end
+
+-- layer 'back' / 'front' (nil: the body's own); top false: a back fixture with no top to stand on
+function lib.setFixtureLayer(fixture, layer, top)
+    local fl = fixtureLayers()
+    if not fl.map[fixture] then fl.n = fl.n + 1 end
+    fl.map[fixture] = layer and { layer = layer, top = top ~= false } or nil
+    if fl.n > fl.prunedAt * 2 + 64 then
+        local n = 0
+        for f in pairs(fl.map) do
+            if f:isDestroyed() then fl.map[f] = nil else n = n + 1 end
+        end
+        fl.n, fl.prunedAt = n, n
+    end
+end
+
+-- a fixture's layer and whether a back one has a top: its own if set, else its body's
+local function layerOfFixture(fixture, thing)
+    local fl = state.fixtureLayers
+    local own = fl and fl.map[fixture]
+    if own then return own.layer, own.top end
+    if thing and thing.layer then return thing.layer, thing.layerTop ~= false end
+    return nil
 end
 
 function lib.isLayered(body)
@@ -94,18 +129,18 @@ end
 
 function lib.onPreSolve(fa, fb, contact)
     local ba, bb = fa:getBody(), fb:getBody()
-    local ta, tb = thingOf(ba), thingOf(bb)
-    local la, lb = ta and ta.layer, tb and tb.layer
+    local la, topA = layerOfFixture(fa, thingOf(ba))
+    local lb, topB = layerOfFixture(fb, thingOf(bb))
     if not la and not lb then return end -- both play: as always
     if la and lb then
         if la ~= lb then contact:setEnabled(false) end
         return
     end
-    local fLayer, fOther, layer, thing = fa, fb, la, ta
-    if lb then fLayer, fOther, layer, thing = fb, fa, lb, tb end
+    local fLayer, fOther, layer, top = fa, fb, la, topA
+    if lb then fLayer, fOther, layer, top = fb, fa, lb, topB end
     if fOther:getBody():getType() == 'static' then return end -- the ground: a house stands on it
     -- what moves around: never a front body; a back body only on its top
-    if layer == 'back' and thing.layerTop ~= false and oneWaySolid(fLayer, fOther) then return end
+    if layer == 'back' and top and oneWaySolid(fLayer, fOther) then return end
     contact:setEnabled(false)
 end
 
