@@ -1,6 +1,7 @@
 -- The "scenes" tab of the right column: every scene in scripts/ (src/scene-catalog.lua), grouped,
 -- two to a row as pictures (scripts/thumbs/, made by `./playtime.sh thumbs`, src/scene-thumbs.lua).
--- Pick one to see what it is, then 'load' or 'load + play'; a script without a scene of its own
+-- Pick one to see what it is, then 'load' or 'load + play' (the list scrolls them into view; a quick second
+-- click keeps them, a slower one hides them again); a script without a scene of its own
 -- (tufts) runs on the scene that's open. Loading replaces what's on the stage.
 -- The search box on top finds scenes by name and description as you type (src/fuzzy-find.lua),
 -- best first, groups set aside; enter loads the best one.
@@ -21,6 +22,10 @@ local THUMB_ASPECT = 0.8 -- the pictures' height / width (the 1000x800 window, s
 -- the list, read again when the tab opens (a new scene shows up without a restart)
 local scenes = nil
 local wasOpen = false
+-- the list's visible window (set in lib.draw, for scrolling a picked tile's buttons into view), and when a tile
+-- was last picked: a second click on it this soon is a double click, not "unpick" (it hid the buttons again)
+local view = { top = 0, h = 0 }
+local DOUBLE_CLICK = 0.45
 
 local function groupsOpen()
     state.rightColumn.sceneGroups = state.rightColumn.sceneGroups
@@ -95,7 +100,13 @@ local function grid(list, rowX, rowY, rowW, rowH, gap, tileW, imgH)
             if scene then
                 local clicked, th = tile(scene, rowX + c * (tileW + gap), rowY, tileW, imgH, picked == scene.id)
                 if clicked then
-                    state.rightColumn.pickedScene = (picked ~= scene.id) and scene.id or nil
+                    local now = love.timer.getTime()
+                    local quick = picked == scene.id and now - (state.rightColumn.pickedAt or 0) < DOUBLE_CLICK
+                    if not quick then
+                        state.rightColumn.pickedScene = (picked ~= scene.id) and scene.id or nil
+                        state.rightColumn.pickedAt = now
+                        state.rightColumn.revealPicked = state.rightColumn.pickedScene ~= nil
+                    end
                     picked = state.rightColumn.pickedScene
                 end
                 if picked == scene.id then pickedHere = scene end
@@ -103,7 +114,17 @@ local function grid(list, rowX, rowY, rowW, rowH, gap, tileW, imgH)
             end
         end
         rowY = rowY + tallest + gap
-        if pickedHere then rowY = lib.pickedRow(pickedHere, rowX, rowY, rowW, rowH, gap) end
+        if pickedHere then
+            rowY = lib.pickedRow(pickedHere, rowX, rowY, rowW, rowH, gap)
+            -- just picked and its buttons below the visible part of the list (a tile in the bottom row): scroll
+            -- them into view. Before, they opened out of sight and it looked like picking did nothing.
+            local scroll = ui._scrollers['scenes-panel']
+            if state.rightColumn.revealPicked and scroll then
+                state.rightColumn.revealPicked = nil
+                local below = rowY - (view.top + view.h + scroll.value)
+                if below > 0 then scroll.value = scroll.value + below end
+            end
+        end
     end
     return rowY
 end
@@ -163,6 +184,7 @@ function lib.draw(x, y, w, h)
         end
         local query = state.rightColumn.sceneSearch or ''
         local top = searchY + rowH + gap
+        view.top, view.h = top, h - (top - y) - 5
         ui.scrollPanel('scenes-panel', x, top, w, h - (top - y) - 5, function()
             local rowX, rowY, rowW = x + 10, top + gap, w - 26 -- room for the scroll bar
             ui.label(rowX, rowY, fit('now: ' .. tostring(state.scene.id or '?'), rowW), DIM)
