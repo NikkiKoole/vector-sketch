@@ -55,6 +55,15 @@ Nikki: "feels nice", "pretty good already".
 - Then water: the cellular water of `../liquid` on the same grid, buoyancy on the Mipos
   (`WATER.md`).
 
+## Parked: dig jobs (Mipos dig what you mark)
+
+tried 2026-11-16: `scripts/spikes/digjobs.playtime.lua` (`./playtime.sh play digjobs`). Burrow felt boring
+("nothing answers the dig"), so: the finger marks tiles, a free Mipo walks to the nearest one it can reach and
+digs it bite by bite, only what it can touch from where it stands (it can't climb). It worked, but Nikki:
+"finnicky and too systems like, also not direct enough". Marking and waiting took the dig away from the
+finger; the tile grid and the Mipos giving up on tiles they couldn't reach read as a system, not a toy. Keep
+the finger digging; if the world should answer, let it answer the finger directly.
+
 ## Parked: an interesting outline for any shape
 
 Not just the burrow: a quick way to give any shape (a body, a prop, the earth) an outline that
