@@ -126,6 +126,10 @@ crates, and Mipos in two lanes.
   (`depthLayers.setFixtureLayer(fixture, layer, top)`, in the script env; only the collisions, the drawing goes
   by the body; not saved, for bodies a script builds). The cabin's back wall and the railing use it instead of
   sensors; drawn-sea's float counts the planks with weight (the layered ones weigh nothing), and floats as before.
+  `depth` (Nikki: "depth spike col layers") — the spike's blocks take the engine's layers (walls back with no
+  top, the floor and roof back with one, the porch floor one-way, drawn in play); its own contact rules and
+  one-way code are gone but for the lanes (DL4): a back-lane Mipo touches only the ground, the path and other
+  back Mipos. Same as before in a run side by side: Mipos where they were, the house loose ('k') the same.
 - [ ] **DL4. Mipo lanes**: a back lane behind the house (drawn behind, hazed, its own ground), from the spike.
 - [ ] **DL5. Parallax per layer** (WORLD-BUILDING G4), and the 3D light's depths per layer (LS16 lanes).
 

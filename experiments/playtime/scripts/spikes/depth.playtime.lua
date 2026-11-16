@@ -6,6 +6,9 @@
 --          one-way floors (set a Mipo on the floor between the storeys, or on the roof)
 --   play   solid: the porch floor, crates
 --   front  drawn over the Mipos, no collision with them: porch pillars and roof, the railing, the fence
+-- The blocks' layers are the engine's since 2026-11-16 (src/depth-layers.lua, from this spike): thing.layer,
+-- a back block's top one-way only where it's oneWay (the floor, the roof; thing.layerTop), the porch floor
+-- drawn in play but one-way in the physics. The script's contact rules are only the lanes now.
 -- Mipos get depth too: a soft contact shadow on whatever is under them, and two lanes. A Mipo in
 -- the back lane walks on the path behind the house: drawn behind it, hazy, colliding only with
 -- the path and the other back Mipos. The world's draw is split between the lanes
@@ -33,7 +36,7 @@ local WORLD_W = 15000                 -- the ground reaches this far either way;
 local function depthState()
     state.depthSpike = state.depthSpike or {
         blocks = {}, welds = {}, decor = {}, mipos = {}, lanes = {}, numbers = {}, nextNumber = 1,
-        roles = {}, passing = {}, showPanel = true,
+        roles = {}, showPanel = true,
         settings = { depth = 1, persp = 0.0011, horizon = 0.22, haze = 0.3, width = 9,
             oblique = false, drawn = true, shadows = true },
     }
@@ -122,17 +125,21 @@ local function block(b, points, opts)
         fixture:setFriction(0.9)
         fixture:setRestitution(0.05)
     end
+    -- the engine's layer (src/depth-layers.lua): a one-way play block (the porch floor) is a back one with a
+    -- top in the physics, drawn in play
+    if opts.layer ~= 'play' or opts.oneWay then
+        thing.layer = opts.layer == 'front' and 'front' or 'back'
+        thing.layerTop = opts.oneWay == true
+    end
     local function rel(r) return r and { r[1] - cx, r[2] - cy, r[3], r[4] } end
     local windows
     if opts.windows then
         windows = {}
         for i, r in ipairs(opts.windows) do windows[i] = rel(r) end
     end
-    local top = math.huge
-    for i = 2, #verts, 2 do top = math.min(top, verts[i]) end
     local p = { body = thing.body, verts = verts, layer = opts.layer, depth = opts.depth or 150,
         color = opts.color, oneWay = opts.oneWay, windows = windows, door = rel(opts.door),
-        doorColor = opts.doorColor, seed = love.math.random() * 1000, lineScale = opts.lineScale or 1, top = top }
+        doorColor = opts.doorColor, seed = love.math.random() * 1000, lineScale = opts.lineScale or 1 }
     makeLines(p)
     b.blocks[#b.blocks + 1] = p
     return p
@@ -151,22 +158,6 @@ local function weld(b, pa, pb)
     joint:setUserData({ id = id, label = 'depth-weld' })
     registry.registerJoint(id, joint)
     b.welds[#b.welds + 1] = joint
-end
-
--- the top of a block at local x: the highest point of its outline straight above or below x
-local function topAt(p, lx)
-    local best
-    local v = p.verts
-    local n = #v / 2
-    for i = 1, n do
-        local j = i % n + 1
-        local x1, y1, x2, y2 = v[i * 2 - 1], v[i * 2], v[j * 2 - 1], v[j * 2]
-        if (lx >= x1 and lx <= x2) or (lx >= x2 and lx <= x1) then
-            local y = (x1 == x2) and math.min(y1, y2) or y1 + (y2 - y1) * (lx - x1) / (x2 - x1)
-            if not best or y < best then best = y end
-        end
-    end
-    return best or p.top
 end
 
 ---------------------------------------------------------------- decor (no bodies)
@@ -216,7 +207,7 @@ local function destroyAll(b)
     for _, body in ipairs(b.grounds or {}) do
         if not body:isDestroyed() then objectManager.destroyBody(body) end
     end
-    b.blocks, b.welds, b.decor, b.grounds, b.passing = {}, {}, {}, {}, {}
+    b.blocks, b.welds, b.decor, b.grounds = {}, {}, {}, {}
 end
 
 local function ground(b, x, y, w, h, role)
@@ -373,8 +364,7 @@ local function refreshRoles(b)
     local roles, passable = {}, {}
     for _, p in ipairs(b.blocks) do
         if p.body and not p.body:isDestroyed() then
-            roles[p.body] = { kind = 'block', block = p }
-            if p.layer ~= 'play' or p.oneWay then passable[p.body] = true end
+            roles[p.body] = { kind = 'block', block = p } -- (the joint guard knows layered blocks itself)
         end
     end
     for body, role in pairs(b.groundRoles or {}) do
@@ -397,34 +387,16 @@ end
 
 local PLAY_MIPO = { kind = 'mipo', lane = 'play' } -- anything else that moves counts as a play-lane toy
 
--- a one-way top: decided when the pair first touches (is the other's lowest point above the
--- block's top there, and not going up?), kept until they part
-local function oneWaySolid(b, p, other, fBlock, fOther)
-    local rec = b.passing[fBlock]
-    if rec and rec[fOther] ~= nil then return rec[fOther] end
-    local x1, _, x2, y2 = fOther:getBoundingBox()
-    local lx, ly = p.body:getLocalPoint((x1 + x2) / 2, y2)
-    local _, vy = other:getLinearVelocity()
-    local solid = ly <= topAt(p, lx) + 24 and vy > -60
-    if not rec then rec = {}; b.passing[fBlock] = rec end
-    rec[fOther] = solid
-    return solid
-end
-
-local function blockWithMipo(b, p, lane, fBlock, fOther)
-    if lane == 'back' then return false end
-    if p.layer == 'front' then return false end
-    if p.oneWay then return oneWaySolid(b, p, fOther:getBody(), fBlock, fOther) end
-    return p.layer == 'play'
-end
-
-local function allowed(b, ra, rb, fa, fb)
+-- The lanes (DEPTH-LAYERS DL4, not in the engine yet): a back-lane Mipo touches only the ground, the path and
+-- the other back Mipos; the path only back Mipos. The blocks' layers are the engine's (src/depth-layers.lua
+-- runs before this; a pair either side disables stays disabled).
+local function allowed(ra, rb)
     if ra.kind == 'ground' or rb.kind == 'ground' then return true end
     if ra.kind == 'path' then return rb.kind == 'mipo' and rb.lane == 'back' end
     if rb.kind == 'path' then return ra.kind == 'mipo' and ra.lane == 'back' end
-    if ra.kind == 'block' and rb.kind == 'block' then return ra.block.layer == rb.block.layer end
-    if ra.kind == 'block' then return blockWithMipo(b, ra.block, rb.lane, fa, fb) end
-    if rb.kind == 'block' then return blockWithMipo(b, rb.block, ra.lane, fb, fa) end
+    if ra.kind == 'block' and rb.kind == 'block' then return true end
+    if ra.kind == 'block' then return rb.lane ~= 'back' end
+    if rb.kind == 'block' then return ra.lane ~= 'back' end
     return ra.lane == rb.lane
 end
 
@@ -433,14 +405,7 @@ function s.preSolve(fa, fb, contact)
     if not b then return end
     local ra, rb = b.roles[fa:getBody()], b.roles[fb:getBody()]
     if not (ra or rb) then return end
-    if not allowed(b, ra or PLAY_MIPO, rb or PLAY_MIPO, fa, fb) then contact:setEnabled(false) end
-end
-
-function s.endContact(fa, fb)
-    local b = state.depthSpike
-    if not b then return end
-    if b.passing[fa] then b.passing[fa][fb] = nil end
-    if b.passing[fb] then b.passing[fb][fa] = nil end
+    if not allowed(ra or PLAY_MIPO, rb or PLAY_MIPO) then contact:setEnabled(false) end
 end
 
 ---------------------------------------------------------------- hooks
