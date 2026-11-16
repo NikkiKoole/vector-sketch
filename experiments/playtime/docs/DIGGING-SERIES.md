@@ -93,11 +93,14 @@ tunnels (BURROW's later payoff; maybe a later update).
 
 - [x] **DS1. Nikki reads this and answers the open questions** (2026-11-16, under "Decided").
 - [ ] **DS6. The mole's look**: a mole breed of Mipo, sketched or rolled from the breeds; not blocking DS3.
-- [ ] **DS2. On the phone:** burrow and oaktree on the SE 2 (`./playtime.sh bench device`), digging while it
-  runs, to know the engine holds 60 fps before the app is built on it.
-- [ ] **DS3. The mole spike:** one mole in a burrow, dragged through the earth to dig it, five or six
+- [x] **DS2. On the phone:** the mole's field on the SE 2 (`./playtime.sh bench device`), digging while it
+  runs (2026-11-16): 60 fps, 0.3% of frames over 20 ms after the earth's drawing stopped making garbage
+  (350 KB a frame before); the earth shader drew black past a diagonal there (medium precision), fixed.
+  oaktree not measured.
+- [x] **DS3. The mole spike** (2026-11-16, `./playtime.sh play mole`): one mole in a burrow, dragged through the earth to dig it, five or six
   findables held in the earth, eaten with the food spike's mouth and the taste scale above; his tastes
   seeded. Built from burrow + food, the
   findables' look in its own file (`scripts/spikes/<name>-look.lua`).
-- [ ] **DS4. Nikki plays with it**: keep, change or park.
+- [x] **DS4. Nikki plays with it**: keep, change or park. 2026-11-16: "this spike is done now" (as the
+  decisions above: the finger digs near the mole, a big bounded field, clumps; the bottom's surprise open).
 - [ ] **DS5. The kids play with it** (APP-ONE AO2), on the iPad, without explaining.
