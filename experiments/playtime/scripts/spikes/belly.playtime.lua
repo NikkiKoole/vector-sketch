@@ -9,8 +9,14 @@
 -- The animal is data (ANIMAL): its back's outline, its floor, the jaw's hinge, the blowhole, the eye, the tail
 -- and its colours. Another sleeping animal (a bear, a cow) is another table.
 --
+-- The peel (Nikki: "do the peel spike on the whale"): from outside the whale is closed, a skin over the cutaway.
+-- Drag the flank down (or tap it) and the skin folds open toward you like a page, hinged along the belly line,
+-- the head end first (a curl), with a little overshoot: who's in there? Drag it back up or tap to close.
+-- It follows the finger; let go past halfway and it finishes, else it springs back. The whale twitches and
+-- peeks with one eye. 'peel' off in the panel: the old always-open cutaway.
+--
 -- play mode (tab): drag Mipos in through the mouth, or 'walk in' and they go by themselves.
--- keys: w walk in   h hiccup now   m a Mipo at the mouse   r reset
+-- keys: w walk in   h hiccup now   o open / close   m a Mipo at the mouse   r reset
 local s = {}
 
 local walk = mipoWalk -- src/mipo-walk.lua
@@ -40,11 +46,18 @@ local ANIMAL = {
     },
     skin = { 0.36, 0.45, 0.58 }, skinDark = { 0.15, 0.19, 0.27 }, belly = { 0.80, 0.82, 0.84 },
     cave = { 0.40, 0.15, 0.19 }, stomach = { 0.50, 0.21, 0.24 }, tongue = { 0.86, 0.46, 0.52 },
-    ribs = { 0.72, 0.48, 0.48 }, baleen = { 0.86, 0.80, 0.62 },
+    ribs = { 0.72, 0.48, 0.48 }, baleen = { 0.86, 0.80, 0.62 }, lining = { 0.66, 0.38, 0.42 },
     stomachFrom = -250,        -- x where the stomach starts (the throat)
+    flapHinge = -95,           -- the peeled skin's hinge: the belly line
+    flapFrom = -2950, flapTo = 2050, -- the flank's length, head to tail: it peels from the head
+    jawLine = { { -2560, -820 }, { -2200, -660 }, { -1750, -600 }, { -1450, -640 } }, -- drawn on the closed skin
 }
 
-local tune = { capacity = 6, breath = 6, swell = 0.04, stiffness = 60, wander = 1 }
+local tune = { capacity = 6, breath = 6, swell = 0.04, stiffness = 60, wander = 1, peel = 1 }
+local PEEL_ANGLE = math.pi * 0.66 -- how far the skin folds down when open (past flat: foreshortened on the sand)
+local PEEL_SPREAD = 0.6           -- the curl: how much later the tail end opens than the head
+local PEEL_DRAG = 1300            -- world units of drag for a full peel
+local flap, flapStates, drawPouch -- defined further down (the flap piece, the whale's flaps)
 
 ------------------------------------------------------------------------------------------------- the shape
 
@@ -442,6 +455,7 @@ function s.onKeyPress(key)
         spawnMipo(b, mx, my)
     elseif key == 'h' then hiccup(b)
     elseif key == 'w' then walkIn(b)
+    elseif key == 'o' then flap.toggle((flapStates(b)))
     elseif key == 'r' then reset(b) end
 end
 
@@ -462,6 +476,215 @@ function s.status()
         end
     end
     return out
+end
+
+
+------------------------------------------------------------------------------------------------- a flap
+
+-- A flap, as in a lift-the-flap book (Spot, Usborne Peep Inside): a polygon hinged along a horizontal line that
+-- folds toward you, showing its darker back, and what was under it. Self-contained, so another flap (a cupboard,
+-- a door, the stomach wall) is just another def:
+--   def = { hingeY, from, to (the x range: the curl runs from `from` to `to`), angle (open: past pi/2 it lies
+--           foreshortened), spread (the curl: how much later the far end opens), drag (world units for a full
+--           open), height (how far the polygon reaches above the hinge), outside, inside, edge (colours),
+--           decorate = function(def, st) (drawn on it while its outside faces us) }
+--   st  = flap.state(store, key): { open, v, target, drag } on state, so a reload keeps it
+-- flap.press / flap.release / flap.update follow a finger (let go past halfway and it finishes, a tap toggles),
+-- else a spring with a little overshoot; flap.draw(def, st, polygon); flap.contains(def, st, polygon, x, y).
+flap = {}
+
+function flap.state(store, key)
+    store[key] = store[key] or { open = 0, v = 0, target = 0 }
+    return store[key]
+end
+
+function flap.angleAt(def, st, x)
+    local u = (x - def.from) / (def.to - def.from)
+    local k = math.max(0, math.min(1.08, st.open * (1 + def.spread) - u * def.spread))
+    local e = k <= 1 and k * k * (3 - 2 * k) or k -- eased, the overshoot kept
+    return def.angle * e
+end
+
+-- a point of the flap folded about the hinge: squashed across it by the cosine of its angle
+function flap.fold(def, st, x, y)
+    local c = math.cos(flap.angleAt(def, st, x))
+    return x, def.hingeY + (y - def.hingeY) * c, c
+end
+
+function flap.foldLine(def, st, pts)
+    local out = {}
+    for i = 1, #pts, 2 do
+        local x, y = flap.fold(def, st, pts[i], pts[i + 1])
+        out[#out + 1], out[#out + 2] = x, y
+    end
+    return out
+end
+
+-- on the flap: inside its polygon (closed), or on it folded down in front of the hinge (open)
+function flap.contains(def, st, poly, x, y)
+    if st.open < 0.5 and insidePoly(poly, x, y) then return true end
+    local down = math.max(0, -math.cos(def.angle * math.min(1, st.open))) * def.height
+    return st.open > 0.3 and x > def.from and x < def.to and y > def.hingeY - 100 and y < def.hingeY + down + 150
+end
+
+function flap.press(st, x, y, now) st.drag = { x = x, y = y, open = st.open, t = now, moved = 0 } end
+
+function flap.release(st, now)
+    local d = st.drag
+    if not d then return end
+    if d.moved < 80 and now - d.t < 0.4 then
+        st.target = d.open > 0.5 and 0 or 1 -- a tap: open or close
+    else
+        st.target = st.open > 0.5 and 1 or 0 -- let go: past halfway it finishes
+    end
+    st.drag = nil
+end
+
+function flap.toggle(st) st.target = st.target > 0.5 and 0 or 1 end
+
+-- returns true the frame it starts to open
+function flap.update(def, st, dt, mx, my)
+    local was = st.open
+    local d = st.drag
+    if d then
+        d.moved = math.max(d.moved, math.abs(my - d.y) + math.abs(mx - d.x))
+        st.open = math.max(0, math.min(1, d.open + (my - d.y) / def.drag))
+        st.v = 0
+    else
+        local a = 90 * (st.target - st.open) - 11 * st.v
+        st.v = st.v + a * dt
+        st.open = math.max(-0.05, math.min(1.08, st.open + st.v * dt))
+    end
+    return was < 0.05 and st.open >= 0.05
+end
+
+function flap.draw(def, st, poly)
+    local ok, tris = pcall(love.math.triangulate, poly)
+    if not ok then return end
+    for _, t in ipairs(tris) do
+        local x1, y1, c1 = flap.fold(def, st, t[1], t[2])
+        local x2, y2, c2 = flap.fold(def, st, t[3], t[4])
+        local x3, y3, c3 = flap.fold(def, st, t[5], t[6])
+        local c = (c1 + c2 + c3) / 3
+        local col, sh = def.outside, 0.72 + 0.28 * c
+        if c < 0 then col, sh = def.inside, 0.65 + 0.35 * -c end
+        love.graphics.setColor(col[1] * sh, col[2] * sh, col[3] * sh)
+        love.graphics.polygon('fill', x1, y1, x2, y2, x3, y3)
+    end
+    if def.decorate then def.decorate(def, st) end
+    local edge = flap.foldLine(def, st, poly)
+    edge[#edge + 1], edge[#edge + 2] = edge[1], edge[2]
+    love.graphics.setColor(def.edge)
+    love.graphics.setLineWidth(def.edgeWidth or 12)
+    love.graphics.line(edge)
+    love.graphics.setLineWidth(1)
+end
+
+------------------------------------------------------------------------------------------------- the whale's flaps
+
+local function flatPoints(list)
+    local out = {}
+    for _, p in ipairs(list) do out[#out + 1] = p[1]; out[#out + 1] = p[2] end
+    return out
+end
+
+-- the big one: the flank's skin over the cutaway, hinged along the belly line, peeling from the head
+local SKIN = {
+    hingeY = ANIMAL.flapHinge, from = ANIMAL.flapFrom, to = ANIMAL.flapTo,
+    angle = PEEL_ANGLE, spread = PEEL_SPREAD, drag = PEEL_DRAG, height = 1700,
+    outside = ANIMAL.skin, inside = ANIMAL.lining, edge = ANIMAL.skinDark,
+}
+-- the pale grooved belly along the hinge and the jaw line, on the skin's outside
+SKIN.decorate = function(def, st)
+    local A = ANIMAL
+    for x = def.from + 700, def.to - 150, 120 do
+        local _, _, c = flap.fold(def, st, x, def.hingeY - 200)
+        if c > 0.05 then
+            love.graphics.setColor(A.belly[1], A.belly[2], A.belly[3], 0.55 * c)
+            love.graphics.polygon('fill', flap.foldLine(def, st, { x - 60, def.hingeY, x + 60, def.hingeY,
+                x + 60, def.hingeY - 240, x - 60, def.hingeY - 240 }))
+            love.graphics.setColor(A.skinDark[1], A.skinDark[2], A.skinDark[3], 0.25 * c)
+            love.graphics.setLineWidth(6)
+            love.graphics.line(flap.foldLine(def, st, { x - 40, def.hingeY - 20, x - 10, def.hingeY - 230 }))
+        end
+    end
+    local _, _, cj = flap.fold(def, st, A.jawLine[1][1], A.jawLine[1][2])
+    if cj > 0.05 then
+        love.graphics.setColor(A.skinDark[1], A.skinDark[2], A.skinDark[3], cj)
+        love.graphics.setLineWidth(16)
+        love.graphics.line(flap.foldLine(def, st, flatPoints(A.jawLine)))
+    end
+end
+
+-- a small one inside (flaps inside flaps): a pouch in the stomach wall, hinged at its bottom; under it a hollow
+-- with a little fish asleep in it. Only once the skin is open.
+local POUCH_POLY = { 760, -470, 1460, -470, 1520, -800, 1400, -1120, 1100, -1220, 820, -1110, 700, -800 }
+local POUCH = {
+    hingeY = -470, from = 700, to = 1520, angle = PEEL_ANGLE, spread = 0.3, drag = 650, height = 750,
+    outside = { 0.58, 0.25, 0.28 }, inside = { 0.85, 0.62, 0.62 }, edge = { 0.30, 0.10, 0.12 }, edgeWidth = 10,
+}
+POUCH.decorate = function(def, st)
+    -- a few folds in the stomach wall
+    for k = 1, 3 do
+        local y = def.hingeY - k * 170
+        local _, _, c = flap.fold(def, st, 1100, y)
+        if c > 0.05 then
+            love.graphics.setColor(0.42, 0.16, 0.19, c)
+            love.graphics.setLineWidth(10)
+            love.graphics.line(flap.foldLine(def, st, { 830, y, 1000, y - 40, 1200, y - 40, 1400, y }))
+        end
+    end
+end
+
+local panelRect = { 20, 20, 300, 0 }
+local function overPanel()
+    if ui.isPanelFolded('•• belly ••') then return false end
+    local mx, my = love.mouse.getPosition()
+    local r = panelRect
+    return mx >= r[1] and mx <= r[1] + r[3] and my >= r[2] and my <= r[2] + r[4]
+end
+
+function flapStates(b)
+    b.flaps = b.flaps or {}
+    return flap.state(b.flaps, 'skin'), flap.state(b.flaps, 'pouch')
+end
+
+-- the flaps, innermost first: a press goes to the first one it's on (not if it grabbed a body)
+local function flapsUpdate(b, dt, now, cave)
+    local skin, pouch = flapStates(b)
+    if tune.peel < 0.5 then
+        skin.drag, pouch.drag = nil, nil
+        return
+    end
+    local order = {}
+    if skin.open > 0.9 and not skin.drag then order[#order + 1] = { POUCH, pouch, POUCH_POLY } end
+    order[#order + 1] = { SKIN, skin, cave }
+    local down = state.playMode and love.mouse.isDown(1)
+    local mx, my = mouseWorldPos()
+    if down and not b.flapPress then
+        b.flapPress = true
+        if #getInteractedWithPointer() == 0 and not overPanel() then
+            for _, f in ipairs(order) do
+                if flap.contains(f[1], f[2], f[3], mx, my) then
+                    flap.press(f[2], mx, my, now)
+                    break
+                end
+            end
+        end
+    elseif not down then
+        b.flapPress = nil
+        flap.release(skin, now)
+        flap.release(pouch, now)
+    end
+    if skin.open < 0.9 and pouch.target > 0 then pouch.target = 0 end -- closing the skin closes what's inside
+    if flap.update(SKIN, skin, dt, mx, my) then
+        b.twitch, b.peek = 0, 0 -- the whale notices: a twitch and a peek with one eye
+    end
+    flap.update(POUCH, pouch, dt, mx, my)
+    if b.peek then
+        b.peek = b.peek + dt
+        if b.peek > 2.1 then b.peek = nil end
+    end
 end
 
 function s.update(dt)
@@ -496,6 +719,7 @@ function s.update(dt)
         end
     end
     if not b.hic then b.inside = list end
+    flapsUpdate(b, dt, now, cave)
 
     if b.hic then
         if b.hic > 1.0 and (#list == 0 or b.hic > 3) then
@@ -512,6 +736,13 @@ function s.update(dt)
     end
 
     steer(b, now)
+
+    -- the twitch when the skin is peeled: a quick ripple through the back
+    if b.twitch then
+        b.twitch = b.twitch + dt
+        b.puff = (b.puff or 0) + 0.025 * math.sin(b.twitch * 35) * math.max(0, 1 - b.twitch / 0.6)
+        if b.twitch > 0.6 then b.twitch = nil end
+    end
 
     -- the drops of the spout, and a small puff of mist with each breath out
     local br = breathAt(b)
@@ -640,6 +871,7 @@ function s.drawBelow()
             love.graphics.line(pts)
         end
     end
+    drawPouch(b) -- flaps inside flaps: a pouch in the stomach wall, under the skin
     -- the tongue: a soft pink ramp along the floor of the mouth
     love.graphics.setColor(A.tongue)
     love.graphics.setLineWidth(70)
@@ -660,10 +892,40 @@ function s.drawBelow()
     love.graphics.setLineWidth(1)
 end
 
+
+-- the skin over the cutaway (over the Mipos), when peeling is on
+local function drawSkin(b)
+    if tune.peel < 0.5 then return end
+    local skin = flapStates(b)
+    flap.draw(SKIN, skin, cavePolygon(b))
+end
+
+-- the pouch in the stomach wall, behind the Mipos: the hollow and the fish under it, then the flap
+function drawPouch(b)
+    if tune.peel < 0.5 then return end
+    local _, pouch = flapStates(b)
+    love.graphics.setColor(0.24, 0.07, 0.10)
+    fillPoly(POUCH_POLY)
+    if pouch.open > 0.05 then
+        local t = love.timer.getTime()
+        local fx, fy = 1110, -760 + math.sin(t * 1.3) * 12
+        love.graphics.setColor(0.98, 0.62, 0.22)
+        love.graphics.polygon('fill', fx + 150, fy, fx + 260, fy - 80, fx + 260, fy + 80)
+        love.graphics.ellipse('fill', fx, fy, 170, 95)
+        love.graphics.setColor(0.25, 0.12, 0.08)
+        love.graphics.setLineWidth(8)
+        love.graphics.arc('line', 'open', fx - 90, fy - 20, 22, 0.3, math.pi - 0.3) -- asleep
+        love.graphics.arc('line', 'open', fx - 30, fy + 5, 70, math.pi * 0.7, math.pi * 1.3)
+        love.graphics.setLineWidth(1)
+    end
+    flap.draw(POUCH, pouch, POUCH_POLY)
+end
+
 function s.draw()
     local b = state.belly
     if not (b and b.beads and alive(b.beads[1]) and alive(b.floor)) then return end
     local A = ANIMAL
+    drawSkin(b)
     -- the skin over the beads: a thick band, over the Mipos
     local back = backPoints(b)
     local n = #back / 2
@@ -704,6 +966,7 @@ function s.draw()
     love.graphics.setColor(A.skinDark)
     love.graphics.setLineWidth(12)
     local open = b.hic and math.max(0, 1 - b.hic / 1.5) or 0
+    if b.peek then open = math.max(open, math.min(1, b.peek * 4) * math.max(0, 1 - (b.peek - 1.5) / 0.6)) end
     if open > 0 then
         love.graphics.setColor(1, 1, 1)
         love.graphics.circle('fill', ex, ey, 45 * open + 10)
@@ -736,12 +999,18 @@ function s.drawUI()
     if not (b and state.playMode) then return end
     ui.startFrame()
     local BH, pad, w = 34, 6, 300
-    local rows = 9
+    local rows = 11
     local h = BH * rows + pad * (rows + 1) + 20
     local x0, y0 = 20, 20 -- top left: the sky over the head is empty, the back is high on the right
+    panelRect[3], panelRect[4] = w, h
     ui.panel(x0, y0, w, h, '•• belly ••', function()
         local layout = ui.createLayout({ type = 'columns', spacing = pad, startX = x0 + pad, startY = y0 + pad + 20 })
         local x, y = ui.nextLayoutPosition(layout, w - 20, BH)
+        local used, on = ui.toggleButton(x, y, w - 20, BH, 'peel: on', 'peel: off (open cutaway)', tune.peel >= 0.5)
+        if used then tune.peel = on and 1 or 0 end
+        x, y = ui.nextLayoutPosition(layout, w - 20, BH)
+        if ui.button(x, y, w - 20, 'open / close (o)') then flap.toggle((flapStates(b))) end
+        x, y = ui.nextLayoutPosition(layout, w - 20, BH)
         if ui.button(x, y, w - 20, 'walk in (w)') then walkIn(b) end
         x, y = ui.nextLayoutPosition(layout, w - 20, BH)
         if ui.button(x, y, w - 20, 'hiccup (h)') then hiccup(b) end

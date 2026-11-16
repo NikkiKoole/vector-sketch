@@ -61,6 +61,58 @@ candidate for app one (`APP-ONE.md` AO1).
 - **The kitchen** — Mipos baking cookies. food, an oven.
 - **Houses of the world** — stilt houses, igloos, windmills. fabuland parts per style.
 
+## Cutaways (2026-11-16)
+
+Nikki, after the whale: "that cutaway concept, can we do more with that?" Picture books are full of it
+(Childcraft's cross-sections, Richard Scarry's houses with the front off, Stephen Biesty's *Incredible
+Cross-Sections*, an ant farm); the dollhouse, the burrow and the whale already are.
+
+- **Peel the front off** — closed from outside; a swipe folds the skin open like a flap and shows who's
+  inside, closed again it's quiet. Peekaboo. Tried first, on the whale (2026-11-16).
+- **See-through only where someone is** — the skin turns see-through around a Mipo that walks in.
+- **An x-ray glass** — drag a magnifying glass over an animal, a house, a tree, a suitcase.
+- **More sleeping animals** — a bear in a cave, a cow, a dragon: the whale's data table, each with its own way
+  of sending Mipos out (the bear snores them out, the cow moos).
+- **A tree from inside** — squirrel rooms in the trunk, roots underground, an owl at the top. bark, trees,
+  burrow.
+- **A ship in cross-section** — cabins, the hold, the engine room, the galley, the sea outside. boat2,
+  drawn-sea.
+- **A house with the front off** — Fabuland/Busytown floors, stairs and a lift. fabuland, depth layers.
+- **A submarine or diving bell**, **an anthill or a beehive.**
+- **How it works inside** — a clock (gears, a Mipo riding one, Hickory Dickory Dock), a windmill (sails turn
+  the stone, flour out at the bottom; the Little Red Hen), a tummy (food in, through and out,
+  `FOOD-IN-FOOD-OUT.md`).
+- **In the engine:** they all share a shell drawn over the Mipos, a back wall behind them, and floors. One
+  shared cutaway piece only after a second cutaway spike, when there are two copies to compare.
+
+## Book mechanics: flaps, tabs, wheels (2026-11-16)
+
+Nikki: "in children's books we have more flaps or pieces to pull usually". Many get better with a touchscreen
+and physics.
+
+- **Lift the flap** (*Where's Spot?*, *Dear Zoo*) — many small flaps: a door, a cupboard, a rug, a bush; under
+  each a Mipo saying "boo", or a thing. Peekaboo twenty times.
+- **Peep inside** (Usborne *Peep Inside*) — the cutaway with flaps in it: open the whale, then smaller flaps
+  inside (the stomach, a cupboard in the cabin). Flaps inside flaps.
+- **Pull tab** (Meggendorfer's moving books, *Spot*) — pull a tab and something moves: a tail wags, a mouth
+  opens, a Mipo pops out of the chimney. With physics the tab is a slider on a joint: pull slowly or hard.
+- **Turning wheel / volvelle** (*Ladybird* and other teaching books) — turn a disc: day and night, the seasons,
+  the weather, what a Mipo wears. Fits "day and night" above.
+- **Pop-up** (Jan Pieńkowski's *Haunted House*, Robert Sabuda) — open the page and a house or a tree folds up
+  out of the ground; Fabuland parts unfolding.
+- **Mix-and-match strips** (*Mixed-Up Animals*, flip books) — head, body and legs on strips you flip. That's
+  Puppetmaker; as book pages a fun variant.
+- **Holes in the page** (*The Very Hungry Caterpillar*) — a piece seen through a hole that turns out to be
+  something else on the next page; a Mipo peeking through a hole in a wall.
+- **Touch and feel** (*That's Not My…*) — fur, felt, sandpaper (the materials spikes); on a screen, feel by
+  sound: each material its own rubbing sound.
+- **Gatefold** — a page that folds out into a long panorama: the whale getting longer and longer, a train.
+- **Press here** (Hervé Tullet's *Press Here*) — tap a dot and something happens; tilt the phone and
+  everything rolls. Tilt is gravity, so it suits physics very well: one verb (tilt) that sand, floats and the
+  whale all fit under.
+- **In the engine:** the whale's peel is the first flap, built as a small piece of its own (a hinge line, a
+  shape, how open it is) so more flaps are cheap. Pull tabs and wheels are joints with a motor or a slider.
+
 ## Built as spikes (2026-11-16)
 
 The four quickest, each its own scene in `scripts/spikes/`, not yet played by Nikki by hand:
@@ -89,6 +141,12 @@ The four quickest, each its own scene in `scripts/spikes/`, not yet played by Ni
   Six inside: a shiver, then a hiccup (the jaw and eye open, a spout, "hup") throws them all onto the beach. The
   animal is a data table (outline, floor, jaw, blowhole), so a bear or a cow is another table. Open: big Mipos
   stop at the throat; the rocking is subtle; plain shapes, wants a drawing.
+  **Peel** (2026-11-16, Nikki: "do the peel spike on the whale"): closed, the skin hides everyone inside; drag
+  the flank down (or tap, or `o`) and it folds toward you like a page, head end first in a curl, past halfway
+  it finishes; the whale twitches and peeks with one eye. Inside, a second flap: a pouch in the stomach wall
+  with a sleeping fish (flaps inside flaps). The flap is its own small piece in the script (a def: hinge,
+  colours, curl; state on `state`), so a new flap is one def. Open: drag and tap not yet tried by hand; Mipos
+  can be grabbed through the closed skin; no muffled voices (no volume hook for scripts).
 
 ## Quickest as a spike (2026-11-16)
 
