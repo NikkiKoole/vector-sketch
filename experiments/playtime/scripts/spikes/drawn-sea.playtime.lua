@@ -1067,7 +1067,7 @@ local function drawSurface(b, x0, x1)
     local px = 1 / cam:getScale()
     for i = 0, COLS do
         local x = X0 + i * DX
-        local y = b.surf[i]
+        local y = b.surf[i] or WATER_Y -- (the first frame can be drawn before the first update fills it)
         local f = math.min(1, b.foam[i] * 1.3)
         local k = i * 2
         sheenVerts[k + 1] = sheenVerts[k + 1] or {}

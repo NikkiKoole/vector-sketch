@@ -72,4 +72,7 @@ per layer or one for all: one looks the same but at the edges). The colours are 
 the horizon close to the sky (it mirrors the sky at that angle), deeper and more saturated toward us, the near
 water the deepest with its bright line and the see-through just under it (sliders horizonPale, rampCurve,
 near/far tint and murk; Nikki's values the defaults). Cost on the Mac: none measurable (CPU-bound, ~85 fps
-either way); the phone not measured yet. sea's own copy of the shader is still there.
+either way). On the phone (iPhone SE 2, play mode, A-B-A, 6 s each): 60 fps steady in every mode, draw
+~3.05 ms with the lit layers off, with one copy and with a copy per layer alike, no frame over 20 ms; the GPU
+work fits in the frame. (drawn-sea's first time on the phone: the first frame drew the waterline before the
+first update had made it, fixed.) sea's own copy of the shader is still there.
