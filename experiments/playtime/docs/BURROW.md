@@ -55,6 +55,23 @@ Nikki: "feels nice", "pretty good already".
 - Then water: the cellular water of `../liquid` on the same grid, buoyancy on the Mipos
   (`WATER.md`).
 
+## diglive: the world answers the finger (2026-11-16)
+
+`scripts/spikes/diglive.playtime.lua` (`./playtime.sh play diglive`), burrow's earth with a new finger. Nikki: burrow
+felt boring, dig jobs not direct enough, plain finger digging "feels not nice"; after looking around (Sago Mini
+Trucks and Diggers: dirt you move back and forth; Where's My Water: earth that resists; the shovel's sound in A Game
+About Digging a Hole): "i like the feel".
+
+- **The scoop:** digs in bites (a crunch each), slower the deeper (topsoil, clay, deep); what it digs it carries, a
+  lump on the finger, until full. Let go: it pours out as clumps (Box2D), and a clump lying still turns back into
+  earth (loose earth: digs soft), small pockets in a settling pile fill. Dig here, build a hill there.
+- **The Mipos** look at the finger, walk over and reach for it, squeak when dug out from under.
+- **The earth** crumbles where it's thin near the dig (a shake, a rumble, clumps).
+- **Things to build with:** beams and toy blocks buried in the earth; dug free they come loose (their footprint dug
+  out first: lying inside solid earth they fell through its edges). Tried and dropped the same day: plain planks
+  ("a bit useless"), Fabuland's parts ("a bit much the big fabuland pieces"). More sky above the grass for towers.
+- No rocks (the borrowed Mipo body outlines: not these).
+
 ## Parked: dig jobs (Mipos dig what you mark)
 
 tried 2026-11-16: `scripts/spikes/digjobs.playtime.lua` (`./playtime.sh play digjobs`). Burrow felt boring
