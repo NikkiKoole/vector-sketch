@@ -113,6 +113,50 @@ and physics.
 - **In the engine:** the whale's peel is the first flap, built as a small piece of its own (a hinge line, a
   shape, how open it is) so more flaps are cheap. Pull tabs and wheels are joints with a motor or a slider.
 
+## Real toys and crafts (2026-11-16)
+
+Nikki: "getting inspired by other real world children's crafting toys or games ... what other layers can we
+spike out".
+
+- **Marionettes** — strings from a crossbar the finger moves; Mipos are physics puppets already. The closest
+  step from Puppetmaker.
+- **Shadow puppets** — a lamp behind a sheet, Mipos as silhouettes (light, shadows in the engine).
+- **Stickers, Colorforms, Fuzzy Felt** — peel a sticker off a sheet and stick it on: a hat on a Mipo, a sun in
+  the sky; felt sticks a little and pulls off again.
+- **Playdough and clay** — knead and roll shapes that become a body (soft torso, blob).
+- **Stamps, potato prints** — press and it prints; Mipo feet leave prints (`paint-marks.lua`).
+- **Marble run** — build a track, roll balls or Mipos through (soapbox, coaster).
+- **Snow globe** — shake it and the snow swirls round a Mipo inside; sand, glitter, bubbles.
+- **Music box with a paper strip** — punch holes in a strip, turn the crank, a tune; the Mipos dance or sing
+  along (synth, choir).
+- **Jack-in-the-box, wind-up toys** — wind the crank, the tension builds, pop; wind up a Mipo and it waddles
+  off (motor). Spiked first (2026-11-16). A wind-up car was tried and parked with the rides (`RIDES.md`).
+- **Nesting dolls** — a Mipo in a Mipo in a Mipo: the whale, small and endless.
+- **Zoetrope, flip book** — spin the drum and the drawings move.
+- **Kaleidoscope, spirograph** — turn it and a drawing becomes a pattern; quiet play.
+
+## What a book can't do (2026-11-16)
+
+Nikki: "we can do things you cannot in a book".
+
+- **Blow on the screen** (the microphone) — blow out candles, a dandelion, wind in a Mipo's sail, a soap
+  bubble. Very physical for small kids; one verb, an app of its own.
+- **Your own drawing comes alive** (the camera) — draw a fish on paper, photograph it, it swims in the whale.
+  The scan-to-texture tool (`ASSETS-AND-BUILDS.md` AB1).
+- **The Mipos hear you** — say something and a Mipo says it back in Mipo language (mipomi-lang, voicebox).
+- **Zoom into a flap** — behind a flap another world with more flaps, on and on (Istvan Banyai's *Zoom*).
+- **It remembers** — the Mipo put under the bush is still there tomorrow; a plant sown yesterday has grown.
+- **Real time** — dark outside, night in the book, the Mipos asleep.
+- **Off the page** — a Mipo walks off the right edge and turns up on the next page.
+- **Consequences** — paper gets wet, dirty, burns, tears (sand, dirt, floats); in a book drawn water stays
+  drawn.
+- **Two kids at once** — multitouch: two siblings each pull an end of the turnip.
+- **Tying things together with ropes** (Nikki: "connecting things with ropes is also a thing kids like") — tie
+  a Mipo to a balloon, a cart to a cart into a train, a bucket on a rope, a swing. `DOLL-PLAY-MENU.md` has
+  the rope bridge, clothesline, tow rope and bucket already.
+
+Picks to spike first: blow on the screen, marionettes, your own drawing in the scene.
+
 ## Built as spikes (2026-11-16)
 
 The four quickest, each its own scene in `scripts/spikes/`, not yet played by Nikki by hand:
@@ -156,6 +200,14 @@ The four quickest, each its own scene in `scripts/spikes/`, not yet played by Ni
   here dots and tilt (arrow keys tip gravity). The flap is now `scripts/spikes/book-flaps.lua`, shared with
   belly. Open: the next spread is blank under a turning page; Mipos are rebuilt every turn; Mipos on the
   pop-up drop when it folds fast; tilt moves gravity, not the picture; nothing tried by hand or on the phone.
+
+- **windup** — parked (tried 2026-11-16; Nikki: "lets park this winding up", moving on to an activity board).
+  A key on anything (`scripts/spikes/windup-key.lua`): turn it round to wind (ratchet clicks, sproing when
+  overwound), the spring hands its power 0..1 to the toy. On a table: Mipo waddler, hopper and drummer
+  (crouch and shiver when wound, a clockwork stutter, walk off the edge), a car on motor wheels, a spinning
+  top that wobbles and falls, a jack-in-the-box (a note per click of Pop Goes the Weasel, the clown pops on
+  the last), a music box slowing down. Open when picked up again: the toys are small next to the Mipos; Mipos
+  off the table leave the view; nothing tried by hand.
 
 ## Quickest as a spike (2026-11-16)
 
