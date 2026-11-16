@@ -260,6 +260,15 @@ The four quickest, each its own scene in `scripts/spikes/`, not yet played by Ni
   catch on the bucket's rim; the fish on the ring are drawn, not in the water (no bob); one rod, no Mipo
   fishing.
 
+- **woodpecker** — parked (tried 2026-11-16; Nikki: "woodpecker pole !", played it, then "commit and park").
+  The woodpecker pole, all honest Box2D: the ring is two pads either side of the pole with 6 px of play (tipped,
+  they pinch the pole by friction); the spring is a hinge plus a spring torque of the script's own, on the bird
+  one way and the ring the other (that tips the ring); the bird leans a little head-down so each forward bob
+  puts the beak on the pole. Flick it (tap, space) and it stick-slips down, ~60 px/s, two pecks a second (counted
+  from Box2D's beak/pole contacts), a tock each. Tried first: a soft weld as the spring; its turning stiffness
+  goes by the lighter body (the little ring) and the bird hung 60°. With the beak resting on the pole the bird
+  was propped and stuck. Open: the bird is small next to the Mipos; nothing happens at the bottom.
+
 ## Quickest as a spike (2026-11-16)
 
 Closest to a one-verb toy: **the Enormous Turnip** (pull), **Humpty Dumpty** (fall, put back together),
