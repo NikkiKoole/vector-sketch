@@ -229,6 +229,18 @@ The four quickest, each its own scene in `scripts/spikes/`, not yet played by Ni
   `scripts/spikes/activity-gadgets.lua`. The Mipos look at what made a sound, jump at the bell, sing with the
   string. Open: nothing tried by hand; Mipos can be grabbed through the closed door; panels overlap a gadget.
 
+- **pushpuppet** — parked (tried 2026-11-16; Nikki: "good enough for this spike for now, park"). The thumb-press
+  push puppet (Nikki: "help me with some other toys, see what we can mimic"; "y push puppet"): a random Mipo
+  with its feet welded on a painted drum; hold the drum (or space) and it crumples, let go and it springs up;
+  drag sideways (arrows) to slacken one side. Its own muscles off (ragdoll, walk held); the strings are a
+  motor per revolute joint pulling to the built pose, as strong as the weight the joint holds x its lever
+  (one strength for all yanked the hands and it shook without end; the hands dangle now). Pressed: no pull,
+  the joint limits widened (with them its legs braced and only the head drooped; fully off it folded over the
+  drum's edge), and the slack strings drag torso and head to the middle of the drum top so it slumps on it.
+  Open: a joint can stay ~25° off after a release; a tilt can swing a shoulder right round; some Mipos still
+  sway a little. Other vintage toys listed then, not built: jumping jack, roly-poly, ladder tumbler, pecking
+  chickens, woodpecker pole, Newton's cradle, pound-a-peg, corn popper, magnetic fishing.
+
 ## Quickest as a spike (2026-11-16)
 
 Closest to a one-verb toy: **the Enormous Turnip** (pull), **Humpty Dumpty** (fall, put back together),
