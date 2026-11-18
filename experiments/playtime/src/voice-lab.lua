@@ -96,9 +96,13 @@ local function prepare(C, plain)
     if not path then return false end
     local shift, size = plain and 0 or L.shift, plain and 0 or L.size
     local key = path .. '|' .. shift .. '|' .. size
-    if L.loaded == key then return true end
+    -- the sample slot is shared with the megadrive style's drums (src/synth.lua lib.sampleBanks): load again
+    -- when they took it since
+    local owners = state.synth and state.synth.sampleOwner
+    if L.loaded == key and not (owners and owners[SAMPLE_SLOT] ~= 'voicelab') then return true end
     local data, n, seconds = pcm(path)
     C.sample_load(SAMPLE_SLOT, data, n)
+    if owners then owners[SAMPLE_SLOT] = 'voicelab' end
     if shift ~= 0 then C.sample_shift(SAMPLE_SLOT, shift) end
     if size ~= 0 then C.sample_formant(SAMPLE_SLOT, -size) end -- sample_formant: + = smaller
     -- instrument() first: it clears the sample binding

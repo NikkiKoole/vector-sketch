@@ -57,7 +57,7 @@ add('jam-breaks-long', { style = 'jam', seed = 1, seconds = 400, bumps = BUSY, j
 local STYLES = { 'acid', 'ambient', 'bachprelude', 'ballad', 'bethena', 'bossa', 'brew', 'brewjam', 'buymode', 'carrelage', 'citypop',
                  'dumont', 'dusk', 'gershwin2', 'gnossienne', 'guaraldi', 'gymnopedie', 'herbs', 'island', 'jingle',
                  'lofi', 'neige', 'earth', 'parlour', 'puppetmaker', 'rollo', 'satie', 'sesame', 'strum', 'supermarket', 'tapisserie',
-                 'traumerei', 'upright', 'vibesnight', 'wave' }
+                 'traumerei', 'upright', 'vibesnight', 'wave', 'megadrive' }
 local STINGERS = { stingerSize = 'small', stingerMoments = 'all' }
 for _, style in ipairs(STYLES) do
     add(style .. '-calm', { style = style, seed = 1, seconds = 90 })

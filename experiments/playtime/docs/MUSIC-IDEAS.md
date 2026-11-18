@@ -70,6 +70,14 @@ The music panel is one panel for every style now (settings → music: a row per 
   ringing under it (the shell plays on with two; the walk's approach on four stays). 0-6 left, all the
   mono bass's previous note logged past the next pluck: none sound. Count rubs on plucks only (drop the
   1-step bass notes from the score) for this style.
+- [x] **Megadrive** (2026-11-18, Nikki: a Mega Drive flavour, groove first, no lead): the `megadrive` style
+  (`src/music-megadrive.lua`), an original club groove after dreamengine's `mdstudies` study 1 (CLUB) on the patch
+  set picked there by blind listening (SOUND-SYNTH.md, "The megadrive style's patches"): 124 BPM, the set's key in
+  minor, i m9 | bVI maj9 | bVII sus | v m9 two bars each (B: bVI bVII i v), mdBassGrit bouncing root / octave /
+  fifth on a syncopated 16th line, mdEpiano stabs on the off-beats, mdPad swelling in from bar 5, 8-bit DAC drums
+  (kick four on the floor, clap on 2 and 4, open hats on the off-beats, closed hats between: every one once the
+  band is in, else the last of each beat). B swaps the grit for the legato FM bass (mdBassFM, sliding). Intro 4,
+  A 16, B 8, A 8, outro 4 (~77 s). No tune. In the style list, not the set; waiting on an ear pass.
 - Bowed strings: tried 2026-11-02 for the furniture music and parked (the parlour cello, 2026-11-04, is the
   booked-note answer: bow changes, slurs and its own vibrato are there now): hard to make sound right with booked notes (no bow movement through a note, no late vibrato, no section). The violin / viola / cello / clarinet patches stay in the instrument lists.
 

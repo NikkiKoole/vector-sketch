@@ -653,6 +653,9 @@ D.styles = {
     -- earth: MF Grimm's 'Earth' (the instrumental) as measured: one 4-bar loop, the C bass pulse and the keys'
     -- sigh (C sus2 -> Eb7, three times, then A7#9 -> Dm7) over boom-bap (src/music-earth.lua)
     earth = { loop = 'earth', bpm = 91, swing = 0.5 },
+    -- megadrive: an original club groove in Mega Drive clothes (dreamengine's mdstudies cart, study 1): FM4
+    -- bass, e-piano stabs and pad, 8-bit DAC drums four on the floor, no lead tune (src/music-megadrive.lua)
+    megadrive = { loop = 'megadrive', bpm = 124, swing = 0.5 },
     jam = { loop = 'jam', bpm = 120, swing = 0.5,
         groups = { 'Electro', 'Hip Hop', 'Breaks', 'Disco', 'Funk', 'Brushes' },
         bpms = { Electro = { 118, 128 }, ['Hip Hop'] = { 86, 94 }, Breaks = { 96, 108 }, Disco = { 116, 124 },

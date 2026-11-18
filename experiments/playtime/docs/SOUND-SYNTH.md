@@ -78,9 +78,42 @@ Saved with the music settings (`steinway`), applied live (`synth.setSteinway`).
   is at its classic level.
 - **Credit** (CC BY 4.0): `CREDITS.md` and `synth.STEINWAY_CREDIT`; the panel shows it while it's on.
 
+## The megadrive style's patches (2026-11-18)
+
+`megadrive` (`src/music-megadrive.lua`) plays a Mega Drive patch set from dreamengine's `mdstudies` / `dreamchip`
+carts, every sound picked there by blind listening tests:
+- **FM4 on its alt mapping** (`lib.INSTR.FM4` = 32, `synth.fm4(alg, r0, r1, r2, r3)`): harmonics = the algorithm
+  ((alg + 0.5) / 8), modes 1-4 the operator ratios as table indices ((i + 0.5) / 13 into 0.5 1 1.414 1.5 1.618 2
+  2.414 3 3.5 4 5 7 14), mode 6 = 1 (MODE_FM4_MAP: the alt route), timbre = modulation index, morph = feedback.
+  `env = { a, d, amount, dest = 4 }` is ENV_TIMBRE, the bright-to-dark pluck. `mdBassFM` (legato lines, mono,
+  slides), `mdEpiano` (1:1 + 14:1 tine), `mdPad` (analog 0.5).
+- **`mdBassGrit`**: the patch matcher's fit to a real YM2612 bass (INSTR_PIPE through a 42 Hz band-pass, an
+  ENV_CUTOFF_OCT sweep, asymmetric drive, tape, tremolo, EQ). Tremolo and EQ are inserts, new patch fields
+  (`tremolo = { rate, depth, shape }`, `eq = { low, mid, high dB }`, bound through CDEF_OPTIONAL), so it is
+  `fx = true` (an effect slot). The effects slider scales the tremolo, not the EQ (the EQ is the fit's tone).
+  A slot that had either gets them switched off before its next patch (`pedalsOff`); other patches' calls are
+  as before. Levels: rendered as loud as mdBassFM (SOLO stems, both -30.8 dB on the same notes).
+- **The DAC drums** (`src/dac-drums.lua`, the cart's `make_drum` ported): kick, clap, closed and open hat as
+  8-bit values held at 8191 Hz, built once on the first note (~45k samples, kept on `state.synth.banks`),
+  loaded end to end into ONE sample slot (`synth.sampleBanks`), each INSTR_SAMPLE patch bound to its region
+  (`patch.sample = { bank, name }`). That slot is 7, **shared with the voice lab**: whoever plays next loads
+  theirs again when the slot holds the other's (`state.synth.sampleOwner`). The web build has no float arrays
+  to hand over, so the drums are silent there.
+- **`lazy = true`** on a slot patch: defined on its first note (`slotOf`), never in the startup batches, so the
+  other patches' define order and the queue load at startup are what they were. All the md patches but the
+  grit bass (an effect slot) are lazy.
+- Not ported from the carts: the per-slot bitcrush (10-bit) every FM voice there has, and the pans (both
+  inserts / not bound); the drums' 8 kHz grit comes from the samples themselves.
+- click-check (dreamengine `tools/click-check.js`, on SOLO stems, 2026-11-18) flags onsets in every part, as it
+  does on any percussive material: the DAC drums' held steps, the e-piano's and the grit bass's attacks (all on
+  the 16th grid), the FM bass's onset and the sharp edge once a cycle in its first ~40 ms (the feedback FM's
+  saw-like edge while the pluck is bright, decaying with it), the pad at 4.2x (barely over the line) where its
+  chords let go. None looked like a splice.
+
 ## Gotchas
 - **128 instrument slots since dreamengine 9f2b18dd (2026-11-04)**; Playtime's fixed slots now run past 47
-  (48-61 the 808, 62 jamPad, 63-76 the 909, 77-80 the funk guitar's strings; 81-127 free). A library built
+  (48-61 the 808, 62 jamPad, 63-76 the 909, 77-80 the funk guitar's strings, 81-87 the megadrive patches,
+  120-123 the voicebox; the rest free). A library built
   from an older dreamengine has 48: it ignores those slots, so they play nothing (no error). The desktop
   dylib is rebuilt; the iPhone (`./playtime.sh device`) and web (`webtest/build-web.sh`) builds take
   dreamengine as it is when they build, so rebuild them before listening to the jam or acid there.
@@ -115,6 +148,8 @@ Saved with the music settings (`steinway`), applied live (`synth.setSteinway`).
 - **Crunchy or dropping sound with several apps or tests running (seen 2026-10-29, left for now).** Most likely the render thread misses its deadline: `synth-thread.lua` keeps only ~35 ms queued (3 × 512 frames). Each app renders its own synth, and offline renders and tests compete for the CPU. If it comes back, try 4 × 1024 (~93 ms; impacts land ~60 ms later, the music is booked 0.3 s ahead and doesn't care). Several apps playing loud at once can also clip in the system mixer.
   - **Seeing it (2026-10-30):** `./playtime.sh audio` (or `synth.audioReport()` over the bridge) lists the dropouts: how long the render thread was away, whether the sound stopped, the window in front or not, the game's frame time, and the busiest processes then. Each one is also a `[synth] dropout` line in the console. The offline render of the music has no clicks, so pops are dropouts. Measured: other programs (another project's test scripts at ~95% CPU each, the browser) made gaps of 25-120 ms while the game's frames stayed at 11 ms. The queue is rarely full, so a gap of only 17 ms already stopped the sound.
 - **Who uses which slot (2026-10-29).** Instrument slots 5–44 are `lib.patches` in synth.lua (35–39 lofi, 40–44 puppetmaker). Slots 45 (INSTR_SAMPLE) and 46 (INSTR_SING) belong to the voice lab (`src/voice-lab.lua`, the sound-effects side), and 47 is free. Sample slots: 7 is the voice lab's, 0–6 are free. Check here before taking one.
+  (2026-11-18: none are free any more: the Steinway 0-6 and 8-11, the voicebox 12-15, and 7 SHARED by the voice
+  lab and the megadrive style's DAC drums, see below.)
 - **An LFO is not an insert.** A patch's `lfo = { { dest, rate, depth } }` (tremolo, pan, pitch wow) takes no FX bus, so that's the way to add motion while the buses are full. `synth.slotFilter(patch, cutoff)` rides a patch's lowpass live; the lofi style's tone automation uses it.
 - **Measure loudness before choosing levels.** Render offline and compare peaks. One instrument (MODAL) came out 10× louder than the rest.
 - **The user's taste so far:** likes the Rhodes, the drums, the membrane boxes and the click. Disliked the celesta and the slide whistle. The upright: loved, just not on everything.

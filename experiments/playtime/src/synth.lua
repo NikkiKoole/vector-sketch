@@ -22,6 +22,7 @@ lib.INSTR = {
     SQUARE = 0, SAW = 1, TRI = 2, NOISE = 3, SINE = 4,
     PLUCK = 16, MALLET = 17, FM = 18, ORGAN = 19, EPIANO = 20, MEMBRANE = 22, REED = 23, PIPE = 25,
     GUITAR = 26, PIANO = 27, BOWED = 28, BRASS = 29, SAMPLE = 30, MODAL = 31, METAL = 34, WAVESCAN = 36,
+    FM4 = 32, -- four-operator FM (OPN/OPM algorithms); the megadrive patches play it on its ALT mapping (lib.fm4)
     SCRAPE = 39, -- scraped/rattled percussion from separate teeth: harmonics body, timbre rate, morph rattle
     SING = 38, -- one recorded syllable sung at any note by the same speaker (timbre = size, morph = speed)
 }
@@ -432,6 +433,73 @@ for i = 1, 4 do
         filter = { mode = 1, cutoff = 1800, resonance = 8 }, reverb = 0.10, level = 0.4 }
 end
 
+-- FM4 on its ALT mapping (dreamengine studio.h: MODE_FM4_MAP, mode 6, >= 0.5): harmonics = the algorithm
+-- ((alg + 0.5) / 8, eight OPN/OPM routings), modes 1..4 (MODE_FM4_R0..R3) = the four operators' ratios, each
+-- an index into the engine's table ((index + 0.5) / 13: ratio 1 -> 0.11538, 2 -> 0.42308, 14 -> 0.96154),
+-- timbre = the modulation index, morph = operator 1's feedback. As dreamengine's dreamchip / mdstudies carts.
+local FM4_RATIOS = { 0.5, 1, 1.414, 1.5, 1.618, 2, 2.414, 3, 3.5, 4, 5, 7, 14 }
+function lib.fm4(alg, r0, r1, r2, r3)
+    local function ratio(r)
+        local best = 1
+        for i = 2, #FM4_RATIOS do
+            if math.abs(FM4_RATIOS[i] - r) < math.abs(FM4_RATIOS[best] - r) then best = i end
+        end
+        return (best - 0.5) / 13
+    end
+    return (alg + 0.5) / 8, { [1] = ratio(r0), [2] = ratio(r1), [3] = ratio(r2), [4] = ratio(r3), [6] = 1 }
+end
+
+-- The megadrive style (src/music-megadrive.lua): a Mega Drive patch set, each sound picked by blind listening
+-- tests in dreamengine's mdstudies / dreamchip carts. lazy = true: defined on its first note (slotOf), not in
+-- the startup batches (definePatches), so the other styles' defines are as before and only a megadrive song
+-- pays for these. Slots 81-87; mdBassGrit has inserts (tape, tremolo, EQ), so it shares the effect slots.
+do
+    local P = lib.patches
+    local function fm(slot, adsr, alg, ratios, timbre, morph, extra)
+        local harmonics, modes = lib.fm4(alg, ratios[1], ratios[2], ratios[3], ratios[4])
+        local patch = { slot = slot, lazy = true, wave = 'FM4', adsr = adsr, harmonics = harmonics, timbre = timbre,
+                        morph = morph, modes = modes, reverb = 0 }
+        for k, v in pairs(extra or {}) do patch[k] = v end
+        return patch
+    end
+    -- the FM bass for legato lines: algorithm 0 (a four-op stack), a bright-to-dark pluck (a timbre envelope,
+    -- env dest 4 = ENV_TIMBRE), a little drive; mono, sliding into a note that continues the line
+    P.mdBassFM = fm(81, { 1, 280, 4, 90 }, 0, { 1, 1, 2, 1 }, 0.40, 0.50,
+                    { env = { 1, 110, 0.30, dest = 4 }, drive = 0.10, driveMode = 0, level = 0.34, mono = true,
+                      legatoGlide = 70 })
+    -- the e-piano: algorithm 4 (two 2-op pairs), the 14:1 tine ping, a short timbre blip
+    P.mdEpiano = fm(82, { 2, 420, 3, 500 }, 4, { 1, 1, 14, 1 }, 0.42, 0.18,
+                    { env = { 1, 60, 0.20, dest = 4 }, level = 0.17, reverb = 0.12 })
+    -- the pad: algorithm 4 on 1:2, slow in, slow out, an old polysynth's voice cards (analog 0.5)
+    P.mdPad = fm(83, { 520, 0, 7, 700 }, 4, { 1, 1, 2, 1 }, 0.28, 0.20, { analog = 0.5, level = 0.11, reverb = 0.2 })
+    -- the punchy bass (Nikki's favourite): the patch matcher's fit to a real YM2612 bass (Mega Jams through
+    -- MAME): a blown pipe through a low band-pass whose envelope sweeps it open (dest 7 = ENV_CUTOFF_OCT), a
+    -- slow volume wobble, asymmetric drive (driveMode 3 = DRIVE_ASYM), tape, a fast tremolo and EQ. Level set
+    -- to sound as loud as mdBassFM (rendered: claudetools/render-music.lua SOLO)
+    P.mdBassGrit = { fx = true, wave = 'PIPE', adsr = { 0, 1201, 0, 43 }, harmonics = 0.210, timbre = 0.975,
+                     morph = 0.599, filter = { mode = 3, cutoff = 42, resonance = 6 },
+                     env = { 0, 175, 1.83, dest = 7 }, lfo = { { 2, 1.90, 0.027 } }, drive = 0.312, driveMode = 3,
+                     tape = { wow = 0.677, flutter = 0.475, saturation = 0.349, warble = 0 },
+                     tremolo = { 10.68, 0.097, 0 }, eq = { -7.6, -6.9, 8.8 }, reverb = 0, level = 0.6 }
+    -- the DAC drums: 8-bit samples held at ~8.2 kHz (src/dac-drums.lua builds them, lib.sampleBanks loads
+    -- them), each sound a region of one sample slot, played at its own pitch (midi 60)
+    local function dac(slot, name, level)
+        return { slot = slot, lazy = true, wave = 'SAMPLE', adsr = { 0, 0, 7, 40 }, reverb = 0.04, level = level,
+                  sample = { bank = 'dacDrums', name = name } }
+    end
+    P.mdKick = dac(84, 'kick', 0.4)
+    P.mdClap = dac(85, 'clap', 0.3)
+    P.mdHatClosed = dac(86, 'closedHat', 0.12)
+    P.mdHatOpen = dac(87, 'openHat', 0.14)
+end
+
+-- Sample banks: sounds built in Lua and loaded into one of the engine's 16 sample slots, each patch a region
+-- of it (patch.sample = { bank, name }). Every slot has an owner already (the Steinway 0-6 and 8-11, the
+-- voicebox 12-15), so the DAC drums SHARE slot 7 with the voice lab (src/voice-lab.lua): whoever plays next
+-- loads theirs again when the slot holds the other's (S.sampleOwner[slot]). Built once (kept on state), on
+-- the first note that needs them; loading copies ~45k floats, so it's cheap to do again.
+lib.sampleBanks = { dacDrums = { slot = 7, module = 'src.dac-drums' } }
+
 local CDEF = [[
 int  de_lua_init(void);
 void de_lua_tick(float dt);
@@ -512,6 +580,8 @@ void instrument_mono(int slot, int on);
 void unschedule(int slot, double t1, double t2);
 void instrument_choke(int slot_a, int slot_b);
 void instrument_leslie(int slot, int speed, float drive, float balance, float doppler, float mix);
+void instrument_eq(int slot, float low_gain, float mid_gain, float high_gain);
+void instrument_tremolo(int slot, float rate, float depth, int shape);
 ]]
 -- The structs on their own: a hot reload redeclaring one errors, which must not stop the functions.
 -- NoteOpts copied from dreamengine runtime/studio.h, FIELD ORDER AND ALL: the engine reads the whole of it,
@@ -563,6 +633,8 @@ local function pedalsFromPatch(patch)
     end
     local les = patch.leslie
     if les then p.leslie = { les.speed or 1, les.drive or 0, les.balance or 0.5, les.doppler or 0.5, les.mix or 1 } end
+    if patch.tremolo then p.tremolo = { patch.tremolo[1], patch.tremolo[2], patch.tremolo[3] or 0 } end
+    if patch.eq then p.eq = { patch.eq[1], patch.eq[2], patch.eq[3] } end
     return p
 end
 
@@ -601,6 +673,17 @@ local function sendPedals(slot, name, only)
     if leslie then -- the rotary cabinet at the chain's end: speed 0 stop, 1 chorale, 2 tremolo
         local l = p.leslie
         leslie(slot, l[1], clamp(l[2] * a, 0, 1), l[3], clamp(l[4] * a, 0, 1), clamp(l[5] * a, 0, 1))
+    end
+    -- tremolo { rate Hz, depth 0..1, shape } (an insert, unlike a volume LFO) and eq { low, mid, high dB }:
+    -- the EQ is the voice's own tone (a fitted patch's), so the slider leaves it be. A slot that had either
+    -- gets them switched off before its next patch (pedalsOff); the others' calls stay as they were
+    local tremolo = want('tremolo') and optionalFn('instrument_tremolo')
+    if tremolo then tremolo(slot, p.tremolo[1], clamp(p.tremolo[2] * a, 0, 1), p.tremolo[3]) end
+    local eq = want('eq') and optionalFn('instrument_eq')
+    if eq then eq(slot, p.eq[1], p.eq[2], p.eq[3]) end
+    if tremolo or eq then
+        S.slotInserts = S.slotInserts or {}
+        S.slotInserts[slot] = true
     end
 end
 
@@ -686,6 +769,12 @@ local function pedalsOff(slot)
     S.C.instrument_drive(slot, 0)
     local leslie = optionalFn('instrument_leslie')
     if leslie then leslie(slot, 1, 0, 0.5, 0, 0) end -- mix 0: bypassed
+    if S.slotInserts and S.slotInserts[slot] then -- a tremolo / EQ from the last patch (the megadrive bass)
+        local tremolo, eq = optionalFn('instrument_tremolo'), optionalFn('instrument_eq')
+        if tremolo then tremolo(slot, 1, 0, 0) end
+        if eq then eq(slot, 0, 0, 0) end
+        S.slotInserts[slot] = nil
+    end
 end
 
 -- The Steinway hybrid (native/desound/desound.c de_steinway_*, dreamengine runtime/steinway.h): with the
@@ -744,8 +833,42 @@ local function steinwayFor(slot, patch, name)
     end
 end
 
+-- A sample bank in its sample slot (lib.sampleBanks), built the first time and loaded again whenever the slot
+-- holds someone else's take; returns the bank ({ data, n, regions }). The web has no float arrays to hand
+-- over (synth-web's sample_load does nothing), so there the drums stay silent.
+local function ensureBank(bankName)
+    local bank = lib.sampleBanks[bankName]
+    S.banks = S.banks or {}
+    local built = S.banks[bankName]
+    if not built then
+        built = require(bank.module).build()
+        S.banks[bankName] = built
+    end
+    S.sampleOwner = S.sampleOwner or {}
+    if S.sampleOwner[bank.slot] ~= bankName then
+        if ffi then
+            local buf = ffi.new('float[?]', built.n)
+            for i = 1, built.n do buf[i - 1] = built.data[i] end
+            S.C.sample_load(bank.slot, buf, built.n)
+        end
+        S.sampleOwner[bank.slot] = bankName
+    end
+    return built
+end
+lib.ensureBank = ensureBank
+
+-- a sample patch (patch.sample = { bank, name }) bound to its region of the bank, at its own pitch on midi 60;
+-- after instrument() (defineVoice), which clears the binding
+local function bindSample(slot, patch)
+    local built = ensureBank(patch.sample.bank)
+    local region = built.regions[patch.sample.name]
+    S.C.instrument_sample(slot, lib.sampleBanks[patch.sample.bank].slot, 60)
+    S.C.instrument_sample_region(slot, region[1], region[2])
+end
+
 local function definePatch(slot, patch, name)
     defineVoice(slot, patch)
+    if patch.sample then bindSample(slot, patch) end
     definePlaying(slot, patch)
     restLanes(slot, patch)
     defineModulation(slot, patch)
@@ -786,13 +909,16 @@ end
 
 local function definePatches()
     S.C.reverb(lib.reverbSize, lib.reverbDamping)
-    local names = {}
+    local names, lazy = {}, {}
     for name, patch in pairs(lib.patches) do
-        if patch.slot then names[#names + 1] = name end
+        if patch.slot and patch.lazy then lazy[#lazy + 1] = name
+        elseif patch.slot then names[#names + 1] = name end
     end
     table.sort(names) -- the same order every run
     S.pendingDefines, S.pendingSet = names, {}
     for _, name in ipairs(names) do S.pendingSet[name] = true end
+    -- lazy patches (lazy = true) wait for their first note (slotOf), outside the batches
+    for _, name in ipairs(lazy) do S.pendingSet[name] = true end
     defineSome(DEFINES_PER_STEP)
     S.pool, S.fx = {}, {} -- the shared slots load their patches on first use
 end
@@ -838,6 +964,7 @@ local function slotOf(name, patch, t, durMs)
             S.pendingSet[name] = nil
             defineOwnSlot(name)
         end
+        if patch.sample then ensureBank(patch.sample.bank) end -- the voice lab may have loaded its take since
         return patch.slot
     end
     if patch.fx then
