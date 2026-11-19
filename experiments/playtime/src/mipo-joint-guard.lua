@@ -197,7 +197,7 @@ end
 -- teleport (setPosition), which skips Box2D's tunnelling protection: a limb
 -- torn across a thin wall was put straight into it and got stuck.
 local function wallBetween(x1, y1, x2, y2)
-    if (x2 - x1) ^ 2 + (y2 - y1) ^ 2 < 1 then return false end
+    if not ((x2 - x1) ^ 2 + (y2 - y1) ^ 2 >= 1) then return false end -- luacheck: ignore 581 (NaN: see wallFixtureBetween)
     local blocked = false
     state.physicsWorld:rayCast(x1, y1, x2, y2, function(fixture)
         if isWall(fixture) then
@@ -315,7 +315,7 @@ end
 local LEG = { luleg = true, ruleg = true, llleg = true, rlleg = true }
 local LEG_PATH = { luleg = true, ruleg = true, llleg = true, rlleg = true, lfoot = true, rfoot = true }
 local function otherMipoAcross(x1, y1, x2, y2, ownId, ownLane)
-    if (x2 - x1) ^ 2 + (y2 - y1) ^ 2 < 1 then return nil end
+    if not ((x2 - x1) ^ 2 + (y2 - y1) ^ 2 >= 1) then return nil end -- luacheck: ignore 581 (NaN: see wallFixtureBetween)
     local found, foundInstance
     local legsPass = state.legsPassMipos
     state.physicsWorld:rayCast(x1, y1, x2, y2, function(fixture)
