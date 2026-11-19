@@ -181,10 +181,11 @@ local function ensureSounds()
         local v = prev * 0.92 + (love.math.random() * 2 - 1) * 0.12
         return v * math.sin(u * math.pi) * 1.6, v
     end)
-    -- under each bite: a low thud, the earth giving way
+    -- under each bite: a low thud, the earth giving way; eased in over 12 ms (an instant start popped like a shot,
+    -- Nikki 2026-11-17 "less shooting noise")
     makeSound('thud', 0.16, function(t, u)
         local f = 95 - 45 * u
-        return math.sin(2 * math.pi * f * t) * (1 - u) ^ 2.5 * 0.9, 0
+        return math.sin(2 * math.pi * f * t) * math.min(1, t / 0.012) * (1 - u) ^ 2.5 * 0.9, 0
     end)
     -- a crust letting go: a low rumble
     makeSound('rumble', 0.5, function(_, u, prev)
@@ -293,6 +294,8 @@ local function fillPockets(c)
     local i1 = math.min(cols - 1, math.ceil((box[3] - X0) / cell) + margin)
     local j0 = math.max(1, math.floor((box[2] - Y0) / cell) - margin)
     local j1 = math.min(rows - 1, math.ceil((box[4] - Y0) / cell) + margin)
+    -- a pile settling outside the earth's grid (a clump flung off the side or above it): nothing to fill
+    if i0 > i1 or j0 > j1 then return end
     local seen = {}
     local function flood(i, j, list)
         local stack = { i, j }
@@ -462,9 +465,11 @@ local function bite(c, sc, m, r, ux, uy)
             color = CLUMP_COLORS[love.math.random(1, #CLUMP_COLORS)] }
     end
     c.puffs[#c.puffs + 1] = { x = sc.x, y = sc.y, r = rb, t = 0 }
-    camera.shake(math.min(40, 5 / math.max(0.05, cam:getScale())), 0.09)
-    play('crunch', m.pitch * (0.9 + love.math.random() * 0.2), 0.55 + frac * 0.45)
-    play('thud', m.pitch * (0.85 + love.math.random() * 0.2), 0.5 + frac * 0.5)
+    -- kept subtle (Nikki 2026-11-17: "a bit more subtle, less screenshake, less shooting noise"; was 5 px for
+    -- 0.09 s, crunch 0.55-1, thud 0.5-1)
+    camera.shake(math.min(12, 1.5 / math.max(0.05, cam:getScale())), 0.06)
+    play('crunch', m.pitch * (0.9 + love.math.random() * 0.2), 0.3 + frac * 0.2)
+    play('thud', m.pitch * (0.85 + love.math.random() * 0.2), 0.2 + frac * 0.2)
     -- where it dug is looked over for earth that can't hold
     local reg = c.region
     if reg then
@@ -1139,10 +1144,77 @@ local function puffsUpdate(c, dt)
     end
 end
 
+-- NaN repair (2026-11-17): now and then a beam lying still against the earth comes out of a Box2D step as NaN
+-- (burrow 2026-11-12 too; nothing dug, poured or moved there that frame, and replaying the pose alone in plain LOVE
+-- doesn't do it, so it's Box2D's carried-over contact state). Contacts spread it to everything touching. The first
+-- frame any body has a NaN place or speed: a clump goes (loose dirt), everything else goes back to where it was the
+-- frame before, still; non-Mipos are switched off and on, which drops their contacts (a contact keeps its NaN push
+-- and hands it back next step; never a Mipo part, see the reach spike). Printed, so it can be counted. Repairs
+-- coming faster than one a second, three times running: the world pauses instead, to look at over the bridge.
+local function badNumber(b)
+    local x, y = b:getPosition()
+    local vx, vy = b:getLinearVelocity()
+    local a, w = b:getAngle(), b:getAngularVelocity()
+    return x ~= x or y ~= y or vx ~= vx or vy ~= vy or a ~= a or w ~= w
+end
+
+local function nanRepair(c, now)
+    if state.world.paused then return end
+    local snap = c.nanSnap or {}
+    local fixed, dropped, lost = {}, 0, 0
+    for _, b in ipairs(state.physicsWorld:getBodies()) do
+        if badNumber(b) then
+            local ud = b:getUserData()
+            local inst, part = mipoRegistry.getFromBody(b)
+            local label = inst and ('mipo ' .. tostring(part)) or (ud and ud.thing and ud.thing.label)
+                or (ud and ud.burrowChunk and 'earth') or '?'
+            local p = snap[b]
+            if label == 'clump' then
+                objectManager.destroyBody(b)
+                dropped = dropped + 1
+            elseif p then
+                b:setPosition(p[1], p[2])
+                b:setAngle(p[3])
+                b:setLinearVelocity(0, 0)
+                b:setAngularVelocity(0)
+                if not inst then
+                    b:setActive(false)
+                    b:setActive(true)
+                end
+                fixed[#fixed + 1] = label
+            else
+                lost = lost + 1
+            end
+        end
+    end
+    if #fixed + dropped + lost == 0 then return end
+    print(string.format('[diglive] NaN repaired: %d put back (%s), %d clumps dropped, %d unknown', #fixed,
+        table.concat(fixed, ', ', 1, math.min(#fixed, 12)), dropped, lost))
+    c.nanFast = (now - (c.nanLastAt or -10) < 1) and (c.nanFast or 0) + 1 or 0
+    c.nanLastAt = now
+    if c.nanFast >= 3 then
+        state.world.paused = true
+        print('[diglive] NaN keeps coming back: world paused')
+    end
+end
+
+-- every body's place and speed, kept at the end of the script's update (the world steps next)
+local function nanSnapshot(c)
+    local snap = {}
+    for _, b in ipairs(state.physicsWorld:getBodies()) do
+        if not badNumber(b) then
+            local x, y = b:getPosition()
+            snap[b] = { x, y, b:getAngle() }
+        end
+    end
+    c.nanSnap = snap
+end
+
 function s.update(dt)
     if not earth then return end
     local c = st()
     local now = love.timer.getTime()
+    nanRepair(c, now)
     ensureSounds()
     scoopTick(c, dt, now)
     pourTick(c)
@@ -1152,6 +1224,7 @@ function s.update(dt)
     piecesUpdate(c, now)
     for _, inst in ipairs(mipos()) do answerTick(inst, now) end
     puffsUpdate(c, dt)
+    nanSnapshot(c)
     for i = #c.crumbs, 1, -1 do
         local p = c.crumbs[i]
         p.vy = p.vy + (p.chunk and 2600 or 1800) * dt
