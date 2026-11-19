@@ -27,7 +27,11 @@ local deadbandParts = { luleg = true, ruleg = true, llleg = true, rlleg = true }
 -- addThing, a scene load, recreateThingFromBody; a flip keeps it). Its behaviors are read from
 -- it live every step. Asked for every body every step (380 with 20 Mipos) and three times per
 -- part balanced, getUserData was ~0.2 ms a frame on an iPhone SE 2 (2026-10-31).
-local thingOfBody = setmetatable({}, { __mode = 'k' })
+-- Weak values too: thing.body is the key again, and LuaJIT has no ephemerons (a weak-keyed table's values are
+-- strong), so with weak keys alone no entry ever went: every body ever destroyed stayed, with its thing
+-- (2026-11-19, diglive: ~1.5 MB a minute of clumps, 81 MB after a long play). The thing lives as long as its
+-- body's userData holds it.
+local thingOfBody = setmetatable({}, { __mode = 'kv' })
 local function thingOf(body)
     local thing = thingOfBody[body]
     if thing == nil then
