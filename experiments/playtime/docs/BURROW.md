@@ -95,6 +95,11 @@ About Digging a Hole): "i like the feel".
   still clump settles (none still: the oldest goes). A loose piece with earth inside its edges is dug out (one
   block lying still in closed-in earth made ~400 contact calls a step: update 13 -> 3 ms). A NaN earth chunk is
   rebuilt (put back, its contact made it NaN again every step and the world paused).
+- **Grass where the sun reaches dirt** (2026-11-19, Nikki: "grass on top of soil/dirt that is exposed to air and
+  sun ... more dynamic"): each column's top, the first earth from the sky down, has grass if it's dirt (burrow's new
+  `opts.grassOn`; mole and oaktree keep the old rule, grass near the first surface). A top that moves (dug, poured
+  onto) starts bare and grows in over 8 s, blade by blade; no grass across a step. Kept per column and looked at
+  only where a stamp changed something (before: every visible column searched from the sky down every frame).
 
 ## Parked: dig jobs (Mipos dig what you mark)
 

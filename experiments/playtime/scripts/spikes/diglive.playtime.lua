@@ -180,6 +180,8 @@ local function loadEarth()
         rocks = 0, -- no rocks (Nikki 2026-11-16: not these, the borrowed Mipo body outlines)
         sharedFrame = true,
         materials = materials,
+        -- grass grows on dirt open to the sky, not on clay or sand (2026-11-19)
+        grassOn = function(x, y) return matAt(x, y) == DIRT end,
     })
 end
 

@@ -25,6 +25,8 @@ local s = {}
 --   bounds       { x1, y1, x2, y2 } for the camera
 --   layerScale   the earth's layers (topsoil, clay, deeper ground) this many times deeper (default 1)
 --   sharedFrame  the scene starts the ui frame itself (its own panel too), before calling drawUI
+--   grassOn(x, y) whether grass grows on the earth's top at (x, y) (diglive: on dirt); given, grass grows on any
+--                top open to the sky and grows in over GRASS_GROW seconds; not given, only near the first surface
 --   materials()  what the earth is made of, per place, instead of the layers by depth: returns a picture
 --                { image, x0, y0, cell, w, h } whose pixel (i, j) is the earth at (x0 + i*cell, y0 + j*cell),
 --                r g b the share of dirt, clay and sand (diglive); nil: the layers by depth
@@ -429,6 +431,70 @@ local function underBody(x, y)
     return hit
 end
 
+-- Grass (2026-11-19, Nikki: "grass on top of soil/dirt that is exposed to air and sun ... more dynamic"): each
+-- column's top, the first earth from the sky down, has grass where opts.grassOn says it grows (diglive: dirt, not
+-- clay or sand). A fresh top (dug, poured onto: moved more than 3/4 of a cell) starts bare and grows in over
+-- GRASS_GROW seconds. Kept per column (b.grass[i] = { y, amount } or false); the columns a stamp touched are looked
+-- at again that frame. Without opts.grassOn the old rule: grass only near the first surface, there at once.
+-- (Before, every visible column was searched from the top of the sky every frame: ~18,000 lookups a frame.)
+local GRASS_GROW = 8
+local function columnTop(b, i)
+    local dens = b.dens
+    local j = 0
+    while j <= ROWS and dens[idx(i, j)] < 0.5 do j = j + 1 end
+    if j == 0 or j > ROWS then return nil end
+    return Y0 + (j - 1 + crossing(dens[idx(i, j - 1)], dens[idx(i, j)])) * CELL
+end
+
+local function lookAtColumn(b, i, full)
+    local y = columnTop(b, i)
+    local can = false
+    if y then
+        if opts.grassOn then
+            can = opts.grassOn(X0 + i * CELL, y + CELL * 0.5)
+        else
+            can = math.abs(y - b.surface[i]) < CELL * 1.5
+        end
+    end
+    if not can then
+        b.grass[i] = false
+        return
+    end
+    local g = b.grass[i]
+    if g and math.abs(g.y - y) <= CELL * 0.75 then
+        g.y = y -- the same top: it keeps growing
+    else
+        b.grass[i] = { y = y, amount = (full or not opts.grassOn) and 1 or 0 }
+    end
+end
+
+local function markGrass(b, i0, i1)
+    local dirty = b.grassDirty
+    if not dirty then return end
+    for i = math.max(0, i0), math.min(COLS, i1) do dirty[i] = true end
+end
+
+local function grassUpdate(b, dt)
+    if not b.grass then return end
+    for i in pairs(b.grassDirty) do lookAtColumn(b, i, false) end
+    b.grassDirty = {}
+    local grow = dt / GRASS_GROW
+    for i = 0, COLS do
+        local g = b.grass[i]
+        if g and g.amount < 1 then g.amount = math.min(1, g.amount + grow) end
+    end
+end
+
+-- every column looked at; a new grid (or none yet) starts fully grown
+local function grassAll(b)
+    local full = false
+    if not b.grass or b.grassCols ~= COLS then
+        b.grass, b.grassCols, full = {}, COLS, true
+    end
+    b.grassDirty = {}
+    for i = 0, COLS do lookAtColumn(b, i, full) end
+end
+
 -- One round brush stamp: dig lowers samples towards 0 inside the radius, fill raises them.
 local function stamp(b, wx, wy, r, fill)
     local i0 = math.max(1, math.floor((wx - r - X0) / CELL) - 1)
@@ -451,6 +517,7 @@ local function stamp(b, wx, wy, r, fill)
             end
         end
     end
+    markGrass(b, i0 - 1, i1 + 1)
     -- a sample is a corner of the cells on both sides, so the chunks around it change too
     for cy = math.max(0, math.floor((j0 - 1) / CHUNK)), math.min(CHUNKS_Y - 1, math.floor(j1 / CHUNK)) do
         for cx = math.max(0, math.floor((i0 - 1) / CHUNK)), math.min(CHUNKS_X - 1, math.floor(i1 / CHUNK)) do
@@ -632,6 +699,7 @@ end
 local function rebuildEverything(b)
     buildWall(b)
     rebuildAll(b)
+    grassAll(b)
 end
 
 -- Reset: the landscape as it started and every Mipo (same looks) back where it came in.
@@ -774,6 +842,7 @@ function s.update(dt)
         b.lastX, b.lastY = mx, my
     end
     rebuildDirty(b)
+    grassUpdate(b, dt)
     rocksUpdate(b, dt)
 end
 
@@ -1145,23 +1214,22 @@ local function project(x, y, k, cx, cy)
     return cx + (x - cx) * k, cy + (y - cy) * k
 end
 
--- the visible columns' tops: the first earth from above, if it's still the grassy surface
+-- the visible columns' grassy tops and how grown they are (0..1), from b.grass (grassUpdate)
 local function grassTops(b, k)
     local cx, _, w, scale = viewCentre()
     local half = w / 2 / scale / k + CELL * 2
     local i0 = math.max(0, math.floor((cx - half - X0) / CELL))
     local i1 = math.min(COLS, math.ceil((cx + half - X0) / CELL))
-    local dens, tops = b.dens, {}
+    local tops, grown = {}, {}
     for i = i0, i1 do
-        local j = 0
-        while j <= ROWS and dens[idx(i, j)] < 0.5 do j = j + 1 end
-        if j > 0 and j <= ROWS then
-            local y = Y0 + (j - 1 + crossing(dens[idx(i, j - 1)], dens[idx(i, j)])) * CELL
-            if math.abs(y - b.surface[i]) < CELL * 1.5 then tops[i] = y end
-        end
+        local g = b.grass and b.grass[i]
+        if g then tops[i], grown[i] = g.y, g.amount end
     end
-    return tops, i0, i1
+    return tops, i0, i1, grown
 end
+
+-- two neighbouring tops joined by grass: not across a step (a dug wall, the side of a pile)
+local function grassJoins(ya, yb) return ya and yb and math.abs(ya - yb) < CELL * 1.5 end
 
 -- the band's edges at one column, kept at least `behind` / `infront` from the line (with the eye
 -- under the ground the perspective would turn the band over)
@@ -1173,32 +1241,35 @@ end
 
 -- (the vertex tables kept, as for the tunnel sides)
 local topVerts, topPool = {}, {}
-local function topVertex(n, x, y, u, v)
+local function topVertex(n, x, y, u, v, a)
     local t = topPool[n]
     if not t then
         t = { 0, 0, 0, 0, 1, 1, 1, 1 }
         topPool[n] = t
     end
-    t[1], t[2], t[3], t[4] = x, y, u, v
+    t[1], t[2], t[3], t[4], t[8] = x, y, u, v, a
     topVerts[n] = t
 end
 
 local function drawGrassTop(b)
     local pl = plane(b)
     local cx, cy = viewCentre()
-    local tops, i0, i1 = grassTops(b, pl.back)
-    b.tops = tops
+    local tops, i0, i1, grown = grassTops(b, pl.back)
+    b.tops, b.grown = tops, grown
     local tw, th = topPattern:getWidth() * 1.6, topPattern:getHeight() * 1.6
     local n = 0
     for i = i0, i1 - 1 do
         local ya, yb = tops[i], tops[i + 1]
-        if ya and yb and n + 6 <= TOP_MAX then
+        if grassJoins(ya, yb) and n + 6 <= TOP_MAX then
+            local aa, ab = grown[i], grown[i + 1]
             local xa, xb = X0 + i * CELL, X0 + (i + 1) * CELL
             local bax, bay, fax, fay = edges(pl, xa, ya, cx, cy)
             local bbx, bby, fbx, fby = edges(pl, xb, yb, cx, cy)
             local ua, ub, vf = xa / tw, xb / tw, BAND_DEPTH / th
-            topVertex(n + 1, bax, bay, ua, 0); topVertex(n + 2, bbx, bby, ub, 0); topVertex(n + 3, fbx, fby, ub, vf)
-            topVertex(n + 4, bax, bay, ua, 0); topVertex(n + 5, fbx, fby, ub, vf); topVertex(n + 6, fax, fay, ua, vf)
+            topVertex(n + 1, bax, bay, ua, 0, aa); topVertex(n + 2, bbx, bby, ub, 0, ab)
+            topVertex(n + 3, fbx, fby, ub, vf, ab)
+            topVertex(n + 4, bax, bay, ua, 0, aa); topVertex(n + 5, fbx, fby, ub, vf, ab)
+            topVertex(n + 6, fax, fay, ua, vf, aa)
             n = n + 6
         end
     end
@@ -1288,7 +1359,7 @@ end
 
 -- a row of blades on the grassy top, at the back (front = false) or the front edge
 local function bladeRow(b, batch, front, seedP, size)
-    local pl, tops = plane(b), b.tops
+    local pl, tops, grown = plane(b), b.tops, b.grown
     if not tops or pl.blades <= 0 then return end
     local cx, cy, w, scale = viewCentre()
     local k = front and pl.front or pl.back + 0.02
@@ -1300,12 +1371,16 @@ local function bladeRow(b, batch, front, seedP, size)
         local fi = (x - X0) / CELL
         local i = math.floor(fi)
         local ya, yb = tops[i], tops[i + 1]
-        if ya and yb then
+        local g = grassJoins(ya, yb) and grown[i] + (grown[i + 1] - grown[i]) * (fi - i) or 0
+        -- growing in: the blades come up one by one (each its own moment), then get taller
+        local born = love.math.noise(x * 0.11, seedP * 7.7) * 0.6
+        if g > born then
+            local up = math.min(1, (g - born) / 0.4)
             local y = ya + (yb - ya) * (fi - i)
             local bx, by, fx, fy = edges(pl, x, y, cx, cy)
             local px, py = bx, by
             if front then px, py = fx, fy end
-            local hh = 0.3 + love.math.noise(x / 1000, seedP) * 0.9
+            local hh = (0.3 + love.math.noise(x / 1000, seedP) * 0.9) * up
             local n = math.min(#BLADES, 1 + math.floor(love.math.noise(x * 0.37, seedP * 3.1) * #BLADES))
             local q = BLADES[n]
             local ang = math.sin(hh * 9) * 0.1 + math.sin(t * 1.3 + x * 0.003) * 0.06
