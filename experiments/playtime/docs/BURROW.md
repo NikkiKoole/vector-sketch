@@ -78,6 +78,23 @@ About Digging a Hole): "i like the feel".
   earth sticks there (a press pulls it off); the scoop doesn't dig past it, poured dirt settles flat against it.
   Liked ("i like the sticks"). Tried and taken out the same day: strokes locking onto flat / upright / 45 degrees
   with square bites ("i dont like the locking angles").
+- **Kinds of ground and a kiln** (2026-11-19, Nikki: "certain types of ground, say clay, sand and mud/dirt, each
+  with different properties, dirt is good for growing stuff on, clay can be baked into bricks"; clay "in layers /
+  pockets", "a kiln at the top surface where you can drop in your clumps"). Every place in the earth is dirt, clay
+  or sand (its own 40 px grid, `c.mat`), drawn by burrow's shader from a small picture of it (burrow's new
+  `opts.materials`; other scenes keep the layers by depth). A clay layer under the topsoil, clay and sand pockets,
+  a sand band under the cave. Clay digs slowest and pours as heavy sticky clumps; sand digs fastest, its clumps
+  slide, and it doesn't hold over a hole or past ~45 degrees (it trickles down near the dig). The lump on the
+  finger shows what it carries, and settled clumps stay what they were. The kiln (left of the cave, on the grass):
+  clay landing on it hisses in; every 10 clumps bake into a brick (1.6 s) that pops out over a rim, glowing and
+  cooling, a piece like the blocks. Dirt and sand on it are flicked off (else they settled into earth on its rims).
+  Not yet: anything growing in dirt.
+  The same day, from playing it: sand ran away (160 clumps and ~300 waiting to crumble, 25 fps): settled sand
+  crumbled again, every fall kept the dug place watched, and the clump cap turned the oldest clump into earth in
+  mid-air. Now only sand that was there runs, the watched place lasts 6 s at most, and at the cap the oldest
+  still clump settles (none still: the oldest goes). A loose piece with earth inside its edges is dug out (one
+  block lying still in closed-in earth made ~400 contact calls a step: update 13 -> 3 ms). A NaN earth chunk is
+  rebuilt (put back, its contact made it NaN again every step and the world paused).
 
 ## Parked: dig jobs (Mipos dig what you mark)
 

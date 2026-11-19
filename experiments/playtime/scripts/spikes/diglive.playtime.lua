@@ -12,6 +12,9 @@
 --   the earth   a thin crust or a lump cut loose near where you dug shakes for a moment (crumbs trickle) and comes
 --               down as clumps; that can leave another thin bit, so it can cascade a little
 --   the pieces  wooden beams and toy blocks buried in the earth: dig one free, drag it up, stack a tower
+--   the ground  (2026-11-19) dirt, clay and sand: a clay layer under the topsoil, clay and sand pockets, a sand band
+--               deep down. Each digs, carries and pours as itself: clay slow and heavy, sand fast and running
+--   the kiln    on the grass, left of the cave: drop clay in and it bakes into bricks that pop out over the rim
 -- Made of: the earth   scripts/spikes/burrow.playtime.lua (its own state 'diglive', its cave, rocks, two Mipos)
 -- play mode (tab): drag on the earth to dig, let go to pour. keys: h the panel
 --   (the burrow's own: m Mipo  r reset  [ ] the scoop's size  t o b i looks)
@@ -58,6 +61,117 @@ local function earthEnv()
         print = print, tostring = tostring, tonumber = tonumber, type = type, pcall = pcall }
 end
 
+---------------------------------------------------------------- what the earth is: dirt, clay, sand
+
+-- Nikki 2026-11-19: "certain types of ground ... each with different properties, dirt is good for growing stuff
+-- on, clay can be baked into bricks"; clay "in layers / pockets in the ground". Each place in the earth is dirt,
+-- clay or sand (c.mat, on its own grid of MCELL, whatever the burrow's cell): it digs, carries and pours as what
+-- it is, and the earth's shader colours it from a small picture of the grid (burrow's opts.materials).
+--   dirt   the topsoil and most of the ground; digs easily
+--   clay   a layer under the topsoil and pockets deeper; heavy, slow to dig, sticky clumps; the kiln bakes it
+--   sand   pockets and a band deep down; digs fast, runs: it doesn't hold over a hole, its clumps slide
+local MCELL = 40
+local MCOLS, MROWS = math.floor(WORLD_W / MCELL), math.floor(WORLD_H / MCELL)
+local MSW = MCOLS + 1
+local MAT_ID = 3 -- another way of laying them out: made again
+local DIRT, CLAY, SAND = 1, 2, 3
+local KINDS = {
+    [DIRT] = { name = 'dirt', bite = 0.06, pitch = 1.2, density = 0.8, friction = 0.9, size = 1,
+        colors = { { 0.36, 0.25, 0.16 }, { 0.3, 0.2, 0.13 }, { 0.44, 0.31, 0.2 } } },
+    [CLAY] = { name = 'clay', bite = 0.14, pitch = 0.75, density = 1.4, friction = 1.0, size = 1.1,
+        colors = { { 0.72, 0.42, 0.27 }, { 0.65, 0.36, 0.23 }, { 0.78, 0.49, 0.32 } } },
+    [SAND] = { name = 'sand', bite = 0.035, pitch = 1.7, density = 0.9, friction = 0.12, size = 0.7,
+        colors = { { 0.86, 0.74, 0.5 }, { 0.8, 0.67, 0.43 }, { 0.91, 0.8, 0.58 } } },
+}
+local SHARE = { [DIRT] = { 255, 0, 0 }, [CLAY] = { 0, 255, 0 }, [SAND] = { 0, 0, 255 } }
+
+local function kindColor(m)
+    local colors = KINDS[m or DIRT].colors
+    return colors[love.math.random(1, #colors)]
+end
+
+local function layOutMaterials(c)
+    local seed = (c.matSeed or 0) * 13.7
+    local noise = love.math.noise
+    local mat = {}
+    for j = 0, MROWS do
+        for i = 0, MCOLS do
+            local x, y = X0 + i * MCELL, Y0 + j * MCELL
+            local d = y + (noise(x * 0.0007, 3.1 + seed) - 0.5) * 260
+            local m = DIRT
+            -- the clay layer under the topsoil, thicker and thinner along the way
+            if d > 420 and d < 900 + (noise(x * 0.0013, 5.7 + seed) - 0.5) * 500 then m = CLAY end
+            -- a sand band deep down, under the cave
+            if d > 2650 and d < 2950 + (noise(x * 0.0011, 8.2 + seed) - 0.5) * 300 then m = SAND end
+            -- pockets
+            if y > 250 then
+                if noise(x * 0.0015, y * 0.0015, 11.3 + seed) > 0.67 then
+                    m = CLAY
+                elseif noise(x * 0.0017, y * 0.0017, 23.9 + seed) > 0.7 then
+                    m = SAND
+                end
+            end
+            mat[j * MSW + i + 1] = m
+        end
+    end
+    c.mat, c.matId = mat, MAT_ID
+end
+
+local matData, matImage, matDirty
+local function materials()
+    local c = st()
+    if not c.mat then return nil end
+    if not matImage then
+        matData = love.image.newImageData(MSW, MROWS + 1)
+        local mat = c.mat
+        matData:mapPixel(function(i, j)
+            local sh = SHARE[mat[j * MSW + i + 1]] or SHARE[DIRT]
+            return sh[1] / 255, sh[2] / 255, sh[3] / 255, 1
+        end)
+        matImage = love.graphics.newImage(matData)
+        matImage:setFilter('linear', 'linear')
+        matImage:setWrap('clamp', 'clamp')
+    elseif matDirty then
+        matImage:replacePixels(matData)
+    end
+    matDirty = nil
+    return { image = matImage, x0 = X0, y0 = Y0, cell = MCELL, w = MSW, h = MROWS + 1 }
+end
+
+local function forgetMaterialPicture() matImage, matData, matDirty = nil, nil, nil end
+
+local function matAt(x, y)
+    local mat = st().mat
+    if not mat then return DIRT end
+    local i = math.max(0, math.min(MCOLS, math.floor((x - X0) / MCELL + 0.5)))
+    local j = math.max(0, math.min(MROWS, math.floor((y - Y0) / MCELL + 0.5)))
+    return mat[j * MSW + i + 1] or DIRT
+end
+
+-- the earth within r of (x, y) becomes m (where a clump settles)
+local function setMat(x, y, r, m)
+    local mat = st().mat
+    if not mat then return end
+    local i0, i1 = math.max(0, math.floor((x - r - X0) / MCELL)), math.min(MCOLS, math.ceil((x + r - X0) / MCELL))
+    local j0, j1 = math.max(0, math.floor((y - r - Y0) / MCELL)), math.min(MROWS, math.ceil((y + r - Y0) / MCELL))
+    local sh = SHARE[m]
+    for j = j0, j1 do
+        for i = i0, i1 do
+            local px, py = X0 + i * MCELL, Y0 + j * MCELL
+            if (px - x) ^ 2 + (py - y) ^ 2 <= (r + MCELL * 0.5) ^ 2 then
+                local k = j * MSW + i + 1
+                if mat[k] ~= m then
+                    mat[k] = m
+                    if matData then
+                        matData:setPixel(i, j, sh[1] / 255, sh[2] / 255, sh[3] / 255, 1)
+                        matDirty = true
+                    end
+                end
+            end
+        end
+    end
+end
+
 local earth
 local function loadEarth()
     return love.filesystem.load('scripts/spikes/burrow.playtime.lua')({
@@ -65,6 +179,7 @@ local function loadEarth()
         canDig = function() return false end, -- the scoop digs (below), not the burrow's own stroke
         rocks = 0, -- no rocks (Nikki 2026-11-16: not these, the borrowed Mipo body outlines)
         sharedFrame = true,
+        materials = materials,
     })
 end
 
@@ -194,6 +309,19 @@ local function ensureSounds()
     end)
 end
 
+-- the kiln's (2026-11-19): clay going in hisses, a brick done pops
+local function ensureKilnSounds()
+    if sounds.sizzle or not (love.audio and love.sound) then return end
+    makeSound('sizzle', 0.35, function(_, u, prev)
+        local v = (love.math.random() * 2 - 1) - prev * 0.6
+        return v * 0.25 * math.min(1, u * 20) * (1 - u) ^ 1.5, v
+    end)
+    makeSound('pop', 0.12, function(t, u)
+        local f = 520 - 300 * u
+        return math.sin(2 * math.pi * f * t) * math.min(1, t / 0.004) * (1 - u) ^ 3 * 0.8, 0
+    end)
+end
+
 local function play(name, pitch, volume)
     local src = sounds[name]
     if not src then return end
@@ -209,14 +337,14 @@ end
 local function scoopRadius() return field().brush end
 local function clumpSize() return math.max(25, math.min(70, scoopRadius() * 0.35)) end
 
-local function crumbs(x, y, n, speed)
+local function crumbs(x, y, n, speed, m)
     local list = st().crumbs
     for _ = 1, n do
         local a = -math.pi / 2 + (love.math.random() - 0.5) * 2.6
         local v = (100 + love.math.random() * 300) * (speed or 1)
         list[#list + 1] = { x = x, y = y, vx = math.cos(a) * v, vy = math.sin(a) * v,
             r = 4 + love.math.random() * 7, life = 0.5 + love.math.random() * 0.5,
-            color = CLUMP_COLORS[love.math.random(1, #CLUMP_COLORS)] }
+            color = m and kindColor(m) or CLUMP_COLORS[love.math.random(1, #CLUMP_COLORS)] }
     end
 end
 
@@ -277,6 +405,7 @@ local function settleClump(list, i)
         local kept = guardedSamples(x, y, p.size * 1.05 + 60)
         earth.dig(x, y, x, y, true, p.size * 1.05)
         putBack(kept)
+        setMat(x, y, p.size * 1.05, p.kind or DIRT)
         markLoose(x, y, p.size * 1.05)
         noteSettle(x, y, p.size * 2)
     end
@@ -343,7 +472,9 @@ local function fillPockets(c)
     end
 end
 
-local function clump(px, py, size, vx, vy)
+local function clump(px, py, size, vx, vy, m)
+    m = m or DIRT
+    local kind = KINDS[m]
     local list = st().clumps
     local verts = {}
     local k = love.math.random(5, 7)
@@ -356,8 +487,8 @@ local function clump(px, py, size, vx, vy)
     if not thing then return end
     local body = thing.body
     for _, fixture in ipairs(body:getFixtures()) do
-        fixture:setDensity(0.8)
-        fixture:setFriction(0.9)
+        fixture:setDensity(kind.density)
+        fixture:setFriction(kind.friction)
         fixture:setRestitution(0.05)
     end
     body:resetMassData()
@@ -365,8 +496,15 @@ local function clump(px, py, size, vx, vy)
     local perM = love.physics.getMeter() / 100 -- speeds as at 100 px per metre
     body:setLinearVelocity((vx or (love.math.random() - 0.5) * 150) * perM, (vy or -love.math.random() * 100) * perM)
     body:setAngularVelocity((love.math.random() - 0.5) * 6)
-    if #list >= CLUMP_MAX then settleClump(list, 1) end -- too many: the oldest becomes earth where it is
-    list[#list + 1] = { body = body, still = 0, size = size, color = CLUMP_COLORS[love.math.random(1, #CLUMP_COLORS)] }
+    if #list >= CLUMP_MAX then -- too many: the oldest lying still becomes earth; none still, the oldest goes
+        -- (settled in mid-air it left floating earth, sand that then crumbled: 2026-11-19)
+        local oldest
+        for n = 1, #list do
+            if list[n].still > 0.1 then oldest = n; break end
+        end
+        if oldest then settleClump(list, oldest) else removeClump(list, 1) end
+    end
+    list[#list + 1] = { body = body, still = 0, size = size, kind = m, color = kindColor(m) }
 end
 
 local function heldBody(body)
@@ -391,7 +529,7 @@ local function clumpsUpdate(dt)
             local _, y = body:getPosition()
             if y > Y0 + WORLD_H + 2000 then
                 removeClump(list, i)
-            elseif p.still > c.settle then
+            elseif p.still > c.settle and not p.onKiln then -- (on the kiln: it's flicked off, kilnUpdate)
                 settleClump(list, i)
             end
         end
@@ -410,28 +548,32 @@ end
 
 ---------------------------------------------------------------- the scoop
 
--- how hard the earth is here: the ring's speed through it, seconds between bites, the crunch's pitch
-local MATERIALS = {
-    { below = 350, speed = 1800, bite = 0.06, pitch = 1.25 },       -- topsoil
-    { below = 1800, speed = 900, bite = 0.09, pitch = 0.95 },       -- clay
-    { below = math.huge, speed = 500, bite = 0.13, pitch = 0.7 },   -- deep ground
-}
-local LOOSE = { bite = 0.04, pitch = 1.5 } -- settled dirt: soft
+-- how hard the earth is here: seconds between bites, the crunch's pitch. By what it is (KINDS), a little harder
+-- deeper down (up to 1.6x at 2000); settled earth (loose) digs at half (it was topsoil, clay, deep ground by depth
+-- only until 2026-11-19)
 local function materialAt(x, y)
-    if isLoose(x, y) then return LOOSE end
-    for _, m in ipairs(MATERIALS) do
-        if y < m.below then return m end
-    end
+    local m = matAt(x, y)
+    local kind = KINDS[m]
+    local bite = kind.bite * (1 + math.max(0, math.min(1, y / 2000)) * 0.6)
+    if isLoose(x, y) then bite = kind.bite * 0.5 end
+    return { bite = bite, pitch = kind.pitch, kind = m }
 end
 
 -- how much of a circle is earth (0..1), from 13 points
 local RING = {}
 for k = 0, 11 do RING[#RING + 1] = { math.cos(k / 12 * math.pi * 2) * 0.7, math.sin(k / 12 * math.pi * 2) * 0.7 } end
 RING[#RING + 1] = { 0, 0 }
-local function earthIn(x, y, r)
+local function earthIn(x, y, r, kinds)
     local n = 0
     for _, p in ipairs(RING) do
-        if earth.earthAt(x + p[1] * r, y + p[2] * r) > 0.5 then n = n + 1 end
+        local px, py = x + p[1] * r, y + p[2] * r
+        if earth.earthAt(px, py) > 0.5 then
+            n = n + 1
+            if kinds then
+                local m = matAt(px, py)
+                kinds[m] = kinds[m] + 1
+            end
+        end
     end
     return n / #RING
 end
@@ -443,16 +585,23 @@ local function capacity(r) return st().scoopBites * math.pi * r * r end
 -- a small camera knock, and a thud under the crunch.
 local BITE_SIZE = 1.15  -- a bite's radius, times the ring's
 local function bite(c, sc, m, r, ux, uy)
-    local frac = earthIn(sc.x, sc.y, r * BITE_SIZE)
+    local kinds = { 0, 0, 0 }
+    local frac = earthIn(sc.x, sc.y, r * BITE_SIZE, kinds)
     if frac <= 0 then return false end
     local rb = r * BITE_SIZE
     local kept = guardedSamples(sc.x, sc.y, rb + 60, sc.backX or sc.x, sc.backY or sc.y)
     earth.dig(sc.x, sc.y, sc.x, sc.y, false, rb)
     putBack(kept)
-    sc.carried = math.min(capacity(r), sc.carried + frac * math.pi * rb * rb)
+    local add = math.min(capacity(r), sc.carried + frac * math.pi * rb * rb) - sc.carried
+    local total = kinds[1] + kinds[2] + kinds[3]
+    sc.load = sc.load or { 0, 0, 0 }
+    for k = 1, 3 do sc.load[k] = sc.load[k] + add * kinds[k] / total end
+    sc.carried = sc.carried + add
+    local most = (kinds[CLAY] >= kinds[DIRT] and kinds[CLAY] >= kinds[SAND]) and CLAY
+        or (kinds[SAND] > kinds[DIRT] and SAND or DIRT)
     sc.bites = (sc.bites or 0) + 1
     sc.kick = 1
-    crumbs(sc.x, sc.y, 4, 0.8)
+    crumbs(sc.x, sc.y, 4, 0.8, most)
     -- chunks: thrown back the way the finger came, and up
     local bx, by = -(ux or 0), -(uy or 1)
     local list = c.crumbs
@@ -461,10 +610,9 @@ local function bite(c, sc, m, r, ux, uy)
         local v = 450 + love.math.random() * 450
         list[#list + 1] = { x = sc.x + (love.math.random() - 0.5) * rb, y = sc.y + (love.math.random() - 0.5) * rb,
             vx = math.cos(a) * v, vy = math.sin(a) * v, r = 14 + love.math.random() * 16 * frac,
-            life = 0.45 + love.math.random() * 0.3, chunk = true,
-            color = CLUMP_COLORS[love.math.random(1, #CLUMP_COLORS)] }
+            life = 0.45 + love.math.random() * 0.3, chunk = true, color = kindColor(most) }
     end
-    c.puffs[#c.puffs + 1] = { x = sc.x, y = sc.y, r = rb, t = 0 }
+    c.puffs[#c.puffs + 1] = { x = sc.x, y = sc.y, r = rb, t = 0, kind = most }
     -- kept subtle (Nikki 2026-11-17: "a bit more subtle, less screenshake, less shooting noise"; was 5 px for
     -- 0.09 s, crunch 0.55-1, thud 0.5-1)
     camera.shake(math.min(12, 1.5 / math.max(0.05, cam:getScale())), 0.06)
@@ -479,27 +627,38 @@ local function bite(c, sc, m, r, ux, uy)
         c.region = { sc.x - r, sc.y - r, sc.x + r, sc.y + r }
     end
     c.regionAt = love.timer.getTime()
+    c.regionFrom = nil -- digging again: looked over afresh
     return true
 end
 
 -- let go: what it carries pours out, a few clumps a frame
+-- (what it carries is kept per kind, sc.load: it pours out as clumps of each, mixed; a sand clump is smaller, so
+-- there are more of them)
 local function startPour(c, sc)
     local size = clumpSize()
-    local n = math.floor(sc.carried / (math.pi * size * size) + 0.5)
-    if n > 0 then c.pour = { x = sc.x, y = sc.y, left = n, size = size } end
-    sc.carried = 0
+    local load = sc.load or { sc.carried, 0, 0 }
+    if sc.carried > math.pi * size * size * 0.5 then
+        c.pour = { x = sc.x, y = sc.y, size = size, load = { load[1], load[2], load[3] } }
+    end
+    sc.carried, sc.load = 0, { 0, 0, 0 }
 end
 
 local function pourTick(c)
     local p = c.pour
     if not p then return end
-    for _ = 1, math.min(3, p.left) do
-        local s2 = p.size * (0.75 + love.math.random() * 0.5)
+    for _ = 1, 3 do
+        local load = p.load
+        local total = load[1] + load[2] + load[3]
+        if total <= math.pi * p.size * p.size * 0.3 then break end
+        local pick, m = love.math.random() * total, SAND
+        if pick < load[DIRT] then m = DIRT elseif pick < load[DIRT] + load[CLAY] then m = CLAY end
+        local s2 = p.size * KINDS[m].size * (0.75 + love.math.random() * 0.5)
         clump(p.x + (love.math.random() - 0.5) * p.size * 1.5, p.y + (love.math.random() - 0.5) * p.size,
-            s2, (love.math.random() - 0.5) * 120, 40 + love.math.random() * 80)
-        p.left = p.left - 1
+            s2, (love.math.random() - 0.5) * 120, 40 + love.math.random() * 80, m)
+        load[m] = math.max(0, load[m] - math.pi * s2 * s2)
     end
-    if p.left <= 0 then
+    local load = p.load
+    if load[1] + load[2] + load[3] <= math.pi * p.size * p.size * 0.3 then
         c.pour = nil
         c.lastFall = { x = p.x, y = p.y, at = love.timer.getTime() }
     end
@@ -601,6 +760,25 @@ local function weakSamples(c)
             end
         end
     end
+    -- sand doesn't hold: sand with air under it, or at an edge steeper than about 45 degrees (air beside it and
+    -- below that), comes down too, a quick trickle (pending at a third of the shake)
+    for i = i0, i1 do
+        for j = j0, j1 do
+            local key = j * sw + i
+            local px, py = X0 + i * cell, Y0 + j * cell
+            -- (only sand that was there: settled sand runs again, its lumpy piles crumbling and settling over and
+            -- over, 2026-11-19: 160 sand clumps and 300 waiting, for good)
+            if not seen[key] and solid(i, j) and matAt(px, py) == SAND and not isLoose(px, py) then
+                local over = not solid(i, j + 1)
+                    or (not solid(i - 1, j) and not solid(i - 1, j + 1))
+                    or (not solid(i + 1, j) and not solid(i + 1, j + 1))
+                if over then
+                    seen[key] = true
+                    weak[#weak + 1] = { i, j, sand = true }
+                end
+            end
+        end
+    end
     -- lumps cut loose: earth inside the box not reached from earth on its edge
     local reached, stack = {}, {}
     local function push(i, j)
@@ -641,7 +819,7 @@ local function lookForWeakEarth(c, now)
             c.pendingKeys[key] = true
             added = added + 1
             c.pending[#c.pending + 1] = { x = X0 + p[1] * cell, y = Y0 + p[2] * cell, key = key,
-                at = now + c.shake * (0.7 + love.math.random() * 0.6) }
+                at = now + c.shake * (0.7 + love.math.random() * 0.6) * (p.sand and 0.3 or 1) }
         end
     end
     if added > 0 then play('rumble', 0.7 + love.math.random() * 0.3, math.min(1, 0.3 + added / 40)) end
@@ -656,12 +834,17 @@ local function crumbleTick(c, dt, now)
             table.remove(c.pending, k)
             c.pendingKeys[p.key] = nil
             if earth.earthAt(p.x, p.y) > 0.5 then
+                local m = matAt(p.x, p.y)
                 earth.dig(p.x, p.y, p.x, p.y, false, cell * 0.8)
-                if love.math.random() < 0.5 then clump(p.x, p.y, cell * (0.5 + love.math.random() * 0.4)) end
+                -- sand runs: every bit of it comes down as a clump, the others half the time
+                if (m == SAND or love.math.random() < 0.5) and #c.clumps < CLUMP_MAX * 0.75 then
+                    clump(p.x, p.y, cell * (0.5 + love.math.random() * 0.4) * KINDS[m].size * (m == SAND and 1.4 or 1),
+                        nil, nil, m)
+                end
                 fell, fx, fy = fell + 1, fx + p.x, fy + p.y
             end
         elseif love.math.random() < dt * 4 then
-            crumbs(p.x, p.y + cell * 0.5, 1, 0.2) -- trickling while it shakes
+            crumbs(p.x, p.y + cell * 0.5, 1, 0.2, matAt(p.x, p.y)) -- trickling while it shakes
         end
     end
     if fell > 0 then
@@ -671,7 +854,9 @@ local function crumbleTick(c, dt, now)
     end
     -- look the dug place over a few times a second while digging, and a while after
     if c.region then
-        if now - (c.regionAt or 0) > 2.5 then
+        c.regionFrom = c.regionFrom or now
+        if now - (c.regionAt or 0) > 2.5 or now - c.regionFrom > 6 then -- (a fall keeps it going, but not forever)
+            c.regionFrom = nil
             c.region = nil
         elseif now >= (c.lookAt or 0) then
             c.lookAt = now + 0.2
@@ -917,12 +1102,30 @@ local function sunk(find)
     return inEarth / n >= 0.6
 end
 
+-- a loose piece with earth inside its edges (a pour settled round it, the earth closed in): Box2D keeps pushing it
+-- out of a dozen chain edges at once, ~400 contact calls a step for one block lying still (2026-11-19: half the
+-- frame). Its place is dug out like a sunk one's.
+local WEDGE_INSET = 15
+local WEDGE_POINTS = { { -1, -1 }, { 0, -1 }, { 1, -1 }, { 1, 0 }, { 1, 1 }, { 0, 1 }, { -1, 1 }, { -1, 0 } }
+local function wedged(find)
+    local body = find.body
+    local hw, hh = find.w / 2 - WEDGE_INSET, find.h / 2 - WEDGE_INSET
+    if hw <= 0 or hh <= 0 then return false end
+    for _, p in ipairs(WEDGE_POINTS) do
+        if earth.earthAt(body:getWorldPoint(p[1] * hw, p[2] * hh)) > 0.5 then return true end
+    end
+    return false
+end
+
 local function piecesUpdate(c, now)
     for _, find in ipairs(c.finds or {}) do
         local body = find.body
         if body and not body:isDestroyed() and find.free and now >= (find.checkAt or 0) then
             find.checkAt = now + 0.5
-            if not find.stuck and sunk(find) then carveFootprint(find) end
+            if not find.stuck and (sunk(find) or wedged(find)) then
+                carveFootprint(find)
+                body:setAwake(true)
+            end
         elseif body and not body:isDestroyed() and not find.free and now >= (find.checkAt or 0) then
             find.checkAt = now + 0.25
             if pieceHeld(find) < 0.35 then
@@ -961,7 +1164,24 @@ local function drawPieces(c)
             love.graphics.rotate(a)
             love.graphics.setColor(col[1] * dim, col[2] * dim, col[3] * dim, 1)
             love.graphics.rectangle('fill', -hw, -hh, find.w, find.h, 8, 8)
-            if find.kind == 'beam' then -- grain and a nail at each end
+            if find.hotUntil and t < find.hotUntil then -- fresh from the kiln: glowing, cooling
+                local heat = (find.hotUntil - t) / 4
+                col = { col[1] + (1 - col[1]) * heat, col[2] + (0.62 - col[2]) * heat, col[3] + (0.2 - col[3]) * heat }
+                love.graphics.setColor(col[1], col[2], col[3], 1)
+                love.graphics.rectangle('fill', -hw, -hh, find.w, find.h, 8, 8)
+            end
+            if find.kind == 'brick' then -- a lighter top edge and a few specks
+                love.graphics.setColor(math.min(1, col[1] * 1.15) * dim, math.min(1, col[2] * 1.15) * dim,
+                    math.min(1, col[3] * 1.15) * dim, 1)
+                love.graphics.rectangle('fill', -hw + 8, -hh + 6, find.w - 16, find.h * 0.22, 4, 4)
+                love.graphics.setColor(col[1] * 0.7 * dim, col[2] * 0.7 * dim, col[3] * 0.7 * dim, 1)
+                local rng = find.specks or {}
+                find.specks = rng
+                if #rng == 0 then
+                    for k = 1, 5 do rng[k] = { (love.math.random() - 0.5) * 0.8, (love.math.random() - 0.3) * 0.6 } end
+                end
+                for _, q in ipairs(rng) do love.graphics.circle('fill', q[1] * find.w, q[2] * find.h, 4) end
+            elseif find.kind == 'beam' then -- grain and a nail at each end
                 love.graphics.setColor(0.25 * dim, 0.15 * dim, 0.08 * dim, 0.6)
                 love.graphics.setLineWidth(3)
                 love.graphics.line(-hw + 30, -hh * 0.3, hw - 40, -hh * 0.25)
@@ -988,6 +1208,214 @@ local function drawPieces(c)
             end
             love.graphics.pop()
         end
+    end
+    love.graphics.setLineWidth(1)
+end
+
+---------------------------------------------------------------- the kiln: clay in, bricks out
+
+-- A kiln on the grass (Nikki 2026-11-19: "a kiln at the top surface where you can drop in your clumps"): a brick
+-- box open at the top with a fire under it. Clay clumps that fall in hiss and go into the heap inside; every
+-- KILN_PER_BRICK of them bake into a brick that pops out over the rim, glowing and cooling (a piece like the beams
+-- and blocks: drag it, stack it, it sticks against the earth). Dirt and sand aren't for baking: the fire spits them
+-- back out.
+local KILN_X = -700
+local KILN_W, KILN_H, KILN_WALL = 460, 420, 60
+local KILN_PER_BRICK = 10
+local KILN_BAKE = 1.6 -- seconds a brick bakes
+local BRICK_W, BRICK_H = 200, 90
+local BRICK_COLORS = { { 0.74, 0.33, 0.2 }, { 0.68, 0.3, 0.19 }, { 0.79, 0.4, 0.24 } }
+
+local function kilnState(c)
+    c.kiln = c.kiln or { clay = 0 }
+    return c.kiln
+end
+
+-- where the earth's top is at x (the first earth from the sky down)
+local function surfaceY(x)
+    local y = Y0 + 200
+    while y < Y0 + WORLD_H and earth.earthAt(x, y) < 0.5 do y = y + 10 end
+    return y
+end
+
+-- the ground under it made flat, and nothing over its footprint (once; the burrow won't fill under a body, so
+-- before the body is made)
+local function shapeKilnGround(k)
+    local base = -math.huge
+    for _, dx in ipairs({ -KILN_W / 2, -KILN_W / 4, 0, KILN_W / 4, KILN_W / 2 }) do
+        base = math.max(base, surfaceY(KILN_X + dx))
+    end
+    base = base - 30
+    for dx = -KILN_W / 2 - 40, KILN_W / 2 + 40, 60 do
+        earth.dig(KILN_X + dx, base + 70, KILN_X + dx, base + 70, true, 75)
+    end
+    for dx = -KILN_W / 2, KILN_W / 2, 60 do
+        for up = 70, 520, 90 do earth.dig(KILN_X + dx, base - up, KILN_X + dx, base - up, false, 70) end
+    end
+    k.base, k.shaped = base, true
+end
+
+local function makeKilnBody(k)
+    local body = love.physics.newBody(state.physicsWorld, KILN_X, k.base, 'static')
+    local hw = KILN_W / 2
+    local wallH = KILN_H
+    love.physics.newFixture(body, love.physics.newRectangleShape(-hw + KILN_WALL / 2, -wallH / 2, KILN_WALL, wallH))
+    love.physics.newFixture(body, love.physics.newRectangleShape(hw - KILN_WALL / 2, -wallH / 2, KILN_WALL, wallH))
+    love.physics.newFixture(body, love.physics.newRectangleShape(0, -KILN_WALL / 2, KILN_W, KILN_WALL))
+    body:setUserData({ diglive = 'kiln' })
+    k.body = body
+end
+
+local function destroyKiln(c)
+    local k = c.kiln
+    if k and k.body and not k.body:isDestroyed() then k.body:destroy() end
+    if k then k.body = nil end
+end
+
+local function placeKiln(c)
+    local k = kilnState(c)
+    if not k.shaped then shapeKilnGround(k) end
+    if not k.body or k.body:isDestroyed() then makeKilnBody(k) end
+end
+
+-- inside the box: between the walls, under the rim, over the floor
+local function inKiln(k, x, y)
+    local hw = KILN_W / 2 - KILN_WALL
+    return k.base and math.abs(x - KILN_X) < hw and y < k.base - KILN_WALL and y > k.base - KILN_H + 20
+end
+
+-- (it comes up over one rim, the other side each time, and hops off outside: from the middle they fell back in)
+-- clay is taken in anywhere on the kiln, its rims too (a poured lump spreads; the mouth alone caught a fifth)
+local function onKiln(k, x, y)
+    return k.base and math.abs(x - KILN_X) < KILN_W / 2 + 50 and y < k.base and y > k.base - KILN_H - 110
+end
+
+local function popBrick(c, k, now)
+    local side = k.side or 1
+    k.side = -side
+    local find = { kind = 'brick', w = BRICK_W, h = BRICK_H, x = KILN_X + side * (KILN_W / 2 - KILN_WALL / 2),
+        y = k.base - KILN_H - BRICK_H, angle = 0,
+        radius = math.sqrt(BRICK_W ^ 2 + BRICK_H ^ 2) / 2, free = true, hotUntil = now + 4,
+        color = BRICK_COLORS[love.math.random(1, #BRICK_COLORS)] }
+    makePieceBody(find)
+    if not find.body then return end
+    local perM = love.physics.getMeter() / 100
+    find.body:setLinearVelocity(side * (350 + love.math.random() * 150) * perM,
+        -(450 + love.math.random() * 150) * perM)
+    find.body:setAngularVelocity(side * (1 + love.math.random() * 1.5))
+    c.finds = c.finds or {}
+    c.finds[#c.finds + 1] = find
+    play('pop', 0.9 + love.math.random() * 0.2, 0.7)
+    crumbs(find.x, find.y, 6, 0.6, CLAY)
+    c.puffs[#c.puffs + 1] = { x = find.x, y = find.y, r = 140, t = 0, smoke = true }
+end
+
+local function kilnUpdate(c, dt, now)
+    local k = c.kiln
+    if not (k and k.body) then return end
+    -- what falls in
+    local list = c.clumps
+    for i = #list, 1, -1 do
+        local p = list[i]
+        local body = p.body
+        if body and not body:isDestroyed() and not heldBody(body) then
+            local x, y = body:getPosition()
+            p.onKiln = onKiln(k, x, y)
+            if p.kind == CLAY and p.onKiln then
+                removeClump(list, i)
+                k.clay = k.clay + 1
+                k.flare = 1
+                play('sizzle', 0.9 + love.math.random() * 0.3, 0.35)
+            elseif inKiln(k, x, y) or (p.onKiln and p.still > 0.2) then -- lying on a rim too: it'd turn to earth there
+                if not p.spatAt or now - p.spatAt > 0.6 then -- not for baking: spat back out
+                    p.spatAt = now
+                    local perM = love.physics.getMeter() / 100
+                    local side = x >= KILN_X and 1 or -1 -- away over the nearer rim
+                    body:setLinearVelocity(side * (350 + love.math.random() * 120) * perM,
+                        -(550 + love.math.random() * 150) * perM)
+                    play('pop', 0.5 + love.math.random() * 0.2, 0.35)
+                    c.puffs[#c.puffs + 1] = { x = x, y = y, r = 70, t = 0, smoke = true }
+                end
+            end
+        end
+    end
+    -- baking: a brick at a time while there's clay for one
+    k.flare = math.max(0, (k.flare or 0) - dt * 2)
+    if k.bakeAt then
+        if now >= k.bakeAt then
+            k.bakeAt = nil
+            popBrick(c, k, now)
+        end
+    elseif k.clay >= KILN_PER_BRICK then
+        k.clay = k.clay - KILN_PER_BRICK
+        k.bakeAt = now + KILN_BAKE
+        k.bakeFrom = now
+    end
+end
+
+local function drawKiln(c)
+    local k = c.kiln
+    if not (k and k.base) then return end
+    local t = love.timer.getTime()
+    local x0, base = KILN_X - KILN_W / 2, k.base
+    local top = base - KILN_H
+    local baking = k.bakeAt and (t - k.bakeFrom) / KILN_BAKE or 0
+    local heat = math.min(1, 0.35 + (k.flare or 0) * 0.4 + baking * 0.5)
+    -- the inside: dark, glowing from below
+    love.graphics.setColor(0.18, 0.1, 0.07, 1)
+    love.graphics.rectangle('fill', x0 + KILN_WALL, top, KILN_W - KILN_WALL * 2, KILN_H - KILN_WALL)
+    love.graphics.setColor(1, 0.45, 0.12, 0.35 * heat)
+    love.graphics.rectangle('fill', x0 + KILN_WALL, top + KILN_H * 0.4, KILN_W - KILN_WALL * 2,
+        KILN_H * 0.6 - KILN_WALL)
+    -- the clay heap inside
+    if k.clay > 0 then
+        local f = math.min(1, k.clay / KILN_PER_BRICK)
+        local col = KINDS[CLAY].colors[1]
+        local glow = baking
+        love.graphics.setColor(col[1] + (1 - col[1]) * glow * 0.6, col[2] + (0.6 - col[2]) * glow * 0.6, col[3], 1)
+        local hw = (KILN_W / 2 - KILN_WALL) * (0.5 + 0.45 * f)
+        love.graphics.ellipse('fill', KILN_X, base - KILN_WALL, hw, 30 + 110 * f)
+    end
+    -- walls and floor: bricks
+    local function brickWall(x, y, w, h)
+        local bc = BRICK_COLORS[1]
+        love.graphics.setColor(bc[1], bc[2], bc[3], 1)
+        love.graphics.rectangle('fill', x, y, w, h, 6, 6)
+        love.graphics.setColor(0.42, 0.2, 0.13, 1)
+        love.graphics.setLineWidth(3)
+        local row = 0
+        for yy = y + 45, y + h - 5, 45 do
+            love.graphics.line(x + 4, yy, x + w - 4, yy)
+            row = row + 1
+        end
+        row = 0
+        for yy = y, y + h - 45, 45 do
+            local off = (row % 2) * 45
+            for xx = x + 45 + off, x + w - 10, 90 do
+                love.graphics.line(xx, yy + 4, xx, math.min(y + h, yy + 41))
+            end
+            row = row + 1
+        end
+        love.graphics.setColor(0.25, 0.12, 0.08, 1)
+        love.graphics.setLineWidth(5)
+        love.graphics.rectangle('line', x, y, w, h, 6, 6)
+    end
+    brickWall(x0, top, KILN_WALL, KILN_H)
+    brickWall(x0 + KILN_W - KILN_WALL, top, KILN_WALL, KILN_H)
+    brickWall(x0, base - KILN_WALL, KILN_W, KILN_WALL)
+    -- the fire door in the floor's front, flames licking
+    love.graphics.setColor(0.12, 0.06, 0.04, 1)
+    love.graphics.arc('fill', KILN_X, base, 70, math.pi, math.pi * 2)
+    for f = 0, 4 do
+        local fx = KILN_X - 44 + f * 22
+        local fh = (28 + 22 * heat) * (0.7 + 0.3 * math.sin(t * 13 + f * 1.7))
+        love.graphics.setColor(1, 0.55 + 0.3 * heat, 0.15, 0.9)
+        love.graphics.polygon('fill', fx - 11, base, fx + 11, base, fx + math.sin(t * 9 + f) * 5, base - fh)
+    end
+    -- a baking brick shows as a glow over the rim
+    if k.bakeAt then
+        love.graphics.setColor(1, 0.6, 0.2, 0.25 + 0.2 * math.sin(t * 10))
+        love.graphics.circle('fill', KILN_X, top + 40, 90 + 30 * baking)
     end
     love.graphics.setLineWidth(1)
 end
@@ -1021,6 +1449,8 @@ function s.onStart()
             state.diglive = nil
         end
         c.loose, c.settleBox, c.scoopSized, c.gridId = {}, nil, nil, GRID_ID
+        destroyKiln(c)
+        c.kiln = nil
         destroyPieces(c)
         local list = c.clumps
         for i = #list, 1, -1 do
@@ -1036,6 +1466,9 @@ function s.onStart()
         b.rocks = {}
     end
     earth.onStart()
+    if c.matId ~= MAT_ID then layOutMaterials(c) end
+    forgetMaterialPicture()
+    placeKiln(c)
     if not c.scoopSized then -- the burrow's brush is the scoop: smaller than its digging brush
         field().brush = 160
         c.scoopSized = true
@@ -1057,6 +1490,7 @@ function s.onStart()
     end
     for _, inst in ipairs(mipos()) do inst._dl = nil end
     ensureSounds()
+    ensureKilnSounds()
 end
 
 function s.onUnload()
@@ -1064,6 +1498,7 @@ function s.onUnload()
     if earth then earth.onUnload() end
     clearClumps()
     destroyPieces(st(), true) -- remade where they are at the next start
+    destroyKiln(st())
 end
 
 -- touching earth: a point just outside its outline, all round, in earth
@@ -1129,9 +1564,15 @@ function s.onKeyPress(key)
             c.loose, c.settleBox = {}, nil
         end
         if earth then earth.onKeyPress(key) end
-        if key == 'r' then -- after the burrow's reset: new parts in the new earth
+        if key == 'r' then -- after the burrow's reset: new parts in the new earth, laid out anew, the kiln again
             destroyPieces(c)
             placePieces(c)
+            c.matSeed = (c.matSeed or 0) + 1
+            layOutMaterials(c)
+            forgetMaterialPicture()
+            destroyKiln(c)
+            c.kiln = nil
+            placeKiln(c)
         end
     end
 end
@@ -1169,7 +1610,14 @@ local function nanRepair(c, now)
             local label = inst and ('mipo ' .. tostring(part)) or (ud and ud.thing and ud.thing.label)
                 or (ud and ud.burrowChunk and 'earth') or '?'
             local p = snap[b]
-            if label == 'clump' then
+            if ud and ud.burrowChunk then
+                -- an earth chunk: a NaN body's push reaches it through a contact (0 mass x NaN is NaN), and put
+                -- back it went NaN again every step, the contact keeping its NaN (2026-11-19, the world paused
+                -- twice): its body goes, contacts and all, and the burrow builds it again
+                b:destroy()
+                field().dirty[ud.burrowChunk - 1] = true
+                fixed[#fixed + 1] = 'earth (rebuilt)'
+            elseif label == 'clump' then
                 objectManager.destroyBody(b)
                 dropped = dropped + 1
             elseif p then
@@ -1221,6 +1669,7 @@ function s.update(dt)
     if c.crumble then crumbleTick(c, dt, now) else c.region = nil end
     earth.update(dt) -- rebuilds what the scoop, the crumbles and the settled clumps changed
     clumpsUpdate(dt)
+    kilnUpdate(c, dt, now)
     piecesUpdate(c, now)
     for _, inst in ipairs(mipos()) do answerTick(inst, now) end
     puffsUpdate(c, dt)
@@ -1295,9 +1744,14 @@ local function drawScoop(c)
     local size = r * (0.25 + 0.75 * math.sqrt(fill)) * (1 + kick * 0.1)
     local t = love.timer.getTime()
     local n = math.max(3, math.floor(#LUMP * math.sqrt(fill)))
+    local load = sc.load or { 1, 0, 0 }
+    local total = math.max(1e-6, load[1] + load[2] + load[3])
     for k = 1, n do
         local p = LUMP[k]
-        local col = CLUMP_COLORS[p[4]]
+        local u, m = (k - 0.5) / n, SAND -- the bits shared out by what it carries
+        if u < load[DIRT] / total then m = DIRT elseif u < (load[DIRT] + load[CLAY]) / total then m = CLAY end
+        local colors = KINDS[m].colors
+        local col = colors[(p[4] - 1) % #colors + 1]
         local wob = math.sin(t * 7 + k) * 0.04
         local x, y, br = sc.x + p[1] * size * (1 + wob), sc.y + p[2] * size, p[3] * size * 0.6
         love.graphics.setColor(0.16, 0.1, 0.07, 1)
@@ -1315,9 +1769,11 @@ function s.draw()
         if p.body and not p.body:isDestroyed() then drawClumpBody(p.body, p.color) end
     end
     love.graphics.setLineWidth(1)
-    for _, p in ipairs(c.puffs) do -- dust
+    drawKiln(c)
+    for _, p in ipairs(c.puffs) do -- dust (smoke from the kiln: grey)
         local u = p.t / 0.3
-        love.graphics.setColor(0.55, 0.42, 0.3, 0.35 * (1 - u))
+        local col = p.smoke and { 0.7, 0.68, 0.66 } or (p.kind and KINDS[p.kind].colors[1]) or { 0.55, 0.42, 0.3 }
+        love.graphics.setColor(col[1], col[2], col[3], 0.35 * (1 - u))
         love.graphics.circle('fill', p.x, p.y, p.r * (0.7 + u * 0.9))
     end
     for _, p in ipairs(c.crumbs) do

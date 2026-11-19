@@ -25,6 +25,9 @@ local s = {}
 --   bounds       { x1, y1, x2, y2 } for the camera
 --   layerScale   the earth's layers (topsoil, clay, deeper ground) this many times deeper (default 1)
 --   sharedFrame  the scene starts the ui frame itself (its own panel too), before calling drawUI
+--   materials()  what the earth is made of, per place, instead of the layers by depth: returns a picture
+--                { image, x0, y0, cell, w, h } whose pixel (i, j) is the earth at (x0 + i*cell, y0 + j*cell),
+--                r g b the share of dirt, clay and sand (diglive); nil: the layers by depth
 --   env          the names it uses (state, world, cam, ui, ...): loaded with love.filesystem.load it runs in
 --                the plain globals, where a scene's names aren't
 local opts = ... or {}
@@ -64,6 +67,10 @@ local earthShader = love.graphics.newShader([[
 varying highp vec2 wpos;
 extern float wall;
 extern float depthScale; // the layers' depths times this (a deeper world: opts.layerScale)
+extern float useMap;     // 1: the colour comes from matMap (dirt, clay, sand in r g b), not from the depth
+extern Image matMap;
+extern vec4 matRect;     // x0, y0, cell, the map's width in pixels
+extern float matRows;    // the map's height in pixels
 #ifdef VERTEX
 vec4 position(mat4 tp, vec4 vp) { wpos = vp.xy; return tp * vp; }
 #endif
@@ -84,13 +91,27 @@ vec4 effect(vec4 color, Image tex, vec2 tc, vec2 sc) {
     vec3 deep = vec3(0.52, 0.40, 0.33);
     vec3 col = mix(topsoil, clay, smoothstep(150.0, 450.0, y));
     col = mix(col, deep, smoothstep(1500.0, 2300.0, y));
+    float dirtShare = 1.0;
+    if (useMap > 0.5) {
+        // wobbly edges: the map read a little off where it is
+        highp vec2 jit = vec2(vnoise(wp * 0.011), vnoise(wp * 0.011 + 17.0)) - 0.5;
+        highp vec2 g = (wpos + jit * 70.0 - matRect.xy) / matRect.z + 0.5;
+        vec3 share = Texel(matMap, g / vec2(matRect.w, matRows)).rgb;
+        share = smoothstep(0.3, 0.7, share);
+        share /= max(0.001, share.r + share.g + share.b);
+        vec3 dirt = mix(topsoil, vec3(0.3, 0.22, 0.16), smoothstep(1500.0, 2300.0, y));
+        vec3 clayM = vec3(0.72, 0.42, 0.27);
+        vec3 sand = vec3(0.86, 0.74, 0.5);
+        col = dirt * share.r + clayM * share.g + sand * share.b;
+        dirtShare = share.r;
+    }
     // thin bands of sediment, and grain at three sizes
     col *= 0.94 + 0.10 * smoothstep(0.45, 0.6, vnoise(vec2(wp.x * 0.0015, wp.y * 0.015)));
     col *= 0.86 + hash(floor(wp / 7.0)) * 0.12 + vnoise(wp * 0.012) * 0.12 + vnoise(wp * 0.003) * 0.08;
     // fine roots in the topsoil: where a stretched noise crosses one value
     highp float rn = vnoise(vec2(wp.x * 0.008, wp.y * 0.004)) + vnoise(wp * 0.03) * 0.15;
     float root = (1.0 - smoothstep(0.0, 0.025, abs(rn - 0.5))) * (1.0 - smoothstep(200.0, 700.0, depth));
-    col = mix(col, vec3(0.22, 0.15, 0.10), root * 0.7);
+    col = mix(col, vec3(0.22, 0.15, 0.10), root * 0.7 * dirtShare);
     // the back wall (1) darker and flatter; the sides of a tunnel (0.5) between it and the front
     col = mix(col, vec3(dot(col, vec3(0.33))), 0.3 * wall) * (1.0 - 0.5 * wall);
     return vec4(col, 1.0) * color;
@@ -1389,6 +1410,13 @@ function s.drawBelow()
     end
     if not b.plain then love.graphics.setShader(earthShader) end
     earthShader:send('depthScale', opts.layerScale or 1)
+    local map = opts.materials and opts.materials()
+    earthShader:send('useMap', map and 1 or 0)
+    if map then
+        earthShader:send('matMap', map.image)
+        earthShader:send('matRect', { map.x0, map.y0, map.cell, map.w })
+        earthShader:send('matRows', map.h)
+    end
     earthShader:send('wall', 1)
     love.graphics.setColor(b.plain and wallColor or { 1, 1, 1, 1 })
     if b.wall then
